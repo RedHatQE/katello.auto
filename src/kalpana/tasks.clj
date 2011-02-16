@@ -23,17 +23,17 @@
 
 (defn create-organization [name description]
   (navigate-to-tab :organizations)
-  (browser setText :name-text name)
-  (browser setText :description-text description)
+  (browser setText :org-name-text name)
+  (browser setText :org-description-text description)
   (browser clickAndWait :create-organization))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
   (comment "currently no way to navigate here!" (navigate-to-tab :xyz))
-  (browser setText :name-text name)
-  (browser setText :description-text description)
+  (browser setText :env-name-text name)
+  (browser setText :env-description-text description)
   (if prior-env
     (browser select :prior-environment prior-env))
-  (browser clickAndWait :create-organization))
+  (browser clickAndWait :create-environment))
 
 (defn login [username password]
   (browser setText :username-text username)

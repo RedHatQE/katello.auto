@@ -38,10 +38,6 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 (def uimap (merge
             {:error-message "//div[@class='warning']"
 
-             ;;stuff that is on more than one page
-             :name-text (textbox "name")
-             :description-text (textbox "description")
-
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -57,8 +53,12 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              ;;Organizations tab
              :new-organization (link "New Organization")
              :create-organization "//input[@name='commit' and @value='Create']"
+             :org-name-text (textbox "name")
+             :org-description-text (textbox "description")
 
              ;;Environments tab
+             :env-name-text (textbox "name")
+             :env-description-text (textbox "description")
              :prior-environment "//select[@id='environment_prior']"
              :create-environment "//input[@name='commit' and @value='Create']"}
              
