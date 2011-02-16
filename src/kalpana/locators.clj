@@ -29,6 +29,8 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 
 (define-strategies {:link (LocatorTemplate. "" "link=$1")
                     :tab (LocatorTemplate. "Tab" "link=$1")
+                    :environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
+                    :org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
                     :textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -56,6 +58,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :org-name-text (textbox "name")
              :org-description-text (textbox "description")
              :org-environments (link "Environments")
+             :edit-organization (link "Edit")
 
              ;;Environments tab
              :env-name-text (textbox "name")
@@ -63,6 +66,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :prior-environment "//select[@id='environment_prior']"
              :create-environment "//input[@name='commit' and @value='Create']"
              :new-environment (link "New Environment")
+             :delete-environment (link "Delete")
              }
              
             ;;regularly named tabs
