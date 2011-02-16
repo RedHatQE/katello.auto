@@ -19,7 +19,7 @@
       (raise {:type (matching-error message) :msg message}))))
 
 (defn navigate-to-tab [& tabs]
-  (for [tab tabs] (browser clickAndWait tab)))
+  (doall (for [tab tabs] (browser clickAndWait tab))))
 
 (defn create-organization [name description]
   (navigate-to-tab :organizations)
@@ -29,7 +29,7 @@
   (browser clickAndWait :create-organization))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
-  (browser open (str "/organizations" org))
+  (browser open (str "/organizations/" org))
   (browser clickAndWait :org-environments)
   (browser clickAndWait :new-environment)
   (browser setText :env-name-text name)

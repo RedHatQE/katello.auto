@@ -1,4 +1,4 @@
-(ns ^{:author "Jeff Weiss"}
+(ns
   kalpana.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable]]
         [clojure.contrib.string :only [split join capitalize]])
@@ -27,9 +27,9 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
            `(defn ~(symbol (name loc-strat)) [& args#]
               (Element. ~(m loc-strat) (into-array args#))))))
 
-(define-strategies {:link (LocatorTemplate. "Link" "link=$1")
+(define-strategies {:link (LocatorTemplate. "" "link=$1")
                     :tab (LocatorTemplate. "Tab" "link=$1")
-                    :textbox (LocatorTemplate. "Text box" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
+                    :textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -55,12 +55,15 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :create-organization "//input[@name='commit' and @value='Create']"
              :org-name-text (textbox "name")
              :org-description-text (textbox "description")
+             :org-environments (link "Environments")
 
              ;;Environments tab
              :env-name-text (textbox "name")
              :env-description-text (textbox "description")
              :prior-environment "//select[@id='environment_prior']"
-             :create-environment "//input[@name='commit' and @value='Create']"}
+             :create-environment "//input[@name='commit' and @value='Create']"
+             :new-environment (link "New Environment")
+             }
              
             ;;regularly named tabs
             (tabs [:organizations
