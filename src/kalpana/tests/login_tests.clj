@@ -1,7 +1,9 @@
 (ns kalpana.tests.login-tests
-  (:use [kalpana.conf :only [init @config]]
+  (:use [kalpana.conf :only [init config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
-        [test-clj.testng :only [gen-class-testng]])
+        [test-clj.testng :only [gen-class-testng]]
+        [clojure.contrib.string :only [split]])
+  (:require [kalpana.tasks :as tasks])
   (:import [org.testng.annotations Test BeforeSuite]))
 
 
@@ -16,7 +18,7 @@
 
 (defn ^{Test {:groups ["login"]}}
   login_admin [_]
-  (login (@config :admin-user) (@config :admin-password)))
+  (tasks/login (@config :admin-user) (@config :admin-password)))
 
 
 (gen-class-testng)

@@ -1,5 +1,5 @@
-(ns ^{:author "Jeff Weiss"}
-  kalpana.tasks
+(ns  kalpana.tasks
+  (:require [kalpana.locators])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [error.handler :only [raise]]))
 ;;tasks
@@ -16,19 +16,22 @@
 (defn check-for-error []
   (if (browser isElementPresent :error-message)
     (let [message (browser getText :error-message)]
-      (raise :type (matching-error message) :msg message ))))
+      (raise {:type (matching-error message) :msg message}))))
 
 (defn navigate-to-tab [& tabs]
   (for [tab tabs] (browser clickAndWait tab)))
 
 (defn create-organization [name description]
   (navigate-to-tab :organizations)
+  (browser clickAndWait :new-organization)
   (browser setText :org-name-text name)
   (browser setText :org-description-text description)
   (browser clickAndWait :create-organization))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
-  (comment "currently no way to navigate here!" (navigate-to-tab :xyz))
+  (browser open (str "/organizations" org))
+  (browser clickAndWait :org-environments)
+  (browser clickAndWait :new-environment)
   (browser setText :env-name-text name)
   (browser setText :env-description-text description)
   (if prior-env
