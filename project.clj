@@ -8,7 +8,7 @@
   :dev-dependencies [[swank-clojure "1.2.1"]])
 
 (comment "Execute this in the repl to load everything and start selenium"
-         (do (require 'kalpana.tasks)
+         (do (require 'kalpana.tasks :reload-all)
              (require 'kalpana.conf)
              (require 'kalpana.tests.login-tests)
              (kalpana.conf/init)

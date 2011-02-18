@@ -1,6 +1,6 @@
-(ns
-  kalpana.locators
-  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable]]
+(ns kalpana.locators
+  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser]]
+        [com.redhat.qe.auto.navigate :only [page]]
         [clojure.contrib.string :only [split join capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]))
 
@@ -67,7 +67,9 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :create-environment "//input[@name='commit' and @value='Create']"
              :new-environment (link "New Environment")
              :delete-environment (link "Delete")
-             }
+             :edit-environment (link "Edit")
+
+            }
              
             ;;regularly named tabs
             (tabs [:organizations
@@ -82,5 +84,26 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
   (sel-locator [k] (uimap k)))
+
+;;page layout
+
+(def page-tree
+  (page :top-level (fn [] nil)
+        (page :organizations-tab
+              (fn [] (browser clickAndWait :organizations))
+              (page :new-organization-page
+                    (fn [] (browser clickAndWait :new-organization)))
+              (page :named-organization-page
+                    (fn [org-name] (browser clickAndWait (org-link org-name)))
+                    (page :edit-organization-page
+                          (fn [] (browser clickAndWait :edit-organization)))
+                    (page :org-environments-page
+                          (fn [] (browser clickAndWait :org-environments))
+                          (page :new-environment-page
+                                (fn [] (browser clickAndWait :new-environment)))
+                          (page :named-environment-page
+                                (fn [env-name] (browser clickAndWait (environment-link env-name)))
+                                (page :edit-environment-page
+                                      (fn [] (browser clickAndWait :edit-environment)))))))))
 
 

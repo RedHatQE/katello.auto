@@ -1,5 +1,6 @@
 (ns  kalpana.tasks
-  (:require [kalpana.locators])
+  (:require [kalpana.locators]
+            [com.redhat.qe.auto.navigate :as nav])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [error.handler :only [raise]]))
 ;;tasks
@@ -18,20 +19,17 @@
     (let [message (browser getText :error-message)]
       (raise {:type (matching-error message) :msg message}))))
 
-(defn navigate-to-tab [& tabs]
-  (doall (for [tab tabs] (browser clickAndWait tab))))
+(def navigate (nav/nav-fn kalpana.locators/page-tree))
 
 (defn create-organization [name description]
-  (navigate-to-tab :organizations)
+  (navigate :new-organization-page)
   (browser clickAndWait :new-organization)
   (browser setText :org-name-text name)
   (browser setText :org-description-text description)
   (browser clickAndWait :create-organization))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
-  (browser open (str "/organizations/" org))
-  (browser clickAndWait :org-environments)
-  (browser clickAndWait :new-environment)
+  (navigate :new-environment-page {:org-name org})
   (browser setText :env-name-text name)
   (browser setText :env-description-text description)
   (if prior-env
