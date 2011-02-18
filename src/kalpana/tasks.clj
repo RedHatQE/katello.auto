@@ -1,18 +1,9 @@
 (ns  kalpana.tasks
   (:require [kalpana.locators]
             [com.redhat.qe.auto.navigate :as nav])
-  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
         [error.handler :only [raise]]))
 ;;tasks
-
-(defn fill-form [items-map submit]
-  (let [fill-fn (fn [el val]
-                  (if (= "selectlist"(browser getElementType el))
-                    (browser select el val)
-                    (browser setText el val)))]
-    (doall (for [el (keys items-map)]
-             (fill-fn el (items-map el))))
-    (browser clickAndWait submit)))
 
 (def known-errors {})
 
@@ -40,8 +31,8 @@
   (navigate :new-environment-page {:org-name org})
   (let [items {:env-name-text name
                :env-description-text description}]
-    (fill-form (if prior-env
-                 (merge items {:prior-environment prior-env}) items)
+    (fill-form (if prior-env (merge items {:prior-environment prior-env})
+                   items)
               :create-environment)))
 
 (defn create-content-provider [name description repo-url type username password]
@@ -55,7 +46,7 @@
              :cp-create-save))
 
 (defn login [username password]
-  (browser setText :username-text username)
-  (browser setText :password-text password)
-  (browser clickAndWait :log-in))
+  (fill-form {:username-text username
+              :password-text password}
+             :log-in))
 
