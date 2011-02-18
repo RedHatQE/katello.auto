@@ -31,6 +31,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
                     :tab (LocatorTemplate. "Tab" "link=$1")
                     :environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
                     :org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
+                    :cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
                     :textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -69,6 +70,9 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :delete-environment (link "Delete")
              :edit-environment (link "Edit")
 
+             ;;Content Management tab
+             :add-content-provider "//input[@type='submit' and @value='Add']"
+
             }
              
             ;;regularly named tabs
@@ -79,7 +83,13 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
                    :dashboard
                    :environments
                    :subscriptions
-                   :create])))
+                   :create
+
+                   ;;subtabs
+                   :content-providers
+                   :sync-management
+                   
+                   ])))
 
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
@@ -89,12 +99,15 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 
 (def page-tree
   (page :top-level (fn [] nil)
-        (page :organizations-tab
-              (fn [] (browser clickAndWait :organizations))
-              (page :new-organization-page
-                    (fn [] (browser clickAndWait :new-organization)))
-              (page :named-organization-page
-                    (fn [org-name] (browser clickAndWait (org-link org-name)))
+        (page :content-management-tab (fn [] (browser clickAndWait :content-management))
+              (page :content-providers-tab (fn [] (browser clickAndWait :content-providers))
+                    (page :new-content-provider-page
+                          (fn [] (browser clickAndWait :add-content-provider)))
+                    (page :named-content-provider-page
+                          (fn [cp-name] (browser clickAndWait (cp-link cp-name))))))
+        (page :organizations-tab (fn [] (browser clickAndWait :organizations))
+              (page :new-organization-page (fn [] (browser clickAndWait :new-organization)))
+              (page :named-organization-page (fn [org-name] (browser clickAndWait (org-link org-name)))
                     (page :edit-organization-page
                           (fn [] (browser clickAndWait :edit-organization)))
                     (page :org-environments-page
