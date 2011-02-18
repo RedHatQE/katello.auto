@@ -72,8 +72,14 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 
              ;;Content Management tab
              :add-content-provider "//input[@type='submit' and @value='Add']"
-
-            }
+             :cp-name-text (textbox "kalpana_model_provider[name]")
+             :cp-description-text (textbox "kalpana_model_provider[description]")
+             :cp-repository-url-text (textbox "kalpana_model_provider[repository_url]")
+             :cp-type-list  "name=kalpana_model_provider[provider_type]"
+             :cp-username-text (textbox "kalpana_model_provider[login_credential_attributes][username]")
+             :cp-password-text (textbox "kalpana_model_provider[login_credential_attributes][password]")
+             :cp-create-save "//input[@name='commit' and @value='Save']"
+             }
              
             ;;regularly named tabs
             (tabs [:organizations

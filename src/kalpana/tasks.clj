@@ -38,15 +38,21 @@
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
   (navigate :new-environment-page {:org-name org})
-  (browser setText :env-name-text name)
-  (browser setText :env-description-text description)
-  (if prior-env
-    (browser select :prior-environment prior-env))
-  (browser clickAndWait :create-environment))
+  (let [items {:env-name-text name
+               :env-description-text description}]
+    (fill-form (if prior-env
+                 (merge items {:prior-environment prior-env}) items)
+              :create-environment)))
 
 (defn create-content-provider [name description repo-url type username password]
   (navigate :new-content-provider-page)
-  (fill-form {} nil))
+  (fill-form {:cp-name-text name
+              :cp-description-text description
+              :cp-repository-url-text repo-url
+              :cp-type-list  type
+              :cp-username-text username
+              :cp-password-text password}
+             :cp-create-save))
 
 (defn login [username password]
   (browser setText :username-text username)
