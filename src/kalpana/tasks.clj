@@ -1,9 +1,13 @@
 (ns  kalpana.tasks
   (:require [kalpana.locators]
-            [com.redhat.qe.auto.navigate :as nav])
+            [com.redhat.qe.auto.navigate :as nav]
+            [clojure.contrib.logging :as log])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
-        [error.handler :only [raise]]))
+        [error.handler :only [raise]]
+        [com.redhat.qe.verify :only [verify]]))
 ;;tasks
+(defn timestamp [s]
+  (str s "-" (System/currentTimeMillis)))
 
 (def known-errors {})
 
@@ -18,6 +22,10 @@
   (if (browser isElementPresent :error-message)
     (let [message (browser getText :error-message)]
       (raise {:type (matching-error message) :msg message}))))
+
+(defn success-message []
+  (if (browser isElementPresent :success-message)
+    (browser getText :success-message) nil))
 
 (def navigate (nav/nav-fn kalpana.locators/page-tree))
 
@@ -45,8 +53,16 @@
               :cp-password-text password}
              :cp-create-save))
 
-(defn login [username password]
-  (fill-form {:username-text username
-              :password-text password}
-             :log-in))
+(defn logout []
+  (if (browser isElementPresent :log-in) (log/info "Already logged out.")
+      (do (browser clickAndWait :log-out)
+          (verify (= (success-message) "Logout Successful")))))
 
+(defn login [username password]
+  (if (browser isElementPresent :log-out)
+    (do (log/warn "Already logged in, logging out.")
+        (logout))
+    (do (fill-form {:username-text username
+                 :password-text password}
+                   :log-in)
+        )))

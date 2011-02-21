@@ -20,6 +20,7 @@
   (:require leiningen.swank))
 
 (defn develop [project & args]
+  (println "Starting dev env")
   (apply leiningen.swank/swank project args)
   (println "starting custom stuff")
   (eval-in-project project '(do (require 'kalpana.tasks :reload-all)

@@ -8,13 +8,10 @@
 
 (defn same-name "takes a collection of keywords like :registration-settings
 and returns a mapping like :registration-settings -> 'Registration Settings'" 
-  ([coll]
-     (same-name identity identity coll))
-  ([word-fn coll]
-     (same-name word-fn identity coll))
+  ([coll] (same-name identity identity coll))
+  ([word-fn coll] (same-name word-fn identity coll))
   ([word-fn val-fn coll]
-     (zipmap coll
-	     (for [keyword coll]
+     (zipmap coll (for [keyword coll]
                (->> keyword name (split #"-") (map word-fn) (join " ") val-fn)))))
 
 (defmacro define-strategies
@@ -40,6 +37,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 
 (def uimap (merge
             {:error-message "//div[@class='warning']"
+             :success-message "//div[@class='success']"
 
              ;; login page
              :username-text (textbox "username")
@@ -49,6 +47,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              ;;main banner
              :search-textbox (textbox "s")
              :search-button "//button[@form='s']"
+             :log-out "//a[normalize-space(.)='Logout']"
              
              ;;tabs with special chars in name
              :sub-organizations (tab "Sub-Organizations")
