@@ -27,6 +27,10 @@
   (if (browser isElementPresent :success-message)
     (browser getText :success-message) nil))
 
+(defn check-for-success []
+  (check-for-error)
+  (or (success-message) (raise {:type :no-success-message-error})))
+
 (def navigate (nav/nav-fn kalpana.locators/page-tree))
 
 (defn create-organization [name description]
@@ -34,14 +38,13 @@
   (fill-form {:org-name-text name
               :org-description-text description}
              :create-organization)
-  (check-for-error))
+  (check-for-success))
 
 (defn delete-organization [org-name]
   (navigate :named-organization-page {:org-name org-name})
   (browser answerOnNextPrompt "OK")
   (browser clickAndWait :delete-organization)
-  (check-for-error)
-  (or (success-message) (raise {:type :no-success-message-error})))
+  (check-for-success))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
   (navigate :new-environment-page {:org-name org})
@@ -49,7 +52,8 @@
                :env-description-text description}]
     (fill-form (if prior-env (merge items {:prior-environment prior-env})
                    items)
-              :create-environment)))
+               :create-environment))
+  (check-for-success))
 
 (defn create-content-provider [name description repo-url type username password]
   (navigate :new-content-provider-page)
@@ -64,7 +68,7 @@
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
       (do (browser clickAndWait :log-out)
-          (verify (= (success-message) "Logout Successful")))))
+          (check-for-success)
 
 (defn login [username password]
   (if (browser isElementPresent :log-out)
@@ -72,4 +76,5 @@
         (logout))
     (do (fill-form {:username-text username
                  :password-text password}
-                   :log-in))))
+                   :log-in)
+        (check-for-success))))
