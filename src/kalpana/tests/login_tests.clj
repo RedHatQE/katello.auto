@@ -7,7 +7,7 @@
   (:require [kalpana.tasks :as tasks])
   (:import [org.testng.annotations Test BeforeClass]))
 
-(defn ^{BeforeClass {:groups ["setup"]}} logout [] )
+(defn ^{BeforeClass {:groups ["setup"]}} logout [_] )
 
 (defn ^{Test {:groups ["login"]}}
   login_admin [_]

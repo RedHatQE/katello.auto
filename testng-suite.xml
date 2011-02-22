@@ -3,21 +3,20 @@
 <suite name="Kalpana GUI Test Suite">
   <test name="Login">
     <packages>
-      <package name="kalpana.tests.login_tests" />
-      <package name="kalpana.tests.setup"></package>
+      <package name="kalpana.tests" />
     </packages>    
     <groups>
       <run>
         <include name="login"/>
         <include name="setup" />
+        <exclude name="start-logged-in"/>
       </run>
     </groups>
   </test>
 
   <test name="Organizations">
     <packages>
-      <package name="kalpana.tests.organizations" />
-      <package name="kalpana.tests.setup"></package>
+      <package name="kalpana.tests" />
     </packages>    
     <groups>
       <run>
