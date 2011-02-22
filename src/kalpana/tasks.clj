@@ -68,7 +68,7 @@
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
       (do (browser clickAndWait :log-out)
-          (check-for-success)
+          (check-for-success))))
 
 (defn login [username password]
   (if (browser isElementPresent :log-out)
