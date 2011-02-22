@@ -59,6 +59,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :org-description-text (textbox "description")
              :org-environments (link "Environments")
              :edit-organization (link "Edit")
+             :delete-organization (link "Delete")
 
              ;;Environments tab
              :env-name-text (textbox "name")

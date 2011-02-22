@@ -16,6 +16,6 @@
     (browser start)
     (browser open (@config :server-url))))
 
-(defn ^{BeforeSuite {:groups ["setup"] :dependsOnMethods ["start_selenium"]}} [_]
+(defn ^{BeforeSuite {:groups ["setup"] :dependsOnMethods ["start_selenium"]}} login [_]
   (tasks/login (@config :admin-user) (@config :admin-password)))
 

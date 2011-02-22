@@ -9,7 +9,7 @@
 (defn timestamp [s]
   (str s "-" (System/currentTimeMillis)))
 
-(def known-errors {})
+(def known-errors {:name-taken-error #"Name is already taken"})
 
 (defn matching-error "Returns a keyword of known error, if the message matches any of them."
   [message]
@@ -33,7 +33,15 @@
   (navigate :new-organization-page)
   (fill-form {:org-name-text name
               :org-description-text description}
-             :create-organization))
+             :create-organization)
+  (check-for-error))
+
+(defn delete-organization [org-name]
+  (navigate :named-organization-page {:org-name org-name})
+  (browser answerOnNextPrompt "OK")
+  (browser clickAndWait :delete-organization)
+  (check-for-error)
+  (or (success-message) (raise {:type :no-success-message-error})))
 
 (defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
   (navigate :new-environment-page {:org-name org})
@@ -64,5 +72,4 @@
         (logout))
     (do (fill-form {:username-text username
                  :password-text password}
-                   :log-in)
-        )))
+                   :log-in))))
