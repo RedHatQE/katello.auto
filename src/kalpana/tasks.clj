@@ -29,7 +29,7 @@
 
 (defn check-for-success []
   (check-for-error)
-  (or (success-message) (raise {:type :no-success-message-error})))
+  (or (success-message) (raise {:type :no-success-message-error :msg "Expected confirmation message, but none is present on page."})))
 
 (def navigate (nav/nav-fn kalpana.locators/page-tree))
 
@@ -64,6 +64,14 @@
               :cp-username-text username
               :cp-password-text password}
              :cp-create-save))
+
+(defn delete-content-provider [name]
+  (navigate :named-content-provider-page {:cp-name name})
+  (browser answerOnNextPrompt "OK")
+  (browser clickAndWait :remove-content-provider)
+  (check-for-success))
+
+(defn edit-content-provider [name & {:keys [description]}])
 
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")

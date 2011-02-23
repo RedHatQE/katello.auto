@@ -79,6 +79,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :cp-username-text (textbox "kalpana_model_provider[login_credential_attributes][username]")
              :cp-password-text (textbox "kalpana_model_provider[login_credential_attributes][password]")
              :cp-create-save "//input[@name='commit' and @value='Save']"
+             :remove-content-provider "//input[@value='Remove']"
              }
              
             ;;regularly named tabs
@@ -104,7 +105,7 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
 ;;page layout
 
 (def page-tree
-  (page :top-level (fn [] nil)
+  (page :top-level (fn [] (if-not (browser isElementPresent :log-out) (browser open "/")))
         (page :content-management-tab (fn [] (browser clickAndWait :content-management))
               (page :content-providers-tab (fn [] (browser clickAndWait :content-providers))
                     (page :new-content-provider-page

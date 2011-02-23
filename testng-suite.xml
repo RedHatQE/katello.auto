@@ -26,4 +26,16 @@
     </groups>
   </test>
 
+  <test name="Content Providers">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="content-providers"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
+
 </suite>

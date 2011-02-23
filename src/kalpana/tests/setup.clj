@@ -4,7 +4,7 @@
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
   (:require [kalpana.tasks :as tasks])
-  (:import [org.testng.annotations BeforeSuite BeforeClass AfterSuite]))
+  (:import [org.testng.annotations BeforeSuite AfterSuite]))
 
 
 (defn ^{BeforeSuite {:groups ["setup"]}}
@@ -16,7 +16,7 @@
     (browser start)
     (browser open (@config :server-url))))
 
-(defn ^{BeforeClass {:groups ["setup" "start-logged-in"] :dependsOnMethods ["start_selenium"]}} login [_]
+(defn ^{BeforeSuite {:groups ["setup"] :dependsOnMethods ["start_selenium"]}} login [_]
   (tasks/login (@config :admin-user) (@config :admin-password)))
 
 (defn ^{AfterSuite {:groups ["setup"]}} stop_selenium [_]
