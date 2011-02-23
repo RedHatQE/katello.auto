@@ -2,7 +2,7 @@
   (:require [kalpana.tasks :as tasks]
             [clojure.contrib.logging :as log])
   (:import [org.testng.annotations Test])
-  (:use [test-clj.testng :only [gen-class-testng data-driven]]
+  (:use [test-clj.testng :only [gen-class-testng]]
         [com.redhat.qe.verify :only [verify]]))
 
 (defn ^{Test {:groups ["content-providers"]}} create_simple [_]
