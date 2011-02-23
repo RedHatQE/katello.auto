@@ -81,8 +81,8 @@
 (defn login [username password]
   (if (browser isElementPresent :log-out)
     (do (log/warn "Already logged in, logging out.")
-        (logout))
-    (do (fill-form {:username-text username
-                 :password-text password}
-                   :log-in)
-        (check-for-success))))
+        (logout)))
+  (do (fill-form {:username-text username
+                  :password-text password}
+                 :log-in)
+      (check-for-success)))
