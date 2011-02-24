@@ -57,13 +57,13 @@
 
 (defn create-content-provider [name description repo-url type username password]
   (navigate :new-content-provider-page)
-  (fill-form {:cp-name-text name
-              :cp-description-text description
-              :cp-repository-url-text repo-url
-              :cp-type-list  type
-              :cp-username-text username
-              :cp-password-text password}
-             :cp-create-save))
+  (fill-form  {:cp-name-text name
+               :cp-description-text description
+               :cp-repository-url-text repo-url
+               :cp-type-list  type
+               :cp-username-text username
+               :cp-password-text password}
+              :cp-create-save))
 
 (defn delete-content-provider [name]
   (navigate :named-content-provider-page {:cp-name name})
@@ -71,7 +71,15 @@
   (browser clickAndWait :remove-content-provider)
   (check-for-success))
 
-(defn edit-content-provider [name & {:keys [description]}])
+(defn edit-content-provider [name & {:keys [description repo-url type username password] :as changes}]
+  (let [m {:description :cp-description-text
+           :repo-url :cp-repository-url-text
+           :type :cp-type-list
+           :username :cp-username-text
+           :password :cp-password-text}]
+    (fill-form (zipmap (vals (select-keys m (keys changes)))
+                       (vals changes))
+               :cp-create-save)))
 
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
