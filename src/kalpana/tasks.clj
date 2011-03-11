@@ -1,7 +1,7 @@
 (ns  kalpana.tasks
   (:require [kalpana.locators]
             [com.redhat.qe.auto.navigate :as nav]
-            [clojure.contrib.logging :as log])
+            [com.redhat.qe.logging :as log])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]]))

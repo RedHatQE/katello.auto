@@ -1,6 +1,5 @@
 (ns kalpana.tests.content-providers
-  (:require [kalpana.tasks :as tasks]
-            [clojure.contrib.logging :as log])
+  (:require [kalpana.tasks :as tasks])
   (:import [org.testng.annotations Test])
   (:use [test-clj.testng :only [gen-class-testng]]
         [com.redhat.qe.verify :only [verify]]))
