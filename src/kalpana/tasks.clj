@@ -9,7 +9,7 @@
 (defn timestamp [s]
   (str s "-" (System/currentTimeMillis)))
 
-(def known-errors {:name-taken-error #"Name is already taken"})
+(def known-errors {:name-taken-error #"Name has already been taken"})
 
 (defn matching-error "Returns a keyword of known error, if the message matches any of them."
   [message]
