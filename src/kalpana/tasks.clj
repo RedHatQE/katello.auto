@@ -82,6 +82,13 @@
                :cp-create-save)
     (check-for-success)))
 
+(defn upload-subscription-manifest [cp-name filepath]
+  (navigate :named-content-provider-page {:cp-name cp-name})
+  (browser click :subscriptions)
+  (browser setText :choose-file filepath)
+  (browser clickAndWait :upload)
+  (check-for-success))
+
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
       (do (browser clickAndWait :log-out)

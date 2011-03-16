@@ -80,6 +80,9 @@ and returns a mapping like :registration-settings -> 'Registration Settings'"
              :cp-password-text (textbox "kalpana_model_provider[login_credential_attributes][password]")
              :cp-create-save "//input[@name='commit' and @value='Save']"
              :remove-content-provider "//input[@value='Remove']"
+             :subscriptions (link "Subscriptions")
+             :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
+             :upload "//input[@value='Upload']"
              }
              
             ;;regularly named tabs
