@@ -79,7 +79,8 @@
            :password :cp-password-text}]
     (fill-form (zipmap (vals (select-keys m (keys changes)))
                        (vals changes))
-               :cp-create-save)))
+               :cp-create-save)
+    (check-for-success)))
 
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
