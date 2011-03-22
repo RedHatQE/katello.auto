@@ -3,13 +3,30 @@
             [com.redhat.qe.auto.navigate :as nav]
             [com.redhat.qe.logging :as log])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
+        [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
+        [clojure.string :only [replace capitalize]]
         [com.redhat.qe.verify :only [verify]]))
 ;;tasks
 (defn timestamp [s]
   (str s "-" (System/currentTimeMillis)))
 
-(def known-errors {:name-taken-error #"Name has already been taken"})
+(defn cant-be-blank-errors
+  "Takes keywords like :name and produces map entry like
+:name-cant-be-blank #\"Name can't be blank"
+  [coll]
+  (same-name identity (comp re-pattern
+                            capitalize
+                            #(replace % " cant " " can't "))
+             (map #(-> (name %) (str "-cant-be-blank") keyword)
+                  coll)))
+
+(def known-errors (merge {:name-taken-error #"Name has already been taken"}
+                         (cant-be-blank-errors [:name
+                                                :certificate
+                                                :login-credential.username
+                                                :repository-url
+                                                :login-credential.password])))
 
 (defn matching-error "Returns a keyword of known error, if the message matches any of them."
   [message]
@@ -63,7 +80,8 @@
                :cp-type-list  type
                :cp-username-text username
                :cp-password-text password}
-              :cp-create-save))
+              :cp-create-save)
+  (check-for-success))
 
 (defn delete-content-provider [name]
   (navigate :named-content-provider-page {:cp-name name})

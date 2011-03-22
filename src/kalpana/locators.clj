@@ -1,18 +1,11 @@
 (ns kalpana.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser]]
         [com.redhat.qe.auto.navigate :only [page]]
-        [clojure.contrib.string :only [split join capitalize]])
+        [com.redhat.qe.config :only [same-name]]
+        [clojure.contrib.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]))
 
 ;;ui layer
-
-(defn same-name "takes a collection of keywords like :registration-settings
-and returns a mapping like :registration-settings -> 'Registration Settings'" 
-  ([coll] (same-name identity identity coll))
-  ([word-fn coll] (same-name word-fn identity coll))
-  ([word-fn val-fn coll]
-     (zipmap coll (for [keyword coll]
-               (->> keyword name (split #"-") (map word-fn) (join " ") val-fn)))))
 
 (defmacro define-strategies
   "Create a function for each locator strategy in map m (which maps
