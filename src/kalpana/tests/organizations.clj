@@ -21,4 +21,9 @@
     (tasks/create-organization org-name "org to delete immediately")
     (tasks/delete-organization org-name)))
 
+(defn ^{Test {:groups ["organizations"]}} name_required [_]
+  (let [result (with-handlers [(handle :name-cant-be-blank [e] (:type e))]
+                 (tasks/create-organization nil "org description"))]
+    (verify (= result :name-cant-be-blank))))
+
 (gen-class-testng)

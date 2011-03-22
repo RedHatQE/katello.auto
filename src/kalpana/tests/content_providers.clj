@@ -29,15 +29,4 @@
               [(tasks/timestamp "mytestcp") "blah" "http://sdf.com" "Red Hat" "admin" nil :login-credential.password-cant-be-blank]
               [(tasks/timestamp "mytestcp") nil "http://sdf.com" "Red Hat" "admin" "admin" :success]])
 
-
-(comment  (defn mytest [x y z] (verify (= z (+ x y))))
-
-          (data-driven mytest {org.testng.annotations.Test {:groups ["content-providers"]}}
-                       [[1 2 3]
-                        [5 10 15]
-                        [-1 -1 -2]
-                        [1 2 4]])
-
-          ) 
-
 (gen-class-testng)
