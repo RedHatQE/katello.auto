@@ -14,7 +14,7 @@
     (tasks/create-organization org-name "org to delete immediately")
     (tasks/delete-organization org-name)))
 
-(defn ^{Test {:groups ["organizations" "validation" "blockedByBug-690907" ]}} duplicate_disallowed [_]
+(defn ^{Test {:groups ["organizations" "validation" ]}} duplicate_disallowed [_]
   (let [org-name (tasks/timestamp "test-dup")]
     (validate/duplicate_disallowed
      #(tasks/create-organization org-name "org-description"))))

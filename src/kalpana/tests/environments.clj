@@ -25,7 +25,7 @@
 (defn ^{Test {:groups ["environments" "validation"]}} name_required [_]
   (validate/name-field-required #(tasks/create-environment @test-org-name nil "env description")))
 
-(defn ^{Test {:groups ["environments" "validation"]}} duplicate_disallowed [_]
+(defn ^{Test {:groups ["environments" "validation" "blockedByBug-690907" ]}} duplicate_disallowed [_]
   (let [env-name (tasks/timestamp "test-dup")] (validate/duplicate_disallowed #(tasks/create-environment @test-org-name env-name "dup env description"))))
 
 (gen-class-testng)
