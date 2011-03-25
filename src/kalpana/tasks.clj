@@ -1,34 +1,37 @@
 (ns  kalpana.tasks
   (:require [kalpana.locators]
             [com.redhat.qe.auto.navigate :as nav]
-            [com.redhat.qe.logging :as log])
+            [com.redhat.qe.logging :as log]
+            [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
         [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
-        [clojure.string :only [replace capitalize]]
         [com.redhat.qe.verify :only [verify]]))
 ;;tasks
 (defn timestamp [s]
   (str s "-" (System/currentTimeMillis)))
 
 (defn cant-be-blank-errors
-  "Takes keywords like :name and produces map entry like
+  "Takes collection of keywords like :name and produces map entry like
 :name-cant-be-blank #\"Name can't be blank"
   [coll]
-  (same-name identity (comp re-pattern
-                            capitalize
-                            #(replace % " cant " " can't "))
+  (same-name identity
+             (comp re-pattern
+                   string/capitalize
+                   #(string/replace % " cant " " can't "))
              (map #(-> (name %) (str "-cant-be-blank") keyword)
                   coll)))
 
-(def known-errors (merge {:name-taken-error #"Name has already been taken"}
-                         (cant-be-blank-errors [:name
-                                                :certificate
-                                                :login-credential.username
-                                                :repository-url
-                                                :login-credential.password])))
+(def known-errors
+  (merge {:name-taken-error #"Name has already been taken"}
+         (cant-be-blank-errors [:name
+                                :certificate
+                                :login-credential.username
+                                :repository-url
+                                :login-credential.password])))
 
-(defn matching-error "Returns a keyword of known error, if the message matches any of them."
+(defn matching-error "Returns a keyword of known error, if the message
+  matches any of them."
   [message]
   (let [matches-message? (fn [key] (let [re (known-errors key)]
                                     (if (re-find re message) key false)))]
@@ -46,7 +49,9 @@
 
 (defn check-for-success []
   (check-for-error)
-  (or (success-message) (raise {:type :no-success-message-error :msg "Expected confirmation message, but none is present on page."})))
+  (or (success-message)
+      (raise {:type :no-success-message-error
+              :msg "Expected confirmation message, but none is present on page."})))
 
 (def navigate (nav/nav-fn kalpana.locators/page-tree))
 
@@ -63,7 +68,8 @@
   (browser clickAndWait :delete-organization)
   (check-for-success))
 
-(defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
+(defn create-environment
+  [org name description & {:keys [prior-env] :or {prior-env nil}}]
   (navigate :new-environment-page {:org-name org})
   (let [items {:env-name-text name
                :env-description-text description}]

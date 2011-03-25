@@ -14,13 +14,13 @@
     (tasks/delete-content-provider cp-name)))
 
 (defn validate [name description repo-url type username password expected-result]
-  (let [result (with-handlers
+  (let [message-after-create (with-handlers
                  [(handle (if (keyword? expected-result)
                             expected-result nil) [e] (:type e))]
                  (tasks/create-content-provider
                   name description repo-url type username password)
                  :success)]
-    (verify (= result expected-result))))
+    (verify (= message-after-create expected-result))))
 
 (data-driven validate {org.testng.annotations.Test {:groups ["content-providers"]}}
              [[nil "blah" "http://sdf.com" "Red Hat" "admin" "admin" :name-cant-be-blank]
