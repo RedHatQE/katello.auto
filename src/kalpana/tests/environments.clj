@@ -1,4 +1,5 @@
 (ns kalpana.tests.environments
+  (:use [test-clj.testng :only [gen-class-testng]])
   (:require [kalpana.tasks :as tasks]
             [kalpana.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
@@ -26,3 +27,5 @@
 
 (defn ^{Test {:groups ["environments" "validation"]}} duplicate_disallowed [_]
   (let [env-name (tasks/timestamp "test-dup")] (validate/duplicate_disallowed #(tasks/create-environment @test-org-name env-name "dup env description"))))
+
+(gen-class-testng)
