@@ -14,6 +14,13 @@
                             (tasks/timestamp "simple-env")
                             "simple environment description"))
 
+(defn ^{Test {:groups ["environments" "blockedByBug-690937"]}} delete_simple [_]
+  (let [env-name (tasks/timestamp "delete-env")]
+    (tasks/create-environment @test-org-name
+                              env-name
+                              "simple environment description")
+    (tasks/delete-environment @test-org-name env-name)))
+
 (defn ^{Test {:groups ["environments" "validation"]}} name_required [_]
   (validate/name-field-required #(tasks/create-environment @test-org-name nil "env description")))
 

@@ -78,6 +78,12 @@
                :create-environment))
   (check-for-success))
 
+(defn delete-environment [org-name env-name]
+  (navigate :named-environment-page {:org-name org-name
+                                     :env-name env-name})
+  (browser clickAndWait :delete-environment)
+  (check-for-success))
+
 (defn create-content-provider [name description repo-url type username password]
   (navigate :new-content-provider-page)
   (fill-form  {:cp-name-text name

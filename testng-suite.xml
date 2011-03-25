@@ -26,6 +26,18 @@
     </groups>
   </test>
 
+  <test name="Environments">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="environments"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
+
   <test name="Content Providers">
     <packages>
       <package name="kalpana.tests" />
