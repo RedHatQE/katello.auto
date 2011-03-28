@@ -7,7 +7,8 @@
   (:import [org.testng.annotations Test BeforeClass]))
 
 (defn ^{Test {:groups ["organizations"]}} create_simple [_]
-  (tasks/create-organization (tasks/timestamp "auto-org") "org description"))
+  (let [message-after-create (tasks/create-organization (tasks/timestamp "auto-org") "org description")]
+    (verify (string? message-after-create))))
 
 (defn ^{Test {:groups ["organizations"]}} delete_simple [_]
   (let [org-name (tasks/timestamp "auto-org-del")]
