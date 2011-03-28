@@ -77,7 +77,7 @@
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
              ;;Promotions subtab
-             :
+             
              }
              
             ;;regularly named tabs
