@@ -23,8 +23,7 @@
      "Red Hat"
      "myuser"
      "mypass")
-    (let [message-after-delete (tasks/delete-content-provider cp-name)]
-      (verify (string? message-after-delete)))))
+    (tasks/verify-success #(tasks/delete-content-provider cp-name))))
 
 (defn validate [name description repo-url type username password expected-result]
   (let [message-after-create (with-handlers

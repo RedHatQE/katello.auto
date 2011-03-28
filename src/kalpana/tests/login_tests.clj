@@ -11,8 +11,8 @@
 
 (defn ^{Test {:groups ["login"]}}
   login_admin [_]
-  (tasks/login (@config :admin-user) (@config :admin-password))
-  (verify (= (tasks/success-message) "Login Successful")))
+  (tasks/verify-success
+   #(tasks/login (@config :admin-user) (@config :admin-password))))
 
 (defn ^{Test {:groups ["login"] :enabled false}}
   login_invalid [_]

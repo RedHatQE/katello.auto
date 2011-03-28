@@ -53,6 +53,10 @@
       (raise {:type :no-success-message-error
               :msg "Expected confirmation message, but none is present on page."})))
 
+(defn verify-success [task-fn]
+  (let [resulting-message (task-fn)]
+    (verify (string? resulting-message))))
+
 (def navigate (nav/nav-fn kalpana.locators/page-tree))
 
 (defn create-organization [name description]
