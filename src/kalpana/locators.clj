@@ -14,15 +14,15 @@
   with the locator strategy and args."
   [m]
   `(do ~@(for [loc-strat (keys m)]
-           `(defn ~(symbol (name loc-strat)) [& args#]
+           `(defn ~loc-strat [& args#]
               (Element. ~(m loc-strat) (into-array args#))))))
 
-(define-strategies {:link (LocatorTemplate. "" "link=$1")
-                    :tab (LocatorTemplate. "Tab" "link=$1")
-                    :environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
-                    :org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
-                    :cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
-                    :textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
+(define-strategies {link (LocatorTemplate. "" "link=$1")
+                    tab (LocatorTemplate. "Tab" "link=$1")
+                    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
+                    org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
+                    cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
+                    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -76,6 +76,8 @@
              :subscriptions (link "Subscriptions")
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
+             ;;Promotions subtab
+             :
              }
              
             ;;regularly named tabs
