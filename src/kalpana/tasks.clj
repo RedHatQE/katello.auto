@@ -59,16 +59,29 @@
 
 (def navigate (nav/nav-fn locators/page-tree))
 
-(defn promote-environment [from-env m]
+(defn promote-content [from-env content]
   (navigate :named-environment-promotions-page {:env-name from-env})
-  (doseq [category (keys m)]
+  (doseq [category (keys content)]
     (browser click (-> category name (str "-category") keyword))
-    (doseq [item (m category)]
-      (browser waitAndClick (locators/promotion-add-content-item item) "20000")
-      (comment (browser waitForElement (locators/promotion-remove-content-item item) "20000"))
+    (doseq [item (content category)]
+      (browser waitAndClick (locators/promotion-add-content-item item) "10000")
+      (comment "for some reason, this resets the previous selection! doh" (browser waitForElement (locators/promotion-remove-content-item item) "10000"))
       (browser sleep 5000))
-    
     (browser clickAndWait :promote-to-next-environment)))
+
+(defn content-in-environment?
+  "If all the content is present in the given environment, returns true."
+  [env content]
+  (navigate :named-environment-promotions-page {:env-name env})
+  (every? true?
+          (flatten
+           (for [category (keys content)]
+             (do (browser click (-> category name (str "-category") keyword))
+                 (for [item (content category)]
+                   (try (do (browser waitForElement
+                                     (locators/promotion-add-content-item item) "10000")
+                            true)
+                        (catch Exception e false))))))))
 
 (defn create-organization [name description]
   (navigate :new-organization-page)
