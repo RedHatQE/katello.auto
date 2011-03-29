@@ -1,5 +1,5 @@
 (ns  kalpana.tasks
-  (:require [kalpana.locators]
+  (:require [kalpana.locators :as locators]
             [com.redhat.qe.auto.navigate :as nav]
             [com.redhat.qe.logging :as log]
             [clojure.string :as string])
@@ -57,7 +57,18 @@
   (let [resulting-message (task-fn)]
     (verify (string? resulting-message))))
 
-(def navigate (nav/nav-fn kalpana.locators/page-tree))
+(def navigate (nav/nav-fn locators/page-tree))
+
+(defn promote-environment [from-env m]
+  (navigate :named-environment-promotions-page {:env-name from-env})
+  (doseq [category (keys m)]
+    (browser click (-> category name (str "-category") keyword))
+    (doseq [item (m category)]
+      (browser waitAndClick (locators/promotion-add-content-item item) "20000")
+      (comment (browser waitForElement (locators/promotion-remove-content-item item) "20000"))
+      (browser sleep 5000))
+    
+    (browser clickAndWait :promote-to-next-environment)))
 
 (defn create-organization [name description]
   (navigate :new-organization-page)

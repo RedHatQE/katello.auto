@@ -9,8 +9,8 @@
 
 (defmacro define-strategies
   "Create a function for each locator strategy in map m (which maps
-  keyword to LocatorStrategy). Each function will be named the same as
-  the keyword, take arguments and return a new element constructed
+  symbol to LocatorStrategy). Each function will be named the same as
+  the symbol, take arguments and return a new element constructed
   with the locator strategy and args."
   [m]
   `(do ~@(for [loc-strat (keys m)]
@@ -22,7 +22,11 @@
                     environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
                     org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
                     cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
-                    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")})
+                    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")
+                    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
+                    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
+                    promotion-add-content-item (LocatorTemplate. "Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
+                    promotion-remove-content-item (LocatorTemplate. "Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -77,7 +81,11 @@
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
              ;;Promotions subtab
-             
+             :products-category (promotion-content-category "Products")
+             :errata-category (promotion-content-category "Errata")
+             :packages-category (promotion-content-category "Packages")
+             :kickstart-trees-category (promotion-content-category "Kickstart Trees")
+             :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
              }
              
             ;;regularly named tabs
@@ -93,7 +101,7 @@
                    ;;subtabs
                    :content-providers
                    :sync-management
-                   
+                   :promotions
                    ])))
 
 (extend-protocol SeleniumLocatable
@@ -109,7 +117,9 @@
                     (page :new-content-provider-page
                           (fn [] (browser clickAndWait :add-content-provider)))
                     (page :named-content-provider-page
-                          (fn [cp-name] (browser clickAndWait (cp-link cp-name))))))
+                          (fn [cp-name] (browser clickAndWait (cp-link cp-name)))))
+              (page :promotions-page (fn [] (browser clickAndWait :promotions))
+                    (page :named-environment-promotions-page (fn [env-name] (browser clickAndWait (env-breadcrumb-link env-name))))))
         (page :organizations-tab (fn [] (browser clickAndWait :organizations))
               (page :new-organization-page (fn [] (browser clickAndWait :new-organization)))
               (page :named-organization-page (fn [org-name] (browser clickAndWait (org-link org-name)))
