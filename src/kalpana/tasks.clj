@@ -8,8 +8,9 @@
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]]))
 ;;tasks
-(defn timestamp [s]
-  (str s "-" (System/currentTimeMillis)))
+(defn timestamp
+  ([s] (str s "-" (System/currentTimeMillis)))
+  ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
 (defn cant-be-blank-errors
   "Takes collection of keywords like :name and produces map entry like

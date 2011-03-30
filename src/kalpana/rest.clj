@@ -10,3 +10,8 @@
                                    :basic-auth [user pw]
                                    :accept :json
                                    :content-type :json}))) 
+(defn delete [url user pw & [req]]
+  (-> (httpclient/delete url (merge req {:basic-auth [user pw]
+                                      :accept :json
+                                         :content-type :json}))
+      :body))
