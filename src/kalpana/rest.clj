@@ -1,6 +1,7 @@
 (ns kalpana.rest
   (:require [clj-http.client :as httpclient]
-            [clojure.contrib.json :as json]))
+            [clojure.contrib.json :as json])
+  (:refer-clojure :exclude (get)))
 
 (defn get [url & [req]]
   (-> (httpclient/get url (merge req {:accept :json})) :body json/read-json))

@@ -50,4 +50,15 @@
     </groups>
   </test>
 
+  <test name="Promotions">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="promotions"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
 </suite>
