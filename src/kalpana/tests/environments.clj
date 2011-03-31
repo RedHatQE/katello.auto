@@ -1,6 +1,7 @@
 (ns kalpana.tests.environments
   (:use [test-clj.testng :only [gen-class-testng]])
   (:require [kalpana.tasks :as tasks]
+            [kalpana.api-tasks :as api]
             [kalpana.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
 
@@ -8,7 +9,7 @@
 
 (defn ^{BeforeClass {:groups ["setup"]}}
   create_test_org [_]
-  (tasks/create-organization (reset! test-org-name (tasks/timestamp "env-test-org")) "organization used to test environments."))
+  (api/create-organization (reset! test-org-name (tasks/timestamp "env-test-org")) "organization used to test environments."))
 
 (defn ^{Test {:groups ["environments"]}} create_simple [_]
   (tasks/verify-success

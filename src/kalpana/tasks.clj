@@ -70,7 +70,7 @@
       (browser sleep 5000))
     (browser clickAndWait :promote-to-next-environment)))
 
-(defn content-in-environment?
+(defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
   (navigate :named-environment-promotions-page {:env-name env})

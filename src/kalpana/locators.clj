@@ -25,8 +25,8 @@
                     textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")
                     env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
                     promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
-                    promotion-add-content-item (LocatorTemplate. "Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
-                    promotion-remove-content-item (LocatorTemplate. "Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")})
+                    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
+                    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
