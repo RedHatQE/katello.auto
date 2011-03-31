@@ -9,6 +9,10 @@
         [com.redhat.qe.verify :only [verify]]))
 ;;tasks
 (defn timestamp
+  "Returns a string with timestamp (time in millis since
+1970) appended onto the end.  If optional n is specified, returns a
+list of n timestamped strings, where the millis is incremented by one
+for each item."
   ([s] (str s "-" (System/currentTimeMillis)))
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
@@ -31,7 +35,8 @@
                                 :repository-url
                                 :login-credential.password])))
 
-(defn matching-error "Returns a keyword of known error, if the message
+(defn matching-error
+  "Returns a keyword of known error, if the message
   matches any of them."
   [message]
   (let [matches-message? (fn [key] (let [re (known-errors key)]
@@ -39,12 +44,18 @@
     (or (some matches-message? (keys known-errors))
 	:kalpana-error)))
 
-(defn check-for-error []
+(defn check-for-error
+  "Checks the page for an error message, if present raises an
+  exception with the contents of the error message."
+  []
   (if (browser isElementPresent :error-message)
     (let [message (browser getText :error-message)]
       (raise {:type (matching-error message) :msg message}))))
 
-(defn success-message []
+(defn success-message
+  "If a success message is present on the current page, returns it,
+otherwise nil."
+  []
   (if (browser isElementPresent :success-message)
     (browser getText :success-message) nil))
 
@@ -66,7 +77,8 @@
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
       (browser waitAndClick (locators/promotion-add-content-item item) "10000")
-      (comment "for some reason, this resets the previous selection! doh" (browser waitForElement (locators/promotion-remove-content-item item) "10000"))
+      (comment "for some reason, this resets the previous selection! doh"
+               (browser waitForElement (locators/promotion-remove-content-item item) "10000"))
       (browser sleep 5000))
     (browser clickAndWait :promote-to-next-environment)))
 
