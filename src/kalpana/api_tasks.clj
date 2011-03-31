@@ -4,32 +4,31 @@
         [inflections :only [pluralize]]))
 
 (defn uri-for-entity-type
-  ([entity-type] (uri-for-entity-type entity-type nil))
-  ([entity-type org-name]
-     (str "/api/" (if (some #(= entity-type %) [:environment :provider])
-                    (str "organizations/"
-                         (or org-name
-                             (throw (IllegalArgumentException.
-                                     (str "Org name is required for this entity type: "
-                                          entity-type))))
-                         "/")
-                    "")
-          (-> entity-type name pluralize))))
+  
+  [entity-type & [org-name]]
+  (str "/api/" (if (some #(= entity-type %) [:environment :provider :product])
+                 (str "organizations/"
+                      (or org-name
+                          (throw (IllegalArgumentException.
+                                  (str "Org name is required for this entity type: "
+                                       entity-type))))
+                      "/")
+                 "")
+       (-> entity-type name pluralize)))
 
-(defn all-entities [entity-type & org-name]
-  (rest/get
-   (str (@config :server-url)
-        (uri-for-entity-type entity-type org-name))))
-
-(defn get-id-by-name [entity-type entity-name & org-name]
+(defn all-entities [entity-type & [org-name]]
   (let [item->entity-fn (if (= entity-type :provider)
                           entity-type
                           identity) ]
-    (some (fn [ent] (if (= (-> ent item->entity-fn :name)
-                          entity-name)
-                     (-> ent item->entity-fn :id)
-                     false))
-          (all-entities entity-type org-name))))
+    (map item->entity-fn (rest/get
+                          (str (@config :server-url)
+                               (uri-for-entity-type entity-type org-name))))))
+
+(defn get-id-by-name [entity-type entity-name & [org-name]]
+  (some (fn [ent] (if (= (ent :name) entity-name)
+                   (ent :id)
+                   false))
+        (all-entities entity-type org-name)))
 
 (defn create-provider [name description repo-url type username password]
   (rest/post
