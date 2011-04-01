@@ -39,7 +39,8 @@ for each item."
   "Returns a keyword of known error, if the message matches any of
   them.  If no matches, returns :kalpana-error."
   [message]
-  (or (some #(re-find (known-errors %) message)
+  (or (some #(let [re (known-errors %)]
+               (if (re-find re message) % false) )
             (keys known-errors))
       :kalpana-error))
 
