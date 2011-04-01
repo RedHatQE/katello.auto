@@ -29,10 +29,10 @@ there is none, one will be created and its name returned."
 
 (defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
   (reset! provider-name (tasks/timestamp "promotion-cp"))
+  (reset! root-next-env (get-root-next-env myorg))
   (api/create-provider @provider-name "test provider for promotions"
                        "http://blah.com" "Red Hat"
-                       (@config :admin-user) (@config :admin-password))
-  (reset! root-next-env (get-root-next-env myorg)))
+                       (@config :admin-user) (@config :admin-password)))
 
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]

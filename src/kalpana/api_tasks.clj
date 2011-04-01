@@ -18,7 +18,11 @@
                  "")
        (-> entity-type name pluralize)))
 
-(defn all-entities [entity-type & [org-name]]
+(defn all-entities
+  "Returns a list of all the entities of the given entity-type.  If
+  that entity type is part of an organization, the name of the org
+  must also be passed in."
+  [entity-type & [org-name]]
   (let [item->entity-fn (if (= entity-type :provider)
                           entity-type
                           identity) ]

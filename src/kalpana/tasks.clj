@@ -36,13 +36,12 @@ for each item."
                                 :login-credential.password])))
 
 (defn matching-error
-  "Returns a keyword of known error, if the message
-  matches any of them."
+  "Returns a keyword of known error, if the message matches any of
+  them.  If no matches, returns :kalpana-error."
   [message]
-  (let [matches-message? (fn [key] (let [re (known-errors key)]
-                                    (if (re-find re message) key false)))]
-    (or (some matches-message? (keys known-errors))
-	:kalpana-error)))
+  (or (some #(re-find (known-errors %) message)
+            (keys known-errors))
+      :kalpana-error))
 
 (defn check-for-error
   "Checks the page for an error message, if present raises an
