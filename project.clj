@@ -16,6 +16,6 @@
              (require 'kalpana.tests.setup)
              (kalpana.conf/init)
              (kalpana.tests.setup/start_selenium nil)
-             (kalpana.tasks/logslin "admin" "admin"))
+             (kalpana.tasks/login "admin" "admin"))
          )
 

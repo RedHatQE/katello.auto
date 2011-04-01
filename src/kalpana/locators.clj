@@ -1,6 +1,6 @@
 (ns kalpana.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser]]
-        [com.redhat.qe.auto.navigate :only [page]]
+        [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.contrib.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]))
@@ -103,6 +103,7 @@
                    :content-providers
                    :sync-management
                    :promotions
+                   :users
                    ])))
 
 (extend-protocol SeleniumLocatable
@@ -110,29 +111,24 @@
   (sel-locator [k] (uimap k)))
 
 ;;page layout
+(defmacro via [link]
+  `(browser ~'clickAndWait ~link))
 
 (def page-tree
-  (page :top-level (fn [] (if-not (browser isElementPresent :log-out) (browser open "/")))
-        (page :content-management-tab (fn [] (browser clickAndWait :content-management))
-              (page :content-providers-tab (fn [] (browser clickAndWait :content-providers))
-                    (page :new-content-provider-page
-                          (fn [] (browser clickAndWait :add-content-provider)))
-                    (page :named-content-provider-page
-                          (fn [cp-name] (browser clickAndWait (cp-link cp-name)))))
-              (page :promotions-page (fn [] (browser clickAndWait :promotions))
-                    (page :named-environment-promotions-page (fn [env-name] (browser clickAndWait (env-breadcrumb-link env-name))))))
-        (page :organizations-tab (fn [] (browser clickAndWait :organizations))
-              (page :new-organization-page (fn [] (browser clickAndWait :new-organization)))
-              (page :named-organization-page (fn [org-name] (browser clickAndWait (org-link org-name)))
-                    (page :edit-organization-page
-                          (fn [] (browser clickAndWait :edit-organization)))
-                    (page :org-environments-page
-                          (fn [] (browser clickAndWait :org-environments))
-                          (page :new-environment-page
-                                (fn [] (browser clickAndWait :new-environment)))
-                          (page :named-environment-page
-                                (fn [env-name] (browser clickAndWait (environment-link env-name)))
-                                (page :edit-environment-page
-                                      (fn [] (browser clickAndWait :edit-environment)))))))))
-
-
+  (nav-tree [:top-level [] (if-not (browser isElementPresent :log-out) (browser open "/"))
+             [:content-management-tab [] (via :content-management)
+              [:content-providers-tab [] (via :content-providers)
+               [:new-content-provider-page [] (via :add-content-provider)]
+               [:named-content-provider-page [cp-name] (via (cp-link cp-name))]]
+              [:promotions-page [] (via :promotions)
+               [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
+             [:organizations-tab [] (via :organizations)
+              [:new-organization-page [] (via :new-organization)]
+              [:named-organization-page [org-name] (via (org-link org-name))
+               [:edit-organization-page [] (via :edit-organization)]
+               [:org-environments-page [] (via :org-environments)
+                [:new-environment-page [] (via :new-environment)]
+                [:named-environment-page [env-name] (via (environment-link env-name))
+                 [:edit-environment-page [] (via :edit-environment)]]]]]
+             [:administration-tab [] (via :administration)
+              [:users-tab [] (via :users)]]]))
