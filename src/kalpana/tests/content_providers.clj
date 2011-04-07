@@ -6,13 +6,14 @@
         [com.redhat.qe.verify :only [verify]]))
 
 (defn ^{Test {:groups ["content-providers"]}} create_simple [_]
-  (verify (string? (tasks/create-content-provider
-                    (tasks/timestamp "auto-cp")
-                    "my description"
-                    "http://myrepo.url.com/blah/"
-                    "Red Hat"
-                    "myuser"
-                    "mypass"))))
+  (let [result-message (tasks/create-content-provider
+                        (tasks/timestamp "auto-cp")
+                        "my description"
+                        "http://myrepo.url.com/blah/"
+                        "Red Hat"
+                        "myuser"
+                        "mypass")]
+    (verify (string? result-message))))
 
 (defn ^{Test {:groups ["content-providers"]}} delete_simple [_]
   (let [cp-name (tasks/timestamp "auto-cp-delete")]

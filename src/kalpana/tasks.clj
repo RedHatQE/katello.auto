@@ -173,3 +173,17 @@ otherwise nil."
                   :password-text password}
                  :log-in)
       (check-for-success)))
+
+(defn create-user [username password]
+  (navigate :users-tab)
+  (browser clickAndWait :new-user)
+  (comment "this can go back in after that annoying popup is gone"
+           (fill-form {:new-user-username-text username
+                       :new-user-password-text password
+                       :new-user-confirm-text password}
+                      :save-user))
+  (browser setText :new-user-username-text username)
+  (browser setText :new-user-password-text password)
+  (browser setText :new-user-confirm-text password)
+  (browser answerOnTextPrompt "OK")
+  (browser clickAndWait :save-user))

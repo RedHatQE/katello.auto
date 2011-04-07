@@ -87,6 +87,14 @@
              :packages-category (promotion-content-category "Packages")
              :kickstart-trees-category (promotion-content-category "Kickstart Trees")
              :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
+
+             ;;Administration tab
+             ;;Users subtab
+             :new-user "//a[@id='new']"
+             :new-user-username-text "username_field"
+             :new-user-password-text "password_field"
+             :new-user-confirm-text "confirm_field"
+             :save-user "save_user_button"
              }
              
             ;;regularly named tabs

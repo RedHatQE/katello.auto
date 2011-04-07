@@ -1,5 +1,6 @@
 (ns kalpana.api-tasks
-  (:require [kalpana.rest :as rest])
+  (:require [kalpana.rest :as rest]
+            [clojure.contrib.logging :as log])
   (:use [kalpana.conf :only [config]]
         [inflections :only [pluralize]]))
 
@@ -23,20 +24,22 @@
   that entity type is part of an organization, the name of the org
   must also be passed in."
   [entity-type & [org-name]]
-  (let [item->entity-fn (if (= entity-type :provider)
-                          entity-type
-                          identity) ]
-    (map item->entity-fn (rest/get
-                          (str (@config :server-url)
-                               (uri-for-entity-type entity-type org-name))))))
+  (log/info (str "Retrieving all " (-> entity-type name pluralize) "."))
+  (rest/get
+   (str (@config :server-url)
+        (uri-for-entity-type entity-type org-name))))
 
 (defn get-id-by-name [entity-type entity-name & [org-name]]
-  (some (fn [ent] (if (= (ent :name) entity-name)
-                   (ent :id)
-                   false))
-        (all-entities entity-type org-name)))
+  (log/info (str "Getting id for " (name entity-type) " "
+                 entity-name (if org-name (str " in org " org-name) "")))
+  (or (some (fn [ent] (if (= (:name ent) entity-name)
+                    (ent :id)
+                    false))
+            (all-entities entity-type org-name))
+      (throw (RuntimeException. (str "No matches for " (name entity-type) " named " entity-name)))))
 
 (defn create-provider [name description repo-url type username password]
+  (log/info (str "Creating provider " name))
   (rest/post
    (str (@config :server-url) (uri-for-entity-type :provider (@config :admin-user)))
    (@config :admin-user) (@config :admin-password)
