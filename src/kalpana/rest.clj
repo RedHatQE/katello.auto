@@ -7,7 +7,7 @@
 
 (defmacro with-logs [ & body]
   `(let [r# (do ~@body)]
-     (log/info (str "Result of REST call: " (with-out-str (pprint/pprint r#))))
+     (log/debug (str "Result of REST call: \n" (with-out-str (pprint/pprint r#))))
      r#))
 
 (defn get
@@ -21,10 +21,12 @@
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
   [url user pw body & [req]]
   (with-logs
-    (httpclient/post url (merge req {:body (json/json-str body)
-                                     :basic-auth [user pw]
-                                     :accept :json
-                                     :content-type :json})))) 
+    (-> (httpclient/post url (merge req {:body (json/json-str body)
+                                      :basic-auth [user pw]
+                                      :accept :json
+                                         :content-type :json}))
+        :body json/read-json)))
+
 (defn delete [url user pw & [req]]
   (with-logs (-> (httpclient/delete url (merge req {:basic-auth [user pw]
                                                     :accept :json

@@ -24,7 +24,7 @@
                               "simple environment description")
     (tasks/verify-success #(tasks/delete-environment @test-org-name env-name))))
 
-(defn ^{Test {:groups ["environments" "validation" "blockedByBug-690937"]}} name_required [_]
+(defn ^{Test {:groups ["environments" "validation" "blockedByBug-693797"]}} name_required [_]
   (validate/name-field-required #(tasks/create-environment @test-org-name nil "env description")))
 
 (defn ^{Test {:groups ["environments" "validation" "blockedByBug-690907"] :dependsOnMethods ["create_simple"]}} duplicate_disallowed [_]
