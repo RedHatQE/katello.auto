@@ -3,7 +3,7 @@
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
-  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser fill-form]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser fill-form]]
         [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]]))
@@ -155,9 +155,9 @@ otherwise nil."
 
 (defn upload-subscription-manifest [cp-name filepath]
   (navigate :named-content-provider-page {:cp-name cp-name})
-  (browser click :subscriptions)
-  (browser setText :choose-file filepath)
-  (browser clickAndWait :upload)
+  (->browser (click :subscriptions)
+             (setText :choose-file filepath)
+             (clickAndWait :upload))
   (check-for-success))
 
 (defn logout []
@@ -176,14 +176,24 @@ otherwise nil."
 
 (defn create-user [username password]
   (navigate :users-tab)
-  (browser clickAndWait :new-user)
-  (comment "this can go back in after that annoying popup is gone"
-           (fill-form {:new-user-username-text username
-                       :new-user-password-text password
-                       :new-user-confirm-text password}
-                      :save-user))
-  (browser setText :new-user-username-text username)
-  (browser setText :new-user-password-text password)
-  (browser setText :new-user-confirm-text password)
-  (browser answerOnTextPrompt "OK")
-  (browser clickAndWait :save-user))
+  (->browser (click :new-user)
+             (waitForElement :new-user-username-text "7500")
+             (comment "this can go back in after that annoying popup is gone"
+                      "remember to split ->browser sexp"
+                      (fill-form {:new-user-username-text username
+                                  :new-user-password-text password
+                                  :new-user-confirm-text password}
+                                 :save-user))
+             (setText :new-user-username-text username)
+             (setText :new-user-password-text password)
+             (setText :new-user-confirm-text password)
+             (answerOnNextPrompt "OK")
+             (clickAndWait :save-user)))
+
+(defn create-role [name]
+  (navigate :roles-tab)
+  (->browser (click :new-role)
+             (waitForElement :new-role-name-text "7500")
+             (setText :new-role-name-text name)
+             (answerOnNextPrompt "OK")
+             (click :save-role)))

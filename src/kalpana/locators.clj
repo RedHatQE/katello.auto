@@ -95,6 +95,11 @@
              :new-user-password-text "password_field"
              :new-user-confirm-text "confirm_field"
              :save-user "save_user_button"
+             ;;Roles subtab
+             :new-role "//a[@id='new']"
+             :new-role-name-text "role_name_field"
+             :save-role "save_role_button"
+             
              }
              
             ;;regularly named tabs
@@ -112,6 +117,7 @@
                    :sync-management
                    :promotions
                    :users
+                   :roles
                    ])))
 
 (extend-protocol SeleniumLocatable
@@ -139,4 +145,5 @@
                 [:named-environment-page [env-name] (via (environment-link env-name))
                  [:edit-environment-page [] (via :edit-environment)]]]]]
              [:administration-tab [] (via :administration)
-              [:users-tab [] (via :users)]]]))
+              [:users-tab [] (via :users)]
+              [:roles-tab [] (via :roles)]]]))
