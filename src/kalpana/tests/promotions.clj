@@ -10,7 +10,7 @@
 (def root-next-env (atom nil))
 (def locker "locker")
 (def root "root")
-(def myorg "admin")
+(def myorg "admin_one")
 
 (defn get-root-next-env
   "Gets the environment whose 'prior' is the root environment.  If
@@ -24,15 +24,23 @@ there is none, one will be created and its name returned."
                               "Multiple envs have root as their prior! See bz 692592."))
      (first matches) (-> matches first :name)
      :else (let [new-env-name (tasks/timestamp "promote-test-env")]
-             (api/create-environment org new-env-name "for testing content promotion" :prior-env root)
+             (api/create-environment new-env-name org
+                                     (@config :admin-user)
+                                     (@config :admin-password)
+                                     :description "for testing content promotion"
+                                     :prior-env root)
              new-env-name))))
 
 (defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
   (reset! provider-name (tasks/timestamp "promotion-cp"))
   (reset! root-next-env (get-root-next-env myorg))
-  (api/create-provider @provider-name "test provider for promotions"
-                       "http://blah.com" "Red Hat"
-                       (@config :admin-user) (@config :admin-password)))
+  (api/create-content-provider myorg (@config :admin-user) (@config :admin-password)
+                               :name @provider-name
+                               :description "test provider for promotions"
+                               :repo-url "http://blah.com"
+                               :type "Red Hat"
+                               :username "test"
+                               :password "test"))
 
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]

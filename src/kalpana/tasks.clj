@@ -6,7 +6,8 @@
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser fill-form]]
         [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
-        [com.redhat.qe.verify :only [verify]]))
+        [com.redhat.qe.verify :only [verify]])
+  (:import [com.thoughtworks.selenium SeleniumException]))
 ;;tasks
 (defn timestamp
   "Returns a string with timestamp (time in millis since
@@ -48,16 +49,18 @@ for each item."
   "Checks the page for an error message, if present raises an
   exception with the contents of the error message."
   []
-  (if (browser isElementPresent :error-message)
-    (let [message (browser getText :error-message)]
-      (raise {:type (matching-error message) :msg message}))))
+  (try (browser waitForElement :error-message "5000")
+       (let [message (browser getText :error-message)]
+         (raise {:type (matching-error message) :msg message}))
+       (catch SeleniumException e nil)))
 
 (defn success-message
   "If a success message is present on the current page, returns it,
 otherwise nil."
   []
-  (if (browser isElementPresent :success-message)
-    (browser getText :success-message) nil))
+  (try (browser waitForElement :success-message "5000")
+       (browser getText :success-message)   
+       (catch SeleniumException e nil)))
 
 (defn check-for-success []
   (check-for-error)

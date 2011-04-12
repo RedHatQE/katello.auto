@@ -7,6 +7,8 @@
 
 (def product-data-url "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=kalpana;a=blob_plain;f=playpen/test-data/products.json;hb=HEAD")
 
+
+
 (defn uri-for-entity-type  
   [entity-type & [org-name]]
   (str "/api/" (if (some #(= entity-type %) [:environment :provider :product])
@@ -38,26 +40,27 @@
             (all-entities entity-type org-name))
       (throw (RuntimeException. (str "No matches for " (name entity-type) " named " entity-name)))))
 
-(defn create-provider [name description repo-url type username password]
+(defn create-content-provider [org-name api-user api-password
+                               & {:keys [name description repo-url type username password]}]
   (log/info (str "Creating provider " name))
   (rest/post
-   (str (@config :server-url) (uri-for-entity-type :provider (@config :admin-user)))
-   (@config :admin-user) (@config :admin-password)
+   (str (@config :server-url) (uri-for-entity-type :provider org-name))
+   api-user api-password
    {:provider {:name name
                :description description
                :repository_url repo-url
                :provider_type type
-               :login_credential {:username username
-                                  :password password}}}))
+               :login_credential_attributes {:username username
+                                             :password password}}}))
 
-(defn create-environment [org name description & {:keys [prior-env] :or {prior-env nil}}]
+(defn create-environment [name org-name api-user api-password & {:keys [description prior-env]}]
   (rest/post
-   (str (@config :server-url) (uri-for-entity-type :environment (@config :admin-user)))
+   (str (@config :server-url) (uri-for-entity-type :environment org-name))
    (@config :admin-user) (@config :admin-password)
    {:environment {:name name
                   :description description
-                  :organization_id (get-id-by-name :organization org)
-                  :prior (get-id-by-name :environment prior-env org)}}))
+                  :organization_id (get-id-by-name :organization org-name)
+                  :prior (get-id-by-name :environment prior-env org-name)}}))
 
 (defn delete-environment [org name]
   (rest/delete

@@ -19,7 +19,7 @@
 (defn ^{BeforeSuite {:groups ["setup"] :dependsOnMethods ["start_selenium"]}} login [_]
   (tasks/login (@config :admin-user) (@config :admin-password)))
 
-(defn ^{AfterSuite {:groups ["setup"]}} stop_selenium [_]
+(defn ^{AfterSuite {:groups ["setup"] :alwaysRun true}} stop_selenium [_]
   (browser stop))
 
 (gen-class-testng)
