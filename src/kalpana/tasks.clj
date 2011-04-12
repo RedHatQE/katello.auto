@@ -66,7 +66,7 @@ otherwise nil."
   (check-for-error)
   (or (success-message)
       (raise {:type :no-success-message-error
-              :msg "Expected confirmation message, but none is present on page."})))
+              :msg "Expected a result message, but none is present on page."})))
 
 (defn verify-success [task-fn]
   (let [resulting-message (task-fn)]

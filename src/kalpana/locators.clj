@@ -34,8 +34,8 @@
   (same-name capitalize tab keys))
 
 (def uimap (merge
-            {:error-message "//div[@class='jnotify-error']"
-             :success-message "//div[@class='jnotify-message']"
+            {:error-message "//div[@class='jnotify-notification-error']"
+             :success-message "//div[@class='jnotify-notification-message']"
 
              ;; login page
              :username-text (textbox "username")
