@@ -27,16 +27,18 @@
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
-   promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")})
+   promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
+   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//li[$1]/a")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
   (same-name capitalize tab keys))
 
 (def uimap (merge
-            {:error-message "//div[@class='jnotify-notification-error']"
-             :success-message "//div[@class='jnotify-notification-message']"
-
+            {:notification "//div[contains(@class,'jnotify-notification')]"
+             :error-message "//div[contains(@class,'jnotify-notification-error')]"
+             :success-message "//div[contains(@class,'jnotify-notification-message')]"
+             :spinner "//img[contains(@src,'spinner.gif')]"
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -87,6 +89,7 @@
              :packages-category (promotion-content-category "Packages")
              :kickstart-trees-category (promotion-content-category "Kickstart Trees")
              :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
+             :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
 
              ;;Administration tab
              ;;Users subtab

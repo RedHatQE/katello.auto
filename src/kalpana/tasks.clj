@@ -3,7 +3,8 @@
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
-  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser fill-form]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser
+                                                     fill-form first-present]]
         [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
@@ -45,28 +46,23 @@ for each item."
             (keys known-errors))
       :kalpana-error))
 
-(defn check-for-error
-  "Checks the page for an error message, if present raises an
-  exception with the contents of the error message."
-  []
-  (try (browser waitForElement :error-message "5000")
-       (let [message (browser getText :error-message)]
-         (raise {:type (matching-error message) :msg message}))
-       (catch SeleniumException e nil)))
-
-(defn success-message
-  "If a success message is present on the current page, returns it,
-otherwise nil."
-  []
-  (try (browser waitForElement :success-message "5000")
-       (browser getText :success-message)   
+(defn notification []
+  (try (browser waitForElement :notification "5000")
+       (let [msg (browser getText :notification)
+             classattr ((into {} (browser getAttributes :notification)) "class")
+             type ({"jnotify-notification-error" :error
+                    "jnotify-notification-message" :message}
+                   (-> (string/split classattr #" ") second))]
+         {:type type :msg msg})
        (catch SeleniumException e nil)))
 
 (defn check-for-success []
-  (check-for-error)
-  (or (success-message)
-      (raise {:type :no-success-message-error
-              :msg "Expected a result message, but none is present on page."})))
+  (let [notif (notification)
+        msg (:msg notif)]
+    (cond (not notif) (raise {:type :no-success-message-error
+                           :msg "Expected a result message, but none is present on page."})
+          (= :error (notif :type)) (raise {:type (matching-error msg) :msg msg})
+          :else msg)))
 
 (defn verify-success [task-fn]
   (let [resulting-message (task-fn)]
@@ -84,6 +80,22 @@ otherwise nil."
                (browser waitForElement (locators/promotion-remove-content-item item) "10000"))
       (browser sleep 5000))
     (browser clickAndWait :promote-to-next-environment)))
+
+(defn extract-content []
+  (let [elems (for [index (iterate inc 1)]
+                (locators/promotion-content-item-n (str index)))
+        retrieve (fn [elem] (try (.get (browser getAttributes elem) "data-products_id")
+                                (catch Exception e nil)))]
+    (take-while identity (map retrieve elems)))) 
+
+(defn environment-content [env]
+  (navigate :named-environment-promotions-page {:env-name env})
+  (let [categories [:products :errata :packages :kickstart-trees]]
+    (into {}
+          (doseq [category categories]
+            (do (browser click (-> category name (str "-category") keyword))
+                (first-present 20000 :promotion-empty-list (locators/promotion-content-item-n (str 1)))
+                [category (extract-content)])))))
 
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
