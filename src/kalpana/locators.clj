@@ -28,7 +28,7 @@
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
-   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//li[$1]/a")})
+   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]

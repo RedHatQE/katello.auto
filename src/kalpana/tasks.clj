@@ -81,21 +81,24 @@ for each item."
       (browser sleep 5000))
     (browser clickAndWait :promote-to-next-environment)))
 
-(defn extract-content []
+(defn extract-content [id]
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
-        retrieve (fn [elem] (try (.get (browser getAttributes elem) "data-products_id")
+        retrieve (fn [elem] (try (-> (browser getText elem) .trim (string/replace #" \w+$" ""))
                                 (catch Exception e nil)))]
     (take-while identity (map retrieve elems)))) 
 
 (defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
-  (let [categories [:products :errata :packages :kickstart-trees]]
+  (let [categories {:products "data-products_id"
+                    :errata "data-errata_id"
+                    :packages "data-packages_id"
+                    :kickstart-trees "data-trees_id"}]
     (into {}
-          (doseq [category categories]
+          (doseq [[category id] categories]
             (do (browser click (-> category name (str "-category") keyword))
                 (first-present 20000 :promotion-empty-list (locators/promotion-content-item-n (str 1)))
-                [category (extract-content)])))))
+                [category (extract-content id)])))))
 
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
