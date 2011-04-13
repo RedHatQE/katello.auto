@@ -84,9 +84,10 @@ for each item."
 (defn extract-content [id]
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
-        retrieve (fn [elem] (try (-> (browser getText elem) .trim (string/replace #" \w+$" ""))
-                                (catch Exception e nil)))]
-    (take-while identity (map retrieve elems)))) 
+        retrieve (fn [elem]
+                   (try (-> (browser getText elem) .trim (string/replace #" \w+$" ""))
+                        (catch Exception e nil)))]
+    (->> (map retrieve elems) (take-while identity) set))) 
 
 (defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
@@ -95,9 +96,11 @@ for each item."
                     :packages "data-packages_id"
                     :kickstart-trees "data-trees_id"}]
     (into {}
-          (doseq [[category id] categories]
+          (for [[category id] categories]
             (do (browser click (-> category name (str "-category") keyword))
-                (first-present 20000 :promotion-empty-list (locators/promotion-content-item-n (str 1)))
+                (first-present 20000
+                               :promotion-empty-list
+                               (locators/promotion-content-item-n (str 1)))
                 [category (extract-content id)])))))
 
 (defn environment-has-content?

@@ -1,6 +1,7 @@
 (ns kalpana.tests.promotions
   (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api])
+            [kalpana.api-tasks :as api]
+            [clojure.contrib.set :as sets])
   (:import [org.testng.annotations Test BeforeClass])
   (:use [kalpana.conf :only [config]]
         [test-clj.testng :only [gen-class-testng data-driven]]
@@ -42,12 +43,18 @@ there is none, one will be created and its name returned."
                                :username "test"
                                :password "test"))
 
+(defn verify-all-content-present [from in]
+  (for [content-type (keys from)]
+    (let [promoted (content-type from)
+          current (content-type in)]
+      (verify (sets/superset? current promoted)))))
+
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]
     (api/create-product org product-name @provider-name))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (tasks/promote-content from-env content)
-    (verify (tasks/environment-has-content? target-env content))))
+    (verify-all-content-present content (tasks/environment-content target-env))))
 
 (data-driven verify_promote_content {org.testng.annotations.Test
                                      {:groups ["promotions"] :description
