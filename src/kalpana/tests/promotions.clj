@@ -44,7 +44,7 @@ there is none, one will be created and its name returned."
                                :password "test"))
 
 (defn verify-all-content-present [from in]
-  (for [content-type (keys from)]
+  (doseq [content-type (keys from)]
     (let [promoted (content-type from)
           current (content-type in)]
       (verify (sets/superset? current promoted)))))
