@@ -38,7 +38,7 @@
     </groups>
   </test>
 
-  <test name="Content Providers">
+  <test name="ContentProviders">
     <packages>
       <package name="kalpana.tests" />
     </packages>    
