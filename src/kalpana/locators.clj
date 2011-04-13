@@ -72,12 +72,12 @@
 
              ;;Content Management tab
              :add-content-provider "//input[@type='submit' and @value='Add']"
-             :cp-name-text (textbox "kalpana_model_provider[name]")
-             :cp-description-text (textbox "kalpana_model_provider[description]")
-             :cp-repository-url-text (textbox "kalpana_model_provider[repository_url]")
-             :cp-type-list  "name=kalpana_model_provider[provider_type]"
-             :cp-username-text (textbox "kalpana_model_provider[login_credential_attributes][username]")
-             :cp-password-text (textbox "kalpana_model_provider[login_credential_attributes][password]")
+             :cp-name-text (textbox "provider[name]")
+             :cp-description-text (textbox "provider[description]")
+             :cp-repository-url-text (textbox "provider[repository_url]")
+             :cp-type-list  "name=provider[provider_type]"
+             :cp-username-text (textbox "provider[login_credential_attributes][username]")
+             :cp-password-text (textbox "provider[login_credential_attributes][password]")
              :cp-create-save "//input[@name='commit' and @value='Save']"
              :remove-content-provider "//input[@value='Remove']"
              :subscriptions (link "Subscriptions")
