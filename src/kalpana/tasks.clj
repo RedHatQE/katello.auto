@@ -183,8 +183,7 @@ for each item."
 
 (defn logout []
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
-      (do (browser clickAndWait :log-out)
-          (check-for-success))))
+      (browser clickAndWait :log-out)))
 
 (defn login [username password]
   (if (browser isElementPresent :log-out)
