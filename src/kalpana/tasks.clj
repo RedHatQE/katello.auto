@@ -76,9 +76,9 @@ for each item."
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
       (browser waitAndClick (locators/promotion-add-content-item item) "10000")
-      (comment "for some reason, this resets the previous selection! doh"
-               (browser waitForElement (locators/promotion-remove-content-item item) "10000"))
-      (browser sleep 5000))
+      (comment "for some reason, this resets the previous selection! doh")
+      (browser waitForElement (locators/promotion-remove-content-item item) "10000")
+      (comment (browser sleep 5000)))
     (browser clickAndWait :promote-to-next-environment)))
 
 (defn extract-content [id]
@@ -196,20 +196,22 @@ for each item."
       (check-for-success)))
 
 (defn create-user [username password]
+  (comment "this can go back in after that annoying popup is gone"
+           "remember to split ->browser sexp"
+           (fill-form {:new-user-username-text username
+                       :new-user-password-text password
+                       :new-user-confirm-text password}
+                      :save-user)) 
   (navigate :users-tab)
-  (->browser (click :new-user)
-             (waitForElement :new-user-username-text "7500")
-             (comment "this can go back in after that annoying popup is gone"
-                      "remember to split ->browser sexp"
-                      (fill-form {:new-user-username-text username
-                                  :new-user-password-text password
-                                  :new-user-confirm-text password}
-                                 :save-user))
-             (setText :new-user-username-text username)
-             (setText :new-user-password-text password)
-             (setText :new-user-confirm-text password)
-             (answerOnNextPrompt "OK")
-             (clickAndWait :save-user)))
+  (->browser
+   (click :new-user)
+   (waitForElement :new-user-username-text "7500")
+   (setText :new-user-username-text username)
+   (setText :new-user-password-text password)
+   (setText :new-user-confirm-text password)
+   (click :save-user)
+   (sleep 5000))
+  (check-for-success))
 
 (defn create-role [name]
   (navigate :roles-tab)

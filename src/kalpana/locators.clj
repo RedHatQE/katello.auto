@@ -97,7 +97,7 @@
              :new-user-username-text "username_field"
              :new-user-password-text "password_field"
              :new-user-confirm-text "confirm_field"
-             :save-user "save_user_button"
+             :save-user "save_user"
              ;;Roles subtab
              :new-role "//a[@id='new']"
              :new-role-name-text "role_name_field"
