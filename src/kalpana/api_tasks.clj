@@ -29,7 +29,8 @@
   (log/info (str "Retrieving all " (-> entity-type name pluralize) "."))
   (rest/get
    (str (@config :server-url)
-        (uri-for-entity-type entity-type org-name))))
+        (uri-for-entity-type entity-type org-name))
+   {:basic-auth [(@config :admin-user) (@config :admin-password)]}))
 
 (defn get-id-by-name [entity-type entity-name & [org-name]]
   (log/info (str "Getting id for " (name entity-type) " "
