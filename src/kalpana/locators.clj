@@ -28,7 +28,8 @@
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
-   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")})
+   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
+   provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -90,7 +91,8 @@
              :kickstart-trees-category (promotion-content-category "Kickstart Trees")
              :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-
+             ;;Sync Management subtab
+             
              ;;Administration tab
              ;;Users subtab
              :new-user "//a[@id='new']"
@@ -137,6 +139,7 @@
               [:content-providers-tab [] (via :content-providers)
                [:new-content-provider-page [] (via :add-content-provider)]
                [:named-content-provider-page [cp-name] (via (cp-link cp-name))]]
+              [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
              [:organizations-tab [] (via :organizations)
