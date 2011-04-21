@@ -92,6 +92,7 @@
              :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
              ;;Sync Management subtab
+             :synchronize-now "sync_button"
              
              ;;Administration tab
              ;;Users subtab
