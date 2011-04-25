@@ -61,4 +61,15 @@
       </run>
     </groups>
   </test>
+  <test name="SyncManagement">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="sync"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
 </suite>

@@ -29,7 +29,8 @@
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
-   provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")})
+   provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
+   provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr/[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]

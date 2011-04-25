@@ -1,10 +1,11 @@
-(ns  kalpana.tasks
+(ns kalpana.tasks
   (:require [kalpana.locators :as locators]
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser
-                                                     fill-form first-present]]
+                                                     fill-form first-present
+                                                     loop-with-timeout]]
         [com.redhat.qe.config :only [same-name]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
@@ -146,15 +147,17 @@ for each item."
   (browser clickAndWait :delete-environment)
   (check-for-success))
 
-(defn create-content-provider [name description repo-url type username password]
+(defn create-content-provider [name description repo-url type & [username password]]
   (navigate :new-content-provider-page)
-  (fill-form  {:cp-name-text name
-               :cp-description-text description
-               :cp-repository-url-text repo-url
-               :cp-type-list  type
-               :cp-username-text username
-               :cp-password-text password}
-              :cp-create-save)
+  (let [required-items {:cp-name-text name
+                        :cp-description-text description
+                        :cp-repository-url-text repo-url
+                        :cp-type-list type}]
+    (fill-form (merge required-items
+                      (if username {:cp-username-text username
+                                    :cp-password-text password}
+                          {}))  
+               :cp-create-save))
   (check-for-success))
 
 (defn delete-content-provider [name]
@@ -219,3 +222,21 @@ for each item."
              (setText :new-role-name-text name)
              (answerOnNextPrompt "OK")
              (click :save-role)))
+
+(defn sync-complete-status
+  "Returns final status if complete.  If sync is still in progress or queued, returns nil."
+  [product]
+  (some #{(browser getText (locators/provider-sync-progress product))} 
+                ["Error syncing!" "Sync complete."]))
+
+(defn sync-products [products timeout]
+  (navigate :sync-management-page)
+  (doseq [product products]
+    (browser check (locators/provider-sync-checkbox product)))
+  (browser click :synchronize-now)
+  (browser sleep 10000)
+  (zipmap products (for [product products]
+                     (loop-with-timeout timeout []
+                       (or (sync-complete-status product)
+                           (do (Thread/sleep 10000)
+                               (recur)))))))
