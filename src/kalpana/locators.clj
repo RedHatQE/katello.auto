@@ -23,7 +23,7 @@
    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
    org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
    cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
-   textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password') and @name='$1'] or self::textarea[@name='$1']]")
+   textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
@@ -80,6 +80,7 @@
              :cp-type-list  "name=provider[provider_type]"
              :cp-username-text (textbox "provider[login_credential_attributes][username]")
              :cp-password-text (textbox "provider[login_credential_attributes][password]")
+             :cp-cert-text (textbox "provider[certificate_attributes][contents]")
              :cp-create-save "//input[@name='commit' and @value='Save']"
              :remove-content-provider "//input[@value='Remove']"
              :subscriptions (link "Subscriptions")

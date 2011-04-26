@@ -31,12 +31,11 @@ for each item."
                   coll)))
 
 (def known-errors
-  (merge {:name-taken-error #"Name has already been taken"}
+  (merge {:name-taken-error #"Name has already been taken"
+          :login-credential.username-cant-be-blank #"Login credential(\.username)? can't be blank"
+          :login-credential.password-cant-be-blank #"Login credential(\.password)? can't be blank"}
          (cant-be-blank-errors [:name
-                                :certificate
-                                :login-credential.username
-                                :repository-url
-                                :login-credential.password])))
+                                :repository-url])))
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
