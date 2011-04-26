@@ -63,6 +63,12 @@ there is none, one will be created and its name returned."
              [[myorg [locker root] {:products (set (tasks/timestamp "MyProduct" 3))}]
               [myorg [locker root @root-next-env] {:products (set (tasks/timestamp "ProductMulti" 3))}]])
 
+(defn ^{Test {:description "After content has been promoted, the change set should be empty."}:groups ["promotions" "blockedByBug-699374"]}
+  verify_change_set_cleared [_]
+  (verify_promote_content myorg
+                          [locker root]
+                          {:products (set (tasks/timestamp "MyProduct" 3))})
+  )
 (gen-class-testng)
 
 

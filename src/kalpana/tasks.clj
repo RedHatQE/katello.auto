@@ -103,6 +103,10 @@ for each item."
                                (locators/promotion-content-item-n (str 1)))
                 [category (extract-content id)])))))
 
+(defn ^{:TODO "finish me"} change-set-content [env]
+  (navigate :named-environment-promotions-page {:env-name env})
+  )
+
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
