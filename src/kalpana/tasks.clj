@@ -51,7 +51,8 @@ for each item."
        (let [msg (browser getText :notification)
              classattr ((into {} (browser getAttributes :notification)) "class")
              type ({"jnotify-notification-error" :error
-                    "jnotify-notification-message" :message}
+                    "jnotify-notification-message" :message
+                    "jnotify-notification-success" :success}
                    (-> (string/split classattr #" ") second))]
          {:type type :msg msg})
        (catch SeleniumException e nil)))
@@ -162,6 +163,25 @@ for each item."
                           {}))  
                :cp-create-save))
   (check-for-success))
+
+(defn create-content-provider2 [name description type & [repo-url]]
+  (let [types {:redhat "Red Hat" :custom "Custom"}]
+    (assert (some #{type} (keys types)))
+    (navigate :new-content-provider-page)
+    (->browser (click :new-content-provider)
+               (waitForElement :cp-name-text "10000")
+               (setText :cp-name-text name)
+               (setText :cp-description-text description)
+               (select :cp-type-list (types type)))
+    (if (= type :redhat)
+      (browser setText :cp-repository-url-text repo-url))
+    (browser click :cp-create-save)
+    (check-for-success)))
+
+(defn add-product [provider-name ]
+  (navigate :named-content-provider-page)
+  (browser click :products-and-repositories)
+  )
 
 (defn delete-content-provider [name]
   (navigate :named-content-provider-page {:cp-name name})

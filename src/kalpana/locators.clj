@@ -73,7 +73,7 @@
              :edit-environment (link "Edit")
 
              ;;Content Management tab
-             :add-content-provider "//input[@type='submit' and @value='Add']"
+             :new-content-provider "new"
              :cp-name-text (textbox "provider[name]")
              :cp-description-text (textbox "provider[description]")
              :cp-repository-url-text (textbox "provider[repository_url]")
@@ -81,11 +81,13 @@
              :cp-username-text (textbox "provider[login_credential_attributes][username]")
              :cp-password-text (textbox "provider[login_credential_attributes][password]")
              :cp-cert-text (textbox "provider[certificate_attributes][contents]")
-             :cp-create-save "//input[@name='commit' and @value='Save']"
+             :cp-create-save "provider_save"
              :remove-content-provider "//input[@value='Remove']"
              :subscriptions (link "Subscriptions")
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
+             :products-and-repositories "//nav[@class='subnav']//a[contains(.,'Products')]"
+             :add-product "add_product"
              ;;Promotions subtab
              :products-category (promotion-content-category "Products")
              :errata-category (promotion-content-category "Errata")
