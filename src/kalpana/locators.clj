@@ -1,5 +1,5 @@
 (ns kalpana.locators
-  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser ->browser]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.contrib.string :only [capitalize]])
@@ -22,7 +22,7 @@
    tab (LocatorTemplate. "Tab" "link=$1")
    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
    org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
-   cp-link (LocatorTemplate. "Content Provider" "//div[@id='provider_list']//a[.='$1']")
+   cp-link (LocatorTemplate. "Content Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
@@ -30,7 +30,11 @@
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
-   provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")})
+   provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
+   add-repository (LocatorTemplate. "Add repostory button" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../ul/div[starts-with(@id,'add_repository')]")
+   product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
+   product-expand (LocatorTemplate. "Product expand" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../div/a")
+   })
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -87,7 +91,16 @@
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
              :products-and-repositories "//nav[@class='subnav']//a[contains(.,'Products')]"
+             ;;add product
              :add-product "add_product"
+             :save-product "save_product_button"
+             :product-name-text "product_name_field"
+             :product-description-text "product_description_field"
+             :product-url-text "product_url_field"
+             :product-yum-checkbox "yum_type"
+             :product-file-checkbox "file_type"
+             ;;add repo
+             :add-repository 
              ;;Promotions subtab
              :products-category (promotion-content-category "Products")
              :errata-category (promotion-content-category "Errata")
@@ -135,15 +148,19 @@
   (sel-locator [k] (uimap k)))
 
 ;;page layout
-(defmacro via [link]
-  `(browser ~'clickAndWait ~link))
+(defmacro via [link & [ajax-wait-for]]
+  (if ajax-wait-for
+    `(->browser (~'click ~link)
+                (~'waitForVisible ~ajax-wait-for "15000"))
+    `(browser ~'clickAndWait ~link)))
 
 (def page-tree
   (nav-tree [:top-level [] (if-not (browser isElementPresent :log-out) (browser open "/"))
              [:content-management-tab [] (via :content-management)
               [:content-providers-tab [] (via :content-providers)
                [:new-content-provider-page [] (via :add-content-provider)]
-               [:named-content-provider-page [cp-name] (via (cp-link cp-name))]]
+               [:named-content-provider-page [cp-name] (via (cp-link cp-name) :remove-content-provider)
+                [:provider-products-repos-page [] (via :products-and-repositories :add-product)]]]
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]

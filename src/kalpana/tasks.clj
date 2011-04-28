@@ -47,7 +47,7 @@ for each item."
       :kalpana-error))
 
 (defn notification []
-  (try (browser waitForElement :notification "5000")
+  (try (browser waitForElement :notification "10000")
        (let [msg (browser getText :notification)
              classattr ((into {} (browser getAttributes :notification)) "class")
              type ({"jnotify-notification-error" :error
@@ -178,10 +178,23 @@ for each item."
     (browser click :cp-create-save)
     (check-for-success)))
 
-(defn add-product [provider-name ]
-  (navigate :named-content-provider-page)
-  (browser click :products-and-repositories)
-  )
+(defn add-product [provider-name name description url & [yum? file?]]
+  (navigate :provider-products-repos-page {:cp-name provider-name})
+  
+  ;;workaround need multiple clicks!
+  (loop-with-timeout 10000 []
+    (browser click :add-product)
+    (if-not (browser isVisible :product-name-text)
+      (do (browser sleep 1000)
+          (recur))))
+
+  (fill-form {:product-name-text name
+              :product-description-text description
+              :product-url-text url
+              :product-yum-checkbox yum?
+              :product-file-checkbox file?}
+             :save-product #(browser sleep 3000))
+  (check-for-success))
 
 (defn delete-content-provider [name]
   (navigate :named-content-provider-page {:cp-name name})
