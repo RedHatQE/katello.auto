@@ -100,7 +100,7 @@
              :product-yum-checkbox "yum_type"
              :product-file-checkbox "file_type"
              ;;add repo
-             :add-repository 
+             ;;:add-repository 
              ;;Promotions subtab
              :products-category (promotion-content-category "Products")
              :errata-category (promotion-content-category "Errata")
