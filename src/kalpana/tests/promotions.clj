@@ -11,7 +11,7 @@
 (def root-next-env (atom nil))
 (def locker "locker")
 (def root "root")
-(def myorg "admin_one")
+(def myorg (@config :admin-org))
 
 (defn get-root-next-env
   "Gets the environment whose 'prior' is the root environment.  If

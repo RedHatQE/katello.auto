@@ -46,22 +46,40 @@ for each item."
             (keys known-errors))
       :kalpana-error))
 
-(defn notification []
-  (try (browser waitForElement :notification "10000")
-       (let [msg (browser getText :notification)
-             classattr ((into {} (browser getAttributes :notification)) "class")
-             type ({"jnotify-notification-error" :error
-                    "jnotify-notification-message" :message
-                    "jnotify-notification-success" :success}
-                   (-> (string/split classattr #" ") second))]
-         {:type type :msg msg})
-       (catch SeleniumException e nil)))
+(defn clear-all-notifications []
+  (let [n (count
+           (take-while (fn [index] (let [loc (locators/notification-close-index (str index))]
+                                    (if (browser isElementPresent loc)
+                                      (do (browser click loc) true))))
+                       (iterate inc 1)))]
+    (log/info (str "Cleared " n " notifications."))
+    n))
 
-(defn check-for-success []
+(defn notification "Gets the notification from the page, returns a map
+object representing the notification (or nil if no notification is
+present within a built-in timeout period)."
+    []
+    (try (browser waitForElement :notification "10000")
+         (let [msg (browser getText :notification)
+               classattr ((into {} (browser getAttributes :notification)) "class")
+               type ({"jnotify-notification-error" :error
+                      "jnotify-notification-message" :message
+                      "jnotify-notification-success" :success}
+                     (-> (string/split classattr #" ") second))]
+           (log/info (str "Received " (name type) " notification \"" msg "\""))
+           (clear-all-notifications)
+           {:type type :msg msg})
+         (catch SeleniumException e nil))) 
+
+(defn check-for-success "Gets any notification from the UI, if there
+is none or it's an error notification, raise an exception.  Otherwise
+return the text of the message."
+  []
   (let [notif (notification)
         msg (:msg notif)]
-    (cond (not notif) (raise {:type :no-success-message-error
-                           :msg "Expected a result message, but none is present on page."})
+    (cond (not notif) (raise
+                       {:type :no-success-message-error
+                        :msg "Expected a result message, but none is present on page."})
           (= :error (notif :type)) (raise {:type (matching-error msg) :msg msg})
           :else msg)))
 
@@ -151,31 +169,16 @@ for each item."
   (browser clickAndWait :delete-environment)
   (check-for-success))
 
-(defn create-content-provider [name description repo-url type & [username password]]
-  (navigate :new-content-provider-page)
-  (let [required-items {:cp-name-text name
-                        :cp-description-text description
-                        :cp-repository-url-text repo-url
-                        :cp-type-list type}]
-    (fill-form (merge required-items
-                      (if username {:cp-username-text username
-                                    :cp-password-text password}
-                          {}))  
-               :cp-create-save))
-  (check-for-success))
-
-(defn create-content-provider2 [name description type & [repo-url]]
+(defn create-content-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat" :custom "Custom"}]
     (assert (some #{type} (keys types)))
     (navigate :new-content-provider-page)
-    (->browser (click :new-content-provider)
-               (waitForElement :cp-name-text "10000")
-               (setText :cp-name-text name)
-               (setText :cp-description-text description)
-               (select :cp-type-list (types type)))
-    (if (= type :redhat)
-      (browser setText :cp-repository-url-text repo-url))
-    (browser click :cp-create-save)
+    (fill-form {:cp-name-text name
+                :cp-description-text description
+                :cp-repository-url-text (if (= type :redhat)
+                                          repo-url nil)
+                :cp-type-list (types type)}
+               :cp-create-save #(browser sleep 1000))
     (check-for-success)))
 
 (defn add-product [provider-name name description url & [yum? file?]]

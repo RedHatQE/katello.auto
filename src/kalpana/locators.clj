@@ -34,6 +34,7 @@
    add-repository (LocatorTemplate. "Add repostory button" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../ul/div[starts-with(@id,'add_repository')]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
    product-expand (LocatorTemplate. "Product expand" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../div/a")
+   notification-close-index (LocatorTemplate. "Notification close button" "xpath=(//a[@class='jnotify-close'])[$1]")
    })
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -45,6 +46,7 @@
              :error-message "//div[contains(@class,'jnotify-notification-error')]"
              :success-message "//div[contains(@class,'jnotify-notification-message')]"
              :spinner "//img[contains(@src,'spinner.gif')]"
+         
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -158,7 +160,7 @@
   (nav-tree [:top-level [] (if-not (browser isElementPresent :log-out) (browser open "/"))
              [:content-management-tab [] (via :content-management)
               [:content-providers-tab [] (via :content-providers)
-               [:new-content-provider-page [] (via :add-content-provider)]
+               [:new-content-provider-page [] (via :new-content-provider :cp-name-text)]
                [:named-content-provider-page [cp-name] (via (cp-link cp-name) :remove-content-provider)
                 [:provider-products-repos-page [] (via :products-and-repositories :add-product)]]]
               [:sync-management-page [] (via :sync-management)]

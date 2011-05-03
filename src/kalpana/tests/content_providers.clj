@@ -9,10 +9,8 @@
   (let [result-message (tasks/create-content-provider
                         (tasks/timestamp "auto-cp")
                         "my description"
-                        "http://myrepo.url.com/blah/"
-                        "Red Hat"
-                        "myuser"
-                        "mypass")]
+                        :redhat
+                        "http://myrepo.url.com/blah/")]
     (verify (string? result-message))))
 
 (defn ^{Test {:groups ["content-providers"]}} delete_simple [_]
@@ -20,26 +18,25 @@
     (tasks/create-content-provider
      cp-name
      "my description"
-     "http://myrepo.url.com/blah/"
-     "Red Hat"
-     "myuser"
-     "mypass")
+     :redhat
+     "http://myrepo.url.com/blah/")
     (tasks/verify-success #(tasks/delete-content-provider cp-name))))
 
 (defn validate [name description repo-url type username password expected-result]
   (let [message-after-create (with-handlers
-                 [(handle (if (keyword? expected-result)
-                            expected-result nil) [e] (:type e))]
-                 (tasks/create-content-provider
-                  name description repo-url type username password)
-                 :success)]
+                               [(handle (if (keyword? expected-result)
+                                          expected-result nil) [e] (:type e))]
+                               (tasks/create-content-provider
+                                name description type repo-url)
+                               :success)]
     (verify (= message-after-create expected-result))))
 
 (data-driven validate {org.testng.annotations.Test {:groups ["content-providers"]}}
-             [[nil "blah" "http://sdf.com" "Red Hat" "admin" "admin" :name-cant-be-blank]
-              [(tasks/timestamp "mytestcp") "blah" nil "Red Hat" "admin" "admin" :repository-url-cant-be-blank]
-              [(tasks/timestamp "mytestcp") "blah" "http://sdf.com" "Red Hat" nil "admin" :login-credential.username-cant-be-blank]
-              [(tasks/timestamp "mytestcp") "blah" "http://sdf.com" "Red Hat" "admin" nil :login-credential.password-cant-be-blank]
-              [(tasks/timestamp "mytestcp") nil "http://sdf.com" "Red Hat" "admin" "admin" :success]])
+             [[nil "blah" "http://sdf.com" :redhat "admin" "admin" :name-cant-be-blank]
+              [(tasks/timestamp "mytestcp") "blah" nil :redhat "admin" "admin" :repository-url-cant-be-blank]
+             ;; [(tasks/timestamp "mytestcp") "blah" "http://sdf.com" :redhat nil "admin" :login-credential.username-cant-be-blank]
+              ;;[(tasks/timestamp "mytestcp") "blah" "http://sdf.com" :redhat "admin" nil :login-credential.password-cant-be-blank]
+              [(tasks/timestamp "mytestcp") nil "http://sdf.com" :redhat "admin" "admin" :success]
+              [(tasks/timestamp "mytestcp") nil "http://sdf.com" :custom "admin" "admin" :success]])
 
 (gen-class-testng)

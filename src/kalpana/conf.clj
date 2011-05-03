@@ -7,7 +7,8 @@
 (def kalpana-auto-properties {:server-url "kalpana.url"
                               :admin-user ["kalpana.admin.user" "admin"]
                               :admin-password ["kalpana.admin.password" "admin"]
-                              :selenium-address ["selenium.address" "localhost:4444"]})
+                              :selenium-address ["selenium.address" "localhost:4444"]
+                              :admin-org ["kalpana.admin.org" "ACME_Corporation"]})
 
 (def config (atom {}))
 
