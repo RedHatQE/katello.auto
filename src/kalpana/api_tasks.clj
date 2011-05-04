@@ -42,7 +42,7 @@
       (throw (RuntimeException. (str "No matches for " (name entity-type) " named " entity-name)))))
 
 (defn create-content-provider [org-name api-user api-password
-                               & {:keys [name description repo-url type username password]}]
+                               & {:keys [name description repo-url type]}]
   (log/info (str "Creating provider " name))
   (rest/post
    (str (@config :server-url) (uri-for-entity-type :provider org-name))
@@ -50,9 +50,7 @@
    {:provider {:name name
                :description description
                :repository_url repo-url
-               :provider_type type
-               :login_credential_attributes {:username username
-                                             :password password}}}))
+               :provider_type type}}))
 
 (defn create-environment [name org-name api-user api-password & {:keys [description prior-env]}]
   (rest/post
@@ -65,7 +63,7 @@
 
 (defn delete-environment [org name]
   (rest/delete
-   (str (@config :server-url) (uri-for-entity-type :environment (@config :admin-user)) "/" name)
+   (str (@config :server-url) (uri-for-entity-type :environment (@config :admin-org)) "/" name)
    (@config :admin-user) (@config :admin-password)))
 
 (defn create-product [org name provider-name]

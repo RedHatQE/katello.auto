@@ -10,8 +10,8 @@
 (def provider-name (atom nil))
 (def root-next-env (atom nil))
 (def locker "locker")
-(def root "root")
-(def myorg (@config :admin-org))
+(def root "Development")
+(def myorg (atom nil))
 
 (defn get-root-next-env
   "Gets the environment whose 'prior' is the root environment.  If
@@ -33,15 +33,15 @@ there is none, one will be created and its name returned."
              new-env-name))))
 
 (defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
+  (reset! myorg (@config :admin-org))
   (reset! provider-name (tasks/timestamp "promotion-cp"))
-  (reset! root-next-env (get-root-next-env myorg))
-  (api/create-content-provider myorg (@config :admin-user) (@config :admin-password)
+  (reset! root-next-env (get-root-next-env @myorg))
+
+  (api/create-content-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
                                :description "test provider for promotions"
                                :repo-url "http://blah.com"
-                               :type "Red Hat"
-                               :username "test"
-                               :password "test"))
+                               :type "Red Hat"))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -60,12 +60,12 @@ there is none, one will be created and its name returned."
                                      {:groups ["promotions"] :description
                                       "Takes content and promotes it thru more environments.
                                        Verifies that it shows up in the new env."}}
-             [[myorg [locker root] {:products (set (tasks/timestamp "MyProduct" 3))}]
-              [myorg [locker root @root-next-env] {:products (set (tasks/timestamp "ProductMulti" 3))}]])
+             [[@myorg [locker root] {:products (set (tasks/timestamp "MyProduct" 3))}]
+              [@myorg [locker root @root-next-env] {:products (set (tasks/timestamp "ProductMulti" 3))}]])
 
 (defn ^{Test {:description "After content has been promoted, the change set should be empty."}:groups ["promotions" "blockedByBug-699374"]}
   verify_change_set_cleared [_]
-  (verify_promote_content myorg
+  (verify_promote_content @myorg
                           [locker root]
                           {:products (set (tasks/timestamp "MyProduct" 3))})
   )
