@@ -72,4 +72,15 @@
       </run>
     </groups>
   </test>
+  <test name="Users">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="users"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
 </suite>

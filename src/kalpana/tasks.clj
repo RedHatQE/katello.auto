@@ -52,7 +52,7 @@ for each item."
                                     (if (browser isElementPresent loc)
                                       (do (browser click loc) true))))
                        (iterate inc 1)))]
-    (log/info (str "Cleared " n " notifications."))
+    (if (> n 0) (log/info (str "Cleared " n " notifications.")))
     n))
 
 (defn notification "Gets the notification from the page, returns a map
@@ -72,7 +72,7 @@ present within a built-in timeout period)."
          (catch SeleniumException e nil))) 
 
 (defn check-for-success "Gets any notification from the UI, if there
-is none or it's an error notification, raise an exception.  Otherwise
+is none or not a success notification, raise an exception.  Otherwise
 return the text of the message."
   []
   (let [notif (notification)
@@ -80,7 +80,7 @@ return the text of the message."
     (cond (not notif) (raise
                        {:type :no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
-          (= :error (notif :type)) (raise {:type (matching-error msg) :msg msg})
+          (not= :success (notif :type)) (raise {:type (matching-error msg) :msg msg})
           :else msg)))
 
 (defn verify-success [task-fn]
@@ -205,16 +205,14 @@ return the text of the message."
   (browser click :remove-content-provider)
   (check-for-success))
 
-(defn edit-content-provider [name & {:keys [description repo-url type username password] :as changes}]
-  (let [m {:description :cp-description-text
-           :repo-url :cp-repository-url-text
-           :type :cp-type-list
-           :username :cp-username-text
-           :password :cp-password-text}]
-    (fill-form (zipmap (vals (select-keys m (keys changes)))
-                       (vals changes))
-               :cp-create-save)
-    (check-for-success)))
+(defn edit-content-provider [name & {:keys [description repo-url type username password]}]
+  (fill-form {:cp-description-text description
+              :cp-repository-url-text repo-url
+              :cp-type-list type
+              :cp-username-text username
+              :cp-password-text password} 
+             :cp-create-save)
+  (check-for-success))
 
 (defn upload-subscription-manifest [cp-name filepath]
   (navigate :named-content-provider-page {:cp-name cp-name})
@@ -236,22 +234,28 @@ return the text of the message."
                  :log-in)
       (check-for-success)))
 
-(defn create-user [username password]
-  (comment "this can go back in after that annoying popup is gone"
-           "remember to split ->browser sexp"
-           (fill-form {:new-user-username-text username
-                       :new-user-password-text password
-                       :new-user-confirm-text password}
-                      :save-user)) 
+(defn create-user [username password & [password-confirm]] 
   (navigate :users-tab)
-  (->browser
-   (click :new-user)
-   (waitForElement :new-user-username-text "7500")
-   (setText :new-user-username-text username)
-   (setText :new-user-password-text password)
-   (setText :new-user-confirm-text password)
-   (click :save-user)
-   (sleep 5000))
+  (->browser (click :new-user)
+             (waitForElement :new-user-username-text "7500"))
+  (fill-form {:new-user-username-text username
+              :new-user-password-text password
+              :new-user-confirm-text (or password-confirm password)}
+             :save-user #(browser sleep 1000))
+  (check-for-success))
+
+(defn delete-user [username]
+  (navigate :named-user-page {:username username})
+  (browser click :remove-user)
+  (check-for-success))
+
+(defn edit-user [username & {:keys [inline-help clear-disabled-helptips new-password]}]
+  (navigate :named-user-page {:username username})
+  (fill-form {:enable-inline-help-checkbox inline-help
+              :clear-disabled-helptips clear-disabled-helptips
+              :change-password-text new-password
+              :confirm-password-text new-password}
+             :save-user-edit #(browser sleep 1000))
   (check-for-success))
 
 (defn create-role [name]

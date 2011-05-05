@@ -19,7 +19,7 @@
 
 (define-strategies
   {link (LocatorTemplate. "" "link=$1")
-   tab (LocatorTemplate. "Tab" "link=$1")
+   tab (LocatorTemplate. "Tab" "link=$1") 
    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
    org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
    cp-link (LocatorTemplate. "Content Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
@@ -35,6 +35,8 @@
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
    product-expand (LocatorTemplate. "Product expand" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../div/a")
    notification-close-index (LocatorTemplate. "Notification close button" "xpath=(//a[@class='jnotify-close'])[$1]")
+   user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
+   username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
    })
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -120,11 +122,16 @@
              :new-user-password-text "password_field"
              :new-user-confirm-text "confirm_field"
              :save-user "save_user"
+             :remove-user (link "Remove User")
+             :enable-inline-help-checkbox "user[helptips_enabled]"
+             :clear-disabled-helptips "clear_helptips"
+             :change-password-text "password_field"
+             :confirm-password-text "confirm_field"
              ;;Roles subtab
              :new-role "//a[@id='new']"
              :new-role-name-text "role_name_field"
              :save-role "save_role_button"
-             
+             :save-user-edit "save_password"
              }
              
             ;;regularly named tabs
@@ -175,5 +182,6 @@
                 [:named-environment-page [env-name] (via (environment-link env-name))
                  [:edit-environment-page [] (via :edit-environment)]]]]]
              [:administration-tab [] (via :administration)
-              [:users-tab [] (via :users)]
+              [:users-tab [] (via :users)
+               [:named-user-page [username] (via (user username) (username-field username) )]]
               [:roles-tab [] (via :roles)]]]))
