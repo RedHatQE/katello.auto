@@ -74,7 +74,7 @@
                           :href (str "/products/" name))]
     (rest/post
      (str (@config :server-url) "/api/providers/"
-          (get-id-by-name :provider provider-name org) "/import_products/")
+           provider-name "/import_products/")
      (@config :admin-user) (@config :admin-password)
      {:products [updated-product]})))
 

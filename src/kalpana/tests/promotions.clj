@@ -40,8 +40,7 @@ there is none, one will be created and its name returned."
   (api/create-content-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
                                :description "test provider for promotions"
-                               :repo-url "http://blah.com"
-                               :type "Red Hat"))
+                               :type "Custom"))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -59,11 +58,12 @@ there is none, one will be created and its name returned."
 (data-driven verify_promote_content {org.testng.annotations.Test
                                      {:groups ["promotions"] :description
                                       "Takes content and promotes it thru more environments.
-                                       Verifies that it shows up in the new env."}}
+                                       VerIfies that it shows up in the new env."}}
              [[@myorg [locker root] {:products (set (tasks/timestamp "MyProduct" 3))}]
               [@myorg [locker root @root-next-env] {:products (set (tasks/timestamp "ProductMulti" 3))}]])
 
-(defn ^{Test {:description "After content has been promoted, the change set should be empty."}:groups ["promotions" "blockedByBug-699374"]}
+(defn ^{Test {:description "After content has been promoted, the change set should be empty."
+              :groups ["promotions" "blockedByBug-699374"]}}
   verify_change_set_cleared [_]
   (verify_promote_content @myorg
                           [locker root]

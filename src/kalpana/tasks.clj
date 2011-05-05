@@ -202,7 +202,7 @@ return the text of the message."
 (defn delete-content-provider [name]
   (navigate :named-content-provider-page {:cp-name name})
   (browser answerOnNextPrompt "OK")
-  (browser clickAndWait :remove-content-provider)
+  (browser click :remove-content-provider)
   (check-for-success))
 
 (defn edit-content-provider [name & {:keys [description repo-url type username password] :as changes}]

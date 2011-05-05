@@ -25,8 +25,8 @@
    cp-link (LocatorTemplate. "Content Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
-   promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left_accordion']//a[.='$1']")
-   promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
+   promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left']//a[.='$1']")
+   promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[@id='left']//li[normalize-space(.)='$1 Add']//a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[@id='left_accordion']//li[normalize-space(.)='$1 Remove']//a[normalize-space(.)='Remove']")
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
@@ -88,7 +88,7 @@
              :cp-password-text (textbox "provider[login_credential_attributes][password]")
              :cp-cert-text (textbox "provider[certificate_attributes][contents]")
              :cp-create-save "provider_save"
-             :remove-content-provider "//input[@value='Remove']"
+             :remove-content-provider (link "Remove Provider")
              :subscriptions (link "Subscriptions")
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"

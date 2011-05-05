@@ -12,7 +12,7 @@
 
 (comment "Execute this in the repl to load everything and start selenium"
          (do (require 'kalpana.tasks :reload-all)
-             (require 'kalpana.conf)
+             (require 'kalpana.conf :reload)
              (require 'kalpana.tests.setup)
              (kalpana.conf/init)
              (kalpana.tests.setup/start_selenium nil)
