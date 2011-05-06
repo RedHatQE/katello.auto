@@ -7,9 +7,9 @@
                                (create-fn))]
     (verify (= message-after-create :name-cant-be-blank))))
 
-(defn duplicate_disallowed [create-fn]
+(defn duplicate_disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
   (create-fn)
   (let [message-after-create (with-handlers
-                               [(handle :name-taken-error [e] (:type e))]
+                               [(handle expected-error [e] (:type e))]
                                (create-fn))]
-    (verify (= message-after-create :name-taken-error))))
+    (verify (= message-after-create expected-error))))

@@ -29,6 +29,7 @@
 
 (defn ^{Test {:groups ["environments" "validation" "blockedByBug-690907"] :dependsOnMethods ["create_simple"]}} duplicate_disallowed [_]
   (let [env-name (tasks/timestamp "test-dup")]
-    (validate/duplicate_disallowed #(tasks/create-environment @test-org-name env-name "dup env description"))))
+    (validate/duplicate_disallowed #(tasks/create-environment @test-org-name env-name "dup env description")
+                                   :expected-error :name-must-be-unique-within-org)))
 
 (gen-class-testng)

@@ -32,6 +32,7 @@ for each item."
 
 (def known-errors
   (merge {:name-taken-error #"Name has already been taken"
+          :name-must-be-unique-within-org #"Name must be unique within one organization"
           :login-credential.username-cant-be-blank #"Login credential(\.username)? can't be blank"
           :login-credential.password-cant-be-blank #"Login credential(\.password)? can't be blank"}
          (cant-be-blank-errors [:name
@@ -261,10 +262,8 @@ return the text of the message."
 (defn create-role [name]
   (navigate :roles-tab)
   (->browser (click :new-role)
-             (waitForElement :new-role-name-text "7500")
-             (setText :new-role-name-text name)
-             (answerOnNextPrompt "OK")
-             (click :save-role)))
+             (waitForElement :new-role-name-text "7500")) 
+  (fill-form {:new-role-name-text name} :save-role #(browser sleep 1000)))
 
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
