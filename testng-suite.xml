@@ -38,13 +38,13 @@
     </groups>
   </test>
 
-  <test name="ContentProviders">
+  <test name="Providers">
     <packages>
       <package name="kalpana.tests" />
     </packages>    
     <groups>
       <run>
-        <include name="content-providers"/>
+        <include name="providers"/>
         <include name="setup" />
       </run>
     </groups>

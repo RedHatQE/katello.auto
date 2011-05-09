@@ -6,7 +6,7 @@
   (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser
                                                      fill-form first-present
                                                      loop-with-timeout]]
-        [com.redhat.qe.config :only [same-name]]
+        
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -19,24 +19,8 @@ for each item."
   ([s] (str s "-" (System/currentTimeMillis)))
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
-(defn cant-be-blank-errors
-  "Takes collection of keywords like :name and produces map entry like
-:name-cant-be-blank #\"Name can't be blank"
-  [coll]
-  (same-name identity
-             (comp re-pattern
-                   string/capitalize
-                   #(string/replace % " cant " " can't "))
-             (map #(-> (name %) (str "-cant-be-blank") keyword)
-                  coll)))
-
 (def known-errors
-  (merge {:name-taken-error #"Name has already been taken"
-          :name-must-be-unique-within-org #"Name must be unique within one organization"
-          :login-credential.username-cant-be-blank #"Login credential(\.username)? can't be blank"
-          :login-credential.password-cant-be-blank #"Login credential(\.password)? can't be blank"}
-         (cant-be-blank-errors [:name
-                                :repository-url])))
+   {:validation-failed #"Validation failed"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
@@ -170,10 +154,10 @@ return the text of the message."
   (browser clickAndWait :delete-environment)
   (check-for-success))
 
-(defn create-content-provider [name description type & [repo-url]]
+(defn create-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat" :custom "Custom"}]
     (assert (some #{type} (keys types)))
-    (navigate :new-content-provider-page)
+    (navigate :new-provider-page)
     (fill-form {:cp-name-text name
                 :cp-description-text description
                 :cp-repository-url-text (if (= type :redhat)
@@ -200,13 +184,13 @@ return the text of the message."
              :save-product #(browser sleep 3000))
   (check-for-success))
 
-(defn delete-content-provider [name]
-  (navigate :named-content-provider-page {:cp-name name})
+(defn delete-provider [name]
+  (navigate :named-provider-page {:cp-name name})
   (browser answerOnNextPrompt "OK")
-  (browser click :remove-content-provider)
+  (browser click :remove-provider)
   (check-for-success))
 
-(defn edit-content-provider [name & {:keys [description repo-url type username password]}]
+(defn edit-provider [name & {:keys [description repo-url type username password]}]
   (fill-form {:cp-description-text description
               :cp-repository-url-text repo-url
               :cp-type-list type
@@ -216,7 +200,7 @@ return the text of the message."
   (check-for-success))
 
 (defn upload-subscription-manifest [cp-name filepath]
-  (navigate :named-content-provider-page {:cp-name cp-name})
+  (navigate :named-provider-page {:cp-name cp-name})
   (->browser (click :subscriptions)
              (setText :choose-file filepath)
              (clickAndWait :upload))

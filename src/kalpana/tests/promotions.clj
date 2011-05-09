@@ -37,7 +37,7 @@ there is none, one will be created and its name returned."
   (reset! provider-name (tasks/timestamp "promotion-cp"))
   (reset! root-next-env (get-root-next-env @myorg))
 
-  (api/create-content-provider @myorg (@config :admin-user) (@config :admin-password)
+  (api/create-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
                                :description "test provider for promotions"
                                :type "Custom"))

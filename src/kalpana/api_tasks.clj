@@ -41,7 +41,7 @@
             (all-entities entity-type org-name))
       (throw (RuntimeException. (str "No matches for " (name entity-type) " named " entity-name)))))
 
-(defn create-content-provider [org-name api-user api-password
+(defn create-provider [org-name api-user api-password
                                & {:keys [name description repo-url type]}]
   (log/info (str "Creating provider " name))
   (rest/post

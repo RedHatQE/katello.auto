@@ -81,7 +81,7 @@
              :edit-environment (link "Edit")
 
              ;;Content Management tab
-             :new-content-provider "new"
+             :new-provider "new"
              :cp-name-text (textbox "provider[name]")
              :cp-description-text (textbox "provider[description]")
              :cp-repository-url-text (textbox "provider[repository_url]")
@@ -90,7 +90,7 @@
              :cp-password-text (textbox "provider[login_credential_attributes][password]")
              :cp-cert-text (textbox "provider[certificate_attributes][contents]")
              :cp-create-save "provider_save"
-             :remove-content-provider (link "Remove Provider")
+             :remove-provider (link "Remove Provider")
              :subscriptions (link "Subscriptions")
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
@@ -145,7 +145,7 @@
                    :create
 
                    ;;subtabs
-                   :content-providers
+                   :providers
                    :sync-management
                    :promotions
                    :users
@@ -166,9 +166,9 @@
 (def page-tree
   (nav-tree [:top-level [] (if-not (browser isElementPresent :log-out) (browser open "/"))
              [:content-management-tab [] (via :content-management)
-              [:content-providers-tab [] (via :content-providers)
-               [:new-content-provider-page [] (via :new-content-provider :cp-name-text)]
-               [:named-content-provider-page [cp-name] (via (cp-link cp-name) :remove-content-provider)
+              [:providers-tab [] (via :providers)
+               [:new-provider-page [] (via :new-provider :cp-name-text)]
+               [:named-provider-page [cp-name] (via (cp-link cp-name) :remove-provider)
                 [:provider-products-repos-page [] (via :products-and-repositories :add-product)]]]
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)

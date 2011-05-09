@@ -9,7 +9,7 @@
               :enabled false  ;;no way to get products into the system yet in an automated fashion -jmw 
               :description "Sync a product."}} simple_sync [_]
   (let [myproduct (tasks/timestamp "sync-test1")]
-    (tasks/create-content-provider myproduct  "testing sync"
+    (tasks/create-provider myproduct  "testing sync"
                                    "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master/lastSuccessfulBuild/artifact/rpms/x86_64"
                                    "Generic Yum Collection")
     (let [results (tasks/sync-products [myproduct] 60000)]
