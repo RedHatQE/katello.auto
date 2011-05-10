@@ -1,5 +1,6 @@
 (ns kalpana.validation
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [clojure.contrib.logging :as log])
   (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]
         [com.redhat.qe.config :only [same-name]]
         [com.redhat.qe.verify :only [verify]]))
@@ -19,7 +20,7 @@
   (merge {:name-taken-error #"Name has already been taken"
           :name-must-not-contain-trailing-whitespace #"Name must not contain trailing white spaces."
           :name-must-not-contain-characters #"Name cannot contain characters other than"
-          :name-must-be-unique-within-org #"Name must be unique within one organization"
+          :name-must-be-unique-within-org #"Name must be unique within one organization" 
           :login-credential.username-cant-be-blank #"Login credential(\.username)? can't be blank"
           :login-credential.password-cant-be-blank #"Login credential(\.password)? can't be blank"}
          (cant-be-blank-errors [:name
@@ -37,6 +38,7 @@
                 (some #{expected-error} message-after-create)))))
 
 (defn duplicate_disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
+  (log/debug (str "Expecting error " expected-error ))
   (create-fn)
   (field-validation create-fn expected-error))
 

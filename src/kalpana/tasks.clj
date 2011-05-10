@@ -65,7 +65,9 @@ return the text of the message."
     (cond (not notif) (raise
                        {:type :no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
-          (not= :success (notif :type)) (raise {:type (matching-error msg) :msg msg})
+          (not= :success (notif :type)) (let [errtype (matching-error msg)]
+                                          (log/debug (str "Raising error type " errtype ))
+                                          (raise {:type errtype :msg msg}))
           :else msg)))
 
 (defn verify-success [task-fn]

@@ -30,9 +30,12 @@
 
 (data-driven validate {org.testng.annotations.Test {:groups ["providers"]}}
              [[nil "blah" "http://sdf.com" :redhat "admin" "admin" :name-cant-be-blank]
+
+              ^{org.testng.annotations.Test {:groups ["blockedByBug-703528"]
+                                             :description "Test that invalid URL is rejected."}}
+              [(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat "admin" "admin" :kalpana-error]
+
               [(tasks/timestamp "mytestcp") "blah" nil :redhat "admin" "admin" :repository-url-cant-be-blank]
-             ;; [(tasks/timestamp "mytestcp") "blah" "http://sdf.com" :redhat nil "admin" :login-credential.username-cant-be-blank]
-              ;;[(tasks/timestamp "mytestcp") "blah" "http://sdf.com" :redhat "admin" nil :login-credential.password-cant-be-blank]
               [(tasks/timestamp "mytestcp") nil "http://sdf.com" :redhat "admin" "admin" :success]
               [(tasks/timestamp "mytestcp") nil "http://sdf.com" :custom "admin" "admin" :success]])
 
