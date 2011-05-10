@@ -23,20 +23,27 @@
      "http://myrepo.url.com/blah/")
     (tasks/verify-success #(tasks/delete-provider cp-name))))
 
-(defn validate [name description repo-url type username password expected-result]
+(defn validate [name description repo-url type  expected-result]
   (validate/field-validation (fn []
                                (tasks/create-provider name description type repo-url)
                                :success) expected-result))
 
-(data-driven validate {org.testng.annotations.Test {:groups ["providers"]}}
-             [[nil "blah" "http://sdf.com" :redhat "admin" "admin" :name-cant-be-blank]
+(def vdata (vec (concat
+                 [[nil "blah" "http://sdf.com" :redhat :name-cant-be-blank]
+                    
+                  ^{Test {:groups ["blockedByBug-703528"]
+                          :description "Test that invalid URL is rejected."}}
+                  [(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :kalpana-error]
 
-              ^{org.testng.annotations.Test {:groups ["blockedByBug-703528"]
-                                             :description "Test that invalid URL is rejected."}}
-              [(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat "admin" "admin" :kalpana-error]
+                  [(tasks/timestamp "mytestcp") "blah" nil :redhat :repository-url-cant-be-blank]
+                  [(tasks/timestamp "mytestcp") nil "http://sdf.com" :redhat :success]
+                  [(tasks/timestamp "mytestcp") nil "http://sdf.com" :custom :success]
+                  [(tasks/timestamp "mytestcp") (validate/test-data :javascript) "http://sdf.com" :custom   :success]]
+                 (vec (for [bad-ws (validate/test-data :trailing-whitespace)]
+                        [bad-ws nil  "http://sdf.com" :custom  :name-must-not-contain-trailing-whitespace]))
+                 (vec (for [bad-inv-char (validate/test-data :invalid-character)]
+                        [bad-inv-char nil "http://sdf.com" :custom :name-must-not-contain-characters])))))
 
-              [(tasks/timestamp "mytestcp") "blah" nil :redhat "admin" "admin" :repository-url-cant-be-blank]
-              [(tasks/timestamp "mytestcp") nil "http://sdf.com" :redhat "admin" "admin" :success]
-              [(tasks/timestamp "mytestcp") nil "http://sdf.com" :custom "admin" "admin" :success]])
+(data-driven validate {Test {:groups ["providers"]}} vdata)
 
 (gen-class-testng)
