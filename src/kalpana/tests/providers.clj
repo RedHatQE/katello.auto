@@ -1,5 +1,6 @@
 (ns kalpana.tests.providers
-  (:require [kalpana.tasks :as tasks])
+  (:require [kalpana.tasks :as tasks]
+            [kalpana.validation :as validate])
   (:import [org.testng.annotations Test])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
@@ -23,13 +24,9 @@
     (tasks/verify-success #(tasks/delete-provider cp-name))))
 
 (defn validate [name description repo-url type username password expected-result]
-  (let [message-after-create (with-handlers
-                               [(handle (if (keyword? expected-result)
-                                          expected-result nil) [e] (:type e))]
-                               (tasks/create-provider
-                                name description type repo-url)
-                               :success)]
-    (verify (= message-after-create expected-result))))
+  (validate/field-validation (fn []
+                               (tasks/create-provider name description type repo-url)
+                               :success) expected-result))
 
 (data-driven validate {org.testng.annotations.Test {:groups ["providers"]}}
              [[nil "blah" "http://sdf.com" :redhat "admin" "admin" :name-cant-be-blank]

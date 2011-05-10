@@ -22,7 +22,7 @@
    tab (LocatorTemplate. "Tab" "link=$1") 
    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
    org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
-   cp-link (LocatorTemplate. "Content Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
+   cp-link (LocatorTemplate. "Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='left']//a[.='$1']")

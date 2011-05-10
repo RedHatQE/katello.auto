@@ -29,18 +29,12 @@
   [message]
   (set (filter (fn [k] (re-find (validation-errors k) message)) (keys validation-errors))))
 
-(defn validator-error-dispatch "A custom dispatcher for error.handler
-that matches when the handler's type matches any of the validation
-errors from the UI."
-  [err handler-meta]
-  (and (= :validation-failed (:type err))
-       (some #{(:type handler-meta)} (matching-validation-errors (:msg err)))))
-
 (defn field-validation [create-fn expected-error]
-  (let [message-after-create (with-handlers-dispatch validator-error-dispatch
-                               [(handle expected-error [e] (:type e))]
-                               (create-fn))]
-    (verify (= message-after-create expected-error))))
+  (let [message-after-create (with-handlers
+                               [(handle :validation-failed [e] (-> e :msg matching-validation-errors))]
+                               (create-fn))] 
+    (verify (or (= expected-error message-after-create)
+                (some #{expected-error} message-after-create)))))
 
 (defn duplicate_disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
   (create-fn)
