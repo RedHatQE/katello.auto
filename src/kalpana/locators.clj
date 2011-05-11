@@ -63,7 +63,7 @@
              :sub-organizations (tab "Sub-Organizations")
 
              ;;Organizations tab
-             :new-organization (link "New Organization")
+             :new-organization "//a[@id='new']"
              :create-organization "//input[@name='commit' and @value='Create']"
              :org-name-text (textbox "name")
              :org-description-text (textbox "description")

@@ -35,10 +35,10 @@
                           :description "Test that invalid URL is rejected."}}
                   [(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :kalpana-error]
 
-                  [(tasks/timestamp "mytestcp") "blah" nil :redhat :repository-url-cant-be-blank]
-                  [(tasks/timestamp "mytestcp") nil "http://sdf.com" :redhat :success]
-                  [(tasks/timestamp "mytestcp") nil "http://sdf.com" :custom :success]
-                  [(tasks/timestamp "mytestcp") (validate/test-data :javascript) "http://sdf.com" :custom   :success]]
+                  [(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
+                  [(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :success]
+                  [(tasks/timestamp "mytestcp4") nil "http://sdf.com" :custom :success]
+                  [(tasks/timestamp "mytestcp5") (validate/test-data :javascript) "http://sdf.com" :custom   :success]]
                  (vec (for [bad-ws (validate/test-data :trailing-whitespace)]
                         [bad-ws nil  "http://sdf.com" :custom  :name-must-not-contain-trailing-whitespace]))
                  (vec (for [bad-inv-char (validate/test-data :invalid-character)]
