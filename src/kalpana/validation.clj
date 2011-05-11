@@ -27,8 +27,13 @@
                                 :repository-url])))
 
 (def test-data {:trailing-whitespace [ "abc123 ", " ", "abc  1-2-3   "]
-                   :invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"]
-                   :javascript "<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"}) 
+                :invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"]
+                :javascript [ "<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"]}) 
+
+(defn variations [args]
+  (let [t (first (filter (set (keys test-data)) args))]
+    (vec (for [datum (test-data t)]
+           (vec (replace {t datum} args))))))
 
 (defn matching-validation-errors "Returns a set of matching known validation errors"
   [message]

@@ -21,7 +21,7 @@
   {link (LocatorTemplate. "" "link=$1")
    tab (LocatorTemplate. "Tab" "link=$1") 
    environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
-   org-link (LocatorTemplate. "Organization" "//div[@id='main']//ul//a[.='$1']")
+   org-link (LocatorTemplate. "Organization" "//div[@id='list']//div[@id='$1']")
    cp-link (LocatorTemplate. "Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
@@ -69,7 +69,7 @@
              :org-description-text (textbox "description")
              :org-environments (link "Environments")
              :edit-organization (link "Edit")
-             :delete-organization (link "Delete")
+             :remove-organization (link "Remove Organization")
 
              ;;Environments tab
              :env-name-text (textbox "name")
@@ -175,7 +175,7 @@
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
-              [:named-organization-page [org-name] (via (org-link org-name))
+              [:named-organization-page [org-name] (via (org-link org-name) :remove-organization)
                [:edit-organization-page [] (via :edit-organization)]
                [:org-environments-page [] (via :org-environments)
                 [:new-environment-page [] (via :new-environment)]

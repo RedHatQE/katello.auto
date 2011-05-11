@@ -10,7 +10,7 @@
   (tasks/verify-success #(tasks/create-organization (tasks/timestamp "auto-org") "org description")))
 
 (defn ^{Test {:groups ["organizations"]}} delete_simple [_]
-  (let [org-name (tasks/timestamp "auto-org-del")]
+  (let [org-name (tasks/timestamp "auto-del")]
     (tasks/create-organization org-name "org to delete immediately")
     (tasks/delete-organization org-name)))
 
@@ -25,8 +25,10 @@
 (defn valid_name [name expected-error]
   (validate/field-validation #(tasks/create-organization name "org description") expected-error))
 
-(data-driven valid_name {org.testng.annotations.Test {:groups ["organizations" "validation"]}}
-             [[" " :name-must-not-contain-trailing-whitespace]])
+(data-driven valid_name {Test {:groups ["organizations" "validation"]}}
+             (vec (concat 
+                   (validate/variations [:invalid-character :name-must-not-contain-characters])
+                   (validate/variations [:trailing-whitespace :name-must-not-contain-trailing-whitespace]))))
 
 (gen-class-testng)
 

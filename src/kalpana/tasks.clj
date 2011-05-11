@@ -137,7 +137,7 @@ return the text of the message."
 (defn delete-organization [org-name]
   (navigate :named-organization-page {:org-name org-name})
   (browser answerOnNextPrompt "OK")
-  (browser clickAndWait :delete-organization)
+  (browser click :remove-organization)
   (check-for-success))
 
 (defn create-environment
