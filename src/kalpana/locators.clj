@@ -64,7 +64,7 @@
 
              ;;Organizations tab
              :new-organization "//a[@id='new']"
-             :create-organization "//input[@name='commit' and @value='Create']"
+             :create-organization "organization_save"
              :org-name-text (textbox "name")
              :org-description-text (textbox "description")
              :org-environments (link "Environments")

@@ -131,7 +131,7 @@ return the text of the message."
   (navigate :new-organization-page)
   (fill-form {:org-name-text name
               :org-description-text description}
-             :create-organization)
+             :create-organization #(browser sleep 1000))
   (check-for-success))
 
 (defn delete-organization [org-name]
