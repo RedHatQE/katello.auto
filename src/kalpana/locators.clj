@@ -174,7 +174,7 @@
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
              [:organizations-tab [] (via :organizations)
-              [:new-organization-page [] (via :new-organization)]
+              [:new-organization-page [] (via :new-organization :org-name-text)]
               [:named-organization-page [org-name] (via (org-link org-name))
                [:edit-organization-page [] (via :edit-organization)]
                [:org-environments-page [] (via :org-environments)
