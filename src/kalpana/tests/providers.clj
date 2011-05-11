@@ -24,21 +24,22 @@
     (tasks/verify-success #(tasks/delete-provider cp-name))))
 
 (defn validate [name description repo-url type  expected-result]
-  (validate/field-validation (fn []
-                               (tasks/create-provider name description type repo-url)
-                               :success) expected-result))
+  (let [name (if (fn? name) (name) name)]
+    (validate/field-validation (fn []
+                                 (tasks/create-provider name description type repo-url)
+                                :success) expected-result)))
 
 (def vdata (vec (concat
                  [[nil "blah" "http://sdf.com" :redhat :name-cant-be-blank]
                     
                   ^{Test {:groups ["blockedByBug-703528"]
                           :description "Test that invalid URL is rejected."}}
-                  [(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :kalpana-error]
+                  [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :kalpana-error]
 
-                  [(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
-                  [(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :success]
-                  [(tasks/timestamp "mytestcp4") nil "http://sdf.com" :custom :success]
-                  [(tasks/timestamp "mytestcp5") (validate/test-data :javascript) "http://sdf.com" :custom   :success]]
+                  [#(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
+                  [#(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :success]
+                  [#(tasks/timestamp "mytestcp4") nil "http://sdf.com" :custom :success]
+                  [#(tasks/timestamp "mytestcp5") (validate/test-data :javascript) "http://sdf.com" :custom   :success]]
                  (vec (for [bad-ws (validate/test-data :trailing-whitespace)]
                         [bad-ws nil  "http://sdf.com" :custom  :name-must-not-contain-trailing-whitespace]))
                  (vec (for [bad-inv-char (validate/test-data :invalid-character)]
