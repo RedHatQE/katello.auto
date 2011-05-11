@@ -9,7 +9,7 @@
 
 (defn ^{BeforeClass {:groups ["setup"]}}
   create_test_org [_]
-  (api/create-organization (reset! test-org-name (tasks/timestamp "env-test-org")) "organization used to test environments."))
+  (api/create-organization (reset! test-org-name (tasks/timestamp "env-test")) "organization used to test environments."))
 
 (defn ^{Test {:groups ["environments" "blockedByBug-693797"]}} create_simple [_]
   (tasks/verify-success
