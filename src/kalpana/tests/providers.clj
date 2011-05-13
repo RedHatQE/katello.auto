@@ -43,7 +43,7 @@
                  (validate/variations
                   [#(tasks/timestamp "mytestcp5") :javascript "http://sdf.com" :custom :success])
                  (validate/variations                  
-                  [:trailing-whitespace nil  "http://sdf.com" :custom  :name-must-not-contain-trailing-whitespace])
+                  [:trailing-whitespace nil  "http://sdf.com" :custom  :name-no-leading-trailing-whitespace])
                  (validate/variations
                   [:invalid-character nil "http://sdf.com" :custom :name-must-not-contain-characters]))))
 

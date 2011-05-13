@@ -28,7 +28,7 @@
 (data-driven valid_name {Test {:groups ["organizations" "validation"]}}
              (vec (concat 
                    (validate/variations [:invalid-character :name-must-not-contain-characters])
-                   (validate/variations [:trailing-whitespace :name-must-not-contain-trailing-whitespace]))))
+                   (validate/variations [:trailing-whitespace :name-no-leading-trailing-whitespace]))))
 
 (gen-class-testng)
 
