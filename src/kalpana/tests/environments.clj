@@ -27,7 +27,7 @@
 (defn ^{Test {:groups ["environments" "validation" "blockedByBug-693797" "blockedByBug-695706"]}} name_required [_]
   (validate/name-field-required #(tasks/create-environment @test-org-name nil "env description")))
 
-(defn ^{Test {:groups ["environments" "validation" "blockedByBug-690907"] :dependsOnMethods ["create_simple"]}} duplicate_disallowed [_]
+(defn ^{Test {:groups ["environments" "validation" "blockedByBug-690907" "blockedByBug-704392" ] :dependsOnMethods ["create_simple"]}} duplicate_disallowed [_]
   (let [env-name (tasks/timestamp "test-dup")]
     (validate/duplicate_disallowed #(tasks/create-environment @test-org-name env-name "dup env description")
                                    :expected-error :name-must-be-unique-within-org)))

@@ -147,13 +147,13 @@ return the text of the message."
                :env-description-text description}]
     (fill-form (if prior-env (merge items {:prior-environment prior-env})
                    items)
-               :create-environment))
+               :create-environment #(browser sleep 1000)))
   (check-for-success))
 
 (defn delete-environment [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (browser clickAndWait :delete-environment)
+  (browser clickAndWait :remove-environment)
   (check-for-success))
 
 (defn create-provider [name description type & [repo-url]]

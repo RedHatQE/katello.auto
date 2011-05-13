@@ -20,7 +20,7 @@
 (define-strategies
   {link (LocatorTemplate. "" "link=$1")
    tab (LocatorTemplate. "Tab" "link=$1") 
-   environment-link (LocatorTemplate. "Environment" "//div[@id='main']//ul//a[.='$1']")
+   environment-link (LocatorTemplate. "Environment" "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']")
    org-link (LocatorTemplate. "Organization" "//div[@id='list']//div[@id='$1']")
    cp-link (LocatorTemplate. "Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
@@ -75,10 +75,10 @@
              :env-name-text (textbox "name")
              :env-description-text (textbox "description")
              :prior-environment "//select[@id='environment_prior']"
-             :create-environment "//input[@name='commit' and @value='Create']"
-             :new-environment (link "New Environment")
-             :delete-environment (link "Delete")
-             :edit-environment (link "Edit")
+             :create-environment "//div[contains(@class, 'environment_create')]"
+             :new-environment "//div[normalize-space(.)='Add New Environment']"
+             :remove-environment (link "Remove Environment")
+              
 
              ;;Content Management tab
              :new-provider "new"
@@ -175,12 +175,9 @@
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
-              [:named-organization-page [org-name] (via (org-link org-name) :remove-organization)
-               [:edit-organization-page [] (via :edit-organization)]
-               [:org-environments-page [] (via :org-environments)
-                [:new-environment-page [] (via :new-environment)]
-                [:named-environment-page [env-name] (via (environment-link env-name))
-                 [:edit-environment-page [] (via :edit-environment)]]]]]
+              [:named-organization-page [org-name] (via (org-link org-name) :remove-organization) 
+               [:new-environment-page [] (via :new-environment :create-environment)]
+               [:named-environment-page [env-name] (via (environment-link env-name) :remove-environment)]]]
              [:administration-tab [] (via :administration)
               [:users-tab [] (via :users)
                [:named-user-page [username] (via (user username) (username-field username) )]]
