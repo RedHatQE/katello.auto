@@ -76,6 +76,9 @@ return the text of the message."
 
 (def navigate (nav/nav-fn locators/page-tree))
 
+(defn fill-ajax-form [items submit]
+  (fill-form items submit #(browser sleep 1000)))
+
 (defn promote-content [from-env content]
   (navigate :named-environment-promotions-page {:env-name from-env})
   (doseq [category (keys content)]
@@ -129,9 +132,9 @@ return the text of the message."
 
 (defn create-organization [name description]
   (navigate :new-organization-page)
-  (fill-form {:org-name-text name
+  (fill-ajax-form {:org-name-text name
               :org-description-text description}
-             :create-organization #(browser sleep 1000))
+             :create-organization)
   (check-for-success))
 
 (defn delete-organization [org-name]
@@ -145,9 +148,9 @@ return the text of the message."
   (navigate :new-environment-page {:org-name org})
   (let [items {:env-name-text name
                :env-description-text description}]
-    (fill-form (if prior-env (merge items {:prior-environment prior-env})
+    (fill-ajax-form (if prior-env (merge items {:prior-environment prior-env})
                    items)
-               :create-environment #(browser sleep 1000)))
+               :create-environment))
   (check-for-success))
 
 (defn delete-environment [org-name env-name]
@@ -156,16 +159,18 @@ return the text of the message."
   (browser clickAndWait :remove-environment)
   (check-for-success))
 
+
+
 (defn create-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat" :custom "Custom"}]
     (assert (some #{type} (keys types)))
     (navigate :new-provider-page)
-    (fill-form {:cp-name-text name
+    (fill-ajax-form {:cp-name-text name
                 :cp-description-text description
                 :cp-repository-url-text (if (= type :redhat)
                                           repo-url nil)
                 :cp-type-list (types type)}
-               :cp-create-save #(browser sleep 1000))
+               :cp-create-save)
     (check-for-success)))
 
 (defn add-product [provider-name name description url & [yum? file?]]
@@ -225,10 +230,10 @@ return the text of the message."
   (navigate :users-tab)
   (->browser (click :new-user)
              (waitForElement :new-user-username-text "7500"))
-  (fill-form {:new-user-username-text username
+  (fill-ajax-form {:new-user-username-text username
               :new-user-password-text password
               :new-user-confirm-text (or password-confirm password)}
-             :save-user #(browser sleep 1000))
+             :save-user)
   (check-for-success))
 
 (defn delete-user [username]
@@ -238,18 +243,18 @@ return the text of the message."
 
 (defn edit-user [username & {:keys [inline-help clear-disabled-helptips new-password]}]
   (navigate :named-user-page {:username username})
-  (fill-form {:enable-inline-help-checkbox inline-help
+  (fill-ajax-form {:enable-inline-help-checkbox inline-help
               :clear-disabled-helptips clear-disabled-helptips
               :change-password-text new-password
               :confirm-password-text new-password}
-             :save-user-edit #(browser sleep 1000))
+             :save-user-edit)
   (check-for-success))
 
 (defn create-role [name]
   (navigate :roles-tab)
   (->browser (click :new-role)
              (waitForElement :new-role-name-text "7500")) 
-  (fill-form {:new-role-name-text name} :save-role #(browser sleep 1000)))
+  (fill-ajax-form {:new-role-name-text name} :save-role))
 
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
