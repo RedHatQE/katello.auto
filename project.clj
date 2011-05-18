@@ -9,8 +9,8 @@
                  [inflections "0.4"]
                  [clj-http "0.1.1"]]
   :dev-dependencies [[swank-clojure "[1.2.1,)"]]
-  :repositories {"clojars.org" {:url "http://clojars.org/repo"
-                                :snapshots {:update :always}}}
+  :repositories {"clojars" {:url "http://clojars.org/repo"
+                            :snapshots {:update :always}}}
   )
 
 (comment "Execute this in the repl to load everything and start selenium"
