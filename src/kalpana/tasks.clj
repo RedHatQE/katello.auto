@@ -79,10 +79,13 @@ return the text of the message."
 (defn fill-ajax-form [items submit]
   (fill-form items submit #(browser sleep 1000)))
 
+(defn activate-in-place [loc]
+  (browser click (locators/inactive-edit-field loc)))
+
 (defn in-place-edit [items]
   (doseq [[loc val] items]
     (if-not (nil? val)
-      (do (browser click (locators/inactive-edit-field loc))
+      (do (activate-in-place loc)
           (fill-item loc val)
           (browser click :save-inplace-edit)))))
 
@@ -173,6 +176,12 @@ return the text of the message."
                   :env-description-text-edit description
                   :env-prior-select-edit prior})
   (check-for-success))
+
+(defn environment-other-possible-priors [org-name env-name]
+  (navigate :named-environment-page {:org-name org-name
+                                     :env-name env-name})
+  (activate-in-place :env-prior-select-edit)
+  (set (browser getSelectOptions :env-prior-select-edit)))
 
 (defn create-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat" :custom "Custom"}]
