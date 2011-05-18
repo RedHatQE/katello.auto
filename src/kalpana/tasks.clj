@@ -3,13 +3,13 @@
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
-  (:use [com.redhat.qe.auto.selenium.selenium :only [connect browser ->browser
-                                                     fill-form first-present
-                                                     loop-with-timeout]]
-        
+  (:use [com.redhat.qe.auto.selenium.selenium
+         :only [connect browser ->browser fill-form fill-item
+                first-present loop-with-timeout]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
   (:import [com.thoughtworks.selenium SeleniumException]))
+
 ;;tasks
 (defn timestamp
   "Returns a string with timestamp (time in millis since
@@ -78,6 +78,13 @@ return the text of the message."
 
 (defn fill-ajax-form [items submit]
   (fill-form items submit #(browser sleep 1000)))
+
+(defn in-place-edit [items]
+  (doseq [[loc val] items]
+    (if-not (nil? val)
+      (do (browser click (locators/inactive-edit-field loc))
+          (fill-item loc val)
+          (browser click :save-inplace-edit)))))
 
 (defn promote-content [from-env content]
   (navigate :named-environment-promotions-page {:env-name from-env})
@@ -159,7 +166,13 @@ return the text of the message."
   (browser clickAndWait :remove-environment)
   (check-for-success))
 
-
+(defn edit-environment [org-name env-name & {:keys [new-name description prior]}]
+  (navigate :named-environment-page {:org-name org-name
+                                     :env-name env-name})
+  (in-place-edit {:env-name-text-edit new-name
+                  :env-description-text-edit description
+                  :env-prior-select-edit prior})
+  (check-for-success))
 
 (defn create-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat" :custom "Custom"}]

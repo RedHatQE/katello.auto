@@ -1,5 +1,5 @@
 (ns kalpana.locators
-  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser ->browser]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser ->browser sel-locator]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.contrib.string :only [capitalize]])
@@ -48,7 +48,7 @@
              :error-message "//div[contains(@class,'jnotify-notification-error')]"
              :success-message "//div[contains(@class,'jnotify-notification-message')]"
              :spinner "//img[contains(@src,'spinner.gif')]"
-         
+             :save-inplace-edit "//button[.='Save']"
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -78,13 +78,15 @@
              :create-environment "//div[contains(@class, 'environment_create')]"
              :new-environment "//div[normalize-space(.)='Add New Environment']"
              :remove-environment (link "Remove Environment")
-              
+             :env-name-text-edit "kp_environment[name]"
+             :env-description-text-edit "kp_environment[description]"
+             :env-prior-select-edit "kp_environment[prior]" 
 
              ;;Content Management tab
              :new-provider "new"
-             :cp-name-text (textbox "provider[name]")
-             :cp-description-text (textbox "provider[description]")
-             :cp-repository-url-text (textbox "provider[repository_url]")
+             :cp-name-text  "provider[name]"
+             :cp-description-text "provider[description]"
+             :cp-repository-url-text "provider[repository_url]"
              :cp-type-list  "name=provider[provider_type]"
              :cp-username-text (textbox "provider[login_credential_attributes][username]")
              :cp-password-text (textbox "provider[login_credential_attributes][password]")
@@ -155,6 +157,9 @@
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
   (sel-locator [k] (uimap k)))
+
+(defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
+  (format "//div[@name='%1s']" (sel-locator loc)))
 
 ;;page layout
 (defmacro via [link & [ajax-wait-for]]
