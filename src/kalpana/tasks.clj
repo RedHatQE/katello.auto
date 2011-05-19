@@ -12,10 +12,10 @@
 
 ;;tasks
 (defn timestamp
-  "Returns a string with timestamp (time in millis since
-1970) appended onto the end.  If optional n is specified, returns a
-list of n timestamped strings, where the millis is incremented by one
-for each item."
+  "Returns a string with timestamp (time in millis since 1970)
+   appended onto the end.  If optional n is specified, returns a list
+   of n timestamped strings, where the millis is incremented by one
+   for each item."
   ([s] (str s "-" (System/currentTimeMillis)))
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
@@ -24,7 +24,7 @@ for each item."
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
-  them.  If no matches, returns :kalpana-error."
+   them.  If no matches, returns :kalpana-error."
   [message]
   (or (some #(let [re (known-errors %)]
                (if (re-find re message) % false) )
@@ -40,25 +40,27 @@ for each item."
     (if (> n 0) (log/info (str "Cleared " n " notifications.")))
     n))
 
-(defn notification "Gets the notification from the page, returns a map
-object representing the notification (or nil if no notification is
-present within a built-in timeout period)."
-    []
-    (try (browser waitForElement :notification "10000")
-         (let [msg (browser getText :notification)
-               classattr ((into {} (browser getAttributes :notification)) "class")
-               type ({"jnotify-notification-error" :error
-                      "jnotify-notification-message" :message
-                      "jnotify-notification-success" :success}
-                     (-> (string/split classattr #" ") second))]
-           (log/info (str "Received " (name type) " notification \"" msg "\""))
-           (clear-all-notifications)
-           {:type type :msg msg})
-         (catch SeleniumException e nil))) 
+(defn notification
+  "Gets the notification from the page, returns a map object
+   representing the notification (or nil if no notification is present
+   within a built-in timeout period)."
+  []
+  (try (browser waitForElement :notification "10000")
+       (let [msg (browser getText :notification)
+             classattr ((into {} (browser getAttributes :notification)) "class")
+             type ({"jnotify-notification-error" :error
+                    "jnotify-notification-message" :message
+                    "jnotify-notification-success" :success}
+                   (-> (string/split classattr #" ") second))]
+         (log/info (str "Received " (name type) " notification \"" msg "\""))
+         (clear-all-notifications)
+         {:type type :msg msg})
+       (catch SeleniumException e nil))) 
 
-(defn check-for-success "Gets any notification from the UI, if there
-is none or not a success notification, raise an exception.  Otherwise
-return the text of the message."
+(defn check-for-success
+  "Gets any notification from the UI, if there is none or not a
+   success notification, raise an exception.  Otherwise return the
+   text of the message."
   []
   (let [notif (notification)
         msg (:msg notif)]
@@ -79,10 +81,19 @@ return the text of the message."
 (defn fill-ajax-form [items submit]
   (fill-form items submit #(browser sleep 1000)))
 
-(defn activate-in-place [loc]
+(defn activate-in-place
+  "For an in-place edit input, switch it from read-only to editing
+   mode. Takes the locator of the input in editing mode as an
+   argument."
+  [loc]
   (browser click (locators/inactive-edit-field loc)))
 
-(defn in-place-edit [items]
+(defn in-place-edit
+  "Fill out a form that uses in-place editing.  Takes a map of
+   locators to values.  The locators given should be for the
+   editing-mode version of the input, it will be activated from its
+   read-only state automatically."
+  [items]
   (doseq [[loc val] items]
     (if-not (nil? val)
       (do (activate-in-place loc)
@@ -154,13 +165,12 @@ return the text of the message."
   (check-for-success))
 
 (defn create-environment
-  [org name description & {:keys [prior-env] :or {prior-env nil}}]
+  [org name description & [prior-env]]
   (navigate :new-environment-page {:org-name org})
-  (let [items {:env-name-text name
-               :env-description-text description}]
-    (fill-ajax-form (if prior-env (merge items {:prior-environment prior-env})
-                   items)
-               :create-environment))
+  (fill-ajax-form {:env-name-text name
+                   :env-description-text description
+                   :prior-environment prior-env}
+                  :create-environment)
   (check-for-success))
 
 (defn delete-environment [org-name env-name]
@@ -177,14 +187,18 @@ return the text of the message."
                   :env-prior-select-edit prior})
   (check-for-success))
 
-(defn environment-other-possible-priors [org-name env-name]
+(defn environment-other-possible-priors
+  "Returns a set of priors that are selectable for the given
+   environment (will not include the currently selected prior)."
+   [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
 
 (defn create-provider [name description type & [repo-url]]
-  (let [types {:redhat "Red Hat" :custom "Custom"}]
+  (let [types {:redhat "Red Hat"
+               :custom "Custom"}]
     (assert (some #{type} (keys types)))
     (navigate :new-provider-page)
     (fill-ajax-form {:cp-name-text name
@@ -197,14 +211,6 @@ return the text of the message."
 
 (defn add-product [provider-name name description url & [yum? file?]]
   (navigate :provider-products-repos-page {:cp-name provider-name})
-  
-  ;;workaround need multiple clicks!
-  (comment (loop-with-timeout 10000 []
-     (browser click :add-product)
-     (if-not (browser isVisible :product-name-text)
-       (do (browser sleep 1000)
-           (recur)))))
-  
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
               :product-description-text description
