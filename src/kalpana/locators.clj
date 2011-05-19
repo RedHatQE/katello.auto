@@ -31,13 +31,12 @@
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
    provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
-   add-repository (LocatorTemplate. "Add repostory button" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../ul/div[starts-with(@id,'add_repository')]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
-   product-expand (LocatorTemplate. "Product expand" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']/../div/a")
    notification-close-index (LocatorTemplate. "Notification close button" "xpath=(//a[@class='jnotify-close'])[$1]")
    user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
    username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
-   })
+   product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']/..//img[@alt='Expand']")
+   add-repository (LocatorTemplate. "Add Repository" "//div[@id='panel-frame']//div[normalize-space(.)='$1' and starts-with(@id,'edit_product')]/..//div[starts-with(@id,'add_repository')]")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -106,7 +105,11 @@
              :product-yum-checkbox "yum_type"
              :product-file-checkbox "file_type"
              ;;add repo
-             ;;:add-repository 
+             :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
+             :repo-name-text "//input[@name='repo[name]' and not(ancestor::div[contains(@style,'display: none')])]"
+             :repo-url-text "//input[@name='repo[feed]' and not(ancestor::div[contains(@style,'display: none')])]" 
+             :save-repository "//div[normalize-space(.)='Save Repository' and not(ancestor::div[contains(@style,'display: none')])]"             
+             
              ;;Promotions subtab
              :products-category (promotion-content-category "Products")
              :errata-category (promotion-content-category "Errata")
@@ -174,7 +177,9 @@
               [:providers-tab [] (via :providers)
                [:new-provider-page [] (via :new-provider :cp-name-text)]
                [:named-provider-page [cp-name] (via (cp-link cp-name) :remove-provider)
-                [:provider-products-repos-page [] (via :products-and-repositories :add-product)]]]
+                [:provider-products-repos-page [] (do (via :products-and-repositories
+                                                           :add-product)
+                                                      (browser sleep 2000))]]]
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]

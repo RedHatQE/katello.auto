@@ -199,18 +199,30 @@ return the text of the message."
   (navigate :provider-products-repos-page {:cp-name provider-name})
   
   ;;workaround need multiple clicks!
-  (loop-with-timeout 10000 []
-    (browser click :add-product)
-    (if-not (browser isVisible :product-name-text)
-      (do (browser sleep 1000)
-          (recur))))
-
-  (fill-form {:product-name-text name
+  (comment (loop-with-timeout 10000 []
+     (browser click :add-product)
+     (if-not (browser isVisible :product-name-text)
+       (do (browser sleep 1000)
+           (recur)))))
+  
+  (browser click :add-product)
+  (fill-ajax-form {:product-name-text name
               :product-description-text description
               :product-url-text url
               :product-yum-checkbox yum?
               :product-file-checkbox file?}
-             :save-product #(browser sleep 3000))
+             :save-product)
+  (check-for-success))
+
+(defn add-repo [provider-name product-name name url]
+  (navigate :provider-products-repos-page {:cp-name provider-name})
+  (let [add-repo-button (locators/add-repository product-name)]
+    (browser click (locators/product-expand product-name))
+    (browser waitForVisible add-repo-button "5000")
+    (browser click add-repo-button))
+  (fill-ajax-form {:repo-name-text name
+                   :repo-url-text url}
+                  :save-repository)
   (check-for-success))
 
 (defn delete-provider [name]
