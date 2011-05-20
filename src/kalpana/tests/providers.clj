@@ -36,7 +36,7 @@
      "http://myrepo.url.com/blah/")
     (tasks/verify-success #(tasks/delete-provider cp-name))))
 
-(defn validate-provider [name description repo-url type  expected-result]
+(defn validate_provider [name description repo-url type  expected-result]
   (let [name (if (fn? name) (name) name)] ; timestamping at compile time defeats purpose of unique names
     (validate/field-validation       
      (fn []                           
@@ -60,14 +60,13 @@
                  (validate/variations
                   [:invalid-character nil "http://sdf.com" :custom :name-must-not-contain-characters]))))
 
-(data-driven validate-provider {Test {:groups ["providers"]}} provider-vdata)
+(data-driven validate_provider {Test {:groups ["providers"]}} provider-vdata)
 
 (defn ^{BeforeGroups {:description "Create a custom Provider to do further testing with."
                       :groups ["providers"]
-                      :value ["products"]
-                      :dependsOnMethods ["create_custom_simple"]}}
+                      :value ["products"]}}
   create_test_custom_provider [_]
-  (tasks/create-provider (reset!  test-provider-name (tasks/timestamp ("cust")))
+  (tasks/create-provider (reset!  test-provider-name (tasks/timestamp "cust"))
                          "my description" :custom))
 
 (defn ^{Test {:groups ["providers" "products"]
