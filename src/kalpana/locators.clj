@@ -82,6 +82,7 @@
              :env-prior-select-edit "kp_environment[prior]" 
 
              ;;Content Management tab
+             ;;Providers
              :new-provider "new"
              :cp-name-text  "provider[name]"
              :cp-description-text "provider[description]"
@@ -96,6 +97,7 @@
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
              :products-and-repositories "//nav[@class='subnav']//a[contains(.,'Products')]"
+             
              ;;add product
              :add-product "add_product"
              :save-product "save_product_button"

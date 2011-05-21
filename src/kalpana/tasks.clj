@@ -238,13 +238,11 @@
   (browser click :remove-provider)
   (check-for-success))
 
-(defn edit-provider [name & {:keys [description repo-url type username password]}]
-  (fill-form {:cp-description-text description
-              :cp-repository-url-text repo-url
-              :cp-type-list type
-              :cp-username-text username
-              :cp-password-text password} 
-             :cp-create-save)
+(defn edit-provider [provider-name & {:keys [new-name description repo-url]}]
+  (navigate :named-provider-page {:cp-name provider-name})
+  (in-place-edit {:cp-name-text new-name
+                  :cp-description-text description
+                  :cp-repository-url-text repo-url})
   (check-for-success))
 
 (defn upload-subscription-manifest [cp-name filepath]
