@@ -40,7 +40,8 @@ there is none, one will be created and its name returned."
   (api/create-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
                                :description "test provider for promotions"
-                               :type "Custom"))
+                               :type "Custom")
+  )
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]

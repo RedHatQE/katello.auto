@@ -3,15 +3,20 @@
   (:import [org.testng.annotations Test])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
-        [com.redhat.qe.verify :only [verify]]))
+        [com.redhat.qe.verify :only [verify]]
+        [kalpana.conf :only [config]]))
+
+(def provider-name (atom nil))
+(def product-name (atom nil))
 
 (defn ^{Test {:groups ["sync"]
-              :enabled false  ;;no way to get products into the system yet in an automated fashion -jmw 
-              :description "Sync a product."}} simple_sync [_]
-  (let [myproduct (tasks/timestamp "sync-test1")]
-    (tasks/create-provider myproduct  "testing sync"
-                                   "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master/lastSuccessfulBuild/artifact/rpms/x86_64"
-                                   "Generic Yum Collection")
+              :description "Sync a product."}}
+  simple_sync [_]
+  (let [myprovider (tasks/timestamp "sync")
+        myproduct (tasks/timestamp "sync-test1")]
+    (tasks/create-provider myprovider  "provider to test syncing" :custom)
+    (tasks/add-product myprovider myproduct  "testing sync" "http://meaningless.url" true true)
+    (tasks/add-repo myprovider myproduct "testrepo" (@config :sync-repo))
     (let [results (tasks/sync-products [myproduct] 60000)]
       (verify (every? #(= "Sync complete." %) (vals results))))))
 

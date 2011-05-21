@@ -1,6 +1,7 @@
 (ns kalpana.tests.providers
   (:require [kalpana.tasks :as tasks]
-            [kalpana.validation :as validate])
+            [kalpana.validation :as validate]
+            [kalpana.api-tasks :as api])
   (:import [org.testng.annotations Test BeforeGroups])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
@@ -19,7 +20,9 @@
     (verify (string? result-message))))
 
 (defn ^{Test {:description "Create a Red Hat provider (sunny day test)"
-              :groups ["providers"]}} create_redhat_simple [_]
+              :groups ["providers"]
+              :enabled false}} ;;disabled, only one redhat provider allowed
+  create_redhat_simple [_]
   (test-provider :redhat))
 
 (defn ^{Test {:description "Create a custom provider (sunny day test)"
@@ -32,9 +35,19 @@
     (tasks/create-provider
      cp-name
      "my description"
-     :redhat
-     "http://myrepo.url.com/blah/")
+     :custom)
     (tasks/verify-success #(tasks/delete-provider cp-name))))
+
+(defn ^{Test {:description "Change the name of a provider, and verify it can be found under its new name."
+              :groups ["providers"]}}
+  edit_name [_]
+  (let [old-name (tasks/timestamp "rename")
+        new-name (tasks/timestamp "newname")]
+    (tasks/create-provider old-name "my description" :custom)
+    (tasks/edit-provider old-name :new-name new-name)
+    (tasks/navigate :named-provider-page {:cp-name new-name})
+    (let [current-providers (map :name (api/all-entities :provider "ACME_Corporation"))]
+      (verify (not (some #{old-name} current-providers))))))
 
 (defn validate_provider [name description repo-url type  expected-result]
   (let [name (if (fn? name) (name) name)] ; timestamping at compile time defeats purpose of unique names
@@ -74,5 +87,6 @@
   create_product [_]
   (tasks/add-product @test-provider-name (reset! test-product-name (tasks/timestamp "prod"))
                      "test product" "http://test.url" true true))
+
 
 (gen-class-testng)
