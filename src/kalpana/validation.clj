@@ -21,8 +21,8 @@
           :name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
           :name-must-not-contain-characters #"Name cannot contain characters other than"
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
-          :login-credential.username-cant-be-blank #"Login credential(\.username)? can't be blank"
-          :login-credential.password-cant-be-blank #"Login credential(\.password)? can't be blank"}
+          :only-one-redhat-provider-per-org #"Only one Red Hat provider permitted"}
+         
          (cant-be-blank-errors [:name
                                 :repository-url])))
 

@@ -64,7 +64,7 @@
                   [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :kalpana-error]
 
                   [#(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
-                  [#(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :success]
+                  [#(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :only-one-redhat-provider-per-org]
                   [#(tasks/timestamp "mytestcp4") nil "http://sdf.com" :custom :success]]
                  (validate/variations
                   [#(tasks/timestamp "mytestcp5") :javascript "http://sdf.com" :custom :success])
