@@ -176,7 +176,8 @@
 (defn delete-environment [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (browser clickAndWait :remove-environment)
+  (browser answerOnNextPrompt "OK")
+  (browser click :remove-environment)
   (check-for-success))
 
 (defn edit-environment [org-name env-name & {:keys [new-name description prior]}]
