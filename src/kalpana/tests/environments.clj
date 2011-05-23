@@ -61,7 +61,7 @@
   (let [org-name (tasks/timestamp "env2")
         env-name "myenv"]
     (tasks/create-organization org-name "org to hold test envs")
-    (tasks/create-environment org-name env-name "test env" :prior-env locker)
+    (tasks/create-environment org-name env-name "test env" locker)
     (tasks/edit-environment org-name env-name :prior root)
     (let [available-priors (tasks/environment-other-possible-priors org-name root)]
       (verify (= available-priors #{locker})))))

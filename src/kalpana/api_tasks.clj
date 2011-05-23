@@ -11,7 +11,7 @@
 
 (defn uri-for-entity-type  
   [entity-type & [org-name]]
-  (str "/api/" (if (some #(= entity-type %) [:environment :provider :product])
+  (str "api/" (if (some #(= entity-type %) [:environment :provider :product])
                  (str "organizations/"
                       (or org-name
                           (throw (IllegalArgumentException.
