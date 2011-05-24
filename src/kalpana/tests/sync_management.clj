@@ -9,7 +9,7 @@
 (def provider-name (atom nil))
 (def product-name (atom nil))
 
-(defn ^{Test {:groups ["sync"]
+(defn ^{Test {:groups ["sync" "blockedByBug-705355"]
               :description "Sync a product."}}
   simple_sync [_]
   (let [myprovider (tasks/timestamp "sync")
