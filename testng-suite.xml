@@ -83,4 +83,15 @@
       </run>
     </groups>
   </test>
+  <test name="Systems">
+    <packages>
+      <package name="kalpana.tests" />
+    </packages>    
+    <groups>
+      <run>
+        <include name="systems"/>
+        <include name="setup" />
+      </run>
+    </groups>
+  </test>
 </suite>

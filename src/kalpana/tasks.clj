@@ -313,3 +313,10 @@
                        (or (sync-complete-status product)
                            (do (Thread/sleep 10000)
                                (recur)))))))
+
+(defn edit-system [name & {:keys [new-name description location]}]
+  (navigate :named-systems-page {:system-name name})
+  (in-place-edit {:system-name-text-edit new-name
+                  :system-description-text-edit description
+                  :system-location-text-edit location})
+  (check-for-success))

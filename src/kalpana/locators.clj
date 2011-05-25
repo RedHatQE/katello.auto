@@ -36,7 +36,8 @@
    user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
    username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
    product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']/..//img[@alt='Expand']")
-   add-repository (LocatorTemplate. "Add Repository" "//div[@id='panel-frame']//div[normalize-space(.)='$1' and starts-with(@id,'edit_product')]/..//div[starts-with(@id,'add_repository')]")})
+   add-repository (LocatorTemplate. "Add Repository" "//div[@id='panel-frame']//div[normalize-space(.)='$1' and starts-with(@id,'edit_product')]/..//div[starts-with(@id,'add_repository')]")
+   system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -121,6 +122,14 @@
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
              ;;Sync Management subtab
              :synchronize-now "sync_button"
+
+             ;;System Tab
+             ;;Registered subtab
+             ;;subtabs
+             ;;General
+             :system-name-text-edit "system[name]"
+             :system-description-text-edit "system[description]"
+             :system-location-text-edit "system[location]"
              
              ;;Administration tab
              ;;Users subtab
@@ -157,6 +166,13 @@
                    :promotions
                    :users
                    :roles
+
+                   :registered
+                   :groups
+                   :general
+                   :subscriptions
+                   :facts
+                   :packages
                    ])))
 
 (extend-protocol SeleniumLocatable
@@ -185,6 +201,10 @@
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
+             [:systems-tab [] (via :systems)
+              [:named-systems-page [system-name] (via (system system-name)
+                                                      (inactive-edit-field :system-name-text-edit))]]
+             
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
               [:named-organization-page [org-name] (via (org-link org-name) :remove-organization) 
