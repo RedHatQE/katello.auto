@@ -100,9 +100,6 @@
           (fill-item loc val)
           (browser click :save-inplace-edit)))))
 
-(defn current-user []
-  (browser getText :account))
-
 (defn promote-content [from-env content]
   (navigate :named-environment-promotions-page {:env-name from-env})
   (doseq [category (keys content)]
@@ -260,17 +257,24 @@
   (if (browser isElementPresent :log-in) (log/info "Already logged out.")
       (browser clickAndWait :log-out)))
 
-(defmacro ensure-by [pred & forms]
-  `(if-not ~pred (do ~@forms)))
+(defn logged-in? []
+  (browser isElementPresent :log-out))
 
 (defn login [username password]
-  (if (browser isElementPresent :log-out)
+  (if (logged-in?)
     (do (log/warn "Already logged in, logging out.")
         (logout)))
   (do (fill-form {:username-text username
                   :password-text password}
                  :log-in)
       (check-for-success)))
+
+(defmacro ensure-by [pred & forms]
+  `(if-not ~pred (do ~@forms)))
+
+(defn current-user []
+  (if (logged-in?)
+    (browser getText :account)))
 
 (defn ensure-current-user [username password]
   (ensure-by (= (current-user) username)

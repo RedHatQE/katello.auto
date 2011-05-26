@@ -8,11 +8,11 @@
 
 
 (defmacro beforeclass-ensure-login [groups username password]
-  `(defn ^{BeforeClass {:groups ~groups}} be_user# [_#]
+  `(defn ~(with-meta 'be_user {BeforeClass {:groups groups}}) [_#]
      (tasks/ensure-current-user ~username ~password)))
 
 (defmacro beforeclass-ensure-admin [groups]
-  (beforeclass-ensure-login groups (@config :admin-user) (@config :admin-password)))
+  `(beforeclass-ensure-login ~groups (@config :admin-user) (@config :admin-password)))
 
 (defn ^{BeforeSuite {:groups ["setup"]}}
   start_selenium [_]
