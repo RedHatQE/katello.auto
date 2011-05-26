@@ -5,8 +5,10 @@
 ;;config layer
 
 (def kalpana-auto-properties {:server-url ["kalpana.url"]
-                              :admin-user ["kalpana.admin.user" "acme_corporation_user"]
-                              :admin-password ["kalpana.admin.password" "acme_corporation_user"]
+                              :admin-user ["kalpana.admin.user" "admin"]
+                              :admin-password ["kalpana.admin.password" "admin"]
+                              :owner-user ["kalpana.owner.user" "acme_corporation_user"]
+                              :owner-password ["kalpana.owner.password" "acme_corporation_user"]
                               :selenium-address ["selenium.address" "localhost:4444"]
                               :admin-org ["kalpana.admin.org" "ACME_Corporation"]
                               :sync-repo ["kalpana.sync.test.repo"]})

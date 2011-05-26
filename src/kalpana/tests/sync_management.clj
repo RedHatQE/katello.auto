@@ -4,10 +4,13 @@
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
         [com.redhat.qe.verify :only [verify]]
-        [kalpana.conf :only [config]]))
+        [kalpana.conf :only [config]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]]))
 
 (def provider-name (atom nil))
 (def product-name (atom nil))
+
+(beforeclass-ensure-admin)
 
 (defn ^{Test {:groups ["sync" "blockedByBug-705355"]
               :description "Sync a product."}}

@@ -14,7 +14,7 @@
 (def root "Development")
 (def myorg (atom nil))
 
-(beforeclass-ensure-admin ["promotions"])
+(beforeclass-ensure-admin)
 
 (defn get-root-next-env
   "Gets the environment whose 'prior' is the root environment.  If

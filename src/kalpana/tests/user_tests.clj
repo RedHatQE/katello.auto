@@ -1,11 +1,10 @@
 (ns kalpana.tests.user-tests
-  (:use [test-clj.testng :only [gen-class-testng]])
-  (:require [kalpana.tasks :as tasks]
-;;            [kalpana.api-tasks :as api]
-;;            [kalpana.validation :as validate]
-            )
+  (:use [test-clj.testng :only [gen-class-testng]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]])
+  (:require [kalpana.tasks :as tasks])
   (:import [org.testng.annotations Test BeforeClass]))
 
+(beforeclass-ensure-admin)
 
 (defn ^{Test {:groups ["users"]
               :description "Create a user."}} simple_create [_]

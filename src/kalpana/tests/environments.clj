@@ -1,6 +1,7 @@
 (ns kalpana.tests.environments
   (:use [test-clj.testng :only [gen-class-testng]]
-        [com.redhat.qe.verify :only [verify]])
+        [com.redhat.qe.verify :only [verify]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]])
   (:require [kalpana.tasks :as tasks]
             [kalpana.api-tasks :as api]
             [kalpana.validation :as validate])
@@ -9,6 +10,8 @@
 (def test-org-name (atom nil))
 (def locker "Locker")
 (def root "root")
+
+(beforeclass-ensure-admin)
 
 (defn ^{BeforeClass {:groups ["setup"]}}
   create_test_org [_]

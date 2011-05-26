@@ -1,10 +1,12 @@
 (ns kalpana.tests.systems
   (:use [test-clj.testng :only [gen-class-testng]]
-        [com.redhat.qe.verify :only [verify]])
+        [kalpana.tests.setup :only [beforeclass-ensure-login]]
+        [kalpana.conf :only [config]])
   (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api]
-            [kalpana.validation :as validate])
-  (:import [org.testng.annotations Test BeforeClass]))
+            [kalpana.api-tasks :as api])
+  (:import [org.testng.annotations Test]))
+
+(beforeclass-ensure-login (@config :owner-user) (@config :owner-password))
 
 (defn ^{Test {:description "Adds a system via REST api and then renames it in the UI"
               :groups ["systems"]}}

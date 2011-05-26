@@ -7,12 +7,18 @@
   (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass]))
 
 
-(defmacro beforeclass-ensure-login [groups username password]
-  `(defn ~(with-meta 'be_user {BeforeClass {:groups groups}}) [_#]
+(defmacro beforeclass-ensure-login
+  "Generates a BeforeClass method that makes sure the given user is
+   logged in, and if not, logs him in with the given password."
+  [username password]
+  `(defn ~(with-meta 'be_user {BeforeClass {:groups "setup"}}) [_#]
      (tasks/ensure-current-user ~username ~password)))
 
-(defmacro beforeclass-ensure-admin [groups]
-  `(beforeclass-ensure-login ~groups (@config :admin-user) (@config :admin-password)))
+(defmacro beforeclass-ensure-admin
+  "Generates a BeforeClass method that ensures that the admin
+   user (set in the config) is logged in."
+  []
+  `(beforeclass-ensure-login (@config :admin-user) (@config :admin-password)))
 
 (defn ^{BeforeSuite {:groups ["setup"]}}
   start_selenium [_]

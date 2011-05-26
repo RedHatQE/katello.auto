@@ -8,7 +8,7 @@
             [kalpana.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
 
-(beforeclass-ensure-admin ["organizations"])
+(beforeclass-ensure-admin)
 
 (defn ^{Test {:groups ["organizations"]}} create_simple [_]
   (tasks/verify-success #(tasks/create-organization (tasks/timestamp "auto-org") "org description")))

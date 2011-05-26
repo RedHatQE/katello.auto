@@ -20,7 +20,7 @@
                           "http://myrepo.url.com/blah/" nil))]
     (verify (string? result-message))))
 
-(beforeclass-ensure-admin ["organizations"])
+(beforeclass-ensure-admin)
 
 (defn ^{Test {:description "Create a Red Hat provider (sunny day test)"
               :groups ["providers"]
