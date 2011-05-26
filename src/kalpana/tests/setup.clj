@@ -4,8 +4,15 @@
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
   (:require [kalpana.tasks :as tasks])
-  (:import [org.testng.annotations BeforeSuite AfterSuite]))
+  (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass]))
 
+
+(defmacro beforeclass-ensure-login [groups username password]
+  `(defn ^{BeforeClass {:groups ~groups}} be_user# [_#]
+     (tasks/ensure-current-user ~username ~password)))
+
+(defmacro beforeclass-ensure-admin [groups]
+  (beforeclass-ensure-login groups (@config :admin-user) (@config :admin-password)))
 
 (defn ^{BeforeSuite {:groups ["setup"]}}
   start_selenium [_]

@@ -4,6 +4,7 @@
             [clojure.contrib.set :as sets])
   (:import [org.testng.annotations Test BeforeClass])
   (:use [kalpana.conf :only [config]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]]
         [test-clj.testng :only [gen-class-testng data-driven]]
         [com.redhat.qe.verify :only [verify]]))
 
@@ -12,6 +13,8 @@
 (def locker "locker")
 (def root "Development")
 (def myorg (atom nil))
+
+(beforeclass-ensure-admin ["promotions"])
 
 (defn get-root-next-env
   "Gets the environment whose 'prior' is the root environment.  If

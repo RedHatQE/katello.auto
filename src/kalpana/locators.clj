@@ -55,8 +55,7 @@
              :log-in "commit"
 
              ;;main banner
-             :search-textbox (textbox "s")
-             :search-button "//button[@form='s']"
+             :account "//li[@class='hello']/a"
              :log-out "//a[normalize-space(.)='Logout']"
              
              ;;tabs with special chars in name

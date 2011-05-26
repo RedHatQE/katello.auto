@@ -5,7 +5,8 @@
   (:import [org.testng.annotations Test BeforeGroups])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
-        [com.redhat.qe.verify :only [verify]]))
+        [com.redhat.qe.verify :only [verify]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]]))
 
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))
@@ -18,6 +19,8 @@
                         (if (= type :redhat)
                           "http://myrepo.url.com/blah/" nil))]
     (verify (string? result-message))))
+
+(beforeclass-ensure-admin ["organizations"])
 
 (defn ^{Test {:description "Create a Red Hat provider (sunny day test)"
               :groups ["providers"]

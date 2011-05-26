@@ -1,10 +1,14 @@
 (ns kalpana.tests.organizations
   (:use [error.handler :only [with-handlers handle ignore]]
         [com.redhat.qe.verify :only [verify]]
-        [test-clj.testng :only [gen-class-testng data-driven]])
+        [test-clj.testng :only [gen-class-testng data-driven]]
+        [kalpana.tests.setup :only [beforeclass-ensure-admin]]
+        [kalpana.conf :only [config]])
   (:require [kalpana.tasks :as tasks]
             [kalpana.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
+
+(beforeclass-ensure-admin ["organizations"])
 
 (defn ^{Test {:groups ["organizations"]}} create_simple [_]
   (tasks/verify-success #(tasks/create-organization (tasks/timestamp "auto-org") "org description")))
