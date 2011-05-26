@@ -11,7 +11,7 @@
   "Generates a BeforeClass method that makes sure the given user is
    logged in, and if not, logs him in with the given password."
   [username password]
-  `(defn ~(with-meta 'be_user {BeforeClass {:groups "setup"}}) [_#]
+  `(defn ~(with-meta 'be_user {BeforeClass {:groups ["setup"]}}) [_#]
      (tasks/ensure-current-user ~username ~password)))
 
 (defmacro beforeclass-ensure-admin
