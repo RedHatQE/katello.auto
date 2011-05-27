@@ -1,5 +1,5 @@
 (ns kalpana.rest
-  (:require [clj-http.client :as httpclient]
+  (:require [kalpana.httpclient :as httpclient]
             [clojure.contrib.json :as json]
             [clojure.contrib.pprint :as pprint]
             [clojure.contrib.logging :as log])
@@ -16,21 +16,19 @@
   "Gets the url, and decodes JSON in the response body, returning a
   clojure datastructure."
   [url & [req]]
-  (with-logs nil
-    (-> (httpclient/get url (merge req {:accept :json})) :body json/read-json)))
+  (-> (httpclient/get url (merge req {:accept :json})) :body json/read-json))
 
 (defn post
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
   [url user pw body & [req]]
-  (with-logs body
-    (-> (httpclient/post url (merge req {:body (json/json-str body)
-                                         :basic-auth [user pw]
-                                         :accept :json
-                                         :content-type :json}))
-        :body json/read-json)))
+  (-> (httpclient/post url (merge req {:body (json/json-str body)
+                                       :basic-auth [user pw]
+                                       :accept :json
+                                       :content-type :json}))
+      :body json/read-json))
 
 (defn delete [url user pw & [req]]
-  (with-logs req (-> (httpclient/delete url (merge req {:basic-auth [user pw]
-                                                    :accept :json
-                                                    :content-type :json}))
-                 :body)))
+  (-> (httpclient/delete url (merge req {:basic-auth [user pw]
+                                         :accept :json
+                                         :content-type :json}))
+      :body))
