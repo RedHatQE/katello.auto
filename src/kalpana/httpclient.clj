@@ -13,7 +13,7 @@
 
 (defn wrap-req-log [client]
   (fn [{:keys [content-type] :as req}]
-    (log/debug (format "Making HTTP request: \n%s"
+    (log/info (format "Making HTTP request: \n%s"
                        (with-out-str
                          (pprint/pprint (if (= content-type "application/json")
                                           (update-in req [:body] json/read-json)
@@ -29,9 +29,9 @@
                (catch Exception e bstr))]
       (if (or (not (clojure.core/get req :throw-exceptions true))
               (baseclient/unexceptional-status? status))
-        (log/info (format "Got status %d with response body: \n%s" status
+        (log/info (format "Got HTTP status %d with response body: \n%s" status
                          pretty-body ))
-        (log/error (format "Got error status %d with response body: \n%s" status pretty-body)))
+        (log/error (format "Got HTTP error status %d with response body: \n%s" status pretty-body)))
       resp)))
 
 (defn wrap-request
