@@ -150,7 +150,7 @@
 
 (defn create-system [name facts]
   (rest/post (api-url "api/consumers")
-             (@config :admin-user) (@config :admin-password)
+             (@config :owner-user) (@config :owner-password)
              {:name name
               :cp_type "system"
               :facts facts}))
