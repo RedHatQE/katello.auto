@@ -2,6 +2,7 @@
   (:refer-clojure :exclude (get))
   (:require [clj-http.client :as baseclient]
             [clj-http.core :as core]
+            [clojure.contrib.json :as json]
             [clojure.contrib.logging :as log]
             [clojure.contrib.pprint :as pprint]))
 
@@ -11,18 +12,26 @@
 ;; off the verbose apache logging
 
 (defn wrap-req-log [client]
-  (fn [req]
-    (log/debug (format "HTTP request: \n%s" (with-out-str (pprint/pprint req))))
+  (fn [{:keys [content-type] :as req}]
+    (log/debug (format "Making HTTP request: \n%s"
+                       (with-out-str
+                         (pprint/pprint (if (= content-type "application/json")
+                                          (update-in req [:body] json/read-json)
+                                          req)))))
     (client req)))
 
+(defn json)
 (defn wrap-resp-log [client]
   (fn [req]
-    (let [{:keys [status] :as resp} (client req)      
-          resp-str (with-out-str (pprint/pprint (update-in resp [:body] #(String. %))))]
+    (let [{:keys [status body] :as resp} (client req)      
+          bstr (String. body)
+          pretty-body (try (-> (json/read-json bstr) pprint/pprint with-out-str)
+               (catch Exception e bstr))]
       (if (or (not (clojure.core/get req :throw-exceptions true))
               (baseclient/unexceptional-status? status))
-        (log/info (format "Got %d with response: \n%s" status resp-str))
-        (log/error (format "Got error %d with response: \n%s" status resp-str )))
+        (log/info (format "Got status %d with response body: \n%s" status
+                         pretty-body ))
+        (log/error (format "Got error status %d with response body: \n%s" status pretty-body)))
       resp)))
 
 (defn wrap-request
