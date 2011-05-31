@@ -9,7 +9,7 @@
 
 (def test-org-name (atom nil))
 (def locker "Locker")
-(def root "root")
+(def root "dev")
 
 (beforeclass-ensure-admin)
 
@@ -64,6 +64,7 @@
   (let [org-name (tasks/timestamp "env2")
         env-name "myenv"]
     (tasks/create-organization org-name "org to hold test envs")
+    (tasks/create-environment org-name root "first env" locker)
     (tasks/create-environment org-name env-name "test env" locker)
     (tasks/edit-environment org-name env-name :prior root)
     (let [available-priors (tasks/environment-other-possible-priors org-name root)]

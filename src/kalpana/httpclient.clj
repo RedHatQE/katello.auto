@@ -20,7 +20,7 @@
                                           req)))))
     (client req)))
 
-(defn json)
+
 (defn wrap-resp-log [client]
   (fn [req]
     (let [{:keys [status body] :as resp} (client req)      
