@@ -5,6 +5,9 @@
         [inflections :only [pluralize]]))
 
 
+(defn assoc-if-set [m newmap]
+  (into m (filter #((complement nil?) (second %)) newmap)))
+
 (def product-data-url "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=kalpana;a=blob_plain;f=playpen/test-data/products.json;hb=HEAD")
 
 (defn api-url [& args]
@@ -12,7 +15,7 @@
 
 (defn uri-for-entity-type  
   [entity-type & [org-name]]
-  (str "api/" (if (some #(= entity-type %) [:environment :provider :product])
+  (str "api/" (if (some #(= entity-type %) [:environment :product])
                  (str "organizations/"
                       (or org-name
                           (throw (IllegalArgumentException.
@@ -47,35 +50,46 @@
   (rest/post
    (api-url (uri-for-entity-type :provider org-name))
    api-user api-password
-   {:provider {:name name
-               :description description
-               :repository_url repo-url
-               :provider_type type}}))
+   {:organization_id org-name
+    :provider (assoc-if-set {:name name
+                             :description description
+                             :provider_type type}
+                            {:repository_url repo-url})}))
 
-(defn create-environment [name org-name api-user api-password & {:keys [description prior-env]}]
+(defn create-environment [name org-name api-user api-password
+                          & {:keys [description prior-env] :or {description ""}}]
   (rest/post
    (api-url (uri-for-entity-type :environment org-name))
    (@config :admin-user) (@config :admin-password)
-   {:environment {:name name
-                  :description description
-                  :organization_id (get-id-by-name :organization org-name)
-                  :prior (get-id-by-name :environment prior-env org-name)}}))
+   {:environment (assoc-if-set
+                  {:name name}
+                  {:description description
+                   :prior (and prior-env
+                               (get-id-by-name :environment prior-env org-name))})}))
 
 (defn delete-environment [org name]
   (rest/delete
    (api-url (uri-for-entity-type :environment (@config :admin-org)) "/" name)
    (@config :admin-user) (@config :admin-password)))
 
-(defn create-product [org name provider-name]
-  (let [product (->> (rest/get product-data-url) :products first)
-        updated-product (assoc product
-                          :name name
-                          :id name
-                          :href (str "/products/" name))]
-    (rest/post
-     (api-url "/api/providers/" provider-name "/import_products/")
-     (@config :admin-user) (@config :admin-password)
-     {:products [updated-product]})))
+(comment (defn create-product [org name provider-name]
+   (let [product (->> (rest/get product-data-url) :products first)
+         updated-product (assoc product
+                           :name name
+                           :id name
+                           :href (str "/products/" name))]
+     (rest/post
+      (api-url "/api/providers/" provider-name "/import_products/")
+      (@config :admin-user) (@config :admin-password)
+      {:products [updated-product]}))))
+
+(defn create-product [name provider-name & {:keys [description url]}]
+  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
+             (@config :admin-user) (@config :admin-password)
+             {:product (assoc-if-set {:name name}
+                                     {:description description
+                                      :url url})}))
+
 
 (defn create-organization [name description]
   (rest/post

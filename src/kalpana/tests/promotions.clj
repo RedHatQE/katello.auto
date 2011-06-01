@@ -1,7 +1,8 @@
 (ns kalpana.tests.promotions
   (:require [kalpana.tasks :as tasks]
             [kalpana.api-tasks :as api]
-            [clojure.contrib.set :as sets])
+            [clojure.contrib.set :as sets]
+            [clojure.contrib.logging :as log])
   (:import [org.testng.annotations Test BeforeClass])
   (:use [kalpana.conf :only [config]]
         [kalpana.tests.setup :only [beforeclass-ensure-admin]]
@@ -9,7 +10,7 @@
         [com.redhat.qe.verify :only [verify]]))
 
 (def provider-name (atom nil))
-(def root-next-env (atom nil))
+(def root-next-env (atom "Q-eh"))
 (def locker "locker")
 (def root "Development")
 (def myorg (atom nil))
@@ -37,14 +38,22 @@ there is none, one will be created and its name returned."
 
 (defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
   (reset! myorg (@config :admin-org))
-  (reset! provider-name (tasks/timestamp "promotion-cp"))
-  (reset! root-next-env (get-root-next-env @myorg))
-
+  (reset! provider-name (tasks/timestamp "promo-"))
+  
   (api/create-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
                                :description "test provider for promotions"
                                :type "Custom")
-  )
+
+  (let [all-envs (map :name (api/all-entities :environment @myorg))
+        ensure-env-exist (fn [env-name]
+                           (tasks/ensure-by
+                            (some #{env-name} all-envs)
+                            (api/create-environment env-name @myorg
+                                                    (@config :admin-user)
+                                                    (@config :admin-password))))]
+    (ensure-env-exist root)
+    (ensure-env-exist @root-next-env)))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -54,7 +63,7 @@ there is none, one will be created and its name returned."
 
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]
-    (api/create-product org product-name @provider-name))
+    (api/create-product product-name @provider-name :description "test product"))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (tasks/promote-content from-env content)
     (verify-all-content-present content (tasks/environment-content target-env))))
