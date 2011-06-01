@@ -269,8 +269,8 @@
                  :log-in)
       (check-for-success)))
 
-(defmacro ensure-by [pred & forms]
-  `(if-not ~pred (do ~@forms)))
+(defmacro ensure-by [exp & forms]
+  `(if-not ~exp (do ~@forms)))
 
 (defn current-user []
   (if (logged-in?)
