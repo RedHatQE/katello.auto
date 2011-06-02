@@ -5,7 +5,7 @@
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
-                first-visible loop-with-timeout]]
+                loop-with-timeout]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
   (:import [com.thoughtworks.selenium SeleniumException]))
