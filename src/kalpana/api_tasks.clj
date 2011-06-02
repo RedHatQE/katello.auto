@@ -35,14 +35,18 @@
    (api-url (uri-for-entity-type entity-type org-name))
    {:basic-auth [(@config :admin-user) (@config :admin-password)]}))
 
-(defn get-id-by-name [entity-type entity-name & [org-name]]
-  (log/info (str "Getting id for " (name entity-type) " "
-                 entity-name (if org-name (str " in org " org-name) "")))
-  (or (some (fn [ent] (if (= (:name ent) entity-name)
-                    (ent :id)
-                    false))
+(defn lookup-by [k v entity-type & [org-name]]
+  (log/info (format "Getting %s where %s=%s %s"
+                    (name entity-type) (name k) v
+                    (if org-name (str " in org " org-name) "")))
+  (or (some (fn [ent] (if (= (k ent) v)
+                       ent))
             (all-entities entity-type org-name))
-      (throw (RuntimeException. (str "No matches for " (name entity-type) " named " entity-name)))))
+      (throw (RuntimeException. (format "No matches for %s with %s=%s."
+                                        (name entity-type) (name k) v)))))
+
+(defn get-id-by-name [entity-type entity-name & [org-name]]
+  (:id (lookup-by :name entity-name entity-type org-name)))
 
 (defn create-provider [org-name api-user api-password
                                & {:keys [name description repo-url type]}]
@@ -72,16 +76,6 @@
    (api-url (uri-for-entity-type :environment (@config :admin-org)) "/" name)
    (@config :admin-user) (@config :admin-password)))
 
-(comment (defn create-product [org name provider-name]
-   (let [product (->> (rest/get product-data-url) :products first)
-         updated-product (assoc product
-                           :name name
-                           :id name
-                           :href (str "/products/" name))]
-     (rest/post
-      (api-url "/api/providers/" provider-name "/import_products/")
-      (@config :admin-user) (@config :admin-password)
-      {:products [updated-product]}))))
 
 (defn create-product [name provider-name & {:keys [description url]}]
   (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
@@ -90,6 +84,12 @@
                                      {:description description
                                       :url url})}))
 
+(defn create-repo [name org-name product-name url]
+  (rest/post (api-url "api/repositories/")
+             (@config :admin-user) (@config :admin-password)
+             {:product_id  (:cp_id (lookup-by :name product-name :product org-name))
+              :name name
+              :url url}))
 
 (defn create-organization [name description]
   (rest/post
@@ -97,6 +97,7 @@
    (@config :admin-user) (@config :admin-password)
    {:name name
     :description description}))
+
 
 (defn random-facts []
   (let [rand (java.util.Random.)

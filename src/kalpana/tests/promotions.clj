@@ -63,7 +63,8 @@ there is none, one will be created and its name returned."
 
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]
-    (api/create-product product-name @provider-name :description "test product"))
+    (api/create-product product-name @provider-name :description "test product")
+    (api/create-repo "mytestrepo" @myorg product-name "http://blah.com"))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (tasks/promote-content from-env content)
     (verify-all-content-present content (tasks/environment-content target-env))))

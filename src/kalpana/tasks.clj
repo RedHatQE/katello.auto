@@ -5,7 +5,7 @@
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
-                first-present loop-with-timeout]]
+                first-visible loop-with-timeout]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify]])
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -106,32 +106,26 @@
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
       (browser waitAndClick (locators/promotion-add-content-item item) "10000")
-      (comment "for some reason, this resets the previous selection! doh")
       (browser waitForElement (locators/promotion-remove-content-item item) "10000")
-      (comment (browser sleep 5000)))
+      (browser sleep 10000))
     (browser clickAndWait :promote-to-next-environment)))
 
-(defn extract-content [id]
+(defn extract-content []
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
         retrieve (fn [elem]
-                   (try (-> (browser getText elem) .trim (string/replace #" \w+$" ""))
+                   (try (-> (browser getText elem) .trim (string/replace #"^\w+ " ""))
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set))) 
 
 (defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
-  (let [categories {:products "data-products_id"
-                    :errata "data-errata_id"
-                    :packages "data-packages_id"
-                    :kickstart-trees "data-trees_id"}]
+  (let [categories [:products]]
     (into {}
-          (for [[category id] categories]
+          (for [category categories]
             (do (browser click (-> category name (str "-category") keyword))
-                (first-present 20000
-                               :promotion-empty-list
-                               (locators/promotion-content-item-n (str 1)))
-                [category (extract-content id)])))))
+                (browser sleep 2000)
+                [category (extract-content)])))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
@@ -203,11 +197,11 @@
     (assert (some #{type} (keys types)))
     (navigate :new-provider-page)
     (fill-ajax-form {:cp-name-text name
-                :cp-description-text description
-                :cp-repository-url-text (if (= type :redhat)
-                                          repo-url nil)
-                :cp-type-list (types type)}
-               :cp-create-save)
+                     :cp-description-text description
+                     :cp-repository-url-text (if (= type :redhat)
+                                               repo-url nil)
+                     :cp-type-list (types type)}
+                    :cp-create-save)
     (check-for-success)))
 
 (defn add-product [provider-name name description url & [yum? file?]]

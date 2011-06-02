@@ -28,7 +28,7 @@
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Remove']")
-   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='left_accordion']//div[contains(@class,'ui-accordion-content-active')]//li[$1]")
+   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
    provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
@@ -113,10 +113,10 @@
              :save-repository "//div[normalize-space(.)='Save Repository' and not(ancestor::div[contains(@style,'display: none')])]"             
              
              ;;Promotions subtab
-             :products-category (promotion-content-category "Products")
-             :errata-category (promotion-content-category "Errata")
-             :packages-category (promotion-content-category "Packages")
-             :kickstart-trees-category (promotion-content-category "Kickstart Trees")
+             :products-category (promotion-content-category "products")
+             :errata-category (promotion-content-category "errata")
+             :packages-category (promotion-content-category "packages")
+             :kickstart-trees-category (promotion-content-category "kickstart trees")
              :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
              ;;Sync Management subtab
