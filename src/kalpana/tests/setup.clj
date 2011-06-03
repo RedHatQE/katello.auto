@@ -4,8 +4,10 @@
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
   (:require [kalpana.tasks :as tasks])
-  (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass]))
+  (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass BeforeTest]))
 
+;; macros to be used by test scripts to add preconditions for logged
+;; in users
 
 (defmacro beforeclass-ensure-login
   "Generates a BeforeClass method that makes sure the given user is
@@ -19,6 +21,10 @@
    user (set in the config) is logged in."
   []
   `(beforeclass-ensure-login (@config :admin-user) (@config :admin-password)))
+
+(defn ^{BeforeTest {:groups ["setup"]}}
+  ensure_ui_up [_]
+  (tasks/navigate :top-level))
 
 (defn ^{BeforeSuite {:groups ["setup"]}}
   start_selenium [_]

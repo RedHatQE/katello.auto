@@ -248,8 +248,9 @@
   (check-for-success))
 
 (defn logout []
-  (if (browser isElementPresent :log-in) (log/info "Already logged out.")
-      (browser clickAndWait :log-out)))
+  (if (browser isElementPresent :log-in)
+    (log/info "Already logged out.")
+    (browser clickAndWait :log-out)))
 
 (defn logged-in? []
   (browser isElementPresent :log-out))
