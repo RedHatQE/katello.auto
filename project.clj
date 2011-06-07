@@ -9,7 +9,6 @@
                  [error.handler "1.1.0-SNAPSHOT"]
                  [inflections "0.4"]
                  [clj-http "0.1.3"]]
-  :dev-dependencies [[swank-clojure "[1.2.1,)"]]
   :repositories {"clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}}
   )

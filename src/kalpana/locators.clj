@@ -24,7 +24,7 @@
    org-link (LocatorTemplate. "Organization" "//div[@id='list']//div[@id='$1']")
    cp-link (LocatorTemplate. "Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
-   env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//div[@id='content_envs']//a[.='$1']")
+   env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//a[@class='path_link' and normalize-space(.)='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Remove']")
@@ -35,9 +35,10 @@
    notification-close-index (LocatorTemplate. "Notification close button" "xpath=(//a[@class='jnotify-close'])[$1]")
    user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
    username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
-   product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']/..//img[@alt='Expand']")
+   product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']")
    add-repository (LocatorTemplate. "Add Repository" "//div[@id='panel-frame']//div[normalize-space(.)='$1' and starts-with(@id,'edit_product')]/..//div[starts-with(@id,'add_repository')]")
-   system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")})
+   system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")
+   button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -99,8 +100,8 @@
              :products-and-repositories "//nav[@class='subnav']//a[contains(.,'Products')]"
              
              ;;add product
-             :add-product "add_product"
-             :save-product "save_product_button"
+             :add-product (button-div "Add Product")
+             :create-product (button-div "Create")
              :product-name-text "product_name_field"
              :product-description-text "product_description_field"
              :product-url-text "product_url_field"

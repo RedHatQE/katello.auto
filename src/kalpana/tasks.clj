@@ -213,7 +213,7 @@
                    :product-url-text url
                    :product-yum-checkbox yum?
                    :product-file-checkbox file?}
-                  :save-product)
+                  :create-product)
   (check-for-success))
 
 (defn add-repo [provider-name product-name name url]
