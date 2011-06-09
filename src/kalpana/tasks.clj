@@ -20,7 +20,7 @@
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
 (def known-errors
-   {:validation-failed #"Validation failed"})
+   {:validation-failed #"Validation Failed"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
