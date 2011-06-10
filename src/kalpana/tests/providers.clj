@@ -85,7 +85,7 @@
   (tasks/create-provider (reset!  test-provider-name (tasks/timestamp "cust"))
                          "my description" :custom))
 
-(defn ^{Test {:groups ["providers" "products"]
+(defn ^{Test {:groups ["providers" "products" "blockedByBug-712318"]
               :description "Create a product"}}
   create_product [_]
   (tasks/add-product @test-provider-name (reset! test-product-name (tasks/timestamp "prod"))
