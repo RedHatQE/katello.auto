@@ -12,7 +12,10 @@
 
 (beforeclass-ensure-admin)
 
-(defn ^{Test {:groups ["sync" "blockedByBug-705355" "blockedByBug-711105" ]
+(defn ^{Test {:groups ["sync"
+                       "blockedByBug-705355"
+                       "blockedByBug-711105"
+                       "blockedByBug-712318" ]
               :description "Sync a product."}}
   simple_sync [_]
   (let [myprovider (tasks/timestamp "sync")
