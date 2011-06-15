@@ -70,7 +70,8 @@
              :org-environments (link "Environments")
              :edit-organization (link "Edit")
              :remove-organization (link "Remove Organization")
-
+             :org-description-text-edit "organization[description]"
+             
              ;;Environments tab
              :env-name-text (textbox "name")
              :env-description-text (textbox "description")

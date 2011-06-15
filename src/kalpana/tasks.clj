@@ -174,6 +174,11 @@
   (browser click :remove-environment)
   (check-for-success))
 
+(defn edit-organization [org-name & {:keys [description]}]
+  (navigate :named-organization-page {:org-name org-name})
+  (in-place-edit {:org-description-text-edit description})
+  (check-for-success))
+
 (defn edit-environment [org-name env-name & {:keys [new-name description prior]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})

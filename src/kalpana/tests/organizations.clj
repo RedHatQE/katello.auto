@@ -5,6 +5,7 @@
         [kalpana.tests.setup :only [beforeclass-ensure-admin]]
         [kalpana.conf :only [config]])
   (:require [kalpana.tasks :as tasks]
+            [kalpana.api-tasks :as api]
             [kalpana.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
 
@@ -16,7 +17,9 @@
 (defn ^{Test {:groups ["organizations"]}} delete_simple [_]
   (let [org-name (tasks/timestamp "auto-del")]
     (tasks/create-organization org-name "org to delete immediately")
-    (tasks/delete-organization org-name)))
+    (tasks/delete-organization org-name)
+    (let [remaining-org-names (doall (map :name (api/all-entities :organization)))]
+      (verify (not (some #{org-name} remaining-org-names))))))
 
 (defn ^{Test {:groups ["organizations" "validation" ]}} duplicate_disallowed [_]
   (let [org-name (tasks/timestamp "test-dup")]
@@ -25,6 +28,11 @@
 
 (defn ^{Test {:groups ["organizations" "validation"]}} name_required [_]
   (validate/name-field-required #(tasks/create-organization nil "org description")))
+
+(defn ^{Test {:groups ["organizations"]}} edit [_]
+  (let [org-name (tasks/timestamp "auto-ren")]
+    (tasks/create-organization org-name "org to edit immediately")
+    (tasks/edit-organization org-name :description "edited description")))
 
 (defn valid_name [name expected-error]
   (validate/field-validation #(tasks/create-organization name "org description") expected-error))
