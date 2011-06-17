@@ -64,8 +64,7 @@ there is none, one will be created and its name returned."
 (defn verify_promote_content [org envs content]
   (doseq [product-name (content :products)]
     (api/create-product product-name @provider-name :description "test product")
-    (Thread/sleep 30000)  ;; workaround for https://bugzilla.redhat.com/show_bug.cgi?id=714204
-    (api/create-repo "mytestrepo" @myorg product-name "http://blah.com"))
+    (api/create-repo (tasks/timestamp "mytestrepo") @myorg product-name "http://blah.com"))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (tasks/promote-content from-env content)
     (verify-all-content-present content (tasks/environment-content target-env))))

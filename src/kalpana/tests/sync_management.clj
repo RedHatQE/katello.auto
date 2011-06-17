@@ -21,9 +21,8 @@
   (let [myprovider (tasks/timestamp "sync")
         myproduct (tasks/timestamp "sync-test1")]
     (tasks/create-provider myprovider  "provider to test syncing" :custom)
-    (Thread/sleep 30000)  ;; workaround for https://bugzilla.redhat.com/show_bug.cgi?id=714204
     (tasks/add-product myprovider myproduct  "testing sync" "http://meaningless.url" true true)
-    (tasks/add-repo myprovider myproduct "testrepo" (@config :sync-repo))
+    (tasks/add-repo myprovider myproduct (tasks/timestamp "testrepo") (@config :sync-repo))
     (let [results (tasks/sync-products [myproduct] 60000)]
       (verify (every? #(= "Sync complete." %) (vals results))))))
 
