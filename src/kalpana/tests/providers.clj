@@ -4,7 +4,6 @@
             [kalpana.api-tasks :as api])
   (:import [org.testng.annotations Test BeforeGroups])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
-        [error.handler :only [with-handlers handle ignore]]
         [com.redhat.qe.verify :only [verify]]
         [kalpana.tests.setup :only [beforeclass-ensure-admin]]))
 
