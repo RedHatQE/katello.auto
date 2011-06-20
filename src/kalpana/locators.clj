@@ -36,7 +36,7 @@
    user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
    username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
    product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']")
-   add-repository (LocatorTemplate. "Add Repository" "//div[@id='panel-frame']//div[normalize-space(.)='$1' and starts-with(@id,'edit_product')]/..//div[starts-with(@id,'add_repository')]")
+   add-repository (LocatorTemplate. "//div[@id='products']//div[normalize-space(.)='$1']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]")
    system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")
    button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")})
 

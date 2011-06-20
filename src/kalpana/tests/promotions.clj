@@ -72,7 +72,8 @@ there is none, one will be created and its name returned."
 (data-driven verify_promote_content {org.testng.annotations.Test
                                      {:groups ["promotions"
                                                "blockedByBug-711144"
-                                               "blockedByBug-712318"] :description
+                                               "blockedByBug-712318"
+                                               "blockedByBug-714297"] :description
                                       "Takes content and promotes it thru more environments.
                                        VerIfies that it shows up in the new env."}}
              [[@myorg [locker root] {:products (set (tasks/timestamp "MyProduct" 3))}]
@@ -82,7 +83,8 @@ there is none, one will be created and its name returned."
               :groups ["promotions"
                        "blockedByBug-699374"
                        "blockedByBug-711144"
-                       "blockedByBug-712318"]}}
+                       "blockedByBug-712318"
+                       "blockedByBug-714297"]}}
   verify_change_set_cleared [_]
   (verify_promote_content @myorg
                           [locker root]
