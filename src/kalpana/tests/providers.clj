@@ -64,6 +64,10 @@
                   ^{Test {:groups ["blockedByBug-703528"]
                           :description "Test that invalid URL is rejected."}}
                   [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :repository-url-invalid]
+                   ^{Test {:groups ["blockedByBug-703528"]
+                          :description "Test that invalid URL is rejected."}}
+                  [#(tasks/timestamp "mytestcp") "blah" "https://" :redhat :repository-url-invalid]
+                  [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*(" :redhat :repository-url-invalid]
 
                   [#(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
                   [#(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :only-one-redhat-provider-per-org]
