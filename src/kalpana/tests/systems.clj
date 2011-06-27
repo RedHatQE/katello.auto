@@ -13,7 +13,7 @@
   rename_system [_]
   (let [old-name (tasks/timestamp "mysys")
         new-name (tasks/timestamp "yoursys")]
-    (api/create-system old-name (api/random-facts))
+    (api/create-system old-name (@config :admin-orgx) (api/random-facts))
     (tasks/edit-system old-name :new-name new-name)
     (tasks/navigate :named-systems-page {:system-name new-name})))
 

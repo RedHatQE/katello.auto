@@ -61,7 +61,7 @@
                             {:repository_url repo-url})}))
 
 (defn create-environment [name org-name api-user api-password
-                          & {:keys [description prior-env] :or {description ""}}]
+                          & {:keys [description prior-env] :or {description "" prior-env "locker"}}]
   (rest/post
    (api-url (uri-for-entity-type :environment org-name))
    (@config :admin-user) (@config :admin-password)
@@ -163,9 +163,10 @@
     "lscpu.numa_node0_cpu(s)" "0"
     }))
 
-(defn create-system [name facts]
+(defn create-system [name org-name facts]
   (rest/post (api-url "api/consumers")
              (@config :owner-user) (@config :owner-password)
              {:name name
+              :org_name org-name
               :cp_type "system"
               :facts facts}))
