@@ -8,7 +8,7 @@
   (:import [org.testng.annotations Test BeforeClass]))
 
 (def test-org-name (atom nil))
-(def locker "Locker")
+(def locker "locker")
 (def root "dev")
 
 (beforeclass-ensure-admin)
