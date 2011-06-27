@@ -14,7 +14,7 @@
 (defn ^{Test {:groups ["organizations"]}} create_simple [_]
   (tasks/verify-success #(tasks/create-organization (tasks/timestamp "auto-org") "org description")))
 
-(defn ^{Test {:groups ["organizations"]}} delete_simple [_]
+(defn ^{Test {:groups ["organizations" "blockedByBug-716972"]}} delete_simple [_]
   (let [org-name (tasks/timestamp "auto-del")]
     (tasks/create-organization org-name "org to delete immediately")
     (tasks/delete-organization org-name)

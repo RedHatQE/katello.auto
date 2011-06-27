@@ -75,7 +75,7 @@
              ;;Environments tab
              :env-name-text (textbox "name")
              :env-description-text (textbox "description")
-             :prior-environment "//select[@id='environment_prior']"
+             :prior-environment "//select[@id='prior']"
              :create-environment "//div[contains(@class, 'environment_create')]"
              :new-environment "//div[normalize-space(.)='Add New Environment']"
              :remove-environment (link "Remove Environment")
