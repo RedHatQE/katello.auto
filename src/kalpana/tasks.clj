@@ -114,7 +114,7 @@
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
         retrieve (fn [elem]
-                   (try (-> (browser getText elem) .trim (string/replace #"^\w+ " ""))
+                   (try (-> (browser getText elem) .trim (string/replace #" +\S+$" ""))
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set))) 
 

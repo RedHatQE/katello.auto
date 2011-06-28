@@ -54,7 +54,7 @@
     (tasks/navigate :named-environment-page {:org-name @test-org-name
                                              :env-name new-name})))
 
-(defn ^{Test {:groups ["environments" "blockedByBug-705495" ]
+(defn ^{Test {:groups ["environments" "blockedByBug-705495" "blockedByBug-717287"]
               :description "Create two promotion paths.  Take the last
               env in the 2nd path (z), and move it to the end of the
               first path.  Verify that items in the path still

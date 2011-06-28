@@ -28,7 +28,7 @@
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='$1']")
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Add']")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Remove']")
-   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]")
+   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]//span[@class='product-icon']")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
    provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
