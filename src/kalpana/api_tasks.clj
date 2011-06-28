@@ -61,7 +61,7 @@
                             {:repository_url repo-url})}))
 
 (defn create-environment [name org-name api-user api-password
-                          & {:keys [description prior-env] :or {description "" prior-env "locker"}}]
+                          & {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
   (rest/post
    (api-url (uri-for-entity-type :environment org-name))
    (@config :admin-user) (@config :admin-password)
@@ -167,6 +167,6 @@
   (rest/post (api-url "api/consumers")
              (@config :owner-user) (@config :owner-password)
              {:name name
-             ;; :organization_id (get-id-by-name :organization org-name)
+              :org_name org-name
               :cp_type "system"
               :facts facts}))
