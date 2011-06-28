@@ -9,7 +9,8 @@
 (beforeclass-ensure-admin)
 
 (defn ^{Test {:description "Adds a system via REST api and then renames it in the UI"
-              :groups ["systems"]}}
+              :groups ["systems"
+                       "blockedByBug-717408"]}}
   rename_system [_]
   (let [old-name (tasks/timestamp "mysys")
         new-name (tasks/timestamp "yoursys")]

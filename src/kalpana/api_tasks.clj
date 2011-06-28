@@ -167,6 +167,6 @@
   (rest/post (api-url "api/consumers")
              (@config :owner-user) (@config :owner-password)
              {:name name
-              :org_name org-name
+             ;; :organization_id (get-id-by-name :organization org-name)
               :cp_type "system"
               :facts facts}))
