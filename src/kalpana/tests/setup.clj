@@ -3,8 +3,7 @@
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
-  (:require [kalpana.tasks :as tasks]
-            [clojure.contrib.trace-fn :as trace])
+  (:require [kalpana.tasks :as tasks])
   (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass BeforeTest]))
 
 ;; macros to be used by test scripts to add preconditions for logged
@@ -30,12 +29,6 @@
 (defn ^{BeforeSuite {:groups ["setup"]}}
   start_selenium [_]
   (init)
-
-  ;;set up trace
-  (trace/trace-ns 'kalpana.tasks)
-  (trace/trace-ns 'com.redhat.qe.auto.selenium.selenium)
-  (trace/trace-off com.redhat.qe.auto.selenium.selenium/locator-args)
-  (trace/trace-off com.redhat.qe.auto.selenium.selenium/sel-locator)
   
   (let [sel-addr (@config :selenium-address)
         [host port] (split #":" sel-addr)] 
