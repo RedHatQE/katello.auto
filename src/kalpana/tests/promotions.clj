@@ -71,22 +71,28 @@ there is none, one will be created and its name returned."
      (tasks/promote-content from-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
 
-(data-driven verify_promote_content {org.testng.annotations.Test
-                                     {:groups ["promotions"
-                                               "blockedByBug-711144"
-                                               "blockedByBug-712318"
-                                               "blockedByBug-714297"] :description
-                                      "Takes content and promotes it thru more environments.
-                                       Verifies that it shows up in the new env."}}
-             [[@myorg [locker root] {:products #(set (tasks/timestamp "MyProduct" 3))}]
-              [@myorg [locker root @root-next-env] {:products #(set (tasks/timestamp "ProductMulti" 3))}]])
+(data-driven verify_promote_content
+             {org.testng.annotations.Test
+              {:groups ["promotions"
+                        "blockedByBug-711144"
+                        "blockedByBug-712318"
+                        "blockedByBug-714297"
+                        "blockedByBug-717663"]
+               :description "Takes content and promotes it thru more
+                             environments.  Verifies that it shows up
+                             in the new env."}}
+             [[@myorg [locker root]
+               {:products #(set (tasks/timestamp "MyProduct" 3))}]
+              [@myorg [locker root @root-next-env]
+               {:products #(set (tasks/timestamp "ProductMulti" 3))}]])
 
 (defn ^{Test {:description "After content has been promoted, the change set should be empty."
               :groups ["promotions"
                        "blockedByBug-699374"
                        "blockedByBug-711144"
                        "blockedByBug-712318"
-                       "blockedByBug-714297"]}}
+                       "blockedByBug-714297"
+                       "blockedByBug-717663"]}}
   verify_change_set_cleared [_]
   (verify_promote_content @myorg
                           [locker root]
