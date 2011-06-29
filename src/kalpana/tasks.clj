@@ -7,12 +7,11 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         [error.handler :only [raise]]
-        [com.redhat.qe.verify :only [verify]]
-        [clojure.contrib.trace :only [deftrace]])
+        [com.redhat.qe.verify :only [verify]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;tasks
-(deftrace timestamp
+(defn timestamp
   "Returns a string with timestamp (time in millis since 1970)
    appended onto the end.  If optional n is specified, returns a list
    of n timestamped strings, where the millis is incremented by one
@@ -23,7 +22,7 @@
 (def known-errors
    {:validation-failed #"Validation [Ff]ailed"})
 
-(deftrace matching-error
+(defn matching-error
   "Returns a keyword of known error, if the message matches any of
    them.  If no matches, returns :kalpana-error."
   [message]
@@ -32,7 +31,7 @@
             (keys known-errors))
       :kalpana-error))
 
-(deftrace clear-all-notifications []
+(defn clear-all-notifications []
   (let [n (count
            (take-while (fn [index] (let [loc (locators/notification-close-index (str index))]
                                     (if (browser isElementPresent loc)
@@ -41,7 +40,7 @@
     (if (> n 0) (log/info (str "Cleared " n " notifications.")))
     n))
 
-(deftrace notification
+(defn notification
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
    within a built-in timeout period)."
@@ -58,7 +57,7 @@
          {:type type :msg msg})
        (catch SeleniumException e nil))) 
 
-(deftrace check-for-success
+(defn check-for-success
   "Gets any notification from the UI, if there is none or not a
    success notification, raise an exception.  Otherwise return the
    text of the message."
@@ -73,23 +72,23 @@
                                           (raise {:type errtype :msg msg}))
           :else msg)))
 
-(deftrace verify-success [task-fn]
+(defn verify-success [task-fn]
   (let [resulting-message (task-fn)]
     (verify (string? resulting-message))))
 
 (def navigate (nav/nav-fn locators/page-tree))
 
-(deftrace fill-ajax-form [items submit]
+(defn fill-ajax-form [items submit]
   (fill-form items submit #(browser sleep 1000)))
 
-(deftrace activate-in-place
+(defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing
    mode. Takes the locator of the input in editing mode as an
    argument."
   [loc]
   (browser click (locators/inactive-edit-field loc)))
 
-(deftrace in-place-edit
+(defn in-place-edit
   "Fill out a form that uses in-place editing.  Takes a map of
    locators to values.  The locators given should be for the
    editing-mode version of the input, it will be activated from its
@@ -101,7 +100,7 @@
           (fill-item loc val)
           (browser click :save-inplace-edit)))))
 
-(deftrace promote-content [from-env content]
+(defn promote-content [from-env content]
   (navigate :named-environment-promotions-page {:env-name from-env})
   (doseq [category (keys content)]
     (browser click (-> category name (str "-category") keyword))
@@ -111,7 +110,7 @@
       (browser sleep 10000))
     (browser clickAndWait :promote-to-next-environment)))
 
-(deftrace extract-content []
+(defn extract-content []
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
         retrieve (fn [elem]
@@ -119,7 +118,7 @@
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set))) 
 
-(deftrace environment-content [env]
+(defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
   (let [categories [:products]]
     (into {}
@@ -128,11 +127,11 @@
                 (browser sleep 2000)
                 [category (extract-content)])))))
 
-(deftrace ^{:TODO "finish me"} change-set-content [env]
+(defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-promotions-page {:env-name env})
   )
 
-(deftrace environment-has-content?
+(defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
   (navigate :named-environment-promotions-page {:env-name env})
@@ -146,20 +145,20 @@
                             true)
                         (catch Exception e false))))))))
 
-(deftrace create-organization [name description]
+(defn create-organization [name description]
   (navigate :new-organization-page)
   (fill-ajax-form {:org-name-text name
               :org-description-text description}
              :create-organization)
   (check-for-success))
 
-(deftrace delete-organization [org-name]
+(defn delete-organization [org-name]
   (navigate :named-organization-page {:org-name org-name})
   (browser answerOnNextPrompt "OK")
   (browser click :remove-organization)
   (check-for-success))
 
-(deftrace create-environment
+(defn create-environment
   [org name description & [prior-env]]
   (navigate :new-environment-page {:org-name org})
   (fill-ajax-form {:env-name-text name
@@ -168,19 +167,19 @@
                   :create-environment)
   (check-for-success))
 
-(deftrace delete-environment [org-name env-name]
+(defn delete-environment [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (browser answerOnNextPrompt "OK")
   (browser click :remove-environment)
   (check-for-success))
 
-(deftrace edit-organization [org-name & {:keys [description]}]
+(defn edit-organization [org-name & {:keys [description]}]
   (navigate :named-organization-page {:org-name org-name})
   (in-place-edit {:org-description-text-edit description})
   (check-for-success))
 
-(deftrace edit-environment [org-name env-name & {:keys [new-name description prior]}]
+(defn edit-environment [org-name env-name & {:keys [new-name description prior]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (in-place-edit {:env-name-text-edit new-name
@@ -188,7 +187,7 @@
                   :env-prior-select-edit prior})
   (check-for-success))
 
-(deftrace environment-other-possible-priors
+(defn environment-other-possible-priors
   "Returns a set of priors that are selectable for the given
    environment (will not include the currently selected prior)."
    [org-name env-name]
@@ -197,7 +196,7 @@
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
 
-(deftrace create-provider [name description type & [repo-url]]
+(defn create-provider [name description type & [repo-url]]
   (let [types {:redhat "Red Hat"
                :custom "Custom"}]
     (assert (some #{type} (keys types)))
@@ -210,7 +209,7 @@
                     :cp-create-save)
     (check-for-success)))
 
-(deftrace add-product [provider-name name description url & [yum? file?]]
+(defn add-product [provider-name name description url & [yum? file?]]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (browser click :add-product)
   (browser waitForVisible :product-name-text "3000")
@@ -222,7 +221,7 @@
                   :create-product)
   (check-for-success))
 
-(deftrace add-repo [provider-name product-name name url]
+(defn add-repo [provider-name product-name name url]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (let [add-repo-button (locators/add-repository product-name)]
     (browser click (locators/product-expand product-name))
@@ -233,35 +232,35 @@
                   :save-repository)
   (check-for-success))
 
-(deftrace delete-provider [name]
+(defn delete-provider [name]
   (navigate :named-provider-page {:cp-name name})
   (browser answerOnNextPrompt "OK")
   (browser click :remove-provider)
   (check-for-success))
 
-(deftrace edit-provider [provider-name & {:keys [new-name description repo-url]}]
+(defn edit-provider [provider-name & {:keys [new-name description repo-url]}]
   (navigate :named-provider-page {:cp-name provider-name})
   (in-place-edit {:cp-name-text new-name
                   :cp-description-text description
                   :cp-repository-url-text repo-url})
   (check-for-success))
 
-(deftrace upload-subscription-manifest [cp-name filepath]
+(defn upload-subscription-manifest [cp-name filepath]
   (navigate :named-provider-page {:cp-name cp-name})
   (->browser (click :subscriptions)
              (setText :choose-file filepath)
              (clickAndWait :upload))
   (check-for-success))
 
-(deftrace logout []
+(defn logout []
   (if (browser isElementPresent :log-in)
     (log/info "Already logged out.")
     (browser clickAndWait :log-out)))
 
-(deftrace logged-in? []
+(defn logged-in? []
   (browser isElementPresent :log-out))
 
-(deftrace login [username password]
+(defn login [username password]
   (if (logged-in?)
     (do (log/warn "Already logged in, logging out.")
         (logout)))
@@ -273,15 +272,15 @@
 (defmacro ensure-by [exp & forms]
   `(if-not ~exp (do ~@forms)))
 
-(deftrace current-user []
+(defn current-user []
   (if (logged-in?)
     (browser getText :account)))
 
-(deftrace ensure-current-user [username password]
+(defn ensure-current-user [username password]
   (ensure-by (= (current-user) username)
           (login username password)))
 
-(deftrace create-user [username password & [password-confirm]] 
+(defn create-user [username password & [password-confirm]] 
   (navigate :users-tab)
   (->browser (click :new-user)
              (waitForElement :new-user-username-text "7500"))
@@ -291,12 +290,12 @@
              :save-user)
   (check-for-success))
 
-(deftrace delete-user [username]
+(defn delete-user [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
   (check-for-success))
 
-(deftrace edit-user [username & {:keys [inline-help clear-disabled-helptips new-password]}]
+(defn edit-user [username & {:keys [inline-help clear-disabled-helptips new-password]}]
   (navigate :named-user-page {:username username})
   (fill-ajax-form {:enable-inline-help-checkbox inline-help
               :clear-disabled-helptips clear-disabled-helptips
@@ -305,19 +304,19 @@
              :save-user-edit)
   (check-for-success))
 
-(deftrace create-role [name]
+(defn create-role [name]
   (navigate :roles-tab)
   (->browser (click :new-role)
              (waitForElement :new-role-name-text "7500")) 
   (fill-ajax-form {:new-role-name-text name} :save-role))
 
-(deftrace sync-complete-status
+(defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
   [product]
   (some #{(browser getText (locators/provider-sync-progress product))} 
                 ["Error syncing!" "Sync complete."]))
 
-(deftrace sync-products [products timeout]
+(defn sync-products [products timeout]
   (navigate :sync-management-page)
   (doseq [product products]
     (browser check (locators/provider-sync-checkbox product)))
@@ -329,7 +328,7 @@
                            (do (Thread/sleep 10000)
                                (recur)))))))
 
-(deftrace edit-system [name & {:keys [new-name description location]}]
+(defn edit-system [name & {:keys [new-name description location]}]
   (navigate :named-systems-page {:system-name name})
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
