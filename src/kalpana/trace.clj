@@ -1,6 +1,7 @@
 (ns kalpana.trace
   (:require [clojure.contrib.trace :as trace]
-            [robert.hooke :as hook]))
+            [robert.hooke :as hook])
+  (:use [clojure.contrib.core :only [-?>]]))
 
 (defn trace-fn-call
   "Traces a single call to a function f with args.  'name' is the
@@ -18,10 +19,17 @@
       value)))
 
 (defn trace [v]
-  (hook/add-hook v trace-fn-call))
+  (if-not (some #{trace-fn-call} (-?> (deref v) meta :robert.hooke/hook deref))
+    (hook/add-hook v trace-fn-call)))
 
 (defn untrace [v]
   (hook/remove-hook v trace-fn-call))
 
-(defn trace-all [namespace]
-  (doall (for [[k v] (ns-interns namespace)] (trace v))))
+(defn with-all-in-ns [f & namespaces]
+  (doall (for [namespace namespaces]
+           (do (require namespace)
+               (for [[_ v] (ns-interns namespace)]
+                 (if (fn? (deref v))
+                   (f v)))))))
+
+
