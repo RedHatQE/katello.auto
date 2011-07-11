@@ -212,7 +212,7 @@
 (defn add-product [provider-name name description url & [yum? file?]]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (browser click :add-product)
-  (browser waitForVisible :product-name-text "3000")
+  (browser waitForVisible :product-name-text "10000")
   (fill-ajax-form {:product-name-text name
                    :product-description-text description
                    :product-url-text url
