@@ -4,7 +4,8 @@
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]]
         [kalpana.trace :only [trace untrace with-all-in-ns]])
-  (:require [kalpana.tasks :as tasks])
+  (:require [kalpana.tasks :as tasks]
+            clojure.contrib.trace)
   (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass BeforeTest]))
 
 ;; macros to be used by test scripts to add preconditions for logged
@@ -32,7 +33,7 @@
   (init)
 
   ;;set up trace - probably not the best place for it
-  (with-all-in-ns trace 'kalpana.tasks 'kalpana.api-tasks)
+  (binding [] (with-all-in-ns trace 'kalpana.tasks 'kalpana.api-tasks))
   
   (let [sel-addr (@config :selenium-address)
         [host port] (split #":" sel-addr)] 
