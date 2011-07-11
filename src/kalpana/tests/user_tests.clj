@@ -10,7 +10,7 @@
               :description "Create a user."}} simple_create [_]
   (tasks/create-user (tasks/timestamp "autouser") "password"))
 
-(defn ^{Test {:groups ["users"]
+(defn ^{Test {:groups ["users" "blockedByBug-720469"]
               :description "Edit a user."}}
   simple_edit [_]
   (let [username (tasks/timestamp "autouser")]
