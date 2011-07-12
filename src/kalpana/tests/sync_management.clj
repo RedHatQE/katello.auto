@@ -1,12 +1,12 @@
-(ns kalpana.tests.sync_management
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api])
+(ns katello.tests.sync_management
+  (:require [katello.tasks :as tasks]
+            [katello.api-tasks :as api])
   (:import [org.testng.annotations Test])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [error.handler :only [with-handlers handle ignore]]
         [com.redhat.qe.verify :only [verify]]
-        [kalpana.conf :only [config]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]]))
+        [katello.conf :only [config]]
+        [katello.tests.setup :only [beforeclass-ensure-admin]]))
 
 (def provider-name (atom nil))
 (def product-name (atom nil))

@@ -1,4 +1,4 @@
-(ns kalpana.httpclient
+(ns katello.httpclient
   (:refer-clojure :exclude (get))
   (:require [clj-http.client :as baseclient]
             [clj-http.core :as core]

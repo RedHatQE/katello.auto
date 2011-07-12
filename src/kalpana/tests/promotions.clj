@@ -1,11 +1,11 @@
-(ns kalpana.tests.promotions
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api]
+(ns katello.tests.promotions
+  (:require [katello.tasks :as tasks]
+            [katello.api-tasks :as api]
             [clojure.contrib.set :as sets]
             [clojure.contrib.logging :as log])
   (:import [org.testng.annotations Test BeforeClass])
-  (:use [kalpana.conf :only [config]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]]
+  (:use [katello.conf :only [config]]
+        [katello.tests.setup :only [beforeclass-ensure-admin]]
         [test-clj.testng :only [gen-class-testng data-driven]]
         [com.redhat.qe.verify :only [verify]]))
 

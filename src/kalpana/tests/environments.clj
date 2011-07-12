@@ -1,10 +1,10 @@
-(ns kalpana.tests.environments
+(ns katello.tests.environments
   (:use [test-clj.testng :only [gen-class-testng]]
         [com.redhat.qe.verify :only [verify]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]])
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api]
-            [kalpana.validation :as validate])
+        [katello.tests.setup :only [beforeclass-ensure-admin]])
+  (:require [katello.tasks :as tasks]
+            [katello.api-tasks :as api]
+            [katello.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
 
 (def test-org-name (atom nil))

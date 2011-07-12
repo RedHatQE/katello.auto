@@ -1,9 +1,9 @@
-(ns kalpana.tests.setup
-  (:use [kalpana.conf :only [init config]]
+(ns katello.tests.setup
+  (:use [katello.conf :only [init config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
-  (:require [kalpana.tasks :as tasks])
+  (:require [katello.tasks :as tasks])
   (:import [org.testng.annotations BeforeSuite AfterSuite BeforeClass BeforeTest]))
 
 ;; macros to be used by test scripts to add preconditions for logged

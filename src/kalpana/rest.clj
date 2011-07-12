@@ -1,5 +1,5 @@
-(ns kalpana.rest
-  (:require [kalpana.httpclient :as httpclient]
+(ns katello.rest
+  (:require [katello.httpclient :as httpclient]
             [clojure.contrib.json :as json]
             [clojure.contrib.pprint :as pprint]
             [clojure.contrib.logging :as log])

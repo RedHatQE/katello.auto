@@ -1,14 +1,12 @@
-(ns kalpana.api-tasks
-  (:require [kalpana.rest :as rest]
+(ns katello.api-tasks
+  (:require [katello.rest :as rest]
             [clojure.contrib.logging :as log])
-  (:use [kalpana.conf :only [config]]
+  (:use [katello.conf :only [config]]
         [inflections :only [pluralize]]))
 
 
 (defn assoc-if-set [m newmap]
   (into m (filter #((complement nil?) (second %)) newmap)))
-
-(def product-data-url "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=kalpana;a=blob_plain;f=playpen/test-data/products.json;hb=HEAD")
 
 (defn api-url [& args]
   (apply str (@config :server-url) args))

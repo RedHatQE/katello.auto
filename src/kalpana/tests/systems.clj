@@ -1,9 +1,9 @@
-(ns kalpana.tests.systems
+(ns katello.tests.systems
   (:use [test-clj.testng :only [gen-class-testng]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]]
-        [kalpana.conf :only [config]])
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api])
+        [katello.tests.setup :only [beforeclass-ensure-admin]]
+        [katello.conf :only [config]])
+  (:require [katello.tasks :as tasks]
+            [katello.api-tasks :as api])
   (:import [org.testng.annotations Test]))
 
 (beforeclass-ensure-admin)

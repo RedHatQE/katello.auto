@@ -1,12 +1,12 @@
-(ns kalpana.tests.organizations
+(ns katello.tests.organizations
   (:use [error.handler :only [with-handlers handle ignore]]
         [com.redhat.qe.verify :only [verify]]
         [test-clj.testng :only [gen-class-testng data-driven]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]]
-        [kalpana.conf :only [config]])
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.api-tasks :as api]
-            [kalpana.validation :as validate])
+        [katello.tests.setup :only [beforeclass-ensure-admin]]
+        [katello.conf :only [config]])
+  (:require [katello.tasks :as tasks]
+            [katello.api-tasks :as api]
+            [katello.validation :as validate])
   (:import [org.testng.annotations Test BeforeClass]))
 
 (beforeclass-ensure-admin)

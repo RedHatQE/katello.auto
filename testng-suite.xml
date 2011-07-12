@@ -1,9 +1,9 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="Kalpana GUI Test Suite">
+<suite name="Katello GUI Test Suite">
   <test name="Login">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -16,7 +16,7 @@
 
   <test name="Organizations">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -28,7 +28,7 @@
 
   <test name="Environments">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -40,7 +40,7 @@
 
   <test name="Providers">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -52,7 +52,7 @@
 
   <test name="Promotions">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -63,7 +63,7 @@
   </test>
   <test name="SyncManagement">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -74,7 +74,7 @@
   </test>
   <test name="Users">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>
@@ -85,7 +85,7 @@
   </test>
   <test name="Systems">
     <packages>
-      <package name="kalpana.tests" />
+      <package name="katello.tests" />
     </packages>    
     <groups>
       <run>

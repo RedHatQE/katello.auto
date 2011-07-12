@@ -1,4 +1,4 @@
-(ns kalpana.locators
+(ns katello.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser ->browser sel-locator]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]

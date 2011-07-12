@@ -1,7 +1,7 @@
-(ns kalpana.tests.user-tests
+(ns katello.tests.user-tests
   (:use [test-clj.testng :only [gen-class-testng]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]])
-  (:require [kalpana.tasks :as tasks])
+        [katello.tests.setup :only [beforeclass-ensure-admin]])
+  (:require [katello.tasks :as tasks])
   (:import [org.testng.annotations Test BeforeClass]))
 
 (beforeclass-ensure-admin)

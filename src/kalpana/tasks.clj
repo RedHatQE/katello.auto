@@ -1,5 +1,5 @@
-(ns kalpana.tasks
-  (:require [kalpana.locators :as locators]
+(ns katello.tasks
+  (:require [katello.locators :as locators]
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
@@ -24,12 +24,12 @@
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
-   them.  If no matches, returns :kalpana-error."
+   them.  If no matches, returns :katello-error."
   [message]
   (or (some #(let [re (known-errors %)]
                (if (re-find re message) % false) )
             (keys known-errors))
-      :kalpana-error))
+      :katello-error))
 
 (defn clear-all-notifications []
   (let [n (count

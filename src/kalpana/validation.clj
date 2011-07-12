@@ -1,4 +1,4 @@
-(ns kalpana.validation
+(ns katello.validation
   (:require [clojure.string :as string]
             [clojure.contrib.logging :as log])
   (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]

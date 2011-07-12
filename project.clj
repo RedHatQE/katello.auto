@@ -1,7 +1,7 @@
-(defproject kalpana "1.0.0-SNAPSHOT"
-  :description "Kalpana automation"
-  :aot [#"^kalpana.tests"]
-  :class-file-whitelist #"^kalpana.tests"
+(defproject katello "1.0.0-SNAPSHOT"
+  :description "Katello automation"
+  :aot [#"^katello.tests"]
+  :class-file-whitelist #"^katello.tests"
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
                  [webui-framework "1.0.2-SNAPSHOT"]
@@ -14,11 +14,11 @@
   )
 
 (comment "Execute this in the repl to load everything and start selenium"
-         (do (require 'kalpana.tasks :reload-all)
-             (require 'kalpana.conf :reload)
-             (require 'kalpana.tests.setup)
-             (kalpana.conf/init)
-             (kalpana.tests.setup/start_selenium nil)
-             (kalpana.tasks/login "admin" "admin"))
+         (do (require 'katello.tasks :reload-all)
+             (require 'katello.conf :reload)
+             (require 'katello.tests.setup)
+             (katello.conf/init)
+             (katello.tests.setup/start_selenium nil)
+             (katello.tasks/login "admin" "admin"))
          )
 

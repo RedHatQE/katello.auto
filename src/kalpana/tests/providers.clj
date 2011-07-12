@@ -1,11 +1,11 @@
-(ns kalpana.tests.providers
-  (:require [kalpana.tasks :as tasks]
-            [kalpana.validation :as validate]
-            [kalpana.api-tasks :as api])
+(ns katello.tests.providers
+  (:require [katello.tasks :as tasks]
+            [katello.validation :as validate]
+            [katello.api-tasks :as api])
   (:import [org.testng.annotations Test BeforeGroups])
   (:use [test-clj.testng :only [gen-class-testng data-driven]]
         [com.redhat.qe.verify :only [verify]]
-        [kalpana.tests.setup :only [beforeclass-ensure-admin]]))
+        [katello.tests.setup :only [beforeclass-ensure-admin]]))
 
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))

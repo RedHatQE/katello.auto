@@ -1,10 +1,10 @@
-(ns kalpana.tests.login-tests
-  (:use [kalpana.conf :only [init config]]
+(ns katello.tests.login-tests
+  (:use [katello.conf :only [init config]]
         [com.redhat.qe.verify :only [verify]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [test-clj.testng :only [gen-class-testng]]
         [clojure.contrib.string :only [split]])
-  (:require [kalpana.tasks :as tasks])
+  (:require [katello.tasks :as tasks])
   (:import [org.testng.annotations Test BeforeClass]))
 
 (defn ^{BeforeClass {:groups ["setup"]}} logout [_] )
