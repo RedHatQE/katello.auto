@@ -26,15 +26,17 @@
   ensure_ui_up [_]
   (tasks/navigate :top-level))
 
-(defn ^{BeforeSuite {:groups ["setup"]}}
-  start_selenium [_]
+(defn start-sel []
   (init)
-  
   (let [sel-addr (@config :selenium-address)
         [host port] (split #":" sel-addr)] 
     (connect host (Integer/parseInt port) "" (@config :server-url))
     (browser start)
     (browser open (@config :server-url))))
+
+(defn ^{BeforeSuite {:groups ["setup"]}}
+  start_selenium [_]
+  (start-sel))
 
 (defn ^{BeforeSuite {:groups ["setup"]
                      :dependsOnMethods ["start_selenium"]}}
