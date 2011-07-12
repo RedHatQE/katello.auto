@@ -1,4 +1,4 @@
-(ns kalpana.trace
+(ns katello.trace
   (:require [clojure.contrib.trace :as trace]
             [robert.hooke :as hook])
   (:use [clojure.contrib.core :only [-?>]]))
@@ -26,10 +26,10 @@
   (hook/remove-hook v trace-fn-call))
 
 (defn with-all-in-ns [f & namespaces]
-  (doall (for [namespace namespaces]
-           (do (require namespace)
-               (for [[_ v] (ns-interns namespace)]
-                 (if (fn? (deref v))
-                   (f v)))))))
+  (doseq [namespace namespaces]
+    (require namespace)
+    (doseq [[_ v] (ns-interns namespace)]
+      (if (fn? (deref v))
+        (f v)))))
 
 

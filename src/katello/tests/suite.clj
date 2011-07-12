@@ -4,12 +4,12 @@
             [katello.tasks :as tasks]
             [katello.api-tasks :as api]
             [katello.validation :as validate]
-            [test-clj.core :as test]
-            [katello.trace :only [trace untrace with-all-in-ns]])
+            [test-clj.core :as test])
   (:use [test-clj.core :only [fn unsatisfied by-name]]
         [katello.conf :only [config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
-        [com.redhat.qe.verify :only [verify]]))
+        [com.redhat.qe.verify :only [verify]]
+        [katello.trace :only [trace untrace with-all-in-ns]]))
 
 (declare login-tests org-tests)
 
@@ -52,5 +52,6 @@
                                      #(tasks/create-organization nil "org description")))}]}])
 
 (defn -main [ & args]
-  (with-all-in-ns trace 'kalpana.tasks 'kalpana.api-tasks)
+  (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
+  (trace #'test/execute)
   (test/run-suite (suite)))
