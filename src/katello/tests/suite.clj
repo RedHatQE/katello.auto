@@ -4,7 +4,8 @@
             [katello.tasks :as tasks]
             [katello.api-tasks :as api]
             [katello.validation :as validate]
-            [test-clj.core :as test])
+            [test-clj.core :as test]
+            [katello.trace :only [trace untrace with-all-in-ns]])
   (:use [test-clj.core :only [fn unsatisfied by-name]]
         [katello.conf :only [config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
@@ -51,4 +52,5 @@
                                      #(tasks/create-organization nil "org description")))}]}])
 
 (defn -main [ & args]
+  (with-all-in-ns trace 'kalpana.tasks 'kalpana.api-tasks)
   (test/run-suite (suite)))
