@@ -12,17 +12,17 @@
 (beforeclass-ensure-admin)
 
 (defn ^{Test {:groups ["organizations"]}} create_simple [_]
-  (tasks/verify-success #(tasks/create-organization (tasks/timestamp "auto-org") "org description")))
+  (tasks/verify-success #(tasks/create-organization (tasks/uniqueify "auto-org") "org description")))
 
 (defn ^{Test {:groups ["organizations" "blockedByBug-716972"]}} delete_simple [_]
-  (let [org-name (tasks/timestamp "auto-del")]
+  (let [org-name (tasks/uniqueify "auto-del")]
     (tasks/create-organization org-name "org to delete immediately")
     (tasks/delete-organization org-name)
     (let [remaining-org-names (doall (map :name (api/all-entities :organization)))]
       (verify (not (some #{org-name} remaining-org-names))))))
 
 (defn ^{Test {:groups ["organizations" "validation" ]}} duplicate_disallowed [_]
-  (let [org-name (tasks/timestamp "test-dup")]
+  (let [org-name (tasks/uniqueify "test-dup")]
     (validate/duplicate_disallowed
      #(tasks/create-organization org-name "org-description"))))
 
@@ -30,7 +30,7 @@
   (validate/name-field-required #(tasks/create-organization nil "org description")))
 
 (defn ^{Test {:groups ["organizations"]}} edit [_]
-  (let [org-name (tasks/timestamp "auto-ren")]
+  (let [org-name (tasks/uniqueify "auto-ren")]
     (tasks/create-organization org-name "org to edit immediately")
     (tasks/edit-organization org-name :description "edited description")))
 

@@ -20,8 +20,8 @@
                        "blockedByBug-715004" ]
               :description "Sync a product."}}
   simple_sync [_]
-  (let [myprovider (tasks/timestamp "sync")
-        myproduct (tasks/timestamp "sync-test1")]
+  (let [myprovider (tasks/uniqueify "sync")
+        myproduct (tasks/uniqueify "sync-test1")]
     (api/create-provider (@config :admin-org)
                          (@config :admin-user)
                          (@config :admin-password)
@@ -31,7 +31,7 @@
     (api/create-product myproduct myprovider
                         :description "testing sync"
                         :url "http://meaningless.url")
-    (api/create-repo (tasks/timestamp "testrepo") (@config :admin-org) myproduct
+    (api/create-repo (tasks/uniqueify "testrepo") (@config :admin-org) myproduct
                      (@config :sync-repo))
     (let [results (tasks/sync-products [myproduct] 60000)]
       (verify (every? #(= "Sync complete." %) (vals results))))))

@@ -12,7 +12,7 @@
 
 (defn test-provider [type]
   (let [result-message (tasks/create-provider
-                        (tasks/timestamp "auto-cp")
+                        (tasks/uniqueify "auto-cp")
                         "my description"
                         type
                         (if (= type :redhat)
@@ -33,7 +33,7 @@
 
 (defn ^{Test {:description "Delete a provider."
               :groups ["providers"]}} delete_simple [_]
-  (let [cp-name (tasks/timestamp "auto-cp-delete")]
+  (let [cp-name (tasks/uniqueify "auto-cp-delete")]
     (tasks/create-provider
      cp-name
      "my description"
@@ -43,8 +43,8 @@
 (defn ^{Test {:description "Change the name of a provider, and verify it can be found under its new name."
               :groups ["providers"]}}
   edit_name [_]
-  (let [old-name (tasks/timestamp "rename")
-        new-name (tasks/timestamp "newname")]
+  (let [old-name (tasks/uniqueify "rename")
+        new-name (tasks/uniqueify "newname")]
     (tasks/create-provider old-name "my description" :custom)
     (tasks/edit-provider old-name :new-name new-name)
     (tasks/navigate :named-provider-page {:cp-name new-name})
@@ -52,7 +52,7 @@
       (verify (not (some #{old-name} current-providers))))))
 
 (defn validate_provider [name description repo-url type  expected-result]
-  (let [name (if (fn? name) (name) name)] ; timestamping at compile time defeats purpose of unique names
+  (let [name (if (fn? name) (name) name)] ; uniqueifying at compile time defeats purpose of unique names
     (validate/field-validation       
      (fn []                           
        (tasks/create-provider name description type repo-url) 
@@ -63,17 +63,17 @@
                     
                   ^{Test {:groups ["blockedByBug-703528"]
                           :description "Test that invalid URL is rejected."}}
-                  [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :repository-url-invalid]
+                  [#(tasks/uniqueify "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :repository-url-invalid]
                    ^{Test {:groups ["blockedByBug-703528"]
                           :description "Test that invalid URL is rejected."}}
-                  [#(tasks/timestamp "mytestcp") "blah" "https://" :redhat :repository-url-invalid]
-                  [#(tasks/timestamp "mytestcp") "blah" "@$#%$%&%*(" :redhat :repository-url-invalid]
+                  [#(tasks/uniqueify "mytestcp") "blah" "https://" :redhat :repository-url-invalid]
+                  [#(tasks/uniqueify "mytestcp") "blah" "@$#%$%&%*(" :redhat :repository-url-invalid]
 
-                  [#(tasks/timestamp "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
-                  [#(tasks/timestamp "mytestcp3") nil "http://sdf.com" :redhat :only-one-redhat-provider-per-org]
-                  [#(tasks/timestamp "mytestcp4") nil "http://sdf.com" :custom :success]]
+                  [#(tasks/uniqueify "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
+                  [#(tasks/uniqueify "mytestcp3") nil "http://sdf.com" :redhat :only-one-redhat-provider-per-org]
+                  [#(tasks/uniqueify "mytestcp4") nil "http://sdf.com" :custom :success]]
                  (validate/variations
-                  [#(tasks/timestamp "mytestcp5") :javascript "http://sdf.com" :custom :success])
+                  [#(tasks/uniqueify "mytestcp5") :javascript "http://sdf.com" :custom :success])
                  (validate/variations                  
                   [:trailing-whitespace nil  "http://sdf.com" :custom  :name-no-leading-trailing-whitespace])
                  (validate/variations
@@ -85,13 +85,13 @@
                       :groups ["providers"]
                       :value ["products"]}}
   create_test_custom_provider [_]
-  (tasks/create-provider (reset!  test-provider-name (tasks/timestamp "cust"))
+  (tasks/create-provider (reset!  test-provider-name (tasks/uniqueify "cust"))
                          "my description" :custom))
 
 (defn ^{Test {:groups ["providers" "products" "blockedByBug-712318"]
               :description "Create a product"}}
   create_product [_]
-  (tasks/add-product @test-provider-name (reset! test-product-name (tasks/timestamp "prod"))
+  (tasks/add-product @test-provider-name (reset! test-product-name (tasks/uniqueify "prod"))
                      "test product" "http://test.url" true true))
 
 

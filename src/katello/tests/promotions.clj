@@ -28,7 +28,7 @@ there is none, one will be created and its name returned."
      (second matches) (throw (IllegalStateException.
                               "Multiple envs have root as their prior! See bz 692592."))
      (first matches) (-> matches first :name)
-     :else (let [new-env-name (tasks/timestamp "promote-test-env")]
+     :else (let [new-env-name (tasks/uniqueify "promote-test-env")]
              (api/create-environment new-env-name org
                                      (@config :admin-user)
                                      (@config :admin-password)
@@ -38,7 +38,7 @@ there is none, one will be created and its name returned."
 
 (defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
   (reset! myorg (@config :admin-org))
-  (reset! provider-name (tasks/timestamp "promo-"))
+  (reset! provider-name (tasks/uniqueify "promo-"))
   
   (api/create-provider @myorg (@config :admin-user) (@config :admin-password)
                                :name @provider-name
@@ -62,11 +62,11 @@ there is none, one will be created and its name returned."
       (verify (sets/superset? current promoted)))))
 
 (defn verify_promote_content [org envs content]
-  (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute timestamping at runtime
+  (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime
                                             (if (fn? val) (val) val)))]
    (doseq [product-name (content :products)]
      (api/create-product product-name @provider-name :description "test product")
-     (api/create-repo (tasks/timestamp "mytestrepo") @myorg product-name "http://blah.com"))
+     (api/create-repo (tasks/uniqueify "mytestrepo") @myorg product-name "http://blah.com"))
    (doseq [[from-env target-env] (partition 2 1 envs)]
      (tasks/promote-content from-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
@@ -78,8 +78,8 @@ there is none, one will be created and its name returned."
                                                "blockedByBug-714297"] :description
                                       "Takes content and promotes it thru more environments.
                                        Verifies that it shows up in the new env."}}
-             [[@myorg [locker root] {:products #(set (tasks/timestamp "MyProduct" 3))}]
-              [@myorg [locker root @root-next-env] {:products #(set (tasks/timestamp "ProductMulti" 3))}]]) 
+             [[@myorg [locker root] {:products #(set (tasks/uniqueify "MyProduct" 3))}]
+              [@myorg [locker root @root-next-env] {:products #(set (tasks/uniqueify "ProductMulti" 3))}]]) 
 
 (defn ^{Test {:description "After content has been promoted, the change set should be empty."
               :groups ["promotions"
@@ -90,7 +90,7 @@ there is none, one will be created and its name returned."
   verify_change_set_cleared [_]
   (verify_promote_content @myorg
                           [locker root]
-                          {:products (set (tasks/timestamp "MyProduct" 3))})
+                          {:products (set (tasks/uniqueify "MyProduct" 3))})
   )
 (gen-class-testng)
 

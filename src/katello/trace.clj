@@ -7,7 +7,7 @@
   "Traces a single call to a function f with args.  'name' is the
   symbol name of the function."
   [f & args]  
-  (let [id (gensym "call")
+  (let [id (gensym "TR")
         m (meta f)]
     (trace/tracer id (str (trace/trace-indent)
                           (pr-str (cons

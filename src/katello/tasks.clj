@@ -7,7 +7,7 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         [error.handler :only [raise]]
-        [com.redhat.qe.verify :only [verify]])
+        [com.redhat.qe.verify :only [verify-that]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;tasks
@@ -18,6 +18,8 @@
    for each item."
   ([s] (str s "-" (System/currentTimeMillis)))
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
+
+(def uniqueify timestamp)
 
 (def known-errors
    {:validation-failed #"Validation [Ff]ailed"})
@@ -31,14 +33,11 @@
             (keys known-errors))
       :katello-error))
 
-(defn clear-all-notifications []
-  (let [n (count
-           (take-while (fn [index] (let [loc (locators/notification-close-index (str index))]
-                                    (if (browser isElementPresent loc)
-                                      (do (browser click loc) true))))
-                       (iterate inc 1)))]
-    (if (> n 0) (log/info (str "Cleared " n " notifications.")))
-    n))
+(defn- clear-all-notifications []
+  (take-while (fn [index] (let [loc (locators/notification-close-index (str index))]
+                           (if (browser isElementPresent loc)
+                             (do (browser click loc) true))))
+              (iterate inc 1)))
 
 (defn notification
   "Gets the notification from the page, returns a map object
@@ -74,7 +73,7 @@
 
 (defn verify-success [task-fn]
   (let [resulting-message (task-fn)]
-    (verify (string? resulting-message))))
+    (verify-that (string? resulting-message))))
 
 (def navigate (nav/nav-fn locators/page-tree))
 
