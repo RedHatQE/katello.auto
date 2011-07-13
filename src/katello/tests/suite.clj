@@ -54,4 +54,5 @@
 (defn -main [ & args]
   (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
   (trace #'test/execute)
+  (trace #'verify)
   (test/run-suite (suite)))
