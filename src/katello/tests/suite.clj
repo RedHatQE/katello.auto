@@ -96,7 +96,7 @@
   (trace #'check)
   (binding [clojure.contrib.trace/tracer
             (fn [name value]
-              (println (str (when name (str " " name)) ": " value)))]
+              (println (str (when name (format "$6s:" name))  value)))]
     (test/run-suite (suite)))
   
   (comment (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
