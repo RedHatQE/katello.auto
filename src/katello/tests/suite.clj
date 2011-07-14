@@ -7,6 +7,7 @@
             [test-clj.core :as test]
             [clojure.contrib.trace :as trace])
   (:use [test-clj.core :only [fn unsatisfied by-name]]
+        [katello.trace :only [with-all-in-ns trace]]
         [katello.conf :only [config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [com.redhat.qe.verify :only [verify-that check]]))
@@ -15,6 +16,7 @@
 
 (defn suite []
   {:name "startup"
+   :configuration true
    :steps (fn [] (setup/start-sel))
    :more (login-tests)})
 
