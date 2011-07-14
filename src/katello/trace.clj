@@ -13,9 +13,11 @@
                           (pr-str (cons
                                    (symbol (str (:ns m)) (str (m :name)))
                                    args))))
-    (let [value (binding [trace/*trace-depth* (inc trace/*trace-depth*)]
-                  (apply f args))]
+    (let [[value err] (binding [trace/*trace-depth* (inc trace/*trace-depth*)]
+                        (try [(apply f args) nil]
+                             (catch Exception e [e e])))]
       (trace/tracer id (str (trace/trace-indent) "=> " (pr-str value)))
+      (when err (throw err))
       value)))
 
 (defn trace [v]
