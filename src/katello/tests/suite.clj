@@ -4,12 +4,12 @@
             [katello.tasks :as tasks]
             [katello.api-tasks :as api]
             [katello.validation :as validate]
+            [com.redhat.qe.auto.selenium.selenium :as sel]
             [test-clj.core :as test]
             [clojure.contrib.trace :as trace])
   (:use [test-clj.core :only [fn unsatisfied by-name]]
         [katello.trace :only [dotrace-all]]
         [katello.conf :only [config]]
-        [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
         [com.redhat.qe.verify :only [verify-that check]])
   (:import [com.redhat.qe.auto.testng BzChecker]))
 
@@ -85,6 +85,16 @@
              :steps (fn []
                       (validate/name-field-required
                        #(tasks/create-organization nil "org description")))}]
+           (test/data-driven {:name "org valid name"}
+                             (fn [name expected-error]
+                               (validate/field-validation
+                                #(tasks/create-organization name "org description")
+                                expected-error))
+                             (concat 
+                              (validate/variations [:invalid-character
+                                                    :name-must-not-contain-characters])
+                              (validate/variations [:trailing-whitespace
+                                                    :name-no-leading-trailing-whitespace])))
            (environment-tests))}])
 
 (defn blocked-by-bz-bugs [ & ids]
