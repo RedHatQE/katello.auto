@@ -7,18 +7,21 @@
             [test-clj.core :as test]
             [clojure.contrib.trace :as trace])
   (:use [test-clj.core :only [fn unsatisfied by-name]]
-        [katello.trace :only [with-all-in-ns trace]]
+        [katello.trace :only [dotrace-all]]
         [katello.conf :only [config]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]
-        [com.redhat.qe.verify :only [verify-that check]]))
+        [com.redhat.qe.verify :only [verify-that check]])
+  (:import [com.redhat.qe.auto.testng BzChecker]))
 
 (declare login-tests org-tests)
 
 (defn suite []
+ 
   {:name "startup"
    :configuration true
    :steps (fn [] (setup/start-sel))
-   :more (login-tests)})
+   :more (login-tests)
+   :post (fn [] (setup/stop_selenium nil))})
 
 (defn login-tests []
   [{:name "login as admin"
@@ -83,25 +86,18 @@
                        #(tasks/create-organization nil "org description")))}]
            (environment-tests))}])
 
-(defn all-fn-in-ns [ & namespaces]
-  (for [namespace namespaces [k v] (ns-interns namespace) :when (fn? (deref v))]
-    v))
-
-(defmacro mydotrace [nslist fnlist & forms]
-  `(trace/dotrace ~(vec (concat (mapcat all-fn-in-ns nslist) fnlist)) ~@forms))
+(defn blocked-by-bz-bugs [ & ids]
+  (fn []
+    (let [checker (BzChecker/getInstance)]
+     (filter (fn [id] (.isBugOpen checker id)) ids))))
 
 (defn -main [ & args]
-  (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
-  (trace #'test/execute)
-  (trace #'check)
+  (comment (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
+   (trace #'test/execute)
+   (trace #'check))
   (binding [clojure.contrib.trace/tracer
             (fn [name value]
               (println (str (when name (format "%6s:" name))  value)))]
-    (test/run-suite (suite)))
-  
-  (comment (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
-           (trace #'test/execute)
-           (trace #'check)
-           (mydotrace (katello.tasks katello.api-tasks)
-               (test/execute check)
-               )))
+    (dotrace-all [katello.tasks katello.api-tasks]
+                 [test/execute check] []
+                 (test/run-suite (suite)))))
