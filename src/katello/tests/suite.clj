@@ -16,12 +16,13 @@
 (declare login-tests org-tests)
 
 (defn suite []
- 
   {:name "startup"
    :configuration true
    :steps (fn [] (setup/start-sel))
-   :more (login-tests)
-   :post (fn [] (setup/stop_selenium nil))})
+   :more (conj (login-tests)
+               {:name "shut down"
+                :configuration :true
+                :steps (fn [] (setup/stop_selenium nil))})})
 
 (defn login-tests []
   [{:name "login as admin"
@@ -92,9 +93,6 @@
      (filter (fn [id] (.isBugOpen checker id)) ids))))
 
 (defn -main [ & args]
-  (comment (with-all-in-ns trace 'katello.tasks 'katello.api-tasks)
-   (trace #'test/execute)
-   (trace #'check))
   (binding [clojure.contrib.trace/tracer
             (fn [name value]
               (println (str (when name (format "%6s:" name))  value)))]
