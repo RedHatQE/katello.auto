@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require [katello.tests.setup :as setup]
             [katello.tests.providers :as providers]
+            [katello.tests.promotions :as promotions]
             [katello.tasks :as tasks]
             [katello.api-tasks :as api]
             [katello.validation :as validate]
@@ -163,6 +164,8 @@
                                 [:trailing-whitespace nil  "http://sdf.com" :custom  :name-no-leading-trailing-whitespace])
                                (validate/variations
                                 [:invalid-character nil "http://sdf.com" :custom :name-must-not-contain-characters]))))}])
+
+
 
 (defn -main [ & args]
   (binding [clojure.contrib.trace/tracer

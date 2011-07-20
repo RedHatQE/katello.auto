@@ -26,9 +26,10 @@
    textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
    env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//a[@class='path_link' and normalize-space(.)='$1']")
    promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='$1']")
-   promotion-add-content-item (LocatorTemplate. "Add Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Add']")
-   promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//div[contains(@id,'details') and contains(.,'$1')]/../a[normalize-space(.)='Remove']")
+   promotion-add-content-item (LocatorTemplate. "Add Content Item" "//a[@data-display_name='$1' and contains(.,'Add')]")
+   promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//a[@data-display_name='$1' and contains(.,'Remove')]")
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]//span[@class='product-icon']")
+   promotion-env-breadcrumb (LocatorTemplate. "Promotion environment breadcrumb" "//a[.='$2' and contains(@class, 'path_link')]/../../..//a[.='$1']")
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
    provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
@@ -115,12 +116,21 @@
              :save-repository "//div[normalize-space(.)='Save Repository' and not(ancestor::div[contains(@style,'display: none')])]"             
              
              ;;Promotions subtab
+             
              :products-category (promotion-content-category "products")
+             :expand-path "path-collapsed"
              :errata-category (promotion-content-category "errata")
              :packages-category (promotion-content-category "packages")
              :kickstart-trees-category (promotion-content-category "kickstart trees")
-             :promote-to-next-environment "//input[starts-with(@value,'Promote to')]"
+             :review-for-promotion "//div[@id='changeset_action' and contains(.,'Review')]"
+             :promote-to-next-environment "//div[@id='changeset_action' and contains(.,'Promote')]"
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
+             :new-changeset "//a[contains(.,'New Changeset')]"
+             :changeset-name-text (textbox "name")
+             :save-changeset "save_changeset_button"
+
+
+             
              ;;Sync Management subtab
              :synchronize-now "sync_button"
 
@@ -201,7 +211,9 @@
                                                       (browser sleep 2000))]]]
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
-               [:named-environment-promotions-page [env-name] (via (env-breadcrumb-link env-name))]]]
+               [:named-environment-promotions-page [env-name next-env-name]
+                (do (browser click :expand-path)
+                  (via (promotion-env-breadcrumb env-name next-env-name)))]]]
              [:systems-tab [] (via :systems)
               [:named-systems-page [system-name] (via (system system-name)
                                                       (inactive-edit-field :system-name-text-edit))]]

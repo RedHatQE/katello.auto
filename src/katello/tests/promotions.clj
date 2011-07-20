@@ -1,13 +1,12 @@
 (ns katello.tests.promotions
   (:require [katello.tasks :as tasks]
             [katello.api-tasks :as api]
-            [clojure.contrib.set :as sets]
-            [clojure.contrib.logging :as log])
-  (:import [org.testng.annotations Test BeforeClass])
+            [clojure.contrib.set :as sets])
+  
   (:use [katello.conf :only [config]]
-        [katello.tests.setup :only [beforeclass-ensure-admin]]
-        [test-clj.testng :only [gen-class-testng data-driven]]
-        [com.redhat.qe.verify :only [verify]]))
+        [test-clj.core :only [data-driven]]
+        [katello.tests.suite :only [blocked-by-bz-bugs]]
+        [com.redhat.qe.verify :only [verify-that]]))
 
 (def provider-name (atom nil))
 (def root-next-env (atom "Q-eh"))
@@ -15,28 +14,8 @@
 (def root "Development")
 (def myorg (atom nil))
 
-(beforeclass-ensure-admin)
 
-(defn get-root-next-env
-  "Gets the environment whose 'prior' is the root environment.  If
-there is none, one will be created and its name returned."
-  [org]
-  (let [rootid (api/get-id-by-name :environment root org)
-        matches (filter #(= (:prior %) rootid)
-                        (api/all-entities :environment org))]
-    (cond
-     (second matches) (throw (IllegalStateException.
-                              "Multiple envs have root as their prior! See bz 692592."))
-     (first matches) (-> matches first :name)
-     :else (let [new-env-name (tasks/uniqueify "promote-test-env")]
-             (api/create-environment new-env-name org
-                                     (@config :admin-user)
-                                     (@config :admin-password)
-                                     :description "for testing content promotion"
-                                     :prior-env root)
-             new-env-name))))
-
-(defn ^{BeforeClass {:groups ["promotions"]}} setup [_]
+(defn setup []
   (reset! myorg (@config :admin-org))
   (reset! provider-name (tasks/uniqueify "promo-"))
   
@@ -59,9 +38,9 @@ there is none, one will be created and its name returned."
   (doseq [content-type (keys from)]
     (let [promoted (content-type from)
           current (content-type in)]
-      (verify (sets/superset? current promoted)))))
+      (verify-that (sets/superset? current promoted)))))
 
-(defn verify_promote_content [org envs content]
+(defn verify-promote-content [org envs content]
   (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime
                                             (if (fn? val) (val) val)))]
    (doseq [product-name (content :products)]
@@ -71,35 +50,20 @@ there is none, one will be created and its name returned."
      (tasks/promote-content from-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
 
-(data-driven verify_promote_content {org.testng.annotations.Test
-                                     {:groups ["promotions"
-                                               "blockedByBug-711144"
-                                               "blockedByBug-712318"
-                                               "blockedByBug-714297"] :description
-                                      "Takes content and promotes it thru more environments.
-                                       Verifies that it shows up in the new env."}}
-             [[@myorg [locker root] {:products #(set (tasks/uniqueify "MyProduct" 3))}]
-              [@myorg [locker root @root-next-env] {:products #(set (tasks/uniqueify "ProductMulti" 3))}]]) 
-
-(defn ^{Test {:description "After content has been promoted, the change set should be empty."
-              :groups ["promotions"
-                       "blockedByBug-699374"
-                       "blockedByBug-711144"
-                       "blockedByBug-712318"
-                       "blockedByBug-714297"]}}
-  verify_change_set_cleared [_]
-  (verify_promote_content @myorg
-                          [locker root]
-                          {:products (set (tasks/uniqueify "MyProduct" 3))})
-  )
-(gen-class-testng)
+(defn tests [] [{:configuration true
+                 :name "set up promotions"
+                 :description "Takes content and promotes it thru more environments.
+                               Verifies that it shows up in the new env."
+                 :steps setup
+                 :more [(data-driven
+                         {:name "promote content"
+                          :pre (blocked-by-bz-bugs "711144"
+                                                   "712318"
+                                                   "714297")}
+                         verify-promote-content
+                         [[@myorg [locker root] {:products
+                                                 #(set (tasks/uniqueify "MyProduct" 3))}]
+                          [@myorg [locker root @root-next-env] {:products
+                                                                #(set (tasks/uniqueify "ProductMulti" 3))}]])]}])
 
 
-
-
-(comment "not needed - dates are not required for api"
-         (def date-fmt (java.text.SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ"))
-
-         (defn formatted-date
-           ([d] (.format date-fmt d))
-           ([] (formatted-date (java.util.Date.)))))

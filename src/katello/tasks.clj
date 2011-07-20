@@ -99,15 +99,26 @@
           (fill-item loc val)
           (browser click :save-inplace-edit)))))
 
-(defn promote-content [from-env content]
-  (navigate :named-environment-promotions-page {:env-name from-env})
-  (doseq [category (keys content)]
+(defn create-changeset [env-name next-env-name changeset-name]
+  (navigate :named-environment-promotions-page {:env-name env-name
+                                                :next-env-name next-env-name})
+  (browser click :new-changeset)
+  (browser waitForElement :changeset-name-text "30000")
+  (browser setText :changeset-name-text changeset-name)
+  (browser click :save-changeset)
+  (check-for-success))
+
+(defn promote-content [from-env to-env content]
+  (let [changeset (uniqueify "changeset")]
+    (create-changeset from-env to-env changeset)
+    (doseq [category (keys content)]
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
       (browser waitAndClick (locators/promotion-add-content-item item) "10000")
       (browser waitForElement (locators/promotion-remove-content-item item) "10000")
       (browser sleep 10000))
-    (browser clickAndWait :promote-to-next-environment)))
+    (browser waitAndClick :review-for-promotion "10000")
+    (browser waitAndClickAndWait :promote-to-next-environment "10000" "60000"))))
 
 (defn extract-content []
   (let [elems (for [index (iterate inc 1)]
@@ -333,3 +344,5 @@
                   :system-description-text-edit description
                   :system-location-text-edit location})
   (check-for-success))
+
+
