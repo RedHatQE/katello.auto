@@ -1,28 +1,23 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require [katello.tests.setup :as setup]
-            [katello.tests.providers :as providers]
-            [katello.tests.promotions :as promotions]
-            [katello.tasks :as tasks]
-            [katello.api-tasks :as api]
-            [katello.validation :as validate]
-            [com.redhat.qe.auto.selenium.selenium :as sel]
-            [test-clj.core :as test]
-            [clojure.contrib.trace :as trace])
-  (:use [test-clj.core :only [fn unsatisfied by-name]]
-        [katello.trace :only [dotrace-all]]
-        [katello.conf :only [config]]
-        [com.redhat.qe.verify :only [verify-that check]])
-  (:import [com.redhat.qe.auto.testng BzChecker]))
+  (:require
+   (katello [tasks :as tasks]
+            [api-tasks :as api]
+            [validation :as validate])
+   (katello.tests [setup :as setup]
+                  [providers :as providers]
+                  [promotions :as promotions]
+                  [sync_management :as sync])
+   [com.redhat.qe.auto.selenium.selenium :as sel]
+   [test-clj.core :as test]
+   [clojure.contrib.trace :as trace])
+  (:use [test-clj.core :only [fn]]
+        (katello [trace :only [dotrace-all]]
+                 [conf :only [config]])
+        [com.redhat.qe.verify :only [verify-that check]]
+        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
 
 (declare login-tests org-tests environment-tests provider-tests)
-
-(defn blocked-by-bz-bugs [ & ids]
-  (fn [_]
-    (let [checker (BzChecker/getInstance)
-          still-open (filter (fn [id] (.isBugOpen checker id)) ids)]
-      (if (= 0 (count still-open)) nil
-          still-open))))
 
 (defn suite []
   {:name "startup"
@@ -31,14 +26,17 @@
    :more (conj (login-tests)
                {:name "shut down"
                 :configuration :true
-                :steps (fn [] (setup/stop_selenium nil))})})
+                :steps (fn [] (setup/stop-selenium))})})
 
 (defn login-tests []
   [{:name "login as admin"
     :steps (fn [] (tasks/verify-success
                   #(tasks/login (@config :admin-user)
                                 (@config :admin-password))))
-    :more (concat (org-tests) (provider-tests))}
+    :more (concat (org-tests)
+                  (provider-tests)
+                  (sync/tests)
+                  (promotions/tests))}
 
    {:name "login as invalid user"
     :pre (constantly true) ;;disables test
@@ -69,6 +67,7 @@
              :steps (fn []
                       (validate/name-field-required
                        #(tasks/create-organization nil "org description")))}]
+           
            (test/data-driven {:name "org valid name"}
                              (fn [name expected-error]
                                (validate/field-validation
@@ -119,9 +118,7 @@
                                                            new-name)
                                    (tasks/navigate :named-environment-page
                                                    {:org-name @test-org-name
-                                                    :env-name new-name})))
-                    }]}]}])
-
+                                                    :env-name new-name})))}]}]}])
 
 (defn provider-tests []
   [{:name "create a custom provider"

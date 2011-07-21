@@ -129,7 +129,8 @@
     (->> (map retrieve elems) (take-while identity) set))) 
 
 (defn environment-content [env]
-  (navigate :named-environment-promotions-page {:env-name env})
+  (navigate :named-environment-promotions-page {:env-name env
+                                                :next-env-name nil})
   (let [categories [:products]]
     (into {}
           (for [category categories]

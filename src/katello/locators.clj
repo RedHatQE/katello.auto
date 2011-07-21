@@ -29,7 +29,7 @@
    promotion-add-content-item (LocatorTemplate. "Add Content Item" "//a[@data-display_name='$1' and contains(.,'Add')]")
    promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//a[@data-display_name='$1' and contains(.,'Remove')]")
    promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]//span[@class='product-icon']")
-   promotion-env-breadcrumb (LocatorTemplate. "Promotion environment breadcrumb" "//a[.='$2' and contains(@class, 'path_link')]/../../..//a[.='$1']")
+   
    provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
    provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
    product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
@@ -41,6 +41,10 @@
    system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")
    button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")})
 
+(defn promotion-env-breadcrumb [name & [next]]
+  (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
+                        "//a[.='%1$s' and contains(@class, 'path_link')]")
+                    name next)))
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
   (same-name capitalize tab keys))

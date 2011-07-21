@@ -34,18 +34,7 @@
     (browser start)
     (browser open (@config :server-url))))
 
-(defn ^{BeforeSuite {:groups ["setup"]}}
-  start_selenium [_]
-  (start-sel))
-
-(defn ^{BeforeSuite {:groups ["setup"]
-                     :dependsOnMethods ["start_selenium"]}}
-  login [_]
-  (tasks/login (@config :admin-user) (@config :admin-password)))
-
-(defn ^{AfterSuite {:groups ["setup"]
-                    :alwaysRun true}}
-  stop_selenium [_]
+(defn  stop-selenium []
   (browser stop))
 
-(gen-class-testng)
+
