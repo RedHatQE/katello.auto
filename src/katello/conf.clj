@@ -1,6 +1,7 @@
 (ns katello.conf
   (:use [com.redhat.qe.config :only [property-map]])
-  (:import [com.redhat.qe.auto.testng TestScript]))
+  (:import [com.redhat.qe.auto.testng TestScript]
+           [java.util.logging Logger Level]))
 
 ;;config layer
 
@@ -17,6 +18,7 @@
 
 (defn init "initialize logging and read in properties"
   []
-  (TestScript.)
+  (TestScript/loadProperties)
+  (-> (Logger/getLogger "") (.setLevel Level/OFF))
   (swap! config merge (property-map katello-auto-properties)))
 

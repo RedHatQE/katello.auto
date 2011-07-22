@@ -1,46 +1,39 @@
 (ns katello.tests.organizations
-  (:use [error.handler :only [with-handlers handle ignore]]
-        [com.redhat.qe.verify :only [verify]]
-        [test-clj.testng :only [gen-class-testng data-driven]]
-        [katello.tests.setup :only [beforeclass-ensure-admin]]
-        [katello.conf :only [config]])
-  (:require [katello.tasks :as tasks]
-            [katello.api-tasks :as api]
-            [katello.validation :as validate])
-  (:import [org.testng.annotations Test BeforeClass]))
+  (:refer-clojure :exclude [fn])
+  (:require (katello [tasks :as tasks]
+                     [api-tasks :as api]
+                     [validation :as validate]))
+  (:use [com.redhat.qe.verify :only [verify-that]]
+        [test-clj.core :only [fn data-driven]]))
 
-(beforeclass-ensure-admin)
+(def create (fn [] (tasks/verify-success
+                   #(tasks/create-organization
+                     (tasks/uniqueify "auto-org") "org description"))))
 
-(defn ^{Test {:groups ["organizations"]}} create_simple [_]
-  (tasks/verify-success #(tasks/create-organization (tasks/uniqueify "auto-org") "org description")))
+(def delete (fn [] (let [org-name (tasks/uniqueify "auto-del")]
+                    (tasks/create-organization org-name "org to delete immediately")
+                    (tasks/delete-organization org-name)
+                    (let [remaining-org-names (doall (map :name (api/all-entities :organization)))]
+                      (verify-that (not (some #{org-name} remaining-org-names)))))))
 
-(defn ^{Test {:groups ["organizations" "blockedByBug-716972"]}} delete_simple [_]
-  (let [org-name (tasks/uniqueify "auto-del")]
-    (tasks/create-organization org-name "org to delete immediately")
-    (tasks/delete-organization org-name)
-    (let [remaining-org-names (doall (map :name (api/all-entities :organization)))]
-      (verify (not (some #{org-name} remaining-org-names))))))
+(def dupe-disallowed (fn [] (let [org-name (tasks/uniqueify "test-dup")]
+                             (validate/duplicate_disallowed
+                              #(tasks/create-organization org-name "org-description")))))
 
-(defn ^{Test {:groups ["organizations" "validation" ]}} duplicate_disallowed [_]
-  (let [org-name (tasks/uniqueify "test-dup")]
-    (validate/duplicate_disallowed
-     #(tasks/create-organization org-name "org-description"))))
+(def name-required (fn [] (validate/name-field-required
+                          #(tasks/create-organization nil "org description"))))
 
-(defn ^{Test {:groups ["organizations" "validation"]}} name_required [_]
-  (validate/name-field-required #(tasks/create-organization nil "org description")))
+(def valid-name (fn [name expected-error]
+                  (validate/field-validation
+                   #(tasks/create-organization name "org description")
+                   expected-error)))
 
-(defn ^{Test {:groups ["organizations"]}} edit [_]
-  (let [org-name (tasks/uniqueify "auto-ren")]
-    (tasks/create-organization org-name "org to edit immediately")
-    (tasks/edit-organization org-name :description "edited description")))
+(def edit (fn [] (let [org-name (tasks/uniqueify "auto-edit")]
+                  (tasks/create-organization org-name "org to edit immediately")
+                  (tasks/edit-organization org-name :description "edited description"))))
 
-(defn valid_name [name expected-error]
-  (validate/field-validation #(tasks/create-organization name "org description") expected-error))
-
-(data-driven valid_name {Test {:groups ["organizations" "validation"]}}
-             (vec (concat 
-                   (validate/variations [:invalid-character :name-must-not-contain-characters])
-                   (validate/variations [:trailing-whitespace :name-no-leading-trailing-whitespace]))))
-
-(gen-class-testng)
-
+(def valid-name-data (concat 
+                      (validate/variations [:invalid-character
+                                            :name-must-not-contain-characters])
+                      (validate/variations [:trailing-whitespace
+                                            :name-no-leading-trailing-whitespace])))
