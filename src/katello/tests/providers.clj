@@ -17,7 +17,7 @@
                         type
                         (if (= type :redhat)
                           "http://myrepo.url.com/blah/" nil))]
-    (verify (string? result-message))))
+    (verify-that (string? result-message))))
 
 (def rename
   (fn [] (let [old-name (tasks/uniqueify "rename")
