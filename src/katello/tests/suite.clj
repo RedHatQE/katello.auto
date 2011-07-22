@@ -1,26 +1,27 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require
-   (katello [tasks :as tasks]
-            [api-tasks :as api]
-            [validation :as validate])
+  (:require (katello.tests [setup :as setup]
+                           [organizations :as orgs]
+                           [providers :as providers]
+                           [promotions :as promotions]
+                           [sync_management :as sync]
+                           [login :as login]
+                           [environments :as envs]
+                           [systems :as systems]
+                           [users :as users])
    
-   (katello.tests [setup :as setup]
-                  [organizations :as orgs]
-                  [providers :as providers]
-                  [promotions :as promotions]
-                  [sync_management :as sync]
-                  [login :as login]
-                  [environments :as envs])
+            (katello [tasks :as tasks]
+                     [api-tasks :as api]
+                     [validation :as validate])
    
-   [test-clj.core :as test]
-   [clojure.contrib.trace :as trace])
+            [test-clj.core :as test]
+            [clojure.contrib.trace :as trace])
   (:use [test-clj.core :only [fn]]
         [katello.trace :only [dotrace-all]]
         [com.redhat.qe.verify :only [verify-that check]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
 
-(declare login-tests org-tests environment-tests provider-tests)
+(declare login-tests org-tests environment-tests provider-tests system-tests user-tests sync-tests)
 
 
 (defn suite []
@@ -32,7 +33,8 @@
                     :steps (fn [] (setup/start-sel))
                     :more (conj (login-tests)
                                 {:name "shut down"
-                                 :configuration :true
+                                 :configuration true
+                                 :always-run true
                                  :steps (fn [] (setup/stop-selenium))})}))
 
 (defn login-tests []
@@ -44,8 +46,10 @@
     :steps login/admin
     :more (concat (org-tests)
                   (provider-tests)
-                  (sync/tests)
-                  (promotions/tests))}
+                  (sync-tests)
+                  (promotions/tests)
+                  (system-tests)
+                  (user-tests))}
 
    {:name "login as invalid user"
     :pre (constantly true) ;;disables test
@@ -121,7 +125,24 @@
                               providers/validation
                               providers/validation-data))}])
 
+(defn sync-tests []
+  [{:name "simple sync"
+     :description "Sync a product with just a few packages in one repo."
+     :pre (blocked-by-bz-bugs "705355" "711105" "712318" "715004")
+     :steps sync/simple }])
 
+(defn system-tests []
+  [{:name "rename a system"
+    :pre (blocked-by-bz-bugs "717408")
+    :description "Adds a system via REST api and then renames it in the UI"
+    :steps systems/rename}])
+
+(defn user-tests []
+  [{:name "create a user"
+    :steps users/create
+    :more [{:name "edit a user"
+            :pre (blocked-by-bz-bugs "720469")
+            :steps users/edit}]}])
 
 (defn -main [ & args]
   (binding [clojure.contrib.trace/tracer

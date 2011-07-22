@@ -1,6 +1,5 @@
 (ns katello.api-tasks
-  (:require [katello.rest :as rest]
-            [clojure.contrib.logging :as log])
+  (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
         [inflections :only [pluralize]]))
 
@@ -28,15 +27,13 @@
   that entity type is part of an organization, the name of the org
   must also be passed in."
   [entity-type & [org-name]]
-  (log/info (str "Retrieving all " (-> entity-type name pluralize) "."))
   (rest/get
    (api-url (uri-for-entity-type entity-type org-name))
    {:basic-auth [(@config :admin-user) (@config :admin-password)]}))
 
+(defn first-matching-entity [])
+
 (defn lookup-by [k v entity-type & [org-name]]
-  (log/info (format "Getting %s where %s=%s %s"
-                    (name entity-type) (name k) v
-                    (if org-name (str " in org " org-name) "")))
   (or (some (fn [ent] (if (= (k ent) v)
                        ent))
             (all-entities entity-type org-name))
@@ -48,7 +45,6 @@
 
 (defn create-provider [org-name api-user api-password
                                & {:keys [name description repo-url type]}]
-  (log/info (str "Creating provider " name))
   (rest/post
    (api-url (uri-for-entity-type :provider org-name))
    api-user api-password
