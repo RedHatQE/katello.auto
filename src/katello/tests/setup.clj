@@ -1,5 +1,6 @@
 (ns katello.tests.setup
   (:use [katello.conf :only [init config]]
+        [clojure.contrib.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect browser]]))
 
 (defn start-sel []
