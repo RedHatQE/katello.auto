@@ -103,7 +103,7 @@
              :subscriptions (link "Subscriptions")
              :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
              :upload "//input[@value='Upload']"
-             :products-and-repositories "//nav[@class='subnav']//a[contains(.,'Products')]"
+             :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
              
              ;;add product
              :add-product (button-div "Add Product")
