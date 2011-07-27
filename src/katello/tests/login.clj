@@ -2,8 +2,11 @@
   (:refer-clojure :exclude [fn])
   (:use [test-clj.core :only [fn]]
         [katello.conf :only [config]]
+        [com.redhat.qe.verify :only [verify-that]]
         katello.tasks))
 
-(def admin (fn [] (verify-success
-                  #(login (@config :admin-user)
-                          (@config :admin-password)))))
+(def admin
+  (fn []
+    (login (@config :admin-user)
+           (@config :admin-password))
+    (verify-that (= (current-user) (@config :admin-user)))))

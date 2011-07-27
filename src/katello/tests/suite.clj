@@ -40,20 +40,19 @@
 (defn login-tests []
   [{:configuration true
     :name "logout first"
-    :steps (fn [] (tasks/logout))}
+    :steps (fn [] (tasks/logout))
+    :more [{:name "login as admin"
+            :steps login/admin
+            :more (concat (org-tests)
+                          (provider-tests)
+                          (sync-tests)
+                          (promotions/tests)
+                          (system-tests)
+                          (user-tests))}
 
-   {:name "login as admin"
-    :steps login/admin
-    :more (concat (org-tests)
-                  (provider-tests)
-                  (sync-tests)
-                  (promotions/tests)
-                  (system-tests)
-                  (user-tests))}
-
-   {:name "login as invalid user"
-    :pre (constantly true) ;;disables test
-    :steps (fn [] (tasks/login "invalid" "asdf1234"))}])
+           {:name "login as invalid user"
+            :pre (constantly true) ;;disables test
+            :steps (fn [] (tasks/login "invalid" "asdf1234"))}]}])
 
 (defn org-tests []
   [{:name "create an org"
