@@ -278,7 +278,8 @@
   (do (fill-form {:username-text username
                   :password-text password}
                  :log-in)
-      (check-for-success)))
+      (comment "apparently no more confirm notif as of 7/27/11"
+               (check-for-success))))
 
 (defmacro ensure-by [exp & forms]
   `(if-not ~exp (do ~@forms)))
