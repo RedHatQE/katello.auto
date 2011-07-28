@@ -63,8 +63,8 @@
                                                   "714297")}
                         verify-promote-content
                         [[@myorg [locker first-env] {:products
-                                                #(set (tasks/uniqueify "MyProduct" 3))}]
+                                                     (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
                          [@myorg [locker first-env second-env] {:products
-                                                               #(set (tasks/uniqueify "ProductMulti" 3))}]])}])
+                                                                (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])}])
 
 
