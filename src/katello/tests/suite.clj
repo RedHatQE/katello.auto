@@ -99,7 +99,8 @@
                                   and move it to the end of the first
                                   path.  Verify that items in the path
                                   still disallow editing to set z as a
-                                  prior."}]}
+                                  prior."
+                    :steps envs/swap-paths}]}
 
            {:name "environment name required"
             :steps envs/name-required}]}])
