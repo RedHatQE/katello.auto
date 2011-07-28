@@ -34,10 +34,10 @@
       :katello-error))
 
 (defn- clear-all-notifications []
-  (take-while (fn [index] (let [loc (locators/notification-close-index (str index))]
-                           (if (browser isElementPresent loc)
-                             (do (browser click loc) true))))
-              (iterate inc 1)))
+  (doseq [closebutton (map (comp locators/notification-close-index str)
+                           (iterate inc 1))
+          :while (browser isElementPresent closebutton)]
+    (browser click closebutton)))
 
 (defn notification
   "Gets the notification from the page, returns a map object
