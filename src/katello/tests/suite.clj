@@ -63,6 +63,7 @@
              :steps orgs/delete}
             
             {:name "duplicate org disallowed"
+             :pre (blocked-by-bz-bugs "726724")
              :steps orgs/dupe-disallowed}
 
             {:name "org name required"
@@ -90,6 +91,7 @@
                     :steps envs/delete}
                    
                    {:name "duplicate environment disallowed"
+                    :pre (blocked-by-bz-bugs "726724")
                     :steps envs/dupe-disallowed}
                    
                    {:name "rename an environment"
@@ -105,6 +107,7 @@
                     :steps envs/swap-paths}]}
 
            {:name "environment name required"
+            :pre (blocked-by-bz-bugs "726724")
             :steps envs/name-required}]}])
 
 (defn provider-tests []
