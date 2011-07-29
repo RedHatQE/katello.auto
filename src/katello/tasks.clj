@@ -1,5 +1,6 @@
 (ns katello.tasks
   (:require [katello.locators :as locators]
+            [katello.api-tasks :as api]
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.contrib.logging :as log]
             [clojure.string :as string])
@@ -148,8 +149,15 @@
                 [category (extract-content)])))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
-  (navigate :named-environment-promotions-page {:env-name env})
-  )
+  (navigate :named-environment-promotions-page {:env-name env}))
+
+(defn ensure-env-exist [org-name env-name prior]
+  (ensure-by (some #{env-name})
+             (map :name (api/all-entities :environment org-name))
+             (api/create-environment env-name org-name
+                                     (@config :admin-user)
+                                     (@config :admin-password)
+                                     :prior-env prior)))
 
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."

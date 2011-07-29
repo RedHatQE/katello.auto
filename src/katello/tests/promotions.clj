@@ -23,17 +23,8 @@
                                :name @provider-name
                                :description "test provider for promotions"
                                :type "Custom")
-
-  (let [all-envs (map :name (api/all-entities :environment @myorg))
-        ensure-env-exist (fn [env-name prior]
-                           (tasks/ensure-by
-                            (some #{env-name} all-envs)
-                            (api/create-environment env-name @myorg
-                                                    (@config :admin-user)
-                                                    (@config :admin-password)
-                                                    :prior-env prior)))]
-    (ensure-env-exist first-env locker)
-    (ensure-env-exist second-env first-env)))
+  (tasks/ensure-env-exist @myorg first-env locker)
+  (tasks/ensure-env-exist @myorg second-env first-env))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (tasks/uniqueify "changeset")]

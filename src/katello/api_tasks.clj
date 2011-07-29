@@ -12,7 +12,7 @@
 
 (defn uri-for-entity-type  
   [entity-type & [org-name]]
-  (str "api/" (if (some #(= entity-type %) [:environment :product])
+  (str "api/" (if (some #(= entity-type %) [:environment :product :system])
                  (str "organizations/"
                       (or org-name
                           (throw (IllegalArgumentException.
@@ -157,10 +157,10 @@
     "lscpu.numa_node0_cpu(s)" "0"
     }))
 
-(defn create-system [name org-name facts]
-  (rest/post (api-url "api/consumers")
-             (@config :owner-user) (@config :owner-password)
+(defn create-system [name org-name env-name facts]
+  (rest/post (api-url "api/environments/"
+                      (str (get-id-by-name :environment env-name org-name)) "/consumers")
+             (@config :admin-user) (@config :admin-password)
              {:name name
-              :org_name org-name
               :cp_type "system"
               :facts facts}))
