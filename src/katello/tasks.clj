@@ -108,17 +108,26 @@
   (browser click :save-changeset)
   (check-for-success))
 
-(defn promote-content [from-env to-env content]
-  (let [changeset (uniqueify "changeset")]
-    (create-changeset from-env to-env changeset)
-    (doseq [category (keys content)]
-    (browser click (-> category name (str "-category") keyword))
-    (doseq [item (content category)]
-      (browser waitAndClick (locators/promotion-add-content-item item) "10000")
-      (browser waitForElement (locators/promotion-remove-content-item item) "10000")
-      (browser sleep 10000))
-    (browser waitAndClick :review-for-promotion "10000")
-    (browser waitAndClickAndWait :promote-to-next-environment "10000" "60000"))))
+(defn add-to-changeset [changeset-name from-env to-env content]
+  (navigate :named-changeset-promotions-page
+   {:env-name from-env
+    :next-env-name to-env
+    :changeset-name changeset-name})
+  (doseq [category (keys content)]
+      (browser click (-> category name (str "-category") keyword))
+      (doseq [item (content category)]
+        (browser waitAndClick (locators/promotion-add-content-item item) "10000")
+        (browser waitForElement (locators/promotion-remove-content-item item) "10000")
+        (browser sleep 10000))))
+
+(defn promote-changeset [changeset-name from-env to-env]
+  (navigate :named-changeset-promotions-page
+            {:env-name from-env
+             :next-env-name to-env
+             :changeset-name changeset-name})
+  (browser waitAndClick :review-for-promotion "10000")
+  (browser waitAndClickAndWait :promote-to-next-environment "10000" "60000")
+  (check-for-success))
 
 (defn extract-content []
   (let [elems (for [index (iterate inc 1)]

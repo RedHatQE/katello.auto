@@ -39,7 +39,8 @@
    product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']")
    add-repository (LocatorTemplate. "Add Repository" "//div[@id='products']//div[normalize-space(.)='sync-test1-1308340698567']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]")
    system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")
-   button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")})
+   button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")
+   changeset (LocatorTemplate. "Changeset" "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']")})
 
 (defn promotion-env-breadcrumb [name & [next]]
   (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
@@ -126,13 +127,13 @@
              :errata-category (promotion-content-category "errata")
              :packages-category (promotion-content-category "packages")
              :kickstart-trees-category (promotion-content-category "kickstart trees")
-             :review-for-promotion "//div[@id='changeset_action' and contains(.,'Review')]"
-             :promote-to-next-environment "//div[@id='changeset_action' and contains(.,'Promote')]"
+             :review-for-promotion "review_changeset"
+             :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
              :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
              :new-changeset "//a[contains(.,'New Changeset')]"
              :changeset-name-text (textbox "name")
              :save-changeset "save_changeset_button"
-
+             :changeset-content "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
 
              
              ;;Sync Management subtab
@@ -217,7 +218,9 @@
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
                 (do (browser click :expand-path)
-                  (via (promotion-env-breadcrumb env-name next-env-name)))]]]
+                    (via (promotion-env-breadcrumb env-name next-env-name)))
+                [:named-changeset-promotions-page [changeset-name]
+                 (via (changeset changeset-name) :changeset-content)]]]]
              [:systems-tab [] (via :systems)
               [:named-systems-page [system-name] (via (system system-name)
                                                       (inactive-edit-field :system-name-text-edit))]]

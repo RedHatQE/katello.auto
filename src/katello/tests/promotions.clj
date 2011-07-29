@@ -35,6 +35,12 @@
     (ensure-env-exist first-env locker)
     (ensure-env-exist second-env first-env)))
 
+(defn promote-content [from-env to-env content]
+  (let [changeset (tasks/uniqueify "changeset")]
+    (tasks/create-changeset from-env to-env changeset)
+    (tasks/add-to-changeset changeset content)
+    (tasks/promote-changeset changeset from-env to-env)))
+
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
     (let [promoted (content-type from)
@@ -48,7 +54,7 @@
      (api/create-product product-name @provider-name :description "test product")
      (api/create-repo (tasks/uniqueify "mytestrepo") @myorg product-name "http://blah.com"))
    (doseq [[from-env target-env] (partition 2 1 envs)]
-     (tasks/promote-content from-env target-env content)
+     (promote-content from-env target-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
 
 (defn tests [] [{:configuration true

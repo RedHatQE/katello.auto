@@ -18,7 +18,7 @@
              (require 'katello.conf :reload)
              (require 'katello.tests.setup)
              (katello.conf/init)
-             (katello.tests.setup/start_selenium nil)
+             (katello.tests.setup/start-sel)
              (katello.tasks/login "admin" "admin"))
          )
 

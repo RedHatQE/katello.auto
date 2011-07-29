@@ -66,12 +66,14 @@
              :steps orgs/dupe-disallowed}
 
             {:name "org name required"
+             :pre (blocked-by-bz-bugs "726724")
              :steps orgs/name-required}
 
             {:name "edit an org"
              :steps orgs/edit}]
            
-           (test/data-driven {:name "org valid name"}
+           (test/data-driven {:name "org valid name"
+                              :pre (blocked-by-bz-bugs "726724")}
                              orgs/valid-name
                              orgs/valid-name-data)
            
