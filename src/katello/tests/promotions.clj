@@ -4,9 +4,10 @@
             [clojure.contrib.set :as sets])
   
   (:use [katello.conf :only [config]]
-        [test-clj.core :only [data-driven]]
+        [test-clj.core :only [data-driven fn]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]
-        [com.redhat.qe.verify :only [verify-that]]))
+        [com.redhat.qe.verify :only [verify-that]])
+  (:refer-clojure :exclude [fn]))
 
 (def provider-name (atom nil))
 (def myorg (atom nil))
