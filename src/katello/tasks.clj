@@ -151,14 +151,6 @@
 (defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-promotions-page {:env-name env}))
 
-(defn ensure-env-exist [org-name env-name prior]
-  (ensure-by (some #{env-name})
-             (map :name (api/all-entities :environment org-name))
-             (api/create-environment env-name org-name
-                                     (@config :admin-user)
-                                     (@config :admin-password)
-                                     :prior-env prior)))
-
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
@@ -298,16 +290,13 @@
       (comment "apparently no more confirm notif as of 7/27/11"
                (check-for-success))))
 
-(defmacro ensure-by [exp & forms]
-  `(if-not ~exp (do ~@forms)))
-
 (defn current-user []
   (if (logged-in?)
     (browser getText :account)))
 
 (defn ensure-current-user [username password]
-  (ensure-by (= (current-user) username)
-          (login username password)))
+  (if-not (= (current-user) username)
+    (login username password)))
 
 (defn create-user [username password & [password-confirm]] 
   (navigate :users-tab)

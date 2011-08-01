@@ -23,8 +23,8 @@
                                :name @provider-name
                                :description "test provider for promotions"
                                :type "Custom")
-  (tasks/ensure-env-exist @myorg first-env locker)
-  (tasks/ensure-env-exist @myorg second-env first-env))
+  (api/ensure-env-exist @myorg first-env locker)
+  (api/ensure-env-exist @myorg second-env first-env))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (tasks/uniqueify "changeset")]

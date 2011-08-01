@@ -70,6 +70,13 @@
    (api-url (uri-for-entity-type :environment (@config :admin-org)) "/" name)
    (@config :admin-user) (@config :admin-password)))
 
+(defn ensure-env-exist [org-name env-name prior]
+  (if-not (some #{env-name}
+                (map :name (all-entities :environment org-name)))
+    (create-environment env-name org-name
+                            (@config :admin-user)
+                            (@config :admin-password)
+                            :prior-env prior)))
 
 (defn create-product [name provider-name & {:keys [description url]}]
   (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
