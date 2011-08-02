@@ -6,7 +6,7 @@
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [config]]))
 
-(defn simple []
+(def simple 
   (fn [] (let [myprovider (tasks/uniqueify "sync")
               myproduct (tasks/uniqueify "sync-test1")]
           (api/create-provider (@config :admin-org)
