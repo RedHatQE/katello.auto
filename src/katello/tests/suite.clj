@@ -133,7 +133,7 @@
 (defn sync-tests []
   [{:name "simple sync"
      :description "Sync a product with just a few packages in one repo."
-     :pre (blocked-by-bz-bugs "705355" "711105" "712318" "715004" "727674")
+     :pre (blocked-by-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
      :steps sync/simple }])
 
 (defn system-tests []
