@@ -138,7 +138,7 @@
 
 (defn system-tests []
   [{:name "rename a system"
-    :pre (blocked-by-bz-bugs "717408")
+    :pre (blocked-by-bz-bugs "717408" "728357")
     :description "Adds a system via REST api and then renames it in the UI"
     :steps systems/rename}])
 
