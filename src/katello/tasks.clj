@@ -229,15 +229,12 @@
                     :cp-create-save)
     (check-for-success)))
 
-(defn add-product [provider-name name description url & [yum? file?]]
+(defn add-product [provider-name name & [description]]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (browser click :add-product)
   (browser waitForVisible :product-name-text "10000")
   (fill-ajax-form {:product-name-text name
-                   :product-description-text description
-                   :product-url-text url
-                   :product-yum-checkbox yum?
-                   :product-file-checkbox file?}
+                   :product-description-text description}
                   :create-product)
   (check-for-success))
 

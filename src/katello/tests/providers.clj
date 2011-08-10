@@ -45,10 +45,7 @@
 (def create-product
   (fn [] (tasks/add-product @test-provider-name
                            (reset! test-product-name (tasks/uniqueify "prod"))
-                           "test product"
-                           "http://test.url"
-                           true
-                           true)))
+                           "test product")))
 
 (def validation
   (fn  [name description repo-url type  expected-result]

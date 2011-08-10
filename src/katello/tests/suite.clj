@@ -40,11 +40,7 @@
                   {:name "login as invalid user"
                    :pre (constantly true) ;;disables test
                    :steps (fn [] (tasks/login "invalid" "asdf1234"))})})
-    {:binding-map {#'selenium/sel setup/new-selenium}
-     :setup (fn [] (println "initializing.") (conf/init))
-     :thread-setup (fn [] (println "starting a sel") (setup/start-selenium) (login/admin))
-     :thread-teardown (fn [] (setup/stop-selenium))
-     :threads 3}))
+    (merge {:threads 3} setup/runner-config)))
 
 (defn org-tests []
   [{:name "create an org"

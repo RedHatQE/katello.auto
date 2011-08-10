@@ -114,9 +114,7 @@
              :create-product (button-div "Create")
              :product-name-text "product_name_field"
              :product-description-text "product_description_field"
-             :product-url-text "product_url_field"
-             :product-yum-checkbox "yum_type"
-             :product-file-checkbox "file_type"
+             
              ;;add repo
              :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
              :repo-name-text "//input[@name='repo[name]' and not(ancestor::div[contains(@style,'display: none')])]"
