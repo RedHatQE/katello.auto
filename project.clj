@@ -4,7 +4,7 @@
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
                  [webui-framework "1.0.2-SNAPSHOT"]
-                 [test-clj "0.1.0-SNAPSHOT"]
+                 [test-clj "0.2.0-SNAPSHOT"]
                  [error.handler "1.1.0-SNAPSHOT"]
                  [inflections "0.4"]
                  [clj-http "0.1.3"]
