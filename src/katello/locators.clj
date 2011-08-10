@@ -56,6 +56,9 @@
              :success-message "//div[contains(@class,'jnotify-notification-message')]"
              :spinner "//img[contains(@src,'spinner.gif')]"
              :save-inplace-edit "//button[.='Save']"
+             :confirmation-dialog "//div[contains(@class, 'confirmation')]"
+             :confirmation-yes "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+             :confirmation-no "//div[contains(@class, 'confirmation')]//span[.='No']"
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -206,7 +209,9 @@
     `(browser ~'clickAndWait ~link)))
 
 (def page-tree
-  (nav-tree [:top-level [] (if-not (browser isElementPresent :log-out) (browser open "/"))
+  (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
+                                   (browser isElementPresent :confirmation-dialog))
+                             (browser open "/"))
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
                [:new-provider-page [] (via :new-provider :cp-name-text)]

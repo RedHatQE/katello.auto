@@ -10,8 +10,7 @@
                  [clj-http "0.1.3"]
                  [robert/hooke "1.1.1"]]
   :repositories {"clojars" {:url "http://clojars.org/repo"
-                            :snapshots {:update :always}}}
-  )
+                            :snapshots {:update :always}}})
 
 (comment "Execute this in the repl to load everything and start selenium"
          (do (require 'katello.tasks :reload-all)

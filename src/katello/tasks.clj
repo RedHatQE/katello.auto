@@ -174,8 +174,8 @@
 
 (defn delete-organization [org-name]
   (navigate :named-organization-page {:org-name org-name})
-  (browser answerOnNextPrompt "OK")
   (browser click :remove-organization)
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn create-environment
@@ -190,8 +190,8 @@
 (defn delete-environment [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (browser answerOnNextPrompt "OK")
   (browser click :remove-environment)
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn edit-organization [org-name & {:keys [description]}]
@@ -254,8 +254,8 @@
 
 (defn delete-provider [name]
   (navigate :named-provider-page {:cp-name name})
-  (browser answerOnNextPrompt "OK")
   (browser click :remove-provider)
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn edit-provider [provider-name & {:keys [new-name description repo-url]}]

@@ -11,11 +11,13 @@
                            [users :as users])
    
             (katello [tasks :as tasks]
+                     [conf :as conf]
                      [api-tasks :as api]
                      [validation :as validate])
    
             [test-clj.core :as test]
-            [clojure.contrib.trace :as trace])
+            [clojure.contrib.trace :as trace]
+            [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test-clj.core :only [fn]]
         [katello.trace :only [dotrace-all]]
         [com.redhat.qe.verify :only [verify-that check]]
@@ -25,34 +27,24 @@
 
 
 (defn suite []
-  (test/before-all (fn []
-                     (tasks/navigate :top-level))
-
-                   {:name "startup"
-                    :configuration true
-                    :steps (fn [] (setup/start-sel))
-                    :more (conj (login-tests)
-                                {:name "shut down"
-                                 :configuration true
-                                 :always-run true
-                                 :steps (fn [] (setup/stop-selenium))})}))
-
-(defn login-tests []
-  [{:configuration true
-    :name "logout first"
-    :steps (fn [] (tasks/logout))
-    :more [{:name "login as admin"
-            :steps login/admin
-            :more (concat (org-tests)
+  (with-meta
+    (test/before-all (fn [] (tasks/navigate :top-level))
+     {:name "login as admin"
+      :steps login/admin
+      :more (conj (concat (org-tests)
                           (provider-tests)
                           (sync-tests)
                           (promotions/tests)
                           (system-tests)
-                          (user-tests))}
-
-           {:name "login as invalid user"
-            :pre (constantly true) ;;disables test
-            :steps (fn [] (tasks/login "invalid" "asdf1234"))}]}])
+                          (user-tests))
+                  {:name "login as invalid user"
+                   :pre (constantly true) ;;disables test
+                   :steps (fn [] (tasks/login "invalid" "asdf1234"))})})
+    {:binding-map {#'selenium/sel setup/new-selenium}
+     :setup (fn [] (println "initializing.") (conf/init))
+     :thread-setup (fn [] (println "starting a sel") (setup/start-selenium) (login/admin))
+     :thread-teardown (fn [] (setup/stop-selenium))
+     :threads 3}))
 
 (defn org-tests []
   [{:name "create an org"

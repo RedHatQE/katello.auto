@@ -7,6 +7,7 @@
 
 (def admin
   (fn []
+    (logout)
     (login (@config :admin-user)
            (@config :admin-password))
     (verify-that (= (current-user) (@config :admin-user)))))
