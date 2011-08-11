@@ -138,9 +138,4 @@
             :steps users/edit}]}])
 
 (defn -main [ & args]
-  (binding [clojure.contrib.trace/tracer
-            (fn [name value]
-              (println (str (when name (format "%6s:" name))  value)))]
-    (dotrace-all [katello.tasks katello.api-tasks]
-                 [test/execute check] []
-                 (test/run-suite (suite)))))
+  (test/run-suite (suite)))
