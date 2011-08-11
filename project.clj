@@ -15,9 +15,11 @@
 (comment "Execute this in the repl to load everything and start selenium"
          (do (require 'katello.tasks :reload-all)
              (require 'katello.conf :reload)
-             (require 'katello.tests.setup)
+             (require 'katello.tests.setup :reload)
+             
              (katello.conf/init)
-             (katello.tests.setup/start-sel)
+             (katello.tests.setup/new-selenium true)
+             (katello.tests.setup/start-selenium)
              (katello.tasks/login "admin" "admin"))
          )
 

@@ -8,10 +8,13 @@
         [clojure.contrib.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]))
 
-(defn new-selenium []
+(defn new-selenium [& [single-thread]]
   (let [sel-addr (@config :selenium-address)
-        [host port] (split #":" sel-addr)] 
-    (new-sel host (Integer/parseInt port) "" (@config :server-url))))
+        [host port] (split #":" sel-addr)
+        sel-fn (if single-thread
+                 connect
+                 new-sel)] 
+    (sel-fn host (Integer/parseInt port) "" (@config :server-url))))
 
 (defn start-selenium []  
   (browser start)

@@ -127,7 +127,7 @@
              :next-env-name to-env
              :changeset-name changeset-name})
   (browser waitAndClick :review-for-promotion "10000")
-  (browser waitAndClickAndWait :promote-to-next-environment "10000" "60000")
+  (browser waitAndClick :promote-to-next-environment "10000")
   (check-for-success))
 
 (defn extract-content []
