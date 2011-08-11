@@ -10,14 +10,14 @@
   "This function is called by trace.  Prints to standard output, but
   may be rebound to do anything you like.  'name' is optional."
   [name value]
-  (println (str (when name (format "%6s:" name))  value)))
+  (println (str (when name (format "%6s: " name))  value)))
 
-(comment (let [s (str (when name (format "%6s:" name))  value "\n")
-        thread-name (.getName (Thread/currentThread))]
-    (if (= thread-name "main")
-      (print s)
-      (spit (str thread-name ".trace") s
-            :append true))))
+(defn per-thread-tracer []
+  (let [tracefile-name (str (.getName (Thread/currentThread)) ".trace")]
+                                (fn [name value]
+                                  (let [s (str (when name (format "%6s: " name))  value "\n")]
+                                    (spit tracefile-name s
+                                          :append true)))))
 (defn trace
   "Sends name (optional) and value to the tracer function, then
   returns value.  May be wrapped around any expression without
