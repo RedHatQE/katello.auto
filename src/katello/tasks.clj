@@ -45,7 +45,7 @@
    representing the notification (or nil if no notification is present
    within a built-in timeout period)."
   []
-  (try (browser waitForElement :notification "10000")
+  (try (browser waitForElement :notification "15000")
        (let [msg (browser getText :notification)
              classattr ((into {} (browser getAttributes :notification)) "class")
              type ({"jnotify-notification-error" :error
