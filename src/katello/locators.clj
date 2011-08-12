@@ -1,9 +1,11 @@
 (ns katello.locators
-  (:use [com.redhat.qe.auto.selenium.selenium :only [SeleniumLocatable browser ->browser sel-locator]]
+  (:use [com.redhat.qe.auto.selenium.selenium :only
+         [fill-form SeleniumLocatable browser ->browser sel-locator]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.contrib.string :only [capitalize]])
-  (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]))
+  (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
+           [com.thoughtworks.selenium SeleniumException]))
 
 ;;ui layer
 
@@ -15,32 +17,42 @@
   [m]
   `(do ~@(for [loc-strat (keys m)]
            `(defn ~loc-strat [& args#]
-              (Element. ~(m loc-strat) (into-array args#))))))
+              (Element. (LocatorTemplate. ~@(m loc-strat)) (into-array args#))))))
 
 (define-strategies
-  {link (LocatorTemplate. "" "link=$1")
-   tab (LocatorTemplate. "Tab" "link=$1") 
-   environment-link (LocatorTemplate. "Environment" "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']")
-   org-link (LocatorTemplate. "Organization" "//div[@id='list']//div[@id='$1']")
-   cp-link (LocatorTemplate. "Provider" "//div[@id='list']//div[normalize-space(.)='$1']")
-   textbox (LocatorTemplate. "" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]")
-   env-breadcrumb-link (LocatorTemplate. "Environment Breadcrumb" "//a[@class='path_link' and normalize-space(.)='$1']")
-   promotion-content-category (LocatorTemplate. "Content Category" "//div[@id='$1']")
-   promotion-add-content-item (LocatorTemplate. "Add Content Item" "//a[@data-display_name='$1' and contains(.,'Add')]")
-   promotion-remove-content-item (LocatorTemplate. "Remove Content Item" "//a[@data-display_name='$1' and contains(.,'Remove')]")
-   promotion-content-item-n (LocatorTemplate. "Content item by index" "//div[@id='list']//li[$1]//span[@class='product-icon']")
-   
-   provider-sync-checkbox (LocatorTemplate. "Provider sync checkbox" "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']")
-   provider-sync-progress (LocatorTemplate.  "Provider progress" "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]")
-   product-edit (LocatorTemplate. "Product edit" "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']")
-   notification-close-index (LocatorTemplate. "Notification close button" "xpath=(//a[@class='jnotify-close'])[$1]")
-   user (LocatorTemplate. "User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']")
-   username-field (LocatorTemplate. "Username field" "//div[@id='users']//div[normalize-space(.)='$1']") 
-   product-expand (LocatorTemplate. "Expand product" "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']")
-   add-repository (LocatorTemplate. "Add Repository" "//div[@id='products']//div[normalize-space(.)='sync-test1-1308340698567']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]")
-   system (LocatorTemplate. "System" "//div[@id='list']//div[normalize-space(.)='$1']")
-   button-div (LocatorTemplate. "Button" "//div[contains(@class,'button') and normalize-space(.)='$1']")
-   changeset (LocatorTemplate. "Changeset" "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']")})
+  {button-div ["Button"
+               "//div[contains(@class,'button') and normalize-space(.)='$1']"]
+   changeset ["Changeset"
+              "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
+   cp-link ["Provider" "//div[@id='list']//div[normalize-space(.)='$1']"]
+   env-breadcrumb-link ["Environment Breadcrumb"
+                        "//a[@class='path_link' and normalize-space(.)='$1']"]
+   environment-link ["Environment"
+                     "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']"]
+   link ["" "link=$1"]
+   notification-close-index ["Notification close button"
+                             "xpath=(//a[@class='jnotify-close'])[$1]"]
+   org-link ["Organization" "//div[@id='list']//div[@id='$1']"]
+   product-edit ["Product edit"
+                 "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
+   product-expand ["Expand product"
+                   "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']"]
+   promotion-add-content-item ["Add Content Item"
+                               "//a[@data-display_name='$1' and contains(.,'Add')]"]
+   promotion-content-category ["Content Category" "//div[@id='$1']"]
+   promotion-content-item-n ["Content item by index"
+                             "//div[@id='list']//li[$1]//span[@class='product-icon']"]
+   promotion-remove-content-item ["Remove Content Item"
+                                  "//a[@data-display_name='$1' and contains(.,'Remove')]"]
+   provider-sync-checkbox ["Provider sync checkbox"
+                           "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
+   provider-sync-progress ["Provider progress"
+                           "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+   system ["System" "//div[@id='list']//div[normalize-space(.)='$1']"]
+   tab ["Tab" "link=$1"]
+   textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
+   user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
+   username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
 
 (defn promotion-env-breadcrumb [name & [next]]
   (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
@@ -59,6 +71,8 @@
              :confirmation-dialog "//div[contains(@class, 'confirmation')]"
              :confirmation-yes "//div[contains(@class, 'confirmation')]//span[.='Yes']"
              :confirmation-no "//div[contains(@class, 'confirmation')]//span[.='No']"
+             :search-bar "search"
+             :search-submit "//button[@form='search_form']"
              ;; login page
              :username-text (textbox "username")
              :password-text (textbox "password")
@@ -199,12 +213,25 @@
 (defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
   (format "//div[@name='%1s']" (sel-locator loc)))
 
+
 ;;page layout
-(defmacro via [link & [ajax-wait-for]]
+(defn via [link & [ajax-wait-for]]
   (if ajax-wait-for
-    `(->browser (~'click ~link)
-                (~'waitForVisible ~ajax-wait-for "15000"))
-    `(browser ~'clickAndWait ~link)))
+    (->browser (click link)
+               (waitForVisible ajax-wait-for "15000"))
+    (browser clickAndWait link)))
+
+(defn select-environment-widget [env-name & [ next-env-name]]
+  (do (browser click :expand-path)
+      (via (promotion-env-breadcrumb env-name next-env-name))))
+
+(defn search [search-term]
+  (fill-form {:search-bar search-term}
+             :search-submit))
+
+(defn choose-left-pane [item & [ajax-wait-for]]
+  (try (via item ajax-wait-for)
+       (catch SeleniumException se (do (search )))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
@@ -220,11 +247,13 @@
               [:sync-management-page [] (via :sync-management)]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
-                (do (browser click :expand-path)
-                    (via (promotion-env-breadcrumb env-name next-env-name)))
+                (select-environment-widget env-name next-env-name)
                 [:named-changeset-promotions-page [changeset-name]
                  (via (changeset changeset-name) :changeset-content)]]]]
              [:systems-tab [] (via :systems)
+              [:systems-environment-page [env-name]
+               (do (via :environments)
+                   (select-environment-widget env-name))]
               [:named-systems-page [system-name] (via (system system-name)
                                                       (inactive-edit-field :system-name-text-edit))]]
              

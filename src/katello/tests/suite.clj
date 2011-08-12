@@ -125,10 +125,16 @@
      :steps sync/simple}])
 
 (defn system-tests []
-  [{:name "rename a system"
+  [{:name "setup environment for systems"
+    :configuration true
+    :steps systems/create-env
     :pre (blocked-by-bz-bugs "717408" "728357")
-    :description "Adds a system via REST api and then renames it in the UI"
-    :steps systems/rename}])
+    :more [{:name "rename a system"
+            :description "Adds a system via REST api and then renames it in the UI"
+            :steps systems/rename}
+           {:name "system shows up on system environment page"
+            :pre (constantly true) ;;disabled
+            :steps systems/in-env}]}])
 
 (defn user-tests []
   [{:name "create a user"
