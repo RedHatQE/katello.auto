@@ -112,7 +112,9 @@
               :name "create provider for testing product creation"
               :steps providers/setup-custom
               :more [{:name "create a product"
-                      :steps providers/create-product}]}]
+                      :steps providers/create-product}
+                     {:name "create a repository"
+                      :steps providers/create-repo}]}]
             
             (test/data-driven {:name "provider validation"}
                               providers/validation

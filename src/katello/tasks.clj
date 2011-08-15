@@ -244,6 +244,7 @@
     (browser click (locators/product-expand product-name))
     (browser waitForVisible add-repo-button "5000")
     (browser click add-repo-button))
+    (browser waitForElement :repo-name-text "10000")
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)

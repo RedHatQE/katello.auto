@@ -47,6 +47,11 @@
                            (reset! test-product-name (tasks/uniqueify "prod"))
                            "test product")))
 
+(def create-repo
+  (fn [] (tasks/add-repo @test-provider-name
+                        @test-product-name
+                        (tasks/uniqueify "repo")
+                        "http://test.com/myurl")))
 (def validation
   (fn  [name description repo-url type  expected-result]
     (let [name (if (fn? name) (name) name)] ; uniqueifying at compile time defeats purpose of unique names

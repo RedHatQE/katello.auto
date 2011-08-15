@@ -7,7 +7,7 @@
 
 (def env-name "Development")
 
-(def create-env []
+(def create-env 
   (fn [] (api/ensure-env-exist (@config :admin-org) env-name "Locker")))
 
 (def rename
@@ -20,4 +20,4 @@
 (def in-env
   (fn [] (let [system-name (tasks/uniqueify "newsystem")]
           api/create-system system-name (@config :admin-org) env-name (api/random-facts)
-          (tasks/navigate :named-systems-page {:system-name new-name}))))
+          (tasks/navigate :named-systems-page {:system-name system-name}))))
