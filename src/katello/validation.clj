@@ -22,7 +22,8 @@
           :name-must-not-contain-characters #"Name cannot contain characters other than"
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
           :only-one-redhat-provider-per-org #"Only one Red Hat provider permitted"
-          :repository-url-invalid #"Repository url is invalid"}
+          :repository-url-invalid #"Repository url is invalid"
+          :invalid-login #"Invalid credentials"}
          (cant-be-blank-errors [:name
                                 :repository-url])))
 

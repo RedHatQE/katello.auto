@@ -38,7 +38,7 @@
                           (system-tests)
                           (user-tests))
                   {:name "login as invalid user"
-                   :pre (constantly true) ;;disables test
+                   :pre (blocked-by-bz-bugs "730738") 
                    :steps (fn [] (tasks/login "invalid" "asdf1234"))})})
     (merge {:threads 3} setup/runner-config)))
 
@@ -134,9 +134,14 @@
     :more [{:name "rename a system"
             :description "Adds a system via REST api and then renames it in the UI"
             :steps systems/rename}
-           {:name "system shows up on system environment page"
-            :pre (constantly true) ;;disabled
-            :steps systems/in-env}]}])
+           
+           {:name "system appears on environment page"
+            :description "Registers a system to an environment, and verifies it appears
+                          on the Systems/Registered/Environments/[environment] page."
+            :steps systems/in-env}
+           
+           {:name "subscribe a system to a product"
+            :steps systems/subscribe}]}])
 
 (defn user-tests []
   [{:name "create a user"

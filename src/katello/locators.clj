@@ -21,6 +21,7 @@
 
 (define-strategies
   {add-repository ["Add Repository" "//div[@id='products']//div[normalize-space(.)='$1']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
+   add-subscription ["Add Subscription" "//div[@id='panel-frame']//li[normalize-space(.)='$1']//span[contains(@class, 'ui-icon-plus')]"]
    button-div ["Button"
                "//div[contains(@class,'button') and normalize-space(.)='$1']"]
    changeset ["Changeset"
@@ -155,13 +156,16 @@
              ;;Sync Management subtab
              :synchronize-now "sync_button"
 
-             ;;System Tab
+             ;;Systems Tab
+             
              ;;Registered subtab
              ;;subtabs
              ;;General
              :system-name-text-edit "system[name]"
              :system-description-text-edit "system[description]"
              :system-location-text-edit "system[location]"
+             ;;subscriptions pane
+             :save-subscriptions "subcription_save"
              
              ;;Administration tab
              ;;Users subtab
@@ -232,7 +236,8 @@
 
 (defn choose-left-pane [item & [ajax-wait-for]]
   (try (via item ajax-wait-for)
-       (catch SeleniumException se (do (search )))))
+       (catch SeleniumException se
+         (do (search (-> item .getArguments first))))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
@@ -241,7 +246,7 @@
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
                [:new-provider-page [] (via :new-provider :cp-name-text)]
-               [:named-provider-page [cp-name] (via (cp-link cp-name) :remove-provider)
+               [:named-provider-page [cp-name] (choose-left-pane (cp-link cp-name) :remove-provider)
                 [:provider-products-repos-page [] (do (via :products-and-repositories
                                                            :add-product)
                                                       (browser sleep 2000))]]]
@@ -254,9 +259,13 @@
              [:systems-tab [] (via :systems)
               [:systems-environment-page [env-name]
                (do (via :environments)
-                   (select-environment-widget env-name))]
-              [:named-systems-page [system-name] (via (system system-name)
-                                                      (inactive-edit-field :system-name-text-edit))]]
+                   (select-environment-widget env-name))
+               [:named-system-environment-page [system-name]
+                (choose-left-pane (system system-name)
+                                  (inactive-edit-field :system-name-text-edit))]]
+              [:named-systems-page [system-name] (choose-left-pane (system system-name)
+                                                                   (inactive-edit-field :system-name-text-edit))
+               [:system-subscriptions-page [] (via :subscriptions :save-subscriptions)]]]
              
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]

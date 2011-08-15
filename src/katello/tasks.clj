@@ -351,4 +351,11 @@
                   :system-location-text-edit location})
   (check-for-success))
 
+(defn subscribe-system [{:keys [system-name products]}]
+  (navigate :system-subscriptions-page {:system-name system-name})
+  (browser sleep 3000)
+  (doseq [product products]
+    (browser click (locators/add-subscription product)))
+  (browser click :save-subscriptions)
+  (check-for-success))
 

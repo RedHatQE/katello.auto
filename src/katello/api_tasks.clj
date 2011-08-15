@@ -31,6 +31,10 @@
    (api-url (uri-for-entity-type entity-type org-name))
    {:basic-auth [(@config :admin-user) (@config :admin-password)]}))
 
+(comment (defn get [entity-type id-or-name]
+   (rest/get (api-url (str "api/" (-> entity-type name pluralize) "/" id-or-name))
+             {:basic-auth [(@config :admin-user) (@config :admin-password)]})))
+
 (defn first-matching-entity [])
 
 (defn lookup-by [k v entity-type & [org-name]]
