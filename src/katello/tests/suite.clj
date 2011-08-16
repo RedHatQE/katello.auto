@@ -29,17 +29,18 @@
 (defn suite []
   (with-meta
     (test/before-all (fn [] (tasks/navigate :top-level))
-     {:name "login as admin"
-      :steps login/admin
-      :more (conj (concat (org-tests)
-                          (provider-tests)
-                          (sync-tests)
-                          (promotions/tests)
-                          (system-tests)
-                          (user-tests))
-                  {:name "login as invalid user"
-                   :pre (blocked-by-bz-bugs "730738") 
-                   :steps (fn [] (tasks/login "invalid" "asdf1234"))})})
+                     {:name "login as admin"
+                      :steps login/admin
+                      :more (concat (org-tests)
+                                    (provider-tests)
+                                    (sync-tests)
+                                    (promotions/tests)
+                                    (system-tests)
+                                    (user-tests)
+                                    (test/data-driven  {:name "login as invalid user"
+                                                        :pre (blocked-by-bz-bugs "730738")} 
+                                                       login/invalid
+                                                       login/invalid-logins))})
     (merge {:threads 3} setup/runner-config)))
 
 (defn org-tests []

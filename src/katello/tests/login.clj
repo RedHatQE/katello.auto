@@ -14,10 +14,17 @@
     (verify-that (= (current-user) (@config :admin-user)))))
 
 (def invalid
-  (fn []
+  (fn [user pw]
     (try (logout)
          (with-handlers [(ignore :invalid-credentials)]
-           (login "invalid" "sdfsdf")
+           (login user pw)
            (throw (RuntimeException. "Login succeeded with bad credentials.")))
          (finally
           (login (@config :admin-user) (@config :admin-password))))))
+
+(def invalid-logins [["admin" ""]
+                     ["admin" "asdfasdf"]
+                     ["" ""]
+                     ["" "mypass"]
+                     ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]])
