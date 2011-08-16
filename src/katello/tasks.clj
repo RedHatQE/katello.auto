@@ -2,7 +2,6 @@
   (:require [katello.locators :as locators]
             [katello.api-tasks :as api]
             [com.redhat.qe.auto.navigate :as nav]
-            [clojure.contrib.logging :as log]
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
@@ -23,7 +22,8 @@
 (def uniqueify timestamp)
 
 (def known-errors
-   {:validation-failed #"Validation [Ff]ailed"})
+  {:validation-failed #"Validation [Ff]ailed"
+   :invalid-credentials #"incorrect username"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
@@ -285,8 +285,7 @@
   (do (fill-form {:username-text username
                   :password-text password}
                  :log-in)
-      (comment "apparently no more confirm notif as of 7/27/11"
-               (check-for-success))))
+      (check-for-success)))
 
 (defn current-user []
   (if (logged-in?)
