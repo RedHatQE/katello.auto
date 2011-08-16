@@ -152,4 +152,10 @@
             :steps users/edit}]}])
 
 (defn -main [ & args]
-  (test/run-suite (suite)))
+  (let [reports (test/run-suite (suite))]
+    (println "Blockers: " (->> reports
+                               vals
+                               (mapcat (fn [r] (let [b (or (:failed-pre @r) [])]
+                                                             (if (coll? b) b
+                                                                 [b]))))
+                               distinct))))
