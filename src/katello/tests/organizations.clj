@@ -4,7 +4,7 @@
                      [api-tasks :as api]
                      [validation :as validate]))
   (:use [com.redhat.qe.verify :only [verify-that]]
-        [test-clj.core :only [fn data-driven]]))
+        [test.tree :only [fn data-driven]]))
 
 (def create (fn [] (tasks/verify-success
                    #(tasks/create-organization

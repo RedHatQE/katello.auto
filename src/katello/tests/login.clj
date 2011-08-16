@@ -1,6 +1,6 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:use [test-clj.core :only [fn]]
+  (:use [test.tree :only [fn]]
         [katello.conf :only [config]]
         [error.handler :only [handle with-handlers]]
         [com.redhat.qe.verify :only [verify-that]]

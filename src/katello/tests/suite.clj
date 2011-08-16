@@ -15,10 +15,10 @@
                      [api-tasks :as api]
                      [validation :as validate])
    
-            [test-clj.core :as test]
+            [test.tree :as test]
             [clojure.contrib.trace :as trace]
             [com.redhat.qe.auto.selenium.selenium :as selenium])
-  (:use [test-clj.core :only [fn]]
+  (:use [test.tree :only [fn]]
         [katello.trace :only [dotrace-all]]
         [com.redhat.qe.verify :only [verify-that check]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))

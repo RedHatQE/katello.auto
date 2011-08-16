@@ -2,7 +2,7 @@
   (:require [katello.trace :as tr]
             [katello.tasks]
             [katello.api-tasks]
-            [test-clj.core :as test])
+            [test.tree :as test])
   (:use [katello.conf :only [init config]]
         [katello.tasks :only [login]]
         [clojure.contrib.string :only [split]]

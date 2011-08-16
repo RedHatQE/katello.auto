@@ -1,6 +1,6 @@
 (ns katello.tests.users
   (:refer-clojure :exclude [fn])
-  (:use [test-clj.core :only [fn]])
+  (:use [test.tree :only [fn]])
   (:require [katello.tasks :as tasks]))
 
 (def create

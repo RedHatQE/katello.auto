@@ -3,7 +3,7 @@
   (:require [katello.tasks :as tasks]
             [katello.validation :as validate]
             [katello.api-tasks :as api])
-  (:use [test-clj.core :only [fn data-driven]]
+  (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
 

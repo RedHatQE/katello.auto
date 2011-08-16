@@ -1,6 +1,6 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:use [test-clj.core :only [fn]]
+  (:use [test.tree :only [fn]]
         [katello.conf :only [config]]
         [com.redhat.qe.verify :only [verify-that]])
   (:require [katello.tasks :as tasks]

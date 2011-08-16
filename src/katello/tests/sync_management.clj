@@ -2,7 +2,7 @@
   (:require [katello.tasks :as tasks]
             [katello.api-tasks :as api])
   (:refer-clojure :exclude [fn])
-  (:use [test-clj.core :only [data-driven fn]]
+  (:use [test.tree :only [data-driven fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [config]]))
 
