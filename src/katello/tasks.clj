@@ -51,8 +51,7 @@
              type ({"jnotify-notification-error" :error
                     "jnotify-notification-message" :message
                     "jnotify-notification-success" :success}
-                   (-> (string/split classattr #" ") second))]
-         (log/info (str "Received " (name type) " notification \"" msg "\""))
+                   (-> (string/split classattr #" ") second))] 
          (clear-all-notifications)
          {:type type :msg msg})
        (catch SeleniumException e nil))) 
@@ -67,8 +66,7 @@
     (cond (not notif) (raise
                        {:type :no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
-          (not= :success (notif :type)) (let [errtype (matching-error msg)]
-                                          (log/debug (str "Raising error type " errtype ))
+          (not= :success (notif :type)) (let [errtype (matching-error msg)] 
                                           (raise {:type errtype :msg msg}))
           :else msg)))
 
@@ -270,18 +268,19 @@
              (clickAndWait :upload))
   (check-for-success))
 
-(defn logout []
-  (if (browser isElementPresent :log-in)
-    (log/info "Already logged out.")
-    (browser clickAndWait :log-out)))
-
 (defn logged-in? []
   (browser isElementPresent :log-out))
 
+(defn logged-out? []
+  (browser isElementPresent :log-in))
+
+(defn logout []
+  (if-not (logged-out?)
+    (browser clickAndWait :log-out)))
+
 (defn login [username password]
-  (if (logged-in?)
-    (do (log/warn "Already logged in, logging out.")
-        (logout)))
+  (when (logged-in?)
+    (logout))
   (do (fill-form {:username-text username
                   :password-text password}
                  :log-in)
