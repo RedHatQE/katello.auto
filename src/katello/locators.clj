@@ -50,6 +50,7 @@
                            "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+   sync-plan ["Sync plan" "//div[@id='list']//div[normalize-space(.)='$1']"]
    system ["System" "//div[@id='list']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
@@ -262,6 +263,9 @@
                                                       (browser sleep 2000))]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
+                [:named-sync-plan-page [sync-plan-name]
+                 (choose-left-pane (sync-plan sync-plan-name)
+                                   (inactive-edit-field :sync-plan-name-text))]
                 [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]

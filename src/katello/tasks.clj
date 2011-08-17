@@ -8,7 +8,8 @@
                 loop-with-timeout]]
         [error.handler :only [raise]]
         [com.redhat.qe.verify :only [verify-that]])
-  (:import [com.thoughtworks.selenium SeleniumException]))
+  (:import [com.thoughtworks.selenium SeleniumException]
+           [java.text SimpleDateFormat]))
 
 ;;tasks
 (defn timestamp
@@ -357,3 +358,29 @@
   (browser click :save-subscriptions)
   (check-for-success))
 
+(defn split-date [date]
+  (try (map (fn [fmt] (.format fmt date))
+            [(SimpleDateFormat. "MM/dd/yyyy")
+             (SimpleDateFormat. "hh:mm aa")])
+       (catch Exception e [nil nil])))
+
+(defn create-sync-plan [{:keys [name description interval start-date]}]
+  (navigate :new-sync-plan-page)
+  (let [[date time] (split-date start-date)]
+    (fill-ajax-form {:sync-plan-name-text name
+                     :sync-plan-description-text description
+                     :sync-plan-interval-select interval
+                     :sync-plan-time-text time
+                     :sync-plan-date-text date}
+                    :save-sync-plan)
+    (check-for-success)))
+
+(defn edit-sync-plan [name {:keys [new-name description interval start-date]}]
+  (navigate :named-sync-plan-page {:sync-plan-name name})
+  (let [[date time] (split-date start-date)]
+    (in-place-edit {:sync-plan-name-text new-name
+                    :sync-plan-description-text description
+                    :sync-plan-interval-select interval
+                    :sync-plan-time-text time
+                    :sync-plan-date-text date}))
+  (check-for-success))
