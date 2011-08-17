@@ -44,8 +44,8 @@
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
    within a built-in timeout period)."
-  []
-  (try (browser waitForElement :notification "15000")
+  [ & [max-wait-ms]]
+  (try (browser waitForElement :notification (str (or max-wait-ms 15000)))
        (let [msg (browser getText :notification)
              classattr ((into {} (browser getAttributes :notification)) "class")
              type ({"jnotify-notification-error" :error
@@ -60,8 +60,8 @@
   "Gets any notification from the UI, if there is none or not a
    success notification, raise an exception.  Otherwise return the
    text of the message."
-  []
-  (let [notif (notification)
+  [ & [max-wait-ms]]
+  (let [notif (notification max-wait-ms)
         msg (:msg notif)]
     (cond (not notif) (raise
                        {:type :no-success-message-error
@@ -77,7 +77,7 @@
 (def navigate (nav/nav-fn locators/page-tree))
 
 (defn fill-ajax-form [items submit]
-  (fill-form items submit #(browser sleep 1000)))
+  (fill-form items submit #(browser sleep 300)))
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing
@@ -117,7 +117,7 @@
       (doseq [item (content category)]
         (browser waitAndClick (locators/promotion-add-content-item item) "10000")
         (browser waitForElement (locators/promotion-remove-content-item item) "10000")
-        (browser sleep 10000))))
+        (browser sleep 1000))))
 
 (defn promote-changeset [changeset-name from-env to-env]
   (navigate :named-changeset-promotions-page
