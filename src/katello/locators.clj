@@ -156,6 +156,14 @@
              ;;Sync Management subtab
              :synchronize-now "sync_button"
 
+             ;;Sync plans
+             :new-sync-plan "new"
+             :sync-plan-name-text "sync_plan[name]"
+             :sync-plan-description-text "sync_plan[description]"
+             :sync-plan-interval-select "sync_plan[interval]"
+             :sync-plan-date-text "sync_plan[plan_date]"
+             :sync-plan-time-text "sync_plan[plan_time]"
+             :save-sync-plan "plan_save"
              ;;Systems Tab
              
              ;;Registered subtab
@@ -199,6 +207,8 @@
                    ;;subtabs
                    :providers
                    :sync-management
+                   :sync-plans
+                   :sync-schedule
                    :promotions
                    :users
                    :roles
@@ -250,7 +260,9 @@
                 [:provider-products-repos-page [] (do (via :products-and-repositories
                                                            :add-product)
                                                       (browser sleep 2000))]]]
-              [:sync-management-page [] (via :sync-management)]
+              [:sync-management-page [] (via :sync-management)
+               [:sync-plans-page [] (via :sync-plans)
+                [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
                 (select-environment-widget env-name next-env-name)
