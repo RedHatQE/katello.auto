@@ -58,7 +58,8 @@
                         {:name "promote content"
                          :pre (blocked-by-bz-bugs "711144"
                                                   "712318"
-                                                  "714297")}
+                                                  "714297"
+                                                  "731390")}
                         verify-promote-content
                         [[@myorg [locker first-env] {:products
                                                      (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]

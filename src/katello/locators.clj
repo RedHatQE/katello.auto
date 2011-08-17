@@ -33,7 +33,7 @@
                      "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']"]
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
-                             "xpath=(//a[@class='jnotify-close'])[$1]"]
+                             "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
    org-link ["Organization" "//div[@id='list']//div[@id='$1']"]
    product-edit ["Product edit"
                  "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]

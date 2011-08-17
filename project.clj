@@ -19,7 +19,6 @@
              
              (katello.conf/init)
              (katello.tests.setup/new-selenium true)
-             (katello.tests.setup/start-selenium)
-             (katello.tasks/login "admin" "admin"))
+             (katello.tests.setup/start-selenium))
          )
 
