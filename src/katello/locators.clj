@@ -258,9 +258,12 @@
              :search-submit))
 
 (defn choose-left-pane [item & [ajax-wait-for]]
-  (try (via item ajax-wait-for)
+  (try (browser click item)
        (catch SeleniumException se
-         (do (search (-> item .getArguments first))))))
+         (do (search (-> item .getArguments first))
+             (browser click item)))
+       (finally (when ajax-wait-for
+                  (browser waitForVisible ajax-wait-for "15000")))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
