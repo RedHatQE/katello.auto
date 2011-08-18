@@ -44,3 +44,14 @@
                                    :start-date (java.util.Date.)})
           (tasks/edit-sync-plan myplan-name {:new-name new-name })
           (tasks/navigate :named-sync-plan-page {:sync-plan-name new-name}))))
+
+(def sync-plan-validate
+  (fn [arg expected]
+    (validate/field-validation (partial tasks/create-sync-plan arg)
+                               expected)))
+(def sync-plan-validation-data
+  (map (fn [[args expected]]
+         [(partial tasks/create-sync-plan args)
+          expected])
+       [[{} :name-cant-be-blank]
+        [{:name "blah"} :start-date-time-cant-be-blank]]))

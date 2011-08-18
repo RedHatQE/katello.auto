@@ -53,16 +53,13 @@
                         (tasks/uniqueify "repo")
                         "http://test.com/myurl")))
 (def validation
-  (fn  [name description repo-url type  expected-result]
+  (fn  [name description repo-url type pred]
     (let [name (if (fn? name) (name) name)] ; uniqueifying at compile time defeats purpose of unique names
-      (validate/field-validation       
-       (fn []                           
-         (tasks/create-provider name description type repo-url) 
-         :success) expected-result))))
+      (validate/field-validation tasks/create-provider [name description repo-url type] pred))))
 
 (def validation-data
   (concat
-   [[nil "blah" "http://sdf.com" :redhat :name-cant-be-blank]
+   [[nil "blah" "http://sdf.com" :redhat (validate/expected-error :name-cant-be-blank)]
                                 
     ^{:pre (blocked-by-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
@@ -82,3 +79,4 @@
    (validate/variations
     [:invalid-character nil "http://sdf.com" :custom :name-must-not-contain-characters])))
 
+()

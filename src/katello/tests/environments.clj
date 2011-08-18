@@ -32,7 +32,7 @@
 
 (def dupe-disallowed
   (fn [] (let [env-name (tasks/uniqueify "test-dup")]
-          (validate/duplicate_disallowed
+          (validate/duplicate-disallowed
            #(tasks/create-environment
              @test-org-name env-name "dup env description")
            :expected-error :name-must-be-unique-within-org))))

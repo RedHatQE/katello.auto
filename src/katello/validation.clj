@@ -2,8 +2,9 @@
   (:require [clojure.string :as string]
             [clojure.contrib.logging :as log])
   (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]
+        [katello.tasks :only [success?]]
         [com.redhat.qe.config :only [same-name]]
-        [com.redhat.qe.verify :only [verify]]))
+        [com.redhat.qe.verify :only [verify-that]]))
 
 (defn cant-be-blank-errors
   "Takes collection of keywords like :name and produces map entry like
@@ -22,7 +23,8 @@
           :name-must-not-contain-characters #"Name cannot contain characters other than"
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
           :only-one-redhat-provider-per-org #"Only one Red Hat provider permitted"
-          :repository-url-invalid #"Repository url is invalid"}
+          :repository-url-invalid #"Repository url is invalid"
+          :start-date-time-cant-be-blank #"Date and Time can't be blank"}
          (cant-be-blank-errors [:name
                                 :repository-url])))
 
@@ -36,17 +38,21 @@
            (vec (replace {t datum} args))))))
 
 (defn matching-validation-errors "Returns a set of matching known validation errors"
-  [message]
-  (set (filter (fn [k] (re-find (validation-errors k) message)) (keys validation-errors))))
+  [m]
+  (set (filter (fn [k] (re-find (validation-errors k) (:msg m))) (keys validation-errors))))
 
-(defn field-validation [create-fn expected-error]
-  (let [message-after-create (with-handlers
-                               [(handle :validation-failed [e] (-> e :msg matching-validation-errors))]
-                               (create-fn))] 
-    (verify (or (= expected-error message-after-create)
-                (some #{expected-error} message-after-create)))))
+(defn expected-error [expected-result]
+  (fn [result]
+    (some #{expected-result} (:validation-errors result))))
 
-(defn duplicate_disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
+(defn field-validation [create-fn args pred]
+  (let [results (with-handlers
+                  [(handle :validation-failed [e]
+                           (assoc e :validation-errors (matching-validation-errors e)))]
+                  (apply create-fn args))] 
+    (verify-that (pred results))))
+
+(defn duplicate-disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
   (log/debug (str "Expecting error " expected-error ))
   (create-fn)
   (field-validation create-fn expected-error))

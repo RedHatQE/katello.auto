@@ -17,7 +17,7 @@
                       (verify-that (not (some #{org-name} remaining-org-names)))))))
 
 (def dupe-disallowed (fn [] (let [org-name (tasks/uniqueify "test-dup")]
-                             (validate/duplicate_disallowed
+                             (validate/duplicate-disallowed
                               #(tasks/create-organization org-name "org-description")))))
 
 (def name-required (fn [] (validate/name-field-required

@@ -103,7 +103,10 @@
   [{:name "create a custom provider"
      :steps (fn [] (providers/test-provider :custom))
      :more (concat
-            [{:name "rename a provider"
+            [{:name "duplicate provider disallowed"
+              :steps providers/dupe-disallowed}
+             
+             {:name "rename a provider"
               :steps providers/rename}
 
              {:name "delete a provider"

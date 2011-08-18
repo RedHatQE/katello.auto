@@ -41,6 +41,9 @@
           :while (browser isElementPresent closebutton)]
     (browser click closebutton)))
 
+(defn success? [notif]
+  (-> notif :type (= :success)))
+
 (defn notification
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
@@ -67,13 +70,13 @@
     (cond (not notif) (raise
                        {:type :no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
-          (not= :success (notif :type)) (let [errtype (matching-error msg)] 
-                                          (raise {:type errtype :msg msg}))
+          ((complement success?) notif) (let [errtype (matching-error msg)] 
+                                          (raise (assoc notif :type errtype)))
           :else msg)))
 
 (defn verify-success [task-fn]
-  (let [resulting-message (task-fn)]
-    (verify-that (string? resulting-message))))
+  (let [notification (task-fn)]
+    (verify-that (success? notification))))
 
 (def navigate (nav/nav-fn locators/page-tree))
 
