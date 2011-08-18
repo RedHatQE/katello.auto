@@ -359,9 +359,9 @@
   (check-for-success))
 
 (defn split-date [date]
-  (try (map (fn [fmt] (.format fmt date))
-            [(SimpleDateFormat. "MM/dd/yyyy")
-             (SimpleDateFormat. "hh:mm aa")])
+  (try (doall (map (fn [fmt] (.format fmt date))
+                   [(SimpleDateFormat. "MM/dd/yyyy")
+                    (SimpleDateFormat. "hh:mm aa")]))
        (catch Exception e [nil nil])))
 
 (defn create-sync-plan [{:keys [name description interval start-date]}]
@@ -378,9 +378,9 @@
 (defn edit-sync-plan [name {:keys [new-name description interval start-date]}]
   (navigate :named-sync-plan-page {:sync-plan-name name})
   (let [[date time] (split-date start-date)]
-    (in-place-edit {:sync-plan-name-text new-name
-                    :sync-plan-description-text description
-                    :sync-plan-interval-select interval
-                    :sync-plan-time-text time
-                    :sync-plan-date-text date}))
+    (in-place-edit {:sync-plan-name-text-edit new-name 
+                    :sync-plan-description-text-edit description
+                    :sync-plan-interval-select-edit interval
+                    :sync-plan-time-text-edit time
+                    :sync-plan-date-text-edit date}))
   (check-for-success))

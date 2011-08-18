@@ -107,9 +107,9 @@
         :when (fn? (deref v))]
     (symbol (str namespace) (str k))))
 
-(defmacro dotrace-all [nslist fnlist excludelist & forms]
+(defmacro dotrace-all [{:keys [namespaces fns exclude]} & forms]
   `(dotrace
-   ~(vec (remove (set excludelist)
-                 (concat (mapcat all-fn-in-ns nslist) fnlist))) ~@forms))
+   ~(vec (remove (set exclude)
+                 (concat (mapcat all-fn-in-ns namespaces) fns))) ~@forms))
 
 

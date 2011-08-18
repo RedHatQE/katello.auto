@@ -27,8 +27,8 @@
 (defn thread-runner [consume-fn]
   (fn [] (binding [sel (new-selenium)
                   tr/tracer (tr/per-thread-tracer)]
-          (tr/dotrace-all [katello.tasks katello.api-tasks]
-                          [test/execute] []
+          (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
+                           :fns [test/execute]}
                           (println "starting a sel")
                           (start-selenium)
                           (consume-fn)

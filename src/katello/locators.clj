@@ -8,6 +8,8 @@
            [com.thoughtworks.selenium SeleniumException]))
 
 ;;ui layer
+(extend-type String SeleniumLocatable
+             (sel-locator [x] x))
 
 (defmacro define-strategies
   "Create a function for each locator strategy in map m (which maps
@@ -57,10 +59,6 @@
    user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
    username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
 
-(defn promotion-env-breadcrumb [name & [next]]
-  (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
-                        "//a[.='%1$s' and contains(@class, 'path_link')]")
-                    name next)))
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
   (same-name capitalize tab keys))
@@ -164,6 +162,12 @@
              :sync-plan-interval-select "sync_plan[interval]"
              :sync-plan-date-text "sync_plan[plan_date]"
              :sync-plan-time-text "sync_plan[plan_time]"
+
+             :sync-plan-name-text-edit "plan[name]"
+             :sync-plan-description-text-edit "plan[description]"
+             :sync-plan-interval-select-edit "plan[interval]"
+             :sync-plan-date-text-edit "plan[plan_date]"
+             :sync-plan-time-text-edit "plan[plan_time]"
              :save-sync-plan "plan_save"
              ;;Systems Tab
              
@@ -226,6 +230,14 @@
   clojure.lang.Keyword
   (sel-locator [k] (uimap k)))
 
+(defn promotion-env-breadcrumb [name & [next]]
+  (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
+                        "//a[.='%1$s' and contains(@class, 'path_link')]")
+                    name next)))
+
+(defn sync-plan-edit-input [new-sync-plan-input]
+  (.replace (uimap new-sync-plan-input) "sync_" ""))
+
 (defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
   (format "//div[@name='%1s']" (sel-locator loc)))
 
@@ -265,7 +277,7 @@
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (sync-plan sync-plan-name)
-                                   (inactive-edit-field :sync-plan-name-text))]
+                                   (inactive-edit-field :sync-plan-name-text-edit))]
                 [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
