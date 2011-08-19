@@ -3,6 +3,7 @@
             [clojure.contrib.logging :as log])
   (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]
         [katello.tasks :only [success?]]
+        [test.tree :only [print-meta]]
         [com.redhat.qe.config :only [same-name]]
         [com.redhat.qe.verify :only [verify-that]]))
 
@@ -41,9 +42,10 @@
   [m]
   (set (filter (fn [k] (re-find (validation-errors k) (:msg m))) (keys validation-errors))))
 
-(defn expected-error [expected-result]
-  (fn [result]
-    (some #{expected-result} (:validation-errors result))))
+(defn expect-error [expected-validation-err]
+ (with-meta (fn [result]
+              (some #{expected-validation-err} (:validation-errors result)))
+   (print-meta `(~'expect-error ~expected-validation-err))) )
 
 (defn field-validation [create-fn args pred]
   (let [results (with-handlers
@@ -52,11 +54,10 @@
                   (apply create-fn args))] 
     (verify-that (pred results))))
 
-(defn duplicate-disallowed [create-fn & {:keys [expected-error] :or {expected-error :name-taken-error}}]
-  (log/debug (str "Expecting error " expected-error ))
-  (create-fn)
-  (field-validation create-fn expected-error))
+(defn duplicate-disallowed [create-fn args & {:keys [pred] :or {pred (expect-error :name-taken-error)}}]
+  (apply create-fn args)
+  (field-validation create-fn pred args))
 
-(defn name-field-required [create-fn]
-  (field-validation create-fn :name-cant-be-blank))
+(defn name-field-required [create-fn args]
+  (field-validation create-fn args (expect-error :name-cant-be-blank)))
 

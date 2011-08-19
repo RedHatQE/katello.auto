@@ -31,11 +31,10 @@
            #(tasks/delete-environment @test-org-name env-name)))))
 
 (def dupe-disallowed
-  (fn [] (let [env-name (tasks/uniqueify "test-dup")]
-          (validate/duplicate-disallowed
-           #(tasks/create-environment
-             @test-org-name env-name "dup env description")
-           :expected-error :name-must-be-unique-within-org))))
+  (fn [] 
+    (validate/duplicate-disallowed tasks/create-environment
+                                   [@test-org-name (tasks/uniqueify "test-dup") "dup env description"]
+                                   (validate/expect-error :name-must-be-unique-within-org))))
 
 (def rename
   (fn [] (let [env-name (tasks/uniqueify "rename")
@@ -52,8 +51,8 @@
                            :env-name new-name}))))
 
 (def name-required
-  (fn [] (validate/name-field-required
-         #(tasks/create-environment @test-org-name nil "env description"))))
+  (fn [] (validate/name-field-required tasks/create-environment
+                                      [@test-org-name nil "env description"])))
 
 (def swap-paths
   (fn [] (let [org-name (tasks/uniqueify "env2")

@@ -1,6 +1,7 @@
 (ns katello.tests.sync_management
   (:require [katello.tasks :as tasks]
-            [katello.api-tasks :as api])
+            [katello.api-tasks :as api]
+            [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
   (:use [test.tree :only [data-driven fn]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -45,13 +46,18 @@
           (tasks/edit-sync-plan myplan-name {:new-name new-name })
           (tasks/navigate :named-sync-plan-page {:sync-plan-name new-name}))))
 
-(def sync-plan-validate
+(def plan-validate
   (fn [arg expected]
-    (validate/field-validation (partial tasks/create-sync-plan arg)
-                               expected)))
-(def sync-plan-validation-data
-  (map (fn [[args expected]]
-         [(partial tasks/create-sync-plan args)
-          expected])
-       [[{} :name-cant-be-blank]
-        [{:name "blah"} :start-date-time-cant-be-blank]]))
+    (validate/field-validation tasks/create-sync-plan [arg]
+                               (validate/expect-error expected))))
+
+(defn plan-validation-data []
+  [[{:start-time (java.util.Date.) :interval "daily"} :name-cant-be-blank]
+   [{:name "blah"} :start-date-time-cant-be-blank]])
+
+(def dupe-disallowed
+  (fn []
+    (validate/duplicate-disallowed tasks/create-sync-plan [{:name (tasks/uniqueify "dupe")
+                                                   :start-date (java.util.Date.)
+                                                   :description "mydescription"
+                                                   :interval "daily"}])))

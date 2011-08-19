@@ -1,11 +1,12 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require [katello.tasks :as tasks]
-            [katello.validation :as validate]
+            
             [katello.api-tasks :as api])
   (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
-        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
+        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]
+        [katello.validation :only [field-validation expect-error duplicate-disallowed variations]]))
 
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))
@@ -52,31 +53,33 @@
                         @test-product-name
                         (tasks/uniqueify "repo")
                         "http://test.com/myurl")))
-(def validation
-  (fn  [name description repo-url type pred]
-    (let [name (if (fn? name) (name) name)] ; uniqueifying at compile time defeats purpose of unique names
-      (validate/field-validation tasks/create-provider [name description repo-url type] pred))))
+(def dupe-disallowed
+  (fn []
+    (duplicate-disallowed tasks/create-provider [(tasks/uniqueify "dupe") "mydescription" :custom])))
 
-(def validation-data
+(def validation
+  (fn  [pred & [name description repo-url type :as args]]
+    (field-validation tasks/create-provider args pred)))
+
+(defn validation-data []
   (concat
-   [[nil "blah" "http://sdf.com" :redhat (validate/expected-error :name-cant-be-blank)]
+   [[(expect-error :name-cant-be-blank) nil "blah" :redhat "http://sdf.com"]
                                 
     ^{:pre (blocked-by-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
-    [#(tasks/uniqueify "mytestcp") "blah" "@$#%$%&%*()[]{}" :redhat :repository-url-invalid]
+    [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*()[]{}"]
     ^{:pre (blocked-by-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
-    [#(tasks/uniqueify "mytestcp") "blah" "https://" :redhat :repository-url-invalid]
-    [#(tasks/uniqueify "mytestcp") "blah" "@$#%$%&%*(" :redhat :repository-url-invalid]
+    [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "https://"]
+    [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*("]
 
-    [#(tasks/uniqueify "mytestcp2") "blah" nil :redhat :repository-url-cant-be-blank]
-    [#(tasks/uniqueify "mytestcp3") nil "http://sdf.com" :redhat :only-one-redhat-provider-per-org]
-    [#(tasks/uniqueify "mytestcp4") nil "http://sdf.com" :custom :success]]
-   (validate/variations
-    [#(tasks/uniqueify "mytestcp5") :javascript "http://sdf.com" :custom :success])
-   (validate/variations                  
-    [:trailing-whitespace nil  "http://sdf.com" :custom  :name-no-leading-trailing-whitespace])
-   (validate/variations
-    [:invalid-character nil "http://sdf.com" :custom :name-must-not-contain-characters])))
+    [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp2") "blah" :redhat nil]
+    [(expect-error :only-one-redhat-provider-per-org) (tasks/uniqueify "mytestcp3") nil :redhat "http://sdf.com"]
+    [tasks/success? (tasks/uniqueify "mytestcp4") nil :custom "http://sdf.com"]]
+   (variations
+    [ (tasks/uniqueify "mytestcp5") :javascript :custom "http://sdf.com"])
+   (variations                  
+    [(expect-error :name-no-leading-trailing-whitespace) :trailing-whitespace nil  :custom "http://sdf.com"])
+   (variations
+    [(expect-error :name-must-not-contain-characters) :invalid-character nil :custom "http://sdf.com"])))
 
-()

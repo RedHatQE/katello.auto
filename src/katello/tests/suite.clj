@@ -130,11 +130,14 @@
     :pre (blocked-by-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
     :steps sync/simple}
    {:name "create a sync plan"
-            :steps sync/create-plan
-            :more [{:name "edit a sync plan"
+    :steps sync/create-plan
+    :more (concat [{:name "edit a sync plan"
                     :steps sync/edit-plan}
                    {:name "rename a sync plan"
-                    :steps sync/rename-plan}]}])
+                    :steps sync/rename-plan}]
+                  (test/data-driven {:name "sync plan validation"}
+                                    sync/plan-validate
+                                    sync/plan-validation-data))}])
 
 (defn system-tests []
   [{:name "setup environment for systems"
