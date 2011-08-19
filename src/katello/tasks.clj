@@ -303,7 +303,7 @@
 (defn create-user [username password & [password-confirm]] 
   (navigate :users-tab)
   (->browser (click :new-user)
-             (waitForElement :new-user-username-text "7500"))
+             (waitForElement :new-user-username-text "15000"))
   (fill-ajax-form {:new-user-username-text username
               :new-user-password-text password
               :new-user-confirm-text (or password-confirm password)}
