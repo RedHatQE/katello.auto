@@ -13,10 +13,8 @@
 
 (def create-custom 
   (fn [] (tasks/create-provider (tasks/uniqueify "auto-cp")
-                          "my description"
-                          type
-                          (if (= type :redhat)
-                            "http://myrepo.url.com/blah/" nil))))
+                               "my description"
+                               :custom)))
 
 (def rename
   (fn [] (let [old-name (tasks/uniqueify "rename")
