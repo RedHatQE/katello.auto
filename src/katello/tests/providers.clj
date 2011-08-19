@@ -73,7 +73,7 @@
     [(expect-error :only-one-redhat-provider-per-org) (tasks/uniqueify "mytestcp3") nil :redhat "http://sdf.com"]
     [tasks/success? (tasks/uniqueify "mytestcp4") nil :custom "http://sdf.com"]]
    (variations
-    [ (tasks/uniqueify "mytestcp5") :javascript :custom "http://sdf.com"])
+    [tasks/success? (tasks/uniqueify "mytestcp5") :javascript :custom "http://sdf.com"])
    (variations                  
     [(expect-error :name-no-leading-trailing-whitespace) :trailing-whitespace nil  :custom "http://sdf.com"])
    (variations
