@@ -72,7 +72,7 @@
                         :msg "Expected a result message, but none is present on page."})
           ((complement success?) notif) (let [errtype (matching-error msg)] 
                                           (raise (assoc notif :type errtype)))
-          :else msg)))
+          :else notif)))
 
 (defn verify-success [task-fn]
   (let [notification (task-fn)]

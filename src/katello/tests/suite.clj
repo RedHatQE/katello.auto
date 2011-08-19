@@ -122,7 +122,7 @@
             
             (test/data-driven {:name "provider validation"}
                               providers/validation
-                              providers/validation-data))}])
+                              (providers/validation-data)))}])
 
 (defn sync-tests []
   [{:name "simple sync"
@@ -137,7 +137,7 @@
                     :steps sync/rename-plan}]
                   (test/data-driven {:name "sync plan validation"}
                                     sync/plan-validate
-                                    sync/plan-validation-data))}])
+                                    (sync/plan-validation-data)))}])
 
 (defn system-tests []
   [{:name "setup environment for systems"
