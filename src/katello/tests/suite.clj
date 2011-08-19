@@ -134,7 +134,9 @@
     :more (concat [{:name "edit a sync plan"
                     :steps sync/edit-plan}
                    {:name "rename a sync plan"
-                    :steps sync/rename-plan}]
+                    :steps sync/rename-plan}
+                   {:name "duplicate sync plan disallowed"
+                    :steps sync/dupe-disallowed}]
                   (test/data-driven {:name "sync plan validation"}
                                     sync/plan-validate
                                     (sync/plan-validation-data)))}])
