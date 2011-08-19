@@ -11,14 +11,12 @@
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))
 
-(defn test-provider [type]
-  (let [result-message (tasks/create-provider
-                        (tasks/uniqueify "auto-cp")
-                        "my description"
-                        type
-                        (if (= type :redhat)
-                          "http://myrepo.url.com/blah/" nil))]
-    (verify-that (string? result-message))))
+(def create-custom 
+  (fn [] (tasks/create-provider (tasks/uniqueify "auto-cp")
+                          "my description"
+                          type
+                          (if (= type :redhat)
+                            "http://myrepo.url.com/blah/" nil))))
 
 (def rename
   (fn [] (let [old-name (tasks/uniqueify "rename")

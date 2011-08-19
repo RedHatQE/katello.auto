@@ -101,7 +101,7 @@
 
 (defn provider-tests []
   [{:name "create a custom provider"
-     :steps (fn [] (providers/test-provider :custom))
+     :steps providers/create-custom
      :more (concat
             [{:name "duplicate provider disallowed"
               :steps providers/dupe-disallowed}
