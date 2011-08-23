@@ -61,10 +61,10 @@
   (concat
    [[(expect-error :name-cant-be-blank) nil "blah" :redhat "http://sdf.com"]
                                 
-    ^{:pre (blocked-by-bz-bugs "703528")
+    ^{:blockers (blocked-by-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*()[]{}"]
-    ^{:pre (blocked-by-bz-bugs "703528")
+    ^{:blockers (blocked-by-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "https://"]
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*("]
