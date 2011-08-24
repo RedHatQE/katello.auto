@@ -179,6 +179,13 @@
              :system-location-text-edit "system[location]"
              ;;subscriptions pane
              :save-subscriptions "subcription_save"
+
+             ;;Activationkeys subtab
+             :new-activation-key "new"
+             :activation-key-name-text "activation_key[name]"
+             :activation-key-description-text "activation_key[description]"
+             :activation-key-template-select "activation_key[system_template_id]"
+             :save-activation-key "activation_key_save"
              
              ;;Administration tab
              ;;Users subtab
@@ -217,6 +224,7 @@
                    :promotions
                    :users
                    :roles
+                   :activation-keys
 
                    :registered
                    :groups
@@ -288,6 +296,7 @@
                 [:named-changeset-promotions-page [changeset-name]
                  (via (changeset changeset-name) :changeset-content)]]]]
              [:systems-tab [] (via :systems)
+              [:activation-keys-page [] (via :activation-keys)]
               [:systems-environment-page [env-name]
                (do (via :environments)
                    (select-environment-widget env-name))

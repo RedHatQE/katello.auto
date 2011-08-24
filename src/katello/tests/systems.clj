@@ -45,3 +45,5 @@
         (fn [sys]
           (tasks/subscribe-system {:system-name (:name sys)
                                    :products [product-name]}))))))
+
+(def create-activation-key (fn []))

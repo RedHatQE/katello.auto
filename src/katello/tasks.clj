@@ -211,6 +211,7 @@
                   :env-prior-select-edit prior})
   (check-for-success))
 
+
 (defn environment-other-possible-priors
   "Returns a set of priors that are selectable for the given
    environment (will not include the currently selected prior)."
