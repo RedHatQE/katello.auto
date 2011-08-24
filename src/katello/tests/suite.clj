@@ -156,7 +156,12 @@
             :steps systems/in-env}
            
            {:name "subscribe a system to a product"
-            :steps systems/subscribe}]}])
+            :steps systems/subscribe}
+
+           {:name "create an activation key"
+            :steps systems/create-activation-key
+            :more [{:name "delete an activation key"
+                    :steps systems/remove-activation-key}]}]}])
 
 (defn user-tests []
   [{:name "create a user"

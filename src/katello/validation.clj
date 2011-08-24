@@ -54,9 +54,9 @@
                   (apply create-fn args))] 
     (verify-that (pred results))))
 
-(defn duplicate-disallowed [create-fn args & {:keys [pred] :or {pred (expect-error :name-taken-error)}}]
+(defn duplicate-disallowed [create-fn args & [pred]]
   (apply create-fn args)
-  (field-validation create-fn args pred))
+  (field-validation create-fn args (or pred (expect-error :name-taken-error))))
 
 (defn name-field-required [create-fn args]
   (field-validation create-fn args (expect-error :name-cant-be-blank)))

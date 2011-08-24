@@ -33,6 +33,7 @@
                         "//a[@class='path_link' and normalize-space(.)='$1']"]
    environment-link ["Environment"
                      "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']"]
+   left-pane-item ["Left pane item" "//div[@id='list']//div[normalize-space(.)='$1']"]
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
@@ -52,8 +53,6 @@
                            "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
-   sync-plan ["Sync plan" "//div[@id='list']//div[normalize-space(.)='$1']"]
-   system ["System" "//div[@id='list']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
@@ -186,7 +185,7 @@
              :activation-key-description-text "activation_key[description]"
              :activation-key-template-select "activation_key[system_template_id]"
              :save-activation-key "activation_key_save"
-             
+             :remove-activation-key (link "Remove Activation Key")
              ;;Administration tab
              ;;Users subtab
              :new-user "//a[@id='new']"
@@ -287,7 +286,7 @@
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
-                 (choose-left-pane (sync-plan sync-plan-name)
+                 (choose-left-pane (left-pane-item sync-plan-name)
                                    (inactive-edit-field :sync-plan-name-text-edit))]
                 [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
@@ -296,14 +295,19 @@
                 [:named-changeset-promotions-page [changeset-name]
                  (via (changeset changeset-name) :changeset-content)]]]]
              [:systems-tab [] (via :systems)
-              [:activation-keys-page [] (via :activation-keys)]
+              [:activation-keys-page [] (via :activation-keys)
+               [:named-activation-key-page [activation-key-name]
+                (choose-left-pane (left-pane-item activation-key-name)
+                                  (inactive-edit-field :activation-key-name-text))]
+               [:new-activation-key-page [] (via :new-activation-key :activation-key-name-text)]]
               [:systems-environment-page [env-name]
                (do (via :environments)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
-                (choose-left-pane (system system-name)
+                (choose-left-pane (left-pane-item system-name)
                                   (inactive-edit-field :system-name-text-edit))]]
-              [:named-systems-page [system-name] (choose-left-pane (system system-name)
+              [:named-systems-page [system-name] (choose-left-pane
+                                                  (left-pane-item system-name)
                                                                    (inactive-edit-field :system-name-text-edit))
                [:system-subscriptions-page [] (via :subscriptions :save-subscriptions)]]]
              

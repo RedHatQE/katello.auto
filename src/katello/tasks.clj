@@ -390,3 +390,18 @@
                     :sync-plan-time-text-edit time
                     :sync-plan-date-text-edit date}))
   (check-for-success))
+
+(defn create-activation-key [{:keys [name description environment system-template] :as m}]
+  (navigate :new-activation-key-page)
+  (browser click (locators/environment-link environment))
+  (fill-ajax-form {:activation-key-name-text name
+                   :activation-key-description-text description
+                   :activation-key-template-select system-template}
+                  :save-activation-key)
+  (check-for-success))
+
+(defn delete-activation-key [name]
+  (navigate :named-activation-key-page {:activation-key-name name})
+  (browser click :remove-activation-key)
+  (browser click :confirmation-yes)
+  (check-for-success))

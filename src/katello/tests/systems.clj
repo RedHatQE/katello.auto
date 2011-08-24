@@ -46,4 +46,16 @@
           (tasks/subscribe-system {:system-name (:name sys)
                                    :products [product-name]}))))))
 
-(def create-activation-key (fn []))
+(def create-activation-key
+  (fn []
+    (tasks/create-activation-key  {:name (tasks/uniqueify "auto-key")
+                                   :description "my description"
+                                   :environment env-name})))
+
+(def remove-activation-key
+  (fn []
+    (let [ak-name (tasks/uniqueify "auto-key-deleteme")]
+      (tasks/create-activation-key {:name ak-name
+                                    :description "my description"
+                                    :environment env-name} )
+      (tasks/delete-activation-key ak-name))))

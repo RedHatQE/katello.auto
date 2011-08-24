@@ -21,4 +21,3 @@
              (katello.tests.setup/new-selenium true)
              (katello.tests.setup/start-selenium))
          )
-
