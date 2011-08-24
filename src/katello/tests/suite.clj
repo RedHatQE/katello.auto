@@ -161,7 +161,10 @@
            {:name "create an activation key"
             :steps systems/create-activation-key
             :more [{:name "delete an activation key"
-                    :steps systems/remove-activation-key}]}]}])
+                    :steps systems/remove-activation-key}
+
+                   {:name "duplicate activation key disallowed"
+                    :steps systems/activation-key-dupe-disallowed}]}]}])
 
 (defn user-tests []
   [{:name "create a user"

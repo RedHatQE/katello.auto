@@ -4,7 +4,8 @@
         [katello.conf :only [config]]
         [com.redhat.qe.verify :only [verify-that]])
   (:require [katello.tasks :as tasks]
-            [katello.api-tasks :as api]))
+            [katello.api-tasks :as api]
+            [katello.validation :as val]))
 
 (def env-name "Development")
 
@@ -59,3 +60,11 @@
                                     :description "my description"
                                     :environment env-name} )
       (tasks/delete-activation-key ak-name))))
+
+(def activation-key-dupe-disallowed
+  (fn []
+    (val/duplicate-disallowed tasks/create-activation-key
+                              [{:name (tasks/uniqueify "auto-key")
+                                :description "my description"
+                                :environment env-name}])))
+
