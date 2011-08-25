@@ -211,7 +211,7 @@
                    :systems
                    :content-management
                    :dashboard
-                   :environments
+                   :by-environments
                    :subscriptions
                    :create
 
@@ -257,7 +257,8 @@
     (browser clickAndWait link)))
 
 (defn select-environment-widget [env-name & [ next-env-name]]
-  (do (browser click :expand-path)
+  (do (when (browser isElementPresent :expand-path)
+        (browser click :expand-path))
       (via (promotion-env-breadcrumb env-name next-env-name))))
 
 (defn search [search-term]
@@ -301,7 +302,7 @@
                                   (inactive-edit-field :activation-key-name-text))]
                [:new-activation-key-page [] (via :new-activation-key :activation-key-name-text)]]
               [:systems-environment-page [env-name]
-               (do (via :environments)
+               (do (via :by-environments)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
                 (choose-left-pane (left-pane-item system-name)

@@ -21,7 +21,7 @@
                               :url "http://meaningless.url")
           (api/create-repo (tasks/uniqueify "testrepo") (@config :admin-org) myproduct
                            (@config :sync-repo))
-          (let [results (tasks/sync-products [myproduct] 60000)]
+          (let [results (tasks/sync-products [myproduct] 120000)]
             (verify-that (every? #(= "Sync complete." %) (vals results)))))))
 
 (def plan-name (atom nil))
