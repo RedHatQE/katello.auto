@@ -243,6 +243,12 @@
                   :create-product)
   (check-for-success))
 
+(defn delete-product [{:keys [name provider-name]}]
+  (navigate :named-product-page {:cp-name provider-name
+                                 :product-name name})
+  (browser click :remove-product)
+  (browser click :confirmation-yes))
+
 (defn add-repo [provider-name product-name name url]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (let [add-repo-button (locators/add-repository product-name)]

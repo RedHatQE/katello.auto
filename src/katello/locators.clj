@@ -28,7 +28,7 @@
                "//div[contains(@class,'button') and normalize-space(.)='$1']"]
    changeset ["Changeset"
               "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
-   cp-link ["Provider" "//div[@id='list']//div[normalize-space(.)='$1']"]
+   editable ["Editable" "//div[contains(@class,'editable') and normalize-space(.)='$1']"]
    env-breadcrumb-link ["Environment Breadcrumb"
                         "//a[@class='path_link' and normalize-space(.)='$1']"]
    environment-link ["Environment"
@@ -128,7 +128,7 @@
              :create-product (button-div "Create")
              :product-name-text "product_name_field"
              :product-description-text "product_description_field"
-             
+             :remove-product (link "Remove Product")
              ;;add repo
              :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
              :repo-name-text "//input[@name='repo[name]' and not(ancestor::div[contains(@style,'display: none')])]"
@@ -280,10 +280,12 @@
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
                [:new-provider-page [] (via :new-provider :cp-name-text)]
-               [:named-provider-page [cp-name] (choose-left-pane (cp-link cp-name) :remove-provider)
+               [:named-provider-page [cp-name] (choose-left-pane (left-pane-item cp-name) :remove-provider)
                 [:provider-products-repos-page [] (do (via :products-and-repositories
                                                            :add-product)
-                                                      (browser sleep 2000))]]]
+                                                      (browser sleep 2000))
+                 [:named-product-page [product-name] (via (editable product-name)
+                                                          :product-name-text)]]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
