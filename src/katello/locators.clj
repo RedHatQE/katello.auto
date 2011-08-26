@@ -102,9 +102,9 @@
              :create-environment "//div[contains(@class, 'environment_create')]"
              :new-environment "//div[normalize-space(.)='Add New Environment']"
              :remove-environment (link "Remove Environment")
-             :env-name-text-edit "kp_environment[name]"
-             :env-description-text-edit "kp_environment[description]"
-             :env-prior-select-edit "kp_environment[prior]" 
+             :env-name-text-edit "kt_environment[name]"
+             :env-description-text-edit "kt_environment[description]"
+             :env-prior-select-edit "kt_environment[prior]" 
 
              ;;Content Management tab
              ;;Providers
