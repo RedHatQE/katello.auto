@@ -126,14 +126,15 @@
              ;;add product
              :add-product (button-div "Add Product")
              :create-product (button-div "Create")
-             :product-name-text "product_name_field"
-             :product-description-text "product_description_field"
+             :product-name-text "//*[@name='product[name]']"
+             :product-description-text "//*[@name='product[description]']"
              :remove-product (link "Remove Product")
              ;;add repo
              :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
-             :repo-name-text "//input[@name='repo[name]' and not(ancestor::div[contains(@style,'display: none')])]"
-             :repo-url-text "//input[@name='repo[feed]' and not(ancestor::div[contains(@style,'display: none')])]" 
-             :save-repository "save_repository_button"             
+             :repo-name-text "repo[name]"
+             :repo-url-text "repo[feed]" 
+             :save-repository "save_repository_button"
+             :remove-repository (link "Remove Repository")
              
              ;;Promotions subtab
              
@@ -284,8 +285,10 @@
                 [:provider-products-repos-page [] (do (via :products-and-repositories
                                                            :add-product)
                                                       (browser sleep 2000))
-                 [:named-product-page [product-name] (via (editable product-name)
-                                                          :product-name-text)]]]]
+                 [:named-product-page [product-name] (do (via (editable product-name)
+                                                              :product-name-text)
+                                                         (browser click (product-expand product-name)))
+                  [:named-repo-page [repo-name] (via (editable repo-name) :remove-repository)]]]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
@@ -311,7 +314,7 @@
                                   (inactive-edit-field :system-name-text-edit))]]
               [:named-systems-page [system-name] (choose-left-pane
                                                   (left-pane-item system-name)
-                                                                   (inactive-edit-field :system-name-text-edit))
+                                                  (inactive-edit-field :system-name-text-edit))
                [:system-subscriptions-page [] (via :subscriptions :save-subscriptions)]]]
              
              [:organizations-tab [] (via :organizations)

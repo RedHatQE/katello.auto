@@ -234,7 +234,7 @@
                     :cp-create-save)
     (check-for-success)))
 
-(defn add-product [provider-name name & [description]]
+(defn add-product [{:keys [provider-name name description]}]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (browser click :add-product)
   (browser waitForVisible :product-name-text "10000")
@@ -247,9 +247,10 @@
   (navigate :named-product-page {:cp-name provider-name
                                  :product-name name})
   (browser click :remove-product)
-  (browser click :confirmation-yes))
+  (browser click :confirmation-yes)
+  (check-for-success))
 
-(defn add-repo [provider-name product-name name url]
+(defn add-repo [{:keys [provider-name product-name name url]}]
   (navigate :provider-products-repos-page {:cp-name provider-name})
   (let [add-repo-button (locators/add-repository product-name)]
     (browser click (locators/product-expand product-name))
@@ -259,6 +260,14 @@
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
+  (check-for-success))
+
+(defn delete-repo [{:keys [name provider-name product-name]}]
+  (navigate :named-repo-page {:cp-name provider-name
+                              :product-name product-name
+                              :repo-name name})
+  (browser click :remove-repository)
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn delete-provider [name]

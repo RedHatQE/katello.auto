@@ -40,15 +40,32 @@
                                "my description" :custom)))
 
 (def create-product
-  (fn [] (tasks/add-product @test-provider-name
-                           (reset! test-product-name (tasks/uniqueify "prod"))
-                           "test product")))
+  (fn [] (tasks/add-product {:provider-name @test-provider-name
+                            :name (reset! test-product-name (tasks/uniqueify "prod"))
+                            :description "test product"})))
+
+(def delete-product
+  (fn [] (let [product {:provider-name @test-provider-name
+                       :name (tasks/uniqueify "deleteme")
+                       :description "test product to delete"}]
+          (tasks/add-product product)
+          (tasks/delete-product product))))
 
 (def create-repo
-  (fn [] (tasks/add-repo @test-provider-name
-                        @test-product-name
-                        (tasks/uniqueify "repo")
-                        "http://test.com/myurl")))
+  (fn [] (tasks/add-repo {:provider-name @test-provider-name
+                         :product-name @test-product-name
+                         :name (tasks/uniqueify "repo")
+                         :url "http://test.com/myurl"})))
+
+(def delete-repo
+  (fn [] (let [repo {:name (tasks/uniqueify "deleteme")
+                    :provider-name @test-provider-name
+                    :product-name @test-product-name
+                    :url "http://my.fake/url"}]
+          (tasks/add-repo repo)
+          (tasks/delete-repo repo))))
+
+
 (def dupe-disallowed
   (fn []
     (duplicate-disallowed tasks/create-provider [(tasks/uniqueify "dupe") "mydescription" :custom])))

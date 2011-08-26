@@ -113,12 +113,17 @@
               :steps providers/delete}
 
              {:configuration true
-              :name "create provider for testing product creation"
+              :name "create provider for testing products and repos"
               :steps providers/setup-custom
               :more [{:name "create a product"
                       :steps providers/create-product
                       :more [{:name "create a repository"
-                              :steps providers/create-repo}]}]}]
+                              :steps providers/create-repo}
+                             
+                             {:name "delete a repository"
+                              :steps providers/delete-repo}]}
+                     {:name "delete a product"
+                      :steps providers/delete-product}]}]
             
             (test/data-driven {:name "provider validation"}
                               providers/validation

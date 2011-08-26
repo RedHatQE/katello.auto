@@ -92,7 +92,7 @@
 (defn create-repo [name org-name product-name url]
   (rest/post (api-url "api/repositories/")
              (@config :admin-user) (@config :admin-password)
-             {:product_id  (:cp_id (lookup-by :name product-name :product org-name))
+             {:product_id  (:id (lookup-by :name product-name :product org-name))
               :name name
               :url url}))
 
