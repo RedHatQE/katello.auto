@@ -162,12 +162,6 @@
              :sync-plan-interval-select "sync_plan[interval]"
              :sync-plan-date-text "sync_plan[plan_date]"
              :sync-plan-time-text "sync_plan[plan_time]"
-
-             :sync-plan-name-text-edit "plan[name]"
-             :sync-plan-description-text-edit "plan[description]"
-             :sync-plan-interval-select-edit "plan[interval]"
-             :sync-plan-date-text-edit "plan[plan_date]"
-             :sync-plan-time-text-edit "plan[plan_time]"
              :save-sync-plan "plan_save"
              ;;Systems Tab
              
@@ -293,7 +287,7 @@
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
-                                   (inactive-edit-field :sync-plan-name-text-edit))]
+                                    (inactive-edit-field :sync-plan-name-text))]
                 [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
