@@ -183,7 +183,6 @@
   (let [reports (test/run-suite (suite))]
     (println "Blockers: " (->> reports
                                vals
-                               (mapcat (fn [r] (let [b (or (:failed-pre @r) [])]
-                                                             (if (coll? b) b
-                                                                 [b]))))
+                               (map deref)
+                               (mapcat :blocked-by)
                                distinct))))

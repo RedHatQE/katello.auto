@@ -12,7 +12,7 @@
 
 (defn uri-for-entity-type  
   [entity-type & [org-name]]
-  (str "api/" (if (some #(= entity-type %) [:environment :product :system])
+  (str "api/" (if (some #(= entity-type %) [:environment :product :system :provider])
                  (str "organizations/"
                       (or org-name
                           (throw (IllegalArgumentException.
@@ -175,3 +175,10 @@
              {:name name
               :cp_type "system"
               :facts facts}))
+
+(defn create-template [{:keys [name description env-name org-name]}]
+  (rest/post (api-url "api/templates/")
+             (@config :admin-user) (@config :admin-password)
+             {:template {:name name
+                         :description description}
+              :environment_id (str (get-id-by-name :environment env-name org-name))}))
