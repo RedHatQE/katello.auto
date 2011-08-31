@@ -41,7 +41,8 @@
       (api/create-provider (@config :admin-org) (@config :admin-user) (@config :admin-password)
                            :name provider-name
                            :type "Custom")
-      (api/create-product product-name  provider-name)
+      (api/create-product {:name product-name
+                           :provider-name provider-name})
       (with-freshly-registered-system
         (fn [sys]
           (tasks/subscribe-system {:system-name (:name sys)

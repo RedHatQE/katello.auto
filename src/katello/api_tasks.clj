@@ -82,8 +82,9 @@
                             (@config :admin-password)
                             :prior-env prior)))
 
-(defn create-product [name provider-name & {:keys [description url]}]
-  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
+(defn create-product [{:keys [name org-name provider-name description url]
+                       :or {org-name (@config :admin-org)}}]
+  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name org-name) "/product_create/")
              (@config :admin-user) (@config :admin-password)
              {:product (assoc-if-set {:name name}
                                      {:description description

@@ -16,9 +16,10 @@
                                :name myprovider
                                :description "provider to test syncing"
                                :type "Custom")
-          (api/create-product myproduct myprovider
-                              :description "testing sync"
-                              :url "http://meaningless.url")
+          (api/create-product {:name myproduct
+                               :provider-name myprovider
+                               :description "testing sync"
+                               :url "http://meaningless.url"})
           (api/create-repo (tasks/uniqueify "testrepo") (@config :admin-org) myproduct
                            (@config :sync-repo))
           (let [results (tasks/sync-products [myproduct] 120000)]

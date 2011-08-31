@@ -43,7 +43,9 @@
   (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime
                                             (if (fn? val) (val) val)))]
    (doseq [product-name (content :products)]
-     (api/create-product product-name @provider-name :description "test product")
+     (api/create-product {:name product-name
+                          :provider-name @provider-name
+                          :description "test product"})
      (api/create-repo (tasks/uniqueify "mytestrepo") @myorg product-name "http://blah.com"))
    (doseq [[from-env target-env] (partition 2 1 envs)]
      (promote-content from-env target-env content)
