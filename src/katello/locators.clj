@@ -37,7 +37,6 @@
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
-   org-link ["Organization" "//div[@id='list']//div[@id='$1']"]
    product-edit ["Product edit"
                  "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
    product-expand ["Expand product"
@@ -287,7 +286,7 @@
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
-                                    (inactive-edit-field :sync-plan-name-text))]
+                                   (inactive-edit-field :sync-plan-name-text))]
                 [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
@@ -313,7 +312,9 @@
              
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
-              [:named-organization-page [org-name] (via (org-link org-name) :remove-organization) 
+              [:named-organization-page [org-name] (choose-left-pane
+                                                    (left-pane-item org-name)
+                                                    :remove-organization) 
                [:new-environment-page [] (via :new-environment :create-environment)]
                [:named-environment-page [env-name] (via (environment-link env-name) :remove-environment)]]]
              [:administration-tab [] (via :administration)
