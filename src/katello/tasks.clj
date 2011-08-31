@@ -132,7 +132,12 @@
              :changeset-name changeset-name})
   (browser waitAndClick :review-for-promotion "10000")
   (browser waitAndClick :promote-to-next-environment "10000")
-  (check-for-success))
+  (check-for-success) ;;for the submission
+  (loop-with-timeout 60000 [status ""]
+    (if (= status "Promoted")
+      status
+      (do (Thread/sleep 1000)
+          (recur (browser getText (locators/changeset-status changeset-name)))))))
 
 (defn extract-content []
   (let [elems (for [index (iterate inc 1)]

@@ -28,6 +28,7 @@
                "//div[contains(@class,'button') and normalize-space(.)='$1']"]
    changeset ["Changeset"
               "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
+   changeset-status ["Changeset status"  "//span[.='$1']/..//span[@class='changeset_status']"]
    editable ["Editable" "//div[contains(@class,'editable') and normalize-space(.)='$1']"]
    env-breadcrumb-link ["Environment Breadcrumb"
                         "//a[@class='path_link' and normalize-space(.)='$1']"]

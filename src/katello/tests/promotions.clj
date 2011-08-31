@@ -54,12 +54,11 @@
                  :description "Takes content and promotes it thru more environments.
                                Verifies that it shows up in the new env."
                  :steps setup
+                 :blockers (blocked-by-bz-bugs "711144"
+                                               "712318"
+                                               "714297")
                  :more (data-driven
-                        {:name "promote content"
-                         :blockers (blocked-by-bz-bugs "711144"
-                                                       "712318"
-                                                       "714297"
-                                                       "731390")}
+                        {:name "promote content"}
                         verify-promote-content
                         [[@myorg [locker first-env] {:products
                                                      (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
