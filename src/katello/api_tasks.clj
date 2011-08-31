@@ -50,7 +50,7 @@
 (defn create-provider [org-name api-user api-password
                                & {:keys [name description repo-url type]}]
   (rest/post
-   (api-url (uri-for-entity-type :provider org-name))
+   (api-url "api/providers")
    api-user api-password
    {:organization_id org-name
     :provider (assoc-if-set {:name name
