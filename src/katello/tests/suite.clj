@@ -14,17 +14,13 @@
                      [conf :as conf]
                      [api-tasks :as api]
                      [validation :as validate])
-   
-            [test.tree :as test]
-            [clojure.contrib.trace :as trace]
+            
+            [test.tree :as test] 
             [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test.tree :only [fn]]
-        [katello.trace :only [dotrace-all]]
-        [com.redhat.qe.verify :only [verify-that check]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
 
 (declare login-tests org-tests environment-tests provider-tests system-tests user-tests sync-tests)
-
 
 (defn suite []
   (with-meta

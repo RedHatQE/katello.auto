@@ -8,7 +8,8 @@
                  [error.handler "1.1.0-SNAPSHOT"]
                  [inflections "0.4"]
                  [clj-http "0.1.3"]
-                 [robert/hooke "1.1.1"]]
+                 [robert/hooke "1.1.1"]
+                 [fn.trace "1.0.0-SNAPSHOT"]]
   :repositories {"clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}})
 
