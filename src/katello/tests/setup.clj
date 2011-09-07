@@ -28,7 +28,8 @@
   (fn [] (binding [sel (new-selenium)
                   tr/tracer (tr/per-thread-tracer tr/clj-format)]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
-                           :fns [test/execute]
+                           :fns [test/execute
+                                 com.redhat.qe.auto.selenium.selenium/call-sel]
                            :exclude [katello.tasks/notification
                                      katello.tasks/clear-all-notifications
                                      katello.tasks/success?]}
