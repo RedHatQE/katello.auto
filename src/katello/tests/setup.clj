@@ -1,5 +1,5 @@
 (ns katello.tests.setup
-  (:require [katello.trace :as tr]
+  (:require [fn.trace :as tr]
             [katello.tasks]
             [katello.api-tasks]
             [test.tree :as test])
@@ -26,13 +26,15 @@
 
 (defn thread-runner [consume-fn]
   (fn [] (binding [sel (new-selenium)
-                  tr/tracer (tr/per-thread-tracer)]
+                  tr/tracer (tr/per-thread-tracer tr/clj-format)]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
                            :fns [test/execute]}
                           (println "starting a sel")
                           (start-selenium)
                           (consume-fn)
-                          (stop-selenium)))))
+                          (stop-selenium)
+                          (tr/htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
+                                      "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))))
 
 (def runner-config 
   {:thread-runner thread-runner
