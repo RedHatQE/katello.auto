@@ -381,7 +381,7 @@
   (browser sleep 3000)
   (doseq [product products]
     (browser click (locators/add-subscription product)))
-  (browser click :save-subscriptions)
+  (browser click :subscribe)
   (check-for-success))
 
 (defn split-date [date]

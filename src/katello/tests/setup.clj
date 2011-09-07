@@ -28,7 +28,10 @@
   (fn [] (binding [sel (new-selenium)
                   tr/tracer (tr/per-thread-tracer tr/clj-format)]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
-                           :fns [test/execute]}
+                           :fns [test/execute]
+                           :exclude [katello.tasks/notification
+                                     katello.tasks/clear-all-notifications
+                                     katello.tasks/success?]}
                           (println "starting a sel")
                           (start-selenium)
                           (consume-fn)

@@ -172,7 +172,7 @@
              :system-description-text-edit "system[description]"
              :system-location-text-edit "system[location]"
              ;;subscriptions pane
-             :save-subscriptions "subcription_save"
+             :subscribe "commit"
 
              ;;Activationkeys subtab
              :new-activation-key "new"
@@ -309,8 +309,7 @@
               [:named-systems-page [system-name] (choose-left-pane
                                                   (left-pane-item system-name)
                                                   (inactive-edit-field :system-name-text-edit))
-               [:system-subscriptions-page [] (via :subscriptions :save-subscriptions)]]]
-             
+               [:system-subscriptions-page [] (via :subscriptions :subscribe)]]]
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
               [:named-organization-page [org-name] (choose-left-pane
