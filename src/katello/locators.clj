@@ -23,7 +23,6 @@
 
 (define-strategies
   {add-repository ["Add Repository" "//div[@id='products']//div[normalize-space(.)='$1']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
-   add-subscription ["Add Subscription" "//div[@id='panel-frame']//li[normalize-space(.)='$1']//span[contains(@class, 'ui-icon-plus')]"]
    button-div ["Button"
                "//div[contains(@class,'button') and normalize-space(.)='$1']"]
    changeset ["Changeset"
@@ -53,6 +52,7 @@
                            "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+   subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
