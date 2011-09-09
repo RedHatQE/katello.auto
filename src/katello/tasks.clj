@@ -107,23 +107,22 @@
 (defn create-changeset [env-name next-env-name changeset-name]
   (navigate :named-environment-promotions-page {:env-name env-name
                                                 :next-env-name next-env-name})
-  (browser click :new-changeset)
-  (browser waitForElement :changeset-name-text "30000")
-  (browser setText :changeset-name-text changeset-name)
-  (browser click :save-changeset)
+  (->browser (click :new-changeset)
+             (waitForElement :changeset-name-text "30000")
+             (setText :changeset-name-text changeset-name)
+             (click :save-changeset))
   (check-for-success))
 
 (defn add-to-changeset [changeset-name from-env to-env content]
-  (navigate :named-changeset-promotions-page
-   {:env-name from-env
-    :next-env-name to-env
-    :changeset-name changeset-name})
+  (navigate :named-changeset-promotions-page {:env-name from-env
+                                              :next-env-name to-env
+                                              :changeset-name changeset-name})
   (doseq [category (keys content)]
-      (browser click (-> category name (str "-category") keyword))
-      (doseq [item (content category)]
-        (browser waitAndClick (locators/promotion-add-content-item item) "10000")
-        (browser waitForElement (locators/promotion-remove-content-item item) "10000")
-        (browser sleep 1000))))
+    (browser click (-> category name (str "-category") keyword))
+    (doseq [item (content category)]
+      (->browser (waitAndClick (locators/promotion-add-content-item item) "10000")
+                 (waitForElement (locators/promotion-remove-content-item item) "10000")
+                 (sleep 1000)))))
 
 (defn promote-changeset [changeset-name from-env to-env]
   (navigate :named-changeset-promotions-page
@@ -231,16 +230,16 @@
                :custom "Custom"}]
     (assert (some #{type} (keys types)))
     (navigate :new-provider-page)
-    (fill-ajax-form {:cp-name-text name
-                     :cp-description-text description
-                     :cp-repository-url-text (if (= type :redhat)
+    (fill-ajax-form {:provider-name-text name
+                     :provider-description-text description
+                     :provider-repository-url-text (if (= type :redhat)
                                                repo-url nil)
-                     :cp-type-list (types type)}
-                    :cp-create-save)
+                     :provider-type-list (types type)}
+                    :provider-create-save)
     (check-for-success)))
 
 (defn add-product [{:keys [provider-name name description]}]
-  (navigate :provider-products-repos-page {:cp-name provider-name})
+  (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (browser waitForVisible :product-name-text "10000")
   (fill-ajax-form {:product-name-text name
@@ -249,26 +248,26 @@
   (check-for-success))
 
 (defn delete-product [{:keys [name provider-name]}]
-  (navigate :named-product-page {:cp-name provider-name
+  (navigate :named-product-page {:provider-name provider-name
                                  :product-name name})
   (browser click :remove-product)
   (browser click :confirmation-yes)
   (check-for-success))
 
 (defn add-repo [{:keys [provider-name product-name name url]}]
-  (navigate :provider-products-repos-page {:cp-name provider-name})
+  (navigate :provider-products-repos-page {:provider-name provider-name})
   (let [add-repo-button (locators/add-repository product-name)]
-    (browser click (locators/product-expand product-name))
-    (browser waitForVisible add-repo-button "5000")
-    (browser click add-repo-button))
-    (browser waitForElement :repo-name-text "10000")
+    (->browser (click (locators/product-expand product-name))
+               (waitForVisible add-repo-button "5000")
+               (click add-repo-button)
+               (waitForElement :repo-name-text "10000")))
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
   (check-for-success))
 
 (defn delete-repo [{:keys [name provider-name product-name]}]
-  (navigate :named-repo-page {:cp-name provider-name
+  (navigate :named-repo-page {:provider-name provider-name
                               :product-name product-name
                               :repo-name name})
   (browser click :remove-repository)
@@ -276,23 +275,16 @@
   (check-for-success))
 
 (defn delete-provider [name]
-  (navigate :named-provider-page {:cp-name name})
+  (navigate :named-provider-page {:provider-name name})
   (browser click :remove-provider)
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-provider [provider-name & {:keys [new-name description repo-url]}]
-  (navigate :named-provider-page {:cp-name provider-name})
-  (in-place-edit {:cp-name-text new-name
-                  :cp-description-text description
-                  :cp-repository-url-text repo-url})
-  (check-for-success))
-
-(defn upload-subscription-manifest [cp-name filepath]
-  (navigate :named-provider-page {:cp-name cp-name})
-  (->browser (click :subscriptions)
-             (setText :choose-file filepath)
-             (clickAndWait :upload))
+(defn edit-provider [{:keys [name new-name description repo-url]}]
+  (navigate :named-provider-page {:provider-name name})
+  (in-place-edit {:provider-name-text new-name
+                  :provider-description-text description
+                  :provider-repository-url-text repo-url})
   (check-for-success))
 
 (defn logged-in? []
@@ -426,3 +418,8 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
+(defn upload-subscription-manifest [{:keys [provider-name file-path]}]
+  (navigate :provider-subscriptions-page {:provider-name provider-name})
+  (fill-ajax-form {:choose-file file-path}
+                  :upload)
+  (check-for-success))

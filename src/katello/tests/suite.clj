@@ -123,7 +123,13 @@
             
             (test/data-driven {:name "provider validation"}
                               providers/validation
-                              (providers/validation-data)))}])
+                              (providers/validation-data)))}
+   {:name "get latest subscription manifest"
+    :steps providers/manifest-setup
+    :configuration true
+    :blockers providers/manifest-testing-blockers
+    :more [{:name "upload subscription manifest"
+            :steps providers/upload-manifest}]}])
 
 (defn sync-tests []
   [{:name "simple sync"

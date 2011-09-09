@@ -109,17 +109,17 @@
              ;;Content Management tab
              ;;Providers
              :new-provider "new"
-             :cp-name-text  "provider[name]"
-             :cp-description-text "provider[description]"
-             :cp-repository-url-text "provider[repository_url]"
-             :cp-type-list  "name=provider[provider_type]"
-             :cp-username-text (textbox "provider[login_credential_attributes][username]")
-             :cp-password-text (textbox "provider[login_credential_attributes][password]")
-             :cp-cert-text (textbox "provider[certificate_attributes][contents]")
-             :cp-create-save "provider_save"
+             :provider-name-text  "provider[name]"
+             :provider-description-text "provider[description]"
+             :provider-repository-url-text "provider[repository_url]"
+             :provider-type-list  "name=provider[provider_type]"
+             :provider-username-text (textbox "provider[login_credential_attributes][username]")
+             :provider-password-text (textbox "provider[login_credential_attributes][password]")
+             :provider-cert-text (textbox "provider[certificate_attributes][contents]")
+             :provider-create-save "provider_save"
              :remove-provider (link "Remove Provider")
              :subscriptions (link "Subscriptions")
-             :choose-file "//input[@type='file' and @id='kalpana_model_provider_contents']"
+             :choose-file "provider_contents"
              :upload "//input[@value='Upload']"
              :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
              
@@ -274,15 +274,16 @@
                              (browser open "/"))
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
-               [:new-provider-page [] (via :new-provider :cp-name-text)]
-               [:named-provider-page [cp-name] (choose-left-pane (left-pane-item cp-name) :remove-provider)
+               [:new-provider-page [] (via :new-provider :provider-name-text)]
+               [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name) :remove-provider)
                 [:provider-products-repos-page [] (do (via :products-and-repositories
                                                            :add-product)
                                                       (browser sleep 2000))
                  [:named-product-page [product-name] (do (via (editable product-name)
                                                               :product-name-text)
                                                          (browser click (product-expand product-name)))
-                  [:named-repo-page [repo-name] (via (editable repo-name) :remove-repository)]]]]]
+                  [:named-repo-page [repo-name] (via (editable repo-name) :remove-repository)]]]
+                [:provider-subscriptions-page [] (via :subscriptions :upload)]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]

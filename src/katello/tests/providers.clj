@@ -1,11 +1,13 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require [katello.tasks :as tasks]
-            
-            [katello.api-tasks :as api])
+            [katello.httpclient :as http]
+            [katello.api-tasks :as api]
+            [clojure.java.io :as io])
   (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
         [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]
+        [katello.conf :only [config]]
         [katello.validation :only [field-validation expect-error duplicate-disallowed variations]]))
 
 (def test-provider-name (atom nil))
@@ -20,7 +22,7 @@
   (fn [] (let [old-name (tasks/uniqueify "rename")
               new-name (tasks/uniqueify "newname")]
           (tasks/create-provider old-name "my description" :custom)
-          (tasks/edit-provider old-name :new-name new-name)
+          (tasks/edit-provider {:name old-name :new-name new-name})
           (let [current-providers (map :name (api/all-entities
                                               :provider
                                               "ACME_Corporation"))]
@@ -28,12 +30,12 @@
                               (not (some #{old-name} current-providers))))))))
 
 (def delete
-  (fn [] (let [cp-name (tasks/uniqueify "auto-cp-delete")]
-          (tasks/create-provider cp-name
+  (fn [] (let [provider-name (tasks/uniqueify "auto-provider-delete")]
+          (tasks/create-provider provider-name
                                  "my description"
                                  :custom)
           (tasks/verify-success
-           #(tasks/delete-provider cp-name)))))
+           #(tasks/delete-provider provider-name)))))
 
 (def setup-custom
   (fn [] (tasks/create-provider (reset! test-provider-name (tasks/uniqueify "cust"))
@@ -65,6 +67,29 @@
           (tasks/add-repo repo)
           (tasks/delete-repo repo))))
 
+(def manifest-tmp-loc "/tmp/manifest.zip")
+
+(def manifest-testing-blockers
+  (fn [_]
+    (if-not (-> (api/lookup-by :name "redhat" :provider (@config :admin-org))
+            :repository_url
+            (.contains "example.com"))
+      [:manifest-already-uploaded]
+      [])))
+
+(def manifest-setup
+  (fn [] 
+    (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
+                outstream (io/output-stream manifest-tmp-loc)]
+      (io/copy instream outstream))))
+
+(def upload-manifest
+  (fn []
+    (let [provider-name "redhat"]
+      (tasks/edit-provider {:name provider-name
+                            :repo-url (@config :redhat-repo-url)})
+      (tasks/upload-subscription-manifest {:provider-name provider-name
+                                           :file-path manifest-tmp-loc}))))
 
 (def dupe-disallowed
   (fn []
