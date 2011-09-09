@@ -406,9 +406,11 @@
 (defn sync-schedule [{:keys [products plan-name]}]
   (navigate :sync-schedule-page)
   (doseq [product products]
-    (browser click ))
-  (browser click )
-  )
+    (browser click (locators/schedule product)))
+  (browser click (locators/schedule plan-name))
+  (browser clickAndWait :apply-sync-schedule )
+  (check-for-success))
+
 (defn create-activation-key [{:keys [name description environment system-template] :as m}]
   (navigate :new-activation-key-page)
   (browser click (locators/environment-link environment))
