@@ -1,6 +1,7 @@
 (ns katello.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only
          [fill-form SeleniumLocatable browser ->browser sel-locator]]
+        [katello.conf :only [config]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.contrib.string :only [capitalize]])
@@ -260,7 +261,7 @@
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
                                    (browser isElementPresent :confirmation-dialog))
-                             (browser open "/"))
+                             (browser open (@config :server-url)))
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
                [:new-provider-page [] (via :new-provider :provider-name-text)]

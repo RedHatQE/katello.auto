@@ -66,4 +66,4 @@
   (fn []
     (let [sync-plan-name (tasks/uniqueify "schedule-plan")]
       (tasks/sync-schedule {:plan-name sync-plan-name
-                            :products }))))
+                            :products nil}))))
