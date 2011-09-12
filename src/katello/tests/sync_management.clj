@@ -62,3 +62,8 @@
                                                    :start-date (java.util.Date.)
                                                    :description "mydescription"
                                                    :interval "daily"}])))
+(def set-schedule
+  (fn []
+    (let [sync-plan-name (tasks/uniqueify "schedule-plan")]
+      (tasks/sync-schedule {:plan-name sync-plan-name
+                            :products }))))

@@ -34,7 +34,8 @@
                                      katello.tasks/clear-all-notifications
                                      katello.tasks/success?]}
                           (println "starting a sel")
-                          (start-selenium)
+                          (try (start-selenium)
+                               (catch Exception e (.printStackTrace e)))
                           (consume-fn)
                           (stop-selenium)
                           (tr/htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
