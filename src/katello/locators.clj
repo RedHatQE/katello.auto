@@ -34,7 +34,7 @@
                         "//a[@class='path_link' and normalize-space(.)='$1']"]
    environment-link ["Environment"
                      "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']"]
-   left-pane-item ["Left pane item" "//div[@id='list']//div[normalize-space(.)='$1']"]
+
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
@@ -227,12 +227,15 @@
                         "//a[.='%1$s' and contains(@class, 'path_link')]")
                     name next)))
 
-(defn sync-plan-edit-input [new-sync-plan-input]
-  (.replace (uimap new-sync-plan-input) "sync_" ""))
-
 (defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
   (format "//div[@name='%1s']" (sel-locator loc)))
 
+(defn left-pane-item [name]
+  (Element. (format  "//div[@id='list']//div[starts-with(normalize-space(.),'%s')]"
+                     (let [l (.length name)]
+                       (if (> l 32)
+                         (.substring name 0 32) ;workaround for bz 737678
+                         name)))))
 
 ;;page layout
 (defn via [link & [ajax-wait-for]]
