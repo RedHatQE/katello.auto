@@ -160,6 +160,7 @@
            {:name "system appears on environment page"
             :description "Registers a system to an environment, and verifies it appears
                           on the Systems/Registered/Environments/[environment] page."
+            :blockers (blocked-by-bz-bugs "738054")
             :steps systems/in-env}
            
            {:name "subscribe a system to a product"

@@ -58,7 +58,8 @@
                  :steps setup
                  :blockers (blocked-by-bz-bugs "711144"
                                                "712318"
-                                               "714297")
+                                               "714297"
+                                               "738054")
                  :more (data-driven
                         {:name "promote content"}
                         verify-promote-content
