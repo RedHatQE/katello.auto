@@ -81,15 +81,7 @@
                    
                    {:name "rename an environment"
                     :steps envs/rename}
-
-                   {:name "swap environment paths"
-                    :description "Create two promotion paths.  Take
-                                  the last env in the 2nd path (z),
-                                  and move it to the end of the first
-                                  path.  Verify that items in the path
-                                  still disallow editing to set z as a
-                                  prior."
-                    :steps envs/swap-paths}]}
+                   ]}
 
            {:name "environment name required"
             :blockers (blocked-by-bz-bugs "726724")

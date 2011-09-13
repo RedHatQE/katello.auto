@@ -54,14 +54,4 @@
   (fn [] (validate/name-field-required tasks/create-environment
                                       [@test-org-name nil "env description"])))
 
-(def swap-paths
-  (fn [] (let [org-name (tasks/uniqueify "env2")
-              env-name "myenv"]
-          (tasks/create-organization org-name "org to hold test envs")
-          (tasks/create-environment org-name first-env "first env" locker)
-          (tasks/create-environment org-name env-name "test env" locker)
-          (tasks/edit-environment org-name env-name :prior first-env)
-          (let [available-priors (tasks/environment-other-possible-priors org-name first-env)]
-            (verify-that (= available-priors #{locker}))))))
-
 
