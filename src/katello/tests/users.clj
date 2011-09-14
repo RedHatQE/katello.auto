@@ -9,8 +9,8 @@
 
 (def edit
   (fn [] (let [username (tasks/uniqueify "autouser")]
-          (tasks/create-user username "password")
-          (tasks/edit-user username :new-password "changedpw"))))
+          (tasks/create-user username {:password "password"})
+          (tasks/edit-user username {:new-password "changedpw"}))))
 
 (def delete
   (fn [] (tasks/delete-user (tasks/uniqueify "autouser")

@@ -38,6 +38,7 @@
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
+   plus-icon ["Plus icon" "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"]
    product-edit ["Product edit"
                  "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
    product-expand ["Expand product"
@@ -173,7 +174,9 @@
             :enable-inline-help-checkbox "user[helptips_enabled]"
             :clear-disabled-helptips "clear_helptips"
             :change-password-text "password_field"
-            :confirm-password-text "confirm_field"})
+            :confirm-password-text "confirm_field"
+            :save-roles "save_roles"
+            :add-all (link "Add all")})
 
 (def sync-plans {:new-sync-plan "new"
                  :sync-plan-name-text "sync_plan[name]"
@@ -214,6 +217,7 @@
               
                    ;;tabs with special chars in name
                    :sub-organizations (tab "Sub-Organizations")
+                   :roles-and-permissions (tab "Roles & Permissions")
 
                    ;;Sync Management subtab
                    :synchronize-now "sync_button"}))
@@ -314,5 +318,6 @@
                [:named-environment-page [env-name] (via (environment-link env-name) :remove-environment)]]]
              [:administration-tab [] (via :administration)
               [:users-tab [] (via :users)
-               [:named-user-page [username] (via (user username) (username-field username) )]]
+               [:named-user-page [username] (via (user username) (username-field username) )
+                [:user-roles-permissions-page [] (via :roles-and-permissions :add-all)]]]
               [:roles-tab [] (via :roles)]]]))

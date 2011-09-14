@@ -313,7 +313,7 @@
   (if-not (= (current-user) username)
     (login username password)))
 
-(defn create-user [username password & [password-confirm]] 
+(defn create-user [username {:keys [password password-confirm]}] 
   (navigate :users-tab)
   (->browser (click :new-user)
              (waitForElement :new-user-username-text "15000"))
@@ -328,7 +328,7 @@
   (browser click :remove-user)
   (check-for-success))
 
-(defn edit-user [username & {:keys [inline-help clear-disabled-helptips new-password]}]
+(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password]}]
   (navigate :named-user-page {:username username})
   (fill-ajax-form {:enable-inline-help-checkbox inline-help
               :clear-disabled-helptips clear-disabled-helptips
@@ -342,6 +342,13 @@
   (->browser (click :new-role)
              (waitForElement :new-role-name-text "7500")) 
   (fill-ajax-form {:new-role-name-text name} :save-role))
+
+(defn assign-role [{:keys [user roles]}]
+  (navigate :user-roles-permissions-page {:username user})
+  (doseq [role roles]
+    (browser click (locators/plus-icon role)))
+  (browser click :save-roles)
+  (check-for-success))
 
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
