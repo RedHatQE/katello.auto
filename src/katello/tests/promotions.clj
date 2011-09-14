@@ -5,7 +5,7 @@
   
   (:use [katello.conf :only [config]]
         [test.tree :only [data-driven fn]]
-        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]
+        [com.redhat.qe.auto.bz :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
 
@@ -56,7 +56,7 @@
                  :description "Takes content and promotes it thru more environments.
                                Verifies that it shows up in the new env."
                  :steps setup
-                 :blockers (blocked-by-bz-bugs "711144"
+                 :blockers (open-bz-bugs "711144"
                                                "712318"
                                                "714297"
                                                "738054")

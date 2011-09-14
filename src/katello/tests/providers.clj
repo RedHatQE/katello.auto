@@ -6,7 +6,7 @@
             [clojure.java.io :as io])
   (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
-        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]
+        [com.redhat.qe.auto.bz :only [open-bz-bugs]]
         [katello.conf :only [config]]
         [katello.validation :only [field-validation expect-error duplicate-disallowed variations]]))
 
@@ -103,10 +103,10 @@
   (concat
    [[(expect-error :name-cant-be-blank) nil "blah" :redhat "http://sdf.com"]
                                 
-    ^{:blockers (blocked-by-bz-bugs "703528")
+    ^{:blockers (open-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*()[]{}"]
-    ^{:blockers (blocked-by-bz-bugs "703528")
+    ^{:blockers (open-bz-bugs "703528")
       :description "Test that invalid URL is rejected."}
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "https://"]
     [(expect-error :repository-url-invalid) (tasks/uniqueify "mytestcp") "blah" :redhat "@$#%$%&%*("]

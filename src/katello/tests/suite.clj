@@ -18,7 +18,7 @@
             [test.tree :as test] 
             [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test.tree :only [fn]]
-        [com.redhat.qe.auto.bz :only [blocked-by-bz-bugs]]))
+        [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
 (declare login-tests org-tests environment-tests provider-tests system-tests user-tests sync-tests)
 
@@ -34,7 +34,7 @@
                                     (system-tests)
                                     (user-tests)
                                     (test/data-driven  {:name "login as invalid user"
-                                                        :blockers (blocked-by-bz-bugs "730738")} 
+                                                        :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
                                                        login/invalid-logins))})
     (merge {:threads 3} setup/runner-config)))
@@ -44,22 +44,22 @@
     :steps orgs/create
     :more (concat
            [{:name "delete an org"
-             :blockers (blocked-by-bz-bugs "716972")
+             :blockers (open-bz-bugs "716972")
              :steps orgs/delete}
             
             {:name "duplicate org disallowed"
-             :blockers (blocked-by-bz-bugs "726724")
+             :blockers (open-bz-bugs "726724")
              :steps orgs/dupe-disallowed}
 
             {:name "org name required"
-             :blockers (blocked-by-bz-bugs "726724")
+             :blockers (open-bz-bugs "726724")
              :steps orgs/name-required}
 
             {:name "edit an org"
              :steps orgs/edit}]
            
            (test/data-driven {:name "org valid name"
-                              :blockers (blocked-by-bz-bugs "726724")}
+                              :blockers (open-bz-bugs "726724")}
                              orgs/valid-name
                              orgs/valid-name-data)
            
@@ -70,13 +70,13 @@
     :name "create a test org"
     :steps envs/create-test-org
     :more [{:name "create environment"
-            :blockers (blocked-by-bz-bugs "693797" "707274")
+            :blockers (open-bz-bugs "693797" "707274")
             :steps envs/create
             :more [{:name "delete environment"
                     :steps envs/delete}
                    
                    {:name "duplicate environment disallowed"
-                    :blockers (blocked-by-bz-bugs "726724")
+                    :blockers (open-bz-bugs "726724")
                     :steps envs/dupe-disallowed}
                    
                    {:name "rename an environment"
@@ -84,7 +84,7 @@
                    ]}
 
            {:name "environment name required"
-            :blockers (blocked-by-bz-bugs "726724")
+            :blockers (open-bz-bugs "726724")
             :steps envs/name-required}]}])
 
 (defn provider-tests []
@@ -126,7 +126,7 @@
 (defn sync-tests []
   [{:name "simple sync"
     :description "Sync a product with just a few packages in one repo."
-    :blockers (juxt (constantly "auto broken, working on fix") (blocked-by-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627"))
+    :blockers (juxt (constantly "auto broken, working on fix") (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627"))
     :steps sync/simple}
    {:name "create a sync plan"
     :steps sync/create-plan
@@ -144,7 +144,7 @@
   [{:name "setup environment for systems"
     :configuration true
     :steps systems/create-env
-    :blockers (blocked-by-bz-bugs "717408" "728357")
+    :blockers (open-bz-bugs "717408" "728357")
     :more [{:name "rename a system"
             :description "Adds a system via REST api and then renames it in the UI"
             :steps systems/rename}
@@ -152,11 +152,11 @@
            {:name "system appears on environment page"
             :description "Registers a system to an environment, and verifies it appears
                           on the Systems/Registered/Environments/[environment] page."
-            :blockers (blocked-by-bz-bugs "738054")
+            :blockers (open-bz-bugs "738054")
             :steps systems/in-env}
            
            {:name "subscribe a system to a product"
-            :blockers (blocked-by-bz-bugs "733780" "736547")
+            :blockers (open-bz-bugs "733780" "736547")
             :steps systems/subscribe}
 
            {:name "create an activation key"
@@ -171,8 +171,20 @@
   [{:name "create a user"
     :steps users/create
     :more [{:name "edit a user"
-            :blockers (blocked-by-bz-bugs "720469")
-            :steps users/edit}]}])
+            :blockers (open-bz-bugs "720469")
+            :steps users/edit}
+
+           {:name "delete a user"
+            :steps users/delete}
+
+           {:name "duplicate user disallowed"
+            :blockers (open-bz-bugs "738425")}
+
+           {:name "users' miniumum password length enforced"
+            :steps users/min-password-length}
+
+           {:name "assign role to user"
+            :steps users/assign-role}]}])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]

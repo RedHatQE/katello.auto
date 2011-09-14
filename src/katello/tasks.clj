@@ -326,6 +326,7 @@
 (defn delete-user [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password]}]
