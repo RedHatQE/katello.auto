@@ -5,7 +5,7 @@
 
 (def create
   (fn [] (tasks/create-user (tasks/uniqueify "autouser")
-                           "password")))
+                           {:password "password"})))
 
 (def edit
   (fn [] (let [username (tasks/uniqueify "autouser")]
