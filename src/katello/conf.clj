@@ -18,9 +18,14 @@
 
 (def config (atom {}))
 
+(declare *session-user* *session-password*)
+
 (defn init "initialize logging and read in properties"
   []
   (TestScript/loadProperties)
   (-> (Logger/getLogger "") (.setLevel Level/OFF))
-  (swap! config merge (property-map katello-auto-properties)))
+  (swap! config merge (property-map katello-auto-properties))
+  (def *session-user* (@config :admin-user))
+  (def *session-password* (@config :admin-password)))
+
 

@@ -10,6 +10,7 @@
                  [clj-http "0.1.3"]
                  [robert/hooke "1.1.1"]
                  [fn.trace "1.0.0-SNAPSHOT"]]
+  :jvm-opts ["-Xmx384m"]
   :repositories {"clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}})
 

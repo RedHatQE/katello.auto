@@ -1,40 +1,48 @@
 (ns katello.tests.setup
   (:require [fn.trace :as tr]
-            [katello.tasks]
-            [katello.api-tasks]
+            (katello [tasks :as tasks]
+                     [conf :as conf]
+                     [api-tasks :as api-tasks]) 
             [test.tree :as test])
-  (:use [katello.conf :only [init config]]
-        [katello.tasks :only [login]]
-        [clojure.contrib.string :only [split]]
+  (:use [clojure.contrib.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]))
 
 (defn new-selenium [& [single-thread]]
-  (let [sel-addr (@config :selenium-address)
+  (let [sel-addr (@conf/config :selenium-address)
         [host port] (split #":" sel-addr)
         sel-fn (if single-thread
                  connect
                  new-sel)] 
-    (sel-fn host (Integer/parseInt port) "" (@config :server-url))))
+    (sel-fn host (Integer/parseInt port) "" (@conf/config :server-url))))
 
 (defn start-selenium []  
   (browser start)
-  (browser open (@config :server-url))
-  (login (@config :admin-user) (@config :admin-password)))
+  (browser open (@conf/config :server-url))
+  (tasks/login (@conf/config :admin-user) (@conf/config :admin-password)))
+
+(defn switch-new-admin-user [user pw]
+  (tasks/create-user user {:password pw })
+  (tasks/assign-role {:user user
+                      :roles ["Administrator"]})
+  (tasks/logout)
+  (tasks/login user pw))
 
 (defn stop-selenium []
   (browser stop))
 
 (defn thread-runner [consume-fn]
   (fn [] (binding [sel (new-selenium)
-                  tr/tracer (tr/per-thread-tracer tr/clj-format)]
+                  tr/tracer (tr/per-thread-tracer tr/clj-format)
+                  katello.conf/*session-user* (tasks/uniqueify (@conf/config :admin-user))]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
                            :fns [test/execute
-                                 com.redhat.qe.auto.selenium.selenium/call-sel]
+                                 start-selenium stop-selenium switch-new-admin-user]
                            :exclude [katello.tasks/notification
                                      katello.tasks/clear-all-notifications
                                      katello.tasks/success?]}
                           (println "starting a sel")
                           (try (start-selenium)
+                               (switch-new-admin-user conf/*session-user* conf/*session-password*)
                                (catch Exception e (.printStackTrace e)))
                           (consume-fn)
                           (stop-selenium)
@@ -43,4 +51,4 @@
 
 (def runner-config 
   {:thread-runner thread-runner
-   :setup (fn [] (println "initializing.") (init))})
+   :setup (fn [] (println "initializing.") (conf/init))})
