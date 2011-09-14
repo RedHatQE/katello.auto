@@ -5,7 +5,8 @@
                      [api-tasks :as api-tasks]) 
             [test.tree :as test])
   (:use [clojure.contrib.string :only [split]]
-        [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]))
+        [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]
+        [com.redhat.qe.verify :only [check]]))
 
 (defn new-selenium [& [single-thread]]
   (let [sel-addr (@conf/config :selenium-address)
@@ -41,7 +42,11 @@
                                                          first)))]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
                            :fns [test/execute
-                                 start-selenium stop-selenium switch-new-admin-user]
+                                 start-selenium stop-selenium switch-new-admin-user
+                                 check
+                                 com.redhat.qe.auto.selenium.selenium/call-sel
+                                 com.redhat.qe.auto.selenium.selenium/locator-args
+                                 com.redhat.qe.auto.selenium.selenium/fill-item]
                            :exclude [katello.tasks/notification
                                      katello.tasks/clear-all-notifications
                                      katello.tasks/success?]}
