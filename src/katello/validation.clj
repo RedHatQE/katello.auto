@@ -19,7 +19,7 @@
                   coll)))
 
 (def validation-errors
-  (merge {:name-taken-error #"Name has already been taken"
+  (merge {:name-taken-error #"(Username|Name) has already been taken"
           :name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
           :name-must-not-contain-characters #"Name cannot contain characters other than"
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
