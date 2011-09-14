@@ -9,7 +9,7 @@
 (def admin
   (fn []
     (logout)
-    login *session-user* *session-password*
+    (login *session-user* *session-password*)
     (verify-that (= (current-user) *session-user*))))
 
 (def invalid
