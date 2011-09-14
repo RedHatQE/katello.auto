@@ -33,7 +33,7 @@
 (defn thread-runner [consume-fn]
   (fn [] (binding [sel (new-selenium)
                   tr/tracer (tr/per-thread-tracer tr/clj-format)
-                  katello.conf/*session-user* (tasks/uniqueify (@conf/config :admin-user))]
+                  katello.conf/*session-user* (str (tasks/uniqueify (.getName (Thread/currentThread))))]
           (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
                            :fns [test/execute
                                  start-selenium stop-selenium switch-new-admin-user]
