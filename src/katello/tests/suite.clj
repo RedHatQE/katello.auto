@@ -178,6 +178,7 @@
             :steps users/delete}
 
            {:name "duplicate user disallowed"
+            :steps users/dupe-disallowed
             :blockers (open-bz-bugs "738425")}
 
            {:name "users' miniumum password length enforced"
