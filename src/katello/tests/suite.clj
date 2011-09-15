@@ -15,7 +15,8 @@
                      [api-tasks :as api]
                      [validation :as validate])
             
-            [test.tree :as test] 
+            [test.tree :as test]
+            [clojure.pprint :as pprint]
             [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test.tree :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
@@ -189,8 +190,9 @@
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
-    (println "Blockers: " (pr-str (->> reports
-                                       vals
-                                       (map deref)
-                                       (mapcat :blocked-by)
-                                       distinct)))))
+    (println "----- Blockers -----\n "
+             (pprint/pprint (->> reports
+                                 vals
+                                 (map deref)
+                                 (mapcat :blocked-by)
+                                 distinct)))))
