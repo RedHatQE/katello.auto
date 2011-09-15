@@ -110,6 +110,7 @@
                               :steps providers/create-repo}
                              
                              {:name "delete a repository"
+                              :blockers (open-bz-bugs "729364")
                               :steps providers/delete-repo}]}
                      {:name "delete a product"
                       :steps providers/delete-product}]}]
