@@ -12,7 +12,7 @@
                               :owner-password ["katello.owner.password" "acme_corporation_user"]
                               :selenium-address ["selenium.address" "localhost:4444"]
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
-                              :sync-repo ["katello.sync.test.repo"]
+                              :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master/lastSuccessfulBuild/artifact/rpms/x86_64"]
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
                               :redhat-manifest-url ["katello.redhat.manifest.url" "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=system-engine;a=blob;f=scripts/test/sample-candlepin-export.zip;h=4451ff79098c1734c2a465e09a0c42fbc6256ae7;hb=HEAD"]})
 

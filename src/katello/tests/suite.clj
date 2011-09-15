@@ -131,6 +131,7 @@
     :steps sync/simple}
    {:name "create a sync plan"
     :steps sync/create-plan
+    :blockers (open-bz-bug "729364")
     :more (concat [{:name "edit a sync plan"
                     :steps sync/edit-plan}
                    {:name "rename a sync plan"

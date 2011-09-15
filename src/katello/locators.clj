@@ -54,7 +54,7 @@
    provider-sync-checkbox ["Provider sync checkbox"
                            "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
    provider-sync-progress ["Provider progress"
-                           "//tr[tdq/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+                           "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
