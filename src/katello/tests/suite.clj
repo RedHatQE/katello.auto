@@ -38,7 +38,7 @@
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
                                                        login/invalid-logins))})
-    (merge {:threads 4} setup/runner-config)))
+    (merge {:threads 3} setup/runner-config)))
 
 (defn org-tests []
   [{:name "create an org"
