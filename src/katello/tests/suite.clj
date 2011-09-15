@@ -189,8 +189,8 @@
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
-    (println "Blockers: " (->> reports
-                               vals
-                               (map deref)
-                               (mapcat :blocked-by)
-                               distinct))))
+    (println "Blockers: " (pr-str (->> reports
+                                       vals
+                                       (map deref)
+                                       (mapcat :blocked-by)
+                                       distinct)))))
