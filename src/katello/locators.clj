@@ -30,10 +30,9 @@
               "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
    changeset-status ["Changeset status"  "//span[.='$1']/..//span[@class='changeset_status']"]
    editable ["Editable" "//div[contains(@class,'editable') and normalize-space(.)='$1']"]
-   env-breadcrumb-link ["Environment Breadcrumb"
-                        "//a[@class='path_link' and normalize-space(.)='$1']"]
+   
    environment-link ["Environment"
-                     "//ul[@class='breadcrumb']//a[normalize-space(.)='$1']"]
+                     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"]
 
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
