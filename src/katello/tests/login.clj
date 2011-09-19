@@ -19,7 +19,7 @@
            (login user pw)
            (throw (RuntimeException. "Login succeeded with bad credentials.")))
          (finally
-          (login (@config :admin-user) (@config :admin-password))))))
+          (login *session-user* *session-password*)))))
 
 (def invalid-logins [["admin" ""]
                      ["admin" "asdfasdf"]
