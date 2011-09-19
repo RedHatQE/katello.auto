@@ -317,6 +317,7 @@
                [:named-environment-page [env-name] (via (environment-link env-name) :remove-environment)]]]
              [:administration-tab [] (via :administration)
               [:users-tab [] (via :users)
-               [:named-user-page [username] (via (user username) (username-field username) )
+               [:named-user-page [username] (choose-left-pane (user username)
+                                                                  (username-field username))
                 [:user-roles-permissions-page [] (via :roles-and-permissions :add-all)]]]
               [:roles-tab [] (via :roles)]]]))
