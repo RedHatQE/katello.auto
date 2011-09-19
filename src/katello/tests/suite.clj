@@ -107,7 +107,8 @@
              :more [{:name "create a product"
                      :steps providers/create-product
                      :more [{:name "delete a product"
-                             :steps providers/delete-product}
+                             :steps providers/delete-product
+                             :blockers (open-bz-bugs "729364")}
                             
                             {:name "create a repository"
                              :steps providers/create-repo
