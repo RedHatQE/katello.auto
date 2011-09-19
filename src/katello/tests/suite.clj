@@ -114,7 +114,6 @@
                              :steps providers/create-repo
                              :blockers (open-bz-bugs "729364")
                              :more [{:name "delete a repository"
-                                     :blockers (open-bz-bugs "729364")
                                      :steps providers/delete-repo}]}]}]}]
             
            (test/data-driven {:name "provider validation"}
@@ -123,7 +122,7 @@
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
     :configuration true
-    :blockers providers/manifest-testing-blockers
+    :blockers (juxt providers/manifest-testing-blockers (open-bz-bugs "729364"))
     :more [{:name "upload subscription manifest"
             :steps providers/upload-manifest}]}])
 
