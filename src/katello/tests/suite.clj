@@ -150,6 +150,7 @@
     :blockers (open-bz-bugs "717408" "728357")
     :more [{:name "rename a system"
             :description "Adds a system via REST api and then renames it in the UI"
+            :blockers (open-bz-bugs "729364")
             :steps systems/rename}
            
            {:name "system appears on environment page"
