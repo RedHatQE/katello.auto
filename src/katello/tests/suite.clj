@@ -90,34 +90,34 @@
 
 (defn provider-tests []
   [{:name "create a custom provider"
-     :steps providers/create-custom
-     :more (concat
-            [{:name "duplicate provider disallowed"
-              :steps providers/dupe-disallowed}
+    :steps providers/create-custom
+    :more (concat
+           [{:name "duplicate provider disallowed"
+             :steps providers/dupe-disallowed}
              
-             {:name "rename a provider"
-              :steps providers/rename}
+            {:name "rename a provider"
+             :steps providers/rename}
 
-             {:name "delete a provider"
-              :steps providers/delete}
+            {:name "delete a provider"
+             :steps providers/delete}
 
-             {:configuration true
-              :name "create provider for testing products and repos"
-              :steps providers/setup-custom
-              :more [{:name "create a product"
-                      :steps providers/create-product
-                      :more [{:name "create a repository"
-                              :steps providers/create-repo}
-                             
-                             {:name "delete a repository"
-                              :blockers (open-bz-bugs "729364")
-                              :steps providers/delete-repo}]}
-                     {:name "delete a product"
-                      :steps providers/delete-product}]}]
+            {:configuration true
+             :name "create provider for testing products and repos"
+             :steps providers/setup-custom
+             :more [{:name "create a product"
+                     :steps providers/create-product
+                     :more [{:name "create a repository"
+                             :steps providers/create-repo
+                             :blockers (open-bz-bugs "729364")
+                             :more [{:name "delete a repository"
+                                     :blockers (open-bz-bugs "729364")
+                                     :steps providers/delete-repo}]}]}
+                    {:name "delete a product"
+                     :steps providers/delete-product}]}]
             
-            (test/data-driven {:name "provider validation"}
-                              providers/validation
-                              (providers/validation-data)))}
+           (test/data-driven {:name "provider validation"}
+                             providers/validation
+                             (providers/validation-data)))}
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
     :configuration true
