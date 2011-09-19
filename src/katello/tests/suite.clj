@@ -106,14 +106,15 @@
              :steps providers/setup-custom
              :more [{:name "create a product"
                      :steps providers/create-product
-                     :more [{:name "create a repository"
+                     :more [{:name "delete a product"
+                             :steps providers/delete-product}
+                            
+                            {:name "create a repository"
                              :steps providers/create-repo
                              :blockers (open-bz-bugs "729364")
                              :more [{:name "delete a repository"
                                      :blockers (open-bz-bugs "729364")
-                                     :steps providers/delete-repo}]}]}
-                    {:name "delete a product"
-                     :steps providers/delete-product}]}]
+                                     :steps providers/delete-repo}]}]}]}]
             
            (test/data-driven {:name "provider validation"}
                              providers/validation

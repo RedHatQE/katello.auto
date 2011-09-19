@@ -1,7 +1,7 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require [katello.tasks :as tasks]
-            [katello.httpclient :as http]
+            [clj-http.client :as http]
             [katello.api-tasks :as api]
             [clojure.java.io :as io])
   (:use [test.tree :only [fn data-driven]]
