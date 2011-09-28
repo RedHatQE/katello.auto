@@ -21,7 +21,7 @@
   ([s] (str s "-" (System/currentTimeMillis)))
   ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
 
-(def uniqueify timestamp)
+(def uniqueify timestamp) ;;alias for timestamp
 
 (def known-errors
   {:validation-failed #"Validation [Ff]ailed"
@@ -63,9 +63,9 @@
        (catch SeleniumException e nil))) 
 
 (defn check-for-success
-  "Gets any notification from the UI, if there is none or not a
+  "Gets any notification from the UI, if there is none, or it's not a
    success notification, raise an exception.  Otherwise return the
-   text of the message."
+   type and text of the message."
   [ & [max-wait-ms]]
   (let [notif (notification max-wait-ms)
         msg (:msg notif)]
@@ -350,6 +350,42 @@
     (browser click (locators/plus-icon role)))
   (browser click :save-roles)
   (check-for-success))
+
+(defn edit-role [name {:keys [add-permissions remove-permissions users]}]
+  (let [nav (fn [page] (navigate page {:role-name name}))
+        each-org (fn [all-perms perms-fn]
+                   (when all-perms
+                     (nav :named-role-permissions-page)
+                     (doseq [{:keys [org permissions]} all-perms]
+                      (->browser (click (locators/permission-org org))
+                                 (sleep 1000))
+                      (perms-fn permissions)
+                      (browser click :role-permissions))))] ;;go back up to choose next org
+    (when users
+      (nav :named-role-users-page)
+      (doseq [user users]
+        (browser click (locators/add-to-role user))))
+    (each-org remove-permissions
+              (fn [permissions]
+                (doseq [permission permissions]
+                  (browser click (locators/remove-from-role permission))
+                  (check-for-success)
+                  (browser sleep 5000)))) 
+    (each-org add-permissions
+              (fn [permissions]
+                (doseq [{:keys [name description resource-type verbs tags]} permissions]
+                  (browser click :add-permission)
+                  (browser select :permission-resource-type-select resource-type)
+                  (doseq [verb verbs]
+                    (browser addSelection :permission-verb-select verb))
+                  (browser click :next)
+                  (doseq [tag tags]
+                    (browser addSelection :permission-tag-select tag))
+                  (fill-ajax-form {:permission-name-text name
+                                   :permission-description-text description}
+                                  :save-permission))
+                (check-for-success)))))
+
 
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."

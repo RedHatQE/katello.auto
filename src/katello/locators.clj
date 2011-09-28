@@ -9,8 +9,6 @@
            [com.thoughtworks.selenium SeleniumException]))
 
 ;;ui layer
-(extend-type String SeleniumLocatable
-             (sel-locator [x] x))
 
 (defmacro define-strategies
   "Create a function for each locator strategy in map m (which maps
@@ -37,6 +35,8 @@
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
+   permission-org ["Permission Org" "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"]
+
    plus-icon ["Plus icon" "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"]
    product-edit ["Product edit"
                  "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
@@ -54,6 +54,7 @@
                            "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+   role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
@@ -202,7 +203,17 @@
 (def roles {:new-role "//a[@id='new']"
             :new-role-name-text "role_name_field"
             :save-role "save_role_button"
-            :save-user-edit "save_password"})
+            :save-user-edit "save_password"
+            :role-users "role_users"
+            :role-permissions "role_permissions"
+            :next "next_button"
+            :permission-resource-type-select "permission[resource_type_attributes[name]]"
+            :permission-verb-select "permission[verb_values][]"
+            :permission-name-text "permission[name]"
+            :permission-description-text "permission[description]"
+            :save-permission "save_permission_button"
+            :remove-role "remove_role"
+            :add-permission "add_permission"})
 
 (def sync-schedules {:apply-sync-schedule "apply_button"})
 
@@ -221,9 +232,15 @@
                    ;;Sync Management subtab
                    :synchronize-now "sync_button"}))
 
+(def add-to-role (partial role-action "+ Add"))
+(def remove-from-role (partial role-action "Remove"))
+
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
   (sel-locator [k] (uimap k)))
+
+(extend-type String SeleniumLocatable
+             (sel-locator [x] x))
 
 (defn promotion-env-breadcrumb [name & [next]]
   (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
@@ -240,12 +257,19 @@
                          (.substring name 0 32) ;workaround for bz 737678
                          name)))))
 
+
 ;;page layout
-(defn via [link & [ajax-wait-for]]
-  (if ajax-wait-for
-    (->browser (click link)
-               (waitForVisible ajax-wait-for "15000"))
-    (browser clickAndWait link)))
+(defn ajax-wait [elem]
+  (fn [] (browser waitForVisible elem "15000")))
+
+(def no-wait (constantly nil))
+
+(defn load-wait [] (browser waitForPageToLoad "60000"))
+
+(defn via [link & [post-fn]]
+  (browser click link)
+  ((or post-fn load-wait)))
+
 
 (defn select-environment-widget [env-name & [ next-env-name]]
   (do (when (browser isElementPresent :expand-path)
@@ -256,13 +280,12 @@
   (fill-form {:search-bar search-term}
              :search-submit))
 
-(defn choose-left-pane [item & [ajax-wait-for]]
+(defn choose-left-pane [item & [post-fn]]
   (try (browser click item)
        (catch SeleniumException se
          (do (search (-> item .getArguments first))
              (browser click item)))
-       (finally (when ajax-wait-for
-                  (browser waitForVisible ajax-wait-for "15000")))))
+       (finally ((or post-fn load-wait)))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
@@ -270,54 +293,60 @@
                              (browser open (@config :server-url)))
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
-               [:new-provider-page [] (via :new-provider :provider-name-text)]
-               [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name) :remove-provider)
+               [:new-provider-page [] (via :new-provider
+                                           (ajax-wait :provider-name-text))]
+               [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
+                                                                       (ajax-wait :remove-provider))
                 [:provider-products-repos-page [] (do (via :products-and-repositories
-                                                           :add-product)
+                                                           (ajax-wait :add-product))
                                                       (browser sleep 2000))
                  [:named-product-page [product-name] (do (via (editable product-name)
-                                                              :product-name-text)
+                                                              (ajax-wait :product-name-text))
                                                          (browser click (product-expand product-name)))
-                  [:named-repo-page [repo-name] (via (editable repo-name) :remove-repository)]]]
-                [:provider-subscriptions-page [] (via :subscriptions :upload)]]]
+                  [:named-repo-page [repo-name] (via (editable repo-name) (ajax-wait :remove-repository))]]]
+                [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
-                                   (inactive-edit-field :sync-plan-name-text))]
-                [:new-sync-plan-page [] (via :new-sync-plan :sync-plan-name-text)]]
+                                   (ajax-wait (inactive-edit-field :sync-plan-name-text)))]
+                [:new-sync-plan-page [] (via :new-sync-plan (ajax-wait :sync-plan-name-text))]]
                [:sync-schedule-page [] (via :sync-schedule)]]
               [:promotions-page [] (via :promotions)
                [:named-environment-promotions-page [env-name next-env-name]
                 (select-environment-widget env-name next-env-name)
                 [:named-changeset-promotions-page [changeset-name]
-                 (via (changeset changeset-name) :changeset-content)]]]]
+                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]]
              [:systems-tab [] (via :systems)
               [:activation-keys-page [] (via :activation-keys)
                [:named-activation-key-page [activation-key-name]
                 (choose-left-pane (left-pane-item activation-key-name)
-                                  (inactive-edit-field :activation-key-name-text))]
-               [:new-activation-key-page [] (via :new-activation-key :activation-key-name-text)]]
+                                  (ajax-wait (inactive-edit-field :activation-key-name-text)))]
+               [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
               [:systems-environment-page [env-name]
                (do (via :by-environments)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
                 (choose-left-pane (left-pane-item system-name)
-                                  (inactive-edit-field :system-name-text-edit))]]
+                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]
               [:named-systems-page [system-name] (choose-left-pane
                                                   (left-pane-item system-name)
-                                                  (inactive-edit-field :system-name-text-edit))
+                                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))
                [:system-subscriptions-page [] (via :subscriptions :subscribe)]]]
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization :org-name-text)]
               [:named-organization-page [org-name] (choose-left-pane
                                                     (left-pane-item org-name)
-                                                    :remove-organization) 
-               [:new-environment-page [] (via :new-environment :create-environment)]
-               [:named-environment-page [env-name] (via (environment-link env-name) :remove-environment)]]]
+                                                    (ajax-wait :remove-organization)) 
+               [:new-environment-page [] (via :new-environment (ajax-wait :create-environment))]
+               [:named-environment-page [env-name] (via (environment-link env-name) (ajax-wait :remove-environment))]]]
              [:administration-tab [] (via :administration)
               [:users-tab [] (via :users)
                [:named-user-page [username] (choose-left-pane (user username)
-                                                                  (username-field username))
-                [:user-roles-permissions-page [] (via :roles-and-permissions :add-all)]]]
-              [:roles-tab [] (via :roles)]]]))
+                                                              (ajax-wait (username-field username)))
+                [:user-roles-permissions-page [] (via :roles-and-permissions (ajax-wait :add-all))]]]
+              [:roles-tab [] (via :roles)
+               [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name)
+                                                               (ajax-wait :remove-role))
+                [:named-role-users-page [] (via :role-users no-wait)]
+                [:named-role-permissions-page [] (via :role-permissions no-wait)]]]]]))
