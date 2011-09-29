@@ -209,6 +209,7 @@
             :next "next_button"
             :permission-resource-type-select "permission[resource_type_attributes[name]]"
             :permission-verb-select "permission[verb_values][]"
+            :permission-tag-select "tags"
             :permission-name-text "permission[name]"
             :permission-description-text "permission[description]"
             :save-permission "save_permission_button"
