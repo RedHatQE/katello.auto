@@ -4,7 +4,7 @@
             [clojure.contrib.set :as sets])
   
   (:use [katello.conf :only [config]]
-        [test.tree :only [data-driven fn]]
+        [test.tree :only [data-driven dep-chain fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
@@ -51,21 +51,21 @@
      (promote-content from-env target-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
 
-(defn tests [] [{:configuration true
-                 :name "set up promotions"
-                 :description "Takes content and promotes it thru more environments.
-                               Verifies that it shows up in the new env."
-                 :steps setup
-                 :blockers (open-bz-bugs "711144"
-                                               "712318"
-                                               "714297"
-                                               "738054")
-                 :more (data-driven
-                        {:name "promote content"}
-                        verify-promote-content
-                        [[@myorg [locker first-env] {:products
-                                                     (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
-                         [@myorg [locker first-env second-env] {:products
-                                                                (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])}])
+(defn tests []
+  [{:configuration true
+    :name "set up promotions"
+    :steps setup
+    :blockers (open-bz-bugs "711144"
+                            "712318"
+                            "714297"
+                            "738054")
+    :more (-> {:name "promote content"
+               :description "Takes content and promotes it thru more environments.
+                             Verifies that it shows up in the new env."}
+              
+              (data-driven verify-promote-content
+                        [[@myorg [locker first-env] {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
+                         [@myorg [locker first-env second-env] {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
+              dep-chain)}])
 
 
