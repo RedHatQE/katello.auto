@@ -233,9 +233,6 @@
                    ;;Sync Management subtab
                    :synchronize-now "sync_button"}))
 
-(def add-to-role (partial role-action "+ Add"))
-(def remove-from-role (partial role-action "Remove"))
-
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
   (sel-locator [k] (uimap k)))
@@ -260,7 +257,7 @@
                          name)))))
 
 
-;;page layout
+;;nav tricks
 (defn ajax-wait [elem]
   (fn [] (browser waitForVisible elem "15000")))
 
@@ -288,6 +285,16 @@
          (do (search (-> item .getArguments first))
              (browser click item)))
        (finally ((or post-fn load-wait)))))
+
+(defn toggler [on-text off-text loc-strategy]
+  (fn [associated-text on?]
+    (loc-strategy (if on? on-text off-text) associated-text)))
+
+(def user-role-toggler (toggler "+ Add" "Remove" role-action))
+
+(defn toggle [toggler associated-text on?]
+  (browser click (toggler associated-text on?))
+  ((ajax-wait (toggler associated-text (not on?)))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))

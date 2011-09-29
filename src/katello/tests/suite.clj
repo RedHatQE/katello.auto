@@ -8,7 +8,8 @@
                            [login :as login]
                            [environments :as envs]
                            [systems :as systems]
-                           [users :as users])
+                           [users :as users]
+                           [permissions :as permissions])
    
             (katello [tasks :as tasks]
                      [conf :as conf]
@@ -21,7 +22,8 @@
   (:use [test.tree :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
-(declare login-tests org-tests environment-tests provider-tests system-tests user-tests sync-tests)
+(declare login-tests org-tests environment-tests provider-tests
+         system-tests user-tests sync-tests permission-tests)
 
 (defn suite []
   (with-meta
@@ -191,6 +193,15 @@
 
            {:name "assign role to user"
             :steps users/assign-role}]}])
+
+(defn permission-tests []
+  [{:name "create a role"
+    :steps permissions/create-role
+    :more [{:name "delete a role"
+            :steps permissions/remove-role}
+
+           {:name "add permission and user to a role"
+            :steps permissions/edit-role}]}]) 
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]

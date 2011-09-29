@@ -364,11 +364,11 @@
     (when users
       (nav :named-role-users-page)
       (doseq [user users]
-        (browser click (locators/add-to-role user))))
+        (locators/toggle locators/user-role-toggler user true)))
     (each-org remove-permissions
               (fn [permissions]
                 (doseq [permission permissions]
-                  (browser click (locators/remove-from-role permission))
+                  (browser click (locators/user-role-toggler permission false))
                   (check-for-success)
                   (browser sleep 5000)))) 
     (each-org add-permissions
@@ -386,6 +386,11 @@
                                   :save-permission))
                 (check-for-success)))))
 
+(defn remove-role [name]
+  (navigate :named-role-page {:role-name name})
+  (browser click :remove-role)
+  (browser click :confirmation-yes)
+  (check-for-success))
 
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
