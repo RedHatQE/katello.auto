@@ -226,9 +226,10 @@
   (sel-locator [k] (uimap k)))
 
 (defn promotion-env-breadcrumb [name & [next]]
-  (Element. (format (if next "//a[.='%2$s' and contains(@class, 'path_link')]/../../..//a[.='%1$s']"
-                        "//a[.='%1$s' and contains(@class, 'path_link')]")
-                    name next)))
+  (let [prefix "//a[normalize-space(.)='%1$s' and contains(@class, 'path_link')]"]
+    (Element. (format 
+               (str prefix (if next "/../../..//a[normalize-space(.)='%1$s']" ""))
+               name next))))
 
 (defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
   (format "//div[@name='%1s']" (sel-locator loc)))
