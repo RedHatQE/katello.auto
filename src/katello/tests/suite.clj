@@ -36,6 +36,7 @@
                                     (promotions/tests)
                                     (system-tests)
                                     (user-tests)
+                                    (permission-tests)
                                     (test/data-driven  {:name "login as invalid user"
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
