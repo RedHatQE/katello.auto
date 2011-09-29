@@ -132,7 +132,7 @@
   (browser waitAndClick :review-for-promotion "10000")
   (browser waitAndClick :promote-to-next-environment "10000")
   (check-for-success) ;;for the submission
-  (loop-with-timeout 60000 [status ""]
+  (loop-with-timeout 120000 [status ""]
     (if (= status "Promoted")
       status
       (do (Thread/sleep 1000)
