@@ -342,7 +342,7 @@
                                                   (left-pane-item system-name)
                                                   (ajax-wait (inactive-edit-field :system-name-text-edit)))
                [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
-             [:organizations-tab [] (via (ajax-wait :organizations))
+             [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization (ajax-wait :org-name-text))]
               [:named-organization-page [org-name] (choose-left-pane
                                                     (left-pane-item org-name)
