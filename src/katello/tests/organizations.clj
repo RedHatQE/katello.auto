@@ -41,7 +41,5 @@
 
 (def valid-name-data
   (concat 
-   (validate/variations [:invalid-character
-                         :name-must-not-contain-characters])
-   (validate/variations [:trailing-whitespace
-                         :name-no-leading-trailing-whitespace])))
+   (validate/variations :name-must-not-contain-characters vector validate/invalid-character)
+   (validate/variations :name-no-leading-trailing-whitespace vector validate/trailing-whitespace)))

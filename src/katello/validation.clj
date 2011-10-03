@@ -30,14 +30,12 @@
          (cant-be-blank-errors [:name
                                 :repository-url])))
 
-(def test-data {:trailing-whitespace [ "abc123 ", " ", "abc  1-2-3   "]
-                :invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"]
-                :javascript [ "<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"]}) 
+(def trailing-whitespace [ "abc123 ", " ", "abc  1-2-3   "]) 
+(def javascript ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
+(def invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
 
-(defn variations [args]
-  (let [t (first (filter (set (keys test-data)) args))]
-    (vec (for [datum (test-data t)]
-           (vec (replace {t datum} args))))))
+(defn variations [orig f vars]
+  (map (partial f orig) vars))
 
 (defn matching-validation-errors "Returns a set of matching known validation errors"
   [m]

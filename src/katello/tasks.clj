@@ -225,7 +225,7 @@
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
 
-(defn create-provider [name description type & [repo-url]]
+(defn create-provider [{:keys [name description type repo-url]}]
   (let [types {:redhat "Red Hat"
                :custom "Custom"}]
     (assert (some #{type} (keys types)))
