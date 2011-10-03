@@ -250,11 +250,12 @@
   (format "//div[@name='%1s']" (sel-locator loc)))
 
 (defn left-pane-item [name]
-  (Element. (format  "//div[@id='list']//div[starts-with(normalize-space(.),'%s')]"
-                     (let [l (.length name)]
-                       (if (> l 32)
-                         (.substring name 0 32) ;workaround for bz 737678
-                         name)))))
+  (Element. (LocatorTemplate. "Left pane item"
+                              "//div[@id='list']//div[starts-with(normalize-space(.),'$1')]") 
+            (into-array [(let [l (.length name)]
+                           (if (> l 32)
+                             (.substring name 0 32) ;workaround for bz 737678
+                             name))])))
 
 
 ;;nav tricks

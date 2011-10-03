@@ -144,11 +144,11 @@
                                                            :url "http://sdf.com"}]
       insert-name v/invalid-character)
 
-     (for [d (v/variations  
-              [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
-                                                         :description "blah"
-                                                         :type :redhat}]
-              insert-url v/invalid-url)]
-       (with-meta d {:blockers (open-bz-bugs "703528" "742983")
-                     :description "Test that invalid URL is rejected."})))))
+     (for [test (v/variations  
+                 [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
+                                                            :description "blah"
+                                                            :type :redhat}]
+                 insert-url v/invalid-url)]
+       (with-meta test {:blockers (open-bz-bugs "703528" "742983")
+                        :description "Test that invalid URL is rejected."})))))
 
