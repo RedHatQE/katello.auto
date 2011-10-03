@@ -109,35 +109,15 @@
 (defn validation-data []
   (let [insert (fn [baseargs k v]
                  (assoc-in baseargs [1 k] v))
-        [insert-name insert-desc] (map (fn [k] #(insert %1 k %2))
-                                       [:name :description])]
+        [insert-name insert-desc insert-url] (map (fn [k] #(insert %1 k %2))
+                                                  [:name :description :url])]
     (concat
      [[(v/expect-error :name-cant-be-blank) {:name nil
                                              :description "blah"
                                              :type :redhat
                                              :url "http://sdf.com"}]
                                 
-      ^{:blockers (open-bz-bugs "703528")
-        :description "Test that invalid URL is rejected."}
-      [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
-                                                 :description "blah"
-                                                 :type :redhat
-                                                 :url "@$#%$%&%*()[]{}"}]
-      ^{:blockers (open-bz-bugs "703528")
-        :description "Test that invalid URL is rejected."}
-      [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
-                                                 :description "blah"
-                                                 :type :redhat
-                                                 :url "https://"}]
-      [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
-                                                 :description "blah"
-                                                 :type :redhat
-                                                 :url "@$#%$%&%*("}]
-
-      [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp2")
-                                                 :description "blah"
-                                                 :type :redhat
-                                                 :url nil}]
+  
       [(v/expect-error :only-one-redhat-provider-per-org) {:name (tasks/uniqueify "mytestcp3")
                                                            :description nil
                                                            :type :redhat
@@ -162,5 +142,13 @@
       [(v/expect-error :name-must-not-contain-characters) {:description nil
                                                            :type :custom
                                                            :url "http://sdf.com"}]
-      insert-name v/invalid-character))))
+      insert-name v/invalid-character)
+
+     (map #(with-meta % {:blockers (open-bz-bugs "703528" "742983")
+                         :description "Test that invalid URL is rejected."})
+          (v/variations  
+           [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
+                                                      :description "blah"
+                                                      :type :redhat}]
+           insert-url v/invalid-url)))))
 

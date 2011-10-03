@@ -33,8 +33,13 @@
 (def trailing-whitespace [ "abc123 ", " ", "abc  1-2-3   "]) 
 (def javascript ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
 (def invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
+(def invalid-url ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc http:///" nil])
 
-(defn variations [orig f vars]
+(defn variations "Produces variations of a set of test data. For each
+                  item in vars, insert it into the original test data
+                  using function f, to produce a new set of
+                  data. "
+  [orig f vars]
   (map (partial f orig) vars))
 
 (defn matching-validation-errors "Returns a set of matching known validation errors"
