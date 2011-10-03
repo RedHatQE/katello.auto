@@ -40,6 +40,6 @@
           (tasks/edit-organization org-name :description "edited description"))))
 
 (def valid-name-data
-  (concat 
-   (validate/variations :name-must-not-contain-characters vector validate/invalid-character)
-   (validate/variations :name-no-leading-trailing-whitespace vector validate/trailing-whitespace)))
+  (let [make-data #(list %2 %1)] (concat 
+    (validate/variations :name-must-not-contain-characters make-data validate/invalid-character)
+    (validate/variations :name-no-leading-trailing-whitespace make-data validate/trailing-whitespace))))
