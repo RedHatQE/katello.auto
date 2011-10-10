@@ -23,7 +23,6 @@
           :name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
           :name-must-not-contain-characters #"Name cannot contain characters other than"
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
-          :only-one-redhat-provider-per-org #"Only one Red Hat provider permitted"
           :repository-url-invalid #"Repository url is invalid"
           :start-date-time-cant-be-blank #"Date and Time can't be blank"
           :password-too-short #"Password at least"}

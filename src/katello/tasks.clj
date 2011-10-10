@@ -225,18 +225,12 @@
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
 
-(defn create-provider [{:keys [name description type repo-url]}]
-  (let [types {:redhat "Red Hat"
-               :custom "Custom"}]
-    (assert (some #{type} (keys types)))
-    (navigate :new-provider-page)
-    (fill-ajax-form {:provider-name-text name
-                     :provider-description-text description
-                     :provider-repository-url-text (if (= type :redhat)
-                                               repo-url nil)
-                     :provider-type-list (types type)}
-                    :provider-create-save)
-    (check-for-success)))
+(defn create-provider [{:keys [name description]}]
+  (navigate :new-provider-page)
+  (fill-ajax-form {:provider-name-text name
+                   :provider-description-text description}
+                  :provider-create-save)
+  (check-for-success))
 
 (defn add-product [{:keys [provider-name name description]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
@@ -280,11 +274,10 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-provider [{:keys [name new-name description repo-url]}]
+(defn edit-provider [{:keys [name new-name description]}]
   (navigate :named-provider-page {:provider-name name})
   (in-place-edit {:provider-name-text new-name
-                  :provider-description-text description
-                  :provider-repository-url-text repo-url})
+                  :provider-description-text description})
   (check-for-success))
 
 (defn logged-in? []

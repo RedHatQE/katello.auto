@@ -90,6 +90,7 @@
 
                      ;;subtabs
                      :providers
+                     :custom
                      :sync-management
                      :sync-plans
                      :sync-schedule
@@ -128,9 +129,6 @@
                 :provider-name-text  "provider[name]"
                 :provider-description-text "provider[description]"
                 :provider-repository-url-text "provider[repository_url]"
-                :provider-type-list  "name=provider[provider_type]"
-                :provider-username-text (textbox "provider[login_credential_attributes][username]")
-                :provider-password-text (textbox "provider[login_credential_attributes][password]")
                 :provider-cert-text (textbox "provider[certificate_attributes][contents]")
                 :provider-create-save "provider_save"
                 :remove-provider (link "Remove Provider")
@@ -197,7 +195,7 @@
               :activation-key-name-text "activation_key[name]"
               :activation-key-description-text "activation_key[description]"
               :activation-key-template-select "activation_key[system_template_id]"
-              :save-activation-key "activation_key_save"
+              :save-activation-key "save_key"
               :remove-activation-key (link "Remove Activation Key")})
 
 (def roles {:new-role "//a[@id='new']"
@@ -303,18 +301,19 @@
                              (browser open (@config :server-url)))
              [:content-management-tab [] (via :content-management)
               [:providers-tab [] (via :providers)
-               [:new-provider-page [] (via :new-provider
-                                           (ajax-wait :provider-name-text))]
-               [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
-                                                                       (ajax-wait :remove-provider))
-                [:provider-products-repos-page [] (do (via :products-and-repositories
-                                                           (ajax-wait :add-product))
-                                                      (browser sleep 2000))
-                 [:named-product-page [product-name] (do (via (editable product-name)
-                                                              (ajax-wait :product-name-text))
-                                                         (browser click (product-expand product-name)))
-                  [:named-repo-page [repo-name] (via (editable repo-name) (ajax-wait :remove-repository))]]]
-                [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
+               [:custom-providers-tab [] (via :custom)
+                [:new-provider-page [] (via :new-provider
+                                            (ajax-wait :provider-name-text))]
+                [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
+                                                                        (ajax-wait :remove-provider))
+                 [:provider-products-repos-page [] (do (via :products-and-repositories
+                                                            (ajax-wait :add-product))
+                                                       (browser sleep 2000))
+                  [:named-product-page [product-name] (do (via (editable product-name)
+                                                               (ajax-wait :product-name-text))
+                                                          (browser click (product-expand product-name)))
+                   [:named-repo-page [repo-name] (via (editable repo-name) (ajax-wait :remove-repository))]]]
+                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
