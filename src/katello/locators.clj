@@ -39,7 +39,7 @@
 
    plus-icon ["Plus icon" "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"]
    product-edit ["Product edit"
-                 "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
+                 "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"]
    product-expand ["Expand product"
                   "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
    schedule ["Product to schedule" "//div[normalize-space(.)='$1']"]
@@ -309,7 +309,7 @@
                  [:provider-products-repos-page [] (do (via :products-and-repositories
                                                             (ajax-wait :add-product))
                                                        (browser sleep 2000))
-                  [:named-product-page [product-name] (do (via (editable product-name)
+                  [:named-product-page [product-name] (do (via (product-edit product-name)
                                                                (ajax-wait :product-name-text))
                                                           (browser click (product-expand product-name)))
                    [:named-repo-page [repo-name] (via (editable repo-name) (ajax-wait :remove-repository))]]]
