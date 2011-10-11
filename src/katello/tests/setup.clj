@@ -44,13 +44,13 @@
                            :fns [test/execute
                                  start-selenium stop-selenium switch-new-admin-user
                                  check
-                                 com.redhat.qe.auto.selenium.selenium/call-sel
-                                 com.redhat.qe.auto.selenium.selenium/locator-args
+                                 ;com.redhat.qe.auto.selenium.selenium/call-sel
+                                 ;com.redhat.qe.auto.selenium.selenium/locator-args
                                  com.redhat.qe.auto.selenium.selenium/fill-item]
                            :exclude [katello.tasks/notification
                                      katello.tasks/clear-all-notifications
                                      katello.tasks/success?]}
-                          (println "starting a sel")
+                          (println "starting a selenium session.")
                           (try (start-selenium)
                                (switch-new-admin-user conf/*session-user* conf/*session-password*)
                                (catch Exception e (.printStackTrace e)))

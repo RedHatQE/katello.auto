@@ -21,7 +21,7 @@
               (Element. (LocatorTemplate. ~@(m loc-strat)) (into-array args#))))))
 
 (define-strategies
-  {add-repository ["Add Repository" "//div[@id='products']//div[normalize-space(.)='$1']/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
+  {add-repository ["Add Repository" "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
    button-div ["Button"
                "//div[contains(@class,'button') and normalize-space(.)='$1']"]
    changeset ["Changeset"
@@ -41,7 +41,7 @@
    product-edit ["Product edit"
                  "//div[@id='products']//div[starts-with(@id, 'edit_product') and normalize-space(.)='$1']"]
    product-expand ["Expand product"
-                   "//div[@id='products']//div[contains(@data-url,'products') and normalize-space(.)='$1']/..//img[@alt='Expand']"]
+                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
    schedule ["Product to schedule" "//div[normalize-space(.)='$1']"]
    promotion-add-content-item ["Add Content Item"
                                "//a[@data-display_name='$1' and contains(.,'Add')]"]
