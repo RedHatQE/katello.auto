@@ -296,7 +296,8 @@
   (do (fill-form {:username-text username
                   :password-text password}
                  :log-in)
-      (check-for-success)))
+      (comment "removed on suspicion the success notif disappears sometimes before it can be read"
+               (check-for-success))))
 
 (defn current-user []
   (if (logged-in?)
