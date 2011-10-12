@@ -118,7 +118,7 @@
                              :blockers (open-bz-bugs "729364")
                              :more [{:name "delete a repository"
                                      :steps providers/delete-repo
-                                     :blockers (open-bg-bugs "745279")}]}]}]}]
+                                     :blockers (open-bz-bugs "745279")}]}]}]}]
             
            (test/data-driven {:name "provider validation"}
                              providers/validation
