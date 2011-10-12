@@ -17,7 +17,8 @@
     (try (logout)
          (with-handlers [(ignore :invalid-credentials)]
            (login user pw)
-           (throw (RuntimeException. "Login succeeded with bad credentials.")))
+           (when (-> (notification) :type (= :success))
+             (throw (RuntimeException. "Login succeeded with bad credentials."))))
          (finally
           (login *session-user* *session-password*)))))
 
