@@ -58,7 +58,8 @@
     :blockers (open-bz-bugs "711144"
                             "712318"
                             "714297"
-                            "738054")
+                            "738054"
+                            "745315")
     :more (-> {:name "promote content"
                :description "Takes content and promotes it thru more environments.
                              Verifies that it shows up in the new env."}
