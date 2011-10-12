@@ -27,7 +27,7 @@
    changeset ["Changeset"
               "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
    changeset-status ["Changeset status"  "//span[.='$1']/..//span[@class='changeset_status']"]
-   editable ["Editable" "//div[contains(@class,'editable') and normalize-space(.)='$1']"]
+   editable ["Editable" "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"]
    
    environment-link ["Environment"
                      "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"]
@@ -309,10 +309,12 @@
                  [:provider-products-repos-page [] (do (via :products-and-repositories
                                                             (ajax-wait :add-product))
                                                        (browser sleep 2000))
-                  [:named-product-page [product-name] (do (via (product-edit product-name)
-                                                               (ajax-wait :product-name-text))
-                                                          (browser click (product-expand product-name)))
-                   [:named-repo-page [repo-name] (via (editable repo-name) (ajax-wait :remove-repository))]]]
+                  [:named-product-page [product-name] (do (via (editable product-name)
+                                                               (ajax-wait :product-name-text)))]
+                  [:named-repo-page [product-name repo-name] (do (via (product-expand product-name)
+                                                                      (ajax-wait (editable repo-name)))
+                                                                 (via (editable repo-name)
+                                                                      (ajax-wait :remove-repository)))]]
                  [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
