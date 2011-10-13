@@ -31,7 +31,8 @@
   (let [changeset (tasks/uniqueify "changeset")]
     (tasks/create-changeset from-env to-env changeset)
     (tasks/add-to-changeset changeset from-env to-env content)
-    (tasks/promote-changeset changeset from-env to-env)))
+    (tasks/promote-changeset changeset {:from-env from-env
+                                        :to-env to-env})))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]

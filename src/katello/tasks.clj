@@ -122,9 +122,11 @@
     (doseq [item (content category)]
       (->browser (waitAndClick (locators/promotion-add-content-item item) "10000")
                  (waitForElement (locators/promotion-remove-content-item item) "10000")
-                 (sleep 1000)))))
+                 (sleep 1000)))
+    (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
+                    ;;can't navigate away until that's done
 
-(defn promote-changeset [changeset-name from-env to-env]
+(defn promote-changeset [changeset-name {:keys [from-env to-env timeout-ms]}]
   (navigate :named-changeset-promotions-page
             {:env-name from-env
              :next-env-name to-env
@@ -132,10 +134,10 @@
   (browser waitAndClick :review-for-promotion "10000")
   (browser waitAndClick :promote-to-next-environment "10000")
   (check-for-success) ;;for the submission
-  (loop-with-timeout 120000 [status ""]
+  (loop-with-timeout (or timeout-ms 120000) [status ""]
     (if (= status "Promoted")
       status
-      (do (Thread/sleep 1000)
+      (do (Thread/sleep 2000)
           (recur (browser getText (locators/changeset-status changeset-name)))))))
 
 (defn extract-content []
