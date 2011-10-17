@@ -1,12 +1,12 @@
 (defproject katello "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main katello.tests.suite
-  :dependencies [[org.clojure/clojure "1.2.0"]
-                 [org.clojure/clojure-contrib "1.2.0"]
+  :dependencies [[org.clojure/clojure "1.3.0"]
+                 [org.clojure/data.json "0.1.1"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [test.tree "0.3.0-SNAPSHOT"]
                  [error.handler "1.1.0-SNAPSHOT"]
-                 [inflections "0.4"]
+                 [inflections "0.6.2"]
                  [clj-http "0.1.3"]
                  [robert/hooke "1.1.1"]
                  [fn.trace "1.0.0-SNAPSHOT"]]

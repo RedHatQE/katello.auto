@@ -4,7 +4,7 @@
         [katello.conf :only [config]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
-        [clojure.contrib.string :only [capitalize]])
+        [clojure.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
            [com.thoughtworks.selenium SeleniumException]))
 

@@ -1,6 +1,6 @@
 (ns katello.rest
   (:require [clj-http.client :as httpclient]
-            [clojure.contrib.json :as json])
+            [clojure.data.json :as json])
   (:refer-clojure :exclude (get)))
 
 (defn get

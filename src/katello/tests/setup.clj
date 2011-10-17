@@ -4,7 +4,7 @@
                      [conf :as conf]
                      [api-tasks :as api-tasks]) 
             [test.tree :as test])
-  (:use [clojure.contrib.string :only [split]]
+  (:use [clojure.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]
         [com.redhat.qe.verify :only [check]]))
 

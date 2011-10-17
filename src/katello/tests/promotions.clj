@@ -1,7 +1,6 @@
 (ns katello.tests.promotions
   (:require [katello.tasks :as tasks]
-            [katello.api-tasks :as api]
-            [clojure.contrib.set :as sets])
+            [katello.api-tasks :as api])
   
   (:use [katello.conf :only [config]]
         [test.tree :only [data-driven dep-chain fn]]
@@ -38,7 +37,7 @@
   (doseq [content-type (keys from)]
     (let [promoted (content-type from)
           current (content-type in)]
-      (verify-that (sets/superset? current promoted)))))
+      (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [org envs content]
   (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime

@@ -1,6 +1,5 @@
 (ns katello.validation
-  (:require [clojure.string :as string]
-            [clojure.contrib.logging :as log])
+  (:require [clojure.string :as string])
   (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]
         [katello.tasks :only [success?]]
         [test.tree :only [print-meta]]

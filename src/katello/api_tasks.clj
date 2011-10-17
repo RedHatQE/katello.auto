@@ -1,7 +1,7 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
-        [inflections :only [pluralize]]))
+        [inflections.core :only [pluralize]]))
 
 
 (defn assoc-if-set [m newmap]
