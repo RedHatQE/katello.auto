@@ -69,17 +69,20 @@
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
 (def redhat-provider-name "Red Hat")
+(def manifest-uploaded? (atom nil))
 (def manifest-testing-blockers
   (fn [_]
-    (if (tasks/manifest-already-uploaded?)
+    (if @manifest-uploaded?
       [:manifest-already-uploaded]
       [])))
 
 (def manifest-setup
   (fn [] 
-    (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
-                outstream (io/output-stream manifest-tmp-loc)]
-      (io/copy instream outstream))))
+    (when (reset! manifest-uploaded?
+                  (tasks/manifest-already-uploaded?))
+      (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
+                 outstream (io/output-stream manifest-tmp-loc)]
+       (io/copy instream outstream)))))
 
 (def upload-manifest
   (fn []
