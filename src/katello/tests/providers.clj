@@ -78,11 +78,11 @@
 
 (def manifest-setup
   (fn [] 
-    (when (reset! manifest-uploaded?
-                  (tasks/manifest-already-uploaded?))
+    (when-not (reset! manifest-uploaded?
+                      (tasks/manifest-already-uploaded?))
       (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
-                 outstream (io/output-stream manifest-tmp-loc)]
-       (io/copy instream outstream)))))
+                  outstream (io/output-stream manifest-tmp-loc)]
+        (io/copy instream outstream)))))
 
 (def upload-manifest
   (fn []
