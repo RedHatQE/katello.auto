@@ -479,8 +479,13 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn upload-subscription-manifest [{:keys [provider-name file-path]}]
-  (navigate :provider-subscriptions-page {:provider-name provider-name})
-  (fill-ajax-form {:choose-file file-path}
-                  :upload)
+(defn upload-subscription-manifest [file-path]
+  (navigate :redhat-provider-tab)
+  (fill-form {:choose-file file-path}
+             :upload
+             (fn [] (browser waitForPageToLoad "300000")))
   (check-for-success))
+
+(defn manifest-already-uploaded? []
+  (navigate :redhat-provider-tab)
+  (browser isElementPresent :subscriptions-items))

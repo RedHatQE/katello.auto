@@ -93,6 +93,7 @@
                      ;;subtabs
                      :providers
                      :custom
+                     :red-hat
                      :sync-management
                      :sync-plans
                      :sync-schedule
@@ -150,7 +151,11 @@
                 :repo-name-text "repo[name]"
                 :repo-url-text "repo[feed]" 
                 :save-repository "save_repository_button"
-                :remove-repository (link "Remove Repository")})
+                :remove-repository (link "Remove Repository")
+
+                ;;redhat page
+                :subscriptions-items "//div[@id='subscription']//tbody/tr"
+                })
 
 (def promotions {:products-category (promotion-content-category "products")
                  :expand-path "path-collapsed"
@@ -317,7 +322,8 @@
                                                                       (ajax-wait (editable repo-name)))
                                                                  (via (editable repo-name)
                                                                       (ajax-wait :remove-repository)))]]
-                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]]
+                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
+               [:redhat-provider-tab [] (via :red-hat)]]
               [:sync-management-page [] (via :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]

@@ -71,9 +71,7 @@
 (def redhat-provider-name "Red Hat")
 (def manifest-testing-blockers
   (fn [_]
-    (if-not (-> (api/lookup-by :name redhat-provider-name :provider (@config :admin-org))
-            :repository_url
-            (.contains "example.com"))
+    (if (tasks/manifest-already-uploaded?)
       [:manifest-already-uploaded]
       [])))
 
@@ -86,10 +84,9 @@
 (def upload-manifest
   (fn []
     (let [provider-name redhat-provider-name]
-      (tasks/edit-provider {:name provider-name
-                            :repo-url (@config :redhat-repo-url)})
-      (tasks/upload-subscription-manifest {:provider-name provider-name
-                                           :file-path manifest-tmp-loc}))))
+      (comment (tasks/edit-provider {:name provider-name
+                             :repo-url (@config :redhat-repo-url)}))
+      (tasks/upload-subscription-manifest  manifest-tmp-loc))))
 
 (def dupe-disallowed
   (fn []
