@@ -151,10 +151,9 @@
                             :steps sync/dupe-disallowed}
 
                            {:name "assign sync plan to multiple products"
-                            :steps sync/set-schedules}
-
-                           {:name "reassign product sync plan"
-                            :steps sync/reset-schedule}]
+                            :steps sync/set-schedules
+                            :more [{:name "reassign product sync plan"
+                                    :steps sync/reset-schedule}]}]
                           
                           (test/data-driven {:name "sync plan validation"}
                                             sync/plan-validate
