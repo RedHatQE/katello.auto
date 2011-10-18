@@ -41,7 +41,8 @@
    product-edit ["Product edit"
                  "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"]
    product-expand ["Expand product"
-                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
+                   "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
+   product-schedule ["Schedule for product" "//div[normalize-space(.)='$1']/following-sibling::div[1]"]
    schedule ["Product to schedule" "//div[normalize-space(.)='$1']"]
    promotion-add-content-item ["Add Content Item"
                                "//a[@data-display_name='$1' and contains(.,'Add')]"]
@@ -56,6 +57,7 @@
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
+   sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]

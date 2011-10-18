@@ -452,9 +452,17 @@
   (navigate :sync-schedule-page)
   (doseq [product products]
     (browser click (locators/schedule product)))
-  (browser click (locators/schedule plan-name))
+  (browser click (locators/sync-plan plan-name))
   (browser clickAndWait :apply-sync-schedule )
   (check-for-success))
+
+(defn current-sync-plan "Returns a map of what sync plan a product is currently scheduled for.  nil if UI says 'None'"
+  [product-names]
+  (navigate :sync-schedule-page)
+  (zipmap product-names
+          (replace {"None" nil}
+            (doall (for [product-name product-names]
+                     (browser getText (locators/product-schedule product-name)))))))
 
 (defn create-activation-key [{:keys [name description environment system-template] :as m}]
   (navigate :new-activation-key-page)
