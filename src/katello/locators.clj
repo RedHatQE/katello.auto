@@ -317,7 +317,7 @@
                                                             (ajax-wait :add-product))
                                                        (browser sleep 2000))
                   [:named-product-page [product-name] (do (via (editable product-name)
-                                                               (ajax-wait :product-name-text)))]
+                                                               (ajax-wait :product-description-text)))]
                   [:named-repo-page [product-name repo-name] (do (via (product-expand product-name)
                                                                       (ajax-wait (editable repo-name)))
                                                                  (via (editable repo-name)
