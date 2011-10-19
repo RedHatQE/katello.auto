@@ -60,7 +60,7 @@
    sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
-   user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
+   user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
    username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
