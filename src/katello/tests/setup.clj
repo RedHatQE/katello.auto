@@ -44,7 +44,7 @@
                            :fns [test/execute
                                  start-selenium stop-selenium switch-new-admin-user
                                  check
-                                 ;com.redhat.qe.auto.selenium.selenium/call-sel
+                                 com.redhat.qe.auto.selenium.selenium/call-sel
                                  ;com.redhat.qe.auto.selenium.selenium/locator-args
                                  com.redhat.qe.auto.selenium.selenium/fill-item]
                            :exclude [katello.tasks/notification
