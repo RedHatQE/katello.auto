@@ -56,9 +56,14 @@
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
+   slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
+   template-product ["Template product" "//span[@class='product-icon' and starts-with(normalize-space(),'$1')]"]
+   template-product-action ["Template content action" "//li[contains(@class,'slide_link') and descendant::span[@class='product-icon' and starts-with(normalize-space(),'$2')]]//a[.='$1']"]
+   template-package-action ["Template package action" "//ul[@class='expand_list']/li[descendant::text()[normalize-space()='$2']]//a[.='$1']"]
+   template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
    username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
@@ -98,6 +103,7 @@
                      :sync-plans
                      :sync-schedule
                      :promotions
+                     :system-templates
                      :users
                      :roles
                      :activation-keys
@@ -223,8 +229,19 @@
 
 (def sync-schedules {:apply-sync-schedule "apply_button"})
 
+(def templates {:new-template "new"
+                :template-name-text "system_template[name]"
+                :template-description-text "system_template[description]"
+                :save-new-template "template_save" ;;when creating
+                :template-eligible-package-groups (template-eligible-category "Package Groups")
+                :template-eligible-packages (template-eligible-category "Packages")
+                :template-package-groups (slide-link "Package Groups")
+                :template-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
+                :save-template "save_template"}) ;;when editing
+
 (def uimap (merge all-tabs common organizations environments roles
                   users systems sync-plans sync-schedules promotions providers
+                  templates
                   { ;; login page
                    :username-text (textbox "username")
                    :password-text (textbox "password")
@@ -292,15 +309,19 @@
              (browser click item)))
        (finally ((or post-fn load-wait)))))
 
-(defn toggler [on-text off-text loc-strategy]
+(defn toggler [[on-text off-text] loc-strategy]
   (fn [associated-text on?]
     (loc-strategy (if on? on-text off-text) associated-text)))
 
-(def user-role-toggler (toggler "+ Add" "Remove" role-action))
+(def add-remove ["+ Add" "Remove"])
 
-(defn toggle [toggler associated-text on?]
-  (browser click (toggler associated-text on?))
-  ((ajax-wait (toggler associated-text (not on?)))))
+(def user-role-toggler (toggler add-remove role-action))
+(def template-product-toggler (toggler add-remove template-product-action))
+(def template-package-toggler (toggler add-remove template-package-action))
+
+(defn toggle [a-toggler associated-text on?]
+  (browser click (a-toggler associated-text on?))
+  ((ajax-wait (a-toggler associated-text (not on?)))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
@@ -335,7 +356,11 @@
                [:named-environment-promotions-page [env-name next-env-name]
                 (select-environment-widget env-name next-env-name)
                 [:named-changeset-promotions-page [changeset-name]
-                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]]
+                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]
+              [:system-templates-page [] (via :system-templates)
+               [:named-system-template-page [template-name] (via (slide-link template-name)
+                                                                 (ajax-wait :template-package-groups))]
+               [:new-system-template-page [] (via :new-template (ajax-wait :template-name-text))]]]
              [:systems-tab [] (via :systems)
               [:activation-keys-page [] (via :activation-keys)
                [:named-activation-key-page [activation-key-name]

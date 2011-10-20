@@ -314,9 +314,9 @@
   (->browser (click :new-user)
              (waitForElement :new-user-username-text "15000"))
   (fill-ajax-form {:new-user-username-text username
-              :new-user-password-text password
-              :new-user-confirm-text (or password-confirm password)}
-             :save-user)
+                   :new-user-password-text password
+                   :new-user-confirm-text (or password-confirm password)}
+                  :save-user)
   (check-for-success))
 
 (defn delete-user [username]
@@ -489,3 +489,32 @@
 (defn manifest-already-uploaded? []
   (navigate :redhat-provider-tab)
   (browser isElementPresent :subscriptions-items))
+
+(defn create-template [{:keys [name description]}]
+  (navigate :new-system-template-page)
+  (fill-ajax-form {:template-name-text name
+                   :template-description-text description}
+                  :save-new-template)
+  (check-for-success))
+
+(defn add-to-template "Adds content to a template"
+  [name content]
+  (comment "content is like:" {:products ["prod1" "prod2"]
+                               :packages [{:product "prod3"
+                                           :packages ["rpm1" "rpm2"]}]})
+  (navigate :named-system-template-page {:template-name name})
+  (let [[add-product add-package] (for [toggler [locators/template-product-toggler
+                                                 locators/template-package-toggler]]
+                                    (fn [item] (locators/toggle toggler item true)))]
+    (doseq [product (:products content)]
+      (add-product product))
+    (doseq [{:keys [product packages]} (:packages content)]
+      (browser click (locators/template-product product))
+      (browser sleep 3000)
+      (browser click :template-eligible-packages)
+      (browser waitForVisible (locators/template-package-toggler (first packages) true) "15000")
+      (doseq [package packages]
+        (add-package package)) 
+      (browser click :template-eligible-home))
+    (browser click :save-template)
+    (check-for-success)))
