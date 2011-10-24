@@ -87,7 +87,7 @@
                 :description description
                 :provider_type "Custom"}}))
 
-(defn create-environment [{:keys [name description prior-env] :or {description "" prior-env "Locker"}}]
+(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
   (rest/post
    (api-url (uri-for-entity-type :environment *org*))
    *user* *password*
@@ -105,10 +105,7 @@
 (defn ensure-env-exist [name {:keys [prior]}]
   (if-not (some #{name}
                 (map :name (all-entities :environment *org*)))
-    (create-environment name *org*
-                            *user*
-                            *password*
-                            :prior-env prior)))
+    (create-environment name {:prior-env prior})))
 
 (defn create-product [name {:keys [provider-name description]}]
   (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name *org*) "/product_create/")
