@@ -9,7 +9,8 @@
                            [environments :as envs]
                            [systems :as systems]
                            [users :as users]
-                           [permissions :as permissions])
+                           [permissions :as permissions]
+                           [templates :as templates])
    
             (katello [tasks :as tasks]
                      [conf :as conf]
@@ -23,7 +24,7 @@
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
 (declare login-tests org-tests environment-tests provider-tests
-         system-tests user-tests sync-tests permission-tests)
+         system-tests user-tests sync-tests permission-tests template-tests)
 
 (defn suite []
   (with-meta
@@ -37,6 +38,7 @@
                                     (system-tests)
                                     (user-tests)
                                     (permission-tests)
+                                    (template-tests)
                                     (test/data-driven  {:name "login as invalid user"
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
@@ -215,7 +217,16 @@
             :steps permissions/remove-role}
 
            {:name "add permission and user to a role"
-            :steps permissions/edit-role}]}]) 
+            :steps permissions/edit-role}]}])
+
+(defn template-tests []
+  [{:name "create a system template"
+    :steps templates/create
+    :more [{:name "setup template content"
+            :configuration true
+            :steps templates/setup-content
+            :more [{:name "add products to template"
+                    :steps templates/add-content}]}]}])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]

@@ -1,6 +1,5 @@
 (ns katello.tasks
   (:require [katello.locators :as locators]
-            [katello.api-tasks :as api]
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
@@ -57,10 +56,10 @@
              type ({"jnotify-notification-error" :error
                     "jnotify-notification-message" :message
                     "jnotify-notification-success" :success}
-                   (-> (string/split classattr #" ") second))] 
+                   (-> (string/split classattr #" ") second))]
          (clear-all-notifications)
          {:type type :msg msg})
-       (catch SeleniumException e nil))) 
+       (catch SeleniumException e nil)))
 
 (defn check-for-success
   "Gets any notification from the UI, if there is none, or it's not a
@@ -72,8 +71,8 @@
     (cond (not notif) (raise
                        {:type :no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
-          ((complement success?) notif) (let [errtype (matching-error msg)] 
-                                          (raise (assoc notif :type errtype)))
+          ((complement success?) notif) (let [errtype (matching-error msg)]
+                                 (raise (assoc notif :type errtype)))
           :else notif)))
 
 (defn verify-success [task-fn]
@@ -124,7 +123,7 @@
                  (waitForElement (locators/promotion-remove-content-item item) "10000")
                  (sleep 1000)))
     (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
-                    ;;can't navigate away until that's done
+;;can't navigate away until that's done
 
 (defn promote-changeset [changeset-name {:keys [from-env to-env timeout-ms]}]
   (navigate :named-changeset-promotions-page
@@ -146,7 +145,7 @@
         retrieve (fn [elem]
                    (try (-> (browser getText elem) .trim (string/replace #" +\S+$" ""))
                         (catch Exception e nil)))]
-    (->> (map retrieve elems) (take-while identity) set))) 
+    (->> (map retrieve elems) (take-while identity) set)))
 
 (defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env
@@ -178,8 +177,8 @@
 (defn create-organization [name description]
   (navigate :new-organization-page)
   (fill-ajax-form {:org-name-text name
-              :org-description-text description}
-             :create-organization)
+                   :org-description-text description}
+                  :create-organization)
   (check-for-success))
 
 (defn delete-organization [org-name]
@@ -221,7 +220,7 @@
 (defn environment-other-possible-priors
   "Returns a set of priors that are selectable for the given
    environment (will not include the currently selected prior)."
-   [org-name env-name]
+  [org-name env-name]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (activate-in-place :env-prior-select-edit)
@@ -309,7 +308,7 @@
   (if-not (= (current-user) username)
     (login username password)))
 
-(defn create-user [username {:keys [password password-confirm]}] 
+(defn create-user [username {:keys [password password-confirm]}]
   (navigate :users-tab)
   (->browser (click :new-user)
              (waitForElement :new-user-username-text "15000"))
@@ -328,16 +327,16 @@
 (defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password]}]
   (navigate :named-user-page {:username username})
   (fill-ajax-form {:enable-inline-help-checkbox inline-help
-              :clear-disabled-helptips clear-disabled-helptips
-              :change-password-text new-password
-              :confirm-password-text new-password}
-             :save-user-edit)
+                   :clear-disabled-helptips clear-disabled-helptips
+                   :change-password-text new-password
+                   :confirm-password-text new-password}
+                  :save-user-edit)
   (check-for-success))
 
 (defn create-role [name]
   (navigate :roles-tab)
   (->browser (click :new-role)
-             (waitForElement :new-role-name-text "7500")) 
+             (waitForElement :new-role-name-text "7500"))
   (fill-ajax-form {:new-role-name-text name} :save-role))
 
 (defn assign-role [{:keys [user roles]}]
@@ -353,10 +352,10 @@
                    (when all-perms
                      (nav :named-role-permissions-page)
                      (doseq [{:keys [org permissions]} all-perms]
-                      (->browser (click (locators/permission-org org))
-                                 (sleep 1000))
-                      (perms-fn permissions)
-                      (browser click :role-permissions))))] ;;go back up to choose next org
+                       (->browser (click (locators/permission-org org))
+                                  (sleep 1000))
+                       (perms-fn permissions)
+                       (browser click :role-permissions))))] ;;go back up to choose next org
     (when users
       (nav :named-role-users-page)
       (doseq [user users]
@@ -366,7 +365,7 @@
                 (doseq [permission permissions]
                   (browser click (locators/user-role-toggler permission false))
                   (check-for-success)
-                  (browser sleep 5000)))) 
+                  (browser sleep 5000))))
     (each-org add-permissions
               (fn [permissions]
                 (doseq [{:keys [name description resource-type verbs tags]} permissions]
@@ -391,8 +390,8 @@
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
   [product]
-  (some #{(browser getText (locators/provider-sync-progress product))} 
-                ["Error syncing!" "Sync complete."]))
+  (some #{(browser getText (locators/provider-sync-progress product))}
+        ["Error syncing!" "Sync complete."]))
 
 (defn sync-products [products timeout]
   (navigate :sync-management-page)
@@ -441,7 +440,7 @@
 (defn edit-sync-plan [name {:keys [new-name description interval start-date]}]
   (navigate :named-sync-plan-page {:sync-plan-name name})
   (let [[date time] (split-date start-date)]
-    (in-place-edit {:sync-plan-name-text new-name 
+    (in-place-edit {:sync-plan-name-text new-name
                     :sync-plan-description-text description
                     :sync-plan-interval-select interval
                     :sync-plan-time-text time
@@ -461,8 +460,8 @@
   (navigate :sync-schedule-page)
   (zipmap product-names
           (replace {"None" nil}
-            (doall (for [product-name product-names]
-                     (browser getText (locators/product-schedule product-name)))))))
+                   (doall (for [product-name product-names]
+                            (browser getText (locators/product-schedule product-name)))))))
 
 (defn create-activation-key [{:keys [name description environment system-template] :as m}]
   (navigate :new-activation-key-page)
@@ -509,12 +508,12 @@
     (doseq [product (:products content)]
       (add-product product))
     (doseq [{:keys [product packages]} (:packages content)]
-      (browser click (locators/template-product product))
-      (browser sleep 3000)
-      (browser click :template-eligible-packages)
-      (browser waitForVisible (locators/template-package-toggler (first packages) true) "15000")
+      (->browser (click (locators/template-product product))
+                (sleep 3000)
+                (click :template-eligible-packages)
+                (waitForVisible (locators/template-package-toggler (first packages) true) "15000"))
       (doseq [package packages]
-        (add-package package)) 
+        (add-package package))
       (browser click :template-eligible-home))
     (browser click :save-template)
     (check-for-success)))

@@ -15,18 +15,12 @@
   (fn []
     (let [myprovider (reset! provider-name (tasks/uniqueify "sync"))
           myproduct (reset! product-name (tasks/uniqueify "sync-test1"))]
-      (api/create-provider (@config :admin-org)
-                           (@config :admin-user)
-                           (@config :admin-password)
-                           :name myprovider
-                           :description "provider to test syncing"
-                           :type "Custom")
-      (api/create-product {:name myproduct
-                           :provider-name myprovider
-                           :description "testing sync"
-                           :url "http://meaningless.url"})
-      (api/create-repo (tasks/uniqueify "testrepo") (@config :admin-org) myproduct
-                       (@config :sync-repo)))))
+      (api/with-admin
+        (api/create-provider myprovider {:description "provider to test syncing"})
+        (api/create-product myproduct {:provider-name myprovider
+                                       :description "testing sync"})
+        (api/create-repo (tasks/uniqueify "testrepo") {:product-name myproduct
+                                                       :url (@config :sync-repo)})))))
 
 (def simple 
   (fn []
@@ -74,14 +68,12 @@
   (fn []
     (let [second-product-name (tasks/uniqueify "MySecondProduct")
           product-names [@product-name second-product-name]]
-      (api/create-product {:name second-product-name
-                           :provider-name @provider-name
-                           :description "testing sync"
-                           :url "http://meaningless.url"})
-      (api/create-repo (tasks/uniqueify "testrepo")
-                       (@config :admin-org)
-                       second-product-name
-                       (@config :sync-repo))
+      (api/with-admin
+        (api/create-product second-product-name {:provider-name @provider-name
+                                                 :description "testing sync"})
+        (api/create-repo (tasks/uniqueify "testrepo")
+                         {:product-name second-product-name
+                          :url (@config :sync-repo)}))
       (tasks/sync-schedule {:plan-name @plan-name
                             :products product-names})
       (let [expected-plan @plan-name

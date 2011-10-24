@@ -10,22 +10,18 @@
   (:refer-clojure :exclude [fn]))
 
 (def provider-name (atom nil))
-(def myorg (atom nil))
 
 (def locker "Locker")
 (def first-env "Development")
 (def second-env "Q-eh")
 
 (defn setup []
-  (reset! myorg (@config :admin-org))
   (reset! provider-name (tasks/uniqueify "promo-"))
   
-  (api/create-provider @myorg (@config :admin-user) (@config :admin-password)
-                               :name @provider-name
-                               :description "test provider for promotions"
-                               :type "Custom")
-  (api/ensure-env-exist @myorg first-env locker)
-  (api/ensure-env-exist @myorg second-env first-env))
+  (api/with-admin
+    (api/create-provider  @provider-name {:description "test provider for promotions"})
+    (api/ensure-env-exist first-env {:prior locker})
+    (api/ensure-env-exist second-env {:prior first-env})))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (tasks/uniqueify "changeset")]
@@ -40,14 +36,15 @@
           current (content-type in)]
       (verify-that (sets/superset? current promoted)))))
 
-(defn verify-promote-content [org envs content]
+(defn verify-promote-content [envs content]
   (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime
                                             (if (fn? val) (val) val)))]
    (doseq [product-name (content :products)]
-     (api/create-product {:name product-name
-                          :provider-name @provider-name
-                          :description "test product"})
-     (api/create-repo (tasks/uniqueify "mytestrepo") @myorg product-name "http://blah.com"))
+     (api/with-admin
+       (api/create-product product-name {:provider-name @provider-name
+                                         :description "test product"})
+       (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
+                                                        :url "http://blah.com"})))
    (doseq [[from-env target-env] (partition 2 1 envs)]
      (promote-content from-env target-env content)
      (verify-all-content-present content (tasks/environment-content target-env)))))
@@ -62,12 +59,12 @@
                             "738054"
                             "745315")
     :more (-> {:name "promote content"
-               :description "Takes content and promotes it thru more environments.
+              :description "Takes content and promotes it thru more environments.
                              Verifies that it shows up in the new env."}
               
-              (data-driven verify-promote-content
-                        [[@myorg [locker first-env] {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
-                         [@myorg [locker first-env second-env] {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
-              dep-chain)}])
+             (data-driven verify-promote-content
+                          [[[locker first-env] {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
+                           [[locker first-env second-env] {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
+             dep-chain)}])
 
 

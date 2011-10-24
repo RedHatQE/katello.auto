@@ -16,7 +16,9 @@
   (fn [] (let [org-name (tasks/uniqueify "auto-del")]
           (tasks/create-organization org-name "org to delete immediately")
           (tasks/delete-organization org-name)
-          (let [remaining-org-names (doall (map :name (api/all-entities :organization)))]
+          (let [remaining-org-names (doall (map :name
+                                                (api/with-admin-creds
+                                                  (api/all-entities :organization))))]
             (verify-that (not (some #{org-name} remaining-org-names)))))))
 
 (def dupe-disallowed

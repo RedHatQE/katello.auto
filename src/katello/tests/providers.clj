@@ -1,10 +1,10 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require (katello [tasks :as tasks]
-                     [validation :as v])
+                     [validation :as v]
+                     [api-tasks :as api])
             
             [clj-http.client :as http]
-            [katello.api-tasks :as api]
             [clojure.java.io :as io])
   (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -24,11 +24,12 @@
           (tasks/create-provider {:name old-name
                                   :description "my description"})
           (tasks/edit-provider {:name old-name :new-name new-name})
-          (let [current-providers (map :name (api/all-entities
-                                              :provider
-                                              "ACME_Corporation"))]
-            (verify-that (and (some #{new-name} current-providers)
-                              (not (some #{old-name} current-providers))))))))
+          (let [current-provider-names (map :name (api/with-admin
+                                               (api/all-entities
+                                               :provider
+                                               "ACME_Corporation")))]
+            (verify-that (and (some #{new-name} current-provider-names)
+                              (not (some #{old-name} current-provider-names))))))))
 
 (def delete
   (fn [] (let [provider-name (tasks/uniqueify "auto-provider-delete")]

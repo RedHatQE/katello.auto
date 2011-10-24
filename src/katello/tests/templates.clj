@@ -12,7 +12,7 @@
 
 (def test-template-name (atom nil))
 (def content (atom nil))
-
+(def products (atom []))
 (def create
   (fn []
     (tasks/create-template {:name (reset! test-template-name (tasks/uniqueify "template"))
@@ -20,8 +20,15 @@
 
 (def setup-content
   (fn []
-    (api/create-provider )))
+    (let [provider-name (tasks/uniqueify "template")]
+      (api/with-admin
+        (api/create-provider provider-name))
+      (reset! products (tasks/uniqueify "templateProduct" 3 ))
+        (for [product @products]
+          (api/with-admin
+            (api/create-product product {:provider-name provider-name
+                                        :description "product to test templates"}))))))
 
 (def add-content
   (fn []
-    (tasks/)))
+    (tasks/add-to-template @test-template-name {:products @products})))

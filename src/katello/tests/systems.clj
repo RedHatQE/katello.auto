@@ -10,11 +10,14 @@
 (def env-name "Development")
 
 (defn with-freshly-registered-system [f]
-  (let [system-name (tasks/uniqueify "newsystem")]  
-    (f (api/create-system system-name (@config :admin-org) env-name (api/random-facts)))))
+  (f (api/with-admin
+       (api/create-system (tasks/uniqueify "newsystem")
+                          {:env-name env-name
+                           :facts (api/random-facts)}))))
 
 (def create-env 
-  (fn [] (api/ensure-env-exist (@config :admin-org) env-name "Locker")))
+  (fn [] (api/with-admin
+          (api/ensure-env-exist env-name {:prior "Locker"}))))
 
 (def rename
   (fn []
@@ -32,17 +35,17 @@
                         {:env-name env-name
                          :system-name (:name sys)})
         (verify-that (= (:environment_id sys)
-                        (api/get-id-by-name :environment env-name (@config :admin-org))))))))
+                        (api/with-admin
+                          (api/get-id-by-name :environment env-name (@config :admin-org)))))))))
 
 (def subscribe
   (fn []
     (let [provider-name (tasks/uniqueify "subscr-prov")
           product-name (tasks/uniqueify "subscribe-me")]
-      (api/create-provider (@config :admin-org) (@config :admin-user) (@config :admin-password)
-                           :name provider-name
-                           :type "Custom")
-      (api/create-product {:name product-name
-                           :provider-name provider-name})
+      (api/with-admin
+        (api/create-provider provider-name)
+        (api/create-product product-name
+                            {:provider-name provider-name}))
       (with-freshly-registered-system
         (fn [sys]
           (tasks/subscribe-system {:system-name (:name sys)
