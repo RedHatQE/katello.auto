@@ -27,7 +27,7 @@
         (for [product @products]
           (api/with-admin
             (api/create-product product {:provider-name provider-name
-                                        :description "product to test templates"}))))))
+                                         :description "product to test templates"}))))))
 
 (def add-content
   (fn []
