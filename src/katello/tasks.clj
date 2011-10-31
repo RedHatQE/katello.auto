@@ -333,11 +333,14 @@
                   :save-user-edit)
   (check-for-success))
 
-(defn create-role [name]
+(defn create-role [name & [{:keys [description]}]]
   (navigate :roles-tab)
   (->browser (click :new-role)
              (waitForElement :new-role-name-text "7500"))
-  (fill-ajax-form {:new-role-name-text name} :save-role))
+  (fill-ajax-form {:new-role-name-text name
+                   :new-role-description-text description}
+                  :save-role)
+  (check-for-success))
 
 (defn assign-role [{:keys [user roles]}]
   (navigate :user-roles-permissions-page {:username user})

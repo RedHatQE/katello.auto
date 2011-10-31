@@ -13,8 +13,7 @@
                            [templates :as templates])
    
             (katello [tasks :as tasks]
-                     [conf :as conf]
-                     [api-tasks :as api]
+                     [conf :as conf] 
                      [validation :as validate])
             
             [test.tree :as test]
@@ -23,7 +22,7 @@
   (:use [test.tree :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
-(declare login-tests org-tests environment-tests provider-tests
+(declare org-tests environment-tests provider-tests
          system-tests user-tests sync-tests permission-tests template-tests)
 
 (defn suite []

@@ -91,6 +91,7 @@
                      :systems
                      :content-management
                      :dashboard
+                     :all
                      :by-environments
                      :subscriptions
                      :create
@@ -212,8 +213,9 @@
               :remove-activation-key (link "Remove Activation Key")})
 
 (def roles {:new-role "//a[@id='new']"
-            :new-role-name-text "role_name_field"
-            :save-role "save_role_button"
+            :new-role-name-text "role[name]"
+            :new-role-description-text "role[description]"
+            :save-role "role_save"
             :save-user-edit "save_password"
             :role-users "role_users"
             :role-permissions "role_permissions"
@@ -281,12 +283,18 @@
 
 
 ;;nav tricks
-(defn ajax-wait [elem]
-  (fn [] (browser waitForVisible elem "15000")))
+(defn ajax-wait
+  ([] (let [stime (System/currentTimeMillis)]
+        (browser waitForCondition "selenium.browserbot.getCurrentWindow().jQuery.active == 0" "15000")
+        (- (System/currentTimeMillis) stime)))
+  ([elem]
+     (fn [] (browser waitForVisible elem "15000"))))
 
 (def no-wait (constantly nil))
 
-(defn load-wait [] (browser waitForPageToLoad "60000"))
+(defn load-wait []
+  (browser waitForPageToLoad "60000")
+  (ajax-wait))
 
 (defn via [link & [post-fn]]
   (browser click link)
@@ -327,13 +335,13 @@
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
                                    (browser isElementPresent :confirmation-dialog))
                              (browser open (@config :server-url)))
-             [:content-management-tab [] (via :content-management)
-              [:providers-tab [] (via :providers)
+             [:content-management-tab [] (browser mouseOver :content-management)
+              [:providers-tab [] (browser mouseOver :providers)
                [:custom-providers-tab [] (via :custom)
                 [:new-provider-page [] (via :new-provider
                                             (ajax-wait :provider-name-text))]
                 [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
-                                                                        (ajax-wait :remove-provider))
+                                                                        ajax-wait)
                  [:provider-products-repos-page [] (do (via :products-and-repositories
                                                             (ajax-wait :add-product))
                                                        (browser sleep 2000))
@@ -345,7 +353,7 @@
                                                                       (ajax-wait :remove-repository)))]]
                  [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
                [:redhat-provider-tab [] (via :red-hat)]]
-              [:sync-management-page [] (via :sync-management)
+              [:sync-management-page [] (browser mouseOver :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
@@ -361,30 +369,31 @@
                [:named-system-template-page [template-name] (via (slide-link template-name)
                                                                  (ajax-wait :template-package-groups))]
                [:new-system-template-page [] (via :new-template (ajax-wait :template-name-text))]]]
-             [:systems-tab [] (via :systems)
+             [:systems-tab [] (browser mouseOver :systems)
+              [:systems-all-page [] (via :all)
+               [:named-systems-page [system-name] (choose-left-pane
+                                                  (left-pane-item system-name)
+                                                  ajax-wait)
+                [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
               [:activation-keys-page [] (via :activation-keys)
-               [:named-activation-key-page [activation-key-name]
-                (choose-left-pane (left-pane-item activation-key-name)
-                                  (ajax-wait (inactive-edit-field :activation-key-name-text)))]
-               [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
+                [:named-activation-key-page [activation-key-name]
+                 (choose-left-pane (left-pane-item activation-key-name)
+                                   (ajax-wait (inactive-edit-field :activation-key-name-text)))]
+                [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
               [:systems-environment-page [env-name]
                (do (via :by-environments)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
                 (choose-left-pane (left-pane-item system-name)
-                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]
-              [:named-systems-page [system-name] (choose-left-pane
-                                                  (left-pane-item system-name)
-                                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))
-               [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
-             [:organizations-tab [] (via :organizations)
+                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]]
+             [:organizations-tab [] (browser mouseOver :organizations)
               [:new-organization-page [] (via :new-organization (ajax-wait :org-name-text))]
               [:named-organization-page [org-name] (choose-left-pane
                                                     (left-pane-item org-name)
                                                     (ajax-wait :remove-organization)) 
                [:new-environment-page [] (via :new-environment (ajax-wait :create-environment))]
                [:named-environment-page [env-name] (via (environment-link env-name) (ajax-wait :remove-environment))]]]
-             [:administration-tab [] (via :administration)
+             [:administration-tab [] (browser mouseOver :administration)
               [:users-tab [] (via :users)
                [:named-user-page [username] (choose-left-pane (user username)
                                                               (ajax-wait (username-field username)))
