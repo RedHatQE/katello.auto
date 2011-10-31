@@ -386,7 +386,7 @@
                [:named-system-environment-page [system-name]
                 (choose-left-pane (left-pane-item system-name)
                                   (ajax-wait (inactive-edit-field :system-name-text-edit)))]]]
-             [:organizations-tab [] (browser mouseOver :organizations)
+             [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization (ajax-wait :org-name-text))]
               [:named-organization-page [org-name] (choose-left-pane
                                                     (left-pane-item org-name)
