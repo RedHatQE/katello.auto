@@ -1,10 +1,10 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require (katello [tasks :as tasks]
-                     [validation :as v])
+                     [validation :as v]
+                     [api-tasks :as api])
             
             [clj-http.client :as http]
-            [katello.api-tasks :as api]
             [clojure.java.io :as io])
   (:use [test.tree :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -24,11 +24,12 @@
           (tasks/create-provider {:name old-name
                                   :description "my description"})
           (tasks/edit-provider {:name old-name :new-name new-name})
-          (let [current-providers (map :name (api/all-entities
-                                              :provider
-                                              "ACME_Corporation"))]
-            (verify-that (and (some #{new-name} current-providers)
-                              (not (some #{old-name} current-providers))))))))
+          (let [current-provider-names (map :name (api/with-admin
+                                               (api/all-entities
+                                               :provider
+                                               "ACME_Corporation")))]
+            (verify-that (and (some #{new-name} current-provider-names)
+                              (not (some #{old-name} current-provider-names))))))))
 
 (def delete
   (fn [] (let [provider-name (tasks/uniqueify "auto-provider-delete")]
@@ -69,27 +70,27 @@
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
 (def redhat-provider-name "Red Hat")
+(def manifest-uploaded? (atom nil))
 (def manifest-testing-blockers
   (fn [_]
-    (if-not (-> (api/lookup-by :name redhat-provider-name :provider (@config :admin-org))
-            :repository_url
-            (.contains "example.com"))
+    (if @manifest-uploaded?
       [:manifest-already-uploaded]
       [])))
 
 (def manifest-setup
   (fn [] 
-    (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
-                outstream (io/output-stream manifest-tmp-loc)]
-      (io/copy instream outstream))))
+    (when-not (reset! manifest-uploaded?
+                      (tasks/manifest-already-uploaded?))
+      (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
+                  outstream (io/output-stream manifest-tmp-loc)]
+        (io/copy instream outstream)))))
 
 (def upload-manifest
   (fn []
     (let [provider-name redhat-provider-name]
-      (tasks/edit-provider {:name provider-name
-                            :repo-url (@config :redhat-repo-url)})
-      (tasks/upload-subscription-manifest {:provider-name provider-name
-                                           :file-path manifest-tmp-loc}))))
+      (comment (tasks/edit-provider {:name provider-name
+                             :repo-url (@config :redhat-repo-url)}))
+      (tasks/upload-subscription-manifest  manifest-tmp-loc))))
 
 (def dupe-disallowed
   (fn []

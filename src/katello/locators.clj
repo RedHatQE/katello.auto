@@ -41,7 +41,8 @@
    product-edit ["Product edit"
                  "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"]
    product-expand ["Expand product"
-                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
+                   "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
+   product-schedule ["Schedule for product" "//div[normalize-space(.)='$1']/following-sibling::div[1]"]
    schedule ["Product to schedule" "//div[normalize-space(.)='$1']"]
    promotion-add-content-item ["Add Content Item"
                                "//a[@data-display_name='$1' and contains(.,'Add')]"]
@@ -55,10 +56,16 @@
    provider-sync-progress ["Provider progress"
                            "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
+   slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
+   sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
+   template-product ["Template product" "//span[@class='product-icon' and starts-with(normalize-space(),'$1')]"]
+   template-product-action ["Template content action" "//li[contains(@class,'slide_link') and descendant::span[@class='product-icon' and starts-with(normalize-space(),'$2')]]//a[.='$1']"]
+   template-package-action ["Template package action" "//ul[@class='expand_list']/li[descendant::text()[normalize-space()='$2']]//a[.='$1']"]
+   template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
-   user ["User" "//div[@id='list']//div[@class='column_1' and normalize-space(.)='$1']"]
+   user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
    username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -84,6 +91,7 @@
                      :systems
                      :content-management
                      :dashboard
+                     :all
                      :by-environments
                      :subscriptions
                      :create
@@ -91,10 +99,12 @@
                      ;;subtabs
                      :providers
                      :custom
+                     :red-hat
                      :sync-management
                      :sync-plans
                      :sync-schedule
                      :promotions
+                     :system-templates
                      :users
                      :roles
                      :activation-keys
@@ -148,7 +158,11 @@
                 :repo-name-text "repo[name]"
                 :repo-url-text "repo[feed]" 
                 :save-repository "save_repository_button"
-                :remove-repository (link "Remove Repository")})
+                :remove-repository (link "Remove Repository")
+
+                ;;redhat page
+                :subscriptions-items "//div[@id='subscription']//tbody/tr"
+                })
 
 (def promotions {:products-category (promotion-content-category "products")
                  :expand-path "path-collapsed"
@@ -199,8 +213,9 @@
               :remove-activation-key (link "Remove Activation Key")})
 
 (def roles {:new-role "//a[@id='new']"
-            :new-role-name-text "role_name_field"
-            :save-role "save_role_button"
+            :new-role-name-text "role[name]"
+            :new-role-description-text "role[description]"
+            :save-role "role_save"
             :save-user-edit "save_password"
             :role-users "role_users"
             :role-permissions "role_permissions"
@@ -216,8 +231,19 @@
 
 (def sync-schedules {:apply-sync-schedule "apply_button"})
 
+(def templates {:new-template "new"
+                :template-name-text "system_template[name]"
+                :template-description-text "system_template[description]"
+                :save-new-template "template_save" ;;when creating
+                :template-eligible-package-groups (template-eligible-category "Package Groups")
+                :template-eligible-packages (template-eligible-category "Packages")
+                :template-package-groups (slide-link "Package Groups")
+                :template-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
+                :save-template "save_template"}) ;;when editing
+
 (def uimap (merge all-tabs common organizations environments roles
                   users systems sync-plans sync-schedules promotions providers
+                  templates
                   { ;; login page
                    :username-text (textbox "username")
                    :password-text (textbox "password")
@@ -257,12 +283,18 @@
 
 
 ;;nav tricks
-(defn ajax-wait [elem]
-  (fn [] (browser waitForVisible elem "15000")))
+(defn ajax-wait
+  ([] (let [stime (System/currentTimeMillis)]
+        (browser waitForCondition "selenium.browserbot.getCurrentWindow().jQuery.active == 0" "15000")
+        (- (System/currentTimeMillis) stime)))
+  ([elem]
+     (fn [] (browser waitForVisible elem "15000"))))
 
 (def no-wait (constantly nil))
 
-(defn load-wait [] (browser waitForPageToLoad "60000"))
+(defn load-wait []
+  (browser waitForPageToLoad "60000")
+  (ajax-wait))
 
 (defn via [link & [post-fn]]
   (browser click link)
@@ -285,38 +317,43 @@
              (browser click item)))
        (finally ((or post-fn load-wait)))))
 
-(defn toggler [on-text off-text loc-strategy]
+(defn toggler [[on-text off-text] loc-strategy]
   (fn [associated-text on?]
     (loc-strategy (if on? on-text off-text) associated-text)))
 
-(def user-role-toggler (toggler "+ Add" "Remove" role-action))
+(def add-remove ["+ Add" "Remove"])
 
-(defn toggle [toggler associated-text on?]
-  (browser click (toggler associated-text on?))
-  ((ajax-wait (toggler associated-text (not on?)))))
+(def user-role-toggler (toggler add-remove role-action))
+(def template-product-toggler (toggler add-remove template-product-action))
+(def template-package-toggler (toggler add-remove template-package-action))
+
+(defn toggle [a-toggler associated-text on?]
+  (browser click (a-toggler associated-text on?))
+  ((ajax-wait (a-toggler associated-text (not on?)))))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
                                    (browser isElementPresent :confirmation-dialog))
                              (browser open (@config :server-url)))
-             [:content-management-tab [] (via :content-management)
-              [:providers-tab [] (via :providers)
+             [:content-management-tab [] (browser mouseOver :content-management)
+              [:providers-tab [] (browser mouseOver :providers)
                [:custom-providers-tab [] (via :custom)
                 [:new-provider-page [] (via :new-provider
                                             (ajax-wait :provider-name-text))]
                 [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
-                                                                        (ajax-wait :remove-provider))
+                                                                        ajax-wait)
                  [:provider-products-repos-page [] (do (via :products-and-repositories
                                                             (ajax-wait :add-product))
                                                        (browser sleep 2000))
                   [:named-product-page [product-name] (do (via (editable product-name)
-                                                               (ajax-wait :product-name-text)))]
+                                                               (ajax-wait :product-description-text)))]
                   [:named-repo-page [product-name repo-name] (do (via (product-expand product-name)
                                                                       (ajax-wait (editable repo-name)))
                                                                  (via (editable repo-name)
                                                                       (ajax-wait :remove-repository)))]]
-                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]]
-              [:sync-management-page [] (via :sync-management)
+                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
+               [:redhat-provider-tab [] (via :red-hat)]]
+              [:sync-management-page [] (browser mouseOver :sync-management)
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
@@ -327,23 +364,28 @@
                [:named-environment-promotions-page [env-name next-env-name]
                 (select-environment-widget env-name next-env-name)
                 [:named-changeset-promotions-page [changeset-name]
-                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]]
-             [:systems-tab [] (via :systems)
+                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]
+              [:system-templates-page [] (via :system-templates)
+               [:named-system-template-page [template-name] (via (slide-link template-name)
+                                                                 (ajax-wait :template-package-groups))]
+               [:new-system-template-page [] (via :new-template (ajax-wait :template-name-text))]]]
+             [:systems-tab [] (browser mouseOver :systems)
+              [:systems-all-page [] (via :all)
+               [:named-systems-page [system-name] (choose-left-pane
+                                                  (left-pane-item system-name)
+                                                  ajax-wait)
+                [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
               [:activation-keys-page [] (via :activation-keys)
-               [:named-activation-key-page [activation-key-name]
-                (choose-left-pane (left-pane-item activation-key-name)
-                                  (ajax-wait (inactive-edit-field :activation-key-name-text)))]
-               [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
+                [:named-activation-key-page [activation-key-name]
+                 (choose-left-pane (left-pane-item activation-key-name)
+                                   (ajax-wait (inactive-edit-field :activation-key-name-text)))]
+                [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
               [:systems-environment-page [env-name]
                (do (via :by-environments)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
                 (choose-left-pane (left-pane-item system-name)
-                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]
-              [:named-systems-page [system-name] (choose-left-pane
-                                                  (left-pane-item system-name)
-                                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))
-               [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
+                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]]
              [:organizations-tab [] (via :organizations)
               [:new-organization-page [] (via :new-organization (ajax-wait :org-name-text))]
               [:named-organization-page [org-name] (choose-left-pane
@@ -351,7 +393,7 @@
                                                     (ajax-wait :remove-organization)) 
                [:new-environment-page [] (via :new-environment (ajax-wait :create-environment))]
                [:named-environment-page [env-name] (via (environment-link env-name) (ajax-wait :remove-environment))]]]
-             [:administration-tab [] (via :administration)
+             [:administration-tab [] (browser mouseOver :administration)
               [:users-tab [] (via :users)
                [:named-user-page [username] (choose-left-pane (user username)
                                                               (ajax-wait (username-field username)))

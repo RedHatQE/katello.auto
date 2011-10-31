@@ -9,11 +9,11 @@
                            [environments :as envs]
                            [systems :as systems]
                            [users :as users]
-                           [permissions :as permissions])
+                           [permissions :as permissions]
+                           [templates :as templates])
    
             (katello [tasks :as tasks]
-                     [conf :as conf]
-                     [api-tasks :as api]
+                     [conf :as conf] 
                      [validation :as validate])
             
             [test.tree :as test]
@@ -22,8 +22,8 @@
   (:use [test.tree :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
-(declare login-tests org-tests environment-tests provider-tests
-         system-tests user-tests sync-tests permission-tests)
+(declare org-tests environment-tests provider-tests
+         system-tests user-tests sync-tests permission-tests template-tests)
 
 (defn suite []
   (with-meta
@@ -37,6 +37,7 @@
                                     (system-tests)
                                     (user-tests)
                                     (permission-tests)
+                                    (template-tests)
                                     (test/data-driven  {:name "login as invalid user"
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
@@ -126,27 +127,39 @@
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
     :configuration true
-    :blockers (juxt providers/manifest-testing-blockers (open-bz-bugs "729364"))
+    :blockers (open-bz-bugs "729364" "747336")
     :more [{:name "upload subscription manifest"
+            :blockers providers/manifest-testing-blockers
             :steps providers/upload-manifest}]}])
 
 (defn sync-tests []
-  [{:name "simple sync"
-    :description "Sync a product with just a few packages in one repo."
-    :blockers (juxt (constantly "auto broken, working on fix") (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627"))
-    :steps sync/simple}
-   {:name "create a sync plan"
-    :steps sync/create-plan
-    :blockers (open-bz-bugs "729364")
-    :more (concat [{:name "edit a sync plan"
-                    :steps sync/edit-plan}
-                   {:name "rename a sync plan"
-                    :steps sync/rename-plan}
-                   {:name "duplicate sync plan disallowed"
-                    :steps sync/dupe-disallowed}]
-                  (test/data-driven {:name "sync plan validation"}
-                                    sync/plan-validate
-                                    (sync/plan-validation-data)))}])
+  [{:name "set up sync tests"
+    :steps sync/setup
+    :configuration true
+    :more [{:name "simple sync"
+            :description "Sync a product with just a few packages in one repo."
+            :blockers (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
+            :steps sync/simple}
+           {:name "create a sync plan"
+            :steps sync/create-plan
+            :blockers (open-bz-bugs "729364")
+            :more (concat [{:name "edit a sync plan"
+                            :steps sync/edit-plan}
+                            
+                           {:name "rename a sync plan"
+                            :steps sync/rename-plan}
+                            
+                           {:name "duplicate sync plan disallowed"
+                            :steps sync/dupe-disallowed}
+
+                           {:name "assign sync plan to multiple products"
+                            :steps sync/set-schedules
+                            :more [{:name "reassign product sync plan"
+                                    :steps sync/reset-schedule}]}]
+                          
+                          (test/data-driven {:name "sync plan validation"}
+                                            sync/plan-validate
+                                            (sync/plan-validation-data)))}]}])
 
 (defn system-tests []
   [{:name "setup environment for systems"
@@ -169,6 +182,7 @@
             :steps systems/subscribe}
 
            {:name "create an activation key"
+            :blockers (open-bz-bugs "750354")
             :steps systems/create-activation-key
             :more [{:name "delete an activation key"
                     :steps systems/remove-activation-key}
@@ -203,13 +217,22 @@
             :steps permissions/remove-role}
 
            {:name "add permission and user to a role"
-            :steps permissions/edit-role}]}]) 
+            :steps permissions/edit-role}]}])
+
+(defn template-tests []
+  [{:name "create a system template"
+    :steps templates/create
+    :more [{:name "setup template content"
+            :configuration true
+            :steps templates/setup-content
+            :more [{:name "add products to template"
+                    :steps templates/add-content}]}]}])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
-    (println "----- Blockers -----\n "
-             (pprint/pprint (->> reports
-                                 vals
-                                 (map deref)
-                                 (mapcat :blocked-by)
-                                 distinct)))))
+    (println "----- Blockers -----\n ")
+    (pprint/pprint (->> reports
+                        vals
+                        (map deref)
+                        (mapcat :blocked-by)
+                        distinct))))

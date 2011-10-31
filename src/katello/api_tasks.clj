@@ -3,6 +3,37 @@
   (:use [katello.conf :only [config]]
         [inflections.core :only [pluralize]]))
 
+(def ^{:dynamic true} *user* nil)
+(def ^{:dynamic true} *password* nil)
+(def ^{:dynamic true} *org* nil)
+
+(defmacro with-creds
+  [user password & body]
+  `(binding [*user* user
+             *password* password]
+     (do 
+       ~@body)))
+
+(defmacro with-admin-creds [& body]
+  `(binding [*user* (@config :admin-user)
+             *password* (@config :admin-password)]
+     (do ~@body)))
+
+(defmacro with-org
+  [org & body]
+  `(binding [*org* org]
+     (do 
+       ~@body)))
+
+(defmacro with-admin-org [& body]
+  `(binding [*org* (@config :admin-org)]
+     (do ~@body)))
+
+(defmacro with-admin [& body]
+  `(binding [*user* (@config :admin-user)
+             *password* (@config :admin-password)
+             *org* (@config :admin-org)]
+     (do ~@body)))
 
 (defn assoc-if-set [m newmap]
   (into m (filter #((complement nil?) (second %)) newmap)))
@@ -29,11 +60,11 @@
   [entity-type & [org-name]]
   (rest/get
    (api-url (uri-for-entity-type entity-type org-name))
-   {:basic-auth [(@config :admin-user) (@config :admin-password)]}))
+   {:basic-auth [*user* *password*]}))
 
 (comment (defn get [entity-type id-or-name]
    (rest/get (api-url (str "api/" (-> entity-type name pluralize) "/" id-or-name))
-             {:basic-auth [(@config :admin-user) (@config :admin-password)]})))
+             {:basic-auth [*user* *password*]})))
 
 (defn first-matching-entity [])
 
@@ -47,60 +78,52 @@
 (defn get-id-by-name [entity-type entity-name & [org-name]]
   (:id (lookup-by :name entity-name entity-type org-name)))
 
-(defn create-provider [org-name api-user api-password
-                               & {:keys [name description repo-url type]}]
+(defn create-provider [name & [{:keys [description]}]]
   (rest/post
    (api-url "api/providers")
-   api-user api-password
-   {:organization_id org-name
-    :provider (assoc-if-set {:name name
-                             :description description
-                             :provider_type type}
-                            {:repository_url repo-url})}))
+   *user* *password*
+   {:organization_id *org*
+    :provider  {:name name
+                :description description
+                :provider_type "Custom"}}))
 
-(defn create-environment [name org-name api-user api-password
-                          & {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
+(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
   (rest/post
-   (api-url (uri-for-entity-type :environment org-name))
-   (@config :admin-user) (@config :admin-password)
+   (api-url (uri-for-entity-type :environment *org*))
+   *user* *password*
    {:environment (assoc-if-set
                   {:name name}
                   {:description description
                    :prior (and prior-env
-                               (get-id-by-name :environment prior-env org-name))})}))
+                               (get-id-by-name :environment prior-env *org*))})}))
 
-(defn delete-environment [org name]
+(defn delete-environment [name]
   (rest/delete
-   (api-url (uri-for-entity-type :environment (@config :admin-org)) "/" name)
-   (@config :admin-user) (@config :admin-password)))
+   (api-url (uri-for-entity-type :environment *org*) "/" name)
+   *user* *password*))
 
-(defn ensure-env-exist [org-name env-name prior]
-  (if-not (some #{env-name}
-                (map :name (all-entities :environment org-name)))
-    (create-environment env-name org-name
-                            (@config :admin-user)
-                            (@config :admin-password)
-                            :prior-env prior)))
+(defn ensure-env-exist [name {:keys [prior]}]
+  (if-not (some #{name}
+                (map :name (all-entities :environment *org*)))
+    (create-environment name {:prior-env prior})))
 
-(defn create-product [{:keys [name org-name provider-name description url]
-                       :or {org-name (@config :admin-org)}}]
-  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name org-name) "/product_create/")
-             (@config :admin-user) (@config :admin-password)
+(defn create-product [name {:keys [provider-name description]}]
+  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name *org*) "/product_create/")
+             *user* *password*
              {:product (assoc-if-set {:name name}
-                                     {:description description
-                                      :url url})}))
+                                     {:description description})}))
 
-(defn create-repo [name org-name product-name url]
+(defn create-repo [name {:keys [product-name url]}]
   (rest/post (api-url "api/repositories/")
-             (@config :admin-user) (@config :admin-password)
-             {:product_id  (:id (lookup-by :name product-name :product org-name))
+             *user* *password*
+             {:product_id  (:id (lookup-by :name product-name :product *org*))
               :name name
               :url url}))
 
-(defn create-organization [name description]
+(defn create-organization [name & [{:keys [description]}]]
   (rest/post
    (api-url (uri-for-entity-type :organization))
-   (@config :admin-user) (@config :admin-password)
+   *user* *password*
    {:name name
     :description description}))
 
@@ -169,17 +192,17 @@
     "lscpu.numa_node0_cpu(s)" "0"
     }))
 
-(defn create-system [name org-name env-name facts]
+(defn create-system [name {:keys [env-name facts]}]
   (rest/post (api-url "api/environments/"
-                      (str (get-id-by-name :environment env-name org-name)) "/consumers")
-             (@config :admin-user) (@config :admin-password)
+                      (str (get-id-by-name :environment env-name *org*)) "/consumers")
+             *user* *password*
              {:name name
               :cp_type "system"
               :facts facts}))
 
-(defn create-template [{:keys [name description env-name org-name]}]
+(defn create-template [name {:keys [description env-name] }]
   (rest/post (api-url "api/templates/")
-             (@config :admin-user) (@config :admin-password)
+             *user* *password*
              {:template {:name name
                          :description description}
-              :environment_id (str (get-id-by-name :environment env-name org-name))}))
+              :environment_id (str (get-id-by-name :environment env-name *org*))}))
