@@ -182,6 +182,7 @@
             :steps systems/subscribe}
 
            {:name "create an activation key"
+            :blockers (open-bz-bugs "750354")
             :steps systems/create-activation-key
             :more [{:name "delete an activation key"
                     :steps systems/remove-activation-key}
