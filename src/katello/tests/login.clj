@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:use [test.tree :only [fn]]
         [katello.conf :only [config *session-user* *session-password*]]
-        [error.handler :only [handle with-handlers ignore]]
+        [slingshot.slingshot]
         [com.redhat.qe.verify :only [verify-that]]
         katello.tasks))
 
@@ -15,10 +15,11 @@
 (def invalid
   (fn [user pw]
     (try (logout)
-         (with-handlers [(ignore :invalid-credentials)]
+         (try+ 
            (login user pw)
            (when (-> (notification) :type (= :success))
-             (throw (RuntimeException. "Login succeeded with bad credentials."))))
+             (throw (RuntimeException. "Login succeeded with bad credentials.")))
+           (catch [:type :katello.tasks/invalid-credentials] _))
          (finally
           (login *session-user* *session-password*)))))
 

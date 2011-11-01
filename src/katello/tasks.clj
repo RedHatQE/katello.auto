@@ -5,7 +5,7 @@
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
-        [error.handler :only [raise]]
+        [slingshot.slingshot :only [throw+]]
         [com.redhat.qe.verify :only [verify-that]]
         [test.tree :only [print-meta]])
   (:import [com.thoughtworks.selenium SeleniumException]
@@ -23,8 +23,8 @@
 (def uniqueify timestamp) ;;alias for timestamp
 
 (def known-errors
-  {:validation-failed #"Validation [Ff]ailed"
-   :invalid-credentials #"incorrect username"})
+  {::validation-failed #"Validation [Ff]ailed"
+   ::invalid-credentials #"incorrect username"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
@@ -33,7 +33,7 @@
   (or (some #(let [re (known-errors %)]
                (if (re-find re message) % false) )
             (keys known-errors))
-      :katello-error))
+      ::katello-error))
 
 (defn- clear-all-notifications []
   (doseq [closebutton (map (comp locators/notification-close-index str)
@@ -68,11 +68,11 @@
   [ & [max-wait-ms]]
   (let [notif (notification max-wait-ms)
         msg (:msg notif)]
-    (cond (not notif) (raise
-                       {:type :no-success-message-error
+    (cond (not notif) (throw+
+                       {:type ::no-success-message-error
                         :msg "Expected a result message, but none is present on page."})
           ((complement success?) notif) (let [errtype (matching-error msg)]
-                                 (raise (assoc notif :type errtype)))
+                                 (throw+ (assoc notif :type errtype)))
           :else notif)))
 
 (defn verify-success [task-fn]

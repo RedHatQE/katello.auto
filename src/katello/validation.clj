@@ -1,6 +1,6 @@
 (ns katello.validation
   (:require [clojure.string :as string])
-  (:use [error.handler :only [with-handlers with-handlers-dispatch handle ignore]]
+  (:use [slingshot.slingshot :only [try+]]
         [katello.tasks :only [success?]]
         [test.tree :only [print-meta]]
         [com.redhat.qe.config :only [same-name]]
@@ -50,10 +50,10 @@
    (print-meta `(~'expect-error ~expected-validation-err))) )
 
 (defn field-validation [create-fn args pred]
-  (let [results (with-handlers
-                  [(handle :validation-failed [e]
-                           (assoc e :validation-errors (matching-validation-errors e)))]
-                  (apply create-fn args))] 
+  (let [results (try+
+                 (apply create-fn args)
+                 (catch [:type :katello.tasks/validation-failed] e
+                   (assoc e :validation-errors (matching-validation-errors e))))] 
     (verify-that (pred results))))
 
 (defn duplicate-disallowed [create-fn args & [pred]]

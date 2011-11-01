@@ -10,7 +10,7 @@
 
 (defn new-selenium [& [single-thread]]
   (let [sel-addr (@conf/config :selenium-address)
-        [host port] (split #":" sel-addr)
+        [host port] (split sel-addr #":")
         sel-fn (if single-thread
                  connect
                  new-sel)] 
