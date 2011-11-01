@@ -233,6 +233,5 @@
     (println "----- Blockers -----\n ")
     (pprint/pprint (->> reports
                         vals
-                        (map deref)
                         (mapcat :blocked-by)
                         distinct))))
