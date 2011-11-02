@@ -1,7 +1,8 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
   (:require (clojure [pprint :as pprint]
-                     [string :as string])
+                     [string :as string]
+                     [data :as data])
 
             (katello.tests [setup :as setup]
                            [organizations :as orgs]
@@ -51,7 +52,12 @@
                                                        login/invalid
                                                        login/invalid-logins))})
     (merge {:threads 3
-            :watchers {:stdout-log watch/log-watcher
+            :watchers {:stdout-log (fn [k r o n]
+                                    (let [[_ d _] (data/diff o n)]
+                                      (doseq [[{:keys [name]} {:keys [status report]}] d]
+                                        (if (= status :done)
+                                          (println (str (:result report) ": " name))
+                                          (println (str status ": " name))))))
                        :screencapture (watch/on-fail
                                        (fn [t _] 
                                          (selenium/browser "screenCapture"
