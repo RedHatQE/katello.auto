@@ -1,6 +1,9 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require (katello.tests [setup :as setup]
+  (:require (clojure [pprint :as pprint]
+                     [string :as string])
+
+            (katello.tests [setup :as setup]
                            [organizations :as orgs]
                            [providers :as providers]
                            [promotions :as promotions]
@@ -17,7 +20,7 @@
                      [validation :as validate])
             
             [test.tree :as test]
-            [clojure.pprint :as pprint]
+            
             [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test.tree :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
@@ -43,7 +46,19 @@
                                                        login/invalid
                                                        login/invalid-logins))})
     (merge {:threads 3
-            :watchers {:stdout-log test/log-watcher}} setup/runner-config)))
+            :watchers {:stdout-log test/log-watcher
+                       :screencapture (test/on-fail
+                                       (fn [t _] 
+                                         (selenium/browser "screenCapture"
+                                                           "screenshots"
+                                                           (str 
+                                                            (:name t)
+                                                            (if (:parameters t)
+                                                              (str "-" (string/replace (:parameters t) "/" "\\"))
+                                                              "")
+                                                            ".png")
+                                                           false)))}}
+           setup/runner-config)))
 
 (defn org-tests []
   [{:name "create an org"
