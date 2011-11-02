@@ -18,11 +18,16 @@
             (katello [tasks :as tasks]
                      [conf :as conf] 
                      [validation :as validate])
-            
+
             [test.tree :as test]
+            (test.tree [builder :as build]
+                       [watcher :as watch]
+                       [reporter :as report])
+            
+            
             
             [com.redhat.qe.auto.selenium.selenium :as selenium])
-  (:use [test.tree :only [fn]]
+  (:use [test.tree.builder :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
 (declare org-tests environment-tests provider-tests
@@ -30,7 +35,7 @@
 
 (defn suite []
   (with-meta
-    (test/before-all (fn [] (tasks/navigate :top-level))
+    (build/before-all (fn [] (tasks/navigate :top-level))
                      {:name "login as admin"
                       :steps login/admin
                       :more (concat (org-tests)
@@ -41,13 +46,13 @@
                                     (user-tests)
                                     (permission-tests)
                                     (template-tests)
-                                    (test/data-driven  {:name "login as invalid user"
+                                    (build/data-driven  {:name "login as invalid user"
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
                                                        login/invalid-logins))})
     (merge {:threads 3
-            :watchers {:stdout-log test/log-watcher
-                       :screencapture (test/on-fail
+            :watchers {:stdout-log watch/log-watcher
+                       :screencapture (watch/on-fail
                                        (fn [t _] 
                                          (selenium/browser "screenCapture"
                                                            "screenshots"
@@ -79,7 +84,7 @@
             {:name "edit an org"
              :steps orgs/edit}]
            
-           (test/data-driven {:name "org valid name"
+           (build/data-driven {:name "org valid name"
                               :blockers (open-bz-bugs "726724")}
                              orgs/valid-name
                              orgs/valid-name-data)
@@ -137,7 +142,7 @@
                                      :steps providers/delete-repo
                                      :blockers (open-bz-bugs "745279")}]}]}]}]
             
-           (test/data-driven {:name "provider validation"}
+           (build/data-driven {:name "provider validation"}
                              providers/validation
                              (providers/validation-data)))}
    {:name "get latest subscription manifest"
@@ -173,7 +178,7 @@
                             :more [{:name "reassign product sync plan"
                                     :steps sync/reset-schedule}]}]
                           
-                          (test/data-driven {:name "sync plan validation"}
+                          (build/data-driven {:name "sync plan validation"}
                                             sync/plan-validate
                                             (sync/plan-validation-data)))}]}])
 

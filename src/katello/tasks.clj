@@ -7,7 +7,7 @@
                 loop-with-timeout]]
         [slingshot.slingshot :only [throw+]]
         [com.redhat.qe.verify :only [verify-that]]
-        [test.tree :only [print-meta]])
+        [test.tree.builder :only [print-meta]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 

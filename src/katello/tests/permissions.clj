@@ -1,6 +1,6 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
-  (:use [test.tree :only [fn]])
+  (:use [test.tree.builder :only [fn]])
   (:require [katello.tasks :as tasks]
             [katello.validation :as v]))
 

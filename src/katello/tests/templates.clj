@@ -5,7 +5,7 @@
                      [api-tasks :as api])
             [clj-http.client :as http]
             [clojure.java.io :as io])
-  (:use [test.tree :only [fn data-driven]]
+  (:use [test.tree.builder :only [fn data-driven]]
         [com.redhat.qe.verify :only [verify-that]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]
         [katello.conf :only [config]]))

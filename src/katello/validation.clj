@@ -2,7 +2,7 @@
   (:require [clojure.string :as string])
   (:use [slingshot.slingshot :only [try+]]
         [katello.tasks :only [success?]]
-        [test.tree :only [print-meta]]
+        [test.tree.builder :only [print-meta]]
         [com.redhat.qe.config :only [same-name]]
         [com.redhat.qe.verify :only [verify-that]]))
 

@@ -4,7 +4,7 @@
                      [api-tasks :as api]
                      [validation :as validate]))
   (:use [com.redhat.qe.verify :only [verify-that]]
-        [test.tree :only [fn data-driven]]
+        [test.tree.builder :only [fn data-driven]]
         [katello.validation :only [duplicate-disallowed field-validation name-field-required expect-error]]))
 
 (def create
