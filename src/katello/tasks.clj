@@ -397,7 +397,7 @@
         ["Error syncing!" "Sync complete."]))
 
 (defn sync-products [products timeout]
-  (navigate :sync-management-page)
+  (navigate :sync-status-page)
   (doseq [product products]
     (browser check (locators/provider-sync-checkbox product)))
   (browser click :synchronize-now)

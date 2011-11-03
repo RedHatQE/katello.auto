@@ -101,6 +101,7 @@
                      :custom
                      :red-hat
                      :sync-management
+                     :sync-status
                      :sync-plans
                      :sync-schedule
                      :promotions
@@ -354,6 +355,7 @@
                  [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
                [:redhat-provider-tab [] (via :red-hat)]]
               [:sync-management-page [] (browser mouseOver :sync-management)
+               [:sync-status-page [] (via :sync-status)]
                [:sync-plans-page [] (via :sync-plans)
                 [:named-sync-plan-page [sync-plan-name]
                  (choose-left-pane (left-pane-item sync-plan-name)
