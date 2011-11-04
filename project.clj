@@ -8,7 +8,7 @@
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
                  [clj-http "0.1.3"]
-                 [fn.trace "1.3.0-SNAPSHOT"]]
+                 [fn.trace "1.3.0.0"]]
   :jvm-opts ["-Xmx256m"]
   :repositories {"clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}})

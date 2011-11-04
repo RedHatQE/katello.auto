@@ -20,14 +20,20 @@
 
 (def setup-content
   (fn []
-    (let [provider-name (tasks/uniqueify "template")]
+    (let [provider-name (tasks/uniqueify "template")
+          cs-name (tasks/uniqueify "cs")]
       (api/with-admin
         (api/create-provider provider-name))
       (reset! products (tasks/uniqueify "templateProduct" 3 ))
-        (for [product @products]
+        (doseq [product @products]
           (api/with-admin
             (api/create-product product {:provider-name provider-name
-                                         :description "product to test templates"}))))))
+                                         :description "product to test templates"})))
+        (api/with-admin
+          (api/with-env "Development"
+            (api/create-changeset cs-name)
+            (api/add-to-changeset cs-name {:content {:products @products}})
+            (api/promote-changeset cs-name) 180000 nil)))))
 
 (def add-content
   (fn []

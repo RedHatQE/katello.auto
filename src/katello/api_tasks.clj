@@ -1,7 +1,8 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
-        [inflections.core :only [pluralize]]))
+        [inflections.core :only [pluralize]]
+        [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]))
 
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
@@ -238,11 +239,17 @@
               {:patch (zipmap patch-actions (map getfn patch-actions))})))
 
 (defn promote-changeset "Returns a future to return the promoted changeset." [changeset-name]
-  (let [initial (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/promote")
-                       *user* *password*
-                       nil)]
-    (future (loop [cs initial]
-              (if (-> cs :state (= "promoted"))
-                cs
-                (do (Thread/sleep 5000)
-                    (recur (get-by-id :changeset (:id cs)))))))))
+  (let [id (get-id-by-name :changeset changeset-name)]
+    (rest/post (api-url "api/changesets/" id "/promote")
+                           *user* *password*
+                           nil)
+    (loop-with-timeout 180000 [cs {}]
+      (cond (-> cs :state (= "promoted"))
+            cs
+            
+            :else
+            (do (Thread/sleep 5000)
+                (recur (get-by-id :changeset id)))))))
+
+(comment  (-> cs :state (= "new"))
+            (throw (IllegalStateException. (format "Changeset %s should be promoting but still says new" changeset-name))))
