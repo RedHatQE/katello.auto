@@ -46,21 +46,23 @@
 
 (defn uri-for-entity-type  
   [entity-type]
-  (let [url-types {[:environment :product :system :provider] {:reqs ['*org*]
+  (let [url-types {[:organization] {:reqs []
+                                    :fmt "api/%s"}
+                   [:environment :product :system :provider] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
-                   [:changeset] {:reqs ['*org* '*env-id*]
+                   [:changeset] {:reqs [#'*org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}}
         {:keys [reqs fmt]} (->> url-types
-                             keys
-                             (drop-while (complement #(some #{entity-type} %)))
-                             first
-                             url-types)
-        unsat (filter #(-> % resolve deref nil?) reqs)]
+                              keys
+                              (drop-while (complement #(some #{entity-type} %)))
+                              first
+                              url-types)
+        unsat (filter #(-> % deref nil?) reqs)]
     (if-not (empty? unsat)
       (throw (IllegalArgumentException.
               (format "%s are required for entity type %s."
-                      (pr-str (map name reqs)) (name entity-type)))))
-    (apply format fmt (conj (vec (map #(-> % resolve deref) reqs)) (-> entity-type name pluralize)))))
+                      (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
+    (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
 
 (defn all-entities
   "Returns a list of all the entities of the given entity-type.  If
