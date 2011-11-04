@@ -7,7 +7,8 @@
   "Gets the url, and decodes JSON in the response body, returning a
   clojure datastructure."
   [url & [req]]
-  (-> (httpclient/get url (merge req {:accept :json})) :body json/read-json))
+  (-> (httpclient/get url (merge req {:accept :json}))
+     :body json/read-json))
 
 (defn post
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
@@ -17,6 +18,15 @@
                                        :accept :json
                                        :content-type :json}))
       :body json/read-json))
+
+(defn put
+  "Encodes datastructure in body to JSON, posts to url, using user and pw. "
+  [url user pw body & [req]]
+  (-> (httpclient/put url (merge req {:body (json/json-str body)
+                                     :basic-auth [user pw]
+                                     :accept :json
+                                     :content-type :json}))
+     :body json/read-json))
 
 (defn delete [url user pw & [req]]
   (-> (httpclient/delete url (merge req {:basic-auth [user pw]

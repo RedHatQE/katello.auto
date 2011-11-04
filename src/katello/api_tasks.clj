@@ -6,11 +6,12 @@
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
 (def ^{:dynamic true} *org* nil)
+(def ^{:dynamic true} *env-id* nil)
 
 (defmacro with-creds
   [user password & body]
-  `(binding [*user* user
-             *password* password]
+  `(binding [*user* ~user
+             *password* ~password]
      (do 
        ~@body)))
 
@@ -41,42 +42,56 @@
 (defn api-url [& args]
   (apply str (@config :server-url) args))
 
+(declare get-id-by-name)
+
 (defn uri-for-entity-type  
-  [entity-type & [org-name]]
-  (str "api/" (if (some #(= entity-type %) [:environment :product :system :provider])
-                 (str "organizations/"
-                      (or org-name
-                          (throw (IllegalArgumentException.
-                                  (str "Org name is required for this entity type: "
-                                       entity-type))))
-                      "/")
-                 "")
-       (-> entity-type name pluralize)))
+  [entity-type]
+  (let [url-types {[:environment :product :system :provider] {:reqs ['*org*]
+                                                              :fmt "api/organizations/%s/%s"}
+                   [:changeset] {:reqs ['*org* '*env-id*]
+                                 :fmt "api/organizations/%s/environments/%s/%s"}}
+        {:keys [reqs fmt]} (->> url-types
+                             keys
+                             (drop-while (complement #(some #{entity-type} %)))
+                             first
+                             url-types)
+        unsat (filter #(-> % resolve deref nil?) reqs)]
+    (if-not (empty? unsat)
+      (throw (IllegalArgumentException.
+              (format "%s are required for entity type %s."
+                      (pr-str (map name reqs)) (name entity-type)))))
+    (apply format fmt (conj (vec (map #(-> % resolve deref) reqs)) (-> entity-type name pluralize)))))
 
 (defn all-entities
   "Returns a list of all the entities of the given entity-type.  If
   that entity type is part of an organization, the name of the org
   must also be passed in."
-  [entity-type & [org-name]]
+  [entity-type]
   (rest/get
-   (api-url (uri-for-entity-type entity-type org-name))
+   (api-url (uri-for-entity-type entity-type))
    {:basic-auth [*user* *password*]}))
 
-(comment (defn get [entity-type id-or-name]
-   (rest/get (api-url (str "api/" (-> entity-type name pluralize) "/" id-or-name))
-             {:basic-auth [*user* *password*]})))
+(defn get-by-name [entity-type entity-name]
+  (rest/get (api-url (uri-for-entity-type entity-type))
+            {:basic-auth [*user* *password*]
+             :query-params {:name entity-name}}))
 
-(defn first-matching-entity [])
+(defn get-by-id [entity-type entity-id]
+  (rest/get (api-url "api/" (-> entity-type name pluralize) (str "/" entity-id))
+            {:basic-auth [*user* *password*]}))
 
-(defn lookup-by [k v entity-type & [org-name]]
-  (or (some (fn [ent] (if (= (k ent) v)
-                       ent))
-            (all-entities entity-type org-name))
-      (throw (RuntimeException. (format "No matches for %s with %s=%s."
-                                        (name entity-type) (name k) v)))))
+(defn get-id-by-name [entity-type entity-name]
+  (let [all (get-by-name entity-type entity-name)
+        ct (count all)]
+    (if (> ct 1)
+      (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected at most 1."
+                                                ct (name entity-type) entity-name)))
+      (-> all first :id))))
 
-(defn get-id-by-name [entity-type entity-name & [org-name]]
-  (:id (lookup-by :name entity-name entity-type org-name)))
+
+(defmacro with-env [env-name & body]
+  `(binding [*env-id* (get-id-by-name :environment ~env-name)]
+     (do ~@body)))
 
 (defn create-provider [name & [{:keys [description]}]]
   (rest/post
@@ -89,26 +104,26 @@
 
 (defn create-environment [name {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
   (rest/post
-   (api-url (uri-for-entity-type :environment *org*))
+   (api-url (uri-for-entity-type :environment))
    *user* *password*
    {:environment (assoc-if-set
                   {:name name}
                   {:description description
                    :prior (and prior-env
-                               (get-id-by-name :environment prior-env *org*))})}))
+                               (get-id-by-name :environment prior-env))})}))
 
 (defn delete-environment [name]
   (rest/delete
-   (api-url (uri-for-entity-type :environment *org*) "/" name)
+   (api-url (uri-for-entity-type :environment) "/" name)
    *user* *password*))
 
 (defn ensure-env-exist [name {:keys [prior]}]
   (if-not (some #{name}
-                (map :name (all-entities :environment *org*)))
+                (map :name (all-entities :environment)))
     (create-environment name {:prior-env prior})))
 
 (defn create-product [name {:keys [provider-name description]}]
-  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name *org*) "/product_create/")
+  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
              *user* *password*
              {:product (assoc-if-set {:name name}
                                      {:description description})}))
@@ -116,7 +131,7 @@
 (defn create-repo [name {:keys [product-name url]}]
   (rest/post (api-url "api/repositories/")
              *user* *password*
-             {:product_id  (:id (lookup-by :name product-name :product *org*))
+             {:product_id  (get-id-by-name :product product-name)
               :name name
               :url url}))
 
@@ -131,7 +146,7 @@
 (defn random-facts []
   (let [rand (java.util.Random.)
         rand-255 #(.nextInt rand 255)
-        splice (fn [sep coll] (apply str (interpose sep coll)))
+        splice (comp (partial apply str) interpose) 
         ip-prefix (splice "." (repeatedly 3 rand-255 ))
         mac  (splice ":" (repeatedly 6 #(format "%02x" (rand-255))))] {
     "dmi.bios.runtime_size" "128 KB"
@@ -194,7 +209,7 @@
 
 (defn create-system [name {:keys [env-name facts]}]
   (rest/post (api-url "api/environments/"
-                      (str (get-id-by-name :environment env-name *org*)) "/consumers")
+                      (str (get-id-by-name :environment env-name)) "/consumers")
              *user* *password*
              {:name name
               :cp_type "system"
@@ -205,4 +220,29 @@
              *user* *password*
              {:template {:name name
                          :description description}
-              :environment_id (str (get-id-by-name :environment env-name *org*))}))
+              :environment_id (str (get-id-by-name :environment env-name))}))
+
+
+(defn create-changeset [name {:keys [env-name] }]
+  (with-env env-name
+    (rest/post (api-url (uri-for-entity-type :changeset))
+               *user* *password*
+               {:changeset {:name name}})))
+
+(defn add-to-changeset [changeset-name {:keys [from-env to-env content]}]
+  (let [patch-actions [:+products :+packages :+repos :+errata :+templates]
+        getfn (fn [kw] (-> kw name (.substring 1) keyword content))]
+    (with-env to-env
+     (rest/put (api-url "api/changesets/" (get-id-by-name :changeset changeset-name))
+               *user* *password*
+               {:patch (zipmap patch-actions (map getfn patch-actions))}))))
+
+(defn promote-changeset "Returns a future to return the promoted changeset." [changeset-name]
+  (let [initial (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/promote")
+                       *user* *password*
+                       nil)]
+    (future (loop [cs initial]
+              (if (-> cs :state (= "promoted"))
+                cs
+                (do (Thread/sleep 5000)
+                    (recur (get-by-id :changeset (:id cs)))))))))

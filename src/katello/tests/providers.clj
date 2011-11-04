@@ -25,9 +25,8 @@
                                   :description "my description"})
           (tasks/edit-provider {:name old-name :new-name new-name})
           (let [current-provider-names (map :name (api/with-admin
-                                               (api/all-entities
-                                               :provider
-                                               "ACME_Corporation")))]
+                                                    (api/all-entities
+                                                     :provider)))]
             (verify-that (and (some #{new-name} current-provider-names)
                               (not (some #{old-name} current-provider-names))))))))
 

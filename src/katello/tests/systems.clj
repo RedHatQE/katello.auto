@@ -36,7 +36,7 @@
                          :system-name (:name sys)})
         (verify-that (= (:environment_id sys)
                         (api/with-admin
-                          (api/get-id-by-name :environment env-name (@config :admin-org)))))))))
+                          (api/get-id-by-name :environment env-name))))))))
 
 (def subscribe
   (fn []
