@@ -225,19 +225,17 @@
               :environment_id (str (get-id-by-name :environment env-name))}))
 
 
-(defn create-changeset [name {:keys [env-name] }]
-  (with-env env-name
-    (rest/post (api-url (uri-for-entity-type :changeset))
-               *user* *password*
-               {:changeset {:name name}})))
+(defn create-changeset [name]
+  (rest/post (api-url (uri-for-entity-type :changeset))
+             *user* *password*
+             {:changeset {:name name}}))
 
-(defn add-to-changeset [changeset-name {:keys [from-env to-env content]}]
+(defn add-to-changeset [changeset-name {:keys [content]}]
   (let [patch-actions [:+products :+packages :+repos :+errata :+templates]
         getfn (fn [kw] (-> kw name (.substring 1) keyword content))]
-    (with-env to-env
-     (rest/put (api-url "api/changesets/" (get-id-by-name :changeset changeset-name))
-               *user* *password*
-               {:patch (zipmap patch-actions (map getfn patch-actions))}))))
+    (rest/put (api-url "api/changesets/" (get-id-by-name :changeset changeset-name))
+              *user* *password*
+              {:patch (zipmap patch-actions (map getfn patch-actions))})))
 
 (defn promote-changeset "Returns a future to return the promoted changeset." [changeset-name]
   (let [initial (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/promote")
