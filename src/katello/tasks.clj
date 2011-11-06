@@ -512,9 +512,9 @@
       (add-product product))
     (doseq [{:keys [product packages]} (:packages content)]
       (->browser (click (locators/template-product product))
-                (sleep 3000)
-                (click :template-eligible-packages)
-                (waitForVisible (locators/template-package-toggler (first packages) true) "15000"))
+                 (sleep 3000)
+                 (click :template-eligible-packages)
+                 (waitForVisible (locators/template-package-toggler (first packages) true) "15000"))
       (doseq [package packages]
         (add-package package))
       (browser click :template-eligible-home))

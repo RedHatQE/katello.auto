@@ -305,7 +305,7 @@
 (defn select-environment-widget [env-name & [ next-env-name]]
   (do (when (browser isElementPresent :expand-path)
         (browser click :expand-path))
-      (via (promotion-env-breadcrumb env-name next-env-name))))
+      (via (promotion-env-breadcrumb env-name next-env-name) ajax-wait)))
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
