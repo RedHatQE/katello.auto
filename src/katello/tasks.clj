@@ -118,9 +118,7 @@
   (doseq [category (keys content)]
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
-      (->browser (waitAndClick (locators/promotion-add-content-item item) "10000")
-                 (waitForElement (locators/promotion-remove-content-item item) "10000")
-                 (sleep 1000)))
+      (browser click (locators/promotion-add-content-item item)))
     (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
@@ -129,8 +127,8 @@
             {:env-name from-env
              :next-env-name to-env
              :changeset-name changeset-name})
-  (browser waitAndClick :review-for-promotion "10000")
-  (browser waitAndClick :promote-to-next-environment "10000")
+  (browser click :review-for-promotion)
+  (browser click :promote-to-next-environment)
   (check-for-success) ;;for the submission
   (loop-with-timeout (or timeout-ms 120000) [status ""]
     (if (= status "Promoted")
@@ -162,14 +160,14 @@
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (navigate :named-environment-promotions-page {:env-name env})
+  (navigate :named-environment-promotions-page {:env-name env :next-env-name ""})
   (every? true?
           (flatten
            (for [category (keys content)]
              (do (browser click (-> category name (str "-category") keyword))
                  (for [item (content category)]
-                   (try (do (browser waitForElement
-                                     (locators/promotion-add-content-item item) "10000")
+                   (try (do (browser isVisible
+                                     (locators/promotion-add-content-item item))
                             true)
                         (catch Exception e false))))))))
 
@@ -235,7 +233,6 @@
 (defn add-product [{:keys [provider-name name description]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
-  (browser waitForVisible :product-name-text "10000")
   (fill-ajax-form {:product-name-text name
                    :product-description-text description}
                   :create-product)
@@ -250,11 +247,8 @@
 
 (defn add-repo [{:keys [provider-name product-name name url]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
-  (let [add-repo-button (locators/add-repository product-name)]
-    (->browser (click (locators/product-expand product-name))
-               (waitForVisible add-repo-button "5000")
-               (click add-repo-button)
-               (waitForElement :repo-name-text "10000")))
+  (->browser (click (locators/product-expand product-name)) 
+             (click (locators/add-repository product-name)))
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
@@ -309,8 +303,7 @@
 
 (defn create-user [username {:keys [password password-confirm]}]
   (navigate :users-tab)
-  (->browser (click :new-user)
-             (waitForElement :new-user-username-text "15000"))
+  (browser click :new-user)
   (fill-ajax-form {:new-user-username-text username
                    :new-user-password-text password
                    :new-user-confirm-text (or password-confirm password)}
@@ -334,8 +327,7 @@
 
 (defn create-role [name & [{:keys [description]}]]
   (navigate :roles-tab)
-  (->browser (click :new-role)
-             (waitForElement :new-role-name-text "7500"))
+  (browser click :new-role)
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
                   :save-role)
@@ -511,9 +503,7 @@
       (add-product product))
     (doseq [{:keys [product packages]} (:packages content)]
       (->browser (click (locators/template-product product))
-                 (sleep 3000)
-                 (click :template-eligible-packages)
-                 (waitForVisible (locators/template-package-toggler (first packages) true) "15000"))
+                 (click :template-eligible-packages))
       (doseq [package packages]
         (add-package package))
       (browser click :template-eligible-home))
