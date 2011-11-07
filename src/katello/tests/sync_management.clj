@@ -69,11 +69,13 @@
     (let [second-product-name (tasks/uniqueify "MySecondProduct")
           product-names [@product-name second-product-name]]
       (api/with-admin
-        (api/create-product second-product-name {:provider-name @provider-name
-                                                 :description "testing sync"})
-        (api/create-repo (tasks/uniqueify "testrepo")
-                         {:product-name second-product-name
-                          :url (@config :sync-repo)}))
+        (api/with-env (@config :first-env)
+          (api/create-product second-product-name {:provider-name @provider-name
+                                                   :description "testing sync"})
+          (api/create-repo (tasks/uniqueify "testrepo")
+                           {:product-name second-product-name
+                            :url (@config :sync-repo)})
+          (api/promote {:products product-names})))
       (tasks/sync-schedule {:plan-name @plan-name
                             :products product-names})
       (let [expected-plan @plan-name

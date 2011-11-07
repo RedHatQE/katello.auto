@@ -380,4 +380,3 @@
                [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
                 [:named-role-users-page [] (via :role-users)]
                 [:named-role-permissions-page [] (via :role-permissions)]]]]]))
-
