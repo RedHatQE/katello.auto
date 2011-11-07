@@ -107,7 +107,6 @@
   (navigate :named-environment-promotions-page {:env-name env-name
                                                 :next-env-name next-env-name})
   (->browser (click :new-changeset)
-             (waitForElement :changeset-name-text "30000")
              (setText :changeset-name-text changeset-name)
              (click :save-changeset))
   (check-for-success))
