@@ -300,7 +300,7 @@
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
-             :search-submit))
+             :search-submit (constantly nil)))
 
 (defn choose-left-pane [item & [post-fn]]
   (try (browser click item)
