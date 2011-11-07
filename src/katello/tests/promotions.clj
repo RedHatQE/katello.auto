@@ -11,16 +11,15 @@
 (def provider-name (atom nil))
 
 (def locker "Locker")
-(def first-env "Development")
-(def second-env "Q-eh")
+
 
 (defn setup []
   (reset! provider-name (tasks/uniqueify "promo-"))
   
   (api/with-admin
     (api/create-provider  @provider-name {:description "test provider for promotions"})
-    (api/ensure-env-exist first-env {:prior locker})
-    (api/ensure-env-exist second-env {:prior first-env})))
+    (api/ensure-env-exist (@config :first-env) {:prior locker})
+    (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)})))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (tasks/uniqueify "changeset")]
@@ -62,8 +61,8 @@
                              Verifies that it shows up in the new env."}
               
              (data-driven verify-promote-content
-                          [[[locker first-env] {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
-                           [[locker first-env second-env] {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
+                          [[(lazy-seq [locker (@config :first-env)]) {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
+                           [(lazy-seq [locker (@config :first-env) (@config :second-env)]) {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
              dep-chain)}])
 
 

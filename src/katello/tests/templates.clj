@@ -30,10 +30,8 @@
             (api/create-product product {:provider-name provider-name
                                          :description "product to test templates"})))
         (api/with-admin
-          (api/with-env "Development"
-            (api/create-changeset cs-name)
-            (api/add-to-changeset cs-name {:content {:products @products}})
-            (api/promote-changeset cs-name) 180000 nil)))))
+          (api/with-env (@config :first-env)
+            (api/promote {:products @products}))))))
 
 (def add-content
   (fn []

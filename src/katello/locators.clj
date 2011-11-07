@@ -93,7 +93,6 @@
                      :dashboard
                      :all
                      :by-environments
-                     :subscriptions
                      :create
 
                      ;;subtabs
@@ -211,7 +210,8 @@
               :activation-key-description-text "activation_key[description]"
               :activation-key-template-select "activation_key[system_template_id]"
               :save-activation-key "save_key"
-              :remove-activation-key (link "Remove Activation Key")})
+              :remove-activation-key (link "Remove Activation Key")
+              :subscriptions-right-nav "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"})
 
 (def roles {:new-role "//a[@id='new']"
             :new-role-name-text "role[name]"
@@ -376,7 +376,7 @@
                [:named-systems-page [system-name] (choose-left-pane
                                                   (left-pane-item system-name)
                                                   ajax-wait)
-                [:system-subscriptions-page [] (via :subscriptions (ajax-wait :subscribe))]]]
+                [:system-subscriptions-page [] (via :subscriptions-right-nav ajax-wait )]]]
               [:activation-keys-page [] (via :activation-keys)
                 [:named-activation-key-page [activation-key-name]
                  (choose-left-pane (left-pane-item activation-key-name)

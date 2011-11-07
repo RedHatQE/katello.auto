@@ -2,7 +2,8 @@
   (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
         [inflections.core :only [pluralize]]
-        [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]))
+        [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
+        [katello.tasks :only [uniqueify]]))
 
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
@@ -250,6 +251,12 @@
             :else
             (do (Thread/sleep 5000)
                 (recur (get-by-id :changeset id)))))))
+
+(defn promote [content]
+  (let [cs-name (uniqueify "api-changeset")]
+    (create-changeset cs-name)
+    (add-to-changeset cs-name {:content content})
+    (promote-changeset cs-name)))
 
 (comment  (-> cs :state (= "new"))
             (throw (IllegalStateException. (format "Changeset %s should be promoting but still says new" changeset-name))))

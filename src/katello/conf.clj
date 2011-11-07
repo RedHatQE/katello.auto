@@ -14,7 +14,9 @@
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
                               :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master/lastSuccessfulBuild/artifact/rpms/x86_64"]
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
-                              :redhat-manifest-url ["katello.redhat.manifest.url" "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=system-engine;a=blob_plain;f=manifests/stageManifest06October2011.zip;hb=HEAD"]})
+                              :redhat-manifest-url ["katello.redhat.manifest.url" "http://axiom.rdu.redhat.com/git/gitweb.cgi?p=system-engine;a=blob_plain;f=manifests/stageManifest06October2011.zip;hb=HEAD"]
+                              :first-env ["katello.environments.first" "Development"]
+                              :second-env ["katello.environments.second" "Q-eh"]})
 
 (def config (atom {}))
 

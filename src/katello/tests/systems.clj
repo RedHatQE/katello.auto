@@ -7,17 +7,17 @@
             [katello.api-tasks :as api]
             [katello.validation :as val]))
 
-(def env-name "Development")
+
 
 (defn with-freshly-registered-system [f]
   (f (api/with-admin
        (api/create-system (tasks/uniqueify "newsystem")
-                          {:env-name env-name
+                          {:env-name (@config :first-env)
                            :facts (api/random-facts)}))))
 
 (def create-env 
   (fn [] (api/with-admin
-          (api/ensure-env-exist env-name {:prior "Locker"}))))
+          (api/ensure-env-exist (@config :first-env) {:prior "Locker"}))))
 
 (def rename
   (fn []
@@ -32,11 +32,11 @@
     (with-freshly-registered-system
       (fn [sys]
         (tasks/navigate :named-system-environment-page
-                        {:env-name env-name
+                        {:env-name (@config :first-env)
                          :system-name (:name sys)})
         (verify-that (= (:environment_id sys)
                         (api/with-admin
-                          (api/get-id-by-name :environment env-name))))))))
+                          (api/get-id-by-name :environment (@config :first-env)))))))))
 
 (def subscribe
   (fn []
@@ -55,14 +55,14 @@
   (fn []
     (tasks/create-activation-key  {:name (tasks/uniqueify "auto-key")
                                    :description "my description"
-                                   :environment env-name})))
+                                   :environment (@config :first-env)})))
 
 (def remove-activation-key
   (fn []
     (let [ak-name (tasks/uniqueify "auto-key-deleteme")]
       (tasks/create-activation-key {:name ak-name
                                     :description "my description"
-                                    :environment env-name} )
+                                    :environment (@config :first-env)} )
       (tasks/delete-activation-key ak-name))))
 
 (def activation-key-dupe-disallowed
@@ -70,5 +70,5 @@
     (val/duplicate-disallowed tasks/create-activation-key
                               [{:name (tasks/uniqueify "auto-key")
                                 :description "my description"
-                                :environment env-name}])))
+                                :environment (@config :first-env)}])))
 
