@@ -5,8 +5,9 @@
                      [api-tasks :as api-tasks]) 
             [test.tree :as test])
   (:use [clojure.string :only [split]]
-        [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel]]
-        [com.redhat.qe.verify :only [check]]))
+        [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel jquery-ajax-finished]]
+        [com.redhat.qe.verify :only [check]])
+  )
 
 (defn new-selenium [& [single-thread]]
   (let [sel-addr (@conf/config :selenium-address)
@@ -18,7 +19,7 @@
 
 (defn start-selenium []  
   (browser start)
-  (browser open (@conf/config :server-url))
+  (browser open (@conf/config :server-url) jquery-ajax-finished)
   (tasks/login (@conf/config :admin-user) (@conf/config :admin-password)))
 
 (defn switch-new-admin-user [user pw]

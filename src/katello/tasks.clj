@@ -82,7 +82,7 @@
 (def navigate (nav/nav-fn locators/page-tree))
 
 (defn fill-ajax-form [items submit]
-  (fill-form items submit #(browser sleep 300)))
+  (fill-form items submit (constantly nil)))
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing

@@ -284,28 +284,19 @@
 
 
 ;;nav tricks
-(defn ajax-wait
-  ([] (let [stime (System/currentTimeMillis)]
-        (browser waitForCondition "selenium.browserbot.getCurrentWindow().jQuery.active == 0" "15000")
-        (- (System/currentTimeMillis) stime)))
-  ([elem]
-     (fn [] (browser waitForVisible elem "15000"))))
-
 (def no-wait (constantly nil))
 
 (defn load-wait []
-  (browser waitForPageToLoad "60000")
-  (ajax-wait))
+  (browser waitForPageToLoad "60000"))
 
 (defn via [link & [post-fn]]
   (browser click link)
-  ((or post-fn load-wait)))
-
+  ((or post-fn no-wait)))
 
 (defn select-environment-widget [env-name & [ next-env-name]]
   (do (when (browser isElementPresent :expand-path)
         (browser click :expand-path))
-      (via (promotion-env-breadcrumb env-name next-env-name) ajax-wait)))
+      (via (promotion-env-breadcrumb env-name next-env-name))))
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
@@ -316,7 +307,7 @@
        (catch SeleniumException se
          (do (search (-> item .getArguments first))
              (browser click item)))
-       (finally ((or post-fn load-wait)))))
+       (finally ((or post-fn no-wait)))))
 
 (defn toggler [[on-text off-text] loc-strategy]
   (fn [associated-text on?]
@@ -329,8 +320,7 @@
 (def template-package-toggler (toggler add-remove template-package-action))
 
 (defn toggle [a-toggler associated-text on?]
-  (browser click (a-toggler associated-text on?))
-  ((ajax-wait (a-toggler associated-text (not on?)))))
+  (browser click (a-toggler associated-text on?)))
 
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
@@ -338,70 +328,56 @@
                              (browser open (@config :server-url)))
              [:content-management-tab [] (browser mouseOver :content-management)
               [:providers-tab [] (browser mouseOver :providers)
-               [:custom-providers-tab [] (via :custom)
-                [:new-provider-page [] (via :new-provider
-                                            (ajax-wait :provider-name-text))]
-                [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name)
-                                                                        ajax-wait)
-                 [:provider-products-repos-page [] (do (via :products-and-repositories
-                                                            (ajax-wait :add-product))
+               [:custom-providers-tab [] (via :custom load-wait)
+                [:new-provider-page [] (via :new-provider)]
+                [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
+                 [:provider-products-repos-page [] (do (via :products-and-repositories)
                                                        (browser sleep 2000))
-                  [:named-product-page [product-name] (do (via (editable product-name)
-                                                               (ajax-wait :product-description-text)))]
-                  [:named-repo-page [product-name repo-name] (do (via (product-expand product-name)
-                                                                      (ajax-wait (editable repo-name)))
-                                                                 (via (editable repo-name)
-                                                                      (ajax-wait :remove-repository)))]]
-                 [:provider-subscriptions-page [] (via :subscriptions (ajax-wait :upload))]]]
-               [:redhat-provider-tab [] (via :red-hat)]]
+                  [:named-product-page [product-name] (do (via (editable product-name)))]
+                  [:named-repo-page [product-name repo-name] (do (via (product-expand product-name))
+                                                                 (via (editable repo-name)))]]
+                 [:provider-subscriptions-page [] (via :subscriptions)]]]
+               [:redhat-provider-tab [] (via :red-hat load-wait)]]
               [:sync-management-page [] (browser mouseOver :sync-management)
-               [:sync-status-page [] (via :sync-status)]
-               [:sync-plans-page [] (via :sync-plans)
+               [:sync-status-page [] (via :sync-status load-wait)]
+               [:sync-plans-page [] (via :sync-plans load-wait)
                 [:named-sync-plan-page [sync-plan-name]
-                 (choose-left-pane (left-pane-item sync-plan-name)
-                                   (ajax-wait (inactive-edit-field :sync-plan-name-text)))]
-                [:new-sync-plan-page [] (via :new-sync-plan (ajax-wait :sync-plan-name-text))]]
-               [:sync-schedule-page [] (via :sync-schedule)]]
-              [:promotions-page [] (via :promotions)
+                 (choose-left-pane (left-pane-item sync-plan-name))]
+                [:new-sync-plan-page [] (via :new-sync-plan)]]
+               [:sync-schedule-page [] (via :sync-schedule load-wait)]]
+              [:promotions-page [] (via :promotions load-wait)
                [:named-environment-promotions-page [env-name next-env-name]
                 (select-environment-widget env-name next-env-name)
                 [:named-changeset-promotions-page [changeset-name]
-                 (via (changeset changeset-name) (ajax-wait :changeset-content))]]]
-              [:system-templates-page [] (via :system-templates)
-               [:named-system-template-page [template-name] (via (slide-link template-name)
-                                                                 (ajax-wait :template-package-groups))]
-               [:new-system-template-page [] (via :new-template (ajax-wait :template-name-text))]]]
+                 (via (changeset changeset-name))]]]
+              [:system-templates-page [] (via :system-templates load-wait)
+               [:named-system-template-page [template-name] (via (slide-link template-name))]
+               [:new-system-template-page [] (via :new-template)]]]
              [:systems-tab [] (browser mouseOver :systems)
-              [:systems-all-page [] (via :all)
+              [:systems-all-page [] (via :all load-wait)
                [:named-systems-page [system-name] (choose-left-pane
-                                                  (left-pane-item system-name)
-                                                  ajax-wait)
-                [:system-subscriptions-page [] (via :subscriptions-right-nav ajax-wait )]]]
-              [:activation-keys-page [] (via :activation-keys)
+                                                  (left-pane-item system-name))
+                [:system-subscriptions-page [] (via :subscriptions-right-nav)]]]
+              [:activation-keys-page [] (via :activation-keys load-wait)
                 [:named-activation-key-page [activation-key-name]
-                 (choose-left-pane (left-pane-item activation-key-name)
-                                   (ajax-wait (inactive-edit-field :activation-key-name-text)))]
-                [:new-activation-key-page [] (via :new-activation-key (ajax-wait :activation-key-name-text))]]
+                 (choose-left-pane (left-pane-item activation-key-name))]
+                [:new-activation-key-page [] (via :new-activation-key)]]
               [:systems-environment-page [env-name]
-               (do (via :by-environments)
+               (do (via :by-environments load-wait)
                    (select-environment-widget env-name))
                [:named-system-environment-page [system-name]
-                (choose-left-pane (left-pane-item system-name)
-                                  (ajax-wait (inactive-edit-field :system-name-text-edit)))]]]
-             [:organizations-tab [] (via :organizations)
-              [:new-organization-page [] (via :new-organization (ajax-wait :org-name-text))]
-              [:named-organization-page [org-name] (choose-left-pane
-                                                    (left-pane-item org-name)
-                                                    (ajax-wait :remove-organization)) 
-               [:new-environment-page [] (via :new-environment (ajax-wait :create-environment))]
-               [:named-environment-page [env-name] (via (environment-link env-name) (ajax-wait :remove-environment))]]]
+                (choose-left-pane (left-pane-item system-name))]]]
+             [:organizations-tab [] (via :organizations load-wait)
+              [:new-organization-page [] (via :new-organization)]
+              [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
+               [:new-environment-page [] (via :new-environment)]
+               [:named-environment-page [env-name] (via (environment-link env-name))]]]
              [:administration-tab [] (browser mouseOver :administration)
-              [:users-tab [] (via :users)
-               [:named-user-page [username] (choose-left-pane (user username)
-                                                              (ajax-wait (username-field username)))
-                [:user-roles-permissions-page [] (via :roles-and-permissions (ajax-wait :add-all))]]]
-              [:roles-tab [] (via :roles)
-               [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name)
-                                                               (ajax-wait :remove-role))
-                [:named-role-users-page [] (via :role-users no-wait)]
-                [:named-role-permissions-page [] (via :role-permissions no-wait)]]]]]))
+              [:users-tab [] (via :users load-wait)
+               [:named-user-page [username] (choose-left-pane (user username))
+                [:user-roles-permissions-page [] (via :roles-and-permissions)]]]
+              [:roles-tab [] (via :roles load-wait)
+               [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
+                [:named-role-users-page [] (via :role-users)]
+                [:named-role-permissions-page [] (via :role-permissions)]]]]]))
+
