@@ -1,9 +1,12 @@
 (ns katello.tests.setup
-  (:require [fn.trace :as tr]
+  (:require (clojure [string :as string]
+                     [data :as data])
+            [fn.trace :as tr]
             (katello [tasks :as tasks]
                      [conf :as conf]
                      [api-tasks :as api-tasks]) 
-            [test.tree :as test])
+            [test.tree :as test]
+            [test.tree.watcher :as watch])
   (:use [clojure.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel jquery-ajax-finished]]
         [com.redhat.qe.verify :only [check]])
@@ -62,4 +65,21 @@
 
 (def runner-config 
   {:thread-runner thread-runner
-   :setup (fn [] (println "initializing.") (conf/init))})
+   :setup (fn [] (println "initializing.") (conf/init))
+   :watchers {:stdout-log (fn [k r o n]
+                            (let [[_ d _] (data/diff o n)]
+                              (doseq [[{:keys [name]} {:keys [status report]}] d]
+                                (if (= status :done)
+                                  (println (str (:result report) ": " name))
+                                  (println (str status ": " name))))))
+              :screencapture (watch/on-fail
+                              (fn [t _] 
+                                (browser "screenCapture"
+                                                  "screenshots"
+                                                  (str 
+                                                   (:name t)
+                                                   (if (:parameters t)
+                                                     (str "-" (string/replace (:parameters t) "/" "\\"))
+                                                     "")
+                                                   ".png")
+                                                  false)))}})

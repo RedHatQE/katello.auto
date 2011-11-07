@@ -1,8 +1,6 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require (clojure [pprint :as pprint]
-                     [string :as string]
-                     [data :as data])
+  (:require (clojure [pprint :as pprint])
 
             (katello.tests [setup :as setup]
                            [organizations :as orgs]
@@ -22,7 +20,7 @@
 
             [test.tree :as test]
             (test.tree [builder :as build]
-                       [watcher :as watch]
+                       
                        [reporter :as report])
             
             
@@ -51,24 +49,7 @@
                                                         :blockers (open-bz-bugs "730738")} 
                                                        login/invalid
                                                        login/invalid-logins))})
-    (merge {:threads 3
-            :watchers {:stdout-log (fn [k r o n]
-                                    (let [[_ d _] (data/diff o n)]
-                                      (doseq [[{:keys [name]} {:keys [status report]}] d]
-                                        (if (= status :done)
-                                          (println (str (:result report) ": " name))
-                                          (println (str status ": " name))))))
-                       :screencapture (watch/on-fail
-                                       (fn [t _] 
-                                         (selenium/browser "screenCapture"
-                                                           "screenshots"
-                                                           (str 
-                                                            (:name t)
-                                                            (if (:parameters t)
-                                                              (str "-" (string/replace (:parameters t) "/" "\\"))
-                                                              "")
-                                                            ".png")
-                                                           false)))}}
+    (merge {:threads 3}
            setup/runner-config)))
 
 (defn org-tests []
@@ -181,6 +162,7 @@
 
                            {:name "assign sync plan to multiple products"
                             :steps sync/set-schedules
+                            :blockers (open-bz-bugs "751876")
                             :more [{:name "reassign product sync plan"
                                     :steps sync/reset-schedule}]}]
                           
