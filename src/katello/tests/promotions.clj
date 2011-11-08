@@ -61,8 +61,8 @@
                              Verifies that it shows up in the new env."}
               
              (data-driven verify-promote-content
-                          [[(lazy-seq [locker (@config :first-env)]) {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}]
-                           [(lazy-seq [locker (@config :first-env) (@config :second-env)]) {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}]])
+                          [(lazy-seq [[locker (@config :first-env)] {:products (fn [] (set (tasks/uniqueify "MyProduct" 3)))}])
+                           (lazy-seq [[locker (@config :first-env) (@config :second-env)] {:products (fn [] (set (tasks/uniqueify "ProductMulti" 3)))}])])
              dep-chain)}])
 
 
