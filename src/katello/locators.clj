@@ -293,10 +293,10 @@
   (browser click link)
   ((or post-fn no-wait)))
 
-(defn select-environment-widget [env-name & [ next-env-name]]
+(defn select-environment-widget [env-name & [{:keys [next-env-name wait-fn]}]]
   (do (when (browser isElementPresent :expand-path)
         (browser click :expand-path))
-      (via (promotion-env-breadcrumb env-name next-env-name) load-wait)))
+      (via (promotion-env-breadcrumb env-name next-env-name) wait-fn)))
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
@@ -347,7 +347,8 @@
                [:sync-schedule-page [] (via :sync-schedule load-wait)]]
               [:promotions-page [] (via :promotions load-wait)
                [:named-environment-promotions-page [env-name next-env-name]
-                (select-environment-widget env-name next-env-name)
+                (select-environment-widget env-name {:next-env-name next-env-name
+                                                     :wait-fn load-wait})
                 [:named-changeset-promotions-page [changeset-name]
                  (via (changeset changeset-name))]]]
               [:system-templates-page [] (via :system-templates load-wait)
