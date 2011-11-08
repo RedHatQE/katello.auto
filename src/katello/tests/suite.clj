@@ -116,6 +116,7 @@
             {:configuration true
              :name "create provider for testing products and repos"
              :steps providers/setup-custom
+             :blockers (open-bz-bugs "751910")
              :more [{:name "create a product"
                      :steps providers/create-product
                      :more [{:name "delete a product"
