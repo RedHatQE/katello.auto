@@ -2,7 +2,7 @@
   :description "Katello automation"  
   :main katello.tests.suite
   :dependencies [[org.clojure/clojure "1.3.0"]
-                 [test.tree "0.5.1-SNAPSHOT"]
+                 [test.tree "0.5.2-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
