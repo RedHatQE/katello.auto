@@ -34,21 +34,22 @@
 
 (defn suite []
   (with-meta
-    (build/before-all (fn [] (tasks/navigate :top-level))
-                     {:name "login as admin"
-                      :steps login/admin
-                      :more (concat (org-tests)
-                                    (provider-tests)
-                                    (sync-tests)
-                                    (promotions/tests)
-                                    (system-tests)
-                                    (user-tests)
-                                    (permission-tests)
-                                    (template-tests)
-                                    (build/data-driven  {:name "login as invalid user"
-                                                        :blockers (open-bz-bugs "730738")} 
-                                                       login/invalid
-                                                       login/invalid-logins))})
+    (build/before-all
+     (fn [] (tasks/navigate :top-level))
+     {:name "login as admin"
+      :steps login/admin
+      :more (concat (org-tests)
+                    (provider-tests)
+                    (sync-tests)
+                    (promotions/tests)
+                    (system-tests)
+                    (user-tests)
+                    (permission-tests)
+                    (template-tests)
+                    (build/data-driven {:name "login as invalid user"
+                                        :blockers (open-bz-bugs "730738")} 
+                                       login/invalid
+                                       login/invalid-logins))})
     (merge {:threads 3}
            setup/runner-config)))
 
