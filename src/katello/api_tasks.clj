@@ -1,7 +1,7 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
-        [inflections.core :only [pluralize]]
+        [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
         [katello.tasks :only [uniqueify]]))
 
@@ -48,9 +48,9 @@
 
 (defn uri-for-entity-type  
   [entity-type]
-  (let [url-types {[:organization] {:reqs []
-                                    :fmt "api/%s"}
-                   [:environment :product :system :provider] {:reqs [#'*org*]
+  (let [url-types {[:organization :template] {:reqs []
+                                              :fmt "api/%s"}
+                   [:environment :product :provider] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
                    [:changeset] {:reqs [#'*org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}}
@@ -211,21 +211,12 @@
     "lscpu.numa_node0_cpu(s)" "0"
     }))
 
-(defn create-system [name {:keys [env-name facts]}]
-  (rest/post (api-url "api/environments/"
-                      (str (get-id-by-name :environment env-name)) "/consumers")
+(defn create-system [name {:keys [facts]}]
+  (rest/post (api-url "api/environments/" *env-id* "/consumers")
              *user* *password*
              {:name name
               :cp_type "system"
               :facts facts}))
-
-(defn create-template [name {:keys [description env-name] }]
-  (rest/post (api-url "api/templates/")
-             *user* *password*
-             {:template {:name name
-                         :description description}
-              :environment_id (str (get-id-by-name :environment env-name))}))
-
 
 (defn create-changeset [name]
   (rest/post (api-url (uri-for-entity-type :changeset))
@@ -258,5 +249,16 @@
     (add-to-changeset cs-name {:content content})
     (promote-changeset cs-name)))
 
-(comment  (-> cs :state (= "new"))
-            (throw (IllegalStateException. (format "Changeset %s should be promoting but still says new" changeset-name))))
+(defn create-template [{:keys [name description]}]
+  (rest/post (api-url (uri-for-entity-type :template))
+             *user* *password*
+             {:template {:name name
+                         :description description}
+              :environment_id *env-id*}))
+
+(defn add-to-template [template-name content]
+  (doseq [[content-type items] content item items]
+    (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/"
+                        (name content-type))
+               *user* *password*
+               {:id (get-id-by-name (-> content-type name singularize keyword) item)})))

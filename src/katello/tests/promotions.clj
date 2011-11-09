@@ -9,7 +9,7 @@
   (:refer-clojure :exclude [fn]))
 
 (def provider-name (atom nil))
-
+(def template-name (atom nil))
 (def locker "Locker")
 
 
@@ -35,17 +35,29 @@
       (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
-  (let [content (zipmap (keys content) (for [val (vals content)]  ;;execute uniqueifying at runtime
-                                            (if (fn? val) (val) val)))]
-   (doseq [product-name (content :products)]
-     (api/with-admin
-       (api/create-product product-name {:provider-name @provider-name
-                                         :description "test product"})
-       (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
-                                                        :url "http://blah.com"})))
-   (doseq [[from-env target-env] (partition 2 1 envs)]
-     (promote-content from-env target-env content)
-     (verify-all-content-present content (tasks/environment-content target-env)))))
+  (let [content (zipmap (keys content) (for [val (vals content)] ;;execute uniqueifying at runtime
+                                         (if (fn? val) (val) val)))]
+    (doseq [product-name (content :products)]
+      (api/with-admin
+        (api/create-product product-name {:provider-name @provider-name
+                                          :description "test product"})
+        (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
+                                                         :url "http://blah.com"})))
+    (doseq [template-name (content :templates)]
+      (api/with-admin
+        (let [product-name (tasks/uniqueify "templ-prod")]
+          (api/create-product product-name 
+                              {:provider-name @provider-name
+                               :description "test product"})
+          (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
+                                                           :url "http://blah.com"})
+          (api/with-env "Locker"
+            (api/create-template {:name template-name
+                                  :description "template to be promoted"})
+            (api/add-to-template template-name {:products [product-name]})))))
+    (doseq [[from-env target-env] (partition 2 1 envs)]
+      (promote-content from-env target-env content)
+      (verify-all-content-present content (tasks/environment-content target-env)))))
 
 (defn tests []
   [{:configuration true
@@ -62,7 +74,8 @@
               
              (data-driven verify-promote-content
                           [ (fn [] [[locker (@config :first-env)] {:products (set (tasks/uniqueify "MyProduct" 3))}])
-                            (fn [] [[locker (@config :first-env) (@config :second-env)] {:products (set (tasks/uniqueify "ProductMulti" 3))}])]) ;;delay calculation with fn, otherwise, @config will still be empty
+                            (fn [] [[locker (@config :first-env) (@config :second-env)] {:products (set (tasks/uniqueify "ProductMulti" 3))}])
+                            (fn [] [[locker (@config :first-env) (@config :second-env)] {:templates (set (tasks/uniqueify "TemplateMulti" 3))}])]) ;;delay calculation with fn, otherwise, @config will still be empty
              dep-chain)}])
 
 

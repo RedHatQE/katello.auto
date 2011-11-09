@@ -140,19 +140,20 @@
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
         retrieve (fn [elem]
-                   (try (-> (browser getText elem) .trim (string/replace #" +\S+$" ""))
+                   (try (browser getText elem)
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set)))
 
 (defn environment-content [env]
   (navigate :named-environment-promotions-page {:env-name env
                                                 :next-env-name nil})
-  (let [categories [:products]]
-    (into {}
+  (let [categories [:products :templates]]
+    (zipmap categories
           (for [category categories]
             (do (browser click (-> category name (str "-category") keyword))
-                (browser sleep 2000)
-                [category (extract-content)])))))
+                (let [result (extract-content)]
+                  (browser click :promotion-eligible-home)
+                  result))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-promotions-page {:env-name env}))

@@ -48,7 +48,7 @@
                                "//a[@data-display_name='$1' and contains(.,'Add')]"]
    promotion-content-category ["Content Category" "//div[@id='$1']"]
    promotion-content-item-n ["Content item by index"
-                             "//div[@id='list']//li[$1]//span[@class='product-icon']"]
+                            "//div[@id='list']//li[$1]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"]
    promotion-remove-content-item ["Remove Content Item"
                                   "//a[@data-display_name='$1' and contains(.,'Remove')]"]
    provider-sync-checkbox ["Provider sync checkbox"
@@ -169,6 +169,9 @@
                  :errata-category (promotion-content-category "errata")
                  :packages-category (promotion-content-category "packages")
                  :kickstart-trees-category (promotion-content-category "kickstart trees")
+                 :templates-category (promotion-content-category "templates")
+                 :promotion-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
+
                  :review-for-promotion "review_changeset"
                  :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
                  :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"

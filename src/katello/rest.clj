@@ -3,12 +3,16 @@
             [clojure.data.json :as json])
   (:refer-clojure :exclude (get)))
 
+(defn- read-json-safe [s]
+  (try (json/read-json s)
+       (catch Exception e {:failed-json-object s :exception e})))
+
 (defn get
   "Gets the url, and decodes JSON in the response body, returning a
   clojure datastructure."
   [url & [req]]
   (-> (httpclient/get url (merge req {:accept :json}))
-     :body json/read-json))
+     :body read-json-safe))
 
 (defn post
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
@@ -17,7 +21,7 @@
                                        :basic-auth [user pw]
                                        :accept :json
                                        :content-type :json}))
-      :body json/read-json))
+      :body read-json-safe))
 
 (defn put
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
@@ -26,7 +30,7 @@
                                      :basic-auth [user pw]
                                      :accept :json
                                      :content-type :json}))
-     :body json/read-json))
+     :body read-json-safe))
 
 (defn delete [url user pw & [req]]
   (-> (httpclient/delete url (merge req {:basic-auth [user pw]
