@@ -11,9 +11,9 @@
 
 (defn with-freshly-registered-system [f]
   (f (api/with-admin
-       (api/create-system (tasks/uniqueify "newsystem")
-                          {:env-name (@config :first-env)
-                           :facts (api/random-facts)}))))
+       (api/with-env (@config :first-env)
+         (api/create-system (tasks/uniqueify "newsystem")
+                            {:facts (api/random-facts)})))))
 
 (def create-env 
   (fn [] (api/with-admin
