@@ -149,11 +149,12 @@
                                                 :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
-          (for [category categories]
-            (do (browser click (-> category name (str "-category") keyword))
-                (let [result (extract-content)]
-                  (browser click :promotion-eligible-home)
-                  result))))))
+            (doall (for [category categories]
+                     (do (browser click (-> category name (str "-category") keyword))
+                         (browser sleep 2000)
+                         (let [result (extract-content)]
+                           (browser click :promotion-eligible-home)
+                           result)))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-promotions-page {:env-name env}))
