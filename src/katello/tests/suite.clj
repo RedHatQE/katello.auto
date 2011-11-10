@@ -19,12 +19,9 @@
                      [validation :as validate])
 
             [test.tree :as test]
-            (test.tree [builder :as build]
-                       
+            (test.tree [builder :as build]       
                        [reporter :as report])
-            
-            
-            
+
             [com.redhat.qe.auto.selenium.selenium :as selenium])
   (:use [test.tree.builder :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
@@ -244,5 +241,5 @@
     (println "----- Blockers -----\n ")
     (pprint/pprint (->> reports
                         vals
-                        (mapcat :blocked-by)
+                        (mapcat #(get-in % [:report :blocked-by]))
                         distinct))))
