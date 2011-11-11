@@ -3,6 +3,7 @@
                      [data :as data])
             [fn.trace :as tr]
             (katello [tasks :as tasks]
+                     [api-tasks :as api]
                      [conf :as conf]
                      [api-tasks :as api-tasks]) 
             [test.tree :as test]
@@ -26,7 +27,7 @@
   (tasks/login (@conf/config :admin-user) (@conf/config :admin-password)))
 
 (defn switch-new-admin-user [user pw]
-  (tasks/create-user user {:password pw })
+  (api/create-user user {:password pw })
   (tasks/assign-role {:user user
                       :roles ["Administrator"]})
   (tasks/logout)

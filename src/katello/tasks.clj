@@ -303,12 +303,15 @@
   (if-not (= (current-user) username)
     (login username password)))
 
-(defn create-user [username {:keys [password password-confirm]}]
+(defn create-user [username {:keys [password password-confirm default-org default-env]}]
   (navigate :users-tab)
   (browser click :new-user)
+  (when default-env
+    (locators/select-environment-widget default-env))
   (fill-ajax-form {:new-user-username-text username
                    :new-user-password-text password
-                   :new-user-confirm-text (or password-confirm password)}
+                   :new-user-confirm-text (or password-confirm password)
+                   :new-user-default-org default-org}
                   :save-user)
   (check-for-success))
 

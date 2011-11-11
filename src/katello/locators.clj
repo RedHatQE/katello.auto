@@ -184,6 +184,7 @@
             :new-user-username-text "username_field"
             :new-user-password-text "password_field"
             :new-user-confirm-text "confirm_field"
+            :new-user-default-org "org_id[org_id]"
             :save-user "save_user"
             :remove-user (link "Remove User")
             :enable-inline-help-checkbox "user[helptips_enabled]"

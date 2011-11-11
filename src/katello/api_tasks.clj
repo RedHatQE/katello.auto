@@ -48,7 +48,7 @@
 
 (defn uri-for-entity-type  
   [entity-type]
-  (let [url-types {[:organization :template] {:reqs []
+  (let [url-types {[:organization :template :user] {:reqs []
                                               :fmt "api/%s"}
                    [:environment :product :provider] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
@@ -262,3 +262,10 @@
                         (name content-type))
                *user* *password*
                {:id (get-id-by-name (-> content-type name singularize keyword) item)})))
+
+(defn create-user [username {:keys [password disabled]}]
+  (rest/post (api-url (uri-for-entity-type :user))
+             *user* *password*
+             {:username username
+              :password password
+              :disabled (or disabled false)}))
