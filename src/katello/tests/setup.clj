@@ -27,7 +27,7 @@
   (tasks/login (@conf/config :admin-user) (@conf/config :admin-password)))
 
 (defn switch-new-admin-user [user pw]
-  (api/create-user user {:password pw })
+  (api/with-admin (api/create-user user {:password pw }))
   (tasks/assign-role {:user user
                       :roles ["Administrator"]})
   (tasks/logout)
