@@ -221,7 +221,7 @@
             :new-role-name-text "role[name]"
             :new-role-description-text "role[description]"
             :save-role "role_save"
-            :save-user-edit "change_password"
+            :save-user-edit "save_password"
             :role-users "role_users"
             :role-permissions "role_permissions"
             :next "next_button"
