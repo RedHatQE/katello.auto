@@ -15,7 +15,7 @@
 (def edit-role
   (fn [] (let [user-name (tasks/uniqueify "role-user")
               role-name (tasks/uniqueify "edit-role")]
-          (tasks/create-user user-name {:password "abcd1234"})
+          (tasks/create-user user-name {:password "abcd1234" :email "me@my.org"})
           (tasks/create-role role-name)
           (tasks/edit-role role-name
                            {:add-permissions [{:org "Global Permissions"

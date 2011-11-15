@@ -25,7 +25,7 @@
 
 (def min-password-length
   (fn []
-    (v/field-validation tasks/create-user [(tasks/uniqueify "insecure-user") details]
+    (v/field-validation tasks/create-user [(tasks/uniqueify "insecure-user") {:password "abcd" :email "me@my.org"}]
                         (v/expect-error :password-too-short))))
 
 (def assign-role

@@ -1,6 +1,6 @@
 (ns katello.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only
-         [fill-form SeleniumLocatable browser ->browser sel-locator]]
+         [fill-form SeleniumLocatable browser ->browser sel-locator load-wait no-wait]]
         [katello.conf :only [config]]
         [com.redhat.qe.auto.navigate :only [nav-tree]]
         [com.redhat.qe.config :only [same-name]]
@@ -192,6 +192,7 @@
             :clear-disabled-helptips "clear_helptips"
             :change-password-text "password_field"
             :confirm-password-text "confirm_field"
+            :user-email-text "user[email]"
             :save-roles "save_roles"
             :add-all (link "Add all")})
 
@@ -265,10 +266,9 @@
 
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
-  (sel-locator [k] (uimap k)))
-
-(extend-type String SeleniumLocatable
-             (sel-locator [x] x))
+  (sel-locator [k] (uimap k))
+  String
+  (sel-locator [x] x))
 
 (defn promotion-env-breadcrumb [name & [next]]
   (let [prefix "//a[normalize-space(.)='%1$s' and contains(@class, 'path_link')]"]
@@ -289,11 +289,6 @@
 
 
 ;;nav tricks
-(def no-wait (constantly nil))
-
-(defn load-wait []
-  (browser waitForPageToLoad "60000"))
-
 (defn via [link & [post-fn]]
   (browser click link)
   ((or post-fn no-wait)))
@@ -362,12 +357,12 @@
              [:systems-tab [] (browser mouseOver :systems)
               [:systems-all-page [] (via :all load-wait)
                [:named-systems-page [system-name] (choose-left-pane
-                                                  (left-pane-item system-name))
+                                                   (left-pane-item system-name))
                 [:system-subscriptions-page [] (via :subscriptions-right-nav)]]]
               [:activation-keys-page [] (via :activation-keys load-wait)
-                [:named-activation-key-page [activation-key-name]
-                 (choose-left-pane (left-pane-item activation-key-name))]
-                [:new-activation-key-page [] (via :new-activation-key)]]
+               [:named-activation-key-page [activation-key-name]
+                (choose-left-pane (left-pane-item activation-key-name))]
+               [:new-activation-key-page [] (via :new-activation-key)]]
               [:systems-environment-page [env-name]
                (do (via :by-environments load-wait)
                    (select-environment-widget env-name))

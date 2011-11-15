@@ -322,14 +322,18 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password]}]
+(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password new-email]}]
   (navigate :named-user-page {:username username})
-  (fill-ajax-form {:enable-inline-help-checkbox inline-help
-                   :clear-disabled-helptips clear-disabled-helptips
-                   :change-password-text new-password
-                   :confirm-password-text new-password}
-                  :save-user-edit)
-  (check-for-success))
+  (when (-> (fill-ajax-form {:enable-inline-help-checkbox inline-help
+                            :clear-disabled-helptips clear-disabled-helptips
+                            :change-password-text new-password
+                            :confirm-password-text new-password}
+                           :save-user-edit)
+           count (> 0))
+    (check-for-success))
+  (when new-email
+    (in-place-edit {:user-email-text new-email})
+    (check-for-success)))
 
 (defn create-role [name & [{:keys [description]}]]
   (navigate :roles-tab)
