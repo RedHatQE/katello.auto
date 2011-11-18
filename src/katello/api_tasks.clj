@@ -87,8 +87,8 @@
 (defn get-id-by-name [entity-type entity-name]
   (let [all (get-by-name entity-type entity-name)
         ct (count all)]
-    (if (> ct 1)
-      (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected at most 1."
+    (if (not= ct 1)
+      (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
                                                 ct (name entity-type) entity-name)))
       (-> all first :id))))
 
