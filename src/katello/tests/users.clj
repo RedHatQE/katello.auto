@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:use [test.tree.builder :only [fn]])
   (:require [katello.tasks :as tasks]
-            [katello.validation :as v]))
+            [katello.validation :as v])
+  (:use [slingshot.slingshot :only [try+ throw+]]))
 
 (def details {:password "password" :email "blah@blah.com"})
 
@@ -10,9 +11,24 @@
   (fn [] (tasks/create-user (tasks/uniqueify "autouser") details)))
 
 (def edit
-  (fn [] (let [username (tasks/uniqueify "autouser")]
+  (fn [] (let [username (tasks/uniqueify "edituser")]
           (tasks/create-user username details)
-          (tasks/edit-user username {:new-password "changedpw"}))))
+          (tasks/edit-user username {:new-password "changedpwd"}))))
+
+(def password-mismatch
+  (fn [] (let [username (tasks/uniqueify "pwdmismatch")]
+           (tasks/create-user username {:password "password"})
+           (try+  (tasks/edit-user username {:new-password "password"
+                                      :new-password-confirm "p@$$word"})
+                  (throw+ {:type :no-mismatch-reported :msg "Passwords do not match not reported"})
+                  (catch [:type :password-mismatch] _)))))
+
+(def search-users
+  "Search for users based on criteria."
+  (fn [] (let [username (tasks/uniqueify "searchuser")]
+           (tasks/create-user username {:password "password"
+                                        :email "blah@blah.org"})
+           (tasks/validate-search :users {:criteria "search"}))))
 
 (def delete
   (fn [] (let [username (tasks/uniqueify "deleteme")]

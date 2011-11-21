@@ -66,7 +66,8 @@
    template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
-   username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]})
+   username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]
+   left-pane-field-list ["Left pane item#" "xpath=(//div[contains(@class,'ellipsis')])[$1]"]})
 
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
@@ -194,7 +195,8 @@
             :confirm-password-text "confirm_field"
             :user-email-text "user[email]"
             :save-roles "save_roles"
-            :add-all (link "Add all")})
+            :add-all (link "Add all")
+            :password-conflict "//div[@id='password_conflict' and string-length(.)>0]"})
 
 (def sync-plans {:new-sync-plan "new"
                  :sync-plan-name-text "sync_plan[name]"
@@ -356,9 +358,10 @@
                [:new-system-template-page [] (via :new-template)]]]
              [:systems-tab [] (browser mouseOver :systems)
               [:systems-all-page [] (via :all load-wait)
+               [:systems-by-environment-page [] (via :by-environments load-wait)
                [:named-systems-page [system-name] (choose-left-pane
                                                    (left-pane-item system-name))
-                [:system-subscriptions-page [] (via :subscriptions-right-nav)]]]
+                [:system-subscriptions-page [] (via :subscriptions-right-nav)]]]]
               [:activation-keys-page [] (via :activation-keys load-wait)
                [:named-activation-key-page [activation-key-name]
                 (choose-left-pane (left-pane-item activation-key-name))]
@@ -381,3 +384,9 @@
                [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
                 [:named-role-users-page [] (via :role-users)]
                 [:named-role-permissions-page [] (via :role-permissions)]]]]]))
+
+(def tabs '(:redhat-provider-tab 
+             :roles-tab :users-tab 
+             :systems-all-page
+             :activation-keys-page
+             :systems-by-environment-page))

@@ -16,7 +16,8 @@
    
             (katello [tasks :as tasks]
                      [conf :as conf] 
-                     [validation :as validate])
+                     [validation :as validate]
+                     [locators :as locators])
 
             [test.tree :as test]
             (test.tree [builder :as build]       
@@ -26,7 +27,7 @@
   (:use [test.tree.builder :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
-(declare org-tests environment-tests provider-tests
+(declare nav-tests org-tests environment-tests provider-tests
          system-tests user-tests sync-tests permission-tests template-tests)
 
 (defn suite []
@@ -49,6 +50,11 @@
                                        login/invalid-logins))})
     (merge {:threads 3}
            setup/runner-config)))
+
+(defn nav-tests []
+  (build/data-driven
+    {:name "check navigation tabs"}
+    tasks/check-tab (map vector locators/tabs)))
 
 (defn org-tests []
   [{:name "create an org"

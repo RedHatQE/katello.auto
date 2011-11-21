@@ -5,11 +5,13 @@
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
-        [slingshot.slingshot :only [throw+]]
+        [slingshot.slingshot :only [throw+ try+]]
         [com.redhat.qe.verify :only [verify-that]]
         [test.tree.builder :only [print-meta]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
+
+(declare search)
 
 ;;tasks
 (defn timestamp
@@ -75,6 +77,11 @@
                                  (throw+ (assoc notif :type errtype)))
           :else notif)))
 
+(defn check-for-error
+  [ & [timeout]]
+  (try+ (check-for-success timeout)
+        (catch [:type ::no-success-message-error] _)))
+
 (defn verify-success [task-fn]
   (let [notification (task-fn)]
     (verify-that (success? notification))))
@@ -135,6 +142,27 @@
       status
       (do (Thread/sleep 2000)
           (recur (browser getText (locators/changeset-status changeset-name)))))))
+
+(defn extract-left-pane-list [loc]
+  "Extract data from the left pane, accepts locator as argument
+   for example, extract-left-pane-list locators/left-pane-field-list"
+  (let [elems (for [index (iterate inc 1)]
+                (loc (str index)))
+                ;(locators/left-pane-field-list (str index)))
+        retrieve (fn [elem]
+                   (try (browser getText elem)
+                        (catch Exception e nil)))]
+    (->> (map retrieve elems) (take-while identity) set)))
+
+(defn validate-search [entity-type &  [{:keys [criteria scope] :as search-opts}]]
+  "Validate a search request.  
+      entity-type can be anything that has a support search, :orgs, :users etc...
+      criteria is something you are searching for.
+      scope is currently not implemented."
+  (search entity-type  search-opts)
+  (if-not (every? (fn [s] (.contains s criteria))
+                  (extract-left-pane-list locators/left-pane-field-list))
+    (throw+ {:type :search-results-inaccurate :msg "Not all search results match criteria."})))
 
 (defn extract-content []
   (let [elems (for [index (iterate inc 1)]
@@ -321,19 +349,28 @@
   (browser click :remove-user)
   (browser click :confirmation-yes)
   (check-for-success))
-
-(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password new-email]}]
+  
+(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password new-password-confirm new-email]}]
   (navigate :named-user-page {:username username})
-  (when (-> (fill-ajax-form {:enable-inline-help-checkbox inline-help
-                            :clear-disabled-helptips clear-disabled-helptips
-                            :change-password-text new-password
-                            :confirm-password-text new-password}
-                           :save-user-edit)
-           count (> 0))
-    (check-for-success))
+  (browser type :change-password-text new-password)
+  (browser type :confirm-password-text (or new-password-confirm new-password))
+  (when (browser isElementPresent :password-conflict)
+    (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
+  (browser click :save-user-edit) 
+  (check-for-success)
   (when new-email
     (in-place-edit {:user-email-text new-email})
     (check-for-success)))
+
+(defn search [entity-type & [{:keys [criteria scope]}]]
+  "Search for criteria in entity-type, scope not yet implemented.
+   check for error with a 2s timeout.  In this case error is a 
+   error jnotify object."
+  (navigate (entity-type {:users :users-tab 
+                          :orgs :organizations-tab}))
+  (browser type :search-bar criteria)
+  (browser click :search-submit)
+  (check-for-error 2000))
 
 (defn create-role [name & [{:keys [description]}]]
   (navigate :roles-tab)
@@ -519,3 +556,21 @@
       (browser click :template-eligible-home))
     (browser click :save-template)
     (check-for-success)))
+
+;;(def tabs '(:redhat-provider-tab :roles-tab 
+;;            :users-tab :systems-all-page
+;;            :activation-keys-page
+;;            :systems-by-environment))
+
+(defn check-tab [tab]
+  "As a result of a recent issue that caused errors on one of the navigation
+   tabs I have created this function to simply navigate to tabs and check 
+   for a error"
+  (navigate tab)
+  (check-for-error 2000))
+
+(defn check-tabs []
+  (for [tab locators/tabs]
+    (try (check-tab tab)
+      (catch Exception e e))))
+

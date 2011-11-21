@@ -7,6 +7,15 @@
         [test.tree.builder :only [fn data-driven]]
         [katello.validation :only [duplicate-disallowed field-validation name-field-required expect-error]]))
 
+(def search-org
+  "Search for organizations based on criteria."
+  (fn [] 
+    (api/with-admin-creds
+      (let [test-org-name (tasks/uniqueify "searchorg")]
+      (api/create-organization test-org-name
+       {:description "organization used to test environments."})
+      (tasks/validate-search :orgs {:criteria "search"})))))
+
 (def create
   (fn [] (tasks/verify-success
          #(tasks/create-organization
