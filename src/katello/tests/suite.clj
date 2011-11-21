@@ -151,7 +151,8 @@
     :configuration true
     :more [{:name "simple sync"
             :description "Sync a product with just a few packages in one repo."
-            :blockers (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
+            :blockers (build/juxtcat (constantly :sync-page-changes-broke-test)
+                                     (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627"))
             :steps sync/simple}
            {:name "create a sync plan"
             :steps sync/create-plan
@@ -172,8 +173,8 @@
                                     :steps sync/reset-schedule}]}]
                           
                           (build/data-driven {:name "sync plan validation"}
-                                            sync/plan-validate
-                                            (sync/plan-validation-data)))}]}])
+                                             sync/plan-validate
+                                             (sync/plan-validation-data)))}]}])
 
 (defn system-tests []
   [{:name "setup environment for systems"
