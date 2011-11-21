@@ -73,7 +73,11 @@
              :steps orgs/name-required}
 
             {:name "edit an org"
-             :steps orgs/edit}]
+             :steps orgs/edit}
+            
+            {:name "search for org"
+             :blockers (open-bz-bugs "750120")
+             :steps orgs/search-org}]
            
            (build/data-driven {:name "org valid name"
                               :blockers (open-bz-bugs "726724")}
@@ -221,6 +225,9 @@
 
            {:name "users' miniumum password length enforced"
             :steps users/min-password-length}
+           
+           {:name "search for user"
+            :steps users/search-users}
 
            {:name "assign role to user"
             :steps users/assign-role}]}])
