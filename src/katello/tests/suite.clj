@@ -54,7 +54,7 @@
 (defn nav-tests []
   (build/data-driven
     {:name "check navigation tabs"}
-    tasks/check-tab (map vector locators/tabs)))
+    tasks/check-tab (map vector locators/tab-list)))
 
 (defn org-tests []
   [{:name "create an org"
@@ -155,8 +155,8 @@
     :configuration true
     :more [{:name "simple sync"
             :description "Sync a product with just a few packages in one repo."
-            :blockers (build/juxtcat (constantly :sync-page-changes-broke-test)
-                                     (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627"))
+            :blockers (fn [_] (conj (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
+                                   :sync-page-changes-broke-test))
             :steps sync/simple}
            {:name "create a sync plan"
             :steps sync/create-plan
