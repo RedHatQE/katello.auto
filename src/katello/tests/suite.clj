@@ -253,7 +253,10 @@
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
     (println "----- Blockers -----\n ")
-    (pprint/pprint (->> reports
-                        vals
-                        (mapcat #(get-in % [:report :blocked-by]))
-                        distinct))))
+    (let [blockers (->> reports
+                      vals
+                      (mapcat #(get-in % [:report :blocked-by]))
+                      distinct
+                      (filter #(not (nil? %)))
+                      (reduce (fn [m x] (assoc m x (inc (m x 0)))) {}))]
+      (pprint/pprint blockers))))

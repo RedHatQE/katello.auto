@@ -70,10 +70,10 @@
    :setup (fn [] (println "initializing.") (conf/init))
    :watchers {:stdout-log (fn [k r o n]
                             (let [[_ d _] (data/diff o n)]
-                              (doseq [[{:keys [name]} {:keys [status report]}] d]
+                              (doseq [[{:keys [name parameters]} {:keys [status report]}] d]
                                 (if (= status :done)
-                                  (println (str (:result report) ": " name))
-                                  (println (str status ": " name))))))
+                                  (println (str (:result report) ": " name) (pr-str parameters))
+                                  (println (str status ": " name) (pr-str parameters))))))
               :screencapture (watch/on-fail
                               (fn [t _] 
                                 (browser "screenCapture"

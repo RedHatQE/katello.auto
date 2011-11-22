@@ -385,8 +385,8 @@
                 [:named-role-users-page [] (via :role-users)]
                 [:named-role-permissions-page [] (via :role-permissions)]]]]]))
 
-(def tab-list'(:redhat-provider-tab 
-               :roles-tab :users-tab 
-               :systems-all-page
-               :activation-keys-page
-               :systems-by-environment-page))
+(def tab-list '(:redhat-provider-tab 
+                :roles-tab :users-tab 
+                :systems-all-page
+                :activation-keys-page
+                :systems-by-environment-page))
