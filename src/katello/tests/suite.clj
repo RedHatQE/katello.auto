@@ -158,8 +158,9 @@
     :configuration true
     :more [{:name "simple sync"
             :description "Sync a product with just a few packages in one repo."
-            :blockers (fn [_] (conj (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
-                                   :sync-page-changes-broke-test))
+            :blockers (build/juxtcat (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
+                                     (constantly [:sync-page-changes-broke-test]))
+            
             :steps sync/simple}
            {:name "create a sync plan"
             :steps sync/create-plan
