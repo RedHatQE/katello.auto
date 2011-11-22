@@ -44,6 +44,7 @@
                     (user-tests)
                     (permission-tests)
                     (template-tests)
+                    (nav-tests)
                     (build/data-driven {:name "login as invalid user"
                                         :blockers (open-bz-bugs "730738")} 
                                        login/invalid
@@ -52,9 +53,11 @@
            setup/runner-config)))
 
 (defn nav-tests []
-  (build/data-driven
-    {:name "check navigation tabs"}
-    tasks/check-tab (map vector locators/tab-list)))
+  (build/data-driven {:name "navigate to tab"}
+                     (fn [tab]
+                       (tasks/navigate tab)
+                       (tasks/check-for-error 2000))
+                     (map vector locators/tab-list)))
 
 (defn org-tests []
   [{:name "create an org"

@@ -556,21 +556,3 @@
       (browser click :template-eligible-home))
     (browser click :save-template)
     (check-for-success)))
-
-;;(def tabs '(:redhat-provider-tab :roles-tab 
-;;            :users-tab :systems-all-page
-;;            :activation-keys-page
-;;            :systems-by-environment))
-
-(defn check-tab [tab]
-  "As a result of a recent issue that caused errors on one of the navigation
-   tabs I have created this function to simply navigate to tabs and check 
-   for a error"
-  (navigate tab)
-  (check-for-error 2000))
-
-(defn check-tabs []
-  (for [tab locators/tabs]
-    (try (check-tab tab)
-      (catch Exception e e))))
-
