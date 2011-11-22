@@ -71,9 +71,10 @@
    :watchers {:stdout-log (fn [k r o n]
                             (let [[_ d _] (data/diff o n)]
                               (doseq [[{:keys [name parameters]} {:keys [status report]}] d]
-                                (if (= status :done)
-                                  (println (str (:result report) ": " name) (pr-str parameters))
-                                  (println (str status ": " name) (pr-str parameters))))))
+                                (let [parms-str (if parameters (pr-str parameters) "")]
+                                  (if (= status :done)
+                                         (println (str (:result report) ": " name parms-str) )
+                                         (println (str status ": " name parms-str)))))))
               :screencapture (watch/on-fail
                               (fn [t _] 
                                 (browser "screenCapture"
