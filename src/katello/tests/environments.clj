@@ -32,7 +32,7 @@
        {:org-name @test-org-name
         :description "simple environment description"})
       (tasks/verify-success
-       #(tasks/delete-environment @test-org-name env-name)))))
+       #(tasks/delete-environment env-name {:org-name @test-org-name})))))
 
 (def dupe-disallowed
   (fn [] 

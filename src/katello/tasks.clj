@@ -223,7 +223,7 @@
                   :create-environment)
   (check-for-success))
 
-(defn delete-environment [org-name env-name]
+(defn delete-environment [env-name {:keys [org-name]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (browser click :remove-environment)
