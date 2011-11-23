@@ -235,7 +235,7 @@
   (in-place-edit {:org-description-text-edit description})
   (check-for-success))
 
-(defn edit-environment [org-name env-name & {:keys [new-name description prior]}]
+(defn edit-environment [env-name {:keys [org-name new-name description prior]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (in-place-edit {:env-name-text-edit new-name

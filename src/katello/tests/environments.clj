@@ -48,10 +48,8 @@
       (tasks/create-environment env-name
                                 {:org-name @test-org-name
                                  :description "try to rename me!"})
-      (tasks/edit-environment @test-org-name
-                              env-name
-                              :new-name
-                              new-name)
+      (tasks/edit-environment env-name {:org-name @test-org-name
+                                        :new-name new-name})
       (tasks/navigate :named-environment-page
                       {:org-name @test-org-name
                        :env-name new-name}))))
