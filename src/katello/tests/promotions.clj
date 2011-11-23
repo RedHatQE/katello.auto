@@ -26,7 +26,8 @@
     (tasks/create-changeset from-env to-env changeset)
     (tasks/add-to-changeset changeset from-env to-env content)
     (tasks/promote-changeset changeset {:from-env from-env
-                                        :to-env to-env})))
+                                        :to-env to-env
+                                        :timeout-ms 300000})))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
