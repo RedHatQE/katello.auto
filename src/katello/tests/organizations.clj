@@ -23,7 +23,7 @@
 
 (def delete
   (fn [] (let [org-name (tasks/uniqueify "auto-del")]
-          (tasks/create-organization org-name "org to delete immediately")
+          (tasks/create-organization org-name {:description "org to delete immediately"})
           (tasks/delete-organization org-name)
           (let [remaining-org-names (doall (map :name
                                                 (api/with-admin-creds
@@ -33,21 +33,21 @@
 (def dupe-disallowed
   (fn [] (let [org-name (tasks/uniqueify "test-dup")]
           (duplicate-disallowed tasks/create-organization
-                                [org-name "org-description"]))))
+                                [org-name {:description "org-description"}]))))
 
 (def name-required
   (fn [] (name-field-required
-         tasks/create-organization [nil "org description"])))
+         tasks/create-organization ["" {:description "org description"}])))
 
 (def valid-name
   (fn [name expected-error]
     (field-validation tasks/create-organization
-                      [name "org description"]
+                      [name {:description "org description"}]
                       (expect-error expected-error))))
 
 (def edit
   (fn [] (let [org-name (tasks/uniqueify "auto-edit")]
-          (tasks/create-organization org-name "org to edit immediately")
+          (tasks/create-organization org-name {:description "org to edit immediately"})
           (tasks/edit-organization org-name :description "edited description"))))
 
 (def valid-name-data
