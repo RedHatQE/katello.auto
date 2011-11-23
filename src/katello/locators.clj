@@ -9,6 +9,8 @@
            [com.thoughtworks.selenium SeleniumException]))
 
 ;;ui layer
+(defn- template [descr templ]
+  (fn [& args] (Element. (LocatorTemplate. descr templ) (into-array args))))
 
 (defmacro define-strategies
   "Create a function for each locator strategy in map m (which maps
@@ -17,8 +19,8 @@
   with the locator strategy and args."
   [m]
   `(do ~@(for [loc-strat (keys m)]
-           `(defn ~loc-strat [& args#]
-              (Element. (LocatorTemplate. ~@(m loc-strat)) (into-array args#))))))
+           `(def ~loc-strat 
+              (template ~@(m loc-strat))))))
 
 (define-strategies
   {add-repository ["Add Repository" "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
