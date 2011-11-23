@@ -82,7 +82,7 @@
                                                   (str 
                                                    (:name t)
                                                    (if (:parameters t)
-                                                     (str "-" (string/replace (:parameters t) "/" "\\"))
+                                                     (str "-" (string/replace (pr-str (:parameters t)) "/" "\\"))
                                                      "")
                                                    ".png")
                                                   false)))}})
