@@ -91,4 +91,14 @@
                         :disallowed-actions [(fn [] (tasks/delete-organization org-name))
                                              (fn [] (tasks/create-provider {:name "myprov"}))
                                              (fn [] (api/create-provider "myprov"))]})])
-              assoc :blockers (open-bz-bugs "756252"))])
+              assoc :blockers (open-bz-bugs "756252"))
+   
+   (fn [] [{:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Organizations"
+                                         :verbs ["Register Systems"]
+                                         :name "systemreg"}]}]
+           :allowed-actions [(fn [] (api/create-system (tasks/uniqueify "system") (api/random-facts)))
+                             (fn [] (tasks/navigate :systems-all-page))]
+           :disallowed-actions [(fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                (fn [] (tasks/navigate :providers-tab))
+                                (fn [] (tasks/navigate :organizations-tab))]}])])
