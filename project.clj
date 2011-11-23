@@ -23,3 +23,14 @@
            (katello.tests.setup/new-selenium true)
            (katello.tests.setup/start-selenium))   ;;<-here for selenium
          )
+
+(comment "Execute this in the repl to create some test entities via API"
+
+         (do (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+             (require '[katello.tests.promotions]
+                      '[katello.tests.sync_management]
+                      '[katello.tests.templates])
+             (katello.tests.promotions/setup)
+             (katello.tests.sync_management/setup)
+             (katello.tests.templates/setup-content))
+         )
