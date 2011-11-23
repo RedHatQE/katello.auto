@@ -215,8 +215,8 @@
   (check-for-success))
 
 (defn create-environment
-  [org name description & [prior-env]]
-  (navigate :new-environment-page {:org-name org})
+  [name {:keys [org-name description prior-env]}]
+  (navigate :new-environment-page {:org-name org-name})
   (fill-ajax-form {:env-name-text name
                    :env-description-text description
                    :prior-environment prior-env}

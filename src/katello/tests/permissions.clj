@@ -50,6 +50,9 @@
                       (try (f)
                            (catch Exception e e))))))
 
+(defn- navigate-all [pages]
+  (for [page pages] (fn [] (tasks/navigate page))))
+
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
   [{:keys [permissions allowed-actions disallowed-actions]}]
   (let [rolename (tasks/uniqueify "role")
