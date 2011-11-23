@@ -30,25 +30,28 @@
 (declare nav-tests org-tests environment-tests provider-tests
          system-tests user-tests sync-tests permission-tests template-tests)
 
+(defn ^:dynamic tests-to-run []
+  (concat (org-tests)
+          (provider-tests)
+          (sync-tests)
+          (promotions/tests)
+          (system-tests)
+          (user-tests)
+          (permission-tests)
+          (template-tests)
+          (nav-tests)
+          (build/data-driven {:name "login as invalid user"
+                              :blockers (open-bz-bugs "730738")} 
+                             login/invalid
+                             login/invalid-logins)))
+
 (defn suite []
   (with-meta
     (build/before-all
      (fn [] (tasks/navigate :top-level))
      {:name "login as admin"
       :steps login/admin
-      :more (concat (org-tests)
-                    (provider-tests)
-                    (sync-tests)
-                    (promotions/tests)
-                    (system-tests)
-                    (user-tests)
-                    (permission-tests)
-                    (template-tests)
-                    (nav-tests)
-                    (build/data-driven {:name "login as invalid user"
-                                        :blockers (open-bz-bugs "730738")} 
-                                       login/invalid
-                                       login/invalid-logins))})
+      :more (tests-to-run)})
     (merge {:threads 3}
            setup/runner-config)))
 
@@ -243,7 +246,9 @@
             :steps permissions/remove-role}
 
            {:name "add permission and user to a role"
-            :steps permissions/edit-role}]}])
+            :steps permissions/edit-role
+            :more (build/data-driven {:name "user with permissions is properly restricted"}
+                                     permissions/verify-access permissions/access-test-data)}]}])
 
 (defn template-tests []
   [{:name "create a system template"

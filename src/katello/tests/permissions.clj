@@ -1,7 +1,8 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
   (:use [test.tree.builder :only [fn]]
-        [com.redhat.qe.verify :only [verify-that]])
+        [com.redhat.qe.verify :only [verify-that]]
+        [com.redhat.qe.auto.bz :only [open-bz-bugs]])
   (:require (katello [tasks :as tasks]
                      [validation :as v]
                      [api-tasks :as api]
@@ -45,9 +46,9 @@
 (def has-access? (fn [r] (not (denied-access? r))))
 
 (defn- try-all [fs]
-  (doall (for [f fs]
-           (try (f)
-                (catch Exception e e)))))
+  (zipmap fs (doall (for [f fs]
+                      (try (f)
+                           (catch Exception e e))))))
 
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
   [{:keys [permissions allowed-actions disallowed-actions]}]
@@ -61,21 +62,33 @@
                                :users [username]})
     (try
       (let [with-perm-results (do (tasks/login username pw)
-                                  (try-all allowed-actions))
+                                  (api/with-creds username pw
+                                    (try-all allowed-actions)))
             no-perm-results (try-all disallowed-actions)]
-        (verify-that (and (every? denied-access? no-perm-results)
-                          (every? has-access? with-perm-results))))
+        (verify-that (and (every? denied-access? (vals no-perm-results))
+                          (every? has-access? (vals with-perm-results)))))
       (finally
        (tasks/login conf/*session-user* conf/*session-password*)))))
 
 
 
 (def access-test-data
-  [[(let [org-name (tasks/uniqueify "org-create-perm")]
-      {:permissions [{:org "Global Permissions"
-                      :permissions [{:resource-type "Organizations"
-                                     :verbs ["Create Organization"]
-                                     :name "orgcreate"}]}]
-       :allowed-actions [(fn [] (tasks/create-organization org-name "mydescription"))]
-       :disallowed-actions [(fn [] (tasks/delete-organization org-name))
-                            (fn [] (tasks/create-provider {:name "myprov"}))]})]])
+  [(fn [] [{:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Organizations"
+                                         :verbs ["Access Organization"]
+                                         :name "orgaccess"}]}]
+           :allowed-actions [(fn [] (tasks/navigate :named-organization-page {:org-name (@conf/config :admin-org)}))]
+           :disallowed-actions [(fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                (fn [] (tasks/navigate :systems-tab))]}])
+
+
+   (vary-meta (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")]
+                       {:permissions [{:org "Global Permissions"
+                                       :permissions [{:resource-type "Organizations"
+                                                      :verbs ["Create Organization"]
+                                                      :name "orgcreate"}]}]
+                        :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))]
+                        :disallowed-actions [(fn [] (tasks/delete-organization org-name))
+                                             (fn [] (tasks/create-provider {:name "myprov"}))
+                                             (fn [] (api/create-provider "myprov"))]})])
+              assoc :blockers (open-bz-bugs "756252"))])

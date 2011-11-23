@@ -201,7 +201,7 @@
                             true)
                         (catch Exception e false))))))))
 
-(defn create-organization [name description]
+(defn create-organization [name {:keys [description]}]
   (navigate :new-organization-page)
   (fill-ajax-form {:org-name-text name
                    :org-description-text description}
