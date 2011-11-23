@@ -50,8 +50,12 @@
                       (try (f)
                            (catch Exception e e))))))
 
-(defn- navigate-all [pages]
-  (for [page pages] (fn [] (tasks/navigate page))))
+(defn- navigate-all [& pages]
+  (for [page pages] (with-meta (fn [] (tasks/navigate page))
+                      {:type :test.tree.builder/serializable-fn
+                       ::source `(navigate ~page)})))
+
+
 
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
   [{:keys [permissions allowed-actions disallowed-actions]}]
@@ -73,7 +77,9 @@
       (finally
        (tasks/login conf/*session-user* conf/*session-password*)))))
 
-
+(def create-env
+  (fn []
+    (tasks/create-environment "blah" {:org-name (@conf/config :admin-org)}))) 
 
 (def access-test-data
   [(fn [] [{:permissions [{:org "Global Permissions"
@@ -81,8 +87,11 @@
                                          :verbs ["Access Organization"]
                                          :name "orgaccess"}]}]
            :allowed-actions [(fn [] (tasks/navigate :named-organization-page {:org-name (@conf/config :admin-org)}))]
-           :disallowed-actions [(fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
-                                (fn [] (tasks/navigate :systems-tab))]}])
+           :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                   :custom-providers-tab :system-templates-page
+                                                   :promotions-page )
+                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                     create-env)}])
 
 
    (vary-meta (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")]
@@ -91,9 +100,13 @@
                                                       :verbs ["Create Organization"]
                                                       :name "orgcreate"}]}]
                         :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))]
-                        :disallowed-actions [(fn [] (tasks/delete-organization org-name))
-                                             (fn [] (tasks/create-provider {:name "myprov"}))
-                                             (fn [] (api/create-provider "myprov"))]})])
+                        :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                                :custom-providers-tab :system-templates-page
+                                                                :promotions-page )
+                                                  (fn [] (tasks/delete-organization org-name))
+                                                  create-env
+                                                  (fn [] (tasks/create-provider {:name "myprov"}))
+                                                  (fn [] (api/create-provider "myprov")))})])
               assoc :blockers (open-bz-bugs "756252"))
    
    (fn [] [{:permissions [{:org "Global Permissions"
@@ -102,6 +115,5 @@
                                          :name "systemreg"}]}]
            :allowed-actions [(fn [] (api/create-system (tasks/uniqueify "system") (api/random-facts)))
                              (fn [] (tasks/navigate :systems-all-page))]
-           :disallowed-actions [(fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
-                                (fn [] (tasks/navigate :providers-tab))
-                                (fn [] (tasks/navigate :organizations-tab))]}])])
+           :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
+                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])])
