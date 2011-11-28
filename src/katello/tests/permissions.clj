@@ -53,7 +53,7 @@
 (defn- navigate-all [& pages]
   (for [page pages] (with-meta (fn [] (tasks/navigate page))
                       {:type :test.tree.builder/serializable-fn
-                       ::source `(navigate ~page)})))
+                       :test.tree.builder/source `(navigate ~page)})))
 
 
 
