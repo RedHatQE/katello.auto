@@ -147,18 +147,15 @@
   "Extract data from the left pane, accepts locator as argument
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
-                (loc (str index)))
-                ;(locators/left-pane-field-list (str index)))
-        retrieve (fn [elem]
-                   (try (browser getText elem)
-                        (catch Exception e nil)))]
-    (->> (map retrieve elems) (take-while identity) set)))
+                (loc (str index)))]
+    (take-while identity (for [elem elems]
+                           (try (browser getText elem)
+                                (catch SeleniumException e nil))))))
 
 (defn validate-search [entity-type &  [{:keys [criteria scope] :as search-opts}]]
-  "Validate a search request.  
-      entity-type can be anything that has a support search, :orgs, :users etc...
-      criteria is something you are searching for.
-      scope is currently not implemented."
+  "Validate a search request.  entity-type can be anything that has a
+   support search, :orgs, :users etc...  criteria is something you are
+   searching for.  scope is currently not implemented."
   (search entity-type  search-opts)
   (if-not (every? (fn [s] (.contains s criteria))
                   (extract-left-pane-list locators/left-pane-field-list))
