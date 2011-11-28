@@ -70,7 +70,8 @@
     (try
       (let [with-perm-results (do (tasks/login username pw)
                                   (api/with-creds username pw
-                                    (try-all allowed-actions)))
+                                    (api/with-env (@conf/config :first-env)
+                                      (try-all allowed-actions))))
             no-perm-results (try-all disallowed-actions)]
         (verify-that (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
@@ -94,20 +95,21 @@
                                      create-env)}])
 
 
-   (vary-meta (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")]
-                       {:permissions [{:org "Global Permissions"
-                                       :permissions [{:resource-type "Organizations"
-                                                      :verbs ["Create Organization"]
-                                                      :name "orgcreate"}]}]
-                        :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))]
-                        :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                                :custom-providers-tab :system-templates-page
-                                                                :promotions-page )
-                                                  (fn [] (tasks/delete-organization org-name))
-                                                  create-env
-                                                  (fn [] (tasks/create-provider {:name "myprov"}))
-                                                  (fn [] (api/create-provider "myprov")))})])
-              assoc :blockers (open-bz-bugs "756252"))
+   (vary-meta
+    (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")]
+             {:permissions [{:org "Global Permissions"
+                             :permissions [{:resource-type "Organizations"
+                                            :verbs ["Create Organization"]
+                                            :name "orgcreate"}]}]
+              :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))]
+              :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                      :custom-providers-tab :system-templates-page
+                                                      :promotions-page )
+                                        (fn [] (tasks/delete-organization org-name))
+                                        create-env
+                                        (fn [] (tasks/create-provider {:name "myprov"}))
+                                        (fn [] (api/create-provider "myprov")))})])
+    assoc :blockers (open-bz-bugs "756252"))
    
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Organizations"
