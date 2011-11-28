@@ -50,10 +50,13 @@
                       (try (f)
                            (catch Exception e e))))))
 
-(defn- navigate-all [& pages]
-  (for [page pages] (with-meta (fn [] (tasks/navigate page))
+(defn- navigate [page]
+  (with-meta (fn [] (tasks/navigate page))
                       {:type :test.tree.builder/serializable-fn
-                       :test.tree.builder/source `(navigate ~page)})))
+                       :test.tree.builder/source `(navigate ~page)})) 
+
+(defn- navigate-all [& pages]
+  (map navigate pages))
 
 
 
@@ -78,8 +81,18 @@
        (tasks/login conf/*session-user* conf/*session-password*)))))
 
 (def create-env
-  (fn []
-    (tasks/create-environment "blah" {:org-name (@conf/config :admin-org)}))) 
+  (fn [] (tasks/create-environment (tasks/uniqueify "blah") {:org-name (@conf/config :admin-org)})))
+
+(def create-ak
+  (fn [] (tasks/create-activation-key {:name (tasks/uniqueify "blah")
+                                      :environment (@conf/config :first-env)})))
+
+(def create-st
+  (fn [] (tasks/create-template {:name (tasks/uniqueify "blah")})))
+
+(def create-user
+  (fn [] (tasks/create-user (tasks/uniqueify "blah") {:password "password" :email "me@me.com"})))
+
 
 (def access-test-data
   [(fn [] [{:permissions [{:org "Global Permissions"
@@ -94,21 +107,21 @@
                                      create-env)}])
 
 
-   (vary-meta
-    (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")]
-             {:permissions [{:org "Global Permissions"
-                             :permissions [{:resource-type "Organizations"
-                                            :verbs ["Create Organization"]
-                                            :name "orgcreate"}]}]
-              :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))]
-              :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                      :custom-providers-tab :system-templates-page
-                                                      :promotions-page )
-                                        (fn [] (tasks/delete-organization org-name))
-                                        create-env
-                                        (fn [] (tasks/create-provider {:name "myprov"}))
-                                        (fn [] (api/create-provider "myprov")))})])
-    assoc :blockers (open-bz-bugs "756252"))
+   
+   (fn [] [(let [org-name (tasks/uniqueify "org-create-perm")] ;;due to bz 756252 'create' means manage
+            {:permissions [{:org "Global Permissions"
+                            :permissions [{:resource-type "Organizations"
+                                           :verbs ["Create Organization"]
+                                           :name "orgcreate"}]}]
+             :allowed-actions [(fn [] (tasks/create-organization org-name {:description "mydescription"}))
+                               (fn [] (tasks/delete-organization org-name))
+                               create-env]
+             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                     :custom-providers-tab :system-templates-page
+                                                     :promotions-page )
+                                       (fn [] (tasks/create-provider {:name "myprov"}))
+                                       (fn [] (api/create-provider "myprov")))})])
+   
    
    (vary-meta
     (fn [] [{:permissions [{:org "Global Permissions"
@@ -118,18 +131,76 @@
             :allowed-actions [(fn [] (api/with-admin-org
                                       (api/with-env (@conf/config :first-env)
                                         (api/create-system (tasks/uniqueify "system") (api/random-facts)))))
-                              (fn [] (tasks/navigate :systems-all-page))]
+                              (navigate :systems-all-page)]
             :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
                                       (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])
     assoc :blockers (open-bz-bugs "757775"))
    
+   (vary-meta
+    (fn [] [{:permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Organizations"
+                                          :verbs ["Access all Activation Keys"]
+                                          :name "akaccess"}]}]
+            :allowed-actions [(navigate :activation-keys-page)]
+            :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+                                                    :systems-all-page :systems-by-environment-page)
+                                      create-ak)}])
+    assoc :blockers (open-bz-bugs "757817"))
+   
+   (vary-meta
+    (fn [] [{:permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Organizations"
+                                          :verbs ["Manage all Activation Keys"]
+                                          :name "akmang"}]}]
+            :allowed-actions [create-ak]
+            :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+                                                    :systems-all-page :systems-by-environment-page)
+                                      (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])
+    assoc :blockers (open-bz-bugs "757817"))
+
    (fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "Organizations"
-                                         :verbs ["Access all Activation Keys"]
-                                         :name "akaccess"}]}]
-           :allowed-actions [(fn [] (api/with-admin-org
-                                     (api/with-env (@conf/config :first-env)
-                                       (api/create-system (tasks/uniqueify "system") (api/random-facts)))))
-                             (fn [] (tasks/navigate :systems-all-page))]
-           :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
-                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])])
+                          :permissions [{:resource-type "System Templates"
+                                         :verbs ["Read All System Templates"]
+                                         :name "stread"}]}]
+           :allowed-actions [(navigate :system-templates-page)]
+           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+                                                   :custom-providers-tab :sync-status-page :promotions-page)
+                                     create-st
+                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                     create-env)}])
+
+   (fn [] [{:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "System Templates"
+                                         :verbs ["Manage All System Templates"]
+                                         :name "stmang"}]}]
+           :allowed-actions [create-st]
+           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+                                                   :custom-providers-tab :sync-status-page :promotions-page)
+                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                     create-env)}])
+   
+   (fn [] [{:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Users"
+                                         :verbs ["Access Users"]
+                                         :name "userread"}]}]
+           :allowed-actions [(navigate :users-tab)]
+           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                   :content-management-tab)
+                                     (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis")))
+                                     create-env
+                                     create-user)}])
+
+   (fn [] [{:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Users"
+                                         :verbs ["Create Users"]
+                                         :name "userread"}]}]
+           :allowed-actions [create-user
+                             (fn [] (api/create-user (tasks/uniqueify "user") {:password "password"
+                                                                              :email "blah@blah.com"}))]
+           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                   :content-management-tab)
+                                     (fn [] (let [username (tasks/uniqueify "deleteme")]
+                                             (tasks/create-user username {:password "password" :email "mee@mee.com"})
+                                             (tasks/delete-user username))))}])
+   
+   ])
