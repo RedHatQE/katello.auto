@@ -13,13 +13,14 @@
 (def locker "Locker")
 
 
-(defn setup []
-  (reset! provider-name (tasks/uniqueify "promo-"))
-  
-  (api/with-admin
-    (api/create-provider  @provider-name {:description "test provider for promotions"})
-    (api/ensure-env-exist (@config :first-env) {:prior locker})
-    (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)})))
+(def setup
+  (fn []
+    (reset! provider-name (tasks/uniqueify "promo-"))
+               
+    (api/with-admin
+      (api/create-provider  @provider-name {:description "test provider for promotions"})
+      (api/ensure-env-exist (@config :first-env) {:prior locker})
+      (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)}))))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (tasks/uniqueify "changeset")]
@@ -36,24 +37,24 @@
       (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
-  (doseq [product-name (content :products)]
-    (api/with-admin
-      (api/create-product product-name {:provider-name @provider-name
-                                        :description "test product"})
-      (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
-                                                       :url "http://blah.com"})))
-  (doseq [template-name (content :templates)]
-    (api/with-admin
-      (let [product-name (tasks/uniqueify "templ-prod")]
-        (api/create-product product-name 
-                            {:provider-name @provider-name
-                             :description "test product"})
-        (api/create-repo (tasks/uniqueify "mytestrepo") {:product-name product-name
-                                                         :url "http://blah.com"})
-        (api/with-env "Locker"
-          (api/create-template {:name template-name
-                                :description "template to be promoted"})
-          (api/add-to-template template-name {:products [product-name]})))))
+  (let [create-repo-fn
+        (fn [prod]
+          (api/create-product prod
+                              {:provider-name @provider-name
+                               :description "test product"})
+          (api/create-repo (tasks/uniqueify "mytestrepo")
+                           {:product-name prod
+                            :url "http://blah.com"}))]
+    (doseq [product-name (content :products)]
+      (api/with-admin (create-repo-fn product-name)))
+    (doseq [template-name (content :templates)]
+      (api/with-admin
+        (let [product-name (tasks/uniqueify "templ-prod")]
+          (create-repo-fn product-name)
+          (api/with-env "Locker"
+            (api/create-template {:name template-name
+                                  :description "template to be promoted"})
+            (api/add-to-template template-name {:products [product-name]}))))))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (promote-content from-env target-env content)
     (verify-all-content-present content (tasks/environment-content target-env))))
