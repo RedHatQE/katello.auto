@@ -70,8 +70,7 @@
     (try
       (let [with-perm-results (do (tasks/login username pw)
                                   (api/with-creds username pw
-                                    (api/with-env (@conf/config :first-env)
-                                      (try-all allowed-actions))))
+                                    (try-all allowed-actions)))
             no-perm-results (try-all disallowed-actions)]
         (verify-that (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
@@ -115,7 +114,9 @@
                           :permissions [{:resource-type "Organizations"
                                          :verbs ["Register Systems"]
                                          :name "systemreg"}]}]
-           :allowed-actions [(fn [] (api/create-system (tasks/uniqueify "system") (api/random-facts)))
+           :allowed-actions [(fn [] (api/with-admin-org
+                                     (api/with-env (@conf/config :first-env)
+                                       (api/create-system (tasks/uniqueify "system") (api/random-facts)))))
                              (fn [] (tasks/navigate :systems-all-page))]
            :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
                                      (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])])
