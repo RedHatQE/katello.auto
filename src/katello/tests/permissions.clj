@@ -110,10 +110,23 @@
                                         (fn [] (api/create-provider "myprov")))})])
     assoc :blockers (open-bz-bugs "756252"))
    
+   (vary-meta
+    (fn [] [{:permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Organizations"
+                                          :verbs ["Register Systems"]
+                                          :name "systemreg"}]}]
+            :allowed-actions [(fn [] (api/with-admin-org
+                                      (api/with-env (@conf/config :first-env)
+                                        (api/create-system (tasks/uniqueify "system") (api/random-facts)))))
+                              (fn [] (tasks/navigate :systems-all-page))]
+            :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
+                                      (fn [] (tasks/create-organization (tasks/uniqueify "cantdothis"))))}])
+    assoc :blockers (open-bz-bugs "757775"))
+   
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Organizations"
-                                         :verbs ["Register Systems"]
-                                         :name "systemreg"}]}]
+                                         :verbs ["Access all Activation Keys"]
+                                         :name "akaccess"}]}]
            :allowed-actions [(fn [] (api/with-admin-org
                                      (api/with-env (@conf/config :first-env)
                                        (api/create-system (tasks/uniqueify "system") (api/random-facts)))))
