@@ -61,15 +61,19 @@
 
 
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
-  [{:keys [permissions allowed-actions disallowed-actions]}]
+  [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
   (let [rolename (tasks/uniqueify "role")
         username (tasks/uniqueify "user-perm")
         pw "password"]
-    (api/with-admin (api/create-user username {:password pw
-                                               :email (str username "@my.org")}))
+    (api/with-admin
+      (api/create-user username {:password pw
+                                               :email (str username "@my.org")})
+      (when setup (setup)))
+    
     (tasks/create-role rolename)
     (tasks/edit-role rolename {:add-permissions permissions
                                :users [username]})
+    
     (try
       (let [with-perm-results (do (tasks/login username pw)
                                   (api/with-creds username pw
@@ -202,5 +206,16 @@
                                      (fn [] (let [username (tasks/uniqueify "deleteme")]
                                              (tasks/create-user username {:password "password" :email "mee@mee.com"})
                                              (tasks/delete-user username))))}])
+   (fn []
+     [(let [user (tasks/uniqueify "user")]
+        {:permissions [{:org "Global Permissions"
+                        :permissions [{:resource-type "Users"
+                                       :verbs ["Delete Users"]
+                                       :name "userdel"}]}]
+         :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
+         :allowed-actions [(fn [] (tasks/delete-user user))]
+         :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                 :content-management-tab)
+                                   create-user)})])
    
    ])
