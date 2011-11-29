@@ -37,6 +37,7 @@
    link ["" "link=$1"]
    notification-close-index ["Notification close button"
                              "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
+   org-switcher ["Org switch list" "//div[@id='orgbox']//a[.='$1']"]
    permission-org ["Permission Org" "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"]
 
    plus-icon ["Plus icon" "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"]
@@ -87,7 +88,9 @@
              :search-submit "//button[@form='search_form']"
              ;;main banner
              :account "//li[@class='hello']/a"
-             :log-out "//a[normalize-space(.)='Logout']"})
+             :log-out "//a[normalize-space(.)='Logout']"
+             :org-switcher "switcherButton"
+             })
 
 (def all-tabs (tabs [:organizations
                      :administration
