@@ -1,7 +1,7 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [fn]]
-        [com.redhat.qe.verify :only [verify-that]])
+  (:use [com.redhat.qe.verify :only [verify-that]]
+        [serializable.fn :only [fn]])
   (:require [katello.tasks :as tasks]
             [katello.api-tasks :as api]
             [katello.validation :as validate]))

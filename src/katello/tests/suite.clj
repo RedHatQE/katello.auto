@@ -24,7 +24,7 @@
                        [reporter :as report])
 
             [com.redhat.qe.auto.selenium.selenium :as selenium])
-  (:use [test.tree.builder :only [fn]]
+  (:use [serializable.fn :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
 (declare nav-tests org-tests environment-tests provider-tests

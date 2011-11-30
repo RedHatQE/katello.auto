@@ -1,6 +1,6 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [fn]]
+  (:use [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]])
   (:require (katello [tasks :as tasks]
@@ -51,14 +51,13 @@
                            (catch Exception e e))))))
 
 (defn- navigate [page]
-  (with-meta (fn [] (tasks/navigate page))
-                      {:type :test.tree.builder/serializable-fn
-                       :test.tree.builder/source `(navigate ~page)})) 
+  (fn [] (tasks/navigate page))) 
 
 (defn- navigate-all [& pages]
   (map navigate pages))
 
-
+(defn- access-org [org]
+  (fn [] (tasks/navigate :named-organization-page {:org-name org})))
 
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
   [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
@@ -98,12 +97,14 @@
   (fn [] (tasks/create-user (tasks/uniqueify "blah") {:password "password" :email "me@me.com"})))
 
 
+
+
 (def access-test-data
   [(fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Organizations"
                                          :verbs ["Access Organization"]
                                          :name "orgaccess"}]}]
-           :allowed-actions [(fn [] (tasks/navigate :named-organization-page {:org-name (@conf/config :admin-org)}))]
+           :allowed-actions [(access-org (@conf/config :admin-org))]
            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                    :custom-providers-tab :system-templates-page
                                                    :promotions-page )
@@ -206,6 +207,7 @@
                                      (fn [] (let [username (tasks/uniqueify "deleteme")]
                                              (tasks/create-user username {:password "password" :email "mee@mee.com"})
                                              (tasks/delete-user username))))}])
+
    (fn []
      [(let [user (tasks/uniqueify "user")]
         {:permissions [{:org "Global Permissions"
@@ -217,5 +219,19 @@
          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                  :content-management-tab)
                                    create-user)})])
+
+   (fn []
+     [(let [org (tasks/uniqueify "org")]
+        {:permissions [{:org (@conf/config :admin-org)
+                        :permissions [{:resource-type "Organizations"
+                                       :verbs ["Access Organization"]
+                                       :name "orgaccess"}]}]
+        :setup (fn [] (api/create-organization org))
+        :allowed-actions [(access-org (@conf/config :admin-org))]
+        :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                     :custom-providers-tab :system-templates-page
+                                                     :promotions-page )
+                                  (fn [] (tasks/switch-org org))
+                                  (fn [] (tasks/navigate :named)))})])
    
    ])

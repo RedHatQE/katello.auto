@@ -1,6 +1,6 @@
 (ns katello.tests.users
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [fn]])
+  (:use [serializable.fn :only [fn]])
   (:require [katello.tasks :as tasks]
             [katello.validation :as v])
   (:use [slingshot.slingshot :only [try+ throw+]]))

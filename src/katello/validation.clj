@@ -1,8 +1,9 @@
 (ns katello.validation
+  (:refer-clojure :exclude [fn])
   (:require [clojure.string :as string])
   (:use [slingshot.slingshot :only [try+]]
         [katello.tasks :only [success?]]
-        [test.tree.builder :only [print-meta]]
+        [serializable.fn :only [fn]]
         [com.redhat.qe.config :only [same-name]]
         [com.redhat.qe.verify :only [verify-that]]))
 
@@ -45,9 +46,8 @@
   (set (filter (fn [k] (re-find (validation-errors k) (:msg m))) (keys validation-errors))))
 
 (defn expect-error [expected-validation-err]
- (with-meta (fn [result]
-              (some #{expected-validation-err} (:validation-errors result)))
-   (print-meta `(~'expect-error ~expected-validation-err))) )
+  (fn [result]
+    (some #{expected-validation-err} (:validation-errors result))))
 
 (defn field-validation [create-fn args pred]
   (let [results (try+

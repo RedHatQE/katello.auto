@@ -1,6 +1,6 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [fn]]
+  (:use [serializable.fn :only [fn]]
         [katello.conf :only [config *session-user* *session-password*]]
         [slingshot.slingshot]
         [com.redhat.qe.verify :only [verify-that]]

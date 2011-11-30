@@ -3,7 +3,8 @@
             [katello.api-tasks :as api]
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [data-driven fn]]
+  (:use [test.tree.builder :only [data-driven]]
+        [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [config]]))
 

@@ -6,8 +6,7 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         [slingshot.slingshot :only [throw+ try+]]
-        [com.redhat.qe.verify :only [verify-that]]
-        [test.tree.builder :only [print-meta]])
+        [com.redhat.qe.verify :only [verify-that]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -43,9 +42,9 @@
           :while (browser isElementPresent closebutton)]
     (browser click closebutton)))
 
-(def success? (with-meta (fn [notif]
-                           (-> notif :type (= :success)))
-                (print-meta 'success?)))
+(def success?
+  (fn [notif]
+    (-> notif :type (= :success))))
 
 (defn notification
   "Gets the notification from the page, returns a map object
