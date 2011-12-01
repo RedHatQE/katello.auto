@@ -1,9 +1,9 @@
 (ns katello.tests.sync_management
-  (:require [katello.tasks :as tasks]
-            [katello.api-tasks :as api]
+  (:require [katello.api-tasks :as api]
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
-  (:use [test.tree.builder :only [data-driven]]
+  (:use katello.tasks
+        [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [config]]))
@@ -14,44 +14,44 @@
 
 (def setup
   (fn []
-    (let [myprovider (reset! provider-name (tasks/uniqueify "sync"))
-          myproduct (reset! product-name (tasks/uniqueify "sync-test1"))]
+    (let [myprovider (reset! provider-name (uniqueify "sync"))
+          myproduct (reset! product-name (uniqueify "sync-test1"))]
       (api/with-admin
         (api/create-provider myprovider {:description "provider to test syncing"})
         (api/create-product myproduct {:provider-name myprovider
                                        :description "testing sync"})
-        (api/create-repo (tasks/uniqueify "testrepo") {:product-name myproduct
+        (api/create-repo (uniqueify "testrepo") {:product-name myproduct
                                                        :url (@config :sync-repo)})))))
 
 (def simple 
   (fn []
-    (let [results (tasks/sync-products [@product-name] 120000)]
+    (let [results (sync-products [@product-name] 120000)]
       (verify-that (every? #(= "Sync complete." %)
                            (vals results))))))
 
 (def create-plan
-  (fn [] (tasks/create-sync-plan {:name (reset! plan-name (tasks/uniqueify "plan"))
+  (fn [] (create-sync-plan {:name (reset! plan-name (uniqueify "plan"))
                                  :description "my plan"
                                  :interval "hourly"
                                  :start-date (java.util.Date.)})))
 
 (def edit-plan
-  (fn [] (tasks/edit-sync-plan @plan-name {:interval "Daily"})))
+  (fn [] (edit-sync-plan @plan-name {:interval "Daily"})))
 
 
 (def rename-plan
-  (fn [] (let [myplan-name (tasks/uniqueify "myplan")
-              new-name (tasks/uniqueify "renamedplan")]
-          (tasks/create-sync-plan {:name myplan-name
+  (fn [] (let [myplan-name (uniqueify "myplan")
+              new-name (uniqueify "renamedplan")]
+          (create-sync-plan {:name myplan-name
                                    :description "my plan"
                                    :interval "hourly"
                                    :start-date (java.util.Date.)})
-          (tasks/edit-sync-plan myplan-name {:new-name new-name })
-          (tasks/navigate :named-sync-plan-page {:sync-plan-name new-name}))))
+          (edit-sync-plan myplan-name {:new-name new-name })
+          (navigate :named-sync-plan-page {:sync-plan-name new-name}))))
 
 (def plan-validate
   (fn [arg expected]
-    (validate/field-validation tasks/create-sync-plan [arg]
+    (validate/field-validation create-sync-plan [arg]
                                (validate/expect-error expected))))
 
 (defn plan-validation-data []
@@ -60,39 +60,39 @@
 
 (def dupe-disallowed
   (fn []
-    (validate/duplicate-disallowed tasks/create-sync-plan [{:name (tasks/uniqueify "dupe")
+    (validate/duplicate-disallowed create-sync-plan [{:name (uniqueify "dupe")
                                                    :start-date (java.util.Date.)
                                                    :description "mydescription"
                                                    :interval "daily"}])))
 
 (def set-schedules
   (fn []
-    (let [second-product-name (tasks/uniqueify "MySecondProduct")
+    (let [second-product-name (uniqueify "MySecondProduct")
           product-names [@product-name second-product-name]]
       (api/with-admin
         (api/with-env (@config :first-env)
           (api/create-product second-product-name {:provider-name @provider-name
                                                    :description "testing sync"})
-          (api/create-repo (tasks/uniqueify "testrepo")
+          (api/create-repo (uniqueify "testrepo")
                            {:product-name second-product-name
                             :url (@config :sync-repo)})
           (api/promote {:products product-names})))
-      (tasks/sync-schedule {:plan-name @plan-name
+      (sync-schedule {:plan-name @plan-name
                             :products product-names})
       (let [expected-plan @plan-name
-            actual-plans (vals (tasks/current-sync-plan product-names))]
+            actual-plans (vals (current-sync-plan product-names))]
         (verify-that (every? #(= % expected-plan) actual-plans))))))
 
 (def reset-schedule
   (fn []
-    (let [plan-name (tasks/uniqueify "new plan")
+    (let [plan-name (uniqueify "new plan")
           new-plan {:name plan-name
                     :description "my new plan"
                     :interval "daily"
                     :start-date (java.util.Date.)}]
-      (tasks/create-sync-plan new-plan)
-      (tasks/sync-schedule {:plan-name plan-name
+      (create-sync-plan new-plan)
+      (sync-schedule {:plan-name plan-name
                             :products [@product-name]})
       (let [product @product-name]
-        (verify-that (= ((tasks/current-sync-plan [product]) product)
+        (verify-that (= ((current-sync-plan [product]) product)
                         plan-name))))))

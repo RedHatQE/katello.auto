@@ -13,15 +13,15 @@
 (declare search)
 
 ;;tasks
-(defn timestamp
-  "Returns a string with timestamp (time in millis since 1970)
-   appended onto the end.  If optional n is specified, returns a list
-   of n timestamped strings, where the millis is incremented by one
-   for each item."
-  ([s] (str s "-" (System/currentTimeMillis)))
-  ([s n] (take n (map #(str s "-" %) (iterate inc (System/currentTimeMillis))))))
+(defn timestamps
+  []
+  (iterate inc (System/currentTimeMillis)))
 
-(def uniqueify timestamp) ;;alias for timestamp
+(defn unique-names [s]
+  (for [t (timestamps)] (str s "-" t)))
+
+(defn uniqueify [s]
+  (first (unique-names s)))
 
 (def known-errors
   {::validation-failed #"Validation [Ff]ailed"
