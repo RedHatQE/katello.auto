@@ -38,10 +38,10 @@
 
 (def setup-no-perm-user
   (fn [] (api/with-admin
-     (apply
-      api/create-user (reset! no-perm-user [(uniqueify "noperms")
-                                            {:password "password"
-                                             :email (str "noperm@my.org")}])))))
+          (apply
+           api/create-user (reset! no-perm-user [(uniqueify "noperms")
+                                                 {:password "password"
+                                                  :email (str "noperm@my.org")}])))))
 
 (def denied-access? (fn [r] (-> r class (isa? Throwable))))
 (def has-access? (fn [r] (not (denied-access? r))))
@@ -67,12 +67,12 @@
         pw "password"]
     (api/with-admin
       (api/create-user username {:password pw
-                                               :email (str username "@my.org")})
+                                 :email (str username "@my.org")})
       (when setup (setup)))
     
     (create-role rolename)
     (edit-role rolename {:add-permissions permissions
-                               :users [username]})
+                         :users [username]})
     
     (try
       (let [with-perm-results (do (login username pw)
@@ -202,7 +202,7 @@
                                          :name "userread"}]}]
            :allowed-actions [create-user
                              (fn [] (api/create-user (uniqueify "user") {:password "password"
-                                                                              :email "blah@blah.com"}))]
+                                                                        :email "blah@blah.com"}))]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                    :content-management-tab)
                                      (fn [] (let [username (uniqueify "deleteme")]
@@ -227,12 +227,12 @@
                         :permissions [{:resource-type "Organizations"
                                        :verbs ["Access Organization"]
                                        :name "orgaccess"}]}]
-        :setup (fn [] (api/create-organization org))
-        :allowed-actions [(access-org (@conf/config :admin-org))]
-        :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                     :custom-providers-tab :system-templates-page
-                                                     :promotions-page )
-                                  (fn [] (switch-org org))
-                                  (fn [] (navigate :named)))})])
+         :setup (fn [] (api/create-organization org))
+         :allowed-actions [(access-org (@conf/config :admin-org))]
+         :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                 :custom-providers-tab :system-templates-page
+                                                 :promotions-page )
+                                   (fn [] (switch-org org))
+                                   (fn [] (navigate :named)))})])
    
    ])

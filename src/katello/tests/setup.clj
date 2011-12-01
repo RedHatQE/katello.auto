@@ -10,8 +10,7 @@
             [test.tree.watcher :as watch])
   (:use [clojure.string :only [split]]
         [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel jquery-ajax-finished]]
-        [com.redhat.qe.verify :only [check]])
-  )
+        [com.redhat.qe.verify :only [check]]))
 
 (defn new-selenium [& [single-thread]]
   (let [sel-addr (@conf/config :selenium-address)
