@@ -37,32 +37,35 @@
   (browser stop))
 
 (defn thread-runner [consume-fn]
-  (fn [] (binding [sel (new-selenium)
-                  tr/tracer (tr/per-thread-tracer tr/clj-format)
-                  katello.conf/*session-user* (tasks/uniqueify
-                                               (str (@conf/config :admin-user)
-                                                    (->> (Thread/currentThread)
-                                                         .getName
-                                                         (re-seq #"\d+")
-                                                         first)))]
-          (tr/dotrace-all {:namespaces [katello.tasks katello.api-tasks]
-                           :fns [test/execute
-                                 start-selenium stop-selenium switch-new-admin-user
-                                 check
-                                 com.redhat.qe.auto.selenium.selenium/call-sel
-                                 ;com.redhat.qe.auto.selenium.selenium/locator-args
-                                 com.redhat.qe.auto.selenium.selenium/fill-item]
-                           :exclude [katello.tasks/notification
-                                     katello.tasks/clear-all-notifications
-                                     katello.tasks/success?]}
-                          (println "starting a selenium session.")
-                          (try (start-selenium)
-                               (switch-new-admin-user conf/*session-user* conf/*session-password*)
-                               (catch Exception e (.printStackTrace e)))
-                          (consume-fn)
-                          (stop-selenium)
-                          (tr/htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
-                                      "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))))
+  (fn []
+    (binding [sel (new-selenium)
+              tr/tracer (tr/per-thread-tracer tr/clj-format)
+              katello.conf/*session-user* (tasks/uniqueify
+                                           (str (@conf/config :admin-user)
+                                                (->> (Thread/currentThread)
+                                                   .getName
+                                                   (re-seq #"\d+")
+                                                   first)))]
+      (tr/dotrace-all
+       {:namespaces [katello.tasks katello.api-tasks]
+        :fns [test/execute
+              start-selenium stop-selenium switch-new-admin-user
+              check
+              com.redhat.qe.auto.selenium.selenium/call-sel]
+        :exclude [katello.tasks/notification
+                  katello.tasks/clear-all-notifications
+                  katello.tasks/success?
+                  katello.tasks/uniqueify
+                  katello.tasks/unique-names
+                  katello.tasks/timestamps]} ;;don't try to trace a fn that returns lazy infinite seq!
+       (println "starting a selenium session.")
+       (try (start-selenium)
+            (switch-new-admin-user conf/*session-user* conf/*session-password*)
+            (catch Exception e (.printStackTrace e)))
+       (consume-fn)
+       (stop-selenium)
+       (tr/htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
+                   "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))))
 
 (def runner-config 
   {:thread-runner thread-runner

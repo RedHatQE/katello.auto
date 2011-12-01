@@ -30,10 +30,6 @@
                                                               :verbs ["Access Organization"]}]}]
                             :users [user-name]}))))
 
-(def missing-link?
-  (fn [res]
-    (-> res class (isa? SeleniumException))))
-
 (def no-perm-user (atom nil))
 
 (def setup-no-perm-user
@@ -70,9 +66,9 @@
                                  :email (str username "@my.org")})
       (when setup (setup)))
     
-    (create-role rolename)
-    (edit-role rolename {:add-permissions permissions
-                         :users [username]})
+    (tasks/create-role rolename)
+    (tasks/edit-role rolename {:add-permissions permissions
+                               :users [username]})
     
     (try
       (let [with-perm-results (do (login username pw)
@@ -233,6 +229,6 @@
                                                  :custom-providers-tab :system-templates-page
                                                  :promotions-page )
                                    (fn [] (switch-org org))
-                                   (fn [] (navigate :named)))})])
+                                   (fn [] (tasks/navigate :named-organization-page {:org-name org})))})])
    
    ])
