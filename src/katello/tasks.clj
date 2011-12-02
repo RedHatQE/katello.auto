@@ -42,9 +42,8 @@
           :while (browser isElementPresent closebutton)]
     (browser click closebutton)))
 
-(def success?
-  (fn [notif]
-    (-> notif :type (= :success))))
+(defn success? [notif]
+  (-> notif :type (= :success)))
 
 (defn notification
   "Gets the notification from the page, returns a map object
