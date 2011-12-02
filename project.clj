@@ -27,9 +27,12 @@
 (comment "Execute this in the repl to create some test entities via API"
 
          (do (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+             (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
              (require '[katello.tests.promotions]
                       '[katello.tests.sync_management]
-                      '[katello.tests.templates])
+                      '[katello.tests.templates]
+                      '[katello.conf])
+             (katello.conf/init)
              (katello.tests.promotions/setup)
              (katello.tests.sync_management/setup)
              (katello.tests.templates/setup-content))
