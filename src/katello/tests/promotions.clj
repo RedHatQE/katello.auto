@@ -81,6 +81,7 @@
                             {:products (set (take 3 (unique-names "ProductMulti")))}])
                      (fn [] [[locker (@config :first-env)
                              (@config :second-env)]
-                            {:templates (set (take 3 (unique-names "TemplateMulti")))}])]))}])
+                            {:templates (set (take 3 (unique-names "TemplateMulti")))}])])
+       dep-chain)}])
 
 
