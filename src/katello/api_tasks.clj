@@ -230,6 +230,11 @@
               *user* *password*
               {:patch (zipmap patch-actions (map getfn patch-actions))})))
 
+(defn add-to-changeset [changeset-name entity-type entity]
+  (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/" (-> entity-type name pluralize))
+             *user* *password*
+             entity))
+
 (defn promote-changeset "Returns a future to return the promoted changeset." [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
     (rest/post (api-url "api/changesets/" id "/promote")
@@ -246,7 +251,9 @@
 (defn promote [content]
   (let [cs-name (uniqueify "api-changeset")]
     (create-changeset cs-name)
-    (add-to-changeset cs-name {:content content})
+    (doseq [[ent-type ents] content
+          ent ents]
+      (add-to-changeset cs-name (-> ent-type name singularize keyword) ent ))
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]

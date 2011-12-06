@@ -27,13 +27,15 @@
       (api/with-admin
         (api/create-provider provider-name))
       (reset! products (take 3 (unique-names "templateProduct")))
-        (doseq [product @products]
-          (api/with-admin
-            (api/create-product product {:provider-name provider-name
-                                         :description "product to test templates"})))
+      (let [prods (doall
+                   (for [product @products]
+                     (api/with-admin
+                       (api/create-product product {:provider-name provider-name
+                                                    :description "product to test templates"}))))
+            content {:products (for [prod prods] {:product_id (:id prod)})}]
         (api/with-admin
           (api/with-env (@config :first-env)
-            (api/promote {:products @products}))))))
+            (api/promote content)))))))
 
 (def add-content
   (fn []
