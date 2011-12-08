@@ -1,6 +1,7 @@
 (defproject katello "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main katello.tests.suite
+  
   :dependencies [[org.clojure/clojure "1.3.0"]
                  [test.tree "0.5.3-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
@@ -10,8 +11,12 @@
                  [clj-http "0.1.3"]
                  [fn.trace "1.3.0.1"]]
   :jvm-opts ["-Xmx256m"]
-  :repositories {"clojars" {:url "http://clojars.org/repo"
-                            :snapshots {:update :always}}})
+  :omit-default-repositories true
+  :repositories {"my-clojars" {:url "http://clojars.org/repo"
+                            :snapshots {:update :always}}
+                 "my-central" {:url "http://repo1.maven.org/maven2"
+                            :snapshots false}})
+
 
 (comment "Execute this in the repl to load everything and start selenium"
          (do
