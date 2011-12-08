@@ -261,7 +261,7 @@
                   { ;; login page
                    :username-text (textbox "username")
                    :password-text (textbox "password")
-                   :log-in "commit"
+                   :log-in "//input[@value='Log In']"
 
               
                    ;;tabs with special chars in name
