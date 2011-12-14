@@ -266,7 +266,7 @@
               
                    ;;tabs with special chars in name
                    :sub-organizations (tab "Sub-Organizations")
-                   :roles-and-permissions (tab "Roles & Permissions")
+                   
 
                    ;;Sync Management subtab
                    :synchronize-now "sync_button"}))
@@ -384,7 +384,7 @@
              [:administration-tab [] (browser mouseOver :administration)
               [:users-tab [] (via :users load-wait)
                [:named-user-page [username] (choose-left-pane (user username))
-                [:user-roles-permissions-page [] (via :roles-and-permissions)]]]
+                [:user-roles-permissions-page [] (via :roles)]]]
               [:roles-tab [] (via :roles load-wait)
                [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
                 [:named-role-users-page [] (via :role-users)]
