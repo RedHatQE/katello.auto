@@ -256,6 +256,7 @@
     :more [{:name "setup template content"
             :configuration true
             :steps templates/setup-content
+            :blockers (open-bz-bugs "765888")
             :more [{:name "add products to template"
                     :steps templates/add-content}]}]}])
 
