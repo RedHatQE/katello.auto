@@ -114,7 +114,8 @@
                      :users
                      :roles
                      :activation-keys
-
+                     :details
+                     
                      :registered
                      :groups
                      :general
@@ -152,7 +153,7 @@
                 :choose-file "provider_contents"
                 :upload "//input[@value='Upload']"
                 :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-             
+                
                 ;;add product
                 :add-product (button-div "Add Product")
                 :create-product (button-div "Create")
@@ -344,6 +345,7 @@
                   [:named-product-page [product-name] (do (via (editable product-name)))]
                   [:named-repo-page [product-name repo-name] (do (via (product-expand product-name))
                                                                  (via (editable repo-name)))]]
+                 [:provider-details-page [] (via :details)]
                  [:provider-subscriptions-page [] (via :subscriptions)]]]
                [:redhat-provider-tab [] (via :red-hat load-wait)]]
               [:sync-management-page [] (browser mouseOver :sync-management)

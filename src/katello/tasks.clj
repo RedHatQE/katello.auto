@@ -294,7 +294,7 @@
   (check-for-success))
 
 (defn edit-provider [{:keys [name new-name description]}]
-  (navigate :named-provider-page {:provider-name name})
+  (navigate :provider-details-page {:provider-name name})
   (in-place-edit {:provider-name-text new-name
                   :provider-description-text description})
   (check-for-success))
