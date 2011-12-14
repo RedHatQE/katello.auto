@@ -186,7 +186,8 @@
                  :save-changeset "save_changeset_button"
                  :changeset-content "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
 
-(def users {:new-user "//a[@id='new']"
+(def users {:roles-subsubtab "//div[@class='panel-content']//a[.='Roles']"
+            :new-user "//a[@id='new']"
             :new-user-username-text "username_field"
             :new-user-password-text "password_field"
             :new-user-confirm-text "confirm_field"
@@ -384,7 +385,7 @@
              [:administration-tab [] (browser mouseOver :administration)
               [:users-tab [] (via :users load-wait)
                [:named-user-page [username] (choose-left-pane (user username))
-                [:user-roles-permissions-page [] (via :roles)]]]
+                [:user-roles-permissions-page [] (via :roles-subsubtab)]]]
               [:roles-tab [] (via :roles load-wait)
                [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
                 [:named-role-users-page [] (via :role-users)]
