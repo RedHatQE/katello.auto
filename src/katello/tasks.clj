@@ -429,15 +429,15 @@
   (some #{(browser getText (locators/provider-sync-progress product))}
         ["Error syncing!" "Sync complete."]))
 
-(defn sync-products [products timeout]
+(defn sync-repos [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)
-  (doseq [product products]
-    (browser check (locators/provider-sync-checkbox product)))
+  (doseq [repo repos]
+    (browser check (locators/provider-sync-checkbox repo)))
   (browser click :synchronize-now)
   (browser sleep 10000)
-  (zipmap products (for [product products]
-                     (loop-with-timeout timeout []
-                       (or (sync-complete-status product)
+  (zipmap repos (for [repo repos]
+                     (loop-with-timeout (or timeout 120000) []
+                       (or (sync-complete-status repo)
                            (do (Thread/sleep 10000)
                                (recur)))))))
 

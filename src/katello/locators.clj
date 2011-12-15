@@ -55,9 +55,9 @@
    promotion-remove-content-item ["Remove Content Item"
                                   "//a[@data-display_name='$1' and contains(.,'Remove')]"]
    provider-sync-checkbox ["Provider sync checkbox"
-                           "//td[div[@class='clickable' and contains(.,'$1')]]/input[@type='checkbox']"]
+                           "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    provider-sync-progress ["Provider progress"
-                           "//tr[td/div[@class='clickable' and contains(.,'$1')]]/td[5]"]
+                           "//tr[td/label[normalize-space(.)='$1']]/td[5]"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]

@@ -11,21 +11,23 @@
 (def plan-name (atom nil))
 (def product-name (atom nil))
 (def provider-name (atom nil))
-
+(def repo-name (atom nil))
 (def setup
   (fn []
     (let [myprovider (reset! provider-name (uniqueify "sync"))
-          myproduct (reset! product-name (uniqueify "sync-test1"))]
+          myproduct (reset! product-name (uniqueify "sync-test1"))
+          myrepo (reset! repo-name (uniqueify "testrepo"))]
       (api/with-admin
         (api/create-provider myprovider {:description "provider to test syncing"})
         (api/create-product myproduct {:provider-name myprovider
                                        :description "testing sync"})
-        (api/create-repo (uniqueify "testrepo") {:product-name myproduct
-                                                       :url (@config :sync-repo)})))))
+        (api/create-repo myrepo
+                         {:product-name myproduct
+                          :url (@config :sync-repo)})))))
 
 (def simple 
   (fn []
-    (let [results (sync-products [@product-name] 120000)]
+    (let [results (sync-repos [@repo-name] 120000)]
       (verify-that (every? #(= "Sync complete." %)
                            (vals results))))))
 
