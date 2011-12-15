@@ -14,14 +14,14 @@
 
 (def invalid
   (fn [user pw]
-    (try (logout)
-         (try+ 
-           (login user pw)
-           (when (-> (notification) :type (= :success))
-             (throw (RuntimeException. "Login succeeded with bad credentials.")))
-           (catch [:type :katello.tasks/invalid-credentials] _))
-         (finally
-          (login *session-user* *session-password*)))))
+    (try+
+     (logout)
+     (login user pw)
+     (when (-> (notification) :type (= :success))
+       (throw (RuntimeException. "Login succeeded with bad credentials.")))
+     (catch [:type :katello.tasks/invalid-credentials] _)
+     (finally
+      (login *session-user* *session-password*)))))
 
 (def invalid-logins [["admin" ""]
                      ["admin" "asdfasdf"]
