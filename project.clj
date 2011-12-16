@@ -8,8 +8,9 @@
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
-                 [clj-http "0.1.3"]
+                 [clj-http "0.2.6"]
                  [fn.trace "1.3.0.1"]]
+
   :jvm-opts ["-Xmx256m"]
   :omit-default-repositories true
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
