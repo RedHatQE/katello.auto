@@ -12,6 +12,8 @@
 
 (declare search)
 
+(def locker "Locker")
+
 ;;tasks
 (defn timestamps
   []

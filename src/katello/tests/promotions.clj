@@ -10,8 +10,6 @@
 
 (def provider-name (atom nil))
 (def template-name (atom nil))
-(def locker "Locker")
-
 
 (def setup
   (fn []
