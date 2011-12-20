@@ -24,7 +24,7 @@
 
 (defmacro with-org
   [org & body]
-  `(binding [*org* org]
+  `(binding [*org* ~org]
      (do 
        ~@body)))
 
@@ -50,7 +50,7 @@
   [entity-type]
   (let [url-types {[:organization :template :user] {:reqs []
                                               :fmt "api/%s"}
-                   [:environment :product :provider] {:reqs [#'*org*]
+                   [:environment :product :provider :system] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
                    [:changeset] {:reqs [#'*org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}}
@@ -277,3 +277,8 @@
               :password password
               :email email
               :disabled (or disabled false)}))
+
+(defn system-available-pools [system-name]
+  (let [sysid  (-> (get-by-name :system system-name) first :uuid)]
+    (:pools (rest/get (api-url (format "api/systems/%s/pools" sysid))
+               {:basic-auth [*user* *password*]}))))
