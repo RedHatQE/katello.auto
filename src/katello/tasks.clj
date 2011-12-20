@@ -141,6 +141,14 @@
       (do (Thread/sleep 2000)
           (recur (browser getText (locators/changeset-status changeset-name)))))))
 
+(defn promote-content [from-env to-env content]
+  (let [changeset (uniqueify "changeset")]
+    (create-changeset from-env to-env changeset)
+    (add-to-changeset changeset from-env to-env content)
+    (promote-changeset changeset {:from-env from-env
+                                        :to-env to-env
+                                        :timeout-ms 300000})))
+
 (defn extract-left-pane-list [loc]
   "Extract data from the left pane, accepts locator as argument
    for example, extract-left-pane-list locators/left-pane-field-list"

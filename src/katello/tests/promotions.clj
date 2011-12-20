@@ -22,14 +22,6 @@
       (api/ensure-env-exist (@config :first-env) {:prior locker})
       (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)}))))
 
-(defn promote-content [from-env to-env content]
-  (let [changeset (uniqueify "changeset")]
-    (create-changeset from-env to-env changeset)
-    (add-to-changeset changeset from-env to-env content)
-    (promote-changeset changeset {:from-env from-env
-                                        :to-env to-env
-                                        :timeout-ms 300000})))
-
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
     (let [promoted (content-type from)
