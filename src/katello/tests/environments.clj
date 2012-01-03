@@ -8,7 +8,7 @@
         [serializable.fn :only [fn]]))
 
 (def test-org-name (atom nil))
-(def locker "Locker")
+
 (def first-env "dev")
 
 (def create-test-org 
