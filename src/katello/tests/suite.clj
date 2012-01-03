@@ -265,7 +265,6 @@
     (let [blockers (->> reports
                       vals
                       (mapcat #(get-in % [:report :blocked-by]))
-                      distinct
                       (filter #(not (nil? %)))
-                      (reduce (fn [m x] (assoc m x (inc (m x 0)))) {}))]
+                      frequencies)]
       (pprint/pprint blockers))))
