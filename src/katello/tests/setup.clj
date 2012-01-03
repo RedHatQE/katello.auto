@@ -59,9 +59,14 @@
                   katello.tasks/unique-names
                   katello.tasks/timestamps]} ;;don't try to trace a fn that returns lazy infinite seq!
        (println "starting a selenium session.")
-       (try (start-selenium)
-            (switch-new-admin-user conf/*session-user* conf/*session-password*)
-            (catch Exception e (.printStackTrace e)))
+       (try
+         ;;remove this ssl workaround when able to use CA properly
+         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
+
+         (start-selenium)
+         (switch-new-admin-user conf/*session-user* conf/*session-password*)
+         (catch Exception e (.printStackTrace e)))
        (consume-fn)
        (stop-selenium)
        (tr/htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
