@@ -21,7 +21,7 @@
                               :clients ["katello.clients" "katello-client1.usersys.redhat.com,katello-client2.usersys.redhat.com,katello-client3.usersys.redhat.com"]
                               :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
                                                                            (System/getProperty "user.home"))]
-                              :client-ssh-key-passphrase ["sm.sshkey.passphrase" "password"]})
+                              :client-ssh-key-passphrase ["sm.sshkey.passphrase" nil]})
 
 (def config (atom {}))
 
