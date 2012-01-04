@@ -44,9 +44,9 @@
           (client/subscribe (->> (api/system-available-pools (-> client/*runner* .getConnection .getHostname))
                                (filter #(= (:poolName %) product-name))
                                first))
-          (let [repolist-return-code (client/run-cmd "yum repolist")
-                install-return-code (client/run-cmd (format "yum install -y --nogpg %s" package-to-install))]
-            (verify-that (every? #(= 0 %) [repolist-return-code install-return-code]))))))))
+          (let [repolist-cmd (client/run-cmd "yum repolist")
+                install-cmd (client/run-cmd (format "yum install -y --nogpg %s" package-to-install))]
+            (->> [repolist-cmd install-cmd] (map :exit-code) (every? zero?) verify-that)))))))
 
 
 
