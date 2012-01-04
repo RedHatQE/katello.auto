@@ -265,10 +265,9 @@
   [{:name "client installs custom content"
     :steps e2e/client-access-custom
     :blockers (juxtcat (open-bz-bugs "754728")
-                       (fn [thistree]
-                         (filter-tests thistree (every-pred (named? ["simple sync"
-                                                                     "promote content"])
-                                                            (complement report/passed?)))))}])
+                       (filter-tests (every-pred (named? ["simple sync"
+                                                          "promote content"])
+                                                 (complement report/passed?))))}])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
