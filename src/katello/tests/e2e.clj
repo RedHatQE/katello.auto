@@ -5,7 +5,7 @@
   (:use [serializable.fn :only [fn]]
         [katello.tasks]
         [com.redhat.qe.verify :only [verify-that]]
-        [katello.conf :only [*session-user* *session-password* *session-client* config]]
+        [katello.conf :only [*session-user* *session-password* config]]
         [slingshot.slingshot :only [try+]]))
 
 
