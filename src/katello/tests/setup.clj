@@ -59,9 +59,12 @@
                     katello.tasks/unique-names
                     katello.tasks/timestamps]} 
          (println "starting a selenium session.")
-         (try (start-selenium)
-              (switch-new-admin-user *session-user* *session-password*)
-              (catch Exception e (.printStackTrace e)))
+         (try
+           (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+           (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
+           (start-selenium)
+           (switch-new-admin-user *session-user* *session-password*)
+           (catch Exception e (.printStackTrace e)))
          (consume-fn)
          (stop-selenium)
          (htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
