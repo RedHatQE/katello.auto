@@ -1,14 +1,12 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require [katello.api-tasks :as api]
-            )
+  (:require [katello.api-tasks :as api])
   (:use katello.tasks
         katello.validation 
         [com.redhat.qe.verify :only [verify-that]]
         [serializable.fn :only [fn]]))
 
 (def test-org-name (atom nil))
-
 (def first-env "dev")
 
 (def create-test-org 

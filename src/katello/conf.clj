@@ -1,5 +1,6 @@
 (ns katello.conf
-  (:use [com.redhat.qe.config :only [property-map]])
+  (:use [com.redhat.qe.config :only [property-map]]
+        [clojure.string :only [split]])
   (:import [com.redhat.qe.auto.testng TestScript]
            [java.util.logging Logger Level]))
 
@@ -16,12 +17,17 @@
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
                               :redhat-manifest-url ["katello.redhat.manifest.url" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/systemengine/manifests/manifest-qe-20111207.zip"]
                               :first-env ["katello.environments.first" "Development"]
-                              :second-env ["katello.environments.second" "Q-eh"]})
+                              :second-env ["katello.environments.second" "Q-eh"]
+                              :clients ["katello.clients" "katello-client1.usersys.redhat.com,katello-client2.usersys.redhat.com,katello-client3.usersys.redhat.com"]
+                              :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
+                                                                           (System/getProperty "user.home"))]
+                              :client-ssh-key-passphrase ["sm.sshkey.passphrase" "password"]})
 
 (def config (atom {}))
 
 (declare ^:dynamic *session-user*
-         ^:dynamic *session-password*)
+         ^:dynamic *session-password*
+         ^:dynamic *clients*)
 
 (defn init "initialize logging and read in properties"
   []
@@ -29,6 +35,7 @@
   (-> (Logger/getLogger "") (.setLevel Level/OFF))
   (swap! config merge (property-map katello-auto-properties))
   (def ^:dynamic *session-user* (@config :admin-user))
-  (def ^:dynamic *session-password* (@config :admin-password)))
+  (def ^:dynamic *session-password* (@config :admin-password))
+  (def ^:dynamic *clients* (split (@config :clients) #",")))
 
 

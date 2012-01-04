@@ -433,11 +433,17 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
+(def sync-messages {:ok "Sync complete."
+                    :fail "Error syncing!"})
+
 (defn sync-complete-status
   "Returns final status if complete.  If sync is still in progress or queued, returns nil."
   [product]
   (some #{(browser getText (locators/provider-sync-progress product))}
-        ["Error syncing!" "Sync complete."]))
+        (vals sync-messages)))
+
+(defn sync-success? [res]
+  (= res (:ok sync-messages)))
 
 (defn sync-repos [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)

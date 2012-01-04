@@ -1,7 +1,7 @@
 (defproject katello "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main katello.tests.suite
-  
+  :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.3.0"]
                  [test.tree "0.5.3-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
@@ -10,24 +10,30 @@
                  [inflections "0.6.2"]
                  [clj-http "0.2.6"]
                  [fn.trace "1.3.0.1"]]
-
-  :jvm-opts ["-Xmx256m"]
-  :omit-default-repositories true
+  :dev-dependencies [[slamhound "1.2.0"]]
+  
+  :jvm-opts ["-Xmx128m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                             :snapshots false}})
-
 
 (comment "Execute this in the repl to load everything and start selenium"
          (do
            (do (require 'katello.tasks :reload-all)
                (require 'katello.conf :reload)
                (require 'katello.tests.setup :reload)
+               (require 'katello.client :reload)
+               
                  
-               (katello.conf/init))  ;;<-here for api only
+               (katello.conf/init)
+               (katello.client/connect (katello.client/new-runner
+                                        (first katello.conf/*clients*)
+                                        "root" nil
+                                        (@katello.conf/config :client-ssh-key)
+                                        (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
            (katello.tests.setup/new-selenium true)
-           (katello.tests.setup/start-selenium))   ;;<-here for selenium
+           (katello.tests.setup/start-selenium)) ;;<-here for selenium
          )
 
 (comment "Execute this in the repl to create some test entities via API"

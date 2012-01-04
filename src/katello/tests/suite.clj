@@ -12,42 +12,44 @@
                            [systems :as systems]
                            [users :as users]
                            [permissions :as permissions]
-                           [templates :as templates])
-   
+                           [templates :as templates]
+                           [e2e :as e2e])
+            
             (katello [tasks :as tasks]
                      [conf :as conf] 
                      [validation :as validate]
                      [locators :as locators])
 
             [test.tree :as test]
-            (test.tree [builder :as build]       
-                       [reporter :as report])
+            [test.tree.reporter :as report]
 
             [com.redhat.qe.auto.selenium.selenium :as selenium])
-  (:use [serializable.fn :only [fn]]
+  (:use test.tree.builder
+        [serializable.fn :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
 (declare nav-tests org-tests environment-tests provider-tests
-         system-tests user-tests sync-tests permission-tests template-tests)
+         system-tests user-tests sync-tests permission-tests template-tests end-to-end-tests)
 
 (defn ^:dynamic tests-to-run []
-  (concat (org-tests)
+  (concat (nav-tests)
+          (user-tests)
+          (permission-tests)
+          (org-tests)
           (provider-tests)
           (sync-tests)
           (promotions/tests)
-          (system-tests)
-          (user-tests)
-          (permission-tests)
+          (system-tests)         
           (template-tests)
-          (nav-tests)
-          (build/data-driven {:name "login as invalid user"
-                              :blockers (open-bz-bugs "730738")} 
-                             login/invalid
-                             login/invalid-logins)))
+          (end-to-end-tests)
+          (data-driven {:name "login as invalid user"
+                        :blockers (open-bz-bugs "730738")} 
+                       login/invalid
+                       login/invalid-logins)))
 
 (defn suite []
   (with-meta
-    (build/before-all
+    (before-all
      (fn [] (tasks/navigate :top-level))
      {:name "login as admin"
       :steps login/admin
@@ -56,11 +58,11 @@
            setup/runner-config)))
 
 (defn nav-tests []
-  (build/data-driven {:name "navigate to tab"}
-                     (fn [tab]
-                       (tasks/navigate tab)
-                       (tasks/check-for-error 2000))
-                     (map vector locators/tab-list)))
+  (data-driven {:name "navigate to tab"}
+               (fn [tab]
+                 (tasks/navigate tab)
+                 (tasks/check-for-error 2000))
+               (map vector locators/tab-list)))
 
 (defn org-tests []
   [{:name "create an org"
@@ -85,10 +87,10 @@
              :blockers (open-bz-bugs "750120")
              :steps orgs/search-org}]
            
-           (build/data-driven {:name "org valid name"
-                              :blockers (open-bz-bugs "726724")}
-                             orgs/valid-name
-                             orgs/valid-name-data)
+           (data-driven {:name "org valid name"
+                         :blockers (open-bz-bugs "726724")}
+                        orgs/valid-name
+                        orgs/valid-name-data)
            
            (environment-tests))}])
 
@@ -120,7 +122,7 @@
     :more (concat
            [{:name "duplicate provider disallowed"
              :steps providers/dupe-disallowed}
-             
+            
             {:name "rename a provider"
              :steps providers/rename}
 
@@ -143,10 +145,10 @@
                              :more [{:name "delete a repository"
                                      :steps providers/delete-repo
                                      :blockers (open-bz-bugs "745279")}]}]}]}]
-            
-           (build/data-driven {:name "provider validation"}
-                             providers/validation
-                             (providers/validation-data)))}
+           
+           (data-driven {:name "provider validation"}
+                        providers/validation
+                        (providers/validation-data)))}
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
     :configuration true
@@ -169,10 +171,10 @@
             :blockers (open-bz-bugs "729364")
             :more (concat [{:name "edit a sync plan"
                             :steps sync/edit-plan}
-                            
+                           
                            {:name "rename a sync plan"
                             :steps sync/rename-plan}
-                            
+                           
                            {:name "duplicate sync plan disallowed"
                             :steps sync/dupe-disallowed}
 
@@ -182,9 +184,9 @@
                             :more [{:name "reassign product sync plan"
                                     :steps sync/reset-schedule}]}]
                           
-                          (build/data-driven {:name "sync plan validation"}
-                                             sync/plan-validate
-                                             (sync/plan-validation-data)))}]}])
+                          (data-driven {:name "sync plan validation"}
+                                       sync/plan-validate
+                                       (sync/plan-validation-data)))}]}])
 
 (defn system-tests []
   [{:name "setup environment for systems"
@@ -246,8 +248,8 @@
 
            {:name "add permission and user to a role"
             :steps permissions/edit-role
-            :more (build/data-driven {:name "user with permissions is properly restricted"}
-                                     permissions/verify-access permissions/access-test-data)}]}])
+            :more (data-driven {:name "user with permissions is properly restricted"}
+                               permissions/verify-access permissions/access-test-data)}]}])
 
 (defn template-tests []
   [{:name "create a system template"
@@ -258,6 +260,15 @@
             :blockers (open-bz-bugs "765888")
             :more [{:name "add products to template"
                     :steps templates/add-content}]}]}])
+
+(defn end-to-end-tests []
+  [{:name "client installs custom content"
+    :steps e2e/client-access-custom
+    :blockers (juxtcat (open-bz-bugs "754728")
+                       (fn [thistree]
+                         (filter-tests thistree (every-pred (named? ["simple sync"
+                                                                     "promote content"])
+                                                            (complement report/passed?)))))}])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
