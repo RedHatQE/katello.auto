@@ -264,10 +264,13 @@
 (defn end-to-end-tests []
   [{:name "client installs custom content"
     :steps e2e/client-access-custom
-    :blockers (juxtcat (open-bz-bugs "754728")
-                       (filter-tests (every-pred (named? ["simple sync"
-                                                          "promote content"])
-                                                 (complement report/passed?))))}])
+    
+    ;;the test.tree feature to filter on passed? is broken, can't
+    ;;figure out why.  
+    ;;:blockers (filter-tests (every-pred (named? ["simple sync"
+    ;;                                              "promote content"])
+    ;;                           (complement report/passed?)))}
+   ])
 
 (defn -main [ & args]
   (let [reports (test/run-suite (suite))]
