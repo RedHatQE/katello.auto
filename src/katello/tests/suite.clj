@@ -23,8 +23,10 @@
             [test.tree :as test]
             [test.tree.reporter :as report]
 
-            [com.redhat.qe.auto.selenium.selenium :as selenium])
+            [com.redhat.qe.auto.selenium.selenium :as selenium]
+            com.redhat.qe.config)
   (:use test.tree.builder
+        fn.trace
         [serializable.fn :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
@@ -276,11 +278,13 @@
     }])
 
 (defn -main [ & args]
-  (let [reports (test/run-suite (suite))]
-    (println "----- Blockers -----\n ")
-    (let [blockers (->> reports
-                      vals
-                      (mapcat #(get-in % [:report :blocked-by]))
-                      (filter #(not (nil? %)))
-                      frequencies)]
-      (pprint/pprint blockers))))
+  (binding [tracer (per-thread-tracer clj-format)]
+    (dotrace-all {:namespaces [com.redhat.qe.config]} 
+                 (let [reports (test/run-suite (suite))]
+                   (println "----- Blockers -----\n ")
+                   (let [blockers (->> reports
+                                     vals
+                                     (mapcat #(get-in % [:report :blocked-by]))
+                                     (filter #(not (nil? %)))
+                                     frequencies)]
+                     (pprint/pprint blockers))))))
