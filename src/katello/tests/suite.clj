@@ -70,7 +70,10 @@
     :more (concat
            [{:name "delete an org"
              :blockers (open-bz-bugs "716972")
-             :steps orgs/delete}
+             :steps orgs/delete
+             :more [{:name "verify cleanup of deleted org"
+                     :steps orgs/recreate-org-with-same-data
+                     :blockers (open-bz-bugs "771957")}]}
             
             {:name "duplicate org disallowed"
              :blockers (open-bz-bugs "726724")

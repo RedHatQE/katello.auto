@@ -3,6 +3,7 @@
   (:require (katello [api-tasks :as api]
                      [validation :as validate]))
   (:use katello.tasks
+        [katello.conf :only [config]]
         [com.redhat.qe.verify :only [verify-that]]
         [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
@@ -36,7 +37,7 @@
           (duplicate-disallowed create-organization
                                 [org-name {:description "org-description"}]))))
 
-(def name-required
+(def name-require
   (fn [] (name-field-required
          create-organization ["" {:description "org description"}])))
 
@@ -56,3 +57,26 @@
     (concat 
      (validate/variations :name-must-not-contain-characters make-data validate/invalid-character)
      (validate/variations :name-no-leading-trailing-whitespace make-data validate/trailing-whitespace))))
+
+(def recreate-org-with-same-data
+  (fn []
+    (let [org-name (uniqueify "delorg")
+          provider-name (uniqueify "delprov")
+          product-name (uniqueify "delprod")
+          repo-name (uniqueify "delrepo")
+          repo-url "http://blah.com/blah"
+          createfn (fn []
+                     (create-organization org-name {:description "org to delete and recreate"})
+                     (switch-org org-name)
+                     (create-provider {:name provider-name
+                                       :description "provider to del and recreate"})
+                     (add-product {:provider-name provider-name
+                                   :name product-name})
+                     (add-repo {:name repo-name
+                                :provider-name provider-name
+                                :product-name product-name
+                                :url repo-url}))]
+      (createfn)
+      (switch-org (@config :admin-org))
+      (delete-organization org-name)
+      (createfn))))
