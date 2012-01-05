@@ -25,13 +25,13 @@
                (require 'katello.tests.setup :reload)
                (require 'katello.client :reload)
                
-                 
                (katello.conf/init)
-               (katello.client/connect (katello.client/new-runner
-                                        (first katello.conf/*clients*)
-                                        "root" nil
-                                        (@katello.conf/config :client-ssh-key)
-                                        (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
+               (when katello.conf/*clients*
+                 (katello.client/connect (katello.client/new-runner
+                                          (first katello.conf/*clients*)
+                                          "root" nil
+                                          (@katello.conf/config :client-ssh-key)
+                                          (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
            (katello.tests.setup/new-selenium true)
            (katello.tests.setup/start-selenium)) ;;<-here for selenium
          )
