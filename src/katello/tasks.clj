@@ -569,6 +569,7 @@
     (check-for-success)))
 
 (defn switch-org [org-name]
-  (browser fireEvent :org-switcher "mouseup")  ;;click doesn't work, oddly
-  (browser ajaxWait)
+  (comment (browser fireEvent :org-switcher "mouseup") ;;click doesn't work, oddly
+           (browser ajaxWait))
+  (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
