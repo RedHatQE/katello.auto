@@ -40,12 +40,13 @@
       (binding [sel (new-selenium)
                 tracer (per-thread-tracer clj-format)
                 *session-user* (tasks/uniqueify
-                                             (str (@config :admin-user)
-                                                  thread-number))
-                client/*runner* (client/new-runner (nth *clients* thread-number)
-                                                   "root" nil
-                                                   (@config :client-ssh-key)
-                                                   (@config :client-ssh-key-passphrase)) ]
+                                (str (@config :admin-user)
+                                     thread-number))
+                client/*runner* (when *clients*
+                                  (client/new-runner (nth *clients* thread-number)
+                                                     "root" nil
+                                                     (@config :client-ssh-key)
+                                                     (@config :client-ssh-key-passphrase))) ]
         (dotrace-all
          {:namespaces [katello.tasks katello.api-tasks katello.client]
           :fns [test/execute
@@ -68,7 +69,7 @@
          (consume-fn)
          (stop-selenium)
          (htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
-                     "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/"))))))
+                  "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/"))))))
 
 (def runner-config 
   {:thread-runner thread-runner

@@ -18,7 +18,7 @@
                               :redhat-manifest-url ["katello.redhat.manifest.url" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/systemengine/manifests/manifest-qe-20111207.zip"]
                               :first-env ["katello.environments.first" "Development"]
                               :second-env ["katello.environments.second" "Q-eh"]
-                              :clients ["katello.clients" "katello-client1.usersys.redhat.com,katello-client2.usersys.redhat.com,katello-client3.usersys.redhat.com"]
+                              :clients ["katello.clients"]
                               :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
                                                                            (System/getProperty "user.home"))]
                               :client-ssh-key-passphrase ["sm.sshkey.passphrase" nil]})
@@ -36,6 +36,7 @@
   (swap! config merge (property-map katello-auto-properties))
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
-  (def ^:dynamic *clients* (split (@config :clients) #",")))
+  (when (@config :clients)
+    (def ^:dynamic *clients* (split (@config :clients) #","))))
 
 
