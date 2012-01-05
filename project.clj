@@ -12,7 +12,7 @@
                  [fn.trace "1.3.0.1"]]
   :dev-dependencies [[slamhound "1.2.0"]]
   
-  :jvm-opts ["-Xmx128m"]
+  :jvm-opts ["-Xmx256m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
