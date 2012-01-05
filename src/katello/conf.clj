@@ -26,8 +26,9 @@
 (def config (atom {}))
 
 (declare ^:dynamic *session-user*
-         ^:dynamic *session-password*
-         ^:dynamic *clients*)
+         ^:dynamic *session-password*)
+
+(def ^:dynamic *clients* nil)
 
 (defn init "initialize logging and read in properties"
   []
