@@ -37,7 +37,7 @@
           (duplicate-disallowed create-organization
                                 [org-name {:description "org-description"}]))))
 
-(def name-require
+(def name-required
   (fn [] (name-field-required
          create-organization ["" {:description "org description"}])))
 
