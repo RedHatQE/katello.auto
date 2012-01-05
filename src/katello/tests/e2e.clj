@@ -17,7 +17,7 @@
           repo-name (uniqueify "aeolus-x86_64")
           target-env (@config :first-env)
           cs-name (uniqueify "promo-aeolus")
-          package-to-install "python-httplib2"]
+          package-to-install "jansson"]
       (api/with-creds *session-user* *session-password*
         (api/with-admin-org
           (api/ensure-env-exist target-env {:prior locker})
@@ -43,7 +43,8 @@
                             :force true})
           (client/subscribe (->> (api/system-available-pools (-> client/*runner* .getConnection .getHostname))
                                (filter #(= (:poolName %) product-name))
-                               first))
+                               first
+                               :poolId))
           (let [repolist-cmd (client/run-cmd "yum repolist")
                 install-cmd (client/run-cmd (format "yum install -y --nogpg %s" package-to-install))]
             (->> [repolist-cmd install-cmd] (map :exit-code) (every? zero?) verify-that)))))))
