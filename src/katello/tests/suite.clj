@@ -278,7 +278,8 @@
     }])
 
 (defn -main [ & args]
-  (binding [tracer (per-thread-tracer clj-format)]
+  (binding [tracer (per-thread-tracer clj-format)
+            *print-length* 50]
     (dotrace-all {:namespaces [com.redhat.qe.config]} 
                  (let [reports (test/run-suite (suite))]
                    (println "----- Blockers -----\n ")

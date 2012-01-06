@@ -21,7 +21,7 @@
                               :clients ["katello.clients"]
                               :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
                                                                            (System/getProperty "user.home"))]
-                              :client-ssh-key-passphrase ["sm.sshkey.passphrase" nil]})
+                              :client-ssh-key-passphrase ["sm.sshkey.passphrase"]})
 
 (def config (atom {}))
 
