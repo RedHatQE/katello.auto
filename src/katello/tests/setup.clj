@@ -4,7 +4,7 @@
             (katello [tasks :as tasks]
                      [api-tasks :as api]
                      [client :as client]) 
-            [test.tree :as test]
+            
             [test.tree.watcher :as watch])
   (:use [clojure.string :only [split replace]]
         [katello.conf]
@@ -38,13 +38,12 @@
   {:namespaces ['katello.tasks
                 'katello.api-tasks
                 'katello.client]
-   ;; :fns [
-   ;;       'test/execute
-   ;;       'start-selenium
-   ;;       'stop-selenium
-   ;;       'switch-new-admin-user
-   ;;       'check
-   ;;       'call-sel]
+   :fns ['test.tree/execute
+         'katello.tests.setup/start-selenium
+         'katello.tests.setup/stop-selenium
+         'katello.tests.setup/switch-new-admin-user
+         'com.redhat.qe.verify/check
+         'com.redhat.qe.auto.selenium.selenium/call-sel]
    :exclude ['katello.tasks/notification 
              'katello.tasks/success?
              'katello.tasks/uniqueify
