@@ -278,14 +278,16 @@
     }])
 
 (defn -main [ & args]
+  (doseq [x (System/getProperties)] (prn x))
   (binding [tracer (per-thread-tracer clj-format)
-            *print-length* 50]
-    (dotrace-all {:namespaces [com.redhat.qe.config]} 
-                 (let [reports (test/run-suite (suite))]
-                   (println "----- Blockers -----\n ")
-                   (let [blockers (->> reports
-                                     vals
-                                     (mapcat #(get-in % [:report :blocked-by]))
-                                     (filter #(not (nil? %)))
-                                     frequencies)]
-                     (pprint/pprint blockers))))))
+            *print-length* 100]
+    (dotrace ['com.redhat.qe.config/property-map] 
+      (let [reports (test/run-suite (suite))]
+        (println "----- Blockers -----\n ")
+        (let [blockers (->> reports
+                          vals
+                          (mapcat #(get-in % [:report :blocked-by]))
+                          (filter #(not (nil? %)))
+                          frequencies)]
+          (pprint/pprint blockers))))))
+

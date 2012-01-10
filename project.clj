@@ -9,7 +9,7 @@
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
                  [clj-http "0.2.6"]
-                 [fn.trace "1.3.0.1"]]
+                 [fn.trace "1.3.1.0-SNAPSHOT"]]
   :dev-dependencies [[slamhound "1.2.0"]]
   
   :jvm-opts ["-Xmx512m"]

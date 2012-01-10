@@ -9,7 +9,7 @@
   (:use [clojure.string :only [split replace]]
         [katello.conf]
         [fn.trace]
-        [com.redhat.qe.auto.selenium.selenium :only [connect new-sel browser sel jquery-ajax-finished]]
+        com.redhat.qe.auto.selenium.selenium
         [com.redhat.qe.verify :only [check]]))
 
 (defn new-selenium [& [single-thread]]
@@ -34,6 +34,23 @@
 (defn stop-selenium []
   (browser stop))
 
+(def fns-to-trace ;;list of namespaces and fns we want to trace
+  {:namespaces ['katello.tasks
+                'katello.api-tasks
+                'katello.client]
+   ;; :fns [
+   ;;       'test/execute
+   ;;       'start-selenium
+   ;;       'stop-selenium
+   ;;       'switch-new-admin-user
+   ;;       'check
+   ;;       'call-sel]
+   :exclude ['katello.tasks/notification 
+             'katello.tasks/success?
+             'katello.tasks/uniqueify
+             'katello.tasks/unique-names
+             'katello.tasks/timestamps]})
+
 (defn thread-runner [consume-fn]
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
@@ -49,18 +66,7 @@
                                                      (@config :client-ssh-key-passphrase)))
                 *print-level* 7
                 *print-length* 30]
-        (dotrace-all
-         {:namespaces [katello.tasks katello.api-tasks katello.client]
-          :fns [test/execute
-                start-selenium stop-selenium switch-new-admin-user
-                check
-                com.redhat.qe.auto.selenium.selenium/call-sel]
-          :exclude [katello.tasks/notification
-                    katello.tasks/clear-all-notifications
-                    katello.tasks/success?
-                    katello.tasks/uniqueify
-                    katello.tasks/unique-names
-                    katello.tasks/timestamps]} 
+        (dotrace-all fns-to-trace
          (println "starting a selenium session.")
          (try
            (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
