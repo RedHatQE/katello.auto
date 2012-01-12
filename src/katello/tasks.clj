@@ -417,6 +417,7 @@
                 (doseq [{:keys [name description resource-type verbs tags]} permissions]
                   (browser click :add-permission)
                   (browser select :permission-resource-type-select resource-type)
+                  (browser click :next)
                   (doseq [verb verbs]
                     (browser addSelection :permission-verb-select verb))
                   (browser click :next)
