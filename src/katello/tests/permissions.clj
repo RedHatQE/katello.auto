@@ -27,7 +27,7 @@
                            {:add-permissions [{:org "Global Permissions"
                                                :permissions [{:name "blah2"
                                                               :resource-type "Organizations"
-                                                              :verbs ["Access Organization"]}]}]
+                                                              :verbs ["Read Organization"]}]}]
                             :users [user-name]}))))
 
 (def no-perm-user (atom nil))
@@ -99,7 +99,7 @@
 (def access-test-data
   [(fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Organizations"
-                                         :verbs ["Access Organization"]
+                                         :verbs ["Read Organization"]
                                          :name "orgaccess"}]}]
            :allowed-actions [(access-org (@conf/config :admin-org))]
            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
@@ -113,7 +113,7 @@
    (fn [] [(let [org-name (uniqueify "org-create-perm")] ;;due to bz 756252 'create' means manage
             {:permissions [{:org "Global Permissions"
                             :permissions [{:resource-type "Organizations"
-                                           :verbs ["Create Organization"]
+                                           :verbs ["Modify Organization and Administer Environments"]
                                            :name "orgcreate"}]}]
              :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
                                (fn [] (delete-organization org-name))
@@ -140,8 +140,8 @@
    
    (vary-meta
     (fn [] [{:permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Organizations"
-                                          :verbs ["Access all Activation Keys"]
+                           :permissions [{:resource-type "Activation Keys"
+                                          :verbs ["Read Activation Keys"]
                                           :name "akaccess"}]}]
             :allowed-actions [(navigate :activation-keys-page)]
             :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
@@ -151,8 +151,8 @@
    
    (vary-meta
     (fn [] [{:permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Organizations"
-                                          :verbs ["Manage all Activation Keys"]
+                           :permissions [{:resource-type "Activation Keys"
+                                          :verbs ["Administer Activation Keys"]
                                           :name "akmang"}]}]
             :allowed-actions [create-ak]
             :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
@@ -162,7 +162,7 @@
 
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "System Templates"
-                                         :verbs ["Read All System Templates"]
+                                         :verbs ["Read System Templates"]
                                          :name "stread"}]}]
            :allowed-actions [(navigate :system-templates-page)]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
@@ -173,7 +173,7 @@
 
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "System Templates"
-                                         :verbs ["Manage All System Templates"]
+                                         :verbs ["Administer System Templates"]
                                          :name "stmang"}]}]
            :allowed-actions [create-st]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
@@ -194,7 +194,7 @@
 
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Users"
-                                         :verbs ["Create Users"]
+                                         :verbs ["Modify Users"]
                                          :name "userread"}]}]
            :allowed-actions [create-user
                              (fn [] (api/create-user (uniqueify "user") {:password "password"
@@ -221,7 +221,7 @@
      [(let [org (uniqueify "org")]
         {:permissions [{:org (@conf/config :admin-org)
                         :permissions [{:resource-type "Organizations"
-                                       :verbs ["Access Organization"]
+                                       :verbs ["Read Organization"]
                                        :name "orgaccess"}]}]
          :setup (fn [] (api/create-organization org))
          :allowed-actions [(access-org (@conf/config :admin-org))]
