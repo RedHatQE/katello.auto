@@ -4,13 +4,11 @@
             (katello [tasks :as tasks]
                      [api-tasks :as api]
                      [client :as client]) 
-            
             [test.tree.watcher :as watch])
   (:use [clojure.string :only [split replace]]
         [katello.conf]
-        [fn.trace]
-        com.redhat.qe.auto.selenium.selenium
-        [com.redhat.qe.verify :only [check]]))
+        fn.trace 
+        com.redhat.qe.auto.selenium.selenium))
 
 (defn new-selenium [& [single-thread]]
   (let [[host port] (split (@config :selenium-address) #":")
@@ -62,25 +60,22 @@
                                   (client/new-runner (nth *clients* thread-number)
                                                      "root" nil
                                                      (@config :client-ssh-key)
-                                                     (@config :client-ssh-key-passphrase)))
-                *print-level* 7
-                *print-length* 30]
-        (dotrace-all fns-to-trace
-         (println "starting a selenium session.")
-         (try
-           (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-           (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-           (start-selenium)
-           (switch-new-admin-user *session-user* *session-password*)
-           (catch Exception e (.printStackTrace e)))
-         (consume-fn)
-         (stop-selenium)
-         (htmlify "html" [(str (.getName (Thread/currentThread)) ".trace")]
-                  "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/"))))))
+                                                     (@config :client-ssh-key-passphrase)))]
+        (println "starting a selenium session.")
+        (try
+          (start-selenium)
+          (switch-new-admin-user *session-user* *session-password*)
+          (catch Exception e (.printStackTrace e)))
+        (consume-fn)
+        (stop-selenium)))))
 
 (def runner-config 
   {:thread-runner thread-runner
-   :setup (fn [] (println "initializing.") (init))
+   :setup (fn []
+            (println "initializing.")
+            (init)
+            (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+            (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC))
    :watchers {:stdout-log (fn [k r o n]
                             (let [[_ d _] (data/diff o n)]
                               (doseq [[{:keys [name parameters]} {:keys [status report]}] d]
