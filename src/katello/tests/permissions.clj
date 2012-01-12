@@ -113,7 +113,7 @@
    (fn [] [(let [org-name (uniqueify "org-create-perm")] ;;due to bz 756252 'create' means manage
             {:permissions [{:org "Global Permissions"
                             :permissions [{:resource-type "Organizations"
-                                           :verbs ["Modify Organization and Administer Environments"]
+                                           :verbs ["Administer Organization"]
                                            :name "orgcreate"}]}]
              :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
                                (fn [] (delete-organization org-name))
@@ -183,7 +183,7 @@
    
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Users"
-                                         :verbs ["Access Users"]
+                                         :verbs ["Read Users"]
                                          :name "userread"}]}]
            :allowed-actions [(navigate :users-tab)]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
@@ -192,18 +192,18 @@
                                      create-env
                                      create-user)}])
 
-   (fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "Users"
-                                         :verbs ["Modify Users"]
-                                         :name "userread"}]}]
-           :allowed-actions [create-user
-                             (fn [] (api/create-user (uniqueify "user") {:password "password"
-                                                                        :email "blah@blah.com"}))]
-           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
-                                                   :content-management-tab)
-                                     (fn [] (let [username (uniqueify "deleteme")]
-                                             (create-user username {:password "password" :email "mee@mee.com"})
-                                             (delete-user username))))}])
+   (fn [] [(let [user (uniqueify "user")]
+            {:setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
+             :permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Users"
+                                          :verbs ["Modify Users"]
+                                          :name "usermod"}]}]
+             :allowed-actions [(edit-user user {:new-email "blah@me.com"})]
+            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                    :content-management-tab)
+                                      (fn [] (let [username (uniqueify "deleteme")]
+                                              (create-user username {:password "password" :email "mee@mee.com"})
+                                              (delete-user username))))})])
 
    (fn []
      [(let [user (uniqueify "user")]
