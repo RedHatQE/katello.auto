@@ -71,8 +71,8 @@
   (let [notif (notification max-wait-ms)
         msg (:msg notif)]
     (cond (not notif) (throw+
-                       {:type ::no-success-message-error
-                        :msg "Expected a result message, but none is present on page."})
+                       {:type ::no-success-message-error}
+                       "Expected a result message, but none is present on page.")
           ((complement success?) notif) (let [errtype (matching-error msg)]
                                  (throw+ (assoc notif :type errtype)))
           :else notif)))
