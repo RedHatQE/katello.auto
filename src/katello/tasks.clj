@@ -72,9 +72,9 @@
         msg (:msg notif)]
     (cond (not notif) (throw+
                        {:type ::no-success-message-error}
-                       "Expected a result message, but none is present on page.")
+                       "Expected a success notification, but none appeared within the timeout period.")
           ((complement success?) notif) (let [errtype (matching-error msg)]
-                                 (throw+ (assoc notif :type errtype)))
+                                 (throw+ (assoc notif :type errtype) "Notification: %s" (pr-str %)))
           :else notif)))
 
 (defn check-for-error
