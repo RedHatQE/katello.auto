@@ -296,7 +296,7 @@
 
 (defn -main [ & args]
   (binding [tracer (per-thread-tracer clj-format)
-            *print-level* 7
+            *print-level* 10
             *print-length* 30]
     (dotrace-all fns-to-trace 
       (let [reports (test/run-suite (suite))]
