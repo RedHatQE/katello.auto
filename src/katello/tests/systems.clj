@@ -66,7 +66,7 @@
 
 (def activation-key-dupe-disallowed
   (fn []
-    (val/duplicate-disallowed create-activation-key
+    (val/duplicate-disallowed katello.tasks/create-activation-key
                               [{:name (uniqueify "auto-key")
                                 :description "my description"
                                 :environment (@config :first-env)}])))
