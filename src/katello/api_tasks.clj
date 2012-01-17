@@ -48,12 +48,14 @@
 
 (defn uri-for-entity-type  
   [entity-type]
-  (let [url-types {[:organization :template :user] {:reqs []
+  (let [url-types {[:organization :user] {:reqs []
                                               :fmt "api/%s"}
                    [:environment :product :provider :system] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
                    [:changeset] {:reqs [#'*org* #'*env-id*]
-                                 :fmt "api/organizations/%s/environments/%s/%s"}}
+                                 :fmt "api/organizations/%s/environments/%s/%s"}
+                   [:template] {:reqs [#'*env-id*]
+                                :fmt "api/environments/%s/templates"}}
         {:keys [reqs fmt]} (->> url-types
                               keys
                               (drop-while (complement #(some #{entity-type} %)))
