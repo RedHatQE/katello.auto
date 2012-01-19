@@ -30,6 +30,10 @@
         [serializable.fn :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
+;;suite file - outlines a tree of tests where the deeper into the tree
+;;you go, the more detailed the tests are.  Each test depends on its
+;;parent test.
+
 (declare nav-tests org-tests environment-tests provider-tests
          system-tests user-tests sync-tests permission-tests template-tests end-to-end-tests)
 

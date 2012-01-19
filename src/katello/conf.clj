@@ -5,7 +5,10 @@
            [java.util.logging Logger Level]))
 
 ;;config layer
-
+;;
+;;mapping of configuration keys to java properties that may have been
+;;read in or passed in on the command line.  last optional item is a
+;;default if the property was not set.
 (def katello-auto-properties {:server-url ["katello.url"]
                               :admin-user ["katello.admin.user" "admin"]
                               :admin-password ["katello.admin.password" "admin"]
@@ -30,7 +33,9 @@
 
 (def ^:dynamic *clients* nil)
 
-(defn init "initialize logging and read in properties"
+(defn init
+  "Read in properties and set some defaults. This function should be
+   called before selenium client is created or any tests are run."
   []
   (TestScript/loadProperties)
   (-> (Logger/getLogger "") (.setLevel Level/OFF))

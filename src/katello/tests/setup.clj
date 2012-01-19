@@ -10,7 +10,10 @@
         fn.trace 
         com.redhat.qe.auto.selenium.selenium))
 
-(defn new-selenium [& [single-thread]]
+(defn new-selenium
+  "Returns a new selenium client. If running in a REPL or other
+   single-session environment, set single-thread to true."
+  [& [single-thread]]
   (let [[host port] (split (@config :selenium-address) #":")
         sel-fn (if single-thread connect new-sel)] 
     (sel-fn host (Integer/parseInt port) "" (@config :server-url))))
@@ -20,7 +23,10 @@
   (browser open (@config :server-url) jquery-ajax-finished)
   (tasks/login (@config :admin-user) (@config :admin-password)))
 
-(defn switch-new-admin-user [user pw]
+(defn switch-new-admin-user
+  "Creates a new user with a unique name, assigns him admin
+   permissions and logs in as that user."
+  [user pw]
   (api/with-creds (@config :admin-user) (@config :admin-password)
     (api/create-user user {:password pw
                            :email (str user "@myorg.org")}))
@@ -48,7 +54,11 @@
              'katello.tasks/unique-names
              'katello.tasks/timestamps]})
 
-(defn thread-runner [consume-fn]
+(defn thread-runner
+  "A test.tree thread runner function that binds some variables for
+   each thread. Starts selenium client for each thread before kicking
+   off tests, and stops it after all tests are done."
+  [consume-fn]
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
       (binding [sel (new-selenium)

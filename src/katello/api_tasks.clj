@@ -11,34 +11,49 @@
 (def ^{:dynamic true} *env-id* nil)
 
 (defmacro with-creds
+  "Execute body and makes any included katello api calls with the
+   given user and password."
   [user password & body]
   `(binding [*user* ~user
              *password* ~password]
      (do 
        ~@body)))
 
-(defmacro with-admin-creds [& body]
+(defmacro with-admin-creds
+  "Executes body and makes any included katello api calls using the
+  admin user and password (which defaults to admin/admin)"
+  [& body]
   `(binding [*user* (@config :admin-user)
              *password* (@config :admin-password)]
      (do ~@body)))
 
 (defmacro with-org
+  "Executes body and makes any included katello api calls using the
+  given organization."
   [org & body]
   `(binding [*org* ~org]
      (do 
        ~@body)))
 
-(defmacro with-admin-org [& body]
+(defmacro with-admin-org
+  "Executes body and makes any included katello api calls using the
+  admin organization (defaults to ACME_Corporation)."
+  [& body]
   `(binding [*org* (@config :admin-org)]
      (do ~@body)))
 
-(defmacro with-admin [& body]
+(defmacro with-admin
+  "Executes body and makes any included katello api calls using the
+  admin user, password, and organization."
+  [& body]
   `(binding [*user* (@config :admin-user)
              *password* (@config :admin-password)
              *org* (@config :admin-org)]
      (do ~@body)))
 
-(defn assoc-if-set [m newmap]
+(defn assoc-if-set
+  "Adds to map m just the entries from newmap where the value is not nil."
+  [m newmap]
   (into m (filter #((complement nil?) (second %)) newmap)))
 
 (defn api-url [& args]
@@ -47,6 +62,10 @@
 (declare get-id-by-name)
 
 (defn uri-for-entity-type  
+  "Returns the proper GET uri given the katello entity type (a
+  keyword, eg. :environment). May require some vars be bound, for
+  example, to get an environment from the API an org must be set. See
+  with-* macros in this namespace."
   [entity-type]
   (let [url-types {[:organization :user] {:reqs []
                                               :fmt "api/%s"}
@@ -95,7 +114,8 @@
       (-> all first :id))))
 
 
-(defmacro with-env [env-name & body]
+(defmacro with-env "Executes body and makes any included katello api calls using the
+  given environment name (it's id will be looked up before executing body)."[env-name & body]
   `(binding [*env-id* (get-id-by-name :environment ~env-name)]
      (do ~@body)))
 
@@ -123,7 +143,9 @@
    (api-url (uri-for-entity-type :environment) "/" name)
    *user* *password*))
 
-(defn ensure-env-exist [name {:keys [prior]}]
+(defn ensure-env-exist
+  "If an environment with the given name and prior environment doesn't exist, create it."
+  [name {:keys [prior]}]
   (if-not (some #{name}
                 (map :name (all-entities :environment)))
     (create-environment name {:prior-env prior})))
@@ -149,7 +171,10 @@
     :description description}))
 
 
-(defn random-facts []
+(defn random-facts
+  "Generate facts about a system - used to register fake systems via
+  the api. Some facts are randomized to guarantee uniqueness."
+  []
   (let [rand (java.util.Random.)
         rand-255 #(.nextInt rand 255)
         splice (comp (partial apply str) interpose) 
@@ -237,11 +262,15 @@
              *user* *password*
              entity))
 
-(defn promote-changeset "Returns a future to return the promoted changeset." [changeset-name]
+(defn promote-changeset
+  "Promotes a changeset, polls the API until the promotion completes,
+   and returns the changeset. If the timeout is hit before the
+   promotion completes, throws an exception."
+  [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
     (rest/post (api-url "api/changesets/" id "/promote")
-                           *user* *password*
-                           nil)
+               *user* *password*
+               nil)
     (loop-with-timeout 180000 [cs {}]
       (cond (-> cs :state (= "promoted"))
             cs
@@ -250,11 +279,15 @@
             (do (Thread/sleep 5000)
                 (recur (get-by-id :changeset id)))))))
 
-(defn promote [content]
+(defn promote
+  "Does a promotion of the given content (creates a changeset, adds
+   the content, and promotes it. Content should match the JSON format
+   that the API expects."
+  [content]
   (let [cs-name (uniqueify "api-changeset")]
     (create-changeset cs-name)
     (doseq [[ent-type ents] content
-          ent ents]
+            ent ents]
       (add-to-changeset cs-name (-> ent-type name singularize keyword) ent ))
     (promote-changeset cs-name)))
 

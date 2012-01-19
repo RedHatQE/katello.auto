@@ -4,6 +4,8 @@
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [java.io File]))
 
+;;some functions to control RHSM on a remote machine via ssh
+
 (def script (atom nil))
 
 (declare  ^:dynamic *runner*)
@@ -23,7 +25,9 @@
      :stderr (.getStderr result)
      :exit-code (.getExitCode result)}))
 
-(defn sm-cmd [cmd & [optmap]]
+(defn sm-cmd
+  "Runs a subscription manager command with the given options."
+  [cmd & [optmap]]
   (let [res (run-cmd (build-sm-cmd cmd optmap))]
     (if (-> res :exit-code (not= 0))
       (throw+ (assoc res :type ::rhsm-error)

@@ -13,10 +13,10 @@
   (fn [& args] (Element. (LocatorTemplate. descr templ) (into-array args))))
 
 (defmacro define-strategies
-  "Create a function for each locator strategy in map m (which maps
-  symbol to LocatorStrategy). Each function will be named the same as
-  the symbol, take arguments and return a new element constructed
-  with the locator strategy and args."
+  "Expands into a function for each locator strategy in map m (which
+  maps symbol to LocatorStrategy). Each function will be named the
+  same as the symbol, take arguments and return a new element
+  constructed with the locator strategy and args."
   [m]
   `(do ~@(for [loc-strat (keys m)]
            `(def ~loc-strat 
@@ -75,6 +75,10 @@
 (defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
   (same-name capitalize tab keys))
+
+;;
+;;UI locators - mapping of names to selenium locator strings.
+;;
 
 (def common {:notification "//div[contains(@class,'jnotify-notification')]"
              :error-message "//div[contains(@class,'jnotify-notification-error')]"
@@ -257,6 +261,7 @@
                 :template-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
                 :save-template "save_template"}) ;;when editing
 
+;;merge all the preceeding maps together, plus a few more items.
 (def uimap (merge all-tabs common organizations environments roles
                   users systems sync-plans sync-schedules promotions providers
                   templates
@@ -273,6 +278,8 @@
                    ;;Sync Management subtab
                    :synchronize-now "sync_button"}))
 
+;;Tells the clojure selenium client where to look up keywords to get
+;;real selenium locators (in uimap in this namespace).
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
   (sel-locator [k] (uimap k))
@@ -298,7 +305,10 @@
 
 
 ;;nav tricks
-(defn via [link & [post-fn]]
+(defn via
+  "Performs a navigation step by clicking a locator and calling
+   optional post-click function."
+  [link & [post-fn]]
   (browser click link)
   ((or post-fn no-wait)))
 
@@ -311,14 +321,23 @@
   (fill-form {:search-bar search-term}
              :search-submit (constantly nil)))
 
-(defn choose-left-pane [item & [post-fn]]
+(defn choose-left-pane
+  "Selects an item in the left pane. If the item is not found, a
+   search is performed and the select is attempted again. Takes an
+   optional post-fn to perform afterwards."
+  [item & [post-fn]]
   (try (browser click item)
        (catch SeleniumException se
          (do (search (-> item .getArguments first))
              (browser click item)))
        (finally ((or post-fn no-wait)))))
 
-(defn toggler [[on-text off-text] loc-strategy]
+(defn toggler
+  "Returns a function that returns a locator for the given on/off text
+   and locator strategy. Used for clicking things like +Add/Remove for
+   items in changesets or permission lists."
+  [[on-text off-text]
+   loc-strategy]
   (fn [associated-text on?]
     (loc-strategy (if on? on-text off-text) associated-text)))
 
@@ -328,9 +347,14 @@
 (def template-product-toggler (toggler add-remove template-product-action))
 (def template-package-toggler (toggler add-remove template-package-action))
 
-(defn toggle [a-toggler associated-text on?]
+(defn toggle "Toggles the item from on to off or vice versa."
+  [a-toggler associated-text on?]
   (browser click (a-toggler associated-text on?)))
 
+;;
+;;Navigation tree - shows all the navigation paths through the ui.
+;;this data is used by the katello.tasks/navigate function to get to
+;;the given page.
 (def page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
                                    (browser isElementPresent :confirmation-dialog))

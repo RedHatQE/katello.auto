@@ -9,7 +9,7 @@
 
 (defn cant-be-blank-errors
   "Takes collection of keywords like :name and produces map entry like
-:name-cant-be-blank #\"Name can't be blank"
+   :name-cant-be-blank #\"Name can't be blank"
   [coll]
   (same-name identity
              (comp re-pattern
@@ -41,22 +41,32 @@
   [orig f vars]
   (map (partial f orig) vars))
 
-(defn matching-validation-errors "Returns a set of matching known validation errors"
+(defn matching-validation-errors
+  "Returns a set of matching known validation errors"
   [m]
   (set (filter (fn [k] (re-find (validation-errors k) (:msg m))) (keys validation-errors))))
 
-(defn expect-error [expected-validation-err]
+(defn expect-error
+  "Returns a predicate that will return true when one of the expected
+   errors actually appears in the validation result."
+  [expected-validation-err]
   (fn [result]
     (some #{expected-validation-err} (:validation-errors result))))
 
-(defn field-validation [create-fn args pred]
+(defn field-validation
+  "Calls create-fn, which should create some katello entity with the
+   given args. Verifies that the results match the given pred."
+   [create-fn args pred]
   (let [results (try+
                  (apply create-fn args)
                  (catch [:type :katello.tasks/validation-failed] e
                    (assoc e :validation-errors (matching-validation-errors e))))] 
     (verify-that (pred results))))
 
-(defn duplicate-disallowed [create-fn args & [pred]]
+(defn duplicate-disallowed
+  "Calls create-fn with the given args, twice, and verifies that the
+   second call results in a 'Name taken' validation error." [create-fn
+  args & [pred]]
   (apply create-fn args)
   (field-validation create-fn args (or pred (expect-error :name-taken-error))))
 

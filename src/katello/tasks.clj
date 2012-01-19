@@ -16,13 +16,17 @@
 
 ;;tasks
 (defn timestamps
+  "Infinite lazy sequence of timestamps in ms, starting with the current time."
   []
   (iterate inc (System/currentTimeMillis)))
 
-(defn unique-names [s]
+(defn unique-names
+  "Infinite lazy sequence of timestamped strings, uses s as the base string."
+  [s]
   (for [t (timestamps)] (str s "-" t)))
 
-(defn uniqueify [s]
+(defn uniqueify "Get one unique name using s as the base string."
+  [s]
   (first (unique-names s)))
 
 (def known-errors
@@ -44,7 +48,10 @@
           :while (browser isElementPresent closebutton)]
     (browser click closebutton)))
 
-(defn success? [notif]
+(defn success?
+  "Returns true if the given notification is a 'success' type
+  notification (aka green notification in the UI)."
+  [notif]
   (-> notif :type (= :success)))
 
 (defn notification
@@ -78,17 +85,28 @@
           :else notif)))
 
 (defn check-for-error
+  "Waits for a notification up to the timeout (in ms), throws an
+  exception if timeout is hit or error notification appears."
   [ & [timeout]]
   (try+ (check-for-success timeout)
         (catch [:type ::no-success-message-error] _)))
 
-(defn verify-success [task-fn]
+(defn verify-success
+  "Calls task-fn and checks for a success message afterwards. If none
+  is found, or an error notification appears, throws an exception."
+  [task-fn]
   (let [notification (task-fn)]
     (verify-that (success? notification))))
 
 (def navigate (nav/nav-fn locators/page-tree))
 
-(defn fill-ajax-form [items submit]
+(defn fill-ajax-form
+  "Fills in a web form and clicks the submit
+button. Only waits for ajax calls to complete. Items should be a map,
+where the keys are locators for form elements, and values are the
+values to fill in. Submit should be a locator for the form submit
+button."
+  [items submit]
   (fill-form items submit (constantly nil)))
 
 (defn activate-in-place
@@ -328,11 +346,16 @@
       (comment "removed on suspicion the success notif disappears sometimes before it can be read"
                (check-for-success))))
 
-(defn current-user []
-  (if (logged-in?)
+(defn current-user
+  "Returns the name of the currently logged in user, or nil if logged out."
+  []
+  (when (logged-in?)
     (browser getText :account)))
 
-(defn ensure-current-user [username password]
+(defn ensure-current-user
+  "If username is already logged in, does nothing. Otherwise logs in
+  with given username and password."
+  [username password]
   (if-not (= (current-user) username)
     (login username password)))
 
@@ -443,7 +466,8 @@
   (some #{(browser getText (locators/provider-sync-progress product))}
         (vals sync-messages)))
 
-(defn sync-success? [res]
+(defn sync-success? "Returns true if given sync result is a success."
+  [res]
   (= res (:ok sync-messages)))
 
 (defn sync-repos [repos & [{:keys [timeout]}]]
@@ -473,10 +497,12 @@
   (browser click :subscribe)
   (check-for-success))
 
-(defn split-date [date]
-  (try (doall (map (fn [fmt] (.format fmt date))
-                   [(SimpleDateFormat. "MM/dd/yyyy")
-                    (SimpleDateFormat. "hh:mm aa")]))
+(defn split-date
+  "Splits the given date object into a list of two strings: a date string and time string."
+  [date]
+  (try (doall (for [fmt [(SimpleDateFormat. "MM/dd/yyyy")
+                         (SimpleDateFormat. "hh:mm aa")]]
+                (.format fmt date)))
        (catch Exception e [nil nil])))
 
 (defn create-sync-plan [{:keys [name description interval start-date]}]
@@ -508,7 +534,8 @@
   (browser clickAndWait :apply-sync-schedule )
   (check-for-success))
 
-(defn current-sync-plan "Returns a map of what sync plan a product is currently scheduled for.  nil if UI says 'None'"
+(defn current-sync-plan
+  "Returns a map of what sync plan a product is currently scheduled for.  nil if UI says 'None'"
   [product-names]
   (navigate :sync-schedule-page)
   (zipmap product-names
@@ -569,8 +596,6 @@
     (browser click :save-template)
     (check-for-success)))
 
-(defn switch-org [org-name]
-  (comment (browser fireEvent :org-switcher "mouseup") ;;click doesn't work, oddly
-           (browser ajaxWait))
+(defn switch-org "Switch to the given organization in the UI." [org-name]
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
