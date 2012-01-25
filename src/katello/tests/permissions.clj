@@ -195,15 +195,15 @@
    (fn [] [(let [user (uniqueify "user")]
             {:setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
              :permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Users"
-                                          :verbs ["Modify Users"]
-                                          :name "usermod"}]}]
-             :allowed-actions [(edit-user user {:new-email "blah@me.com"})]
-            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
-                                                    :content-management-tab)
-                                      (fn [] (let [username (uniqueify "deleteme")]
-                                              (create-user username {:password "password" :email "mee@mee.com"})
-                                              (delete-user username))))})])
+                            :permissions [{:resource-type "Users"
+                                           :verbs ["Modify Users"]
+                                           :name "usermod"}]}]
+             :allowed-actions [(fn [] (edit-user user {:new-email "blah@me.com"}))]
+             :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                     :content-management-tab)
+                                       (fn [] (let [username (uniqueify "deleteme")]
+                                               (create-user username {:password "password" :email "mee@mee.com"})
+                                               (delete-user username))))})])
 
    (fn []
      [(let [user (uniqueify "user")]
