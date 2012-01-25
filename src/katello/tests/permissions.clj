@@ -202,8 +202,8 @@
              :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                      :content-management-tab)
                                        (fn [] (let [username (uniqueify "deleteme")]
-                                               (create-user username {:password "password" :email "mee@mee.com"})
-                                               (delete-user username))))})])
+                                               (katello.tasks/create-user username {:password "password" :email "mee@mee.com"})
+                                               (katello.tasks/delete-user username))))})])
 
    (fn []
      [(let [user (uniqueify "user")]
