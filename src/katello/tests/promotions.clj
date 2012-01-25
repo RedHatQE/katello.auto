@@ -60,11 +60,11 @@
                             "745315")
     :more
     (-> {:name "promote content"
+        :steps verify-promote-content
         :description "Takes content and promotes it thru more environments.
                             Verifies that it shows up in the new env."}
               
-       (data-driven verify-promote-content
-                    [(fn [] [[locker (@config :first-env)]
+       (data-driven [(fn [] [[locker (@config :first-env)]
                             {:products (set (take 3 (unique-names "MyProduct")))}])
                      (fn [] [[locker (@config :first-env)
                              (@config :second-env)]

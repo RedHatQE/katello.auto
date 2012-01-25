@@ -49,8 +49,8 @@
           (template-tests)
           (end-to-end-tests)
           (data-driven {:name "login as invalid user"
+                        :steps login/invalid
                         :blockers (open-bz-bugs "730738")} 
-                       login/invalid
                        login/invalid-logins)))
 
 (defn suite []
@@ -58,16 +58,16 @@
     (before-all
      (fn [] (tasks/navigate :top-level))
      {:name "login as admin"
-      :steps login/admin
+      :steps (fn [& _] (login/admin))
       :more (tests-to-run)})
     (merge {:threads 3}
            setup/runner-config)))
 
 (defn nav-tests []
-  (data-driven {:name "navigate to tab"}
-               (fn [tab]
-                 (tasks/navigate tab)
-                 (tasks/check-for-error 2000))
+  (data-driven {:name "navigate to tab"
+                :steps (fn [tab]
+                         (tasks/navigate tab)
+                         (tasks/check-for-error 2000))}
                (map vector locators/tab-list)))
 
 (defn org-tests []
@@ -97,8 +97,8 @@
              :steps orgs/search-org}]
            
            (data-driven {:name "org valid name"
-                         :blockers (open-bz-bugs "726724")}
-                        orgs/valid-name
+                         :blockers (open-bz-bugs "726724")
+                         :steps orgs/valid-name}
                         orgs/valid-name-data)
            
            (environment-tests))}])
@@ -155,8 +155,8 @@
                                      :steps providers/delete-repo
                                      :blockers (open-bz-bugs "745279")}]}]}]}]
            
-           (data-driven {:name "provider validation"}
-                        providers/validation
+           (data-driven {:name "provider validation"
+                         :steps providers/validation}
                         (providers/validation-data)))}
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
@@ -193,8 +193,8 @@
                             :more [{:name "reassign product sync plan"
                                     :steps sync/reset-schedule}]}]
                           
-                          (data-driven {:name "sync plan validation"}
-                                       sync/plan-validate
+                          (data-driven {:name "sync plan validation"
+                                        :steps sync/plan-validate}
                                        (sync/plan-validation-data)))}]}])
 
 (defn system-tests []
@@ -257,8 +257,9 @@
 
            {:name "add permission and user to a role"
             :steps permissions/edit-role
-            :more (data-driven {:name "user with permissions is properly restricted"}
-                               permissions/verify-access permissions/access-test-data)}]}])
+            :more (data-driven {:name "user with permissions is properly restricted"
+                                :steps permissions/verify-access}
+                               permissions/access-test-data)}]}])
 
 (defn template-tests []
   [{:name "create a system template"

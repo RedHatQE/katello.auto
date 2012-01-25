@@ -3,7 +3,7 @@
   :main katello.tests.suite
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.3.0"]
-                 [test.tree "0.5.3-SNAPSHOT"]
+                 [test.tree "0.6.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
