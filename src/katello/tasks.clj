@@ -491,7 +491,6 @@ button."
 
 (defn subscribe-system [{:keys [system-name products]}]
   (navigate :system-subscriptions-page {:system-name system-name})
-  (browser sleep 3000)
   (doseq [product products]
     (browser check (locators/subscription-checkbox product)))
   (browser click :subscribe)

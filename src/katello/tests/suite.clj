@@ -214,7 +214,7 @@
             :steps systems/in-env}
            
            {:name "subscribe a system to a product"
-            :blockers (open-bz-bugs "733780" "736547")
+            :blockers (open-bz-bugs "733780" "736547" "784701")
             :steps systems/subscribe}
 
            {:name "create an activation key"

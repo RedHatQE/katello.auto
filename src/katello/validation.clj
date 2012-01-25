@@ -65,8 +65,8 @@
 
 (defn duplicate-disallowed
   "Calls create-fn with the given args, twice, and verifies that the
-   second call results in a 'Name taken' validation error." [create-fn
-  args & [pred]]
+   second call results in a 'Name taken' validation error."
+  [create-fn args & [pred]]
   (apply create-fn args)
   (field-validation create-fn args (or pred (expect-error :name-taken-error))))
 
