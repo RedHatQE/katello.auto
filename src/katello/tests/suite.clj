@@ -56,9 +56,9 @@
 (defn suite []
   (with-meta
     (before-all
-     (fn [] (tasks/navigate :top-level))
+     (fn [& _] (tasks/navigate :top-level))
      {:name "login as admin"
-      :steps (fn [& _] (login/admin))
+      :steps login/admin
       :more (tests-to-run)})
     (merge {:threads 3}
            setup/runner-config)))
