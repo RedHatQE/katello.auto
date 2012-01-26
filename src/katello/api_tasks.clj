@@ -275,15 +275,13 @@
 (defn promote
   "Does a promotion of the given content (creates a changeset, adds
    the content, and promotes it. Content should match the JSON format
-   that the API expects."
+   that the API expects. currently like {:product_id '1234567890'}"
   [content]
   (let [cs-name (uniqueify "api-changeset")]
     (create-changeset cs-name)
     (doseq [[ent-type ents] content
             ent ents]
-      (let [ent-type-singular (-> ent-type name singularize keyword)]
-        (add-to-changeset cs-name ent-type-singular {(str (name ent-type-singular) "_id")
-                                                     (get-id-by-name ent-type-singular ent)})))
+      (add-to-changeset cs-name (-> ent-type name singularize keyword) ent))
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]

@@ -79,7 +79,8 @@
                            {:product-name second-product-name
                             :url (@config :sync-repo)}))
         (api/with-env (@config :first-env)
-          (api/promote {:products product-names})))
+          (api/promote {:products (for [product product-names]
+                                    {:product_id (api/get-id-by-name :product product)})})))
       (sync-schedule {:plan-name @plan-name
                       :products product-names})
       (let [expected-plan @plan-name
