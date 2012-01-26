@@ -77,10 +77,11 @@
                                                    :description "testing sync"})
           (api/create-repo (uniqueify "testrepo")
                            {:product-name second-product-name
-                            :url (@config :sync-repo)})
+                            :url (@config :sync-repo)}))
+        (api/with-env (@config :first-env)
           (api/promote {:products product-names})))
       (sync-schedule {:plan-name @plan-name
-                            :products product-names})
+                      :products product-names})
       (let [expected-plan @plan-name
             actual-plans (vals (current-sync-plan product-names))]
         (verify-that (every? #(= % expected-plan) actual-plans))))))

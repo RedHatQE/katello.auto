@@ -250,13 +250,6 @@
              *user* *password*
              {:changeset {:name name}}))
 
-(defn add-to-changeset [changeset-name {:keys [content]}]
-  (let [patch-actions [:+products :+packages :+repos :+errata :+templates]
-        getfn (fn [kw] (-> kw name (.substring 1) keyword content))]
-    (rest/put (api-url "api/changesets/" (get-id-by-name :changeset changeset-name))
-              *user* *password*
-              {:patch (zipmap patch-actions (map getfn patch-actions))})))
-
 (defn add-to-changeset [changeset-name entity-type entity]
   (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/" (-> entity-type name pluralize))
              *user* *password*
@@ -288,7 +281,9 @@
     (create-changeset cs-name)
     (doseq [[ent-type ents] content
             ent ents]
-      (add-to-changeset cs-name (-> ent-type name singularize keyword) ent ))
+      (let [ent-type-singular (-> ent-type name singularize keyword)]
+        (add-to-changeset cs-name ent-type-singular {(str (name ent-type-singular) "_id")
+                                                     (get-id-by-name ent-type-singular ent)})))
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]
