@@ -103,7 +103,7 @@
                                          :name "orgaccess"}]}]
            :allowed-actions [(access-org (@conf/config :admin-org))]
            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                   :custom-providers-tab :system-templates-page
+                                                   :custom-content-providers-tab :system-templates-page
                                                    :promotions-page )
                                      (fn [] (create-organization (uniqueify "cantdothis")))
                                      create-env)}])
@@ -119,7 +119,7 @@
                                (fn [] (delete-organization org-name))
                                create-env]
              :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                     :custom-providers-tab :system-templates-page
+                                                     :custom-content-providers-tab :system-templates-page
                                                      :promotions-page )
                                        (fn [] (create-provider {:name "myprov"}))
                                        (fn [] (api/create-provider "myprov")))})])
@@ -166,7 +166,7 @@
                                          :name "stread"}]}]
            :allowed-actions [(navigate :system-templates-page)]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
-                                                   :custom-providers-tab :sync-status-page :promotions-page)
+                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
                                      create-st
                                      (fn [] (create-organization (uniqueify "cantdothis")))
                                      create-env)}])
@@ -177,7 +177,7 @@
                                          :name "stmang"}]}]
            :allowed-actions [create-st]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
-                                                   :custom-providers-tab :sync-status-page :promotions-page)
+                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
                                      (fn [] (create-organization (uniqueify "cantdothis")))
                                      create-env)}])
    
@@ -226,7 +226,7 @@
          :setup (fn [] (api/create-organization org))
          :allowed-actions [(access-org (@conf/config :admin-org))]
          :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                 :custom-providers-tab :system-templates-page
+                                                 :custom-content-providers-tab :system-templates-page
                                                  :promotions-page )
                                    (fn [] (switch-org org))
                                    (fn [] (tasks/navigate :named-organization-page {:org-name org})))})])

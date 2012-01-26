@@ -16,7 +16,7 @@
 
 (def create-env 
   (fn [] (api/with-admin
-          (api/ensure-env-exist (@config :first-env) {:prior "Locker"}))))
+          (api/ensure-env-exist (@config :first-env) {:prior library}))))
 
 (def rename
   (fn []

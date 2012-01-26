@@ -12,7 +12,7 @@
 
 (declare search)
 
-(def locker "Locker")
+(def library "Library")
 
 ;;tasks
 (defn timestamps
@@ -131,7 +131,7 @@ button."
 (defn create-changeset [env-name next-env-name changeset-name]
   (navigate :named-environment-promotions-page {:env-name env-name
                                                 :next-env-name next-env-name})
-  (->browser (click :new-changeset)
+  (->browser (click :new-promotion-changeset)
              (setText :changeset-name-text changeset-name)
              (click :save-changeset))
   (check-for-success))

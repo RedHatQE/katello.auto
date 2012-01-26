@@ -3,7 +3,7 @@
   (:use [katello.conf :only [config]]
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify]]))
+        [katello.tasks :only [uniqueify library]]))
 
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
@@ -128,7 +128,7 @@
                 :description description
                 :provider_type "Custom"}}))
 
-(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env "Locker"}}]
+(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env library}}]
   (rest/post
    (api-url (uri-for-entity-type :environment))
    *user* *password*

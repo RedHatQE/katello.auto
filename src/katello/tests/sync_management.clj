@@ -72,7 +72,7 @@
     (let [second-product-name (uniqueify "MySecondProduct")
           product-names [@product-name second-product-name]]
       (api/with-admin
-        (api/with-env locker
+        (api/with-env library
           (api/create-product second-product-name {:provider-name @provider-name
                                                    :description "testing sync"})
           (api/create-repo (uniqueify "testrepo")

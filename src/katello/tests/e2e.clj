@@ -20,7 +20,7 @@
           package-to-install "jansson"]
       (api/with-creds *session-user* *session-password*
         (api/with-admin-org
-          (api/ensure-env-exist target-env {:prior locker})
+          (api/ensure-env-exist target-env {:prior library})
           (create-provider {:name provider-name})
           (add-product {:provider-name provider-name
                         :name product-name})
@@ -31,7 +31,7 @@
           (let [sync-results (sync-repos [repo-name] {:timeout 600000})]
             (verify-that (every? (fn [[_ res]] (sync-success? res))
                                  sync-results)))
-          (promote-content locker target-env {:products [product-name]})
+          (promote-content library target-env {:products [product-name]})
 
           ;;client side
           (client/setup-client)

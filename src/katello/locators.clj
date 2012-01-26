@@ -106,9 +106,9 @@
                      :create
 
                      ;;subtabs
-                     :providers
-                     :custom
-                     :red-hat
+                     :content-providers
+                     :custom-content-providers
+                     :red-hat-content-provider
                      :sync-management
                      :sync-status
                      :sync-plans
@@ -186,7 +186,7 @@
                  :review-for-promotion "review_changeset"
                  :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
                  :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-                 :new-changeset "//a[contains(.,'New Changeset')]"
+                 :new-promotion-changeset "//a[contains(.,'New Promotion Changeset')]"
                  :changeset-name-text (textbox "name")
                  :save-changeset "save_changeset_button"
                  :changeset-content "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
@@ -360,8 +360,8 @@
                                    (browser isElementPresent :confirmation-dialog))
                              (browser open (@config :server-url)))
              [:content-management-tab [] (browser mouseOver :content-management)
-              [:providers-tab [] (browser mouseOver :providers)
-               [:custom-providers-tab [] (via :custom load-wait)
+              [:content-providers-tab [] (browser mouseOver :content-providers)
+               [:custom-content-providers-tab [] (via :custom-content-providers load-wait)
                 [:new-provider-page [] (via :new-provider)]
                 [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
                  [:provider-products-repos-page [] (do (via :products-and-repositories)
@@ -371,7 +371,7 @@
                                                                  (via (editable repo-name)))]]
                  [:provider-details-page [] (via :details)]
                  [:provider-subscriptions-page [] (via :subscriptions)]]]
-               [:redhat-provider-tab [] (via :red-hat load-wait)]]
+               [:redhat-provider-tab [] (via :red-hat-content-provider load-wait)]]
               [:sync-management-page [] (browser mouseOver :sync-management)
                [:sync-status-page [] (via :sync-status load-wait)]
                [:sync-plans-page [] (via :sync-plans load-wait)

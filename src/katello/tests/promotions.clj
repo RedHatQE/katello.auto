@@ -17,7 +17,7 @@
                
     (api/with-admin
       (api/create-provider  @provider-name {:description "test provider for promotions"})
-      (api/ensure-env-exist (@config :first-env) {:prior locker})
+      (api/ensure-env-exist (@config :first-env) {:prior library})
       (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)}))))
 
 (defn verify-all-content-present [from in]
@@ -41,7 +41,7 @@
       (api/with-admin
         (let [product-name (uniqueify "templ-prod")]
           (create-repo-fn product-name)
-          (api/with-env "Locker"
+          (api/with-env library
             (api/create-template {:name template-name
                                   :description "template to be promoted"})
             (api/add-to-template template-name {:products [product-name]}))))))
@@ -65,12 +65,12 @@
         :description "Takes content and promotes it thru more environments.
                             Verifies that it shows up in the new env."}
               
-       (data-driven [(fn [] [[locker (@config :first-env)]
+       (data-driven [(fn [] [[library (@config :first-env)]
                             {:products (set (take 3 (unique-names "MyProduct")))}])
-                     (fn [] [[locker (@config :first-env)
+                     (fn [] [[library (@config :first-env)
                              (@config :second-env)]
                             {:products (set (take 3 (unique-names "ProductMulti")))}])
-                     (fn [] [[locker (@config :first-env)
+                     (fn [] [[library (@config :first-env)
                              (@config :second-env)]
                             {:templates (set (take 3 (unique-names "TemplateMulti")))}])])
        dep-chain)}])
