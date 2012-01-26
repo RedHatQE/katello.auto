@@ -280,6 +280,7 @@
     ;;:blockers (filter-tests (every-pred (named? ["simple sync"
     ;;                                              "promote content"])
     ;;                           (complement report/passed?)))
+    :blockers (open-bz-bugs "784853")
     }])
 
 (def fns-to-trace ;;list of namespaces and fns we want to trace

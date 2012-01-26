@@ -57,7 +57,8 @@
                             "712318"
                             "714297"
                             "738054"
-                            "745315")
+                            "745315"
+                            "784853")
     :more
     (-> {:name "promote content"
         :steps verify-promote-content
