@@ -380,12 +380,13 @@ button."
   
 (defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password new-password-confirm new-email]}]
   (navigate :named-user-page {:username username})
-  (browser type :change-password-text new-password)
-  (browser type :confirm-password-text (or new-password-confirm new-password))
-  (when (browser isElementPresent :password-conflict)
-    (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
-  (browser click :save-user-edit) 
-  (check-for-success)
+  (when new-password
+    (browser setText :change-password-text new-password)
+    (browser setText :confirm-password-text (or new-password-confirm new-password))
+    (when (browser isElementPresent :password-conflict)
+      (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
+    (browser click :save-user-edit) 
+    (check-for-success))
   (when new-email
     (in-place-edit {:user-email-text new-email})
     (check-for-success)))
