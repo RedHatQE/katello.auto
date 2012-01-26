@@ -132,7 +132,7 @@
                                           :name "systemreg"}]}]
             :allowed-actions [(fn [] (api/with-admin-org
                                       (api/with-env (@conf/config :first-env)
-                                        (api/create-system (uniqueify "system") (api/random-facts)))))
+                                        (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
                               (navigate :systems-all-page)]
             :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
                                       (fn [] (create-organization (uniqueify "cantdothis"))))}])
