@@ -30,8 +30,11 @@
       (let [prods (doall
                    (for [product @products]
                      (api/with-admin
-                       (api/create-product product {:provider-name provider-name
-                                                    :description "product to test templates"}))))
+                       (let [created-prod (api/create-product
+                                           product {:provider-name provider-name
+                                                    :description "product to test templates"})]
+                         (api/create-repo (uniqueify "templ") {:product-name product :url "http://my.fakerepo.com/blah/blah"})
+                         created-prod))))
             content {:products (for [prod prods] {:product_id (:id prod)})}]
         (api/with-admin
           (api/with-env (@config :first-env)
