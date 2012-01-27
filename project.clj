@@ -24,6 +24,9 @@
                (require 'katello.conf :reload)
                (require 'katello.tests.setup :reload)
                (require 'katello.client :reload)
+
+               (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+               (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
                
                (katello.conf/init)
                (when katello.conf/*clients*
