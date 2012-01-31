@@ -4,6 +4,7 @@
   (:use katello.tasks
         katello.validation
         [katello.conf :only [config]]
+        [katello.tests.providers :only [with-two-orgs]]
         [com.redhat.qe.verify :only [verify-that]]
         [serializable.fn :only [fn]]))
 

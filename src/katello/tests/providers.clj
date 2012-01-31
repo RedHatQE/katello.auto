@@ -15,6 +15,33 @@
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))
 
+(defn with-two-orgs
+  "Create two orgs with unique names, and call f with a unique entity
+  name, and the org names. Used for verifying (for instance) that
+  envs or providers with the same name can be created in 2 different
+  orgs.  Switches back to admin org after f is called."
+  [f]
+  (let [ent-name (tasks/uniqueify "samename")
+        orgs (take 2 (tasks/unique-names "ns-org"))]
+    (doseq [org orgs]
+      (api/with-admin (api/create-organization org)))
+    (try
+      (f ent-name orgs)
+      (finally (tasks/switch-org (@config :admin-org)) ))))
+
+
+(defn with-two-providers
+  "Create two providers with unique names, and call f with a unique
+  entity name, and the provider names. Used for verifying (for
+  instance) that products with the same name can be created in 2
+  different providers."
+  [f]
+  (let [ent-name (tasks/uniqueify "samename")
+        providers (take 2 (tasks/unique-names "ns-provider"))]
+    (doseq [provider providers]
+      (api/with-admin (api/create-provider provider)))
+    (f ent-name providers)))
+
 (def create-custom 
   (fn [] (tasks/create-provider {:name (tasks/uniqueify "auto-cp")
                                 :description "my description"})))
@@ -70,14 +97,14 @@
 
 (def namespace-provider
   (fn []
-    (tasks/with-two-orgs (fn [prov-name orgs]
+    (with-two-orgs (fn [prov-name orgs]
                      (doseq [org orgs]
                        (tasks/switch-org org)
                        (tasks/create-provider {:name prov-name}))))))
 
 (def namespace-product-in-provider
   (fn []
-    (v/field-validation tasks/with-two-providers
+    (v/field-validation with-two-providers
                         [(fn [product-name providers]
                             (doseq [provider providers]
                               (tasks/add-product {:provider-name provider
@@ -86,7 +113,7 @@
 
 (def namespace-product-in-org
   (fn []
-    (tasks/with-two-orgs
+    (with-two-orgs
       (fn [product-name orgs]
         (doseq [org orgs]
           (tasks/switch-org org)

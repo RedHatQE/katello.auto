@@ -1,10 +1,8 @@
 (ns katello.tasks
   (:require [katello.locators :as locators]
-            [katello.api-tasks :as api]
             [com.redhat.qe.auto.navigate :as nav]
             [clojure.string :as string])
-  (:use [katello.conf :only [config]]
-        [com.redhat.qe.auto.selenium.selenium
+  (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         [slingshot.slingshot :only [throw+ try+]]
@@ -602,29 +600,3 @@ button."
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
 
-(defn with-two-orgs
-  "Create two orgs with unique names, and call f with a unique entity
-  name, and the org names. Used for verifying (for instance) that
-  envs or providers with the same name can be created in 2 different
-  orgs.  Switches back to admin org after f is called."
-  [f]
-  (let [ent-name (uniqueify "samename")
-        orgs (take 2 (unique-names "ns-org"))]
-    (doseq [org orgs]
-      (api/with-admin (api/create-organization org)))
-    (try
-      (f ent-name orgs)
-      (finally (switch-org (@config :admin-org)) ))))
-
-
-(defn with-two-providers
-  "Create two providers with unique names, and call f with a unique
-  entity name, and the provider names. Used for verifying (for
-  instance) that products with the same name can be created in 2
-  different providers."
-  [f]
-  (let [ent-name (uniqueify "samename")
-        providers (take 2 (unique-names "ns-provider"))]
-    (doseq [provider providers]
-      (api/with-admin (api/create-provider provider)))
-    (f ent-name providers)))
