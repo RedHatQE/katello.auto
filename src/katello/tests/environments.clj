@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:require [katello.api-tasks :as api])
   (:use katello.tasks
-        katello.validation 
+        katello.validation
+        [katello.conf :only [config]]
         [com.redhat.qe.verify :only [verify-that]]
         [serializable.fn :only [fn]]))
 
@@ -58,4 +59,29 @@
                              [nil {:org-name @test-org-name
                                    :description "env description"}])))
 
+(defn- with-two-orgs [f]
+  (let [env-name (uniqueify "samename")
+        orgs [(uniqueify "envname1") (uniqueify "envname2")]]
+    (doseq [org orgs]
+      (api/with-admin (api/create-organization org)))
+    (try
+      (f env-name orgs)
+      (finally (switch-org (@config :admin-org)) ))))
 
+(def create-same-name-diff-org
+  (fn []
+    (with-two-orgs (fn [env-name orgs]
+                     (doseq [org orgs]                           
+                       (switch-org org)
+                       (create-environment env-name {:org-name org}))))))
+
+(def delete-same-name-diff-org
+  (fn []
+    (with-two-orgs (fn [env-name orgs]
+                     (doseq [org orgs]
+                       (switch-org org)
+                       (create-environment env-name {:org-name org}))
+                     
+                     (delete-environment env-name {:org-name (first orgs)})
+                     (navigate :named-environment-page {:env-name env-name
+                                                        :org-name (second orgs)})))))

@@ -119,7 +119,12 @@
                    
                    {:name "rename an environment"
                     :steps envs/rename}
-                   ]}
+
+                   {:name "create environment same name different org"
+                    :steps envs/create-same-name-diff-org}
+
+                   {:name "delete environment same name different org"
+                    :steps envs/delete-same-name-diff-org}]}
 
            {:name "environment name required"
             :blockers (open-bz-bugs "726724")
