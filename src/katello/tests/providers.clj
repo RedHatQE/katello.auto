@@ -68,6 +68,35 @@
           (tasks/add-repo repo)
           (tasks/delete-repo repo))))
 
+(def namespace-provider
+  (fn []
+    (tasks/with-two-orgs (fn [prov-name orgs]
+                     (doseq [org orgs]
+                       (tasks/switch-org org)
+                       (tasks/create-provider {:name prov-name}))))))
+
+(def namespace-product-in-provider
+  (fn []
+    (v/field-validation tasks/with-two-providers
+                        [(fn [product-name providers]
+                            (doseq [provider providers]
+                              (tasks/add-product {:provider-name provider
+                                                  :name product-name})))]
+                        (v/expect-error :product-must-be-unique-in-org))))
+
+(def namespace-product-in-org
+  (fn []
+    (tasks/with-two-orgs
+      (fn [product-name orgs]
+        (doseq [org orgs]
+          (tasks/switch-org org)
+          (let [provider-name (tasks/uniqueify "prov")]
+           (api/with-admin
+             (api/with-org org
+               (api/create-provider provider-name))
+             (tasks/add-product {:provider-name provider-name
+                                 :name product-name}))))))))
+
 (def manifest-tmp-loc "/tmp/manifest.zip")
 (def redhat-provider-name "Red Hat")
 (def manifest-uploaded? (atom nil))

@@ -126,7 +126,7 @@
                    {:name "rename an environment"
                     :steps envs/rename}
 
-                   {:name "create environment same name different org"
+                   {:name "environment namespace limited to org"
                     :steps envs/create-same-name-diff-org}]}
 
            {:name "environment name required"
@@ -146,6 +146,9 @@
             {:name "delete a provider"
              :steps providers/delete}
 
+            {:name "provider namespace limited to org"
+             :steps providers/namespace-provider}
+            
             {:configuration true
              :name "create provider for testing products and repos"
              :steps providers/setup-custom
@@ -161,7 +164,14 @@
                              :blockers (open-bz-bugs "729364")
                              :more [{:name "delete a repository"
                                      :steps providers/delete-repo
-                                     :blockers (open-bz-bugs "745279")}]}]}]}]
+                                     :blockers (open-bz-bugs "745279")}]}
+                            
+                            {:name "product namespace limited to org"
+                             :steps providers/namespace-product-in-org
+                             :blockers (open-bz-bugs "784712")}
+
+                            {:name "same product name in different providers disallowed"
+                             :steps providers/namespace-product-in-provider}]}]}]
            
            (data-driven {:name "provider validation"
                          :steps providers/validation}

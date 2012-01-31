@@ -59,15 +59,6 @@
                              [nil {:org-name @test-org-name
                                    :description "env description"}])))
 
-(defn- with-two-orgs [f]
-  (let [env-name (uniqueify "samename")
-        orgs [(uniqueify "envname1") (uniqueify "envname2")]]
-    (doseq [org orgs]
-      (api/with-admin (api/create-organization org)))
-    (try
-      (f env-name orgs)
-      (finally (switch-org (@config :admin-org)) ))))
-
 (def create-same-name-diff-org
   (fn []
     (with-two-orgs (fn [env-name orgs]
