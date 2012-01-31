@@ -111,7 +111,13 @@
             :blockers (open-bz-bugs "693797" "707274")
             :steps envs/create
             :more [{:name "delete environment"
-                    :steps envs/delete}
+                    :steps envs/delete
+                    :more [{:name "delete environment same name different org"
+                            :description "Creates the same env name in two different orgs, deletes one and verifies the other still exists."
+                            :steps envs/delete-same-name-diff-org}
+
+                           {:name "delete environment with promoted content"
+                            :steps envs/delete-env-with-promoted-content}]}
                    
                    {:name "duplicate environment disallowed"
                     :blockers (open-bz-bugs "726724")
@@ -121,10 +127,7 @@
                     :steps envs/rename}
 
                    {:name "create environment same name different org"
-                    :steps envs/create-same-name-diff-org}
-
-                   {:name "delete environment same name different org"
-                    :steps envs/delete-same-name-diff-org}]}
+                    :steps envs/create-same-name-diff-org}]}
 
            {:name "environment name required"
             :blockers (open-bz-bugs "726724")
