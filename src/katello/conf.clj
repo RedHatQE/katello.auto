@@ -15,6 +15,7 @@
                               :owner-user ["katello.owner.user" "acme_corporation_user"]
                               :owner-password ["katello.owner.password" "acme_corporation_user"]
                               :selenium-address ["selenium.address" "localhost:4444"]
+                              :selenium-browsers ["selenium.browsers" "*firefox"]
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
                               :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master.el6/lastSuccessfulBuild/artifact/rpms/x86_64"]
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
@@ -29,7 +30,8 @@
 (def config (atom {}))
 
 (declare ^:dynamic *session-user*
-         ^:dynamic *session-password*)
+         ^:dynamic *session-password*
+         ^:dynamic *browsers)
 
 (def ^:dynamic *clients* nil)
 
@@ -43,6 +45,7 @@
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
   (when (@config :clients)
-    (def ^:dynamic *clients* (split (@config :clients) #","))))
+    (def ^:dynamic *clients* (split (@config :clients) #",")))
+  (def ^:dynamic *browsers* (split (@config :selenium-browsers) #",")))
 
 
