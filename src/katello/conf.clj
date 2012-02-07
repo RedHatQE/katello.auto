@@ -18,7 +18,7 @@
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
                               :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master.el6/lastSuccessfulBuild/artifact/rpms/x86_64"]
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
-                              :redhat-manifest-url ["katello.redhat.manifest.url" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/systemengine/manifests/manifest-qe-20111207.zip"]
+                              :redhat-manifest-url ["katello.redhat.manifest.url" "http://git.fedorahosted.org/git?p=katello.git;a=blob_plain;f=scripts/test/manifest_generation/fake-manifest-export.zip;hb=HEAD"]
                               :first-env ["katello.environments.first" "Development"]
                               :second-env ["katello.environments.second" "Q-eh"]
                               :clients ["katello.clients"]
