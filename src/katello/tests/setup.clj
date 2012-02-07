@@ -13,10 +13,10 @@
 (defn new-selenium
   "Returns a new selenium client. If running in a REPL or other
    single-session environment, set single-thread to true."
-  [& [single-thread]]
+  [browser-string & [single-thread]]
   (let [[host port] (split (@config :selenium-address) #":")
         sel-fn (if single-thread connect new-sel)] 
-    (sel-fn host (Integer/parseInt port) "" (@config :server-url))))
+    (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
 
 (defn start-selenium []  
   (browser start)
@@ -38,22 +38,6 @@
 (defn stop-selenium []
   (browser stop))
 
-(def fns-to-trace ;;list of namespaces and fns we want to trace
-  {:namespaces ['katello.tasks
-                'katello.api-tasks
-                'katello.client]
-   :fns ['test.tree/execute
-         'katello.tests.setup/start-selenium
-         'katello.tests.setup/stop-selenium
-         'katello.tests.setup/switch-new-admin-user
-         'com.redhat.qe.verify/check
-         'com.redhat.qe.auto.selenium.selenium/call-sel]
-   :exclude ['katello.tasks/notification 
-             'katello.tasks/success?
-             'katello.tasks/uniqueify
-             'katello.tasks/unique-names
-             'katello.tasks/timestamps]})
-
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
    each thread. Starts selenium client for each thread before kicking
@@ -61,16 +45,18 @@
   [consume-fn]
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
-      (binding [sel (new-selenium)
+      (binding [sel (new-selenium (nth (cycle *browsers*)
+                                       thread-number))
                 tracer (per-thread-tracer clj-format)
                 *session-user* (tasks/uniqueify
                                 (str (@config :admin-user)
                                      thread-number))
                 client/*runner* (when *clients*
-                                  (client/new-runner (nth *clients* thread-number)
-                                                     "root" nil
-                                                     (@config :client-ssh-key)
-                                                     (@config :client-ssh-key-passphrase)))]
+                                  (try (client/new-runner (nth *clients* thread-number)
+                                                      "root" nil
+                                                      (@config :client-ssh-key)
+                                                      (@config :client-ssh-key-passphrase))
+                                       (catch Exception e (do (.printStackTrace e) e))))]
         (println "starting a selenium session.")
         (try
           (start-selenium)

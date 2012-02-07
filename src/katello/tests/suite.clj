@@ -111,7 +111,13 @@
             :blockers (open-bz-bugs "693797" "707274")
             :steps envs/create
             :more [{:name "delete environment"
-                    :steps envs/delete}
+                    :steps envs/delete
+                    :more [{:name "delete environment same name different org"
+                            :description "Creates the same env name in two different orgs, deletes one and verifies the other still exists."
+                            :steps envs/delete-same-name-diff-org}
+
+                           {:name "delete environment with promoted content"
+                            :steps envs/delete-env-with-promoted-content}]}
                    
                    {:name "duplicate environment disallowed"
                     :blockers (open-bz-bugs "726724")
@@ -119,7 +125,9 @@
                    
                    {:name "rename an environment"
                     :steps envs/rename}
-                   ]}
+
+                   {:name "environment namespace limited to org"
+                    :steps envs/create-same-name-diff-org}]}
 
            {:name "environment name required"
             :blockers (open-bz-bugs "726724")
@@ -138,6 +146,9 @@
             {:name "delete a provider"
              :steps providers/delete}
 
+            {:name "provider namespace limited to org"
+             :steps providers/namespace-provider}
+            
             {:configuration true
              :name "create provider for testing products and repos"
              :steps providers/setup-custom
@@ -153,7 +164,14 @@
                              :blockers (open-bz-bugs "729364")
                              :more [{:name "delete a repository"
                                      :steps providers/delete-repo
-                                     :blockers (open-bz-bugs "745279")}]}]}]}]
+                                     :blockers (open-bz-bugs "745279")}]}
+                            
+                            {:name "product namespace limited to org"
+                             :steps providers/namespace-product-in-org
+                             :blockers (open-bz-bugs "784712")}
+
+                            {:name "same product name in different providers disallowed"
+                             :steps providers/namespace-product-in-provider}]}]}]
            
            (data-driven {:name "provider validation"
                          :steps providers/validation}

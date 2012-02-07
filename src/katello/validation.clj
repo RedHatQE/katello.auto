@@ -25,7 +25,8 @@
           :name-must-be-unique-within-org #"Name must be unique within one organization" 
           :repository-url-invalid #"Repository url is invalid"
           :start-date-time-cant-be-blank #"Date and Time can't be blank"
-          :password-too-short #"Password must be at least"}
+          :password-too-short #"Password must be at least"
+          :product-must-be-unique-in-org #"Products within an organization must have unique name"}
          (cant-be-blank-errors [:name
                                 :repository-url])))
 

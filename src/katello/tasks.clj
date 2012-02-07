@@ -599,3 +599,4 @@ button."
 (defn switch-org "Switch to the given organization in the UI." [org-name]
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
+
