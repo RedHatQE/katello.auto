@@ -79,4 +79,6 @@
       (createfn)
       (switch-org (@config :admin-org))
       (delete-organization org-name)
+      ;;wait for delayed job to delete org
+      (Thread/sleep 30000)
       (createfn))))
