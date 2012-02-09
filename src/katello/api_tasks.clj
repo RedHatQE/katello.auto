@@ -159,7 +159,8 @@
 (defn create-repo [name {:keys [product-name url]}]
   (rest/post (api-url "api/repositories/")
              *user* *password*
-             {:product_id  (get-id-by-name :product product-name)
+             {:organization_id *org*
+              :product_id  (get-id-by-name :product product-name)
               :name name
               :url url}))
 
