@@ -76,9 +76,10 @@
                                 :provider-name provider-name
                                 :product-name product-name
                                 :url repo-url}))]
-      (createfn)
-      (switch-org (@config :admin-org))
-      (delete-organization org-name)
-      ;;wait for delayed job to delete org
-      (Thread/sleep 30000)
-      (createfn))))
+      (try (createfn)
+           (switch-org (@config :admin-org))
+           (delete-organization org-name)
+           ;;wait for delayed job to delete org
+           (Thread/sleep 30000)
+           (createfn)
+           (finally (switch-org (@config :admin-org)))))))
