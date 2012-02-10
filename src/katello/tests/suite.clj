@@ -60,7 +60,7 @@
      {:name "login as admin"
       :steps login/admin
       :more (tests-to-run)})
-    (merge {:threads (let [user-choice (try (-> (@conf/config :threads)
+    (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
                                                (Integer.))
                                             (catch Exception e 3))]
                        (Math/min user-choice 5))}
@@ -322,6 +322,7 @@
              'katello.tasks/timestamps]})
 
 (defn -main [ & args]
+  (println args)
   (binding [tracer (per-thread-tracer clj-format)
             *print-level* 10
             *print-length* 30]
