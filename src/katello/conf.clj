@@ -16,6 +16,7 @@
                               :owner-password ["katello.owner.password" "acme_corporation_user"]
                               :selenium-address ["selenium.address" "localhost:4444"]
                               :selenium-browsers ["selenium.browsers" "*firefox"]
+                              :threads ["test.tree.threads" "3"]
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
                               :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/job/subscription-manager_master.el6/lastSuccessfulBuild/artifact/rpms/x86_64"]
                               :redhat-repo-url ["katello.redhat.repo.url" "https://sat-perf-03.idm.lab.bos.redhat.com/pulp/repos/"]
