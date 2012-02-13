@@ -231,11 +231,14 @@ button."
                   :create-organization)
   (check-for-success))
 
-(defn delete-organization [org-name]
+(defn delete-organization [org-name & [{:keys [confirm-timeout-ms]}]]
   (navigate :named-organization-page {:org-name org-name})
   (browser click :remove-organization)
   (browser click :confirmation-yes)
-  (check-for-success))
+  (let [queue-success (check-for-success)]
+    (if confirm-timeout-ms
+      (check-for-success confirm-timeout-ms)
+      queue-success)))
 
 (defn create-environment
   [name {:keys [org-name description prior-env]}]

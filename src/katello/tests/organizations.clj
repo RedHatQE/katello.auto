@@ -26,7 +26,7 @@
 (def delete
   (fn [] (let [org-name (uniqueify "auto-del")]
           (create-organization org-name {:description "org to delete immediately"})
-          (delete-organization org-name)
+          (delete-organization org-name {:confirm-timeout-ms 200000})
           (let [remaining-org-names (doall (map :name
                                                 (api/with-admin-creds
                                                   (api/all-entities :organization))))]
@@ -78,7 +78,7 @@
                                 :url repo-url}))]
       (try (createfn)
            (switch-org (@config :admin-org))
-           (delete-organization org-name)
+           (delete-organization org-name {:confirm-timeout-ms 200000})
            ;;wait for delayed job to delete org
            (Thread/sleep 30000)
            (createfn)
