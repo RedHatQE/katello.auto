@@ -155,7 +155,7 @@
   (browser click :review-for-promotion)
   ;;for the submission
   (loop-with-timeout 600000 []
-    (if-not (try+ (browser click :promote-to-next-environment)
+    (when-not (try+ (browser click :promote-to-next-environment)
                   (check-for-success)
                   (catch [:type ::promotion-already-in-progress] _
                     nil))
