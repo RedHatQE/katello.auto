@@ -322,20 +322,41 @@
              'katello.tasks/unique-names
              'katello.tasks/timestamps]})
 
+
+(def test-traces (ref {}))
+
+(defn wrap-tracing [runner]
+  (fn [test]
+    (println "tracing")
+    (binding [tracer (fn [name value & [out?]]
+                       (dosync
+                        (alter test-traces update-in [test]
+                               (fn [v]
+                                 (conj (or v []) [name value out?])))))]
+      (let [result (runner test)]
+        (assoc result :trace (@test-traces test))))))
+
+
 (defn -main [ & args]
   (println args)
+  (alter-var-root #'test/runner (fn [_] (-> test/execute
+                                          wrap-tracing
+                                          test/wrap-blockers
+                                          test/wrap-timer
+                                          test/wrap-data-driven)))
+  
   (binding [tracer (per-thread-tracer clj-format)
             *print-level* 10
             *print-length* 30]
     (dotrace-all fns-to-trace 
-      (let [reports (test/run-suite (suite))]
-        (println "----- Blockers -----\n ")
-        (let [blockers (->> reports
-                          vals
-                          (mapcat #(get-in % [:report :blocked-by]))
-                          (filter #(not (nil? %)))
-                          frequencies)]
-          (pprint/pprint blockers))))
+                 (let [reports (test/run-suite (suite))]
+                   (println "----- Blockers -----\n ")
+                   (let [blockers (->> reports
+                                     vals
+                                     (mapcat #(get-in % [:report :blocked-by]))
+                                     (filter #(not (nil? %)))
+                                     frequencies)]
+                     (pprint/pprint blockers))))
 
     ;;convert trace files to pretty html
     (htmlify "html"  (->> (System/getProperty "user.dir")
