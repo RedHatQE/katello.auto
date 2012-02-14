@@ -182,7 +182,7 @@
    {:name "get latest subscription manifest"
     :steps providers/manifest-setup
     :configuration true
-    :blockers (open-bz-bugs "729364" "757752")
+    :blockers (open-bz-bugs "729364")
     :more [{:name "upload subscription manifest"
             :blockers providers/manifest-testing-blockers
             :steps providers/upload-manifest}]}])
