@@ -74,18 +74,18 @@
                    [:changeset] {:reqs [#'*org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
-                                :fmt "api/environments/%s/templates"}}  }
-    {:keys [reqs fmt]} (->> url-types
-                          keys
-                          (drop-while (complement #(some #{entity-type} %)))
-                          first
-                          url-types)
-    unsat (filter #(-> % deref nil?) reqs)]
-  (if-not (empty? unsat)
-    (throw (IllegalArgumentException.
-            (format "%s are required for entity type %s."
-                    (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
-  (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
+                                :fmt "api/environments/%s/templates"}} 
+        {:keys [reqs fmt]} (->> url-types
+                              keys
+                              (drop-while (complement #(some #{entity-type} %)))
+                              first
+                              url-types)
+        unsat (filter #(-> % deref nil?) reqs)]
+    (if-not (empty? unsat)
+      (throw (IllegalArgumentException.
+              (format "%s are required for entity type %s."
+                      (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
+    (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
 
 (defn all-entities
   "Returns a list of all the entities of the given entity-type.  If
