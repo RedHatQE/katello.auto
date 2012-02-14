@@ -143,10 +143,9 @@
 
 (def upload-manifest
   (fn []
-    (let [provider-name redhat-provider-name]
-      (comment (tasks/edit-provider {:name provider-name
-                             :repo-url (@config :redhat-repo-url)}))
-      (tasks/upload-subscription-manifest  manifest-tmp-loc))))
+    (let [provider-name redhat-provider-name]      
+      (tasks/upload-subscription-manifest manifest-tmp-loc
+                                          {:repository-url (@config :redhat-repo-url)}))))
 
 (def dupe-disallowed
   (fn []

@@ -154,8 +154,9 @@
                 :provider-create-save "provider_save"
                 :remove-provider (link "Remove Provider")
                 :subscriptions (link "Subscriptions")
+                :redhat-provider-repository-url-text "provider[repository_url]"
                 :choose-file "provider_contents"
-                :upload "//input[@value='Upload']"
+                :upload "upload_submit"
                 :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
                 ;;add product

@@ -561,8 +561,10 @@ button."
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn upload-subscription-manifest [file-path]
+(defn upload-subscription-manifest [file-path & [{:keys [repository-url]}]]
   (navigate :redhat-provider-tab)
+  (when repository-url
+    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (fill-form {:choose-file file-path}
              :upload
              (fn [] (browser waitForPageToLoad "300000")))
