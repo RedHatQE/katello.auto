@@ -31,7 +31,8 @@
 
 (def known-errors
   {::validation-failed #"Validation [Ff]ailed"
-   ::invalid-credentials #"incorrect username"})
+   ::invalid-credentials #"incorrect username"
+   ::promotion-already-in-progress #"Cannot promote.*while another changeset"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
@@ -101,11 +102,10 @@
 (def navigate (nav/nav-fn locators/page-tree))
 
 (defn fill-ajax-form
-  "Fills in a web form and clicks the submit
-button. Only waits for ajax calls to complete. Items should be a map,
-where the keys are locators for form elements, and values are the
-values to fill in. Submit should be a locator for the form submit
-button."
+  "Fills in a web form and clicks the submit button. Only waits for
+   ajax calls to complete. Items should be a map, where the keys are
+   locators for form elements, and values are the values to fill in.
+   Submit should be a locator for the form submit button."
   [items submit]
   (fill-form items submit (constantly nil)))
 
@@ -153,8 +153,15 @@ button."
              :next-env-name to-env
              :changeset-name changeset-name})
   (browser click :review-for-promotion)
-  (browser click :promote-to-next-environment)
-  (check-for-success) ;;for the submission
+  ;;for the submission
+  (loop-with-timeout 600000 []
+    (if-not (try+ (browser click :promote-to-next-environment)
+                  (check-for-success)
+                  (catch [:type ::promotion-already-in-progress] _
+                    nil))
+      (Thread/sleep 30000)
+      (recur)))
+  ;;for confirmation
   (loop-with-timeout (or timeout-ms 120000) [status ""]
     (if (= status "Promoted")
       status
