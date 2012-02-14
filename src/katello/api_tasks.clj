@@ -67,23 +67,25 @@
   example, to get an environment from the API an org must be set. See
   with-* macros in this namespace."
   [entity-type]
-  (let [url-types {[:organization :user :template] {:reqs []
-                                                    :fmt "api/%s"}
+  (let [url-types {[:organization :user] {:reqs []
+                                          :fmt "api/%s"}
                    [:environment :product :provider :system] {:reqs [#'*org*]
                                                               :fmt "api/organizations/%s/%s"}
                    [:changeset] {:reqs [#'*org* #'*env-id*]
-                                 :fmt "api/organizations/%s/environments/%s/%s"}}
-        {:keys [reqs fmt]} (->> url-types
-                              keys
-                              (drop-while (complement #(some #{entity-type} %)))
-                              first
-                              url-types)
-        unsat (filter #(-> % deref nil?) reqs)]
-    (if-not (empty? unsat)
-      (throw (IllegalArgumentException.
-              (format "%s are required for entity type %s."
-                      (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
-    (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
+                                 :fmt "api/organizations/%s/environments/%s/%s"}
+                   [:template] {:reqs [#'*env-id*]
+                                :fmt "api/environments/%s/templates"}}  }
+    {:keys [reqs fmt]} (->> url-types
+                          keys
+                          (drop-while (complement #(some #{entity-type} %)))
+                          first
+                          url-types)
+    unsat (filter #(-> % deref nil?) reqs)]
+  (if-not (empty? unsat)
+    (throw (IllegalArgumentException.
+            (format "%s are required for entity type %s."
+                    (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
+  (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
 
 (defn all-entities
   "Returns a list of all the entities of the given entity-type.  If
@@ -284,7 +286,7 @@
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]
-  (rest/post (api-url (uri-for-entity-type :template))
+  (rest/post (api-url "api/templates/")
              *user* *password*
              {:template {:name name
                          :description description}
