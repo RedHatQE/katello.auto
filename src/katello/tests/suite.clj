@@ -120,7 +120,8 @@
                             :steps envs/delete-same-name-diff-org}
 
                            {:name "delete environment with promoted content"
-                            :steps envs/delete-env-with-promoted-content}]}
+                            :steps envs/delete-env-with-promoted-content
+                            :blockers (open-bz-bugs "790246")}]}
                    
                    {:name "duplicate environment disallowed"
                     :blockers (open-bz-bugs "726724")
@@ -193,7 +194,7 @@
     :configuration true
     :more [{:name "simple sync"
             :description "Sync a product with just a few packages in one repo."
-            :blockers (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627")
+            :blockers (open-bz-bugs "705355" "711105" "712318" "715004" "727674" "727627" "790246")
             :steps sync/simple}
            
            {:name "create a sync plan"
@@ -301,7 +302,7 @@
     ;;:blockers (filter-tests (every-pred (named? ["simple sync"
     ;;                                              "promote content"])
     ;;                           (complement report/passed?)))
-    :blockers (open-bz-bugs "784853")
+    :blockers (open-bz-bugs "784853" "790246")
     }])
 
 (def fns-to-trace ;;list of namespaces and fns we want to trace
