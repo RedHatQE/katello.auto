@@ -173,7 +173,7 @@
                 :remove-repository (link "Remove Repository")
 
                 ;;redhat page
-                :subscriptions-items "//div[@id='subscription']//tbody/tr"
+                :subscriptions-items "//table[@id='redhatSubscriptionTable']/tbody/tr"
                 })
 
 (def promotions {:products-category (promotion-content-category "products")
