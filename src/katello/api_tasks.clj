@@ -146,9 +146,10 @@
 (defn ensure-env-exist
   "If an environment with the given name and prior environment doesn't exist, create it."
   [name {:keys [prior]}]
-  (if-not (some #{name}
-                (map :name (all-entities :environment)))
-    (create-environment name {:prior-env prior})))
+  (locking (keyword *org*)  ;;lock on org name to prevent race condition
+    (if-not (some #{name}
+                  (map :name (all-entities :environment)))
+      (create-environment name {:prior-env prior}))))
 
 (defn create-product [name {:keys [provider-name description]}]
   (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
