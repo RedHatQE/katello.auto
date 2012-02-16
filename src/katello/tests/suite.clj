@@ -1,6 +1,8 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require (clojure [pprint :as pprint])
+  (:require (clojure [pprint :as pprint]
+                     [zip :as zip]
+                     [walk :as walk])
 
             (katello.tests [setup :as setup]
                            [organizations :as orgs]
@@ -336,6 +338,70 @@
       (let [result (runner test)]
         (assoc result :trace (@test-traces test))))))
 
+(defn mktree [vz [i out? :as e]]
+  (if out?
+    (-> vz (zip/append-child i) zip/up )
+    (-> vz (zip/append-child [i]) zip/down zip/rightmost)))
+
+(defn html-transform [nested-trace]
+  (walk/postwalk))
+
+(defn to-html-snippet [tracelist]
+  (-> (reduce mktree (zip/vector-zip []) tracelist)
+     zip/root
+     ))
+
+
+(def mytraceout
+  (with-meta '
+[[(+ 5 (- 4 2 (* 9 3)) (* 5 (+ 6 3))) nil]
+ [(- 4 2 (* 9 3)) nil]
+ [(* 9 3) nil]
+ [27 true]
+ [-25 true]
+ [(* 5 (+ 6 3)) nil]
+ [(+ 6 3) nil]
+ [9 true]
+ [45 true]
+ [25 true]]
+    {:log true}))
+
+(defn pprint-with-custom [o]
+  
+  (let [orig-dispatch clojure.pprint/*print-pprint-dispatch*]
+    (pprint/with-pprint-dispatch
+      (loop [indent 0 items o]
+       (if-not (empty? items)
+         (let [[val dec?] (first items)
+               myindent (if dec? (dec indent) (inc indent))]
+           (pprint/with-pprint-dispatch pprint/code-dispatch
+             (pprint/pprint-logical-block {:per-line-prefix  (apply str (repeat myindent "  "))} val))
+           (recur myindent (rest items))))))))
+
+(defn my-custom-dispatch [o]
+  (if (-> o meta :log)
+    (loop [indent 0 items o]
+       (if-not (empty? items)
+         (let [[val dec?] (first items)
+               myindent (if dec? (dec indent) (inc indent))]
+           (pprint/pprint-logical-block {:per-line-prefix  (apply str (repeat myindent "  "))} val)
+           (recur myindent (rest items)))))))
+(comment
+
+  (loop [indent 0 items mytraceout]
+                        (if-not (empty? items)
+                           (let [[val dec?] (first items)
+                                 myindent (if dec? (dec indent) (inc indent))]
+                             (print (apply str (repeat (Math/min myindent indent) "  ")))
+                             (prn val)
+                             (recur myindent (rest items)))))
+  
+  (loop [indent 0 items mytraceout]
+                        (if-not (empty? items)
+                           (let [[val dec?] (first items)
+                                 myindent (if dec? (dec indent) (inc indent))]
+                             (println (apply str (repeat myindent "  ")) val)
+                             (recur myindent (rest items))))))
 
 (defn -main [ & args]
   (println args)
