@@ -284,7 +284,7 @@
     (create-changeset cs-name)
     (doseq [[ent-type ents] content
             ent ents]
-      (add-to-changeset cs-name (-> ent-type name singularize keyword) ent))
+      (add-to-changeset cs-name (singularize ent-type) ent))
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]
@@ -299,7 +299,7 @@
     (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/"
                         (name content-type))
                *user* *password*
-               {:id (get-id-by-name (-> content-type name singularize keyword) item)})))
+               {:id (get-id-by-name (singularize content-type) item)})))
 
 (defn create-user [username {:keys [password email disabled]}]
   (rest/post (api-url (uri-for-entity-type :user))
