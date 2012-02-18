@@ -182,7 +182,7 @@
                  :packages-category (promotion-content-category "packages")
                  :kickstart-trees-category (promotion-content-category "kickstart trees")
                  :templates-category (promotion-content-category "templates")
-                 :promotion-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
+                 :promotion-eligible-home "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
 
                  :review-for-promotion "review_changeset"
                  :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"

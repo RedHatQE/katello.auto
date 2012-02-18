@@ -12,13 +12,14 @@
 
 (declare search)
 
-(def library "Library")
-(def promotion-lock nil)                    ;var for synchronizing
-                                        ;promotion calls, since only
-                                        ;one can be done in the system
-                                        ;at a time.
+(def library "Library")                 
+
+;;var for synchronizing promotion calls, since only one can be done in
+;;the system at a time.
+(def promotion-lock nil)
+
                                         
-;;tasks
+;;UI tasks
 (defn timestamps
   "Infinite lazy sequence of timestamps in ms, starting with the current time."
   []
