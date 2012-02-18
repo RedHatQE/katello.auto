@@ -3,7 +3,7 @@
   (:use [katello.conf :only [config]]
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify library]]))
+        [katello.tasks :only [uniqueify library promotion-lock]]))
 
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
@@ -263,16 +263,17 @@
    promotion completes, throws an exception."
   [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
-    (rest/post (api-url "api/changesets/" id "/promote")
-               *user* *password*
-               nil)
-    (loop-with-timeout 180000 [cs {}]
-      (cond (-> cs :state (= "promoted"))
-            cs
-            
-            :else
-            (do (Thread/sleep 5000)
-                (recur (get-by-id :changeset id)))))))
+    (locking #'promotion-lock
+      (rest/post (api-url "api/changesets/" id "/promote")
+                 *user* *password*
+                 nil)
+      (loop-with-timeout 180000 [cs {}]
+        (cond (-> cs :state (= "promoted"))
+              cs
+             
+              :else
+              (do (Thread/sleep 5000)
+                  (recur (get-by-id :changeset id))))))))
 
 (defn promote
   "Does a promotion of the given content (creates a changeset, adds
