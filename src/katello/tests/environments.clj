@@ -93,3 +93,17 @@
         (api/with-env env-name
           (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]})))
       (delete-environment env-name {:org-name (@config :admin-org)}))))
+
+(def delete-middle-env
+  (fn []
+    (let [envs (conj (take 3 (unique-names "env"))
+                     library)
+          env-chain (partition 2 1 envs)]
+      (doseq [[prior curr] env-chain]
+        (create-environment curr {:prior-env prior
+                                  :org-name (@config :admin-org)}))
+      (delete-environment (nth envs 2) {:org-name (@config :admin-org)})
+      (let [curr (last envs)
+            prior (second envs)]
+        (create-environment curr {:prior-env prior
+                                  :org-name (@config :admin-org)})))))
