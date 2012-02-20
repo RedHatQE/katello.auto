@@ -126,7 +126,7 @@
                            {:name "delete environment from middle of chain"
                             :description "Delete an environment from the middle of the chain and try to recreate the end of the chain"
                             :steps envs/delete-middle-env
-                            :blocked-by (open-bz-bugs "794799")}]}
+                            :blockers (open-bz-bugs "794799")}]}
                    
                    {:name "duplicate environment disallowed"
                     :blockers (open-bz-bugs "726724")
