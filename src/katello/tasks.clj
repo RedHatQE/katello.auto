@@ -12,9 +12,14 @@
 
 (declare search)
 
-(def library "Library")
+(def library "Library")                 
 
-;;tasks
+;;var for synchronizing promotion calls, since only one can be done in
+;;the system at a time.
+(def promotion-lock nil)
+
+                                        
+;;UI tasks
 (defn timestamps
   "Infinite lazy sequence of timestamps in ms, starting with the current time."
   []
@@ -148,25 +153,27 @@
 ;;can't navigate away until that's done
 
 (defn promote-changeset [changeset-name {:keys [from-env to-env timeout-ms]}]
-  (navigate :named-changeset-promotions-page
-            {:env-name from-env
-             :next-env-name to-env
-             :changeset-name changeset-name})
-  (browser click :review-for-promotion)
-  ;;for the submission
-  (loop-with-timeout 600000 []
-    (when-not (try+ (browser click :promote-to-next-environment)
-                  (check-for-success)
-                  (catch [:type ::promotion-already-in-progress] _
-                    nil))
-      (Thread/sleep 30000)
-      (recur)))
-  ;;for confirmation
-  (loop-with-timeout (or timeout-ms 120000) [status ""]
-    (if (= status "Promoted")
-      status
-      (do (Thread/sleep 2000)
-          (recur (browser getText (locators/changeset-status changeset-name)))))))
+  (let [nav-to-cs (fn [] (navigate :named-changeset-promotions-page
+                                  {:env-name from-env
+                                   :next-env-name to-env
+                                   :changeset-name changeset-name}))]
+    (nav-to-cs)
+    (locking #'promotion-lock
+      (browser click :review-for-promotion)
+      ;;for the submission
+      (loop-with-timeout 600000 []
+        (when-not (try+ (browser click :promote-to-next-environment)
+                        (check-for-success)
+                        (catch [:type ::promotion-already-in-progress] _
+                          (nav-to-cs)))
+          (Thread/sleep 30000)
+          (recur)))
+      ;;for confirmation
+      (loop-with-timeout (or timeout-ms 120000) [status ""]
+        (if (= status "Promoted")
+          status
+          (do (Thread/sleep 2000)
+              (recur (browser getText (locators/changeset-status changeset-name)))))))))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (uniqueify "changeset")]

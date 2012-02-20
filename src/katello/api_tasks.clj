@@ -3,7 +3,7 @@
   (:use [katello.conf :only [config]]
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify library]]))
+        [katello.tasks :only [uniqueify library promotion-lock]]))
 
 (def ^{:dynamic true} *user* nil)
 (def ^{:dynamic true} *password* nil)
@@ -146,9 +146,10 @@
 (defn ensure-env-exist
   "If an environment with the given name and prior environment doesn't exist, create it."
   [name {:keys [prior]}]
-  (if-not (some #{name}
-                (map :name (all-entities :environment)))
-    (create-environment name {:prior-env prior})))
+  (locking (keyword *org*)  ;;lock on org name to prevent race condition
+    (if-not (some #{name}
+                  (map :name (all-entities :environment)))
+      (create-environment name {:prior-env prior}))))
 
 (defn create-product [name {:keys [provider-name description]}]
   (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
@@ -262,16 +263,17 @@
    promotion completes, throws an exception."
   [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
-    (rest/post (api-url "api/changesets/" id "/promote")
-               *user* *password*
-               nil)
-    (loop-with-timeout 180000 [cs {}]
-      (cond (-> cs :state (= "promoted"))
-            cs
-            
-            :else
-            (do (Thread/sleep 5000)
-                (recur (get-by-id :changeset id)))))))
+    (locking #'promotion-lock
+      (rest/post (api-url "api/changesets/" id "/promote")
+                 *user* *password*
+                 nil)
+      (loop-with-timeout 180000 [cs {}]
+        (cond (-> cs :state (= "promoted"))
+              cs
+             
+              :else
+              (do (Thread/sleep 5000)
+                  (recur (get-by-id :changeset id))))))))
 
 (defn promote
   "Does a promotion of the given content (creates a changeset, adds
@@ -282,7 +284,7 @@
     (create-changeset cs-name)
     (doseq [[ent-type ents] content
             ent ents]
-      (add-to-changeset cs-name (-> ent-type name singularize keyword) ent))
+      (add-to-changeset cs-name (singularize ent-type) ent))
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]
@@ -297,7 +299,7 @@
     (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/"
                         (name content-type))
                *user* *password*
-               {:id (get-id-by-name (-> content-type name singularize keyword) item)})))
+               {:id (get-id-by-name (singularize content-type) item)})))
 
 (defn create-user [username {:keys [password email disabled]}]
   (rest/post (api-url (uri-for-entity-type :user))

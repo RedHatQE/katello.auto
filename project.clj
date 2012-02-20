@@ -8,7 +8,7 @@
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
-                 [clj-http "0.2.6"]
+                 [clj-http "0.3.2"]
                  [fn.trace "1.3.1.0-SNAPSHOT"]]
   :dev-dependencies [[slamhound "1.2.0"]]
   
