@@ -3,7 +3,7 @@
   :main katello.tests.suite
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.3.0"]
-                 [test.tree "0.6.0-SNAPSHOT"]
+                 [test.tree "0.6.1-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
@@ -12,7 +12,7 @@
                  [fn.trace "1.3.1.0-SNAPSHOT"]]
   :dev-dependencies [[slamhound "1.2.0"]]
   
-  :jvm-opts ["-Xmx512m"]
+  :jvm-opts ["-Xmx192m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
