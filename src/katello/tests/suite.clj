@@ -132,9 +132,9 @@
                     :blockers (open-bz-bugs "726724")
                     :steps envs/dupe-disallowed}
                    
-                   (comment "renaming disabled for v1"
-                            {:name "rename an environment"
-                             :steps envs/rename})
+                   #_(comment "renaming disabled for v1"
+                              {:name "rename an environment"
+                               :steps envs/rename})
 
                    {:name "environment namespace limited to org"
                     :steps envs/create-same-name-diff-org}]}
