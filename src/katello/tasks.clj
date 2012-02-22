@@ -400,6 +400,11 @@
   (when new-password
     (browser setText :change-password-text new-password)
     (browser setText :confirm-password-text (or new-password-confirm new-password))
+
+    ;;hack alert - force the page to check the passwords (selenium
+    ;;doesn't fire the event by itself
+    (browser getEval "window.KT.user_page.verifyPassword();")
+
     (when (browser isElementPresent :password-conflict)
       (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
     (browser click :save-user-edit) 
