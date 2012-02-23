@@ -58,6 +58,7 @@
                            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/label[normalize-space(.)='$1']]/td[5]"]
+   repo-enable-checkbox ["Repo enable checkbox" "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
@@ -94,6 +95,7 @@
              :account "//li[@class='hello']/a"
              :log-out "//a[normalize-space(.)='Logout']"
              :org-switcher "switcherButton"
+             :active-org "//*[@id='switcherButton']/div[1]"
              })
 
 (def all-tabs (tabs [:organizations
@@ -157,6 +159,7 @@
                 :redhat-provider-repository-url-text "provider[repository_url]"
                 :choose-file "provider_contents"
                 :upload "upload_submit"
+                :enable-repositories-tab "//a[normalize-space(.)='Enable Repositories']"
                 :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
                 ;;add product

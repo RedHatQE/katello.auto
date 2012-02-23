@@ -191,8 +191,9 @@
     :configuration true
     :blockers (open-bz-bugs "729364")
     :more [{:name "upload subscription manifest"
-            :blockers providers/manifest-testing-blockers
-            :steps providers/upload-manifest}]}])
+            :steps providers/upload-manifest
+            :more [{:name "enable Red Hat repositories"
+                    :steps providers/enable-redhat-repos}]}]}])
 
 (defn sync-tests []
   [{:name "set up sync tests"

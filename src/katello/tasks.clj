@@ -493,6 +493,7 @@
   [res]
   (= res (:ok sync-messages)))
 
+
 (defn sync-repos [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)
   (doseq [repo repos]
@@ -624,3 +625,22 @@
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
 
+(defn enable-redhat-repositories
+  "Enable the given list of repos in the current org"
+  [repos]
+  (navigate :redhat-provider-tab)
+  (browser click :enable-repositories-tab)
+  (doseq [repo repos]
+    (browser check (locators/repo-enable-checkbox repo))))
+
+(defn current-org []
+  "return the currently active org shown in the org switcher."
+  (browser getText :active-org))
+
+(defmacro with-org [org-name & body]
+  "Switch to org-name, execute body, and then switch back to current
+   org, whether there was an exception or not."
+  `(let [curr-org# (current-org)]
+     (try (switch-org ~org-name)
+          ~@body
+          (finally (switch-org curr-org#)))))
