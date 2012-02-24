@@ -173,7 +173,9 @@
         (if (= status "Promoted")
           status
           (do (Thread/sleep 2000)
-              (recur (browser getText (locators/changeset-status changeset-name)))))))))
+              (recur (browser getText (locators/changeset-status changeset-name))))))
+      ;;wait for async success notif
+      (check-for-success 180000))))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (uniqueify "changeset")]
