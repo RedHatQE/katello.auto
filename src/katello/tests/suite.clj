@@ -193,7 +193,9 @@
     :more [{:name "upload subscription manifest"
             :steps providers/upload-manifest
             :more [{:name "enable Red Hat repositories"
-                    :steps providers/enable-redhat-repos}]}]}])
+                    :steps providers/enable-redhat-repos
+                    :more [{:name "client installs Red Hat content"
+                            :steps e2e/client-access-redhat}]}]}]}])
 
 (defn sync-tests []
   [{:name "set up sync tests"
