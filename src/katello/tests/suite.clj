@@ -312,29 +312,30 @@
     :blockers (open-bz-bugs "784853" "790246")
     }])
 
-(def fns-to-trace ;;list of namespaces and fns we want to trace
-  {:namespaces ['katello.tasks
-                'katello.api-tasks
-                'katello.client]
-   :fns ['test.tree/execute
-         'katello.tests.setup/start-selenium
-         'katello.tests.setup/stop-selenium
-         'katello.tests.setup/switch-new-admin-user
-         'com.redhat.qe.verify/check
-         'com.redhat.qe.auto.selenium.selenium/call-sel
-         'com.redhat.qe.config/property-map]
-   :exclude ['katello.tasks/notification 
-             'katello.tasks/success?
-             'katello.tasks/uniqueify
-             'katello.tasks/unique-names
-             'katello.tasks/timestamps]})
+(def to-trace ;;list of namespaces and fns we want to trace
+  ['katello.tasks
+   'katello.api-tasks
+   'katello.client'test.tree/execute
+   'katello.tests.setup/start-selenium
+   'katello.tests.setup/stop-selenium
+   'katello.tests.setup/switch-new-admin-user
+   'com.redhat.qe.verify/check
+   'com.redhat.qe.auto.selenium.selenium/call-sel
+   'com.redhat.qe.config/property-map])
+
+(def do-not-trace ;;set of fns to exclude from tracing
+  #{'katello.tasks/notification 
+    'katello.tasks/success?
+    'katello.tasks/uniqueify
+    'katello.tasks/unique-names
+    'katello.tasks/timestamps})
 
 (defn -main [ & args]
   (println args)
   (binding [tracer (per-thread-tracer clj-format)
             *print-level* 10
             *print-length* 30]
-    (dotrace-all fns-to-trace 
+    (dotrace-all (remove do-not-trace (all-fns to-trace)) 
       (let [reports (test/run-suite (suite))]
         (println "----- Blockers -----\n ")
         (let [blockers (->> reports
@@ -353,4 +354,5 @@
                         (map #(.getCanonicalPath %)))
              
              "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))
+
 
