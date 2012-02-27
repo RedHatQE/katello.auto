@@ -28,7 +28,8 @@
             [com.redhat.qe.auto.selenium.selenium :as selenium]
             com.redhat.qe.config)
   (:use test.tree.builder
-        fn.trace
+        fn.trace 
+        slingshot.slingshot
         [serializable.fn :only [fn]]
         [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
 
@@ -315,15 +316,15 @@
     }])
 
 (def to-trace ;;list of namespaces and fns we want to trace
-  ['katello.tasks
-   'katello.api-tasks
-   'katello.client'test.tree/execute
-   'katello.tests.setup/start-selenium
-   'katello.tests.setup/stop-selenium
-   'katello.tests.setup/switch-new-admin-user
-   'com.redhat.qe.verify/check
-   'com.redhat.qe.auto.selenium.selenium/call-sel
-   'com.redhat.qe.config/property-map])
+  '[katello.tasks
+    katello.api-tasks
+    katello.client'test.tree/execute
+    katello.tests.setup/start-selenium
+    katello.tests.setup/stop-selenium
+    katello.tests.setup/switch-new-admin-user
+    com.redhat.qe.verify/check
+    com.redhat.qe.auto.selenium.selenium/call-sel
+    com.redhat.qe.config/property-map])
 
 (def do-not-trace ;;set of fns to exclude from tracing
   #{'katello.tasks/notification 
@@ -338,21 +339,20 @@
 (defn wrap-tracing [runner]
   (fn [test]
     (println "tracing")
-    (binding [tracer (fn [name value & [out?]]
+    (binding [tracer (fn [_ value & [out?]]
                        (dosync
                         (alter test-traces update-in [test]
                                (fn [v]
-                                 (conj (or v []) [name value out?])))))]
+                                 (conj (or v (with-meta [] {:log true})) [value out?])))))]
       (let [result (runner test)]
-        (assoc result :trace (@test-traces test))))))
+        (if (-> (:result result) (= :fail))
+          (assoc-in  result [:error :trace] (@test-traces test))
+          result)))))
 
 (defn mktree [vz [i out? :as e]]
   (if out?
     (-> vz (zip/append-child i) zip/up )
     (-> vz (zip/append-child [i]) zip/down zip/rightmost)))
-
-(defn html-transform [nested-trace]
-  (walk/postwalk))
 
 (defn to-html-snippet [tracelist]
   (-> (reduce mktree (zip/vector-zip []) tracelist)
@@ -374,42 +374,7 @@
  [25 true]]
     {:log true}))
 
-(defn pprint-with-custom [o]
-  
-  (let [orig-dispatch clojure.pprint/*print-pprint-dispatch*]
-    (pprint/with-pprint-dispatch
-      (loop [indent 0 items o]
-       (if-not (empty? items)
-         (let [[val dec?] (first items)
-               myindent (if dec? (dec indent) (inc indent))]
-           (pprint/with-pprint-dispatch pprint/code-dispatch
-             (pprint/pprint-logical-block {:per-line-prefix  (apply str (repeat myindent "  "))} val))
-           (recur myindent (rest items))))))))
 
-(defn my-custom-dispatch [o]
-  (if (-> o meta :log)
-    (loop [indent 0 items o]
-       (if-not (empty? items)
-         (let [[val dec?] (first items)
-               myindent (if dec? (dec indent) (inc indent))]
-           (pprint/pprint-logical-block {:per-line-prefix  (apply str (repeat myindent "  "))} val)
-           (recur myindent (rest items)))))))
-(comment
-
-  (loop [indent 0 items mytraceout]
-                        (if-not (empty? items)
-                           (let [[val dec?] (first items)
-                                 myindent (if dec? (dec indent) (inc indent))]
-                             (print (apply str (repeat (Math/min myindent indent) "  ")))
-                             (prn val)
-                             (recur myindent (rest items)))))
-  
-  (loop [indent 0 items mytraceout]
-                        (if-not (empty? items)
-                           (let [[val dec?] (first items)
-                                 myindent (if dec? (dec indent) (inc indent))]
-                             (println (apply str (repeat myindent "  ")) val)
-                             (recur myindent (rest items))))))
 
 (defn -main [ & args]
   (println args)
@@ -421,8 +386,11 @@
   
   (binding [tracer (per-thread-tracer clj-format)
             *print-level* 10
-            *print-length* 30]
-    (dotrace-all (remove do-not-trace (all-fns to-trace)) 
+            *print-length* 30
+            pprint/*print-pprint-dispatch* log-dispatch
+            report/syntax-highlight (report/syntax-highlighter
+                                     "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")]
+    (dotrace (remove do-not-trace (all-fns to-trace)) 
       (let [reports (test/run-suite (suite))]
         (println "----- Blockers -----\n ")
         (let [blockers (->> reports
@@ -433,13 +401,13 @@
           (pprint/pprint blockers))))
 
     ;;convert trace files to pretty html
-    (htmlify "html"  (->> (System/getProperty "user.dir")
-                        java.io.File.
-                        .listFiles
-                        seq
-                        (filter #(-> % .getName (.endsWith ".trace")))
-                        (map #(.getCanonicalPath %)))
+    (comment(htmlify "html"  (->> (System/getProperty "user.dir")
+                                java.io.File.
+                                .listFiles
+                                seq
+                                (filter #(-> % .getName (.endsWith ".trace")))
+                                (map #(.getCanonicalPath %)))
              
-             "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))
+                     "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/"))))
 
 
