@@ -13,11 +13,11 @@
 (def client-access-custom
   (fn []
     (let [provider-name (uniqueify "fedorapeople")
-          product-name (uniqueify "aeolus")
-          repo-name (uniqueify "aeolus-x86_64")
+          product-name (uniqueify "safari-1_0")
+          repo-name (uniqueify "safari-x86_64")
           target-env (@config :first-env)
-          cs-name (uniqueify "promo-aeolus")
-          package-to-install "jansson"]
+          cs-name (uniqueify "promo-safari")
+          package-to-install "cheetah"]
       (api/with-creds *session-user* *session-password*
         (api/with-admin-org
           (api/ensure-env-exist target-env {:prior library})
@@ -27,7 +27,7 @@
           (add-repo {:provider-name provider-name
                      :product-name product-name
                      :name repo-name
-                     :url "http://repos.fedorapeople.org/repos/aeolus/conductor/latest-release/6Server/x86_64/"} )
+                     :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
           (let [sync-results (sync-repos [repo-name] {:timeout 600000})]
             (verify-that (every? (fn [[_ res]] (sync-success? res))
                                  sync-results)))

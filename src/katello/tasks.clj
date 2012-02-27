@@ -173,7 +173,9 @@
         (if (= status "Promoted")
           status
           (do (Thread/sleep 2000)
-              (recur (browser getText (locators/changeset-status changeset-name)))))))))
+              (recur (browser getText (locators/changeset-status changeset-name))))))
+      ;;wait for async success notif
+      (check-for-success 180000))))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (uniqueify "changeset")]
@@ -400,6 +402,11 @@
   (when new-password
     (browser setText :change-password-text new-password)
     (browser setText :confirm-password-text (or new-password-confirm new-password))
+
+    ;;hack alert - force the page to check the passwords (selenium
+    ;;doesn't fire the event by itself
+    (browser getEval "window.KT.user_page.verifyPassword();")
+
     (when (browser isElementPresent :password-conflict)
       (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
     (browser click :save-user-edit) 
@@ -487,6 +494,7 @@
 (defn sync-success? "Returns true if given sync result is a success."
   [res]
   (= res (:ok sync-messages)))
+
 
 (defn sync-repos [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)
@@ -619,3 +627,22 @@
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
 
+(defn enable-redhat-repositories
+  "Enable the given list of repos in the current org"
+  [repos]
+  (navigate :redhat-provider-tab)
+  (browser click :enable-repositories-tab)
+  (doseq [repo repos]
+    (browser check (locators/repo-enable-checkbox repo))))
+
+(defn current-org []
+  "return the currently active org shown in the org switcher."
+  (browser getText :active-org))
+
+(defmacro with-org [org-name & body]
+  "Switch to org-name, execute body, and then switch back to current
+   org, whether there was an exception or not."
+  `(let [curr-org# (current-org)]
+     (try (switch-org ~org-name)
+          ~@body
+          (finally (switch-org curr-org#)))))

@@ -58,14 +58,15 @@
                            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    provider-sync-progress ["Provider progress"
                            "//tr[td/label[normalize-space(.)='$1']]/td[5]"]
+   repo-enable-checkbox ["Repo enable checkbox" "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    template-product ["Template product" "//span[@class='product-icon' and starts-with(normalize-space(),'$1')]"]
-   template-product-action ["Template content action" "//li[contains(@class,'slide_link') and descendant::span[@class='product-icon' and starts-with(normalize-space(),'$2')]]//a[.='$1']"]
-   template-package-action ["Template package action" "//ul[@class='expand_list']/li[descendant::text()[normalize-space()='$2']]//a[.='$1']"]
+   template-product-action ["Template content action" "//a[@data-name='$2' and .='$1']"]
+   template-package-action ["Template package action" "//a[@data-name='$2' and .='$1']"]
    template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
@@ -94,6 +95,7 @@
              :account "//li[@class='hello']/a"
              :log-out "//a[normalize-space(.)='Logout']"
              :org-switcher "switcherButton"
+             :active-org "//*[@id='switcherButton']/div[1]"
              })
 
 (def all-tabs (tabs [:organizations
@@ -157,6 +159,7 @@
                 :redhat-provider-repository-url-text "provider[repository_url]"
                 :choose-file "provider_contents"
                 :upload "upload_submit"
+                :enable-repositories-tab "//a[normalize-space(.)='Enable Repositories']"
                 :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
                 ;;add product

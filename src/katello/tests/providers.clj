@@ -125,27 +125,31 @@
                                  :name product-name}))))))))
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
-(def redhat-provider-name "Red Hat")
-(def manifest-uploaded? (atom nil))
-(def manifest-testing-blockers
-  (fn [_]
-    (if @manifest-uploaded?
-      [:manifest-already-uploaded]
-      [])))
+(def redhat-provider-test-org (atom nil))
 
 (def manifest-setup
   (fn [] 
-    (when-not (reset! manifest-uploaded?
-                      (tasks/manifest-already-uploaded?))
+    (let [org-name (reset! redhat-provider-test-org (tasks/uniqueify "rh-test"))]
+      (api/with-admin (api/create-organization org-name))
       (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
                   outstream (io/output-stream manifest-tmp-loc)]
         (io/copy instream outstream)))))
 
 (def upload-manifest
   (fn []
-    (let [provider-name redhat-provider-name]      
+    (tasks/with-org @redhat-provider-test-org
       (tasks/upload-subscription-manifest manifest-tmp-loc
                                           {:repository-url (@config :redhat-repo-url)}))))
+
+(def enable-redhat-repos
+  (fn []
+    (let [repos ["Nature Enterprise x86_64 5Server"
+                 "Nature Enterprise x86_64 6Server"]]
+      
+      (tasks/with-org @redhat-provider-test-org
+        (tasks/enable-redhat-repositories repos)
+        (tasks/navigate :sync-status-page)
+        (verify-that (every? nil? (map tasks/sync-complete-status repos)))))))
 
 (def dupe-disallowed
   (fn []

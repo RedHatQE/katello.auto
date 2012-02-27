@@ -134,8 +134,9 @@
                     :blockers (open-bz-bugs "726724")
                     :steps envs/dupe-disallowed}
                    
-                   {:name "rename an environment"
-                    :steps envs/rename}
+                   #_(comment "renaming disabled for v1"
+                              {:name "rename an environment"
+                               :steps envs/rename})
 
                    {:name "environment namespace limited to org"
                     :steps envs/create-same-name-diff-org}]}
@@ -192,8 +193,9 @@
     :configuration true
     :blockers (open-bz-bugs "729364")
     :more [{:name "upload subscription manifest"
-            :blockers providers/manifest-testing-blockers
-            :steps providers/upload-manifest}]}])
+            :steps providers/upload-manifest
+            :more [{:name "enable Red Hat repositories"
+                    :steps providers/enable-redhat-repos}]}]}])
 
 (defn sync-tests []
   [{:name "set up sync tests"
@@ -312,22 +314,23 @@
     :blockers (open-bz-bugs "784853" "790246")
     }])
 
-(def fns-to-trace ;;list of namespaces and fns we want to trace
-  {:namespaces ['katello.tasks
-                'katello.api-tasks
-                'katello.client]
-   :fns ['test.tree/execute
-         'katello.tests.setup/start-selenium
-         'katello.tests.setup/stop-selenium
-         'katello.tests.setup/switch-new-admin-user
-         'com.redhat.qe.verify/check
-         'com.redhat.qe.auto.selenium.selenium/call-sel
-         'com.redhat.qe.config/property-map]
-   :exclude ['katello.tasks/notification 
-             'katello.tasks/success?
-             'katello.tasks/uniqueify
-             'katello.tasks/unique-names
-             'katello.tasks/timestamps]})
+(def to-trace ;;list of namespaces and fns we want to trace
+  ['katello.tasks
+   'katello.api-tasks
+   'katello.client'test.tree/execute
+   'katello.tests.setup/start-selenium
+   'katello.tests.setup/stop-selenium
+   'katello.tests.setup/switch-new-admin-user
+   'com.redhat.qe.verify/check
+   'com.redhat.qe.auto.selenium.selenium/call-sel
+   'com.redhat.qe.config/property-map])
+
+(def do-not-trace ;;set of fns to exclude from tracing
+  #{'katello.tasks/notification 
+    'katello.tasks/success?
+    'katello.tasks/uniqueify
+    'katello.tasks/unique-names
+    'katello.tasks/timestamps})
 
 
 (def test-traces (ref {}))
@@ -419,15 +422,15 @@
   (binding [tracer (per-thread-tracer clj-format)
             *print-level* 10
             *print-length* 30]
-    (dotrace-all fns-to-trace 
-                 (let [reports (test/run-suite (suite))]
-                   (println "----- Blockers -----\n ")
-                   (let [blockers (->> reports
-                                     vals
-                                     (mapcat #(get-in % [:report :blocked-by]))
-                                     (filter #(not (nil? %)))
-                                     frequencies)]
-                     (pprint/pprint blockers))))
+    (dotrace-all (remove do-not-trace (all-fns to-trace)) 
+      (let [reports (test/run-suite (suite))]
+        (println "----- Blockers -----\n ")
+        (let [blockers (->> reports
+                          vals
+                          (mapcat #(get-in % [:report :blocked-by]))
+                          (filter #(not (nil? %)))
+                          frequencies)]
+          (pprint/pprint blockers))))
 
     ;;convert trace files to pretty html
     (htmlify "html"  (->> (System/getProperty "user.dir")
@@ -438,4 +441,5 @@
                         (map #(.getCanonicalPath %)))
              
              "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")))
+
 
