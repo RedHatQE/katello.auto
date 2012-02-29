@@ -340,7 +340,6 @@
 
 (defn wrap-tracing [runner]
   (fn [test]
-    (println "tracing")
     (binding [tracer (fn [_ value & [out?]]
                        (dosync
                         (alter test-traces update-in [test]
