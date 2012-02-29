@@ -47,7 +47,6 @@
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
       (binding [sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))
-                tracer (per-thread-tracer clj-format)
                 *session-user* (tasks/uniqueify
                                 (str (@config :admin-user)
                                      thread-number))

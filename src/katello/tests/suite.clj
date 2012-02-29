@@ -359,20 +359,20 @@
      zip/root
      ))
 
-
-(def mytraceout
-  (with-meta '
-[[(+ 5 (- 4 2 (* 9 3)) (* 5 (+ 6 3))) nil]
- [(- 4 2 (* 9 3)) nil]
- [(* 9 3) nil]
- [27 true]
- [-25 true]
- [(* 5 (+ 6 3)) nil]
- [(+ 6 3) nil]
- [9 true]
- [45 true]
- [25 true]]
-    {:log true}))
+(comment "test tracing data -ignore"
+         (def mytraceout
+           (with-meta '
+             [[(+ 5 (- 4 2 (* 9 3)) (* 5 (+ 6 3))) nil]
+              [(- 4 2 (* 9 3)) nil]
+              [(* 9 3) nil]
+              [27 true]
+              [-25 true]
+              [(* 5 (+ 6 3)) nil]
+              [(+ 6 3) nil]
+              [9 true]
+              [45 true]
+              [25 true]]
+             {:log true})))
 
 
 
@@ -384,9 +384,9 @@
                                           test/wrap-timer
                                           test/wrap-data-driven)))
   
-  (binding [tracer (per-thread-tracer clj-format)
+  (binding [tracer (per-thread-tracer text-format)
             *print-level* 10
-            *print-length* 30
+            *print-length* 30 
             pprint/*print-pprint-dispatch* log-dispatch
             report/syntax-highlight (report/syntax-highlighter
                                      "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")]
