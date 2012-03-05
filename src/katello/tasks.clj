@@ -6,7 +6,9 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         [slingshot.slingshot :only [throw+ try+]]
-        [com.redhat.qe.verify :only [verify-that]])
+        [com.redhat.qe.config :only [kw-to-text]]
+        [com.redhat.qe.verify :only [verify-that]]
+        [clojure.string :only [capitalize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -608,21 +610,23 @@
 
 (defn add-to-template "Adds content to a template"
   [name content]
-  (comment "content is like:" {:products ["prod1" "prod2"]
-                               :packages [{:product "prod3"
-                                           :packages ["rpm1" "rpm2"]}]})
+  (comment "content is like:" [{:product "prod3"
+                                :packages ["rpm1" "rpm2"]}
+                               {:product "prod6"
+                                :repositories ["x86_64"]}])
   (navigate :named-system-template-page {:template-name name})
-  (let [[add-product add-package] (for [toggler [locators/template-product-toggler
-                                                 locators/template-package-toggler]]
-                                    (fn [item] (locators/toggle toggler item true)))]
-    (doseq [product (:products content)]
-      (add-product product))
-    (doseq [{:keys [product packages]} (:packages content)]
-      (->browser (click (locators/template-product product))
-                 (click :template-eligible-packages))
-      (doseq [package packages]
-        (add-package package))
-      (browser click :template-eligible-home))
+  (println "Before outer let")
+  (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
+    (println "Before doseq")
+    (doseq [group content]
+      (println "starting doseq")
+      (let [category-keyword (-> group (dissoc :product) keys first)
+            category-name (kw-to-text category-keyword capitalize)]
+        (println "starting let")
+        (browser click (locators/template-product (:product group)))
+        (browser click (locators/template-eligible-category category-name))
+        (doall (map add-item (group category-keyword)))
+        (browser click :template-eligible-home)))
     (browser click :save-template)
     (check-for-success)))
 

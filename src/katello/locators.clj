@@ -64,9 +64,8 @@
    subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
-   template-product ["Template product" "//span[@class='product-icon' and starts-with(normalize-space(),'$1')]"]
-   template-product-action ["Template content action" "//a[@data-name='$2' and .='$1']"]
-   template-package-action ["Template package action" "//a[@data-name='$2' and .='$1']"]
+   template-product ["Template product" "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"]
+   template-action ["Template content action" "//a[@data-name='$2' and .='$1']"]
    template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
    textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
    user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
@@ -261,8 +260,9 @@
                 :save-new-template "template_save" ;;when creating
                 :template-eligible-package-groups (template-eligible-category "Package Groups")
                 :template-eligible-packages (template-eligible-category "Packages")
+                :template-eligible-repositories (template-eligible-category "Repositories")
                 :template-package-groups (slide-link "Package Groups")
-                :template-eligible-home "//div[@id='content_tree']//div[contains(@class,'home_img_inactive')]"
+                :template-eligible-home "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
                 :save-template "save_template"}) ;;when editing
 
 ;;merge all the preceeding maps together, plus a few more items.
@@ -348,8 +348,8 @@
 (def add-remove ["+ Add" "Remove"])
 
 (def user-role-toggler (toggler add-remove role-action))
-(def template-product-toggler (toggler add-remove template-product-action))
-(def template-package-toggler (toggler add-remove template-package-action))
+(def template-toggler (toggler add-remove template-action))
+
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
