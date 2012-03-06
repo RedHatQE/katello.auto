@@ -45,7 +45,8 @@
   [consume-fn]
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
-      (binding [sel (new-selenium (nth (cycle *browsers*)
+      (binding [tracer (per-thread-tracer)
+                sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))
                 *session-user* (tasks/uniqueify
                                 (str (@config :admin-user)
@@ -76,8 +77,7 @@
                               (doseq [[{:keys [name parameters]} {:keys [status report]}] d]
                                 (let [parms-str (if parameters (pr-str parameters) "")]
                                   (if (= status :done)
-                                    (println (str (:result report) ": " name parms-str) )
-                                    (println (str status ": " name parms-str)))))))
+                                    (println (apply format "%-12s %s %s\n" (map str [(:result report) name parms-str]))))))))
               :screencapture (watch/on-fail
                               (fn [t _] 
                                 (browser "screenCapture"

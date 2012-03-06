@@ -386,7 +386,7 @@
                                           test/wrap-timer
                                           test/wrap-data-driven)))
   
-  (binding [tracer (per-thread-tracer text-format)
+  (binding [tracer (per-thread-tracer)
             *print-level* 10
             *print-length* 30 
             pprint/*print-pprint-dispatch* log-dispatch
