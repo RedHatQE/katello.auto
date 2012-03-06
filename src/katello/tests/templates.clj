@@ -14,6 +14,7 @@
 (def test-template-name (atom nil))
 (def content (atom nil))
 (def products (atom []))
+(def repos (atom []))
 
 (def create
   (fn []
@@ -32,8 +33,10 @@
                      (api/with-admin
                        (let [created-prod (api/create-product
                                            product {:provider-name provider-name
-                                                    :description "product to test templates"})]
-                         (api/create-repo (uniqueify "templ") {:product-name product :url "http://my.fakerepo.com/blah/blah"})
+                                                    :description "product to test templates"})
+                             repo-name (uniqueify "templ")]
+                         (api/create-repo repo-name {:product-name product :url "http://my.fakerepo.com/blah/blah"})
+                         (swap! repos conj {:product product :repositories [repo-name]})
                          created-prod))))
             content {:products (for [prod prods] {:product_id (:id prod)})}]
         (api/with-admin
@@ -42,4 +45,4 @@
 
 (def add-content
   (fn []
-    (add-to-template @test-template-name {:products @products})))
+    (add-to-template @test-template-name @repos)))

@@ -615,14 +615,10 @@
                                {:product "prod6"
                                 :repositories ["x86_64"]}])
   (navigate :named-system-template-page {:template-name name})
-  (println "Before outer let")
   (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
-    (println "Before doseq")
     (doseq [group content]
-      (println "starting doseq")
       (let [category-keyword (-> group (dissoc :product) keys first)
             category-name (kw-to-text category-keyword capitalize)]
-        (println "starting let")
         (browser click (locators/template-product (:product group)))
         (browser click (locators/template-eligible-category category-name))
         (doall (map add-item (group category-keyword)))
