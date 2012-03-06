@@ -28,6 +28,7 @@
       (api/with-admin
         (api/create-provider provider-name))
       (reset! products (take 3 (unique-names "templateProduct")))
+      (reset! repos [])
       (let [prods (doall
                    (for [product @products]
                      (api/with-admin
