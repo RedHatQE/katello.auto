@@ -320,7 +320,8 @@
 (def to-trace ;;list of namespaces and fns we want to trace
   '[katello.tasks
     katello.api-tasks
-    katello.client'test.tree/execute
+    katello.client
+    test.tree/execute
     katello.tests.setup/start-selenium
     katello.tests.setup/stop-selenium
     katello.tests.setup/switch-new-admin-user

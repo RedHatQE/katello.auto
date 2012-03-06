@@ -21,9 +21,9 @@
 (def create
   (fn []
     (verify-success
-     #(create-environment (uniqueify "simple-env")
-                          {:org-name @test-org-name
-                           :description "simple environment description"}))))
+     (fn [] (create-environment (uniqueify "simple-env")
+                               {:org-name @test-org-name
+                                :description "simple environment description"})))))
 
 (def delete
   (fn []
@@ -33,7 +33,7 @@
        {:org-name @test-org-name
         :description "simple environment description"})
       (verify-success
-       #(delete-environment env-name {:org-name @test-org-name})))))
+       (fn [] (delete-environment env-name {:org-name @test-org-name}))))))
 
 (def dupe-disallowed
   (fn [] (duplicate-disallowed create-environment
