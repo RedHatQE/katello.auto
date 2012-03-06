@@ -49,9 +49,9 @@
   (def ^:dynamic *runner* runner))
 
 (defn configure-client [m]
-  (for [[heading settings] m
-        [k v] settings]
-    (sm-cmd :config {(keyword (str heading "." k)) v})))
+  (doall (for [[heading settings] m
+               [k v] settings]
+           (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
 (defn get-ca-certs []
   (let [certs {"candlepin-ca.crt" "candlepin-local.pem"
