@@ -126,9 +126,9 @@
                             :steps envs/delete-env-with-promoted-content
                             :blockers (open-bz-bugs "790246")}
 
-                           {:name "delete environment from middle of chain"
-                            :description "Delete an environment from the middle of the chain and try to recreate the end of the chain"
-                            :steps envs/delete-middle-env
+                           {:name "only last environment in path can be deleted"
+                            :description "Try to delete an env from the middle of the path, and the last in the path, only the latter should be allowed."
+                            :steps envs/no-delete-middle-env
                             :blockers (open-bz-bugs "794799")}]}
                    
                    {:name "duplicate environment disallowed"

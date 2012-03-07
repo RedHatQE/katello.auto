@@ -20,7 +20,15 @@
 ;;the system at a time.
 (def promotion-lock nil)
 
-                                        
+
+(defmacro expecting-error
+  "Execute forms, if error is caught matching selector, nil is
+   returned, otherwise object to-throw is thrown."
+  [selector & forms]
+  `(try+ ~@forms
+         (throw+ {:type :unexpected-success :expected ~selector})
+         (catch ~selector e# nil)))
+
 ;;UI tasks
 (defn timestamps
   "Infinite lazy sequence of timestamps in ms, starting with the current time."
@@ -273,7 +281,9 @@
 (defn delete-environment [env-name {:keys [org-name]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (browser click :remove-environment)
+  (if (browser isElementPresent :remove-environment)
+    (browser click :remove-environment)
+    (throw+ {:type :env-cant-be-deleted :env-name env-name}))
   (browser click :confirmation-yes)
   (check-for-success))
 

@@ -3,6 +3,7 @@
   (:require [katello.api-tasks :as api])
   (:use katello.tasks
         katello.validation
+        slingshot.slingshot
         [katello.conf :only [config]]
         [katello.tests.providers :only [with-two-orgs]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -94,7 +95,7 @@
           (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]})))
       (delete-environment env-name {:org-name (@config :admin-org)}))))
 
-(def delete-middle-env
+(def no-delete-middle-env
   (fn []
     (let [envs (conj (take 3 (unique-names "env"))
                      library)
@@ -102,8 +103,10 @@
       (doseq [[prior curr] env-chain]
         (create-environment curr {:prior-env prior
                                   :org-name (@config :admin-org)}))
-      (delete-environment (nth envs 2) {:org-name (@config :admin-org)})
-      (let [curr (last envs)
-            prior (second envs)]
-        (create-environment curr {:prior-env prior
-                                  :org-name (@config :admin-org)})))))
+      ;;can't delete middle env
+      (expecting-error
+       [:type :env-cant-be-deleted]
+       (delete-environment (nth envs 2) {:org-name (@config :admin-org)}))
+      ;;can delete last env
+      (delete-environment (last envs) {:org-name (@config :admin-org)}))))
+
