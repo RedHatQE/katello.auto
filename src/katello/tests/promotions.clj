@@ -32,19 +32,22 @@
           (api/create-product prod
                               {:provider-name @provider-name
                                :description "test product"})
-          (api/create-repo (uniqueify "mytestrepo")
-                           {:product-name prod
-                            :url "http://blah.com"}))]
+          (let [repo-name (uniqueify "mytestrepo")]
+            (api/create-repo repo-name
+                             {:product-name prod
+                              :url "http://blah.com"})
+            repo-name))]
     (doseq [product-name (content :products)]
       (api/with-admin (create-repo-fn product-name)))
     (doseq [template-name (content :templates)]
       (api/with-admin
-        (let [product-name (uniqueify "templ-prod")]
-          (create-repo-fn product-name)
+        (let [product-name (uniqueify "templ-prod")
+              repo-name (create-repo-fn product-name)] 
           (api/with-env library
             (api/create-template {:name template-name
                                   :description "template to be promoted"})
-            (api/add-to-template template-name {:products [product-name]}))))))
+            (api/add-to-template template-name {:repositories [{:product product-name
+                                                                :name repo-name}]}))))))
   (doseq [[from-env target-env] (partition 2 1 envs)]
     (promote-content from-env target-env content)
     (verify-all-content-present content (environment-content target-env))))

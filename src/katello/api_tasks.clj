@@ -9,6 +9,7 @@
 (def ^{:dynamic true} *password* nil)
 (def ^{:dynamic true} *org* nil)
 (def ^{:dynamic true} *env-id* nil)
+(def ^{:dynamic true} *product-id* nil)
 
 (defmacro with-creds
   "Execute body and makes any included katello api calls with the
@@ -74,7 +75,9 @@
                    [:changeset] {:reqs [#'*org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
-                                :fmt "api/environments/%s/templates"}} 
+                                :fmt "api/environments/%s/templates"}
+                   [:repository] {:reqs [#'*org* #'*product-id*]
+                                  :fmt "/api/organizations/%s/products/%s/repositories"}} 
         {:keys [reqs fmt]} (->> url-types
                               keys
                               (drop-while (complement #(some #{entity-type} %)))
@@ -295,11 +298,16 @@
               :environment_id *env-id*}))
 
 (defn add-to-template [template-name content]
+  (comment "content like " {:repositories [{:product "myprod" :name "blah"}]})
   (doseq [[content-type items] content item items]
     (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/"
                         (name content-type))
                *user* *password*
-               {:id (get-id-by-name (singularize content-type) item)})))
+               {:id (with-bindings (case content-type
+                                     :repositories {#'*product-id* (get-id-by-name :product
+                                                                                   (:product item))}
+                                     {})
+                      (get-id-by-name (singularize content-type) (:name item)))})))
 
 (defn create-user [username {:keys [password email disabled]}]
   (rest/post (api-url (uri-for-entity-type :user))
