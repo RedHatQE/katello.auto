@@ -630,7 +630,7 @@
       (let [category-keyword (-> group (dissoc :product) keys first)
             category-name (kw-to-text category-keyword capitalize)]
         (browser click (locators/template-product (:product group)))
-        (browser sleep 1000) ;;ff3.6 workaround
+        (browser sleep 5000) ;;ff3.6 workaround
         (browser click (locators/template-eligible-category category-name))
         (doall (map add-item (group category-keyword)))
         (browser click :template-eligible-home)))

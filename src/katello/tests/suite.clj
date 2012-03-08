@@ -302,7 +302,7 @@
             :configuration true
             :steps templates/setup-content
             :blockers (open-bz-bugs "765888")
-            :more [{:name "add products to template"
+            :more [{:name "add repos to template"
                     :steps templates/add-content}]}]}])
 
 (defn end-to-end-tests []
