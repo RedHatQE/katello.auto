@@ -23,6 +23,16 @@
                                        :content-type :json}))
       :body read-json-safe))
 
+(defn post-multipart
+  "Encodes datastructure in body to JSON, posts to url, using user and pw. "
+  [url user pw parts & [req]]
+  (-> (httpclient/post url (merge req {:multipart parts
+                                       :basic-auth [user pw]
+                                       :accept :json}))
+      :body read-json-safe))
+
+
+
 (defn put
   "Encodes datastructure in body to JSON, posts to url, using user and pw. "
   [url user pw body & [req]]

@@ -137,9 +137,11 @@
 
 (def upload-manifest
   (fn []
-    (tasks/with-org @redhat-provider-test-org
-      (tasks/upload-subscription-manifest manifest-tmp-loc
-                                          {:repository-url (@config :redhat-repo-url)}))))
+    (comment (tasks/with-org @redhat-provider-test-org
+               (tasks/upload-subscription-manifest manifest-tmp-loc
+                                                   {:repository-url (@config :redhat-repo-url)})))
+    (api/with-admin (api/with-org @redhat-provider-test-org
+                      (api/upload-manifest manifest-tmp-loc (@config :redhat-repo-url))))))
 
 (def enable-redhat-repos
   (fn []

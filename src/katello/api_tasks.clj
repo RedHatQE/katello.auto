@@ -312,4 +312,13 @@
 (defn system-available-pools [system-name]
   (let [sysid  (-> (get-by-name :system system-name) first :uuid)]
     (:pools (rest/get (api-url (format "api/systems/%s/pools" sysid))
-               {:basic-auth [*user* *password*]}))))
+                      {:basic-auth [*user* *password*]}))))
+
+(defn upload-manifest [file-name repo-url]
+  (let [prov-id (get-id-by-name :provider "Red Hat")]
+    (rest/put (api-url "/api/providers/" prov-id) *user* *password* {:provider {:repository_url repo-url}})
+    (rest/post-multipart
+     (api-url "/api/providers/" prov-id "/import_manifest")
+     *user* *password*
+     {"Filename" file-name
+      "import" (clojure.java.io/file file-name)})))
