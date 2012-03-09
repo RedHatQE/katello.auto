@@ -180,10 +180,15 @@
           (recur)))
       ;;for confirmation
       (loop-with-timeout (or timeout-ms 120000) [status ""]
-        (if (= status "Promoted")
-          status
+        (case status
+          "Promoted" status
+          "Promotion Failed" (throw+ {:type :promotion-failed
+                                      :changeset changeset-name
+                                      :from-env from-env
+                                      :to-env to-env})
           (do (Thread/sleep 2000)
-              (recur (browser getText (locators/changeset-status changeset-name))))))
+              (recur (browser getText
+                              (locators/changeset-status changeset-name))))))
       ;;wait for async success notif
       (loop-with-timeout 180000 []
         (or (notification)
