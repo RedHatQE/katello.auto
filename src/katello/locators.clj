@@ -140,7 +140,7 @@
 (def environments {:env-name-text (textbox "name")
                    :env-description-text (textbox "description")
                    :prior-environment "//select[@id='prior']"
-                   :create-environment "//div[contains(@class, 'environment_create')]"
+                   :create-environment "//input[contains(@class, 'environment_create')]"
                    :new-environment "//div[normalize-space(.)='Add New Environment']"
                    :remove-environment (link "Remove Environment")
                    :env-name-text-edit "kt_environment[name]"
