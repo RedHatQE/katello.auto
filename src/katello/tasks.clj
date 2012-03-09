@@ -162,6 +162,13 @@
     (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
+(defn- async-notification [& [timeout]]
+  (Thread/sleep 3000)
+  (loop-with-timeout (or timeout 180000) []
+    (or (notification)
+        (do (browser refresh)
+            (recur)))))
+
 (defn promote-changeset [changeset-name {:keys [from-env to-env timeout-ms]}]
   (let [nav-to-cs (fn [] (navigate :named-changeset-promotions-page
                                   {:env-name from-env
@@ -190,10 +197,7 @@
               (recur (browser getText
                               (locators/changeset-status changeset-name))))))
       ;;wait for async success notif
-      (loop-with-timeout 180000 []
-        (or (notification)
-            (do (browser refresh)
-                (recur)))))))
+      (async-notification))))
 
 (defn promote-content [from-env to-env content]
   (let [changeset (uniqueify "changeset")]
@@ -269,10 +273,9 @@
   (navigate :named-organization-page {:org-name org-name})
   (browser click :remove-organization)
   (browser click :confirmation-yes)
-  (let [queue-success (check-for-success)]
-    (if confirm-timeout-ms
-      (check-for-success confirm-timeout-ms)
-      queue-success)))
+  (check-for-success) ;queueing success
+  (async-notification)  ;for actual delete
+  )
 
 (defn create-environment
   [name {:keys [org-name description prior-env]}]
