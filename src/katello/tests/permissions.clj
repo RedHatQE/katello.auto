@@ -3,7 +3,7 @@
   (:use [katello.tasks :exclude [navigate create-role edit-role remove-role create-user]]
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
-        [com.redhat.qe.auto.bz :only [open-bz-bugs]])
+        [bugzilla.checker :only [open-bz-bugs]])
   (:require (katello [validation :as v]
                      [api-tasks :as api]
                      [conf :as conf]

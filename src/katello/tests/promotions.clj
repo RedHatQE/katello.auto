@@ -4,7 +4,7 @@
         [katello.conf :only [config]]
         [test.tree.builder :only [data-driven dep-chain]]
         [serializable.fn :only [fn]]
-        [com.redhat.qe.auto.bz :only [open-bz-bugs]]
+        [bugzilla.checker :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
 
