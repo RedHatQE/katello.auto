@@ -9,6 +9,7 @@
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
                  [clj-http "0.3.2"]
+                 [bugzilla.checker "0.1.0"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
   :dev-dependencies [[slamhound "1.2.0"]]
   

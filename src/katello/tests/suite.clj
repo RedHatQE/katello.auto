@@ -31,7 +31,7 @@
         fn.trace 
         slingshot.slingshot
         [serializable.fn :only [fn]]
-        [com.redhat.qe.auto.bz :only [open-bz-bugs]]))
+        [bugzilla.checker :only [open-bz-bugs]]))
 
 ;;suite file - outlines a tree of tests where the deeper into the tree
 ;;you go, the more detailed the tests are.  Each test depends on its
@@ -400,16 +400,6 @@
                           (mapcat #(get-in % [:report :blocked-by]))
                           (filter #(not (nil? %)))
                           frequencies)]
-          (pprint/pprint blockers))))
-
-    ;;convert trace files to pretty html
-    (comment(htmlify "html"  (->> (System/getProperty "user.dir")
-                                java.io.File.
-                                .listFiles
-                                seq
-                                (filter #(-> % .getName (.endsWith ".trace")))
-                                (map #(.getCanonicalPath %)))
-             
-                     "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/"))))
+          (pprint/pprint blockers))))))
 
 
