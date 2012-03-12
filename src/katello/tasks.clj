@@ -545,17 +545,16 @@
   (browser click :subscribe)
   (check-for-success))
 
-(defn split-date
-  "Splits the given date object into a list of two strings: a date string and time string."
-  [date]
-  (try (doall (for [fmt [(SimpleDateFormat. "MM/dd/yyyy")
-                         (SimpleDateFormat. "hh:mm aa")]]
-                (.format fmt date)))
-       (catch Exception e [nil nil])))
+(def syncplan-dateformat (SimpleDateFormat. "MM/dd/yyyy"))
+(def syncplan-timeformat (SimpleDateFormat. "hh:mm aa"))
+(defn date-str [d] (.format syncplan-dateformat d))
+(defn time-str [d] (.format syncplan-timeformat d))
 
-(defn create-sync-plan [{:keys [name description interval start-date]}]
+(defn create-sync-plan [{:keys [name description interval start-date
+                                start-date-literal start-time-literal]}]
   (navigate :new-sync-plan-page)
-  (let [[date time] (split-date start-date)]
+  (let [date (if start-date (date-str start-date) start-date-literal)
+        time (if start-date (time-str start-date) start-time-literal)]
     (fill-ajax-form {:sync-plan-name-text name
                      :sync-plan-description-text description
                      :sync-plan-interval-select interval

@@ -58,7 +58,7 @@
 
 (defn plan-validation-data []
   [[{:start-time (java.util.Date.) :interval "daily"} :name-cant-be-blank]
-   [{:name "blah"} :start-date-time-cant-be-blank]])
+   [{:name "blah" :start-time-literal "" :start-date-literal ""} :start-date-time-cant-be-blank]])
 
 (def dupe-disallowed
   (fn []
