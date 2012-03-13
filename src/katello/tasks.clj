@@ -550,11 +550,14 @@
 (defn date-str [d] (.format syncplan-dateformat d))
 (defn time-str [d] (.format syncplan-timeformat d))
 
+(defn- split-date [{:keys [start-date start-date-literal start-time-literal]}]
+  (list (if start-date (date-str start-date) start-date-literal)
+        (if start-date (time-str start-date) start-time-literal)))
+
 (defn create-sync-plan [{:keys [name description interval start-date
-                                start-date-literal start-time-literal]}]
+                                start-date-literal start-time-literal] :as m}]
   (navigate :new-sync-plan-page)
-  (let [date (if start-date (date-str start-date) start-date-literal)
-        time (if start-date (time-str start-date) start-time-literal)]
+  (let [[date time] (split-date m)]
     (fill-ajax-form {:sync-plan-name-text name
                      :sync-plan-description-text description
                      :sync-plan-interval-select interval
@@ -563,9 +566,10 @@
                     :save-sync-plan)
     (check-for-success)))
 
-(defn edit-sync-plan [name {:keys [new-name description interval start-date]}]
+(defn edit-sync-plan [name {:keys [new-name description interval start-date
+                                   start-date-literal start-time-literal] :as m}]
   (navigate :named-sync-plan-page {:sync-plan-name name})
-  (let [[date time] (split-date start-date)]
+  (let [[date time] (split-date m)]
     (in-place-edit {:sync-plan-name-text new-name
                     :sync-plan-description-text description
                     :sync-plan-interval-select interval
