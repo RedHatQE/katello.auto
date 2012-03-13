@@ -32,79 +32,14 @@
 ;;you go, the more detailed the tests are.  Each test depends on its
 ;;parent test.
 
-(declare nav-tests org-tests environment-tests provider-tests
-         system-tests user-tests sync-tests permission-tests template-tests end-to-end-tests)
-
-(defn ^:dynamic tests-to-run []
-  (concat (nav-tests)
-          (user-tests)
-          (permission-tests)
-          (org-tests)
-          (provider-tests)
-          (sync-tests)
-          (promotions/tests)
-          (system-tests)         
-          (template-tests)
-          (end-to-end-tests)
-          (data-driven {:name "login as invalid user"
-                        :steps login/invalid
-                        :blockers (open-bz-bugs "730738")} 
-                       login/invalid-logins)))
-
-(defn suite []
-  (with-meta
-    (before-all
-     (fn [& _] (tasks/navigate :top-level))
-     {:name "login as admin"
-      :steps login/admin
-      :more (tests-to-run)})
-    (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
-                                               (Integer.))
-                                            (catch Exception e 3))]
-                       (Math/min user-choice 5))}
-           setup/runner-config)))
-
-(defn nav-tests []
+(def nav-tests
   (data-driven {:name "navigate to tab"
                 :steps (fn [tab]
                          (tasks/navigate tab)
                          (tasks/check-for-error 2000))}
                (map vector locators/tab-list)))
 
-(defn org-tests []
-  [{:name "create an org"
-    :steps orgs/create
-    :more (concat
-           [{:name "delete an org"
-             :blockers (open-bz-bugs "716972")
-             :steps orgs/delete
-             :more [{:name "verify cleanup of deleted org"
-                     :steps orgs/recreate-org-with-same-data
-                     :blockers (open-bz-bugs "771957")}]}
-            
-            {:name "duplicate org disallowed"
-             :blockers (open-bz-bugs "726724")
-             :steps orgs/dupe-disallowed}
-
-            {:name "org name required"
-             :blockers (open-bz-bugs "726724")
-             :steps orgs/name-required}
-
-            {:name "edit an org"
-             :steps orgs/edit}
-            
-            {:name "search for org"
-             :blockers (open-bz-bugs "750120")
-             :steps orgs/search-org}]
-           
-           (data-driven {:name "org valid name"
-                         :blockers (open-bz-bugs "726724")
-                         :steps orgs/valid-name}
-                        orgs/valid-name-data)
-           
-           (environment-tests))}])
-
-(defn environment-tests []
+(def environment-tests
   [{:configuration true
     :name "create a test org"
     :steps envs/create-test-org
@@ -141,7 +76,40 @@
             :blockers (open-bz-bugs "726724")
             :steps envs/name-required}]}])
 
-(defn provider-tests []
+(def org-tests
+  [{:name "create an org"
+    :steps orgs/create
+    :more (concat
+           [{:name "delete an org"
+             :blockers (open-bz-bugs "716972")
+             :steps orgs/delete
+             :more [{:name "verify cleanup of deleted org"
+                     :steps orgs/recreate-org-with-same-data
+                     :blockers (open-bz-bugs "771957")}]}
+            
+            {:name "duplicate org disallowed"
+             :blockers (open-bz-bugs "726724")
+             :steps orgs/dupe-disallowed}
+
+            {:name "org name required"
+             :blockers (open-bz-bugs "726724")
+             :steps orgs/name-required}
+
+            {:name "edit an org"
+             :steps orgs/edit}
+            
+            {:name "search for org"
+             :blockers (open-bz-bugs "750120")
+             :steps orgs/search-org}]
+           
+           (data-driven {:name "org valid name"
+                         :blockers (open-bz-bugs "726724")
+                         :steps orgs/valid-name}
+                        orgs/valid-name-data)
+           
+           environment-tests)}])
+
+(def provider-tests
   [{:name "create a custom provider"
     :steps providers/create-custom
     :more (concat
@@ -195,7 +163,7 @@
                     :more [{:name "client installs Red Hat content"
                             :steps e2e/client-access-redhat}]}]}]}])
 
-(defn sync-tests []
+(def sync-tests
   [{:name "set up sync tests"
     :steps sync/setup
     :configuration true
@@ -226,7 +194,7 @@
                                         :steps sync/plan-validate}
                                        (sync/plan-validation-data)))}]}])
 
-(defn system-tests []
+(def system-tests
   [{:name "setup environment for systems"
     :configuration true
     :steps systems/create-env
@@ -255,7 +223,7 @@
                    {:name "duplicate activation key disallowed"
                     :steps systems/activation-key-dupe-disallowed}]}]}])
 
-(defn user-tests []
+(def user-tests
   [{:name "create a user"
     :steps users/create
     :more [{:name "edit a user"
@@ -278,7 +246,7 @@
            {:name "assign role to user"
             :steps users/assign-role}]}])
 
-(defn permission-tests []
+(def permission-tests
   [{:name "create a role"
     :steps permissions/create-role
     :more [{:name "delete a role"
@@ -290,7 +258,7 @@
                                 :steps permissions/verify-access}
                                permissions/access-test-data)}]}])
 
-(defn template-tests []
+(def template-tests
   [{:name "create a system template"
     :steps templates/create
     :more [{:name "setup template content"
@@ -300,19 +268,49 @@
             :more [{:name "add repos to template"
                     :steps templates/add-content}]}]}])
 
-(defn end-to-end-tests []
+(def end-to-end-tests
   [{:name "client installs custom content"
     :steps e2e/client-access-custom 
-    
-    ;;the test.tree feature to filter on passed? is broken, can't
-    ;;figure out why.  
-    ;;:blockers (filter-tests (every-pred (named? ["simple sync"
-    ;;                                              "promote content"])
-    ;;                           (complement report/passed?)))
-    :blockers (open-bz-bugs "784853" "790246")
-    }])
+    :blockers (juxtcat (filter-tests (every-pred
+                                      (named? ["simple sync"
+                                               "promote content"])
+                                      (complement report/passed?)))
+                       (open-bz-bugs "784853" "790246"))}])
 
-(def to-trace ;;list of namespaces and fns we want to trace
+(def invalid-user-tests
+  (data-driven {:name "login as invalid user"
+                :steps login/invalid
+                :blockers (open-bz-bugs "730738")} 
+               login/invalid-logins))
+
+(defn ^:dynamic tests-to-run []
+  (concat nav-tests
+          user-tests
+          permission-tests
+          org-tests
+          provider-tests
+          sync-tests
+          promotions/tests
+          system-tests         
+          template-tests
+          end-to-end-tests
+          invalid-user-tests))
+
+(defn suite []
+  (with-meta                                ;add a step before each
+    (before-all                             ;test to navigate back
+     (fn [& _] (tasks/navigate :top-level))  ;to the top level
+     {:name "login as admin"
+      :steps login/admin
+      :more (tests-to-run)})
+    (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
+                                               (Integer.))
+                                            (catch Exception e 3))]
+                       (Math/min user-choice 5))}  ;
+           setup/runner-config)))
+
+;;list of namespaces and fns we want to trace 
+(def to-trace 
   '[katello.tasks
     katello.api-tasks
     katello.client
@@ -323,7 +321,8 @@
     com.redhat.qe.auto.selenium.selenium/call-sel
     com.redhat.qe.config/property-map])
 
-(def do-not-trace ;;set of fns to exclude from tracing
+;;set of fns to exclude from tracing
+(def do-not-trace 
   #{'katello.tasks/notification 
     'katello.tasks/success?
     'katello.tasks/uniqueify

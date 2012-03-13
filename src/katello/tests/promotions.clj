@@ -52,16 +52,11 @@
     (promote-content from-env target-env content)
     (verify-all-content-present content (environment-content target-env))))
 
-(defn tests []
+(def tests
   [{:configuration true
     :name "set up promotions"
     :steps setup
-    :blockers (open-bz-bugs "711144"
-                            "712318"
-                            "714297"
-                            "738054"
-                            "745315"
-                            "784853")
+    :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853")
     :more
     (-> {:name "promote content"
         :steps verify-promote-content
