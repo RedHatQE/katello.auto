@@ -181,7 +181,7 @@
                             
                             {:name "product namespace limited to org"
                              :steps providers/namespace-product-in-org
-                             :blockers (open-bz-bugs "784712")}
+                             :blockers (open-bz-bugs "784712" "802795")}
 
                             {:name "same product name in different providers disallowed"
                              :steps providers/namespace-product-in-provider}]}]}]
