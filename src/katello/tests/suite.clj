@@ -1,8 +1,6 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require (clojure [pprint :as pprint]
-                     [zip :as zip]
-                     [walk :as walk])
+  (:require [clojure.pprint :as pprint]
 
             (katello.tests [setup :as setup]
                            [organizations :as orgs]
@@ -18,18 +16,15 @@
                            [e2e :as e2e])
             
             (katello [tasks :as tasks]
-                     [conf :as conf] 
-                     [validation :as validate]
                      [locators :as locators])
 
-            [test.tree :as test]
+            [test.tree.jenkins :as jenkins]
             [test.tree.reporter :as report]
 
-            [com.redhat.qe.auto.selenium.selenium :as selenium]
+            com.redhat.qe.auto.selenium.selenium
             com.redhat.qe.config)
   (:use test.tree.builder
         fn.trace 
-        slingshot.slingshot
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]))
 
@@ -321,7 +316,6 @@
   '[katello.tasks
     katello.api-tasks
     katello.client
-    test.tree/execute
     katello.tests.setup/start-selenium
     katello.tests.setup/stop-selenium
     katello.tests.setup/switch-new-admin-user
@@ -336,70 +330,8 @@
     'katello.tasks/unique-names
     'katello.tasks/timestamps})
 
-
-(def test-traces (ref {}))
-
-(defn wrap-tracing [runner]
-  (fn [test]
-    (binding [tracer (fn [_ value & [out?]]
-                       (dosync
-                        (alter test-traces update-in [test]
-                               (fn [v]
-                                 (conj (or v (with-meta [] {:log true})) [value out?])))))]
-      (let [result (runner test)]
-        (if (-> (:result result) (= :fail))
-          (assoc-in  result [:error :trace] (@test-traces test))
-          result)))))
-
-(defn mktree [vz [i out? :as e]]
-  (if out?
-    (-> vz (zip/append-child i) zip/up )
-    (-> vz (zip/append-child [i]) zip/down zip/rightmost)))
-
-(defn to-html-snippet [tracelist]
-  (-> (reduce mktree (zip/vector-zip []) tracelist)
-     zip/root
-     ))
-
-(comment "test tracing data -ignore"
-         (def mytraceout
-           (with-meta '
-             [[(+ 5 (- 4 2 (* 9 3)) (* 5 (+ 6 3))) nil]
-              [(- 4 2 (* 9 3)) nil]
-              [(* 9 3) nil]
-              [27 true]
-              [-25 true]
-              [(* 5 (+ 6 3)) nil]
-              [(+ 6 3) nil]
-              [9 true]
-              [45 true]
-              [25 true]]
-             {:log true})))
-
-
-
 (defn -main [ & args]
-  (println args)
-  (alter-var-root #'test/runner (fn [_] (-> test/execute
-                                          wrap-tracing
-                                          test/wrap-blockers
-                                          test/wrap-timer
-                                          test/wrap-data-driven)))
-  
-  (binding [tracer (per-thread-tracer)
-            *print-level* 10
-            *print-length* 30 
-            pprint/*print-pprint-dispatch* log-dispatch
-            report/syntax-highlight (report/syntax-highlighter
-                                     "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/syntaxhighlighter/")]
-    (dotrace (remove do-not-trace (all-fns to-trace)) 
-      (let [reports (test/run-suite (suite))]
-        (println "----- Blockers -----\n ")
-        (let [blockers (->> reports
-                          vals
-                          (mapcat #(get-in % [:report :blocked-by]))
-                          (filter #(not (nil? %)))
-                          frequencies)]
-          (pprint/pprint blockers))))))
+  (jenkins/run-suite (suite) {:to-trace to-trace
+                              :do-not-trace do-not-trace}))
 
 

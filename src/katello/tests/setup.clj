@@ -4,7 +4,8 @@
             (katello [tasks :as tasks]
                      [api-tasks :as api]
                      [client :as client]) 
-            [test.tree.watcher :as watch])
+            [test.tree.watcher :as watch]
+            [test.tree.jenkins :as jenkins])
   (:use [clojure.string :only [split replace]]
         [katello.conf]
         fn.trace 
@@ -57,7 +58,6 @@
                                                       (@config :client-ssh-key)
                                                       (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
-        (println "starting a selenium session.")
         (try
           (start-selenium)
           (switch-new-admin-user *session-user* *session-password*)
@@ -68,16 +68,10 @@
 (def runner-config 
   {:thread-runner thread-runner
    :setup (fn []
-            (println "initializing.")
             (init)
             (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
             (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC))
-   :watchers {:stdout-log (fn [k r o n]
-                            (let [[_ d _] (data/diff o n)]
-                              (doseq [[{:keys [name parameters]} {:keys [status report]}] d]
-                                (let [parms-str (if parameters (pr-str parameters) "")]
-                                  (if (= status :done)
-                                    (println (apply format "%-12s %s %s\n" (map str [(:result report) name parms-str]))))))))
+   :watchers {:stdout-log watch/stdout-log-watcher
               :screencapture (watch/on-fail
                               (fn [t _] 
                                 (browser "screenCapture"
