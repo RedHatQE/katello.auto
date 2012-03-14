@@ -371,8 +371,7 @@
                  [:provider-products-repos-page [] (do (via :products-and-repositories)
                                                        (browser sleep 2000))
                   [:named-product-page [product-name] (do (via (editable product-name)))]
-                  [:named-repo-page [product-name repo-name] (do (via (product-expand product-name))
-                                                                 (via (editable repo-name)))]]
+                  [:named-repo-page [product-name repo-name] (via (editable repo-name))]]
                  [:provider-details-page [] (via :details)]
                  [:provider-subscriptions-page [] (via :subscriptions)]]]
                [:redhat-provider-tab [] (via :red-hat-content-provider load-wait)]]
