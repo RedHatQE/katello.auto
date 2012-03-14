@@ -640,9 +640,8 @@
       (let [category-keyword (-> group (dissoc :product) keys first)
             category-name (kw-to-text category-keyword capitalize)]
         (->browser
-         (answerOnNextPrompt "Cancel")
+         (getEval "window.onbeforeunload = function(){};") ;circumvent popup
          (click (locators/template-product (:product group)))
-         (sleep 5000) ;;ff3.6 workaround
          (click (locators/template-eligible-category category-name)))
         (doall (map add-item (group category-keyword)))
         (browser click :template-eligible-home)))
