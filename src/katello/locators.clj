@@ -163,7 +163,7 @@
                 
                 ;;add product
                 :add-product (button-div "Add Product")
-                :create-product (button-div "Create")
+                :create-product "//input[@value='Create']"
                 :product-name-text "//*[@name='product[name]']"
                 :product-description-text "//*[@name='product[description]']"
                 :remove-product (link "Remove Product")
