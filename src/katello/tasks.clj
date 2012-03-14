@@ -342,8 +342,7 @@
 
 (defn add-repo [{:keys [provider-name product-name name url]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
-  (->browser (click (locators/product-expand product-name)) 
-             (click (locators/add-repository product-name)))
+  (browser click (locators/add-repository product-name))
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)

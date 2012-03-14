@@ -171,7 +171,7 @@
                 :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
                 :repo-name-text "repo[name]"
                 :repo-url-text "repo[feed]" 
-                :save-repository "save_repository_button"
+                :save-repository "//input[@value='Create']"
                 :remove-repository (link "Remove Repository")
 
                 ;;redhat page

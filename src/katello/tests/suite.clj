@@ -1,8 +1,6 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require [clojure.pprint :as pprint]
-
-            (katello.tests [setup :as setup]
+  (:require (katello.tests [setup :as setup]
                            [organizations :as orgs]
                            [providers :as providers]
                            [promotions :as promotions]
