@@ -641,7 +641,9 @@
             category-name (kw-to-text category-keyword capitalize)]
         (->browser
          (getEval "window.onbeforeunload = function(){};") ;circumvent popup
+         (sleep 2000)
          (click (locators/template-product (:product group)))
+         (sleep 2000)
          (click (locators/template-eligible-category category-name)))
         (doall (map add-item (group category-keyword)))
         (browser click :template-eligible-home)))
