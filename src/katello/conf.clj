@@ -21,8 +21,7 @@
                               :sync-repo ["katello.sync.test.repo" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/"] 
                               :redhat-repo-url ["katello.redhat.repo.url" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"]
                               :redhat-manifest-url ["katello.redhat.manifest.url" "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
-                              :first-env ["katello.environments.first" "Development"]
-                              :second-env ["katello.environments.second" "Q-eh"]
+                              :environments ["katello.environments" "Development,Q-eh"]
                               :clients ["katello.clients"]
                               :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
                                                                            (System/getProperty "user.home"))]
@@ -32,7 +31,8 @@
 
 (declare ^:dynamic *session-user*
          ^:dynamic *session-password*
-         ^:dynamic *browsers)
+         ^:dynamic *browsers*
+         ^:dynamic *environments*)
 
 (def ^:dynamic *clients* nil)
 
@@ -47,6 +47,9 @@
   (def ^:dynamic *session-password* (@config :admin-password))
   (when (@config :clients)
     (def ^:dynamic *clients* (split (@config :clients) #",")))
-  (def ^:dynamic *browsers* (split (@config :selenium-browsers) #",")))
+  (def ^:dynamic *browsers* (split (@config :selenium-browsers) #","))
+
+  ;;list makes it easier to conj on library at the beginning
+  (def ^:dynamic *environments* (apply list (split (@config :environments) #",")))) 
 
 

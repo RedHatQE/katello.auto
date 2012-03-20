@@ -9,7 +9,7 @@
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]]
-        [katello.conf :only [config]]))
+        [katello.conf :only [*environments*]]))
 
 (def test-template-name (atom nil))
 (def content (atom nil))
@@ -41,7 +41,7 @@
                          created-prod))))
             content {:products (for [prod prods] {:product_id (:id prod)})}]
         (api/with-admin
-          (api/with-env (@config :first-env)
+          (api/with-env (first *environments*)
             (api/promote content)))))))
 
 (def add-content

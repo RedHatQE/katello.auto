@@ -85,7 +85,7 @@
 
 (def create-ak
   (fn [] (tasks/create-activation-key {:name (uniqueify "blah")
-                                      :environment (@conf/config :first-env)})))
+                                      :environment (first conf/*environments*)})))
 
 (def create-st
   (fn [] (tasks/create-template {:name (uniqueify "blah")})))
@@ -131,7 +131,7 @@
                                           :verbs ["Register Systems"]
                                           :name "systemreg"}]}]
             :allowed-actions [(fn [] (api/with-admin-org
-                                      (api/with-env (@conf/config :first-env)
+                                      (api/with-env (first conf/*environments*)
                                         (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
                               (navigate :systems-all-page)]
             :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)

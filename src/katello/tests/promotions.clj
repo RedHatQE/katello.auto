@@ -1,7 +1,7 @@
 (ns katello.tests.promotions
   (:require [katello.api-tasks :as api])
   (:use katello.tasks
-        [katello.conf :only [config]]
+        [katello.conf :only [config *environments*]]
         [test.tree.builder :only [data-driven dep-chain]]
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]
@@ -11,6 +11,15 @@
 
 (def provider-name (atom nil))
 (def template-name (atom nil))
+(def envs (atom nil))
+
+(defn chain-envs
+  "Given a list of environments, and a function of two neighboring
+   environments in the chain, invoke f on each successive pair (eg:
+   envs ['a' 'b' 'c'] -> (f 'a' 'b'), (f 'b' 'c')"
+  [envs f]
+  (doseq [[from-env target-env] (partition 2 1 envs)]
+      (f from-env target-env)))
 
 (def setup
   (fn []
@@ -18,8 +27,9 @@
                
     (api/with-admin
       (api/create-provider  @provider-name {:description "test provider for promotions"})
-      (api/ensure-env-exist (@config :first-env) {:prior library})
-      (api/ensure-env-exist (@config :second-env) {:prior (@config :first-env)}))))
+      (reset! envs (conj *environments* library))
+      (chain-envs envs (fn [prior curr] 
+                         (api/ensure-env-exist curr {:prior prior}))))))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -39,7 +49,9 @@
                   repo-name (uniqueify "mytestrepo")]
               (api/create-repo repo-name
                                {:product-name prod
-                                :url "http://blah.com"})
+                                :url (@config :sync-repo)})
+              (binding [api/*product-id* product-id]
+                (api/sync-repo repo-name))
               {:repo-name repo-name
                :product-id product-id}))]
       (doseq [product-name (content :products)]
@@ -56,19 +68,22 @@
                                     :description "template to be promoted"})
               (api/add-to-template template-name {:repositories [{:product product-name
                                                                   :name repo-name}]}))))))
-    (doseq [[from-env target-env] (partition 2 1 envs)]
-      (promote-content from-env target-env content)
-      (verify-all-content-present content (environment-content target-env)))))
+    (chain-envs envs (fn [from-env target-env]
+                      (promote-content from-env target-env content)
+                      (verify-all-content-present content (environment-content target-env))))))
 
 (def promo-data
-  [(fn [] [[library (@config :first-env)]
+  [(fn [] [(take 2 @envs)
           {:products (set (take 3 (unique-names "MyProduct")))}])
-   (fn [] [[library (@config :first-env)
-           (@config :second-env)]
+   (fn [] [(take 3 @envs)
           {:products (set (take 3 (unique-names "ProductMulti")))}])
-   (fn [] [[library (@config :first-env)
-           (@config :second-env)]
-          {:templates (set (take 3 (unique-names "TemplateMulti")))}])])
+   (fn [] [(take 3 @envs)
+          {:templates (set (take 3 (unique-names "TemplateMulti")))}])
+   (_(fn [] [(take 2 @envs)
+            {:errata "uhh... need to figure out how to specify"
+             {:advisory "RHEA-2012:0001"
+              :title "Beat_Erratum"
+              :others ["Sea" "Bird" "Gorilla"]}}]))])
 
 (def tests
   [{:configuration true

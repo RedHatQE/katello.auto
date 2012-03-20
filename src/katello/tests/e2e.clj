@@ -6,7 +6,7 @@
         [katello.tasks]
         [katello.tests.providers :only [redhat-provider-test-org]]
         [com.redhat.qe.verify :only [verify-that]]
-        [katello.conf :only [*session-user* *session-password* config]]
+        [katello.conf :only [*session-user* *session-password* *environments* config]]
         [slingshot.slingshot :only [try+ throw+]]))
 
 
@@ -49,7 +49,7 @@
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")
           repo-name (uniqueify "safari-x86_64")
-          target-env (@config :first-env)
+          target-env (first *environments*)
           cs-name (uniqueify "promo-safari")
           package-to-install "cheetah"]
       (with-org (@config :admin-org)
@@ -69,7 +69,7 @@
 
 (def client-access-redhat
   (fn []
-    (let [target-env (@config :first-env)
+    (let [target-env (first *environments*)
           products [{:name "Nature Enterprise" :poolName "Nature Enterprise 8/5"
                      :repos ["Nature Enterprise x86_64 6Server"
                              "Nature Enterprise x86_64 5Server"]}

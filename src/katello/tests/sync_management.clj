@@ -6,7 +6,7 @@
         [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
-        [katello.conf :only [config]]))
+        [katello.conf :only [config *environments*]]))
 
 (def plan-name (atom nil))
 (def product-name (atom nil))
@@ -78,7 +78,7 @@
           (api/create-repo (uniqueify "testrepo")
                            {:product-name second-product-name
                             :url (@config :sync-repo)}))
-        (api/with-env (@config :first-env)
+        (api/with-env (first *environments*)
           (api/promote {:products (for [product product-names]
                                     {:product_id (api/get-id-by-name :product product)})})))
       (sync-schedule {:plan-name @plan-name
