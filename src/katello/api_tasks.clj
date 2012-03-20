@@ -5,11 +5,11 @@
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
         [katello.tasks :only [uniqueify library promotion-lock]]))
 
-(def ^{:dynamic true} *user* nil)
-(def ^{:dynamic true} *password* nil)
-(def ^{:dynamic true} *org* nil)
-(def ^{:dynamic true} *env-id* nil)
-(def ^{:dynamic true} *product-id* nil)
+(def ^:dynamic *user* nil)
+(def ^:dynamic *password* nil)
+(def ^:dynamic *org* nil)
+(def ^:dynamic *env-id* nil)
+(def ^:dynamic *product-id* nil)
 
 (defmacro with-creds
   "Execute body and makes any included katello api calls with the
@@ -91,9 +91,9 @@
     (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
 
 (defn all-entities
-  "Returns a list of all the entities of the given entity-type.  If
-  that entity type is part of an organization, the name of the org
-  must also be passed in."
+  "Returns a list of all the entities of the given entity-type. If
+   that entity type is part of an org, or environment or product,
+   those vars must be bound (see with-* macros)"
   [entity-type]
   (rest/get
    (api-url (uri-for-entity-type entity-type))
@@ -117,8 +117,11 @@
       (-> all first :id))))
 
 
-(defmacro with-env "Executes body and makes any included katello api calls using the
-  given environment name (it's id will be looked up before executing body)."[env-name & body]
+(defmacro with-env
+  "Executes body and makes any included katello api calls using the
+   given environment name (it's id will be looked up before executing
+   body)."
+  [env-name & body]
   `(binding [*env-id* (get-id-by-name :environment ~env-name)]
      (do ~@body)))
 
@@ -147,7 +150,8 @@
    *user* *password*))
 
 (defn ensure-env-exist
-  "If an environment with the given name and prior environment doesn't exist, create it."
+  "If an environment with the given name and prior environment doesn't
+   exist, create it."
   [name {:keys [prior]}]
   (locking (keyword *org*)  ;;lock on org name to prevent race condition
     (if-not (some #{name}
@@ -256,7 +260,9 @@
              {:changeset {:name name}}))
 
 (defn add-to-changeset [changeset-name entity-type entity]
-  (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/" (-> entity-type name pluralize))
+  (rest/post (api-url "api/changesets/"
+                      (get-id-by-name :changeset changeset-name) "/"
+                      (-> entity-type name pluralize))
              *user* *password*
              entity))
 
@@ -271,12 +277,9 @@
                  *user* *password*
                  nil)
       (loop-with-timeout 180000 [cs {}]
-        (cond (-> cs :state (= "promoted"))
-              cs
-             
-              :else
-              (do (Thread/sleep 5000)
-                  (recur (get-by-id :changeset id))))))))
+        (cond (-> cs :state (= "promoted")) cs
+              :else (do (Thread/sleep 5000)
+                        (recur (get-by-id :changeset id))))))))
 
 (defn promote
   "Does a promotion of the given content (creates a changeset, adds
@@ -330,3 +333,15 @@
      *user* *password*
      {"Filename" file-name
       "import" (clojure.java.io/file file-name)})))
+
+(defn sync-repo [repo-name & [timeout-ms]]
+  (let [url (->> repo-name
+               (get-id-by-name :repository)
+               (format "/api/repositories/%s/sync")
+               api-url)]
+    (rest/post url *user* *password* {})
+    (loop-with-timeout (or timeout-ms 180000) [sync-info {}]
+      (Thread/sleep 15000)
+      (if (-> sync-info :state (= "finished"))
+        sync-info
+        (recur (rest/get url {:basic-auth [*user* *password*]}))))))

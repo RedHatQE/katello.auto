@@ -18,7 +18,7 @@
                               :selenium-browsers ["selenium.browsers" "*firefox"]
                               :threads ["test.tree.threads" "3"]
                               :admin-org ["katello.admin.org" "ACME_Corporation"]
-                              :sync-repo ["katello.sync.test.repo" "http://hudson.rhq.lab.eng.bos.redhat.com:8080/hudson/view/Entitlement/job/subscription-manager.el6/lastSuccessfulBuild/artifact/rpms/x86_64/"] 
+                              :sync-repo ["katello.sync.test.repo" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/"] 
                               :redhat-repo-url ["katello.redhat.repo.url" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"]
                               :redhat-manifest-url ["katello.redhat.manifest.url" "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
                               :first-env ["katello.environments.first" "Development"]
