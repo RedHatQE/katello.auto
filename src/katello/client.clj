@@ -53,22 +53,12 @@
                [k v] settings]
            (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
-(defn get-ca-certs []
-  (let [certs {"candlepin-ca.crt" "candlepin-local.pem"
-               "candlepin-upstream-ca.crt" "candlepin-upstream-local.pem"}
-        host (server-hostname)]
-    (doseq [[rem loc] certs]
-      (run-cmd
-       (format "wget -O /etc/rhsm/ca/%s http://%s/pub/%s" loc host rem)))))
-
 (defn setup-client []
-  (let [hostname  (server-hostname)]
-    (get-ca-certs)
-    (configure-client {"server" {"port" "443"
-                                 "hostname" hostname
-                                 "prefix" "/katello/api"}
-                       "rhsm" {"baseurl" (format "https://%s/pulp/repos" hostname)
-                               "repo_ca_cert" "%(ca_cert_dir)scandlepin-local.pem"}})))
+  (let [rpm-name-prefix "candlepin-cert-consumer"
+        cmds [["subscription-manager clean"] 
+              ["yum remove -y '%s*'" rpm-name-prefix]
+              ["rpm -ivh http://%1$s/pub/%2$s-%1$s-1.0-1.noarch.rpm" (server-hostname) rpm-name-prefix]]]
+    (doall (for [cmd cmds] (run-cmd (apply format cmd))))))
 
 (defn subscribe [poolid]
   (sm-cmd :subscribe {:pool poolid}))
