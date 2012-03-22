@@ -28,7 +28,7 @@
     (api/with-admin
       (api/create-provider  @provider-name {:description "test provider for promotions"})
       (reset! envs (conj *environments* library))
-      (chain-envs envs (fn [prior curr] 
+      (chain-envs @envs (fn [prior curr] 
                          (api/ensure-env-exist curr {:prior prior}))))))
 
 (defn verify-all-content-present [from in]
@@ -79,11 +79,10 @@
           {:products (set (take 3 (unique-names "ProductMulti")))}])
    (fn [] [(take 3 @envs)
           {:templates (set (take 3 (unique-names "TemplateMulti")))}])
-   (_(fn [] [(take 2 @envs)
-            {:errata "uhh... need to figure out how to specify"
-             {:advisory "RHEA-2012:0001"
-              :title "Beat_Erratum"
-              :others ["Sea" "Bird" "Gorilla"]}}]))])
+   #_(fn [] [(take 2 @envs)
+           {:errata {:advisory "RHEA-2012:0001"
+                     :title "Beat_Erratum"
+                     :others ["Sea" "Bird" "Gorilla"]}}])])
 
 (def tests
   [{:configuration true
