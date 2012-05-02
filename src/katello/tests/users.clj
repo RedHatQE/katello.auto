@@ -41,7 +41,7 @@
   
     (deftest "search for user"
       (with-unique username "searchuser"
-        (create-user     username                {:password "password", :email "blah@blah.org"})
+        (create-user     username                user-details)
         (validate-search :users                  {:criteria "search"})))
 
   
