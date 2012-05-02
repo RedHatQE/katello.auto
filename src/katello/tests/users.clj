@@ -1,52 +1,55 @@
 (ns katello.tests.users
   (:refer-clojure :exclude [fn])
-  (:use [serializable.fn :only [fn]])
-  (:require (katello [validation :as v]))
-  (:use [katello.tasks :exclude [assign-role]]
-        [slingshot.slingshot :only [try+ throw+]]))
+  (:use [serializable.fn :only [fn]]
+        katello.validation
+        test.tree.script
+        katello.tasks))
 
-(def details {:password "password" :email "blah@blah.com"})
+;;; Variables
 
-(def create
-  (fn [] (create-user (uniqueify "autouser") details)))
 
-(def edit
-  (fn [] (let [username (uniqueify "edituser")]
-          (create-user username details)
-          (edit-user username {:new-password "changedpwd"}))))
+(def user-details {:password "password", :email "blah@blah.com"})
 
-(def password-mismatch
-  (fn [] (let [username (uniqueify "pwdmismatch")]
-          (create-user username {:password "password"})
-          (try+  (edit-user username {:new-password "password"
-                                      :new-password-confirm "p@$$word"})
-                 (throw+ {:type :no-mismatch-reported :msg "Passwords do not match not reported"})
-                 (catch [:type :password-mismatch] _)))))
 
-(def search-users
-  "Search for users based on criteria."
-  (fn [] (let [username (uniqueify "searchuser")]
-          (create-user username {:password "password"
-                                 :email "blah@blah.org"})
-          (validate-search :users {:criteria "search"}))))
+;;; Tests
 
-(def delete
-  (fn [] (let [username (uniqueify "deleteme")]
-          (create-user username details)
-          (delete-user username))))
+(def all-user-tests
 
-(def dupe-disallowed
-  (fn [] (v/duplicate-disallowed
-         create-user [(uniqueify "dupeuser") details])))
+  (deftest "create a user"
+    (create-user       (uniqueify "autouser")   user-details)
 
-(def min-password-length
-  (fn []
-    (v/field-validation create-user [(uniqueify "insecure-user") {:password "abcd" :email "me@my.org"}]
-                        (v/expect-error :password-too-short))))
 
-(def assign-role
-  (fn []
-    (let [username (uniqueify "autouser")]
-      (create-user username details)
-      (katello.tasks/assign-role {:user username
-                                  :roles ["Administrator"]}))))
+    (deftest "edit a user"
+      (with-unique username "edituser"
+        (create-user    username                user-details)
+        (edit-user      username                {:new-password "changedpwd"})))
+
+  
+    (deftest "delete a user"
+      (with-unique username "deleteme"
+        (create-user    username                user-details)
+        (delete-user    username)))
+
+
+    (deftest "duplicate user disallowed"
+      (verify-2nd-try-fails-with       :name-taken-error     create-user    (uniqueify "dupeuser")    user-details))
+
+
+    (deftest "users' miniumum password length enforced"
+      (expect-error-on-action :password-too-short  create-user (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"}))
+
+  
+    (deftest "search for user"
+      (with-unique username "searchuser"
+        (create-user     username                {:password "password", :email "blah@blah.org"})
+        (validate-search :users                  {:criteria "search"})))
+
+  
+    (deftest "assign role to user"
+      (with-unique username "autouser"
+        (create-user     username                user-details)
+        (assign-role     {:user username, :roles ["Administrator"]})))))
+
+
+
+

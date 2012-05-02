@@ -74,3 +74,22 @@
 (defn name-field-required [create-fn args]
   (field-validation create-fn args (expect-error :name-cant-be-blank)))
 
+;;this should deprecate duplicate-disallowed
+(defn verify-2nd-try-fails-with [exp-err f & args]
+  (apply f args)
+  (field-validation f args (expect-error exp-err)))
+
+(defn expect-error-on-action
+  "Calls create-fn, which should create some katello entity with the
+   given args. Verifies that the results match the given pred. The
+   predicate can be a keyword for a matching error, or any predicate
+   function."
+  [pred create-fn & args]
+  (let [results (try+
+                 (apply create-fn args)
+                 (catch [:type :katello.tasks/validation-failed] e
+                   (assoc e :validation-errors (matching-validation-errors e))))
+        pred (if (keyword? pred)
+               (expect-error pred)
+               pred)] 
+    (verify-that (pred results))))

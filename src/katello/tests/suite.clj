@@ -30,12 +30,7 @@
 ;;you go, the more detailed the tests are.  Each test depends on its
 ;;parent test.
 
-(def nav-tests
-  (data-driven {:name "navigate to tab"
-                :steps (fn [tab]
-                         (tasks/navigate tab)
-                         (tasks/check-for-error 2000))}
-               (map vector locators/tab-list)))
+
 
 (def environment-tests
   [{:configuration true

@@ -1,31 +1,44 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:use [serializable.fn :only [fn]]
-        [katello.conf :only [config *session-user* *session-password*]]
-        [slingshot.slingshot]
-        [com.redhat.qe.verify :only [verify-that]]
-        katello.tasks))
+  (:use test.tree.script
+        katello.conf
+        katello.tasks
+        slingshot.slingshot
+        [com.redhat.qe.verify :only [verify-that]]))
 
-(def admin
-  (fn []
+;;; Keywords
+
+(defn verify-invalid-login-rejected
+  "Try to login with the given credentials, verify that a proper error
+  message appears in the UI."
+  [username password]
+  (try+
+   (logout)
+   (login username password)
+   (when (-> (notification) :type (= :success))
+     (throw (RuntimeException. "Login succeeded with bad credentials.")))
+   (catch [:type :katello.tasks/invalid-credentials] _)
+   (finally
+    (login *session-user* *session-password*))))
+
+;;; tests
+
+(def logintests
+
+  (deftest
+    "login as admin"
     (logout)
-    (login *session-user* *session-password*)
-    (verify-that (= (current-user) *session-user*))))
+    (login         *session-user*         *session-password*)
+    (verify-that   (= (current-user) *session-user*))
 
-(def invalid
-  (fn [user pw]
-    (try+
-     (logout)
-     (login user pw)
-     (when (-> (notification) :type (= :success))
-       (throw (RuntimeException. "Login succeeded with bad credentials.")))
-     (catch [:type :katello.tasks/invalid-credentials] _)
-     (finally
-      (login *session-user* *session-password*)))))
 
-(def invalid-logins [["admin" ""]
-                     ["admin" "asdfasdf"]
-                     ["" ""]
-                     ["" "mypass"]
-                     ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]])
+    (deftest :data-driven
+      "login as invalid user"
+      verify-invalid-login-rejected
+
+      [["admin" ""]
+       ["admin" "asdfasdf"]
+       ["" ""]
+       ["" "mypass"]
+       ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]])))

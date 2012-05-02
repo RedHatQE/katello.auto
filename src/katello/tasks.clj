@@ -44,6 +44,11 @@
   [s]
   (first (unique-names s)))
 
+(defmacro with-unique "An unhygenic macro to shorten use of unique names."
+  [sym s & forms]
+  `(let [~sym (uniqueify ~s)]
+     ~@forms))
+
 (def known-errors
   {::validation-failed #"Validation [Ff]ailed"
    ::invalid-credentials #"incorrect username"
