@@ -1,8 +1,7 @@
 (ns katello.tests.users
-  (:refer-clojure :exclude [fn])
-  (:use [serializable.fn :only [fn]]
+  
+  (:use test.tree.script
         katello.validation
-        test.tree.script
         katello.tasks))
 
 ;;; Variables
@@ -13,8 +12,8 @@
 
 ;;; Tests
 
-(def all-user-tests
-
+(defgroup all-user-tests
+  
   (deftest "Admin creates a user"
     (create-user       (uniqueify "autouser")   user-details)
 
@@ -49,7 +48,3 @@
       (with-unique username "autouser"
         (create-user     username                user-details)
         (assign-role     {:user username, :roles ["Administrator"]})))))
-
-
-
-
