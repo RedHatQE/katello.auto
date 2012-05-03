@@ -11,34 +11,37 @@
                  [clj-http "0.3.2"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
-  :dev-dependencies [[slamhound "1.2.0"]]
+  :dev-dependencies [[lein-autodoc "0.9.0"]]
   
   :jvm-opts ["-Xmx192m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
-                            :snapshots false}})
+                               :snapshots false}}
+  :autodoc {:name "Katello GUI Automation"
+            :namespaces-to-document ["katello.tasks" "katello.validation" "katello.api-tasks"]})
 
-(comment "Execute this in the repl to load everything and start selenium"
-         (do
-           (do (require 'katello.tasks :reload-all)
-               (require 'katello.conf :reload)
-               (require 'katello.tests.setup :reload)
-               (require 'katello.client :reload)
+(comment 
+         "Execute this in the repl to load everything and start selenium"
+           (do
+             (do (require 'katello.tasks :reload-all)
+                 (require 'katello.conf :reload)
+                 (require 'katello.tests.setup :reload)
+                 (require 'katello.client :reload)
 
-               (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-               (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-               
-               (katello.conf/init)
-               (when katello.conf/*clients*
-                 (katello.client/connect (katello.client/new-runner
-                                          (first katello.conf/*clients*)
-                                          "root" nil
-                                          (@katello.conf/config :client-ssh-key)
-                                          (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
-           (katello.tests.setup/new-selenium "*firefox" true)
-           (katello.tests.setup/start-selenium)) ;;<-here for selenium
-         )
+                 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+                 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
+                 
+                 (katello.conf/init)
+                 (when katello.conf/*clients*
+                   (katello.client/connect (katello.client/new-runner
+                                            (first katello.conf/*clients*)
+                                            "root" nil
+                                            (@katello.conf/config :client-ssh-key)
+                                            (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
+             (katello.tests.setup/new-selenium "*firefox" true)
+             (katello.tests.setup/start-selenium)) ;;<-here for selenium
+           )
 
 (comment "Execute this in the repl to create some test entities via API"
 
