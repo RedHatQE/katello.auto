@@ -17,7 +17,7 @@
 ;;; Tests
 
 
-(def navtests
+(defgroup navtests
 
   (deftest :data-driven 
     "navigate to tab"

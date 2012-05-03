@@ -44,9 +44,14 @@
   [s]
   (first (unique-names s)))
 
-(defmacro with-unique "An unhygenic macro to shorten use of unique names."
-  [sym s & forms]
-  `(let [~sym (uniqueify ~s)]
+(defmacro with-unique
+  "Binds variables to unique strings. Example:
+   (with-unique [x 'foo' y 'bar'] [x y]) will give something like:
+     ['foo-12346748964356' 'bar-12346748964357']"
+  [bindings & forms]
+  `(let ~(vec (apply concat
+                 (for [[k v] (apply hash-map bindings)]
+                   [k `(uniqueify ~v)])))
      ~@forms))
 
 (def known-errors

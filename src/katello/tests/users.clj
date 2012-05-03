@@ -19,13 +19,13 @@
 
 
     (deftest "Admin changes a user's password"
-      (with-unique username "edituser"
+      (with-unique [username "edituser"]
         (create-user    username                user-details)
         (edit-user      username                {:new-password "changedpwd"})))
 
   
     (deftest "Admin deletes a user"
-      (with-unique username "deleteme"
+      (with-unique [username "deleteme"]
         (create-user    username                user-details)
         (delete-user    username)))
 
@@ -39,12 +39,12 @@
 
   
     (deftest "Search for a user"
-      (with-unique username "searchuser"
+      (with-unique [username "searchuser"]
         (create-user     username                user-details)
         (validate-search :users                  {:criteria "search"})))
 
   
     (deftest "Admin assigns a role to user"
-      (with-unique username "autouser"
+      (with-unique [username "autouser"]
         (create-user     username                user-details)
         (assign-role     {:user username, :roles ["Administrator"]})))))
