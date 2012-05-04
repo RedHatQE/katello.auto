@@ -242,10 +242,10 @@
                            (try (browser getText elem)
                                 (catch SeleniumException e nil))))))
 
-(defn validate-search [entity-type &  [{:keys [criteria scope] :as search-opts}]]
-  "Validate a search request.  entity-type can be anything that has a
-   support search, :orgs, :users etc...  criteria is something you are
-   searching for.  scope is currently not implemented."
+(defn verify-all-search-results-contain-criteria
+  "Validate a search request by checking that all results contain the
+  search criteria. Scope is currently not implemented."
+  [entity-type & [{:keys [criteria scope] :as search-opts}]]
   (search entity-type  search-opts)
   (if-not (every? (fn [s] (.contains s criteria))
                   (extract-left-pane-list locators/left-pane-field-list))
@@ -519,7 +519,7 @@
    error jnotify object."
   [entity-type & [{:keys [criteria scope]}]]
   (navigate (entity-type {:users :users-tab 
-                          :orgs :organizations-tab}))
+                          :organizations :organizations-tab}))
   (browser type :search-bar criteria)
   (browser click :search-submit)
   (check-for-error 2000))

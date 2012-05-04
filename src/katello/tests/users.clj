@@ -39,9 +39,9 @@
 
   
     (deftest "Search for a user"
-      (with-unique [username "searchuser"]
-        (create-user     username                user-details)
-        (validate-search :users                  {:criteria "search"})))
+      (with-unique [username "mybazquuxuser"]
+        (create-user                                username                user-details)
+        (verify-all-search-results-contain-criteria :users                  {:criteria "mybazquux"})))
 
   
     (deftest "Admin assigns a role to user"

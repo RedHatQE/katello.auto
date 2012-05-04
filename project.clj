@@ -4,6 +4,7 @@
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [test.tree.jenkins "0.1.0-SNAPSHOT"]
+                 [test.tree "0.7.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
@@ -20,7 +21,7 @@
                                :snapshots false}}
   :autodoc {:name "Katello GUI Automation"})
 
-(comment :namespaces-to-document ["katello.tasks" "katello.validation" "katello.api-tasks"]
+(comment 
          "Execute this in the repl to load everything and start selenium"
            (do
              (do (require 'katello.tasks :reload-all)

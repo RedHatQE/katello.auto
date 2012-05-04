@@ -89,10 +89,9 @@
     (deftest "Search for an organization"
       :description "Search for organizations based on criteria." 
     
-      (with-unique [org-name "searchorg"]
-        (create-test-org    org-name)
-        (validate-search    :orgs        {:criteria "search"})))
-
+      (with-unique [org-name "myfoobarorg"]
+        (create-test-org                               org-name)
+        (verify-all-search-results-contain-criteria    :organizations        {:criteria "myfoobar"})))
 
 
     (deftest "Delete an organization"
