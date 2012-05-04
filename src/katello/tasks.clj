@@ -126,7 +126,15 @@
   (let [notification (task-fn)]
     (verify-that (success? notification))))
 
-(def navigate (nav/nav-fn locators/page-tree))
+(def ^{:doc "Navigates to a named location in the UI. The first
+  argument should be a keyword for the place in the page tree to
+  navigate to. The 2nd optional argument is a mapping of keywords to
+  strings, if any arguments are needed to navigate there.
+  Example: (navigate :named-organization-page {:org-name 'My org'})
+  See also katello.locators/page-tree for all the places that can be
+  navigated to."
+       :arglists ([location-kw & [argmap]])}
+  navigate (nav/nav-fn locators/page-tree))
 
 (defn fill-ajax-form
   "Fills in a web form and clicks the submit button. Only waits for

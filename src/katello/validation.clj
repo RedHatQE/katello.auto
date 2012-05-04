@@ -18,7 +18,13 @@
              (map #(-> (name %) (str "-cant-be-blank") keyword)
                   coll)))
 
-(def validation-errors
+(def
+  ^{:doc "All the different validation error messages that Katello
+  can throw. The keys are keywords that can be used to refer to this
+  type of error, and the values are regexes that match the error
+  notification message in the UI. See also expect-error and
+  field-validation."}
+  validation-errors
   (merge {:name-taken-error #"(Username|Name) has already been taken"
           :name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
           :name-must-not-contain-characters #"Name cannot contain characters other than"
@@ -35,10 +41,10 @@
 (def invalid-character [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
 (def invalid-url ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
 
-(defn variations "Produces variations of a set of test data. For each
-                  item in vars, insert it into the original test data
-                  using function f, to produce a new set of
-                  data. "
+(defn variations
+  "Produces variations of a set of test data. For each item in vars,
+   insert it into the original test data using function f, to produce
+   a new set of data. "
   [orig f vars]
   (map (partial f orig) vars))
 
@@ -71,11 +77,22 @@
   (apply create-fn args)
   (field-validation create-fn args (or pred (expect-error :name-taken-error))))
 
-(defn name-field-required [create-fn args]
+(defn name-field-required
+  "Verifies that when create-fn is called with args, katello gives an
+  error message that the name field cannot be blank. create-fn should
+  be a function that creates some entity in katello, eg. an org,
+  environment, provider, etc. The args provided should cause create-fn
+  to not fill in a name field. Example:
+   (name-field-required create-organization [""]])"
+   [create-fn args]
   (field-validation create-fn args (expect-error :name-cant-be-blank)))
 
 ;;this should deprecate duplicate-disallowed
-(defn verify-2nd-try-fails-with [exp-err f & args]
+(defn verify-2nd-try-fails-with
+  "Verify that when f is called with args for the 2nd time, katello
+  shows an error message of the type exp-err. See also
+  validation-errors."
+  [exp-err f & args]
   (apply f args)
   (field-validation f args (expect-error exp-err)))
 

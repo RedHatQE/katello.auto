@@ -16,7 +16,8 @@
   "Expands into a function for each locator strategy in map m (which
   maps symbol to LocatorStrategy). Each function will be named the
   same as the symbol, take arguments and return a new element
-  constructed with the locator strategy and args."
+  constructed with the locator strategy and args. See also the
+  LocatorTemplate class."
   [m]
   `(do ~@(for [loc-strat (keys m)]
            `(def ~loc-strat 
@@ -72,7 +73,8 @@
    username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]
    left-pane-field-list ["Left pane item#" "xpath=(//div[contains(@class,'ellipsis')])[$1]"]})
 
-(defn- tabs "creates mapping eg: {:my-tab 'link=My Tab'}"
+(defn- tabs
+  "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
   [keys]
   (same-name capitalize tab keys))
 
@@ -266,21 +268,25 @@
                 :save-template "save_template"}) ;;when editing
 
 ;;merge all the preceeding maps together, plus a few more items.
-(def uimap (merge all-tabs common organizations environments roles
-                  users systems sync-plans sync-schedules promotions providers
-                  templates
-                  { ;; login page
-                   :username-text (textbox "username")
-                   :password-text (textbox "password")
-                   :log-in "//input[@value='Log In']"
+(def ^{:doc "All the selenium locators for the Katello UI. Maps a
+  keyword to the selenium locator. You can pass the keyword to
+  selenium just the same as you would the locator string. See also
+  SeleniumLocatable protocol."}
+  uimap
+  (merge all-tabs common organizations environments roles users systems sync-plans
+         sync-schedules promotions providers templates
+         { ;; login page
+          :username-text (textbox "username")
+          :password-text (textbox "password")
+          :log-in "//input[@value='Log In']"
 
               
-                   ;;tabs with special chars in name
-                   :sub-organizations (tab "Sub-Organizations")
+          ;;tabs with special chars in name
+          :sub-organizations (tab "Sub-Organizations")
                    
 
-                   ;;Sync Management subtab
-                   :synchronize-now "sync_button"}))
+          ;;Sync Management subtab
+          :synchronize-now "sync_button"}))
 
 ;;Tells the clojure selenium client where to look up keywords to get
 ;;real selenium locators (in uimap in this namespace).
@@ -290,16 +296,26 @@
   String
   (sel-locator [x] x))
 
-(defn promotion-env-breadcrumb [name & [next]]
+(defn promotion-env-breadcrumb
+  "Locates a link in the environment breadcrumb UI widget. If there
+  are multiple environment paths, and you wish to select Library,
+  'next' is required."
+  [name & [next]]
   (let [prefix "//a[normalize-space(.)='%1$s' and contains(@class, 'path_link')]"]
     (Element. (format 
                (str prefix (if next "/../../..//a[normalize-space(.)='%1$s']" ""))
                name next))))
 
-(defn inactive-edit-field "Takes a locator for an active in-place edit field, returns the inactive version" [loc]
+(defn inactive-edit-field
+  "Takes a locator for an active in-place edit field, returns the
+  inactive version"
+  [loc]
   (format "//div[@name='%1s']" (sel-locator loc)))
 
-(defn left-pane-item [name]
+(defn left-pane-item
+  "Returns a selenium locator for an item in a left
+   pane list (by the name of the item)"
+  [name]
   (Element. (LocatorTemplate. "Left pane item"
                               "//div[@id='list']//div[starts-with(normalize-space(.),'$1')]") 
             (into-array [(let [l (.length name)]
@@ -359,7 +375,15 @@
 ;;Navigation tree - shows all the navigation paths through the ui.
 ;;this data is used by the katello.tasks/navigate function to get to
 ;;the given page.
-(def page-tree
+(def
+  ^{:doc "The navigation layout of the UI. Each item in the tree is
+  a new page or tab, that you can drill down into from its parent
+  item. Each item contains a keyword to refer to the location in the
+  UI, a list of any arguments needed to navigate there (for example,
+  to navigate to a provider details page, you need the name of the
+  provider). Finally some code to navigate to the location from its
+  parent location. See also katello.tasks/navigate."}
+  page-tree
   (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
                                    (browser isElementPresent :confirmation-dialog))
                              (browser open (@config :server-url)))
