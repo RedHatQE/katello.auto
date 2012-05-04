@@ -83,7 +83,8 @@
 (defn notification
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
-   within a built-in timeout period)."
+   within the optional timeout period). Default timeout is 15
+   seconds."
   [ & [max-wait-ms]]
   (try (browser waitForElement :notification (str (or max-wait-ms 15000)))
        (let [msg (browser getText :notification)
@@ -98,8 +99,9 @@
 
 (defn check-for-success
   "Gets any notification from the UI, if there is none, or it's not a
-   success notification, raise an exception.  Otherwise return the
-   type and text of the message."
+   success notification, raise an exception. Otherwise return the type
+   and text of the message. Takes an optional max amount of time to
+   wait, in ms."
   [ & [max-wait-ms]]
   (let [notif (notification max-wait-ms)
         msg (:msg notif)]
@@ -111,8 +113,8 @@
           :else notif)))
 
 (defn check-for-error
-  "Waits for a notification up to the timeout (in ms), throws an
-  exception if timeout is hit or error notification appears."
+  "Waits for a notification up to the optional timeout (in ms), throws
+  an exception if timeout is hit or error notification appears."
   [ & [timeout]]
   (try+ (check-for-success timeout)
         (catch [:type ::no-success-message-error] _)))
@@ -153,7 +155,9 @@
           (fill-item loc val)
           (browser click :save-inplace-edit)))))
 
-(defn create-changeset [env-name next-env-name changeset-name]
+(defn create-changeset
+  "Creates a changeset for promotion from env-name to next-env name."
+  [env-name next-env-name changeset-name]
   (navigate :named-environment-promotions-page {:env-name env-name
                                                 :next-env-name next-env-name})
   (->browser (click :new-promotion-changeset)
@@ -161,7 +165,11 @@
              (click :save-changeset))
   (check-for-success))
 
-(defn add-to-changeset [changeset-name from-env to-env content]
+(defn add-to-changeset
+  "Adds the given content to an existing changeset. The originating
+   and target environments need to be specified to find to locate the
+   changeset."
+  [changeset-name from-env to-env content]
   (navigate :named-changeset-promotions-page {:env-name from-env
                                               :next-env-name to-env
                                               :changeset-name changeset-name})
@@ -179,7 +187,11 @@
         (do (browser refresh)
             (recur)))))
 
-(defn promote-changeset [changeset-name {:keys [from-env to-env timeout-ms]}]
+(defn promote-changeset
+  "Promotes the given changeset to its target environment. An optional
+   timeout-ms key will specify how long to wait for the promotion to
+   complete successfully."
+  [changeset-name {:keys [from-env to-env timeout-ms]}]
   (let [nav-to-cs (fn [] (navigate :named-changeset-promotions-page
                                   {:env-name from-env
                                    :next-env-name to-env
@@ -209,13 +221,17 @@
       ;;wait for async success notif
       (async-notification))))
 
-(defn promote-content [from-env to-env content]
+(defn promote-content
+  "Promotes the given content from one environment to another. Example
+  content:
+     {:products ['Product1' 'Product2']} "
+  [from-env to-env content]
   (let [changeset (uniqueify "changeset")]
     (create-changeset from-env to-env changeset)
     (add-to-changeset changeset from-env to-env content)
     (promote-changeset changeset {:from-env from-env
-                                        :to-env to-env
-                                        :timeout-ms 300000})))
+                                  :to-env to-env
+                                  :timeout-ms 300000})))
 
 (defn extract-left-pane-list [loc]
   "Extract data from the left pane, accepts locator as argument
@@ -235,7 +251,7 @@
                   (extract-left-pane-list locators/left-pane-field-list))
     (throw+ {:type :search-results-inaccurate :msg "Not all search results match criteria."})))
 
-(defn extract-content []
+(defn- extract-content []
   (let [elems (for [index (iterate inc 1)]
                 (locators/promotion-content-item-n (str index)))
         retrieve (fn [elem]
@@ -243,8 +259,10 @@
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set)))
 
-(defn environment-content [env]
-  (navigate :named-environment-promotions-page {:env-name env
+(defn environment-content
+  "Returns the content that is available to promote, in the given environment."
+  [env-name]
+  (navigate :named-environment-promotions-page {:env-name env-name
                                                 :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
@@ -272,22 +290,28 @@
                             true)
                         (catch Exception e false))))))))
 
-(defn create-organization [name & [{:keys [description]}]]
+(defn create-organization
+  "Creates an organization with the given name and optional description."
+  [name & [{:keys [description]}]]
   (navigate :new-organization-page)
   (fill-ajax-form {:org-name-text name
                    :org-description-text description}
                   :create-organization)
   (check-for-success))
 
-(defn delete-organization [org-name & [{:keys [confirm-timeout-ms]}]]
+(defn delete-organization
+  "Deletes the named organization."
+  [org-name]
   (navigate :named-organization-page {:org-name org-name})
   (browser click :remove-organization)
   (browser click :confirmation-yes)
   (check-for-success) ;queueing success
-  (async-notification)  ;for actual delete
-  )
+  (async-notification))  ;for actual delete
 
 (defn create-environment
+  "Creates an environment with the given name, and a map containing
+   the organization name to create the environment in, the prior
+   environment, and an optional description."
   [name {:keys [org-name description prior-env]}]
   (navigate :new-environment-page {:org-name org-name})
   (fill-ajax-form {:env-name-text name
@@ -296,7 +320,9 @@
                   :create-environment)
   (check-for-success))
 
-(defn delete-environment [env-name {:keys [org-name]}]
+(defn delete-environment
+  "Deletes an environment from the given organization."
+  [env-name {:keys [org-name]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (if (browser isElementPresent :remove-environment)
@@ -305,12 +331,20 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-organization [org-name & {:keys [description]}]
+(defn edit-organization
+  "Edits an organization. Currently the only property of an org that
+   can be edited is the org's description."
+  [org-name & {:keys [description]}]
   (navigate :named-organization-page {:org-name org-name})
   (in-place-edit {:org-description-text-edit description})
   (check-for-success))
 
-(defn edit-environment [env-name {:keys [org-name new-name description prior]}]
+(defn edit-environment
+  "Edits an environment with the given name. Also takes a map
+   containing the name of the environment's organization, and optional
+   fields: a new name, a new description, and a new prior
+   environment."
+  [env-name {:keys [org-name new-name description prior]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (in-place-edit {:env-name-text-edit new-name
@@ -328,14 +362,18 @@
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
 
-(defn create-provider [{:keys [name description]}]
+(defn create-provider
+  "Creates a custom provider with the given name and description."
+  [{:keys [name description]}]
   (navigate :new-provider-page)
   (fill-ajax-form {:provider-name-text name
                    :provider-description-text description}
                   :provider-create-save)
   (check-for-success))
 
-(defn add-product [{:keys [provider-name name description]}]
+(defn add-product
+  "Adds a product to a provider, with the given name and description."
+  [{:keys [provider-name name description]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
@@ -343,14 +381,19 @@
                   :create-product)
   (check-for-success))
 
-(defn delete-product [{:keys [name provider-name]}]
+(defn delete-product
+  "Deletes a product from the given provider."
+  [{:keys [name provider-name]}]
   (navigate :named-product-page {:provider-name provider-name
                                  :product-name name})
   (browser click :remove-product)
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn add-repo [{:keys [provider-name product-name name url]}]
+(defn add-repo
+  "Adds a repository under the given provider and product. Requires a
+   name and url be given for the repo."
+  [{:keys [provider-name product-name name url]}]
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click (locators/add-repository product-name))
   (fill-ajax-form {:repo-name-text name
@@ -358,7 +401,9 @@
                   :save-repository)
   (check-for-success))
 
-(defn delete-repo [{:keys [name provider-name product-name]}]
+(defn delete-repo
+  "Deletes a repository from the given provider and product."
+  [{:keys [name provider-name product-name]}]
   (navigate :named-repo-page {:provider-name provider-name
                               :product-name product-name
                               :repo-name name})
@@ -366,29 +411,43 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn delete-provider [name]
+(defn delete-provider
+  "Deletes the named custom provider."
+  [name]
   (navigate :named-provider-page {:provider-name name})
   (browser click :remove-provider)
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-provider [{:keys [name new-name description]}]
+(defn edit-provider
+  "Edits the named custom provider. Takes an optional new name, and
+  new description." [{:keys [name new-name description]}]
   (navigate :provider-details-page {:provider-name name})
   (in-place-edit {:provider-name-text new-name
                   :provider-description-text description})
   (check-for-success))
 
-(defn logged-in? []
+(defn logged-in?
+  "Returns true if the browser is currently showing a page where a
+  user is logged in."
+  []
   (browser isElementPresent :log-out))
 
-(defn logged-out? []
+(defn logged-out?
+  "Returns true if the login page is displayed."
+  []
   (browser isElementPresent :log-in))
 
-(defn logout []
+(defn logout
+  "Logs out the current user from the UI."
+  []
   (if-not (logged-out?)
     (browser clickAndWait :log-out)))
 
-(defn login [username password]
+(defn login
+  "Logs in a user to the UI with the given username and password. If
+   any user is currently logged in, he will be logged out first."
+  [username password]
   (when (logged-in?)
     (logout))
   (do (fill-form {:username-text username
@@ -410,7 +469,9 @@
   (if-not (= (current-user) username)
     (login username password)))
 
-(defn create-user [username {:keys [password password-confirm email default-org default-env]}]
+(defn create-user
+  "Creates a user with the given name and properties."
+  [username {:keys [password password-confirm email default-org default-env]}]
   (navigate :users-tab)
   (browser click :new-user)
   (when default-env
@@ -423,13 +484,18 @@
                   :save-user)
   (check-for-success))
 
-(defn delete-user [username]
+(defn delete-user "Deletes the given user."
+  [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
   (browser click :confirmation-yes)
   (check-for-success))
   
-(defn edit-user [username {:keys [inline-help clear-disabled-helptips new-password new-password-confirm new-email]}]
+(defn edit-user
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once)."
+  [username {:keys [inline-help clear-disabled-helptips
+                    new-password new-password-confirm new-email]}]
   (navigate :named-user-page {:username username})
   (when new-password
     (browser setText :change-password-text new-password)
@@ -447,17 +513,20 @@
     (in-place-edit {:user-email-text new-email})
     (check-for-success)))
 
-(defn search [entity-type & [{:keys [criteria scope]}]]
+(defn search
   "Search for criteria in entity-type, scope not yet implemented.
    check for error with a 2s timeout.  In this case error is a 
    error jnotify object."
+  [entity-type & [{:keys [criteria scope]}]]
   (navigate (entity-type {:users :users-tab 
                           :orgs :organizations-tab}))
   (browser type :search-bar criteria)
   (browser click :search-submit)
   (check-for-error 2000))
 
-(defn create-role [name & [{:keys [description]}]]
+(defn create-role
+  "Creates a role with the given name and optional description."
+  [name & [{:keys [description]}]]
   (navigate :roles-tab)
   (browser click :new-role)
   (fill-ajax-form {:new-role-name-text name
@@ -465,14 +534,27 @@
                   :save-role)
   (check-for-success))
 
-(defn assign-role [{:keys [user roles]}]
+(defn assign-role
+  "Assigns the given user to the given roles. Roles should be a list
+  of roles to assign."
+  [{:keys [user roles]}]
   (navigate :user-roles-permissions-page {:username user})
   (doseq [role roles]
     (browser click (locators/plus-icon role)))
   (browser click :save-roles)
   (check-for-success))
 
-(defn edit-role [name {:keys [add-permissions remove-permissions users]}]
+(defn edit-role
+  "Edits a role to add new permissions, remove existing permissions,
+  and assign users to the role. Example:
+
+  (edit-role 'myrole'
+             {:add-permissions [{:resource-type 'Organizations'
+                                 :verbs ['Read Organization']
+                                 :name 'newPerm1'}]
+              :remove-permissions ['existingPerm1' 'existingPerm2']
+              :users ['joe' 'bob']})"
+  [name {:keys [add-permissions remove-permissions users]}]
   (let [nav (fn [page] (navigate page {:role-name name}))
         each-org (fn [all-perms perms-fn]
                    (when all-perms
@@ -508,7 +590,9 @@
                                   :save-permission))
                 (check-for-success)))))
 
-(defn remove-role [name]
+(defn remove-role
+  "Deletes the given role."
+  [name]
   (navigate :named-role-page {:role-name name})
   (browser click :remove-role)
   (browser click :confirmation-yes)
@@ -528,7 +612,11 @@
   (= res (:ok sync-messages)))
 
 
-(defn sync-repos [repos & [{:keys [timeout]}]]
+(defn sync-repos
+  "Syncs the given list of repositories. Also takes an optional
+  timeout (in ms) of how long to wait for the sync to complete before
+  throwing an error.  Default timeout is 2 minutes."
+  [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)
   (doseq [repo repos]
     (browser check (locators/provider-sync-checkbox repo)))
@@ -540,14 +628,19 @@
                            (do (Thread/sleep 10000)
                                (recur)))))))
 
-(defn edit-system [name & {:keys [new-name description location]}]
+(defn edit-system
+  "Edits the properties of the given system. Optionally specify a new
+  name, a new description, and a new location."
+  [name & {:keys [new-name description location]}]
   (navigate :named-systems-page {:system-name name})
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
                   :system-location-text-edit location})
   (check-for-success))
 
-(defn subscribe-system [{:keys [system-name products]}]
+(defn subscribe-system
+  "Subscribes the given system to the products. (products should be a list)."
+  [{:keys [system-name products]}]
   (navigate :system-subscriptions-page {:system-name system-name})
   (doseq [product products]
     (browser check (locators/subscription-checkbox product)))
@@ -563,8 +656,14 @@
   (list (if start-date (date-str start-date) start-date-literal)
         (if start-date (time-str start-date) start-time-literal)))
 
-(defn create-sync-plan [{:keys [name description interval start-date
-                                start-date-literal start-time-literal] :as m}]
+(defn create-sync-plan
+  "Creates a sync plan with the given properties. Either specify a
+  start-date (as a java.util.Date object) or a separate string for
+  start-date-literal 'MM/dd/yyyy', and start-time-literal 'hh:mm aa'
+  The latter can also be used to specify invalid dates for validation
+  tests."
+  [{:keys [name description interval start-date
+           start-date-literal start-time-literal] :as m}]
   (navigate :new-sync-plan-page)
   (let [[date time] (split-date m)]
     (fill-ajax-form {:sync-plan-name-text name
@@ -575,8 +674,12 @@
                     :save-sync-plan)
     (check-for-success)))
 
-(defn edit-sync-plan [name {:keys [new-name description interval start-date
-                                   start-date-literal start-time-literal] :as m}]
+(defn edit-sync-plan
+  "Edits the given sync plan with optional new properties. See also
+  create-sync-plan for more details."
+  [name {:keys [new-name
+                description interval start-date start-date-literal
+                start-time-literal] :as m}]
   (navigate :named-sync-plan-page {:sync-plan-name name})
   (let [[date time] (split-date m)]
     (in-place-edit {:sync-plan-name-text new-name
@@ -586,7 +689,10 @@
                     :sync-plan-date-text date}))
   (check-for-success))
 
-(defn sync-schedule [{:keys [products plan-name]}]
+(defn sync-schedule
+  "Schedules the given list of products to be synced using the given
+  sync plan name."
+  [{:keys [products plan-name]}]
   (navigate :sync-schedule-page)
   (doseq [product products]
     (browser click (locators/schedule product)))
@@ -595,7 +701,8 @@
   (check-for-success))
 
 (defn current-sync-plan
-  "Returns a map of what sync plan a product is currently scheduled for.  nil if UI says 'None'"
+  "Returns a map of what sync plan a product is currently scheduled
+  for. nil if UI says 'None'"
   [product-names]
   (navigate :sync-schedule-page)
   (zipmap product-names
@@ -603,7 +710,10 @@
                    (doall (for [product-name product-names]
                             (browser getText (locators/product-schedule product-name)))))))
 
-(defn create-activation-key [{:keys [name description environment system-template] :as m}]
+(defn create-activation-key
+  "Creates an activation key with the given properties. Description
+  and system-template are optional."
+  [{:keys [name description environment system-template] :as m}]
   (navigate :new-activation-key-page)
   (browser click (locators/environment-link environment))
   (fill-ajax-form {:activation-key-name-text name
@@ -612,13 +722,19 @@
                   :save-activation-key)
   (check-for-success))
 
-(defn delete-activation-key [name]
+(defn delete-activation-key
+  "Deletes the given activation key."
+  [name]
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn upload-subscription-manifest [file-path & [{:keys [repository-url]}]]
+(defn upload-subscription-manifest
+  "Uploads a subscription manifest from the filesystem local to the
+   selenium browser. Optionally specify a new repository url for Red
+   Hat content- if not specified, the default url is kept."
+  [file-path & [{:keys [repository-url]}]]
   (navigate :redhat-provider-tab)
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
@@ -627,23 +743,30 @@
              (fn [] (browser waitForPageToLoad "300000")))
   (check-for-success))
 
-(defn manifest-already-uploaded? []
+(defn manifest-already-uploaded?
+  "Returns true if the current organization already has Red Hat
+  content uploaded."
+  []
   (navigate :redhat-provider-tab)
   (browser isElementPresent :subscriptions-items))
 
-(defn create-template [{:keys [name description]}]
+(defn create-template
+  "Creates a system template with the given name and optional
+  description."
+  [{:keys [name description]}]
   (navigate :new-system-template-page)
   (fill-ajax-form {:template-name-text name
                    :template-description-text description}
                   :save-new-template)
   (check-for-success))
 
-(defn add-to-template "Adds content to a template"
+(defn add-to-template
+  "Adds content to a given template.  Example:
+   (add-to-template 'mytemplate' [{:product 'prod3'
+                                   :packages ['rpm1' 'rpm2']}
+                                  {:product 'prod6'
+                                   :repositories ['x86_64']}]"
   [name content]
-  (comment "content is like:" [{:product "prod3"
-                                :packages ["rpm1" "rpm2"]}
-                               {:product "prod6"
-                                :repositories ["x86_64"]}])
   (navigate :named-system-template-page {:template-name name})
   (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
     (doseq [group content]
@@ -660,12 +783,13 @@
     (browser click :save-template)
     (check-for-success)))
 
-(defn switch-org "Switch to the given organization in the UI." [org-name]
+(defn switch-org "Switch to the given organization in the UI."
+  [org-name]
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
 
 (defn enable-redhat-repositories
-  "Enable the given list of repos in the current org"
+  "Enable the given list of repos in the current org."
   [repos]
   (navigate :redhat-provider-tab)
   (browser click :enable-repositories-tab)
@@ -673,12 +797,12 @@
     (browser check (locators/repo-enable-checkbox repo))))
 
 (defn current-org []
-  "return the currently active org shown in the org switcher."
+  "Return the currently active org (a string) shown in the org switcher."
   (browser getText :active-org))
 
 (defmacro with-org [org-name & body]
-  "Switch to org-name, execute body, and then switch back to current
-   org, whether there was an exception or not."
+  "Switch to org-name, execute the code in body. Finally, switch back
+   to current org, whether there was an exception or not."
   `(let [curr-org# (current-org)]
      (try (switch-org ~org-name)
           ~@body
