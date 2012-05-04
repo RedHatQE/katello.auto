@@ -7,7 +7,7 @@
 ;;; Variables
 
 
-(def user-details {:password "password", :email "blah@blah.com"})
+(def generic-user-details {:password "password", :email "blah@blah.com"})
 
 
 ;;; Tests
@@ -15,23 +15,23 @@
 (defgroup all-user-tests
   
   (deftest "Admin creates a user"
-    (create-user       (uniqueify "autouser")   user-details)
+    (create-user       (uniqueify "autouser")   generic-user-details)
 
 
     (deftest "Admin changes a user's password"
       (with-unique [username "edituser"]
-        (create-user    username                user-details)
+        (create-user    username                generic-user-details)
         (edit-user      username                {:new-password "changedpwd"})))
 
   
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
-        (create-user    username                user-details)
+        (create-user    username                generic-user-details)
         (delete-user    username)))
 
 
     (deftest "Two users with the same username is disallowed"
-      (verify-2nd-try-fails-with       :name-taken-error     create-user    (uniqueify "dupeuser")    user-details))
+      (verify-2nd-try-fails-with       :name-taken-error     create-user    (uniqueify "dupeuser")    generic-user-details))
 
 
     (deftest "User's minimum password length is enforced"
@@ -40,11 +40,11 @@
   
     (deftest "Search for a user"
       (with-unique [username "mybazquuxuser"]
-        (create-user                                username                user-details)
+        (create-user                                username                generic-user-details)
         (verify-all-search-results-contain-criteria :users                  {:criteria "mybazquux"})))
 
   
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
-        (create-user     username                user-details)
+        (create-user     username                generic-user-details)
         (assign-role     {:user username, :roles ["Administrator"]})))))
