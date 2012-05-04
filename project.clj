@@ -18,10 +18,9 @@
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
-  :autodoc {:name "Katello GUI Automation"
-            :namespaces-to-document ["katello.tasks" "katello.validation" "katello.api-tasks"]})
+  :autodoc {:name "Katello GUI Automation"})
 
-(comment 
+(comment :namespaces-to-document ["katello.tasks" "katello.validation" "katello.api-tasks"]
          "Execute this in the repl to load everything and start selenium"
            (do
              (do (require 'katello.tasks :reload-all)

@@ -72,9 +72,8 @@
       
       (name-field-required create-organization ["" {:description "org description"}]))
 
-    ;;commented until i fix having a list of tests inlined into the
-    ;;current list
-    #_(deftest "Verify proper error message when invalid org name is used"
+    
+    (deftest "Verify proper error message when invalid org name is used"
       :data-driven true
       
       verify-bad-org-name-gives-expected-error
