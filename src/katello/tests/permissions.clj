@@ -1,45 +1,24 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
-  (:use [katello.tasks :exclude [navigate create-role edit-role remove-role create-user]]
+  (:use katello.tasks
+        test.tree.script
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]])
   (:require (katello [validation :as v]
                      [api-tasks :as api]
-                     [conf :as conf]
-                     [tasks :as tasks]))
+                     [conf :as conf]))
   (:import [com.thoughtworks.selenium SeleniumException]))
 
-(def create-role
-  (fn [] (tasks/create-role (uniqueify "testrole"))))
 
-(def remove-role
-  (fn [] (let [role-name (uniqueify "deleteme-role")]
-          (tasks/create-role role-name)
-          (tasks/remove-role role-name))))
-
-(def edit-role
-  (fn [] (let [user-name (uniqueify "role-user")
-              role-name (uniqueify "edit-role")]
-          (tasks/create-user user-name {:password "abcd1234" :email "me@my.org"})
-          (tasks/create-role role-name)
-          (tasks/edit-role role-name
-                           {:add-permissions [{:org "Global Permissions"
-                                               :permissions [{:name "blah2"
-                                                              :resource-type "Organizations"
-                                                              :verbs ["Read Organization"]}]}]
-                            :users [user-name]}))))
+;;Variables
 
 (def no-perm-user (atom nil))
 
-(def setup-no-perm-user
-  (fn [] (api/with-admin
-          (apply
-           api/create-user (reset! no-perm-user [(uniqueify "noperms")
-                                                 {:password "password"
-                                                  :email (str "noperm@my.org")}])))))
+;; Functions
 
 (def denied-access? (fn [r] (-> r class (isa? Throwable))))
+
 (def has-access? (fn [r] (not (denied-access? r))))
 
 (defn- try-all [fs]
@@ -47,14 +26,14 @@
                       (try (f)
                            (catch Exception e e))))))
 
-(defn- navigate [page]
-  (fn [] (tasks/navigate page))) 
+(defn- navigate-fn [page]
+  (fn [] (navigate page))) 
 
 (defn- navigate-all [& pages]
-  (map navigate pages))
+  (map navigate-fn pages))
 
 (defn- access-org [org]
-  (fn [] (tasks/navigate :named-organization-page {:org-name org})))
+  (fn [] (navigate :named-organization-page {:org-name org})))
 
 (defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
   [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
@@ -66,8 +45,8 @@
                                  :email (str username "@my.org")})
       (when setup (setup)))
     
-    (tasks/create-role rolename)
-    (tasks/edit-role rolename {:add-permissions permissions
+    (create-role rolename)
+    (edit-role rolename {:add-permissions permissions
                                :users [username]})
     
     (try
@@ -80,21 +59,18 @@
       (finally
        (login conf/*session-user* conf/*session-password*)))))
 
-(def create-env
-  (fn [] (tasks/create-environment (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
+(def create-an-env
+  (fn [] (create-environment (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
 
-(def create-ak
-  (fn [] (tasks/create-activation-key {:name (uniqueify "blah")
+(def create-an-ak
+  (fn [] (create-activation-key {:name (uniqueify "blah")
                                       :environment (first conf/*environments*)})))
 
-(def create-st
-  (fn [] (tasks/create-template {:name (uniqueify "blah")})))
+(def create-a-st
+  (fn [] (create-template {:name (uniqueify "blah")})))
 
-(def create-user
-  (fn [] (tasks/create-user (uniqueify "blah") {:password "password" :email "me@me.com"})))
-
-
-
+(def create-a-user
+  (fn [] (create-user (uniqueify "blah") {:password "password" :email "me@me.com"})))
 
 (def access-test-data
   [(fn [] [{:permissions [{:org "Global Permissions"
@@ -106,7 +82,7 @@
                                                    :custom-content-providers-tab :system-templates-page
                                                    :promotions-page )
                                      (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-env)}])
+                                     create-an-env)}])
 
 
    
@@ -117,7 +93,7 @@
                                            :name "orgcreate"}]}]
              :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
                                (fn [] (delete-organization org-name))
-                               create-env]
+                               create-an-env]
              :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                      :custom-content-providers-tab :system-templates-page
                                                      :promotions-page )
@@ -133,7 +109,7 @@
             :allowed-actions [(fn [] (api/with-admin-org
                                       (api/with-env (first conf/*environments*)
                                         (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
-                              (navigate :systems-all-page)]
+                              (navigate-fn :systems-all-page)]
             :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
                                       (fn [] (create-organization (uniqueify "cantdothis"))))}])
     assoc :blockers (open-bz-bugs "757775"))
@@ -143,10 +119,10 @@
                            :permissions [{:resource-type "Activation Keys"
                                           :verbs ["Read Activation Keys"]
                                           :name "akaccess"}]}]
-            :allowed-actions [(navigate :activation-keys-page)]
+            :allowed-actions [(navigate-fn :activation-keys-page)]
             :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
                                                     :systems-all-page :systems-by-environment-page)
-                                      create-ak)}])
+                                      create-an-ak)}])
     assoc :blockers (open-bz-bugs "757817"))
    
    (vary-meta
@@ -154,7 +130,7 @@
                            :permissions [{:resource-type "Activation Keys"
                                           :verbs ["Administer Activation Keys"]
                                           :name "akmang"}]}]
-            :allowed-actions [create-ak]
+            :allowed-actions [create-an-ak]
             :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
                                                     :systems-all-page :systems-by-environment-page)
                                       (fn [] (create-organization (uniqueify "cantdothis"))))}])
@@ -164,33 +140,33 @@
                           :permissions [{:resource-type "System Templates"
                                          :verbs ["Read System Templates"]
                                          :name "stread"}]}]
-           :allowed-actions [(navigate :system-templates-page)]
+           :allowed-actions [(navigate-fn :system-templates-page)]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
                                                    :custom-content-providers-tab :sync-status-page :promotions-page)
-                                     create-st
+                                     create-a-st
                                      (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-env)}])
+                                     create-an-env)}])
 
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "System Templates"
                                          :verbs ["Administer System Templates"]
                                          :name "stmang"}]}]
-           :allowed-actions [create-st]
+           :allowed-actions [create-a-st]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
                                                    :custom-content-providers-tab :sync-status-page :promotions-page)
                                      (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-env)}])
+                                     create-an-env)}])
    
    (fn [] [{:permissions [{:org "Global Permissions"
                           :permissions [{:resource-type "Users"
                                          :verbs ["Read Users"]
                                          :name "userread"}]}]
-           :allowed-actions [(navigate :users-tab)]
+           :allowed-actions [(navigate-fn :users-tab)]
            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                    :content-management-tab)
                                      (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-env
-                                     create-user)}])
+                                     create-an-env
+                                     create-a-user)}])
 
    (fn [] [(let [user (uniqueify "user")]
             {:setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
@@ -202,8 +178,8 @@
              :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                      :content-management-tab)
                                        (fn [] (let [username (uniqueify "deleteme")]
-                                               (katello.tasks/create-user username {:password "password" :email "mee@mee.com"})
-                                               (katello.tasks/delete-user username))))})])
+                                               (create-user username {:password "password" :email "mee@mee.com"})
+                                               (delete-user username))))})])
 
    (fn []
      [(let [user (uniqueify "user")]
@@ -215,7 +191,7 @@
          :allowed-actions [(fn [] (delete-user user))]
          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
                                                  :content-management-tab)
-                                   create-user)})])
+                                   create-a-user)})])
 
    (fn []
      [(let [org (uniqueify "org")]
@@ -229,6 +205,37 @@
                                                  :custom-content-providers-tab :system-templates-page
                                                  :promotions-page )
                                    (fn [] (switch-org org))
-                                   (fn [] (tasks/navigate :named-organization-page {:org-name org})))})])
+                                   (fn [] (navigate :named-organization-page {:org-name org})))})])
    
    ])
+
+;; Tests
+(defgroup all-permission-tests
+  
+  (deftest "Create a role"
+    (create-role (uniqueify "testrole")))
+
+ 
+  (deftest "Remove a role"
+    (let [role-name (uniqueify "deleteme-role")]
+      (create-role role-name)
+      (remove-role role-name)))
+
+ 
+  (deftest "Add a permission and user to a role"
+    (let [user-name (uniqueify "role-user")
+          role-name (uniqueify "edit-role")]
+      (create-user user-name {:password "abcd1234" :email "me@my.org"})
+      (create-role role-name)
+      (edit-role role-name
+                 {:add-permissions [{:org "Global Permissions"
+                                     :permissions [{:name "blah2"
+                                                    :resource-type "Organizations"
+                                                    :verbs ["Read Organization"]}]}]
+                  :users [user-name]}))
+
+    (comment (deftest "Verify user with specific permission has access only to what permission allows"
+               :data-driven true
+
+               verify-access
+               access-test-data)) ))
