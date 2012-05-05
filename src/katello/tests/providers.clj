@@ -59,6 +59,12 @@
     (switch-org org)
     (create-provider {:name prov-name})))
 
+(defn validation
+  "Attempts to creates a provider and validates the result using
+   pred."
+  [pred provider]
+  (field-validation create-provider [provider] pred))
+
 (defn get-validation-data
   "a totally misguided attempt on my part to generate test data.
   Generating data is fine, but this code is unreadable even to me,
@@ -143,9 +149,7 @@
 
 
 
-(def validation
-    (fn [pred provider]
-      (field-validation create-provider [provider] pred)))
+
 
 
 
