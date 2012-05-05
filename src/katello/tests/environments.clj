@@ -110,8 +110,7 @@
               org (@config :admin-org)]
           (create-environment-path org envs)
           (expecting-error [:type :env-cant-be-deleted]
-                           (delete-environment (second envs) {:org-name org}))
-          
+                           (delete-environment (second envs) {:org-name org}))    
           (delete-environment (last envs) {:org-name org}))))
 
     

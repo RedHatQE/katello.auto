@@ -21,9 +21,19 @@
 (def promotion-lock nil)
 
 
-(defmacro expecting-error
-  "Execute forms, if error is caught matching selector, nil is
-   returned, otherwise an :unexpected-success error is thrown."
+(defmacro ^{:see-also "https://github.com/scgilardi/slingshot"}
+  expecting-error
+  "Inverts exception handling. Execute forms, if error is caught
+   matching selector, nil is returned. If no error is caught,
+   an :unexpected-success error is thrown. If a non-matching error
+   occurs, the exception will not be caught and will propagate up the
+   stack.
+   Examples: (expecting-error ArithmeticException (/ 1 0)) -> nil
+
+             (expecting-error ArithmeticException (/ 12 3)) ->
+               throws :unexpected-success exception.
+    See also
+   slingshot.slingshot/try+ for selector documentation"
   [selector & forms]
   `(try+ ~@forms
          (throw+ {:type :unexpected-success :expected ~selector})
@@ -31,12 +41,15 @@
 
 ;;UI tasks
 (defn timestamps
-  "Infinite lazy sequence of timestamps in ms, starting with the current time."
+  "Returns an infinite lazy sequence of timestamps in ms, starting
+  with the current time, incrementing the time by one on each
+  successive item."
   []
   (iterate inc (System/currentTimeMillis)))
 
 (defn unique-names
-  "Infinite lazy sequence of timestamped strings, uses s as the base string."
+  "Returns an infinite lazy sequence of timestamped strings, uses s as
+  the base string."
   [s]
   (for [t (timestamps)] (str s "-" t)))
 
@@ -56,7 +69,10 @@
                    [k `(uniqueify ~v)])))
      ~@forms))
 
-(def known-errors
+(def ^{:doc "A mapping of known errors in Katello. This helps
+  automation throw and catch the right type of exception interally,
+  taking UI error messages and mapping them to internal error types."}
+  known-errors
   {::validation-failed #"Validation [Ff]ailed"
    ::invalid-credentials #"incorrect username"
    ::promotion-already-in-progress #"Cannot promote.*while another changeset"})
@@ -622,7 +638,8 @@
                     :fail "Error syncing!"})
 
 (defn sync-complete-status
-  "Returns final status if complete.  If sync is still in progress or queued, returns nil."
+  "Returns final status if complete. If sync is still in progress, not
+  synced, or queued, returns nil."
   [product]
   (some #{(browser getText (locators/provider-sync-progress product))}
         (vals sync-messages)))
@@ -820,9 +837,10 @@
   "Return the currently active org (a string) shown in the org switcher."
   (browser getText :active-org))
 
-(defmacro with-org [org-name & body]
-  "Switch to org-name, execute the code in body. Finally, switch back
-   to current org, whether there was an exception or not."
+(defmacro with-org
+  "Switch to organization org-name, then execute the code in body. Finally,
+   switch back to the previous org, even if there was an error."
+   [org-name & body]
   `(let [curr-org# (current-org)]
      (try (switch-org ~org-name)
           ~@body

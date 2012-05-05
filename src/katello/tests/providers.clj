@@ -1,19 +1,31 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
-  (:require (katello [tasks :as tasks]
-                     [validation :as v]
-                     [api-tasks :as api])
-            
+  (:require [katello.api-tasks :as api]
             [clj-http.client :as http]
-            [clojure.java.io :as io])
-  (:use [test.tree.builder :only [data-driven]]
+            [clojure.java.io :as io]
+            [katello.tests.e2e :as e2e])
+  (:use katello.tasks
+        katello.validation
+        test.tree.script
+        [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [config]]))
 
-(def test-provider-name (atom nil))
-(def test-product-name (atom nil))
+;; Load more tests groups into this namespace
+(load "providers/custom")
+(load "providers/redhat")
+
+;; Functions
+
+(defn get-all-providers []
+  (map :name (api/with-admin (api/all-entities :provider))))
+
+(defn verify-provider-renamed [old-name new-name]
+  (let [current-provider-names (get-all-providers)]
+    (verify-that (and (some #{new-name} current-provider-names)
+                      (not (some #{old-name} current-provider-names))))))
 
 (defn with-n-new-orgs
   "Create n organizations with unique names. Then calls function f
@@ -21,14 +33,13 @@
   whether the same name for an entity can be used across orgs.
   Switches back to admin org after f is called."
   [n f]
-  (let [ent-name (tasks/uniqueify "samename")
-        orgs (take n (tasks/unique-names "ns-org"))]
+  (let [ent-name (uniqueify "samename")
+        orgs (take n (unique-names "ns-org"))]
     (doseq [org orgs]
       (api/with-admin (api/create-organization org)))
     (try
       (f ent-name orgs)
-      (finally (tasks/switch-org (@config :admin-org))))))
-
+      (finally (switch-org (@config :admin-org))))))
 
 (defn with-two-providers
   "Create two providers with unique names, and call f with a unique
@@ -36,167 +47,106 @@
   instance) that products with the same name can be created in 2
   different providers."
   [f]
-  (let [ent-name (tasks/uniqueify "samename")
-        providers (take 2 (tasks/unique-names "ns-provider"))]
+  (let [ent-name (uniqueify "samename")
+        providers (take 2 (unique-names "ns-provider"))]
     (doseq [provider providers]
       (api/with-admin (api/create-provider provider)))
     (f ent-name providers)))
 
-(def create-custom 
-  (fn [] (tasks/create-provider {:name (tasks/uniqueify "auto-cp")
-                                :description "my description"})))
+(defn create-same-provider-in-multiple-orgs
+  [prov-name orgs]
+  (doseq [org orgs]
+    (switch-org org)
+    (create-provider {:name prov-name})))
 
-(def rename
-  (fn [] (let [old-name (tasks/uniqueify "rename")
-              new-name (tasks/uniqueify "newname")]
-          (tasks/create-provider {:name old-name
-                                  :description "my description"})
-          (tasks/edit-provider {:name old-name :new-name new-name})
-          (let [current-provider-names (map :name (api/with-admin
-                                                    (api/all-entities
-                                                     :provider)))]
-            (verify-that (and (some #{new-name} current-provider-names)
-                              (not (some #{old-name} current-provider-names))))))))
-
-(def delete
-  (fn [] (let [provider-name (tasks/uniqueify "auto-provider-delete")]
-          (tasks/create-provider {:name provider-name
-                                  :description "my description"})
-          (tasks/verify-success
-           #(tasks/delete-provider provider-name)))))
-
-(def setup-custom
-  (fn [] (tasks/create-provider {:name (reset! test-provider-name (tasks/uniqueify "cust"))
-                                :description "my description"})))
-
-(def create-product
-  (fn [] (tasks/add-product {:provider-name @test-provider-name
-                            :name (reset! test-product-name (tasks/uniqueify "prod"))
-                            :description "test product"})))
-
-(def delete-product
-  (fn [] (let [product {:provider-name @test-provider-name
-                       :name (tasks/uniqueify "deleteme")
-                       :description "test product to delete"}]
-          (tasks/add-product product)
-          (tasks/delete-product product))))
-
-(def create-repo
-  (fn [] (tasks/add-repo {:provider-name @test-provider-name
-                         :product-name @test-product-name
-                         :name (tasks/uniqueify "repo")
-                         :url "http://test.com/myurl"})))
-
-(def delete-repo
-  (fn [] (let [repo {:name (tasks/uniqueify "deleteme")
-                    :provider-name @test-provider-name
-                    :product-name @test-product-name
-                    :url "http://my.fake/url"}]
-          (tasks/add-repo repo)
-          (tasks/delete-repo repo))))
-
-(def namespace-provider
-  (fn []
-    (with-n-new-orgs 2 (fn [prov-name orgs]
-                     (doseq [org orgs]
-                       (tasks/switch-org org)
-                       (tasks/create-provider {:name prov-name}))))))
-
-(def namespace-product-in-provider
-  (fn []
-    (v/field-validation with-two-providers
-                        [(fn [product-name providers]
-                            (doseq [provider providers]
-                              (tasks/add-product {:provider-name provider
-                                                  :name product-name})))]
-                        (v/expect-error :product-must-be-unique-in-org))))
-
-(def namespace-product-in-org
-  (fn []
-    (with-n-new-orgs 2
-      (fn [product-name orgs]
-        (doseq [org orgs]
-          (tasks/switch-org org)
-          (let [provider-name (tasks/uniqueify "prov")]
-           (api/with-admin
-             (api/with-org org
-               (api/create-provider provider-name))
-             (tasks/add-product {:provider-name provider-name
-                                 :name product-name}))))))))
-
-(def manifest-tmp-loc "/tmp/manifest.zip")
-(def redhat-provider-test-org (atom nil))
-
-(def manifest-setup
-  (fn [] 
-    (let [org-name (reset! redhat-provider-test-org (tasks/uniqueify "rh-test"))]
-      (api/with-admin (api/create-organization org-name))
-      (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
-                  outstream (io/output-stream manifest-tmp-loc)]
-        (io/copy instream outstream)))))
-
-(def upload-manifest
-  (fn []
-    (comment (tasks/with-org @redhat-provider-test-org
-               (tasks/upload-subscription-manifest manifest-tmp-loc
-                                                   {:repository-url (@config :redhat-repo-url)})))
-    (api/with-admin (api/with-org @redhat-provider-test-org
-                      (api/upload-manifest manifest-tmp-loc (@config :redhat-repo-url))))))
-
-(def enable-redhat-repos
-  (fn []
-    (let [repos ["Nature Enterprise x86_64 5Server"
-                 "Nature Enterprise x86_64 6Server"]]
-      
-      (tasks/with-org @redhat-provider-test-org
-        (tasks/enable-redhat-repositories repos)
-        (tasks/navigate :sync-status-page)
-        (verify-that (every? nil? (map tasks/sync-complete-status repos)))))))
-
-(def dupe-disallowed
-  (fn []
-    (v/duplicate-disallowed tasks/create-provider [{:name (tasks/uniqueify "dupe")
-                                                    :description "mydescription"}])))
-
-(def validation
-    (fn [pred provider]
-      (v/field-validation tasks/create-provider [provider] pred)))
-
-
-(defn validation-data []
+(defn get-validation-data
+  "a totally misguided attempt on my part to generate test data.
+  Generating data is fine, but this code is unreadable even to me,
+  should probably replace this code with the data it produces, and be
+  done with it. Only issue there is we can't hardcode
+  provider/product/repo names. -jweiss" []
   (let [insert (fn [baseargs k v]
                  (assoc-in baseargs [1 k] v))
         [insert-name insert-desc insert-url] (map (fn [k] #(insert %1 k %2))
                                                   [:name :description :url])]
     (concat
-     [[(v/expect-error :name-cant-be-blank) {:name nil
-                                             :description "blah"
-                                             :url "http://sdf.com"}]
-                                
-  
-      
-      [tasks/success?  {:name (tasks/uniqueify "mytestcp4")
-                        :description nil 
-                        :url "http://sdf.com"}]]
-     (v/variations
-      [tasks/success?  {:name (tasks/uniqueify "mytestcp5") 
-                        :url "http://sdf.com"}]
-      insert-desc v/javascript)
-     
-     (v/variations                  
-      [(v/expect-error :name-no-leading-trailing-whitespace) {:description nil 
-                                                              :url "http://sdf.com"}]
-      insert-name v/trailing-whitespace)
+     [[(expect-error :name-cant-be-blank) {:name nil :description "blah" :url "http://sdf.com"}]
+      [success?  {:name (uniqueify "mytestcp4") :description nil :url "http://sdf.com"}]]
 
-     (v/variations
-      [(v/expect-error :name-must-not-contain-characters) {:description nil 
-                                                           :url "http://sdf.com"}]
-      insert-name v/invalid-character)
+     (variations [success?  {:name (uniqueify "mytestcp5") :url "http://sdf.com"}] insert-desc javascript)
+     (variations [(expect-error :name-no-leading-trailing-whitespace) {:description nil :url "http://sdf.com"}] insert-name trailing-whitespace)
+     (variations [(expect-error :name-must-not-contain-characters) {:description nil :url "http://sdf.com"}] insert-name invalid-character)
 
-     (for [test (v/variations  
-                 [(v/expect-error :repository-url-invalid) {:name (tasks/uniqueify "mytestcp")
-                                                            :description "blah"}]
-                 insert-url v/invalid-url)]
+     (for [test (variations [(expect-error :repository-url-invalid) {:name (uniqueify "mytestcp") :description "blah"}]
+                              insert-url invalid-url)]
        (with-meta test {:blockers (open-bz-bugs "703528" "742983")
                         :description "Test that invalid URL is rejected."})))))
+
+;; Tests
+
+(defgroup all-provider-tests
+  
+  (deftest "Create a custom provider" 
+    (create-provider {:name (uniqueify "auto-cp")
+                      :description "my description"})
+
+
+    (deftest "Cannot create two providers in the same org with the same name"
+      (duplicate-disallowed create-provider [{:name (uniqueify "dupe")
+                                                  :description "mydescription"}]))
+    
+    (deftest "Provider validation"
+      :data-driven true
+      :description "Creates a provider using invalid data, and
+                    verifies that an error notification is shown in
+                    the UI."
+      validation
+      (get-validation-data))
+
+    
+    (deftest "Rename a custom provider"
+      (with-unique [old-name  "rename"
+                    new-name  "newname"]
+        (create-provider {:name old-name :description "my description"})
+        (edit-provider {:name old-name :new-name new-name})
+        (verify-provider-renamed old-name new-name)))
+    
+    
+    (deftest "Delete a custom provider"
+      (with-unique [provider-name "auto-provider-delete"]
+        (create-provider {:name provider-name :description "my description"})
+        (delete-provider provider-name)))
+
+    
+    (deftest "Create two providers with the same name, in two different orgs"
+      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs)))
+
+  )
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(def validation
+    (fn [pred provider]
+      (field-validation create-provider [provider] pred)))
+
+
+
 
