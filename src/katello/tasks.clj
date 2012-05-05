@@ -23,7 +23,7 @@
 
 (defmacro expecting-error
   "Execute forms, if error is caught matching selector, nil is
-   returned, otherwise object to-throw is thrown."
+   returned, otherwise an :unexpected-success error is thrown."
   [selector & forms]
   `(try+ ~@forms
          (throw+ {:type :unexpected-success :expected ~selector})
@@ -40,7 +40,9 @@
   [s]
   (for [t (timestamps)] (str s "-" t)))
 
-(defn uniqueify "Get one unique name using s as the base string."
+(defn uniqueify
+  "Returns one unique string using s as the base string.
+   Example: (unique-name 'joe') -> 'joe-12694956934'"
   [s]
   (first (unique-names s)))
 
@@ -133,7 +135,7 @@
   Example: (navigate :named-organization-page {:org-name 'My org'})
   See also katello.locators/page-tree for all the places that can be
   navigated to."
-       :arglists ([location-kw & [argmap]])}
+       :arglists '([location-kw & [argmap]])}
   navigate (nav/nav-fn locators/page-tree))
 
 (defn fill-ajax-form
@@ -369,6 +371,16 @@
                                      :env-name env-name})
   (activate-in-place :env-prior-select-edit)
   (set (browser getSelectOptions :env-prior-select-edit)))
+
+(defn create-environment-path
+  "Creates a path of environments in the given org. All the names in
+  the environment list must not already exist in the given org. Example:
+  (create-environment-path 'ACME_Corporation' ['Dev' 'QA' 'Production'])"
+  [org-name environments]
+  (let [env-chain  (partition 2 1 (concat [library] environments))]
+    (doseq [[prior curr] env-chain]
+      (create-environment curr {:prior-env prior
+                                :org-name org-name}))))
 
 (defn create-provider
   "Creates a custom provider with the given name and description."

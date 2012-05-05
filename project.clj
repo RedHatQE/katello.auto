@@ -19,7 +19,8 @@
                             :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
-  :autodoc {:name "Katello GUI Automation"})
+  :autodoc {:name "Katello GUI Automation"
+            :web-src-dir "https://github.com/weissjeffm/katello.auto/blob/"})
 
 (comment 
          "Execute this in the repl to load everything and start selenium"

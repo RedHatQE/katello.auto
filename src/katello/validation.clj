@@ -83,7 +83,7 @@
   be a function that creates some entity in katello, eg. an org,
   environment, provider, etc. The args provided should cause create-fn
   to not fill in a name field. Example:
-   (name-field-required create-organization [""]])"
+   (name-field-required create-organization [''])"
    [create-fn args]
   (field-validation create-fn args (expect-error :name-cant-be-blank)))
 

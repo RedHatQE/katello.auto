@@ -15,19 +15,19 @@
 (def test-provider-name (atom nil))
 (def test-product-name (atom nil))
 
-(defn with-two-orgs
-  "Create two orgs with unique names, and call f with a unique entity
-  name, and the org names. Used for verifying (for instance) that
-  envs or providers with the same name can be created in 2 different
-  orgs.  Switches back to admin org after f is called."
-  [f]
+(defn with-n-new-orgs
+  "Create n organizations with unique names. Then calls function f
+  with a unique name, and the org names. This is useful for verifying
+  whether the same name for an entity can be used across orgs.
+  Switches back to admin org after f is called."
+  [n f]
   (let [ent-name (tasks/uniqueify "samename")
-        orgs (take 2 (tasks/unique-names "ns-org"))]
+        orgs (take n (tasks/unique-names "ns-org"))]
     (doseq [org orgs]
       (api/with-admin (api/create-organization org)))
     (try
       (f ent-name orgs)
-      (finally (tasks/switch-org (@config :admin-org)) ))))
+      (finally (tasks/switch-org (@config :admin-org))))))
 
 
 (defn with-two-providers
@@ -97,7 +97,7 @@
 
 (def namespace-provider
   (fn []
-    (with-two-orgs (fn [prov-name orgs]
+    (with-n-new-orgs 2 (fn [prov-name orgs]
                      (doseq [org orgs]
                        (tasks/switch-org org)
                        (tasks/create-provider {:name prov-name}))))))
@@ -113,7 +113,7 @@
 
 (def namespace-product-in-org
   (fn []
-    (with-two-orgs
+    (with-n-new-orgs 2
       (fn [product-name orgs]
         (doseq [org orgs]
           (tasks/switch-org org)
