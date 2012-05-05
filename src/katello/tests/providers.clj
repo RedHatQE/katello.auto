@@ -2,10 +2,10 @@
   (:refer-clojure :exclude [fn])
   (:require [katello.api-tasks :as api]
             [clj-http.client :as http]
-            [clojure.java.io :as io]
-            [katello.tests.e2e :as e2e])
+            [clojure.java.io :as io])
   (:use katello.tasks
         katello.validation
+        [katello.tests.e2e :only [test-client-access]]
         test.tree.script
         [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
@@ -13,16 +13,15 @@
         [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [config]]))
 
-;; Load more tests groups into this namespace
-(load "providers/custom")
-(load "providers/redhat")
-
 ;; Functions
 
 (defn get-all-providers []
   (map :name (api/with-admin (api/all-entities :provider))))
 
-(defn verify-provider-renamed [old-name new-name]
+(defn verify-provider-renamed
+  "Verifies that a provider named old-name doesn't exist, that that a
+  provider named new-name does exist."
+  [old-name new-name]
   (let [current-provider-names (get-all-providers)]
     (verify-that (and (some #{new-name} current-provider-names)
                       (not (some #{old-name} current-provider-names))))))
@@ -54,6 +53,7 @@
     (f ent-name providers)))
 
 (defn create-same-provider-in-multiple-orgs
+  "Create providers with the same name in multiple orgs."
   [prov-name orgs]
   (doseq [org orgs]
     (switch-org org)
@@ -90,6 +90,11 @@
 
 ;; Tests
 
+;; Load more tests groups into this namespace
+(load "providers/custom-product")
+(load "providers/redhat")
+
+
 (defgroup all-provider-tests
   
   (deftest "Create a custom provider" 
@@ -125,8 +130,16 @@
 
     
     (deftest "Create two providers with the same name, in two different orgs"
-      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs)))
+      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
+
+    custom-product-tests
+    )
+
+
+  redhat-content-provider-tests
+
+  
   )
 
  

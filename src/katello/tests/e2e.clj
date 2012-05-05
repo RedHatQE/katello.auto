@@ -4,7 +4,6 @@
   (:refer-clojure :exclude [fn])
   (:use [serializable.fn :only [fn]]
         [katello.tasks]
-        [katello.tests.providers :only [redhat-provider-test-org]]
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [*session-user* *session-password* *environments* config]]
         [slingshot.slingshot :only [try+ throw+]]))
@@ -67,25 +66,7 @@
                                target-env
                                [{:name product-name :repos [repo-name]}] [package-to-install] )))))))
 
-(def client-access-redhat
-  (fn []
-    (let [target-env (first *environments*)
-          products [{:name "Nature Enterprise" :poolName "Nature Enterprise 8/5"
-                     :repos ["Nature Enterprise x86_64 6Server"
-                             "Nature Enterprise x86_64 5Server"]}
-                    #_{:name "Zoo Enterprise" :poolName "Zoo Enterprise 24/7"
-                       :repos ["Zoo Enterprise x86_64 6Server"
-                               "Zoo Enterprise x86_64 5Server"]}]
-          packages ["cheetah" "elephant"]]
-      (with-org @redhat-provider-test-org
-        (enable-redhat-repositories (apply concat (map :repos products)) )
-        (api/with-admin
-          (api/with-org @redhat-provider-test-org
-            (api/ensure-env-exist target-env {:prior library})
-            (test-client-access @redhat-provider-test-org
-                                target-env
-                                products
-                                packages)))))))
+
 
 
 

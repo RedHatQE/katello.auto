@@ -3,7 +3,22 @@
 ;; Variables
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
+
 (def redhat-provider-test-org (atom nil))
+
+(def redhat-products [{:name "Nature Enterprise"
+                       :poolName "Nature Enterprise 8/5"
+                       :repos ["Nature Enterprise x86_64 6Server"
+                               "Nature Enterprise x86_64 5Server"]}
+                      #_{:name "Zoo Enterprise"
+                         :poolName "Zoo Enterprise 24/7"
+                         :repos ["Zoo Enterprise x86_64 6Server"
+                                 "Zoo Enterprise x86_64 5Server"]}])
+
+(def redhat-repos (apply concat (map :repos redhat-products)))
+
+(def packages-to-install ["cheetah" "elephant"])
+
 
 ;; Functions
 
@@ -16,6 +31,9 @@
 
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync-complete-status repos))))
+
+(defn enable-redhat-repositories-in-org [org repos]
+  (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
 ;; Tests
 
@@ -41,8 +59,19 @@
           (enable-redhat-repositories repos)
           (navigate :sync-status-page)
           (verify-all-repos-not-synced repos))))
+    
 
-    (comment e2e/client-access-redhat)))
+    (deftest "Clients can access Red Hat content"
+      (with-org @redhat-provider-test-org
+        (enable-redhat-repositories redhat-repos)
+        (api/with-admin
+          (api/with-org @redhat-provider-test-org
+            (with-unique [target-env "myenv"]
+              (api/ensure-env-exist target-env {:prior library})
+              (test-client-access @redhat-provider-test-org
+                                  target-env
+                                  redhat-products
+                                  packages-to-install))))))))
 
 
 
