@@ -1,6 +1,7 @@
 (ns katello.tests.promotions
   (:require [katello.api-tasks :as api])
-  (:use katello.tasks
+  (:use test.tree.script
+        katello.tasks
         [katello.conf :only [config *environments*]]
         [test.tree.builder :only [data-driven dep-chain]]
         [serializable.fn :only [fn]]
@@ -9,9 +10,13 @@
         [com.redhat.qe.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
 
+;; Variables
+
 (def provider-name (atom nil))
 (def template-name (atom nil))
 (def envs (atom nil))
+
+;; Functions
 
 (defn chain-envs
   "Given a list of environments, and a function of two neighboring
@@ -21,15 +26,14 @@
   (doseq [[from-env target-env] (partition 2 1 envs)]
       (f from-env target-env)))
 
-(def setup
-  (fn []
-    (reset! provider-name (uniqueify "promo-"))
-               
-    (api/with-admin
-      (api/create-provider  @provider-name {:description "test provider for promotions"})
-      (reset! envs (conj *environments* library))
-      (chain-envs @envs (fn [prior curr] 
-                         (api/ensure-env-exist curr {:prior prior}))))))
+(defn create-test-provider-and-envs "Create a test provider and enviroments." []
+  (reset! provider-name (uniqueify "promo-"))
+  
+  (api/with-admin
+    (api/create-provider  @provider-name {:description "test provider for promotions"})
+    (reset! envs (conj *environments* library))
+    (chain-envs @envs (fn [prior curr] 
+                        (api/ensure-env-exist curr {:prior prior})))))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -73,29 +77,31 @@
                       (verify-all-content-present content (environment-content target-env))))))
 
 (def promo-data
-  [(fn [] [(take 2 @envs)
-          {:products (set (take 3 (unique-names "MyProduct")))}])
-   (fn [] [(take 3 @envs)
-          {:products (set (take 3 (unique-names "ProductMulti")))}])
-   (fn [] [(take 3 @envs)
-          {:templates (set (take 3 (unique-names "TemplateMulti")))}])
-   #_(fn [] [(take 2 @envs)
-           {:errata {:advisory "RHEA-2012:0001"
-                     :title "Beat_Erratum"
-                     :others ["Sea" "Bird" "Gorilla"]}}])])
+  (runtime-data
+   [(take 2 @envs) {:products (set (take 3 (unique-names "MyProduct")))}]
+   [(take 3 @envs) {:products (set (take 3 (unique-names "ProductMulti")))}]
+   [(take 3 @envs) {:templates (set (take 3 (unique-names "TemplateMulti")))}]
 
-(def tests
-  [{:configuration true
-    :name "set up promotions"
-    :steps setup
-    :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853")
-    :more
-    (-> {:name "promote content"
-        :steps verify-promote-content
-        :description "Takes content and promotes it thru more environments.
-                            Verifies that it shows up in the new env."}
-              
-       (data-driven promo-data)
-       dep-chain)}])
+   #_(comment "promoting errata requires some extra setup, disabled for now"
+               [(take 2 @envs) {:errata {:advisory "RHEA-2012:0001"
+                                         :title "Beat_Erratum"
+                                         :others ["Sea" "Bird" "Gorilla"]}}])))
+
+;; Tests
+
+(defgroup all-promotion-tests
+  :group-setup create-test-provider-and-envs
+  :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853")
+          
+  (dep-chain
+   (deftest "Promote content"
+     :data-driven true
+     :description "Takes content and promotes it thru more
+                   environments. Verifies that it shows up in the new
+                   env."
+     verify-promote-content
+     promo-data)))
+
+
 
 
