@@ -35,8 +35,13 @@
 (defn- access-org [org]
   (fn [] (navigate :named-organization-page {:org-name org})))
 
-(defn verify-access "First tries all actions with a user with no permissions, to make sure they all fail.  Then gives a new user the permissions, and retries the actions to ensure they all succeed, finally tries out-of-bounds actions to make sure they still fail."
-  [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
+(defn verify-access
+  "First tries all actions with a user with no permissions, to make
+  sure they all fail. Then gives a new user the permissions, and
+  retries the actions to ensure they all succeed, finally tries
+  out-of-bounds actions to make sure they still fail."
+  [{:keys [permissions allowed-actions disallowed-actions setup]}]
+  {:pre [permissions]}
   (let [rolename (uniqueify "role")
         username (uniqueify "user-perm")
         pw "password"]
@@ -47,7 +52,7 @@
     
     (create-role rolename)
     (edit-role rolename {:add-permissions permissions
-                               :users [username]})
+                         :users [username]})
     
     (try
       (let [with-perm-results (do (login username pw)
@@ -210,6 +215,7 @@
    ])
 
 ;; Tests
+
 (defgroup all-permission-tests
   
   (deftest "Create a role"
@@ -234,8 +240,8 @@
                                                     :verbs ["Read Organization"]}]}]
                   :users [user-name]}))
 
-    (comment (deftest "Verify user with specific permission has access only to what permission allows"
-               :data-driven true
+    (deftest "Verify user with specific permission has access only to what permission allows"
+      :data-driven true
 
-               verify-access
-               access-test-data)) ))
+      verify-access
+      access-test-data) ))

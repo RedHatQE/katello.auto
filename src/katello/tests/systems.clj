@@ -4,7 +4,8 @@
         test.tree.script
         [serializable.fn :only [fn]]
         [katello.conf :only [config *environments*]]
-        [com.redhat.qe.verify :only [verify-that]])
+        [com.redhat.qe.verify :only [verify-that]]
+        [bugzilla.checker :only [open-bz-bugs]])
   (:require (katello [api-tasks :as api]
                      [validation :as val])))
 
@@ -15,9 +16,9 @@
   (api/with-admin
     (api/ensure-env-exist test-environment {:prior library})))
 
-(defn register-new-test-system [env]
+(defn register-new-test-system []
   (api/with-admin
-    (api/with-env env
+    (api/with-env test-environment
       (api/create-system (uniqueify "newsystem")
                          {:facts (api/random-facts)}))))
 
@@ -27,9 +28,9 @@
     (navigate :named-systems-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
-   [system env]
+   [system]
   (navigate :named-system-environment-page
-            {:env-name env
+            {:env-name test-environment
              :system-name (:name system)})
   (verify-that (= (:environment_id system)
                   (api/with-admin
@@ -40,19 +41,22 @@
 
 (defgroup all-system-tests
   :group-setup create-test-environment
-
+  :blockers (open-bz-bugs "717408" "728357")
   
-  (deftest "Rename an existing system" 
-    (-> test-environment
-       register-new-test-system
-       verify-system-rename))
+  (deftest "Rename an existing system"
+    :blockers (open-bz-bugs "729364") 
+    (verify-system-rename (register-new-test-system)))
 
   
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
+    :blockers (open-bz-bugs "738054")
+
     (verify-system-appears-on-env-page (register-new-test-system)))
 
   
   (deftest "Subscribe a system to a product"
+    :blockers (open-bz-bugs "733780" "736547" "784701")
+
     (with-unique [provider-name "subscr-prov"
                   product-name "subscribe-me"]
       (api/with-admin
@@ -63,6 +67,8 @@
 
   
   (deftest "Create an activation key" 
+    :blockers (open-bz-bugs "750354")
+
     (create-activation-key {:name (uniqueify "auto-key")
                             :description "my description"
                             :environment test-environment})

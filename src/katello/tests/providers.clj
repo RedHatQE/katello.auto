@@ -15,7 +15,8 @@
 
 ;; Functions
 
-(defn get-all-providers []
+(defn get-all-providers "Uses API to return all provider names in the admin org"
+  []
   (map :name (api/with-admin (api/all-entities :provider))))
 
 (defn verify-provider-renamed
@@ -133,14 +134,9 @@
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
 
-    custom-product-tests
-    )
-
-
-  redhat-content-provider-tests
-
+    custom-product-tests)
   
-  )
+  redhat-content-provider-tests)
 
  
 

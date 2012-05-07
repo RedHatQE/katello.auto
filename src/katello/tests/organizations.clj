@@ -28,7 +28,7 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (field-validation create-test-org [name] (expect-error expected-error)))
+  (field-validation create-organization [name] (expect-error expected-error)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (create-organization org-name {:description "org to delete and recreate"})
@@ -75,6 +75,7 @@
     
     (deftest "Verify proper error message when invalid org name is used"
       :data-driven true
+      :blockers (open-bz-bugs "726724")
       
       verify-bad-org-name-gives-expected-error
       bad-org-names)
@@ -88,7 +89,8 @@
   
     (deftest "Search for an organization"
       :description "Search for organizations based on criteria." 
-    
+      :blockers    (open-bz-bugs "750120")
+      
       (with-unique [org-name "myfoobarorg"]
         (create-test-org                               org-name)
         (verify-all-search-results-contain-criteria    :organizations        {:criteria "myfoobar"})))
@@ -99,7 +101,7 @@
     
       (with-unique [org-name "auto-del"]
         (create-test-org              org-name)
-        (delete-organization          org-name            {:confirm-timeout-ms 200000})
+        (delete-organization          org-name)
         (verify-that                  (org-does-not-exist? org-name)))
 
     
@@ -112,7 +114,7 @@
           (try
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
             (switch-org                          (@config :admin-org))
-            (delete-organization                 org-name {:confirm-timeout-ms 200000})
+            (delete-organization                 org-name)
             ;;wait for delayed job to delete org
             (Thread/sleep                        30000)
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)

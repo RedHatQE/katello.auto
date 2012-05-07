@@ -44,6 +44,8 @@
 
     
     (deftest "Delete a custom product"
+      :blockers (open-bz-bugs "729364")
+      
       (let [product {:provider-name @test-provider-name
                      :name (uniqueify "deleteme")
                      :description "test product to delete"}]
@@ -51,6 +53,8 @@
         (delete-product product)))
 
     (deftest "Create a repository"
+      :blockers (open-bz-bugs "729364")
+
       (add-repo {:provider-name @test-provider-name
                  :product-name @test-product-name
                  :name (uniqueify "repo")
@@ -58,6 +62,8 @@
 
       
       (deftest "Delete a repository"
+        :blockers (open-bz-bugs "745279")
+        
         (let [repo {:provider-name @test-provider-name
                     :product-name @test-product-name
                     :name (uniqueify "deleteme")
@@ -67,6 +73,8 @@
 
     
     (deftest "Create two products with the same name, in different orgs"
+      :blockers (open-bz-bugs "784712" "802795")
+
       (with-n-new-orgs 2 create-same-product-name-in-multiple-orgs))
 
 

@@ -3,7 +3,8 @@
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
-        test.tree.script 
+        test.tree.script
+        [bugzilla.checker :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]]
         [katello.conf :only [config *environments*]]))
 
@@ -45,6 +46,9 @@
   :group-setup create-sync-test-repo
   
   (deftest "Sync a small repo"
+    :blockers (open-bz-bugs "705355" "711105" "712318" "715004"
+                            "727674" "727627" "790246")
+    
     (->>
      (sync-repos [@repo-name] 120000)
      vals
@@ -52,6 +56,8 @@
      verify-that))
 
   (deftest "Create a sync plan"
+    :blockers (open-bz-bugs "729364")
+
     (create-sync-plan {:name (reset! plan-name (uniqueify "plan"))
                        :description "my plan"
                        :interval "hourly"
@@ -88,6 +94,8 @@
 
 
     (deftest "Assign a sync plan to multiple products"      
+      :blockers (open-bz-bugs "751876")
+      
       (let [second-product-name (uniqueify "MySecondProduct")
             product-names [@product-name second-product-name]]
         (api/with-admin

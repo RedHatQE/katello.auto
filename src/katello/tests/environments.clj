@@ -8,7 +8,8 @@
         [katello.conf :only [config]]
         [katello.tests.providers :only [with-n-new-orgs]]
         [com.redhat.qe.verify :only [verify-that]]
-        [serializable.fn :only [fn]]))
+        [serializable.fn :only [fn]]
+        [bugzilla.checker :only [open-bz-bugs]]))
 
 ;; Variables
 
@@ -78,11 +79,15 @@
   :group-setup create-test-org
   
   (deftest "Create an environment"
+    :blockers (open-bz-bugs "693797" "707274")
+    
     (create-environment (uniqueify "simple-env") {:org-name @test-org-name
                                                   :description "simple environment description"})
 
     
-    (deftest "Delete an environment" 
+    (deftest "Delete an environment"
+      :blockers (open-bz-bugs "790246")
+      
       (with-unique [env-name "delete-env"]
         (create-environment env-name {:org-name @test-org-name
                                       :description "simple environment description"})
@@ -100,11 +105,11 @@
       
 
       (deftest "Verify that only environments at the end of their path can be deleted"
-
         :description "Creates 3 environments in a single path, tries
                       to delete the middle one, which should fail.
                       Then tries to delete the last one, which should
                       succeed."
+        :blockers    (open-bz-bugs "794799")
         
         (let [envs (take 3 (unique-names "env"))
               org (@config :admin-org)]
@@ -115,6 +120,8 @@
 
     
     (deftest "Cannot create two environments in the same org with the same name"
+      :blockers (open-bz-bugs "726724")
+      
       (verify-2nd-try-fails-with :name-must-be-unique-within-org
                                  create-environment
                                  (uniqueify "test-dup")
@@ -142,56 +149,3 @@
   (deftest "Enviroment name is required"
     (name-field-required create-environment [nil {:org-name @test-org-name
                                                   :description "env description"}])))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(comment (def environment-tests
-   [{:configuration true
-     :name "create a test org"
-     :steps envs/create-test-org
-     :more [{:name "create environment"
-             :blockers (open-bz-bugs "693797" "707274")
-             :steps envs/create
-             :more [{:name "delete environment"
-                     :steps envs/delete
-                     :more [{:name "delete environment same name different org"
-                             :description "Creates the same env name in two different orgs, deletes one and verifies the other still exists."
-                             :steps envs/delete-same-name-diff-org}
-
-                            {:name "delete environment with promoted content"
-                             :steps envs/delete-env-with-promoted-content
-                             :blockers (open-bz-bugs "790246")}
-
-                            {:name "only last environment in path can be deleted"
-                             :description "Try to delete an env from the middle of the path, and the last in the path, only the latter should be allowed."
-                             :steps envs/no-delete-middle-env
-                             :blockers (open-bz-bugs "794799")}]}
-                   
-                    {:name "duplicate environment disallowed"
-                     :blockers (open-bz-bugs "726724")
-                     :steps envs/dupe-disallowed}
-                   
-                    #_(comment "renaming disabled for v1"
-                               {:name "rename an environment"
-                                :steps envs/rename})
-
-                    {:name "environment namespace limited to org"
-                     :steps envs/create-same-name-diff-org}]}
-
-            {:name "environment name required"
-             :blockers (open-bz-bugs "726724")
-             :steps envs/name-required}]}]))

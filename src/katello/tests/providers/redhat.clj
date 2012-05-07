@@ -39,15 +39,16 @@
 
 (defgroup redhat-content-provider-tests
   :group-setup prepare-manifest-and-org 
-
+  :blockers (open-bz-bugs "729364")
 
   (deftest "upload-manifest"
     :description "Upload manifest, uses API currently, if I remember
                   right, the UI no longer allows selenium to select
                   the manifest file."
-    :what-test-should-do (comment (with-org @redhat-provider-test-org
-                                    (upload-subscription-manifest manifest-tmp-loc
-                                                                  {:repository-url (@config :redhat-repo-url)})))
+    :what-test-should-do (comment
+                           (with-org @redhat-provider-test-org
+                             (upload-subscription-manifest manifest-tmp-loc
+                                                           {:repository-url (@config :redhat-repo-url)})))
 
     (api/with-admin (api/with-org @redhat-provider-test-org
                       (api/upload-manifest manifest-tmp-loc (@config :redhat-repo-url))))

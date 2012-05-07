@@ -4,10 +4,14 @@
   (:refer-clojure :exclude [fn])
   (:use [serializable.fn :only [fn]]
         [katello.tasks]
+        test.tree.script
+        test.tree.builder
+        [bugzilla.checker :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]]
-        [katello.conf :only [*session-user* *session-password* *environments* config]]
-        [slingshot.slingshot :only [try+ throw+]]))
+        slingshot.slingshot
+        [katello.conf :only [*session-user* *session-password* *environments* config]]))
 
+;; Functions
 
 (defn test-client-access
   "content like [ {:name 'myprod' :poolName 'myprod 24/7' :repos ['myrepoa' 'myrepob']} ]"
@@ -42,9 +46,14 @@
                        (client/run-cmd (format "rpm -q %s" all-packages))]]
       (->> cmd-results (map :exit-code) (every? zero?) verify-that))))
 
+;; Tests
 
-(def client-access-custom
-  (fn []
+(defgroup all-end-to-end-tests 
+
+  (deftest "Clients can access custom content"
+    :blockers (union (blocking-tests "simple sync" "promote content")
+                     (open-bz-bugs "784853" "790246"))
+   
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")
           repo-name (uniqueify "safari-x86_64")
@@ -53,18 +62,18 @@
           package-to-install "cheetah"]
       (with-org (@config :admin-org)
         (api/with-admin
-         (api/with-admin-org
-           (api/ensure-env-exist target-env {:prior library})
-           (create-provider {:name provider-name})
-           (add-product {:provider-name provider-name
-                         :name product-name})
-           (add-repo {:provider-name provider-name
-                      :product-name product-name
-                      :name repo-name
-                      :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
-           (test-client-access (@config :admin-org)
-                               target-env
-                               [{:name product-name :repos [repo-name]}] [package-to-install] )))))))
+          (api/with-admin-org
+            (api/ensure-env-exist target-env {:prior library})
+            (create-provider {:name provider-name})
+            (add-product {:provider-name provider-name
+                          :name product-name})
+            (add-repo {:provider-name provider-name
+                       :product-name product-name
+                       :name repo-name
+                       :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
+            (test-client-access (@config :admin-org)
+                                target-env
+                                [{:name product-name :repos [repo-name]}] [package-to-install] )))))))
 
 
 

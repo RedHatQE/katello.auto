@@ -6,7 +6,7 @@
   (:use katello.tasks
         test.tree.script
         [serializable.fn :only [fn]]
-        
+        [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [*environments*]]))
 
 ;; Variables
@@ -44,6 +44,7 @@
 
 (defgroup all-template-tests
   :group-setup setup-content
+  :blockers (open-bz-bugs "765888")
   
   (deftest "Create a system template" 
     (create-template {:name (reset! test-template-name (uniqueify "template"))

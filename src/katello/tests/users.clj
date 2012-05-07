@@ -2,7 +2,8 @@
   
   (:use test.tree.script
         katello.validation
-        katello.tasks))
+        katello.tasks
+        [bugzilla.checker :only [open-bz-bugs]]))
 
 ;;; Variables
 
@@ -19,6 +20,8 @@
 
 
     (deftest "Admin changes a user's password"
+      :blockers (open-bz-bugs "720469")
+      
       (with-unique [username "edituser"]
         (create-user    username                generic-user-details)
         (edit-user      username                {:new-password "changedpwd"})))
@@ -31,6 +34,8 @@
 
 
     (deftest "Two users with the same username is disallowed"
+      :blockers (open-bz-bugs "738425")
+
       (verify-2nd-try-fails-with       :name-taken-error     create-user    (uniqueify "dupeuser")    generic-user-details))
 
 
