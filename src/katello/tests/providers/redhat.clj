@@ -41,7 +41,7 @@
   :group-setup prepare-manifest-and-org 
   :blockers (open-bz-bugs "729364")
 
-  (deftest "upload-manifest"
+  (deftest "Upload a subscription manifest"
     :description "Upload manifest, uses API currently, if I remember
                   right, the UI no longer allows selenium to select
                   the manifest file."
@@ -54,7 +54,7 @@
                       (api/upload-manifest manifest-tmp-loc (@config :redhat-repo-url))))
 
 
-    (deftest "enable-redhat-repos"  
+    (deftest "Enable Red Hat repositories"  
       (let [repos ["Nature Enterprise x86_64 5Server" "Nature Enterprise x86_64 6Server"]]
         (with-org @redhat-provider-test-org
           (enable-redhat-repositories repos)
@@ -63,6 +63,9 @@
     
 
     (deftest "Clients can access Red Hat content"
+      :description "Enable repositories, promote content into an
+                    environment, register a system to that environment
+                    and install some packages."
       (with-org @redhat-provider-test-org
         (enable-redhat-repositories redhat-repos)
         (api/with-admin
