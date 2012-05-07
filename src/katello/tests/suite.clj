@@ -1,38 +1,27 @@
 (ns katello.tests.suite
   (:refer-clojure :exclude [fn])
-  (:require (katello.tests [setup :as setup]
-                           [organizations :as orgs]
-                           [providers :as providers]
-                           [promotions :as promotions]
-                           [sync_management :as sync]
-                           [login :as login]
-                           [environments :as envs]
-                           [systems :as systems]
-                           [users :as users]
-                           [permissions :as permissions]
-                           [templates :as templates]
-                           [e2e :as e2e])
+  (:require (katello.tests organizations providers promotions
+                           sync_management login environments
+                           systems users permissions templates e2e)
             
-            [test.tree.jenkins :as jenkins])
-  (:use test.tree.script
-        fn.trace 
-        [serializable.fn :only [fn]]
-        [bugzilla.checker :only [open-bz-bugs]]))
+            [test.tree.jenkins :as jenkins]
+            [katello.tests.setup :as setup]
+            serializable.fn)
+  (:use test.tree.script))
 
 (defgroup all-katello-tests
       :test-setup login/navigate-toplevel
 
-      login/all-login-tests
-      orgs/all-org-tests
-      envs/all-environment-tests
-      providers/all-provider-tests
-      systems/all-system-tests
-      sync/all-sync-tests
-      users/all-user-tests
-      permissions/all-permission-tests
-      templates/all-template-tests
-      e2e/all-end-to-end-tests
-      )
+      katello.tests.login/all-login-tests
+      katello.tests.organizations/all-org-tests
+      katello.tests.environments/all-environment-tests
+      katello.tests.providers/all-provider-tests
+      katello.tests.systems/all-system-tests
+      katello.tests.sync_management/all-sync-tests
+      katello.tests.users/all-user-tests
+      katello.tests.permissions/all-permission-tests
+      katello.tests.templates/all-template-tests
+      katello.tests.e2e/all-end-to-end-tests)
 
 (defn suite
   ([] (suite nil))
@@ -50,9 +39,9 @@
   '[katello.tasks
     katello.api-tasks
     katello.client
-    katello.tests.setup/start-selenium
-    katello.tests.setup/stop-selenium
-    katello.tests.setup/switch-new-admin-user
+    katello.setup/start-selenium
+    katello.setup/stop-selenium
+    katello.setup/switch-new-admin-user
     com.redhat.qe.verify/check
     com.redhat.qe.auto.selenium.selenium/call-sel
     com.redhat.qe.config/property-map])

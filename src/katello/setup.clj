@@ -1,4 +1,4 @@
-(ns katello.tests.setup
+(ns katello.setup
   (:refer-clojure :exclude [replace])
   (:require [clojure.data :as data]
             (katello [tasks :as tasks]
