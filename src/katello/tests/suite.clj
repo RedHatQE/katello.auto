@@ -37,7 +37,8 @@
 (defn suite
   ([] (suite nil))
   ([group]
-     (with-meta (-> group (or "all-katello-tests") symbol resolve deref)
+     (with-meta (-> group (or "katello.tests.suite/all-katello-tests")
+                   symbol resolve deref)
        (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
                                                   (Integer.))
                                                (catch Exception e 3))]
