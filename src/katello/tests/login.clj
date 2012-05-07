@@ -36,7 +36,7 @@
   (verify-that   (= (current-user) *session-user*)))
 ;;; tests
 
-(defgroup logintests
+(defgroup all-login-tests
 
   (deftest "login as invalid user"
     :data-driven true

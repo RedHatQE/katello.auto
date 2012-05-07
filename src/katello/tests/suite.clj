@@ -22,8 +22,17 @@
 (defgroup all-katello-tests
       :test-setup login/navigate-toplevel
 
+      login/all-login-tests
       orgs/all-org-tests
-      envs/all-environment-tests)
+      envs/all-environment-tests
+      providers/all-provider-tests
+      systems/all-system-tests
+      sync/all-sync-tests
+      users/all-user-tests
+      permissions/all-permission-tests
+      templates/all-template-tests
+      e2e/all-end-to-end-tests
+      )
 
 (defn suite
   ([] (suite "all-katello-tests"))
