@@ -9,14 +9,19 @@
         test.tree.script
         [bugzilla.checker :only [open-bz-bugs]]))
 
-;; Keywords
+;; Functions
 
-(defn create-test-org [org-name]
+(defn create-test-org
+  "Creates an organization named org-name via the API"
+  [org-name]
   (api/with-admin-creds
     (api/create-organization org-name
                              {:description "organization used to test environments."})))
 
-(defn get-all-org-names []
+(defn get-all-org-names
+  "Returns a list of the names of all the organizations in the system.
+   Uses the API."
+  []
   (doall (map :name
               (api/with-admin-creds
                 (api/all-entities :organization)))))
@@ -56,7 +61,7 @@
 
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
-      (create-test-org     org-name)
+      (create-organization     org-name)
       (verify-that         (org-exists? org-name)))
 
   

@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
-                           systems users permissions templates e2e)
+                           systems users permissions templates
+                           e2e navigation)
             
             [test.tree.jenkins :as jenkins]
             [katello.tests.setup :as setup]
@@ -13,6 +14,7 @@
       :test-setup login/navigate-toplevel
 
       katello.tests.login/all-login-tests
+      katello.tests.navigation/all-nav-tests
       katello.tests.organizations/all-org-tests
       katello.tests.environments/all-environment-tests
       katello.tests.providers/all-provider-tests
@@ -55,7 +57,8 @@
     'katello.tasks/timestamps})
 
 (defn -main [ & args]
-  (jenkins/run-suite (suite (first args)) {:to-trace to-trace
-                              :do-not-trace do-not-trace}))
+  (jenkins/run-suite (suite (first args))
+                     {:to-trace to-trace
+                      :do-not-trace do-not-trace}))
 
 

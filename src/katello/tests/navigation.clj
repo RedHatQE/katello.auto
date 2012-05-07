@@ -3,7 +3,7 @@
         katello.tasks
         [katello.locators :only [tab-list]] ))
 
-;;; Keywords
+;;; Functions
 
 (defn verify-navigation
   "Navigates to a tab"
@@ -14,13 +14,13 @@
 (def all-navigation-tabs
   (map vector tab-list))
 
+
 ;;; Tests
 
+(defgroup all-nav-tests
 
-(defgroup navtests
-
-  (deftest :data-driven 
-    "navigate to tab"
+  (deftest "Navigate to tab" 
+    :data-driven true
     verify-navigation
  
     all-navigation-tabs))

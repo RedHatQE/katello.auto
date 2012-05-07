@@ -10,12 +10,8 @@
 ;;; Functions
 
 (defn navigate-toplevel [& _]
-  ;;since this will be juxtaposed in with data-driven tests that take
-  ;;arguments, this function needs to accept any number of args (it
-  ;;will just ignore them)
+  ;;to be used as a :before-test for all tests
   (navigate :top-level))
-
-;;; Keywords
 
 (defn verify-invalid-login-rejected
   "Try to login with the given credentials, verify that a proper error
@@ -34,7 +30,9 @@
   (logout)
   (login         *session-user*         *session-password*)
   (verify-that   (= (current-user) *session-user*)))
-;;; tests
+
+
+;;; Tests
 
 (defgroup all-login-tests
 

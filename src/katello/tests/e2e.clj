@@ -14,7 +14,11 @@
 ;; Functions
 
 (defn test-client-access
-  "content like [ {:name 'myprod' :poolName 'myprod 24/7' :repos ['myrepoa' 'myrepob']} ]"
+  "In an org named org-name, promotes products into target-env. Then
+   on a client machine, registers the client to the Katello server,
+   subscribes to the products, and then installs packages-to-install.
+   Example of products: [ {:name 'myprod' :poolName 'myprod
+   24/7' :repos ['myrepoa' 'myrepob']} ]"
   [org-name target-env products packages-to-install]
   (let [all-prods (map :name products)
         all-pools (map #(or (:poolName %1)

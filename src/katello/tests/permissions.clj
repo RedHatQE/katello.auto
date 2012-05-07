@@ -36,12 +36,14 @@
   (fn [] (navigate :named-organization-page {:org-name org})))
 
 (defn verify-access
-  "First tries all actions with a user with no permissions, to make
-  sure they all fail. Then gives a new user the permissions, and
-  retries the actions to ensure they all succeed, finally tries
-  out-of-bounds actions to make sure they still fail."
-  [{:keys [permissions allowed-actions disallowed-actions setup]}]
-  {:pre [permissions]}
+  "Assigns a new user to a new role with the given permissions. That
+   user is logs in, and tries the allowed-actions to ensure they all
+   succeed, finally tries disallowed-actions to make sure they all
+   fail. If any setup needs to be done to set up an action, a no-arg
+   function can be passed in as setup. (for instance, if you're
+   testing a permission to modify users, you need a test user to
+   attempt to modify)."
+  [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
   (let [rolename (uniqueify "role")
         username (uniqueify "user-perm")
         pw "password"]
@@ -229,8 +231,8 @@
 
  
   (deftest "Add a permission and user to a role"
-    (let [user-name (uniqueify "role-user")
-          role-name (uniqueify "edit-role")]
+    (with-unique [user-name "role-user"
+                  role-name "edit-role"]
       (create-user user-name {:password "abcd1234" :email "me@my.org"})
       (create-role role-name)
       (edit-role role-name
