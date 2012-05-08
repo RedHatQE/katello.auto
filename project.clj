@@ -6,6 +6,7 @@
                  [test.tree.jenkins "0.1.0-SNAPSHOT"]
                  [test.tree "0.7.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
+                 [ui.navigate "0.1.0"]
                  [webui-framework "1.0.2-SNAPSHOT"]
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]

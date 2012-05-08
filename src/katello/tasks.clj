@@ -1,6 +1,6 @@
 (ns katello.tasks
   (:require [katello.locators :as locators]
-            [com.redhat.qe.auto.navigate :as nav]
+            [ui.navigate :as nav]
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
@@ -152,7 +152,7 @@
   See also katello.locators/page-tree for all the places that can be
   navigated to."
        :arglists '([location-kw & [argmap]])}
-  navigate (nav/nav-fn locators/page-tree))
+  navigate (nav/nav-fn #'locators/page-tree))
 
 (defn fill-ajax-form
   "Fills in a web form and clicks the submit button. Only waits for

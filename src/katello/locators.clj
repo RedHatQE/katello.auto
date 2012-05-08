@@ -2,7 +2,7 @@
   (:use [com.redhat.qe.auto.selenium.selenium :only
          [fill-form SeleniumLocatable browser ->browser sel-locator load-wait no-wait]]
         [katello.conf :only [config]]
-        [com.redhat.qe.auto.navigate :only [nav-tree]]
+        [ui.navigate :only [nav-tree page-zip]]
         [com.redhat.qe.config :only [same-name]]
         [clojure.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
@@ -328,17 +328,10 @@
 
 
 ;;nav tricks
-(defn via
-  "Performs a navigation step by clicking a locator and calling
-   optional post-click function."
-  [link & [post-fn]]
-  (browser click link)
-  ((or post-fn no-wait)))
-
-(defn select-environment-widget [env-name & [{:keys [next-env-name wait-fn]}]]
+(defn select-environment-widget [env-name & [{:keys [next-env-name]}]]
   (do (when (browser isElementPresent :expand-path)
         (browser click :expand-path))
-      (via (promotion-env-breadcrumb env-name next-env-name) wait-fn)))
+      (browser click (promotion-env-breadcrumb env-name next-env-name))))
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
@@ -387,66 +380,67 @@
   provider). Finally some code to navigate to the location from its
   parent location. See also katello.tasks/navigate."}
   page-tree
-  (nav-tree [:top-level [] (if (or (not (browser isElementPresent :log-out))
-                                   (browser isElementPresent :confirmation-dialog))
-                             (browser open (@config :server-url)))
-             [:content-management-tab [] (browser mouseOver :content-management)
-              [:content-providers-tab [] (browser mouseOver :content-providers)
-               [:custom-content-providers-tab [] (via :custom-content-providers load-wait)
-                [:new-provider-page [] (via :new-provider)]
-                [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
-                 [:provider-products-repos-page [] (do (via :products-and-repositories)
-                                                       (browser sleep 2000))
-                  [:named-product-page [product-name] (do (via (editable product-name)))]
-                  [:named-repo-page [product-name repo-name] (via (editable repo-name))]]
-                 [:provider-details-page [] (via :details)]
-                 [:provider-subscriptions-page [] (via :subscriptions)]]]
-               [:redhat-provider-tab [] (via :red-hat-content-provider load-wait)]]
-              [:sync-management-page [] (browser mouseOver :sync-management)
-               [:sync-status-page [] (via :sync-status load-wait)]
-               [:sync-plans-page [] (via :sync-plans load-wait)
-                [:named-sync-plan-page [sync-plan-name]
-                 (choose-left-pane (left-pane-item sync-plan-name))]
-                [:new-sync-plan-page [] (via :new-sync-plan)]]
-               [:sync-schedule-page [] (via :sync-schedule load-wait)]]
-              [:promotions-page [] (via :promotions load-wait)
-               [:named-environment-promotions-page [env-name next-env-name]
-                (select-environment-widget env-name {:next-env-name next-env-name
-                                                     :wait-fn load-wait})
-                [:named-changeset-promotions-page [changeset-name]
-                 (via (changeset changeset-name))]]]
-              [:system-templates-page [] (via :system-templates load-wait)
-               [:named-system-template-page [template-name] (via (slide-link template-name))]
-               [:new-system-template-page [] (via :new-template)]]]
-             [:systems-tab [] (browser mouseOver :systems)
-              [:systems-all-page [] (via :all load-wait)
-               [:systems-by-environment-page [] (via :by-environments load-wait)
-               [:named-systems-page [system-name] (choose-left-pane
-                                                   (left-pane-item system-name))
-                [:system-subscriptions-page [] (via :subscriptions-right-nav)]]]]
-              [:activation-keys-page [] (via :activation-keys load-wait)
-               [:named-activation-key-page [activation-key-name]
-                (choose-left-pane (left-pane-item activation-key-name))]
-               [:new-activation-key-page [] (via :new-activation-key)]]
-              [:systems-environment-page [env-name]
-               (do (via :by-environments load-wait)
-                   (select-environment-widget env-name))
-               [:named-system-environment-page [system-name]
-                (choose-left-pane (left-pane-item system-name))]]]
-             [:organizations-tab [] (via :organizations load-wait)
-              [:new-organization-page [] (via :new-organization)]
-              [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
-               [:new-environment-page [] (via :new-environment)]
-               [:named-environment-page [env-name] (via (environment-link env-name))]]]
-             [:administration-tab [] (browser mouseOver :administration)
-              [:users-tab [] (via :users load-wait)
-               [:named-user-page [username] (choose-left-pane (user username))
-                [:user-environments-page [] (via :environments-subsubtab)]
-                [:user-roles-permissions-page [] (via :roles-subsubtab)]]]
-              [:roles-tab [] (via :roles load-wait)
-               [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
-                [:named-role-users-page [] (via :role-users)]
-                [:named-role-permissions-page [] (via :role-permissions)]]]]]))
+  (page-zip (nav-tree
+    [:top-level [] (if (or (not (browser isElementPresent :log-out))
+                           (browser isElementPresent :confirmation-dialog))
+                     (browser open (@config :server-url)))
+     [:content-management-tab [] (browser mouseOver :content-management)
+      [:content-providers-tab [] (browser mouseOver :content-providers)
+       [:custom-content-providers-tab [] (browser clickAndWait :custom-content-providers)
+        [:new-provider-page [] (browser click :new-provider)]
+        [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
+         [:provider-products-repos-page [] (->browser (click :products-and-repositories)
+                                                      (sleep 2000))
+          [:named-product-page [product-name] (browser click (editable product-name))]
+          [:named-repo-page [product-name repo-name] (browser click (editable repo-name))]]
+         [:provider-details-page [] (browser click :details)]
+         [:provider-subscriptions-page [] (browser click :subscriptions)]]]
+       [:redhat-provider-tab [] (browser clickAndWait :red-hat-content-provider)]]
+      [:sync-management-page [] (browser mouseOver :sync-management)
+       [:sync-status-page [] (browser clickAndWait :sync-status)]
+       [:sync-plans-page [] (browser clickAndWait :sync-plans)
+        [:named-sync-plan-page [sync-plan-name]
+         (choose-left-pane (left-pane-item sync-plan-name))]
+        [:new-sync-plan-page [] (browser click :new-sync-plan)]]
+       [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
+      [:promotions-page [] (browser clickAndWait :promotions)
+       [:named-environment-promotions-page [env-name next-env-name]
+        (select-environment-widget env-name {:next-env-name next-env-name
+                                             :wait-fn load-wait})
+        [:named-changeset-promotions-page [changeset-name]
+         (browser click (changeset changeset-name))]]]
+      [:system-templates-page [] (browser clickAndWait :system-templates)
+       [:named-system-template-page [template-name] (browser click (slide-link template-name))]
+       [:new-system-template-page [] (browser click :new-template)]]]
+     [:systems-tab [] (browser mouseOver :systems)
+      [:systems-all-page [] (browser clickAndWait :all)
+       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
+        [:named-systems-page [system-name] (choose-left-pane
+                                            (left-pane-item system-name))
+         [:system-subscriptions-page [] (browser click :subscriptions-right-nav)]]]]
+      [:activation-keys-page [] (browser clickAndWait :activation-keys)
+       [:named-activation-key-page [activation-key-name]
+        (choose-left-pane (left-pane-item activation-key-name))]
+       [:new-activation-key-page [] (browser click :new-activation-key)]]
+      [:systems-environment-page [env-name]
+       (do (browser clickAndWait :by-environments)
+           (select-environment-widget env-name))
+       [:named-system-environment-page [system-name]
+        (choose-left-pane (left-pane-item system-name))]]]
+     [:organizations-tab [] (browser clickAndWait :organizations)
+      [:new-organization-page [] (browser click :new-organization)]
+      [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
+       [:new-environment-page [] (browser click :new-environment)]
+       [:named-environment-page [env-name] (browser click (environment-link env-name))]]]
+     [:administration-tab [] (browser mouseOver :administration)
+      [:users-tab [] (browser clickAndWait :users)
+       [:named-user-page [username] (choose-left-pane (user username))
+        [:user-environments-page [] (browser click :environments-subsubtab)]
+        [:user-roles-permissions-page [] (browser click :roles-subsubtab)]]]
+      [:roles-tab [] (browser clickAndWait :roles)
+       [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
+        [:named-role-users-page [] (browser click :role-users)]
+        [:named-role-permissions-page [] (browser click :role-permissions)]]]]])))
 
 (def tab-list '(:redhat-provider-tab 
                 :roles-tab :users-tab 
