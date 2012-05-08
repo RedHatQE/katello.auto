@@ -27,7 +27,7 @@
            (do
              (do (require 'katello.tasks :reload-all)
                  (require 'katello.conf :reload)
-                 (require 'katello.tests.setup :reload)
+                 (require 'katello.setup :reload)
                  (require 'katello.client :reload)
 
                  (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
@@ -40,8 +40,8 @@
                                             "root" nil
                                             (@katello.conf/config :client-ssh-key)
                                             (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
-             (katello.tests.setup/new-selenium "*firefox" true)
-             (katello.tests.setup/start-selenium)) ;;<-here for selenium
+             (katello.setup/new-selenium "*firefox" true)
+             (katello.setup/start-selenium)) ;;<-here for selenium
            )
 
 (comment "Execute this in the repl to create some test entities via API"
@@ -53,7 +53,7 @@
                       '[katello.tests.templates]
                       '[katello.conf])
              (katello.conf/init)
-             (katello.tests.promotions/setup)
+             (katello.tests.promotions/setup)  ;;needs updating, fn names have changed
              (katello.tests.sync_management/setup)
              (katello.tests.templates/setup-content))
          )
