@@ -1,4 +1,4 @@
-(defproject katello "1.0.0-SNAPSHOT"
+(defproject katello.auto "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main katello.tests.suite
   :omit-default-repositories true
@@ -17,7 +17,7 @@
   
   :jvm-opts ["-Xmx192m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
-                            :snapshots {:update :always}}
+                               :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
   :autodoc {:name "Katello GUI Automation"
@@ -25,7 +25,8 @@
 
 (comment 
          "Execute this in the repl to load everything and start selenium"
-           (do
+           (do  ;;here for eclipse/selenium
+             
              (do (require 'katello.tasks :reload-all)
                  (require 'katello.conf :reload)
                  (require 'katello.setup :reload)
@@ -42,7 +43,7 @@
                                             (@katello.conf/config :client-ssh-key)
                                             (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
              (katello.setup/new-selenium "*firefox" true)
-             (katello.setup/start-selenium)) ;;<-here for selenium
+             (katello.setup/start-selenium)) ;;<-here for emacs/selenium
            )
 
 (comment "Execute this in the repl to create some test entities via API"
