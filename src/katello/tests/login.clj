@@ -34,7 +34,7 @@
 
 ;;; Tests
 
-(defgroup all-login-tests
+(defgroup login-tests
 
   (deftest "login as invalid user"
     :data-driven true

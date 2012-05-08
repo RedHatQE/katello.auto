@@ -75,7 +75,7 @@
 
 ;; Tests
 
-(defgroup all-environment-tests
+(defgroup environment-tests
   :group-setup create-test-org
   
   (deftest "Create an environment"

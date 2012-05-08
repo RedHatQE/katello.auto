@@ -42,7 +42,7 @@
 
 ;; Tests
 
-(defgroup all-sync-tests
+(defgroup sync-tests
   :group-setup create-sync-test-repo
   
   (deftest "Sync a small repo"

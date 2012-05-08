@@ -10,25 +10,25 @@
             serializable.fn)
   (:use test.tree.script))
 
-(defgroup all-katello-tests
+(defgroup katello-tests
       :test-setup katello.tests.login/navigate-toplevel
 
-      katello.tests.login/all-login-tests
-      katello.tests.navigation/all-nav-tests
-      katello.tests.organizations/all-org-tests
-      katello.tests.environments/all-environment-tests
-      katello.tests.providers/all-provider-tests
-      katello.tests.systems/all-system-tests
-      katello.tests.sync_management/all-sync-tests
-      katello.tests.users/all-user-tests
-      katello.tests.permissions/all-permission-tests
-      katello.tests.templates/all-template-tests
-      katello.tests.e2e/all-end-to-end-tests)
+      katello.tests.login/login-tests
+      katello.tests.navigation/nav-tests
+      katello.tests.organizations/org-tests
+      katello.tests.environments/environment-tests
+      katello.tests.providers/provider-tests
+      katello.tests.systems/system-tests
+      katello.tests.sync_management/sync-tests
+      katello.tests.users/user-tests
+      katello.tests.permissions/permission-tests
+      katello.tests.templates/template-tests
+      katello.tests.e2e/end-to-end-tests)
 
 (defn suite
   ([] (suite nil))
   ([group]
-     (with-meta (-> group (or "katello.tests.suite/all-katello-tests")
+     (with-meta (-> group (or "katello.tests.suite/katello-tests")
                    symbol resolve deref)
        (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
                                                   (Integer.))

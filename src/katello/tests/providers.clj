@@ -96,7 +96,7 @@
 (load "providers/redhat")
 
 
-(defgroup all-provider-tests
+(defgroup provider-tests
   
   (deftest "Create a custom provider" 
     (create-provider {:name (uniqueify "auto-cp")

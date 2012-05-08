@@ -39,7 +39,7 @@
 ;; Tests
 
 
-(defgroup all-system-tests
+(defgroup system-tests
   :group-setup create-test-environment
   :blockers (open-bz-bugs "717408" "728357")
   

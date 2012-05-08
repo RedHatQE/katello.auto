@@ -13,7 +13,7 @@
 
 ;;; Tests
 
-(defgroup all-user-tests
+(defgroup user-tests
   
   (deftest "Admin creates a user"
     (create-user       (uniqueify "autouser")   generic-user-details)

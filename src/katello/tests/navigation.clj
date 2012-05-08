@@ -17,7 +17,7 @@
 
 ;;; Tests
 
-(defgroup all-nav-tests
+(defgroup nav-tests
 
   (deftest "Navigate to tab" 
     :data-driven true

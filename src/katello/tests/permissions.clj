@@ -218,7 +218,7 @@
 
 ;; Tests
 
-(defgroup all-permission-tests
+(defgroup permission-tests
   
   (deftest "Create a role"
     (create-role (uniqueify "testrole")))

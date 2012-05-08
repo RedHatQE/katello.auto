@@ -42,7 +42,7 @@
 
 ;; Tests
 
-(defgroup all-template-tests
+(defgroup template-tests
   :group-setup setup-content
   :blockers (open-bz-bugs "765888")
   

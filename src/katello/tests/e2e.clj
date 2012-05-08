@@ -52,7 +52,7 @@
 
 ;; Tests
 
-(defgroup all-end-to-end-tests 
+(defgroup end-to-end-tests 
 
   (deftest "Clients can access custom content"
     :blockers (union (blocking-tests "simple sync" "promote content")

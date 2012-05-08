@@ -57,7 +57,7 @@
 
 ;; Tests
 
-(defgroup all-org-tests
+(defgroup org-tests
 
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
