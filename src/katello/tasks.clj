@@ -845,3 +845,12 @@
      (try (switch-org ~org-name)
           ~@body
           (finally (switch-org curr-org#)))))
+
+(defn assign-user-default-org-and-env 
+  "Assigns a default organization and environment to a user"
+  [username org-name env-name]
+  (navigate :user-environments-page {:username username})
+  (browser select :user-default-org-select org-name)
+  (browser click (locators/environment-link env-name))
+  (browser click :save-user-environment)
+  (check-for-success))

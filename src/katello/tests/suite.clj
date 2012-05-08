@@ -6,12 +6,12 @@
                            e2e navigation)
             
             [test.tree.jenkins :as jenkins]
-            [katello.tests.setup :as setup]
+            [katello.setup :as setup]
             serializable.fn)
   (:use test.tree.script))
 
 (defgroup all-katello-tests
-      :test-setup login/navigate-toplevel
+      :test-setup katello.tests.login/navigate-toplevel
 
       katello.tests.login/all-login-tests
       katello.tests.navigation/all-nav-tests

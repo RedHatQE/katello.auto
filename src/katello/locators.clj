@@ -197,6 +197,9 @@
                  :changeset-content "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
 
 (def users {:roles-subsubtab "//div[@class='panel-content']//a[.='Roles']"
+            :environments-subsubtab "//div[@class='panel-content']//a[.='Environments']"
+            :user-default-org-select "org_id[org_id]"
+            :save-user-environment "update_user"
             :new-user "//a[@id='new']"
             :new-user-username-text "username_field"
             :new-user-password-text "password_field"
@@ -438,6 +441,7 @@
              [:administration-tab [] (browser mouseOver :administration)
               [:users-tab [] (via :users load-wait)
                [:named-user-page [username] (choose-left-pane (user username))
+                [:user-environments-page [] (via :environments-subsubtab)]
                 [:user-roles-permissions-page [] (via :roles-subsubtab)]]]
               [:roles-tab [] (via :roles load-wait)
                [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
