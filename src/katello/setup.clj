@@ -1,13 +1,14 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
   (:require [clojure.data :as data]
-            (katello [tasks :as tasks]
+            (katello [ui-tasks :as ui]
                      [api-tasks :as api]
                      [client :as client]) 
             [test.tree.watcher :as watch]
             [test.tree.jenkins :as jenkins])
   (:use [clojure.string :only [split replace]]
-        [katello.conf]
+        katello.conf
+        katello.tasks
         fn.trace 
         com.redhat.qe.auto.selenium.selenium))
 
@@ -22,7 +23,7 @@
 (defn start-selenium []  
   (browser start)
   (browser open (@config :server-url) jquery-ajax-finished)
-  (tasks/login (@config :admin-user) (@config :admin-password)))
+  (ui/login (@config :admin-user) (@config :admin-password)))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
@@ -31,13 +32,16 @@
   (api/with-creds (@config :admin-user) (@config :admin-password)
     (api/create-user user {:password pw
                            :email (str user "@myorg.org")}))
-  (tasks/assign-role {:user user
+  (ui/assign-role {:user user
                       :roles ["Administrator"]})
-  (tasks/logout)
-  (tasks/login user pw))
+  (ui/logout)
+  (ui/login user pw))
 
 (defn stop-selenium []
   (browser stop))
+
+(defn autodetect-headpin? "Checks the UI footer to determine whether this is a katello or "[]
+  )
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
@@ -49,7 +53,7 @@
       (binding [tracer (per-thread-tracer)
                 sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))
-                *session-user* (tasks/uniqueify
+                *session-user* (uniqueify
                                 (str (@config :admin-user)
                                      thread-number))
                 client/*runner* (when *clients*

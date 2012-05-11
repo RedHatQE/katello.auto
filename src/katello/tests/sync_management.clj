@@ -3,6 +3,7 @@
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
+        katello.ui-tasks
         test.tree.script
         [bugzilla.checker :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]]

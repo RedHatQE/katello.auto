@@ -2,6 +2,7 @@
   (:require [katello.api-tasks :as api])
   (:use test.tree.script
         katello.tasks
+        katello.ui-tasks
         [katello.conf :only [config *environments*]]
         [test.tree.builder :only [data-driven dep-chain]]
         [serializable.fn :only [fn]]
@@ -89,7 +90,7 @@
 
 ;; Tests
 
-(defgroup all-promotion-tests
+(defgroup promotion-tests
   :group-setup create-test-provider-and-envs
   :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853")
           

@@ -4,6 +4,7 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
+        katello.ui-tasks
         katello.validation
         [katello.tests.e2e :only [test-client-access]]
         test.tree.script

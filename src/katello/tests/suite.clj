@@ -11,19 +11,34 @@
   (:use test.tree.script))
 
 (defgroup katello-tests
-      :test-setup katello.tests.login/navigate-toplevel
+  :test-setup katello.tests.login/navigate-toplevel
 
-      katello.tests.login/login-tests
-      katello.tests.navigation/nav-tests
-      katello.tests.organizations/org-tests
-      katello.tests.environments/environment-tests
-      katello.tests.providers/provider-tests
-      katello.tests.systems/system-tests
-      katello.tests.sync_management/sync-tests
-      katello.tests.users/user-tests
-      katello.tests.permissions/permission-tests
-      katello.tests.templates/template-tests
-      katello.tests.e2e/end-to-end-tests)
+  katello.tests.login/login-tests
+  katello.tests.navigation/nav-tests
+  katello.tests.organizations/org-tests
+  katello.tests.environments/environment-tests
+  katello.tests.providers/provider-tests
+  katello.tests.systems/system-tests
+  katello.tests.sync_management/sync-tests
+  katello.tests.users/user-tests
+  katello.tests.permissions/permission-tests
+  katello.tests.promotions/promotion-tests
+  katello.tests.e2e/end-to-end-tests)
+
+
+
+(defgroup sam-tests
+  :description "All the tests that apply to SAM or headpin."
+  :test-setup katello.tests.login/navigate-toplevel
+  
+  katello.tests.login/login-tests
+  katello.tests.navigation/nav-tests
+  katello.tests.organizations/org-tests
+  katello.tests.providers/redhat-content-provider-tests
+  katello.tests.environments/environment-tests
+  katello.tests.systems/system-tests
+  katello.tests.users/user-tests
+  )
 
 (defn suite
   ([] (suite nil))
@@ -39,6 +54,7 @@
 ;;list of namespaces and fns we want to trace 
 (def to-trace 
   '[katello.tasks
+    katello.ui-tasks
     katello.api-tasks
     katello.client
     katello.setup/start-selenium

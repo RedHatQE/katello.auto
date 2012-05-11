@@ -1,7 +1,9 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
+        katello.ui-tasks
         test.tree.script
+        [test.tree.builder :only [union]]
         [serializable.fn :only [fn]]
         [katello.conf :only [config *environments*]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -54,8 +56,9 @@
     (verify-system-appears-on-env-page (register-new-test-system)))
 
   
-  (deftest "Subscribe a system to a product"
-    :blockers (open-bz-bugs "733780" "736547" "784701")
+  (deftest "Subscribe a system to a custom product"
+    :blockers (union (open-bz-bugs "733780" "736547" "784701")
+                     api/katello-only)
 
     (with-unique [provider-name "subscr-prov"
                   product-name "subscribe-me"]

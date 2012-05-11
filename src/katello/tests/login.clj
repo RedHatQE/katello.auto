@@ -3,6 +3,7 @@
   (:use test.tree.script
         katello.conf
         katello.tasks
+        katello.ui-tasks
         slingshot.slingshot
         [bugzilla.checker :only [open-bz-bugs]]
         [com.redhat.qe.verify :only [verify-that]]))
@@ -22,7 +23,7 @@
    (login username password)
    (when (-> (notification) :type (= :success))
      (throw (RuntimeException. "Login succeeded with bad credentials.")))
-   (catch [:type :katello.tasks/invalid-credentials] _)
+   (catch [:type :katello.ui-tasks/invalid-credentials] _)
    (finally
     (login *session-user* *session-password*))))
 

@@ -3,6 +3,7 @@
   (:require (katello [api-tasks :as api]
                      [validation :as validate]))
   (:use katello.tasks
+        katello.ui-tasks
         katello.validation
         [katello.conf :only [config]]
         [com.redhat.qe.verify :only [verify-that]]
@@ -110,7 +111,9 @@
         (verify-that                  (org-does-not-exist? org-name)))
 
     
-      (deftest "Create an org with content, delete it and recreate it"    
+      (deftest "Create an org with content, delete it and recreate it"
+        :blockers api/katello-only
+        
         (with-unique [org-name       "delorg"
                       provider-name  "delprov"
                       product-name   "delprod"

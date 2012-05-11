@@ -4,6 +4,7 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
+        katello.ui-tasks
         test.tree.script
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]
@@ -18,7 +19,7 @@
 
 ;; Functions
 
-(defn setup-content []  
+(defn setup-custom-content []  
   (let [provider-name (uniqueify "template")
         cs-name (uniqueify "cs")]
     (api/with-admin
@@ -43,12 +44,12 @@
 ;; Tests
 
 (defgroup template-tests
-  :group-setup setup-content
   :blockers (open-bz-bugs "765888")
   
   (deftest "Create a system template" 
     (create-template {:name (reset! test-template-name (uniqueify "template"))
                       :description "my test template"})
 
-    (deftest "Add content to a system template"
+    (deftest "Add custom content to a system template"
+      (setup-custom-content)
       (add-to-template @test-template-name @repos))))

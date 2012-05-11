@@ -4,6 +4,8 @@
   (:import [com.redhat.qe.auto.testng TestScript]
            [java.util.logging Logger Level]))
 
+
+
 ;;config layer
 ;;
 ;;mapping of configuration keys to java properties that may have been
@@ -52,4 +54,10 @@
   ;;list makes it easier to conj on library at the beginning
   (def ^:dynamic *environments* (apply list (split (@config :environments) #",")))) 
 
+
+(def current-version (atom nil))
+
+(defn match-server-version? "Returns true if the regex matches the version running"
+  [re]
+  (re-matches re @current-version))
 

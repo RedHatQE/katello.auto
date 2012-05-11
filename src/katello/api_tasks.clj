@@ -345,3 +345,29 @@
       (if (-> sync-info :state (= "finished"))
         sync-info
         (recur (rest/get url {:basic-auth [*user* *password*]}))))))
+
+(def get-server-version
+  (memoize
+   (fn [url]
+     (rest/get url {:basic-auth [*user* *password*]}))))
+
+(defn get-version []
+  (get-server-version (api-url "/api/version")))
+
+(defn is-katello? []
+  (-> (get-version) :name (= "Headpin") with-admin-creds not))
+
+(def is-headpin? (complement is-katello?))
+
+(defmacro when-katello [& body]
+  `(when (is-katello?) ~@body))
+
+(defmacro when-headpin [& body]
+  `(when (is-headpin?) ~@body))
+
+(defn katello-only
+  "A function you can call from :blockers of any test so it will skip
+   if run against a non-katello (eg SAM or headpin) deployment"
+  [_]
+  (if (->> (get-version) :name (= "Headpin") with-admin-creds)
+    ["This test is for Katello based deployments only and this is aheadpin-based server."] []))

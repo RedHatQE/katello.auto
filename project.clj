@@ -27,7 +27,7 @@
          "Execute this in the repl to load everything and start selenium"
            (do  ;;here for eclipse/selenium
              
-             (do (require 'katello.tasks :reload-all)
+             (do (require 'katello.ui-tasks :reload-all)
                  (require 'katello.conf :reload)
                  (require 'katello.setup :reload)
                  (require 'katello.client :reload)

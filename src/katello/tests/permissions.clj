@@ -1,6 +1,7 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
+        katello.ui-tasks
         test.tree.script
         [serializable.fn :only [fn]]
         [com.redhat.qe.verify :only [verify-that]]

@@ -54,7 +54,9 @@
                       (api/upload-manifest manifest-tmp-loc (@config :redhat-repo-url))))
 
 
-    (deftest "Enable Red Hat repositories"  
+    (deftest "Enable Red Hat repositories"
+      :blockers api/katello-only
+      
       (let [repos ["Nature Enterprise x86_64 5Server" "Nature Enterprise x86_64 6Server"]]
         (with-org @redhat-provider-test-org
           (enable-redhat-repositories repos)
@@ -67,7 +69,8 @@
                     environment, register a system to that environment
                     and install some packages."
       (with-org @redhat-provider-test-org
-        (enable-redhat-repositories redhat-repos)
+        (when (api/is-katello?)
+          (enable-redhat-repositories redhat-repos))
         (api/with-admin
           (api/with-org @redhat-provider-test-org
             (with-unique [target-env "myenv"]

@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require [clojure.string :as string])
   (:use [slingshot.slingshot :only [try+]]
-        [katello.tasks :only [success?]]
+        [katello.ui-tasks :only [success?]]
         [serializable.fn :only [fn]]
         [com.redhat.qe.config :only [same-name]]
         [com.redhat.qe.verify :only [verify-that]]))
@@ -66,7 +66,7 @@
    [create-fn args pred]
   (let [results (try+
                  (apply create-fn args)
-                 (catch [:type :katello.tasks/validation-failed] e
+                 (catch [:type :katello.ui-tasks/validation-failed] e
                    (assoc e :validation-errors (matching-validation-errors e))))] 
     (verify-that (pred results))))
 
@@ -104,7 +104,7 @@
   [pred create-fn & args]
   (let [results (try+
                  (apply create-fn args)
-                 (catch [:type :katello.tasks/validation-failed] e
+                 (catch [:type :katello.ui-tasks/validation-failed] e
                    (assoc e :validation-errors (matching-validation-errors e))))
         pred (if (keyword? pred)
                (expect-error pred)

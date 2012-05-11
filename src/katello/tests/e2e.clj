@@ -3,7 +3,8 @@
                      [api-tasks :as api]))
   (:refer-clojure :exclude [fn])
   (:use [serializable.fn :only [fn]]
-        [katello.tasks]
+        katello.tasks
+        katello.ui-tasks
         test.tree.script
         test.tree.builder
         [bugzilla.checker :only [open-bz-bugs]]
@@ -23,12 +24,14 @@
   (let [all-prods (map :name products)
         all-pools (map #(or (:poolName %1)
                             (:name %1)) products)
-        all-repos (apply concat (map :repos products))
-        sync-results (sync-repos all-repos {:timeout 600000})
-        all-packages (apply str (interpose " " packages-to-install)) ]
-    (verify-that (every? (fn [[_ res]] (sync-success? res))
-                         sync-results))
-    (promote-content library target-env {:products all-prods})
+        all-packages (apply str (interpose " " packages-to-install))]
+    
+    (when (api/is-katello?)
+      (let [all-repos (apply concat (map :repos products))
+            sync-results (sync-repos all-repos {:timeout 600000})]
+        (verify-that (every? (fn [[_ res]] (sync-success? res))
+                             sync-results))
+        (promote-content library target-env {:products all-prods})))
 
     ;;client side
     (client/setup-client)

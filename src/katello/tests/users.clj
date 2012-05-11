@@ -3,6 +3,7 @@
   (:use test.tree.script
         katello.validation
         katello.tasks
+        katello.ui-tasks
         [bugzilla.checker :only [open-bz-bugs]]))
 
 ;;; Variables

@@ -3,6 +3,7 @@
   (:require [katello.api-tasks :as api])
   (:use test.tree.script
         katello.tasks
+        katello.ui-tasks
         katello.validation
         slingshot.slingshot
         [katello.conf :only [config]]
@@ -99,6 +100,8 @@
 
 
       (deftest "Delete an environment that has had content promoted into it"
+        :blockers api/katello-only
+        
         (with-unique [env-name "del-w-content"]
           (setup-environment-with-promoted-content env-name)
           (delete-environment env-name {:org-name (@config :admin-org)})))
