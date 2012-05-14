@@ -14,8 +14,6 @@
 (def katello-auto-properties {:server-url ["katello.url"]
                               :admin-user ["katello.admin.user" "admin"]
                               :admin-password ["katello.admin.password" "admin"]
-                              :owner-user ["katello.owner.user" "acme_corporation_user"]
-                              :owner-password ["katello.owner.password" "acme_corporation_user"]
                               :selenium-address ["selenium.address" "localhost:4444"]
                               :selenium-browsers ["selenium.browsers" "*firefox"]
                               :threads ["test.tree.threads" "3"]
@@ -28,6 +26,19 @@
                               :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
                                                                            (System/getProperty "user.home"))]
                               :client-ssh-key-passphrase ["sm.sshkey.passphrase"]})
+
+(def defaults
+  :admin-user  "admin"
+  :admin-password  "admin"
+  :selenium-address  "localhost:4444"
+  :selenium-browsers  "*firefox"
+  :admin-org  "ACME_Corporation"
+  :sync-repo  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/rpms/" 
+  :redhat-repo-url  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"
+  :redhat-manifest-url  "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"
+  :environments  [ "Development" "Q-eh"]
+  :client-ssh-key  (format "%s/.ssh/id_auto_dsa"
+                           (System/getProperty "user.home")))
 
 (def config (atom {}))
 

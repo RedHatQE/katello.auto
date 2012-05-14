@@ -14,7 +14,7 @@
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
   :dev-dependencies [[lein-autodoc "0.9.0"]]
-  
+  :checksum-deps false
   :jvm-opts ["-Xmx192m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
