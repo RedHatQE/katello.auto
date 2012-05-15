@@ -352,12 +352,14 @@
      (rest/get url {:basic-auth [*user* *password*]}))))
 
 (defn get-version []
-  (get-server-version (api-url "/api/version")))
+  (try
+   (get-server-version (api-url "/api/version"))
+   (catch Exception _ {:name "unknown" :version "unknown"})))
 
-(defn is-katello? []
-  (-> (get-version) :name (= "Headpin") with-admin-creds not))
+(defn is-headpin? []
+  (-> (get-version) :name (= "Headpin") with-admin-creds))
 
-(def is-headpin? (complement is-katello?))
+(def is-katello? (complement is-headpin?))
 
 (defmacro when-katello [& body]
   `(when (is-katello?) ~@body))

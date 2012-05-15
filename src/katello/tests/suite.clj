@@ -74,7 +74,7 @@
   (let [[opts [suite] banner]
         (cli/cli args
                  ["-h" "--help" "Print usage guide" :default false :flag true]
-                 ["-c" "--config" "Config file (containing a clojure map of config options) to read and overlay on top of defaults" :default (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
+                 ["-c" "--config" "Config file (containing a clojure map of config options) to read and overlay on top of defaults"]
                  ["-n" "--num-threads" "Number of threads to run tests with" :parse-fn #(Integer. %) :default 3])]
     (conf/init (:config opts))
     (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)

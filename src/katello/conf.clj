@@ -30,7 +30,8 @@
 (defn init
   "Read in properties and set some defaults. This function should be
    called before selenium client is created or any tests are run."
-  [config-file]
+  ([] (init (format "%s/automation-properties.clj" (System/getProperty "user.home"))))
+  ([config-file]
   ;;bid adeiu to j.u.l logging
   (-> (Logger/getLogger "") (.setLevel Level/OFF))
   
@@ -44,7 +45,7 @@
   (when (@config :clients)
     (def ^:dynamic *clients* (@config :clients)))
   (def ^:dynamic *browsers* (@config :selenium-browsers))
-  (def ^:dynamic *environments* (@config :environments))) 
+  (def ^:dynamic *environments* (@config :environments)))) 
 
 
 
