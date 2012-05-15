@@ -3,9 +3,9 @@
   (:require [clojure.string :as string])
   (:use [slingshot.slingshot :only [try+]]
         [katello.ui-tasks :only [success?]]
-        [serializable.fn :only [fn]]
-        [com.redhat.qe.config :only [same-name]]
-        [com.redhat.qe.verify :only [verify-that]]))
+        [katello.tasks :only [same-name]]
+        [serializable.fn :only [fn]] 
+        [tools.verify :only [verify-that]]))
 
 (defn cant-be-blank-errors
   "Takes collection of keywords like :name and produces map entry like

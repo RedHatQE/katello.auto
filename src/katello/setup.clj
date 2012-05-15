@@ -40,9 +40,6 @@
 (defn stop-selenium []
   (browser stop))
 
-(defn autodetect-headpin? "Checks the UI footer to determine whether this is a katello or "[]
-  )
-
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
    each thread. Starts selenium client for each thread before kicking
@@ -71,10 +68,6 @@
 
 (def runner-config 
   {:thread-runner thread-runner
-   :setup (fn []
-            (init)
-            (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-            (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC))
    :watchers {:stdout-log watch/stdout-log-watcher
               :screencapture (watch/on-fail
                               (fn [t _] 

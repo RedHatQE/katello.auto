@@ -1,16 +1,20 @@
 (defproject katello.auto "1.0.0-SNAPSHOT"
   :description "Katello automation"  
-  :main katello.tests.suite
+  :main ^{:skip-aot true} katello.tests.suite
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [test.tree.jenkins "0.1.0-SNAPSHOT"]
                  [test.tree "0.7.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
-                 [webui-framework "1.0.2-SNAPSHOT"]
+                 [com.redhat.qe/tools.verify "1.0.0"]
+                 [com.redhat.qe/extended-selenium "1.0.3"]
+                 [com.redhat.qe/ssh-tools "1.0.0"]
+                 [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
                  [clj-http "0.3.2"]
+                 [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
   :dev-dependencies [[lein-autodoc "0.9.0"]]

@@ -6,7 +6,7 @@
         katello.ui-tasks
         slingshot.slingshot
         [bugzilla.checker :only [open-bz-bugs]]
-        [com.redhat.qe.verify :only [verify-that]]))
+        [tools.verify :only [verify-that]]))
 
 ;;; Functions
 

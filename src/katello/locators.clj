@@ -1,9 +1,9 @@
 (ns katello.locators
   (:use [com.redhat.qe.auto.selenium.selenium :only
-         [fill-form SeleniumLocatable browser ->browser sel-locator load-wait no-wait]]
+         [fill-form SeleniumLocatable browser ->browser sel-locator]]
         [katello.conf :only [config]]
+        [katello.tasks :only [same-name]]
         [ui.navigate :only [nav-tree page-zip]]
-        [com.redhat.qe.config :only [same-name]]
         [clojure.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
            [com.thoughtworks.selenium SeleniumException]))
@@ -341,12 +341,11 @@
   "Selects an item in the left pane. If the item is not found, a
    search is performed and the select is attempted again. Takes an
    optional post-fn to perform afterwards."
-  [item & [post-fn]]
+  [item]
   (try (browser click item)
        (catch SeleniumException se
          (do (search (-> item .getArguments first))
-             (browser click item)))
-       (finally ((or post-fn no-wait)))))
+             (browser click item)))))
 
 (defn toggler
   "Returns a function that returns a locator for the given on/off text
@@ -405,8 +404,7 @@
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
       [:promotions-page [] (browser clickAndWait :promotions)
        [:named-environment-promotions-page [env-name next-env-name]
-        (select-environment-widget env-name {:next-env-name next-env-name
-                                             :wait-fn load-wait})
+        (select-environment-widget env-name {:next-env-name next-env-name})
         [:named-changeset-promotions-page [changeset-name]
          (browser click (changeset changeset-name))]]]
       [:system-templates-page [] (browser clickAndWait :system-templates)

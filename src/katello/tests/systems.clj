@@ -6,7 +6,7 @@
         [test.tree.builder :only [union]]
         [serializable.fn :only [fn]]
         [katello.conf :only [config *environments*]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]])
   (:require (katello [api-tasks :as api]
                      [validation :as val])))

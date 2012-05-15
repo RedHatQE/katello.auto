@@ -8,7 +8,7 @@
         test.tree.script
         test.tree.builder
         [bugzilla.checker :only [open-bz-bugs]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         slingshot.slingshot
         [katello.conf :only [*session-user* *session-password* *environments* config]]))
 

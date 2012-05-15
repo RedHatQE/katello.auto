@@ -10,7 +10,7 @@
         test.tree.script
         [test.tree.builder :only [data-driven]]
         [serializable.fn :only [fn]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [config]]))
 

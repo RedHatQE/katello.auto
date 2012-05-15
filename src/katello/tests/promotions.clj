@@ -8,7 +8,7 @@
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]
         [clj-http.client :only [with-connection-pool]]
-        [com.redhat.qe.verify :only [verify-that]])
+        [tools.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
 
 ;; Variables

@@ -6,7 +6,7 @@
         katello.ui-tasks
         katello.validation
         [katello.conf :only [config]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         test.tree.script
         [bugzilla.checker :only [open-bz-bugs]]))
 

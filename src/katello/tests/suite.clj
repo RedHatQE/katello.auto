@@ -7,6 +7,8 @@
             
             [test.tree.jenkins :as jenkins]
             [katello.setup :as setup]
+            [katello.conf :as conf] 
+            [clojure.tools.cli :as cli]
             serializable.fn)
   (:use test.tree.script))
 
@@ -40,16 +42,12 @@
   katello.tests.users/user-tests
   )
 
-(defn suite
-  ([] (suite nil))
+(defn make-suite
+  ([] (make-suite nil))
   ([group]
      (with-meta (-> group (or "katello.tests.suite/katello-tests")
                    symbol resolve deref)
-       (merge {:threads (let [user-choice (try (-> (System/getProperty "test.tree.threads")
-                                                  (Integer.))
-                                               (catch Exception e 3))]
-                          (Math/min user-choice 5))} ;
-              setup/runner-config))))
+       (merge setup/runner-config))))
 
 ;;list of namespaces and fns we want to trace 
 (def to-trace 
@@ -60,7 +58,7 @@
     katello.setup/start-selenium
     katello.setup/stop-selenium
     katello.setup/switch-new-admin-user
-    com.redhat.qe.verify/check
+    tools.verify/check
     com.redhat.qe.auto.selenium.selenium/call-sel
     com.redhat.qe.config/property-map])
 
@@ -73,8 +71,15 @@
     'katello.tasks/timestamps})
 
 (defn -main [ & args]
-  (jenkins/run-suite (suite (first args))
-                     {:to-trace to-trace
-                      :do-not-trace do-not-trace}))
-
+  (let [[opts [suite] banner]
+        (cli/cli args
+                 ["-h" "--help" "Print usage guide" :default false :flag true]
+                 ["-c" "--config" "Config file (containing a clojure map of config options) to read and overlay on top of defaults" :default (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
+                 ["-n" "--num-threads" "Number of threads to run tests with" :parse-fn #(Integer. %) :default 3])]
+    (conf/init (:config opts))
+    (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
+    (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
+    (jenkins/run-suite
+     (vary-meta (make-suite suite) assoc :threads (:num-threads opts)) 
+     {:to-trace to-trace :do-not-trace do-not-trace})))
 

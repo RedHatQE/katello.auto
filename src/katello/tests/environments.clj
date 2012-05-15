@@ -8,7 +8,7 @@
         slingshot.slingshot
         [katello.conf :only [config]]
         [katello.tests.providers :only [with-n-new-orgs]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]))
 

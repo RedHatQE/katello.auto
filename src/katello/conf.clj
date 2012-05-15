@@ -1,46 +1,24 @@
 (ns katello.conf
-  (:use [com.redhat.qe.config :only [property-map]]
-        [clojure.string :only [split]])
-  (:import [com.redhat.qe.auto.testng TestScript]
-           [java.util.logging Logger Level]))
-
-
+  (:require [clojure.java.io :as io])
+  (:import [java.io PushbackReader]
+           [java.util.logging Level Logger]))
 
 ;;config layer
-;;
-;;mapping of configuration keys to java properties that may have been
-;;read in or passed in on the command line.  last optional item is a
-;;default if the property was not set.
-(def katello-auto-properties {:server-url ["katello.url"]
-                              :admin-user ["katello.admin.user" "admin"]
-                              :admin-password ["katello.admin.password" "admin"]
-                              :selenium-address ["selenium.address" "localhost:4444"]
-                              :selenium-browsers ["selenium.browsers" "*firefox"]
-                              :threads ["test.tree.threads" "3"]
-                              :admin-org ["katello.admin.org" "ACME_Corporation"]
-                              :sync-repo ["katello.sync.test.repo" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/rpms/"] 
-                              :redhat-repo-url ["katello.redhat.repo.url" "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"]
-                              :redhat-manifest-url ["katello.redhat.manifest.url" "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
-                              :environments ["katello.environments" "Development,Q-eh"]
-                              :clients ["katello.clients"]
-                              :client-ssh-key ["sm.sshkey.private" (format "%s/.ssh/id_auto_dsa"
-                                                                           (System/getProperty "user.home"))]
-                              :client-ssh-key-passphrase ["sm.sshkey.passphrase"]})
-
 (def defaults
-  :admin-user  "admin"
-  :admin-password  "admin"
-  :selenium-address  "localhost:4444"
-  :selenium-browsers  "*firefox"
-  :admin-org  "ACME_Corporation"
-  :sync-repo  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/rpms/" 
-  :redhat-repo-url  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"
-  :redhat-manifest-url  "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"
-  :environments  [ "Development" "Q-eh"]
-  :client-ssh-key  (format "%s/.ssh/id_auto_dsa"
-                           (System/getProperty "user.home")))
+  {:admin-user  "admin"
+   :admin-password  "admin"
+   :selenium-address  "localhost:4444"
+   :selenium-browsers  ["*firefox"]
+   :admin-org  "ACME_Corporation"
+   :sync-repo  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/content/nature/6Server/x86_64/rpms/" 
+   :redhat-repo-url  "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"
+   :redhat-manifest-url  "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"
+   :environments  '("Development" "Q-eh") ;;list makes it easier to conj on library at the beginning
+   :client-ssh-key  (format "%s/.ssh/id_auto_dsa"
+                            (System/getProperty "user.home"))})
 
-(def config (atom {}))
+(def config (atom defaults))
+
 
 (declare ^:dynamic *session-user*
          ^:dynamic *session-password*
@@ -52,23 +30,21 @@
 (defn init
   "Read in properties and set some defaults. This function should be
    called before selenium client is created or any tests are run."
-  []
-  (TestScript/loadProperties)
+  [config-file]
+  ;;bid adeiu to j.u.l logging
   (-> (Logger/getLogger "") (.setLevel Level/OFF))
-  (swap! config merge (property-map katello-auto-properties))
+  
+  (when config-file 
+    (let [user-config (with-open [r (io/reader config-file)]
+                        (read (PushbackReader. r)))]
+      (swap! config merge user-config)))
+  
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
   (when (@config :clients)
-    (def ^:dynamic *clients* (split (@config :clients) #",")))
-  (def ^:dynamic *browsers* (split (@config :selenium-browsers) #","))
-
-  ;;list makes it easier to conj on library at the beginning
-  (def ^:dynamic *environments* (apply list (split (@config :environments) #",")))) 
+    (def ^:dynamic *clients* (@config :clients)))
+  (def ^:dynamic *browsers* (@config :selenium-browsers))
+  (def ^:dynamic *environments* (@config :environments))) 
 
 
-(def current-version (atom nil))
-
-(defn match-server-version? "Returns true if the regex matches the version running"
-  [re]
-  (re-matches re @current-version))
 

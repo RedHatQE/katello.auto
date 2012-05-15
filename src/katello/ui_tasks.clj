@@ -8,8 +8,7 @@
         katello.tasks
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
-        [com.redhat.qe.config :only [kw-to-text]]
-        [com.redhat.qe.verify :only [verify-that]]
+        [tools.verify :only [verify-that]]
         [clojure.string :only [capitalize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
