@@ -46,7 +46,7 @@
                                             "root" nil
                                             (@katello.conf/config :client-ssh-key)
                                             (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
-             (katello.setup/new-selenium "*firefox" true)
+             (katello.setup/new-selenium (-> katello.conf/config deref :selenium-browsers first) true)
              (katello.setup/start-selenium)) ;;<-here for emacs/selenium
            )
 
