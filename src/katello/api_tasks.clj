@@ -58,7 +58,7 @@
   (into m (filter #((complement nil?) (second %)) newmap)))
 
 (defn api-url [& args]
-  (apply str (@config :server-url) args))
+  (apply str (@config :server-url) "/" args))
 
 (declare get-id-by-name)
 
