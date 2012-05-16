@@ -622,7 +622,6 @@
   name, a new description, and a new location."
   [name & {:keys [new-name description location]}]
   (navigate :named-systems-page {:system-name name})
-  (when-headpin (browser click :details))
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
                   :system-location-text-edit location})
