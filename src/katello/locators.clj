@@ -163,6 +163,7 @@
                 :redhat-provider-repository-url-text "provider[repository_url]"
                 :choose-file "provider_contents"
                 :upload "upload_submit"
+                :force-import-checkbox "force_import"
                 :enable-repositories-tab "//a[normalize-space(.)='Enable Repositories']"
                 :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 

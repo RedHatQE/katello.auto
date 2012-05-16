@@ -722,11 +722,13 @@
 (defn upload-subscription-manifest
   "Uploads a subscription manifest from the filesystem local to the
    selenium browser. Optionally specify a new repository url for Red
-   Hat content- if not specified, the default url is kept."
-  [file-path & [{:keys [repository-url]}]]
+   Hat content- if not specified, the default url is kept. Optionally
+   specify whether to force the upload."
+  [file-path & [{:keys [repository-url force]}]]
   (navigate :redhat-provider-tab)
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
+  (when force (browser check :force-import-checkbox))
   (fill-form {:choose-file file-path}
              :upload
              (fn [] (browser waitForPageToLoad "300000")))
