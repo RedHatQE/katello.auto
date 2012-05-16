@@ -65,6 +65,12 @@
       (create-organization     org-name)
       (verify-that         (org-exists? org-name)))
 
+    
+    (deftest "Create an organization with an initial environment"
+      (with-unique [org-name "auto-org"
+                    env-name "environment"]
+        (create-organization     org-name  {:initial-env-name env-name})
+        (verify-that         (org-exists? org-name))))
   
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
