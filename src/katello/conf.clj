@@ -30,7 +30,7 @@
 (defn init
   "Read in properties and set some defaults. This function should be
    called before selenium client is created or any tests are run."
-  ([] (init (format "%s/automation-properties.clj" (System/getProperty "user.home"))))
+  ([] (init "automation-properties.clj"))
   ([config-file]
   ;;bid adeiu to j.u.l logging
   (-> (Logger/getLogger "") (.setLevel Level/OFF))

@@ -10,5 +10,6 @@ junit*
 *.trace
 checkouts/
 report.clj
+automation-properties.clj
 bin/
 pom.xml
