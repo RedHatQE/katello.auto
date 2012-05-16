@@ -1,0 +1,10 @@
+lib/
+classes/
+target/
+test-output/
+.project
+.classpath
+testng*
+*.trace
+checkouts/
+report.clj
