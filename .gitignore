@@ -2,9 +2,13 @@ lib/
 classes/
 target/
 test-output/
+screenshots/
 .project
 .classpath
 testng*
+junit*
 *.trace
 checkouts/
 report.clj
+bin/
+pom.xml
