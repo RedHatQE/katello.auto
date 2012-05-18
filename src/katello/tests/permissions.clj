@@ -44,7 +44,7 @@
    function can be passed in as setup. (for instance, if you're
    testing a permission to modify users, you need a test user to
    attempt to modify)."
-  [{:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
+  [& {:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
   (let [rolename (uniqueify "role")
         username (uniqueify "user-perm")
         pw "password"]
@@ -81,139 +81,137 @@
   (fn [] (create-user (uniqueify "blah") {:password "password" :email "me@me.com"})))
 
 (def access-test-data
-  [(fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "Organizations"
-                                         :verbs ["Read Organization"]
-                                         :name "orgaccess"}]}]
-           :allowed-actions [(access-org (@conf/config :admin-org))]
-           :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                   :custom-content-providers-tab :system-templates-page
-                                                   :promotions-page )
-                                     (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-an-env)}])
+  [(fn [] [:permissions [{:org "Global Permissions"
+                         :permissions [{:resource-type "Organizations"
+                                        :verbs ["Read Organization"]
+                                        :name "orgaccess"}]}]
+          :allowed-actions [(access-org (@conf/config :admin-org))]
+          :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                  :custom-content-providers-tab :system-templates-page
+                                                  :promotions-page )
+                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    create-an-env)])
 
 
    
-   (fn [] [(let [org-name (uniqueify "org-create-perm")] ;;due to bz 756252 'create' means manage
-            {:permissions [{:org "Global Permissions"
-                            :permissions [{:resource-type "Organizations"
-                                           :verbs ["Administer Organization"]
-                                           :name "orgcreate"}]}]
-             :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
-                               (fn [] (delete-organization org-name))
-                               create-an-env]
-             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                     :custom-content-providers-tab :system-templates-page
-                                                     :promotions-page )
-                                       (fn [] (create-provider {:name "myprov"}))
-                                       (fn [] (api/create-provider "myprov")))})])
+   (fn [] (let [org-name (uniqueify "org-create-perm")] ;;due to bz 756252 'create' means manage
+           [:permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Organizations"
+                                          :verbs ["Administer Organization"]
+                                          :name "orgcreate"}]}]
+            :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
+                              (fn [] (delete-organization org-name))
+                              create-an-env]
+            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                    :custom-content-providers-tab :system-templates-page
+                                                    :promotions-page )
+                                      (fn [] (create-provider {:name "myprov"}))
+                                      (fn [] (api/create-provider "myprov")))]))
    
    
    (vary-meta
-    (fn [] [{:permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Organizations"
-                                          :verbs ["Register Systems"]
-                                          :name "systemreg"}]}]
-            :allowed-actions [(fn [] (api/with-admin-org
-                                      (api/with-env (first conf/*environments*)
-                                        (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
-                              (navigate-fn :systems-all-page)]
-            :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
-                                      (fn [] (create-organization (uniqueify "cantdothis"))))}])
+    (fn [] [:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Organizations"
+                                         :verbs ["Register Systems"]
+                                         :name "systemreg"}]}]
+           :allowed-actions [(fn [] (api/with-admin-org
+                                     (api/with-env (first conf/*environments*)
+                                       (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
+                             (navigate-fn :systems-all-page)]
+           :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
+                                     (fn [] (create-organization (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757775"))
    
    (vary-meta
-    (fn [] [{:permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Activation Keys"
-                                          :verbs ["Read Activation Keys"]
-                                          :name "akaccess"}]}]
-            :allowed-actions [(navigate-fn :activation-keys-page)]
-            :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
-                                                    :systems-all-page :systems-by-environment-page)
-                                      create-an-ak)}])
+    (fn [] [:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Activation Keys"
+                                         :verbs ["Read Activation Keys"]
+                                         :name "akaccess"}]}]
+           :allowed-actions [(navigate-fn :activation-keys-page)]
+           :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+                                                   :systems-all-page :systems-by-environment-page)
+                                     create-an-ak)])
     assoc :blockers (open-bz-bugs "757817"))
    
    (vary-meta
-    (fn [] [{:permissions [{:org "Global Permissions"
-                           :permissions [{:resource-type "Activation Keys"
-                                          :verbs ["Administer Activation Keys"]
-                                          :name "akmang"}]}]
-            :allowed-actions [create-an-ak]
-            :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
-                                                    :systems-all-page :systems-by-environment-page)
-                                      (fn [] (create-organization (uniqueify "cantdothis"))))}])
+    (fn [] [:permissions [{:org "Global Permissions"
+                          :permissions [{:resource-type "Activation Keys"
+                                         :verbs ["Administer Activation Keys"]
+                                         :name "akmang"}]}]
+           :allowed-actions [create-an-ak]
+           :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+                                                   :systems-all-page :systems-by-environment-page)
+                                     (fn [] (create-organization (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757817"))
 
-   (fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "System Templates"
-                                         :verbs ["Read System Templates"]
-                                         :name "stread"}]}]
-           :allowed-actions [(navigate-fn :system-templates-page)]
-           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
-                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
-                                     create-a-st
-                                     (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-an-env)}])
+   (fn [] [:permissions [{:org "Global Permissions"
+                         :permissions [{:resource-type "System Templates"
+                                        :verbs ["Read System Templates"]
+                                        :name "stread"}]}]
+          :allowed-actions [(navigate-fn :system-templates-page)]
+          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+                                                  :custom-content-providers-tab :sync-status-page :promotions-page)
+                                    create-a-st
+                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    create-an-env)])
 
-   (fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "System Templates"
-                                         :verbs ["Administer System Templates"]
-                                         :name "stmang"}]}]
-           :allowed-actions [create-a-st]
-           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
-                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
-                                     (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-an-env)}])
+   (fn [] [:permissions [{:org "Global Permissions"
+                         :permissions [{:resource-type "System Templates"
+                                        :verbs ["Administer System Templates"]
+                                        :name "stmang"}]}]
+          :allowed-actions [create-a-st]
+          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+                                                  :custom-content-providers-tab :sync-status-page :promotions-page)
+                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    create-an-env)])
    
-   (fn [] [{:permissions [{:org "Global Permissions"
-                          :permissions [{:resource-type "Users"
-                                         :verbs ["Read Users"]
-                                         :name "userread"}]}]
-           :allowed-actions [(navigate-fn :users-tab)]
-           :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
-                                                   :content-management-tab)
-                                     (fn [] (create-organization (uniqueify "cantdothis")))
-                                     create-an-env
-                                     create-a-user)}])
+   (fn [] [:permissions [{:org "Global Permissions"
+                         :permissions [{:resource-type "Users"
+                                        :verbs ["Read Users"]
+                                        :name "userread"}]}]
+          :allowed-actions [(navigate-fn :users-tab)]
+          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                  :content-management-tab)
+                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    create-an-env
+                                    create-a-user)])
 
-   (fn [] [(let [user (uniqueify "user")]
-            {:setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
-             :permissions [{:org "Global Permissions"
-                            :permissions [{:resource-type "Users"
-                                           :verbs ["Modify Users"]
-                                           :name "usermod"}]}]
-             :allowed-actions [(fn [] (edit-user user {:new-email "blah@me.com"}))]
-             :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
-                                                     :content-management-tab)
-                                       (fn [] (let [username (uniqueify "deleteme")]
-                                               (create-user username {:password "password" :email "mee@mee.com"})
-                                               (delete-user username))))})])
+   (fn [] (let [user (uniqueify "user")]
+           [:setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
+            :permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Users"
+                                          :verbs ["Modify Users"]
+                                          :name "usermod"}]}]
+            :allowed-actions [(fn [] (edit-user user {:new-email "blah@me.com"}))]
+            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                    :content-management-tab)
+                                      (fn [] (let [username (uniqueify "deleteme")]
+                                              (create-user username {:password "password" :email "mee@mee.com"})
+                                              (delete-user username))))]))
 
-   (fn []
-     [(let [user (uniqueify "user")]
-        {:permissions [{:org "Global Permissions"
-                        :permissions [{:resource-type "Users"
-                                       :verbs ["Delete Users"]
-                                       :name "userdel"}]}]
-         :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
-         :allowed-actions [(fn [] (delete-user user))]
-         :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
-                                                 :content-management-tab)
-                                   create-a-user)})])
+   (fn [] (let [user (uniqueify "user")]
+           [:permissions [{:org "Global Permissions"
+                           :permissions [{:resource-type "Users"
+                                          :verbs ["Delete Users"]
+                                          :name "userdel"}]}]
+            :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
+            :allowed-actions [(fn [] (delete-user user))]
+            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+                                                    :content-management-tab)
+                                      create-a-user)]))
 
-   (fn []
-     [(let [org (uniqueify "org")]
-        {:permissions [{:org (@conf/config :admin-org)
-                        :permissions [{:resource-type "Organizations"
-                                       :verbs ["Read Organization"]
-                                       :name "orgaccess"}]}]
-         :setup (fn [] (api/create-organization org))
-         :allowed-actions [(access-org (@conf/config :admin-org))]
-         :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
-                                                 :custom-content-providers-tab :system-templates-page
-                                                 :promotions-page )
-                                   (fn [] (switch-org org))
-                                   (fn [] (navigate :named-organization-page {:org-name org})))})])
+   (fn [] (let [org (uniqueify "org")]
+           [:permissions [{:org (@conf/config :admin-org)
+                            :permissions [{:resource-type "Organizations"
+                                           :verbs ["Read Organization"]
+                                           :name "orgaccess"}]}]
+            :setup (fn [] (api/create-organization org))
+            :allowed-actions [(access-org (@conf/config :admin-org))]
+            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+                                                    :custom-content-providers-tab :system-templates-page
+                                                    :promotions-page )
+                                      (fn [] (switch-org org))
+                                      (fn [] (navigate :named-organization-page {:org-name org})))]))
    
    ])
 
