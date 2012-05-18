@@ -76,7 +76,7 @@
                                          (str 
                                           (:name t)
                                           (if (:parameters t)
-                                            (str "-" (replace (pr-str (:parameters t)) "/" "\\"))
+                                            (str "-" (System/currentTimeMillis))
                                             "")
                                           ".png")
                                          false)))}})
