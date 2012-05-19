@@ -35,6 +35,13 @@
 (defn enable-redhat-repositories-in-org [org repos]
   (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
+(defn upload-test-manifest-to-test-org [& opts]
+  (with-org @redhat-provider-test-org
+    (upload-subscription-manifest manifest-tmp-loc
+                                  (merge {:repository-url (@config :redhat-repo-url)
+                                          :force force?}
+                                         opts))))
+
 ;; Tests
 
 (defgroup redhat-content-provider-tests
@@ -42,9 +49,10 @@
   :blockers (open-bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
-    (with-org @redhat-provider-test-org
-      (upload-subscription-manifest manifest-tmp-loc
-                                    {:repository-url (@config :redhat-repo-url)}))
+    (upload-test-manifest-to-test-org)            
+
+    (deftest "Upload the same manifest to an org using force"
+      (upload-test-manifest-to-test-org {:force true}))
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
