@@ -3,12 +3,14 @@
   :main ^{:skip-aot true} katello.tests.suite
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.4.0"]
+                 [swank-clojure "1.4.2"]
                  [test.tree.jenkins "0.1.0-SNAPSHOT"]
                  [test.tree "0.7.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
                  [com.redhat.qe/tools.verify "1.0.0"]
                  [com.redhat.qe/extended-selenium "1.0.3.3"]
+                 [org.seleniumhq.selenium/selenium-server "2.21.0"]
                  [com.redhat.qe/ssh-tools "1.0.0"]
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [slingshot "0.8.0"]
@@ -27,28 +29,11 @@
   :autodoc {:name "Katello GUI Automation"
             :web-src-dir "https://github.com/weissjeffm/katello.auto/blob/"})
 
-(comment 
-         "Execute this in the repl to load everything and start selenium"
-           (do  ;;here for eclipse/selenium
-             
-             (do (require 'katello.ui-tasks :reload-all)
-                 (require 'katello.conf :reload)
-                 (require 'katello.setup :reload)
-                 (require 'katello.client :reload)
-
-                 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-                 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-                 
-                 (katello.conf/init)
-                 (when katello.conf/*clients*
-                   (katello.client/connect (katello.client/new-runner
-                                            (first katello.conf/*clients*)
-                                            "root" nil
-                                            (@katello.conf/config :client-ssh-key)
-                                            (@katello.conf/config :client-ssh-key-passphrase))))) ;;<-here for api only
-             (katello.setup/new-selenium (-> katello.conf/config deref :selenium-browsers first) true)
-             (katello.setup/start-selenium)) ;;<-here for emacs/selenium
-           )
+;; if you're looking for that comment block to start selenium, that's
+;; been replaced by something easier. You no longer need to start
+;; selenium server yourself, it's now embedded (so if you started one
+;; on port 4444, kill it). Just type (load "bootstrap") at the repl,
+;; that will start both selenium server and the client.
 
 (comment "Execute this in the repl to create some test entities via API"
 
