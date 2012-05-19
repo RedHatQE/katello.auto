@@ -31,7 +31,7 @@
   [env-name orgs]
   (doseq [org orgs]
     (switch-org org)
-    (create-environment env-name {:org-name org}))      
+    (create-environment env-name {:org-name org}))
   (delete-environment env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
     (navigate :named-environment-page {:env-name env-name
@@ -42,7 +42,7 @@
    in different organizations. See also
    verify-delete-env-restricted-to-this-org."
   [env-name orgs]
-  (doseq [org orgs]                           
+  (doseq [org orgs]
     (switch-org org)
     (create-environment env-name {:org-name org})))
 
@@ -78,34 +78,44 @@
 
 (defgroup environment-tests
   :group-setup create-test-org
-  
+
   (deftest "Create an environment"
     :blockers (open-bz-bugs "693797" "707274")
-    
+
     (create-environment (uniqueify "simple-env") {:org-name @test-org-name
                                                   :description "simple environment description"})
 
-    
+    (deftest "Create parallel sequential environments"
+         :description "Creates two parallel environment paths: one with 5 environments and the
+                      other with 2 environments, both off the Library."
+         (let [envs1 (take 5 (unique-names "envpath1"))
+               envs2 (take 2 (unique-names "envpath2"))
+               org (@config :admin-org)]
+           (create-environment-path org envs1)
+           (create-environment-path org envs2)))
+
     (deftest "Delete an environment"
       :blockers (open-bz-bugs "790246")
-      
+
       (with-unique [env-name "delete-env"]
         (create-environment env-name {:org-name @test-org-name
                                       :description "simple environment description"})
         (delete-environment env-name {:org-name @test-org-name}))
 
-      
+
       (deftest "Deleting an environment does not affect another org with the same name environment"
         (with-n-new-orgs 2 verify-delete-env-restricted-to-this-org))
 
 
       (deftest "Delete an environment that has had content promoted into it"
         :blockers api/katello-only
-        
+
         (with-unique [env-name "del-w-content"]
           (setup-environment-with-promoted-content env-name)
           (delete-environment env-name {:org-name (@config :admin-org)})))
-      
+
+
+
 
       (deftest "Verify that only environments at the end of their path can be deleted"
         :description "Creates 3 environments in a single path, tries
@@ -113,27 +123,27 @@
                       Then tries to delete the last one, which should
                       succeed."
         :blockers    (open-bz-bugs "794799")
-        
+
         (let [envs (take 3 (unique-names "env"))
               org (@config :admin-org)]
           (create-environment-path org envs)
           (expecting-error [:type :env-cant-be-deleted]
-                           (delete-environment (second envs) {:org-name org}))    
+                           (delete-environment (second envs) {:org-name org}))
           (delete-environment (last envs) {:org-name org}))))
 
-    
+
     (deftest "Cannot create two environments in the same org with the same name"
       :blockers (open-bz-bugs "726724")
-      
+
       (verify-2nd-try-fails-with :name-must-be-unique-within-org
                                  create-environment
                                  (uniqueify "test-dup")
                                  {:org-name @test-org-name :description "dup env description"}))
 
-    
+
     (deftest "Rename an environment"
       :blockers (constantly ["Renaming is not supported for v1"])
-      
+
       (with-unique [env-name  "rename"
                     new-name  "newname"]
         (create-environment env-name {:org-name @test-org-name
@@ -144,11 +154,11 @@
                   {:org-name @test-org-name
                    :env-name new-name})))
 
-    
-    (deftest "Create environments with the same name but in different orgs" 
+
+    (deftest "Create environments with the same name but in different orgs"
       (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs)))
 
-  
+
   (deftest "Enviroment name is required"
     (name-field-required create-environment [nil {:org-name @test-org-name
                                                   :description "env description"}])))

@@ -462,14 +462,15 @@
   [username {:keys [password password-confirm email default-org default-env]}]
   (navigate :users-tab)
   (browser click :new-user)
-  (when default-env
-    (locators/select-environment-widget default-env))
-  (fill-ajax-form {:new-user-username-text username
-                   :new-user-password-text password
-                   :new-user-confirm-text (or password-confirm password)
-                   :new-user-email email
-                   :new-user-default-org default-org}
-                  :save-user)
+  (let [env-chooser (fn [env] (when env
+                               (locators/select-environment-widget env)))]
+    (fill-ajax-form [:new-user-username-text username
+                     :new-user-password-text password
+                     :new-user-confirm-text (or password-confirm password)
+                     :new-user-email email
+                     :new-user-default-org default-org
+                     env-chooser [default-env]]
+                    :save-user))
   (check-for-success))
 
 (defn delete-user "Deletes the given user."

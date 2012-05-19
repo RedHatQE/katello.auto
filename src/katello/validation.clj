@@ -57,8 +57,10 @@
   "Returns a predicate that will return true when one of the expected
    errors actually appears in the validation result."
   [expected-validation-err]
-  (fn [result]
-    (some #{expected-validation-err} (:validation-errors result))))
+  (with-meta (fn [result]
+               (some #{expected-validation-err} (:validation-errors result)))
+    {:type :serializable.fn/serializable-fn
+      :serializable.fn/source `(expect-error ~expected-validation-err)}))
 
 (defn field-validation
   "Calls create-fn, which should create some katello entity with the
