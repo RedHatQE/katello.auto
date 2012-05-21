@@ -251,7 +251,8 @@
               :activation-key-template-select "activation_key[system_template_id]"
               :save-activation-key "save_key"
               :remove-activation-key (link "Remove Activation Key")
-              :subscriptions-right-nav "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"})
+              :subscriptions-right-nav "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+              :release-version-text "system[releaseVer]"})
 
 (def roles {:new-role "//a[@id='new']"
             :new-role-name-text "role[name]"
