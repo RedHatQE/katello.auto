@@ -342,10 +342,11 @@
 
 
 ;;nav tricks
-(defn select-environment-widget [env-name & [{:keys [next-env-name]}]]
+(defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
   (do (when (browser isElementPresent :expand-path)
         (browser click :expand-path))
-      (browser click (promotion-env-breadcrumb env-name next-env-name))))
+      (browser click (promotion-env-breadcrumb env-name next-env-name))
+      (when wait (browser waitForPageToLoad))))
 
 (defn search [search-term]
   (fill-form {:search-bar search-term}
@@ -420,7 +421,7 @@
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
       [:promotions-page [] (browser clickAndWait :promotions)
        [:named-environment-promotions-page [env-name next-env-name]
-        (select-environment-widget env-name {:next-env-name next-env-name})
+        (select-environment-widget env-name {:next-env-name next-env-name :wait true})
         [:named-changeset-promotions-page [changeset-name]
          (browser click (changeset changeset-name))]]]
       [:system-templates-page [] (browser clickAndWait :system-templates)
