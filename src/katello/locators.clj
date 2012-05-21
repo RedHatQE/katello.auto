@@ -182,6 +182,15 @@
 
                 ;;redhat page
                 :subscriptions-items "//table[@id='redhatSubscriptionTable']/tbody/tr"
+
+                ;;gpg keys
+                :gpg-key-name-text "gpg_key_name"
+                :gpg-key-file-upload-text "gpg_key_content_upload"
+                :gpg-key-upload-button "upload_gpg_key"
+                :gpg-key-content-text "gpg_key_content"
+                :gpg-keys "//a[.='GPG Keys']"
+                :gpg-keys-save "save_gpg_key"
+                :new-gpg-key "new"
                 })
 
 (def promotions {:products-category (promotion-content-category "products")
@@ -398,7 +407,9 @@
           [:named-repo-page [product-name repo-name] (browser click (editable repo-name))]]
          [:provider-details-page [] (browser click :details)]
          [:provider-subscriptions-page [] (browser click :subscriptions)]]]
-       [:redhat-provider-tab [] (browser clickAndWait :red-hat-content-provider)]]
+       [:redhat-provider-tab [] (browser clickAndWait :red-hat-content-provider)]
+       [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
+        [:new-gpg-key-page [] (browser click :new-gpg-key)]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
        [:sync-status-page [] (browser clickAndWait :sync-status)]
        [:sync-plans-page [] (browser clickAndWait :sync-plans)
