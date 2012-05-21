@@ -38,8 +38,7 @@
 (defn upload-test-manifest-to-test-org [& opts]
   (with-org @redhat-provider-test-org
     (upload-subscription-manifest manifest-tmp-loc
-                                  (merge {:repository-url (@config :redhat-repo-url)
-                                          :force force?}
+                                  (merge {:repository-url (@config :redhat-repo-url)}
                                          opts))))
 
 ;; Tests
