@@ -100,7 +100,7 @@
              })
 
 (def all-tabs (tabs [:organizations
-                     :administration
+                     :administer
                      :systems
                      :content-management
                      :dashboard
@@ -433,7 +433,7 @@
       [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
        [:new-environment-page [] (browser click :new-environment)]
        [:named-environment-page [env-name] (browser click (environment-link env-name))]]]
-     [:administration-tab [] (browser mouseOver :administration)
+     [:administer-tab [] (browser mouseOver :administer)
       [:users-tab [] (browser clickAndWait :users)
        [:named-user-page [username] (choose-left-pane (user username))
         [:user-environments-page [] (browser click :environments-subsubtab)]
