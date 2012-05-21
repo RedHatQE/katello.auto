@@ -59,7 +59,6 @@
                                                       (@config :client-ssh-key)
                                                       (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
-        (throw (Exception. "rut roh"))
         (start-selenium)
         (switch-new-admin-user *session-user* *session-password*)
         (consume-fn)
