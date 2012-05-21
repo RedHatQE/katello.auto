@@ -76,10 +76,11 @@
                  ["-h" "--help" "Print usage guide" :default false :flag true]
                  ["-c" "--config" "Config file (containing a clojure map of config options) to read and overlay on top of defaults"]
                  ["-n" "--num-threads" "Number of threads to run tests with" :parse-fn #(Integer. %) :default 3])]
-    (conf/init [(:config opts)])
+    (if-let [c (:config opts)]
+      (conf/init c)
+      (conf/init))
     (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
     (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
     (jenkins/run-suite
      (vary-meta (make-suite suite) assoc :threads (:num-threads opts)) 
      {:to-trace to-trace :do-not-trace do-not-trace})))
-
