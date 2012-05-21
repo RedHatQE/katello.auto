@@ -809,3 +809,13 @@
   (browser click (locators/environment-link env-name))
   (browser click :save-user-environment)
   (check-for-success))
+
+(defn create-gpg-key [name & [{:keys [filename contents]}]]
+  (navigate :new-gpg-key-page)
+  (when filename
+    (fill-ajax-form {:gpg-key-file-upload-text filename}
+                    :gpg-key-upload-button))
+  (fill-ajax-form {:gpg-key-name-text name
+                   :gpg-key-content-text contents}
+                  :gpg-keys-save)
+  (check-for-success))
