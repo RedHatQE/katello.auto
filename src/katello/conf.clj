@@ -1,6 +1,6 @@
 (ns katello.conf
   (:require [clojure.java.io :as io])
-  (:import [java.io PushbackReader]
+  (:import [java.io PushbackReader FileNotFoundException]
            [java.util.logging Level Logger]))
 
 ;;config layer
@@ -27,25 +27,37 @@
 
 (def ^:dynamic *clients* nil)
 
+(defn- try-read-configs
+  "try to read a config from filename, if file doesn't exist, return nil"
+  [filenames]
+  (for [f filenames]
+    (try
+      (with-open [r (io/reader f)]
+        (read (PushbackReader. r)))
+      (catch FileNotFoundException fnfe
+        nil))) )
+
 (defn init
   "Read in properties and set some defaults. This function should be
    called before selenium client is created or any tests are run."
-  ([] (init "automation-properties.clj"))
-  ([config-file]
-  ;;bid adeiu to j.u.l logging
-  (-> (Logger/getLogger "") (.setLevel Level/OFF))
+  ([] (init ["automation-properties.clj"
+             (format "%s/automation-properties.clj" (System/getProperty "user.home"))]))
+  ([config-files]
+     ;;bid adeiu to j.u.l logging
+     (-> (Logger/getLogger "") (.setLevel Level/OFF))
+     
+     (when config-files
+       (swap! config merge  (->> config-files
+                               try-read-configs
+                               (drop-while nil?)
+                               first)))
   
-  (when config-file 
-    (let [user-config (with-open [r (io/reader config-file)]
-                        (read (PushbackReader. r)))]
-      (swap! config merge user-config)))
-  
-  (def ^:dynamic *session-user* (@config :admin-user))
-  (def ^:dynamic *session-password* (@config :admin-password))
-  (when (@config :clients)
-    (def ^:dynamic *clients* (@config :clients)))
-  (def ^:dynamic *browsers* (@config :selenium-browsers))
-  (def ^:dynamic *environments* (@config :environments)))) 
+     (def ^:dynamic *session-user* (@config :admin-user))
+     (def ^:dynamic *session-password* (@config :admin-password))
+     (when (@config :clients)
+       (def ^:dynamic *clients* (@config :clients)))
+     (def ^:dynamic *browsers* (@config :selenium-browsers))
+     (def ^:dynamic *environments* (@config :environments)))) 
 
 
 
