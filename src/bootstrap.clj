@@ -8,12 +8,18 @@
 
 ;;------------
 
+(defn stop-selenium-server []
+  (.stop selenium-server))
+
 (defn new-selenium-server []
   (let [rcconf (doto (RemoteControlConfiguration.)
                  (.setPort 4444)
                  (.setTrustAllSSLCertificates true))]
     (when selenium-server
-      (.stop selenium-server))
+      (try
+        (stop-selenium-server)
+        (catch Exception _ nil)))
+    
     (def ^:dynamic selenium-server (SeleniumServer. rcconf))
     (.start selenium-server)))
 
