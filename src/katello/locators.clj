@@ -96,7 +96,7 @@
              :account "//li[@class='hello']/a"
              :log-out "//a[normalize-space(.)='Logout']"
              :org-switcher "switcherButton"
-             :active-org "//*[@id='switcherButton']/div[1]"
+             :active-org "//*[@id='switcherButton']"
              })
 
 (def all-tabs (tabs [:organizations
