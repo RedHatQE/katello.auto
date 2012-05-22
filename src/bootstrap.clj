@@ -1,35 +1,19 @@
 (ns user)
-(import [org.openqa.selenium.server RemoteControlConfiguration SeleniumServer])
+
 (use 'katello.ui-tasks)
+(require 'selenium-server)
 (require 'katello.conf)
 (require 'katello.setup)
 
-(declare selenium-server)
-
-;;------------
-
-(defn stop-selenium-server []
-  (.stop selenium-server))
-
-(defn new-selenium-server []
-  (let [rcconf (doto (RemoteControlConfiguration.)
-                 (.setPort 4444)
-                 (.setTrustAllSSLCertificates true))]
-    (when selenium-server
-      (try
-        (stop-selenium-server)
-        (catch Exception _ nil)))
-    
-    (def ^:dynamic selenium-server (SeleniumServer. rcconf))
-    (.start selenium-server)))
-
+ 
 (defn new-browser []
-  (katello.setup/new-selenium (-> katello.conf/config deref :selenium-browsers first) true)
-  (katello.setup/start-selenium)) 
+  (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
+  (katello.setup/start-selenium))
 
 ;;-------------
 
-(katello.conf/init)
+(katello.conf/init {:selenium-address "localhost:4444"})
+
 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
 
@@ -40,5 +24,5 @@
                            "root" nil
                            (@katello.conf/config :client-ssh-key)
                            (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
-(new-selenium-server)
+(selenium-server/start)
 (new-browser)
