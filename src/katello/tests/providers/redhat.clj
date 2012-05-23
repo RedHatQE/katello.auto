@@ -35,7 +35,7 @@
 (defn enable-redhat-repositories-in-org [org repos]
   (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
-(defn upload-test-manifest-to-test-org [& opts]
+(defn upload-test-manifest-to-test-org [& [opts]]
   (with-org @redhat-provider-test-org
     (upload-subscription-manifest manifest-tmp-loc
                                   (merge {:repository-url (@config :redhat-repo-url)}
