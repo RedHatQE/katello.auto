@@ -12,7 +12,7 @@
         [serializable.fn :only [fn]]
         [tools.verify :only [verify-that]]
         [bugzilla.checker :only [open-bz-bugs]]
-        [katello.conf :only [config]]))
+        [katello.conf :only [config no-clients-defined]]))
 
 ;; Functions
 

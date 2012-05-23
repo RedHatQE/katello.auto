@@ -105,4 +105,8 @@
   (def ^:dynamic *environments* (@config :environments))) 
 
 
+(defn no-clients-defined "Blocks a test if no client machines are defined." [_]
+  (if (:clients @config)
+    []
+    ["No clients were specified - see --clients option"]))
 

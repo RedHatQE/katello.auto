@@ -10,7 +10,7 @@
         [bugzilla.checker :only [open-bz-bugs]]
         [tools.verify :only [verify-that]]
         slingshot.slingshot
-        [katello.conf :only [*session-user* *session-password* *environments* config]]))
+        [katello.conf :only [*session-user* *session-password* *environments* config no-clients-defined]]))
 
 ;; Functions
 
@@ -60,7 +60,7 @@
   (deftest "Clients can access custom content"
     :blockers (union (blocking-tests "simple sync" "promote content")
                      (open-bz-bugs "784853" "790246")
-                     #(if (:clients @config) [] ["No clients were specified - see --clients option"]))
+                     no-clients-defined)
    
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")

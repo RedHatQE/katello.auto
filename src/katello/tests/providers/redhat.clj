@@ -67,7 +67,7 @@
       :description "Enable repositories, promote content into an
                     environment, register a system to that environment
                     and install some packages."
-      :blockers #(if (:clients @config) [] ["No clients were specified - see --clients option"])
+      :blockers no-clients-defined
       
       (with-org @redhat-provider-test-org
         (when (api/is-katello?)
