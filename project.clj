@@ -5,7 +5,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [swank-clojure "1.4.2"]
                  [test.tree.jenkins "0.1.0-SNAPSHOT"]
-                 [test.tree "0.7.0-SNAPSHOT"]
+                 [test.tree "0.7.1-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
                  [com.redhat.qe/tools.verify "1.0.0"]
