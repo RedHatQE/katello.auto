@@ -435,11 +435,10 @@
        [:named-activation-key-page [activation-key-name]
         (choose-left-pane (left-pane-item activation-key-name))]
        [:new-activation-key-page [] (browser click :new-activation-key)]]
-      [:systems-environment-page [env-name]
-       (do (browser clickAndWait :by-environments)
-           (select-environment-widget env-name))
-       [:named-system-environment-page [system-name]
-        (choose-left-pane (left-pane-item system-name))]]]
+      [:systems-by-environment-page [] (browser clickAndWait :by-environments)
+       [:systems-environment-page [env-name] (select-environment-widget env-name)
+        [:named-system-environment-page [system-name]
+         (choose-left-pane (left-pane-item system-name))]]]]
      [:organizations-tab [] (browser clickAndWait :organizations)
       [:new-organization-page [] (browser click :new-organization)]
       [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
