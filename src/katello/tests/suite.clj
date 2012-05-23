@@ -20,11 +20,11 @@
   katello.tests.organizations/org-tests
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
+  katello.tests.promotions/promotion-tests
+  katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
   katello.tests.sync_management/sync-tests
   katello.tests.users/user-tests
-  katello.tests.permissions/permission-tests
-  katello.tests.promotions/promotion-tests
   katello.tests.e2e/end-to-end-tests)
 
 
