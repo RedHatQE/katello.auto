@@ -30,6 +30,9 @@
    ["-m" "--redhat-manifest-url" "URL that points to a Red Hat test manifest"
     :default "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
 
+   ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
+    :default "http://download.englab.brq.redhat.com/scratch/inecas/fakerepos/cds/"]
+
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]
 
@@ -46,7 +49,6 @@
 
    ["-b" "--browser-types" "Selenium browser types, eg '*firefox' or '*firefox,*googlechrome' (multiple values only used when threads > 1"
     :default ["*firefox"] :parse-fn #(string/split % #",")]
-
 
    ["-c" "--config" "Config files (containing a clojure map of config options) to read and overlay  other command line options on top of - a list of comma separated places to look - first existing file is used and rest are ignored."
     :default ["automation-properties.clj" (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
