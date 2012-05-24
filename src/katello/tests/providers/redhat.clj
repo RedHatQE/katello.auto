@@ -56,7 +56,7 @@
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
       
-      (let [repos ["Nature Enterprise x86_64 5Server" "Nature Enterprise x86_64 6Server"]]
+      (let [repos ["Nature Enterprise x86_64 15" "Nature Enterprise x86_64 16"]]
         (with-org @redhat-provider-test-org
           (enable-redhat-repositories repos)
           (navigate :sync-status-page)
