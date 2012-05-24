@@ -49,27 +49,6 @@
                    symbol resolve deref)
        (merge setup/runner-config))))
 
-;;list of namespaces and fns we want to trace 
-(def to-trace 
-  '[katello.tasks
-    katello.ui-tasks
-    katello.api-tasks
-    katello.client
-    katello.setup/start-selenium
-    katello.setup/stop-selenium
-    katello.setup/switch-new-admin-user
-    tools.verify/check
-    com.redhat.qe.auto.selenium.selenium/call-sel
-    com.redhat.qe.config/property-map])
-
-;;set of fns to exclude from tracing
-(def do-not-trace 
-  #{'katello.tasks/notification 
-    'katello.tasks/success?
-    'katello.tasks/uniqueify
-    'katello.tasks/unique-names
-    'katello.tasks/timestamps})
-
 (defn -main [ & args]
   (let [[opts [suite] banner]
         (apply cli/cli args conf/options)]
@@ -81,4 +60,4 @@
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
         (jenkins/run-suite
          (vary-meta (make-suite suite) assoc :threads (:num-threads opts)) 
-         {:to-trace to-trace :do-not-trace do-not-trace})))))
+         {:to-trace (@conf/config :trace) :do-not-trace (@conf/config :trace-excludes)})))))

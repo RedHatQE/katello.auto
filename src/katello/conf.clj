@@ -52,7 +52,29 @@
 
    ["-c" "--config" "Config files (containing a clojure map of config options) to read and overlay  other command line options on top of - a list of comma separated places to look - first existing file is used and rest are ignored."
     :default ["automation-properties.clj" (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
-    :parse-fn #(string/split % #",")]])
+    :parse-fn #(string/split % #",")]
+
+
+   ["--trace" "Namespaces and functions to trace"
+    :default '[katello.tasks
+               katello.ui-tasks
+               katello.api-tasks
+               katello.client
+               katello.setup/start-selenium
+               katello.setup/stop-selenium
+               katello.setup/switch-new-admin-user
+               tools.verify/check
+               com.redhat.qe.auto.selenium.selenium/call-sel
+               com.redhat.qe.config/property-map]
+    :parse-fn #(->> (string/split % #",") (map symbol) vec)]
+   
+   ["--trace-excludes" "Functions to exclude from tracing"
+     :default #{'katello.tasks/notification 
+                'katello.tasks/success?
+                'katello.tasks/uniqueify
+                'katello.tasks/unique-names
+                'katello.tasks/timestamps}
+     :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 
