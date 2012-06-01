@@ -1,10 +1,9 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
-                     [validation :as validate]))
+                     [validation :as v]))
   (:use katello.tasks
         katello.ui-tasks
-        katello.validation
         [katello.conf :only [config]]
         [tools.verify :only [verify-that]]
         test.tree.script
@@ -34,7 +33,7 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (field-validation create-organization [name] (expect-error expected-error)))
+  (v/field-validation create-organization [name] (v/expect-error expected-error)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (create-organization org-name {:description "org to delete and recreate"})
@@ -51,10 +50,11 @@
 ;; Data (Generated)
 
 (def bad-org-names
-  (let [make-data #(list %2 %1)]
-    (concat 
-     (validate/variations :name-must-not-contain-characters make-data validate/invalid-character)
-     (validate/variations :name-no-leading-trailing-whitespace make-data validate/trailing-whitespace))))
+  (concat
+   (for [inv-char-str v/invalid-character-strings]
+     [:name-must-not-contain-characters inv-char-str])
+   (for [trailing-ws-str v/trailing-whitespace-strings]
+     [:name-no-leading-trailing-whitespace trailing-ws-str])))
 
 ;; Tests
 
@@ -76,13 +76,13 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (verify-2nd-try-fails-with :name-taken-error create-organization org-name {:description "org-description"})))
+        (v/verify-2nd-try-fails-with :name-taken-error create-organization org-name {:description "org-description"})))
 
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
       
-      (name-field-required create-organization ["" {:description "org description"}]))
+      (v/name-field-required create-organization ["" {:description "org description"}]))
 
     
     (deftest "Verify proper error message when invalid org name is used"

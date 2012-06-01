@@ -68,27 +68,24 @@
   (field-validation create-provider [provider] pred))
 
 (defn get-validation-data
-  "a totally misguided attempt on my part to generate test data.
-  Generating data is fine, but this code is unreadable even to me,
-  should probably replace this code with the data it produces, and be
-  done with it. Only issue there is we can't hardcode
-  provider/product/repo names. -jweiss" []
-  (let [insert (fn [baseargs k v]
-                 (assoc-in baseargs [1 k] v))
-        [insert-name insert-desc insert-url] (map (fn [k] #(insert %1 k %2))
-                                                  [:name :description :url])]
-    (concat
-     [[(expect-error :name-cant-be-blank) {:name nil :description "blah" :url "http://sdf.com"}]
-      [success?  {:name (uniqueify "mytestcp4") :description nil :url "http://sdf.com"}]]
+  []
+  (concat
+   [[(expect-error :name-cant-be-blank) {:name nil :description "blah" :url "http://sdf.com"}]
+    [success?  {:name (uniqueify "mytestcp4") :description nil :url "http://sdf.com"}]]
 
-     (variations [success?  {:name (uniqueify "mytestcp5") :url "http://sdf.com"}] insert-desc javascript)
-     (variations [(expect-error :name-no-leading-trailing-whitespace) {:description nil :url "http://sdf.com"}] insert-name trailing-whitespace)
-     (variations [(expect-error :name-must-not-contain-characters) {:description nil :url "http://sdf.com"}] insert-name invalid-character)
+   (for [js-str javascript-strings]
+     [success?  {:name (uniqueify "mytestcp5") :url "http://sdf.com" :description js-str}])
+    
+   (for [trailing-ws-str trailing-whitespace-strings]
+     [(expect-error :name-no-leading-trailing-whitespace) {:name trailing-ws-str :description nil :url "http://sdf.com"}])
+    
+   (for [inv-char-str invalid-character-strings]
+     [(expect-error :name-must-not-contain-characters) {:name inv-char-str :description nil :url "http://sdf.com"}])
 
-     (for [test (variations [(expect-error :repository-url-invalid) {:name (uniqueify "mytestcp") :description "blah"}]
-                              insert-url invalid-url)]
-       (with-meta test {:blockers (open-bz-bugs "703528" "742983")
-                        :description "Test that invalid URL is rejected."})))))
+   (for [inv-url invalid-urls]
+     (with-meta [(expect-error :repository-url-invalid) {:name (uniqueify "mytestcp") :description "blah" :url inv-url}]
+       {:blockers (open-bz-bugs "703528" "742983")
+        :description "Test that invalid URL is rejected."}))))
 
 ;; Tests
 
