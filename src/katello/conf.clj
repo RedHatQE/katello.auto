@@ -110,8 +110,11 @@
                          try-read-configs
                          (drop-while nil?)
                          first))
-  (swap! config merge opts) ; merge 2nd time to override anything in
-                            ; config files
+  (let [non-defaults (into {}
+                           (filter (fn [[k v]] (not= v (k defaults)))
+                                      opts))]
+    (swap! config merge non-defaults)) ; merge 2nd time to override anything in
+                                       ; config files
 
   ;; if user didn't specify sel address, start a server and use that
   ;; address.
