@@ -52,9 +52,9 @@
 (def bad-org-names
   (concat
    (for [inv-char-str v/invalid-character-strings]
-     [:name-must-not-contain-characters inv-char-str])
+     [inv-char-str :name-must-not-contain-characters])
    (for [trailing-ws-str v/trailing-whitespace-strings]
-     [:name-no-leading-trailing-whitespace trailing-ws-str])))
+     [trailing-ws-str :name-no-leading-trailing-whitespace])))
 
 ;; Tests
 
