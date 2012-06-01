@@ -22,7 +22,7 @@
   :dev-dependencies [[lein-autodoc "0.9.0"]]
   :checksum-deps false
   :jvm-opts ["-Xmx192m" "-Xms96m"]
-  :repl-init bootstrap
+  ;; :repl-init bootstrap
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
