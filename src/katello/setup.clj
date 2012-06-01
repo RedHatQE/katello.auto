@@ -21,8 +21,14 @@
     (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
 
 (defn start-selenium []  
-  (browser start)
-  (browser open (@config :server-url) jquery-ajax-finished)
+  (->browser
+   (start)
+   ;;workaround for http://code.google.com/p/selenium/issues/detail?id=3498
+   (setTimeout "180000")
+   (setAjaxFinishedCondition jquery-ajax-finished)
+   (open (@config :server-url) false)
+   (setTimeout "60000"))
+  
   (ui/login (@config :admin-user) (@config :admin-password)))
 
 (defn switch-new-admin-user
