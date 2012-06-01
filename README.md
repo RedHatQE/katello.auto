@@ -6,28 +6,33 @@ There are several options for running automation.  You'll need to download [the 
 binary](https://github.com/downloads/weissjeffm/katello.auto/katello.auto-1.0.0-SNAPSHOT-standalone.jar).
 
 ### Running pre-packaged tests from command line
-Run `java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m
-katello.tests.suite -h` to get a list of command line options (the `-m
-katello.tests.suite` is required directly after the jar filename).
+Run 
 
-An example command line would be `java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m
-katello.tests.suite -s https://my.host/katello
-katello.tests.suite/katello-tests` where the last argument is the test
+    $ java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m katello.tests.suite -h
+
+to get a list of command line options (the `-m katello.tests.suite` is required directly after the jar filename).
+
+An example command line would be 
+
+    $ java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m katello.tests.suite -s \
+    https://my.host/katello katello.tests.suite/katello-tests
+
+where the last argument is the test
 group to run.  Existing test groups are
 
-* katello.tests.suite/katello-tests
-* katello.tests.suite/sam-tests
-* katello.tests.login/login-tests
-* katello.tests.navigation/nav-tests
-* katello.tests.organizations/org-tests
-* katello.tests.environments/environment-tests
-* katello.tests.providers/provider-tests
-* katello.tests.promotions/promotion-tests
-* katello.tests.permissions/permission-tests
-* katello.tests.systems/system-tests
-* katello.tests.sync_management/sync-tests
-* katello.tests.users/user-tests
-* katello.tests.e2e/end-to-end-tests
+     katello.tests.suite/katello-tests
+     katello.tests.suite/sam-tests
+     katello.tests.login/login-tests
+     katello.tests.navigation/nav-tests
+     katello.tests.organizations/org-tests
+     katello.tests.environments/environment-tests
+     katello.tests.providers/provider-tests
+     katello.tests.promotions/promotion-tests
+     katello.tests.permissions/permission-tests
+     katello.tests.systems/system-tests
+     katello.tests.sync_management/sync-tests
+     katello.tests.users/user-tests
+     katello.tests.e2e/end-to-end-tests
 
 By default this will start up 3 firefox browsers and run the specified
 tests in parallel.
