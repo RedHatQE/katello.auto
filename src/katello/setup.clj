@@ -65,8 +65,11 @@
                                                       (@config :client-ssh-key)
                                                       (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
-        (start-selenium)
-        (switch-new-admin-user *session-user* *session-password*)
+        (try
+          (start-selenium)
+          (switch-new-admin-user *session-user* *session-password*)
+          (catch Exception e (.printStackTrace e)))
+
         (consume-fn)
         (stop-selenium)))))
 
