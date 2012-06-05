@@ -15,7 +15,7 @@
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [slingshot "0.8.0"]
                  [inflections "0.6.2"]
-                 [clj-http "0.3.2"]
+                 [http.async.client "0.4.5"]
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
