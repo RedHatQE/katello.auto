@@ -429,8 +429,10 @@
        [:new-system-template-page [] (browser click :new-template)]]]
      [:systems-tab [] (browser mouseOver :systems)
       [:systems-all-page [] (browser clickAndWait :all)
-       [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
-         [:named-systems-page [] (browser click :details)]]]
+       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
+        [:named-systems-page [system-name] (choose-left-pane
+                                            (left-pane-item system-name))
+         [:system-subscriptions-page [] (browser click :subscriptions-right-nav)]]]]
       [:activation-keys-page [] (browser clickAndWait :activation-keys)
        [:named-activation-key-page [activation-key-name]
         (choose-left-pane (left-pane-item activation-key-name))]
