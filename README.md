@@ -37,6 +37,12 @@ group to run.  Existing test groups are
 By default this will start up 3 firefox browsers and run the specified
 tests in parallel.
 
+### Viewing results
+
+After the tests finish running, there will be a file testng-report.xml in the current directory.  You can either view this file directly in an editor or browser, or if you prefer a nicely formatted HTML report, [http://jenkins-ci.org/](Jenkins) with the TestNG plugin can generate one for you.  The internal Red Hat QE Jenkins server has a [https://url.corp.redhat.com/e82371c](job set up to display the result) - just upload the xml file. 
+
+If you are running your own Jenkins server, this job is very easy to set up.  Just add a file parameter `testng-report.xml`, and then check the box `Publish TestNG Results` and fill in `*.xml`.
+
 ### Running arbitrary commands
 
 You can connect to an interactive prompt in several different ways.
@@ -79,12 +85,16 @@ can be built easily.
 
 Start emacs (the first startup will download and built some emacs
 packages), and then run `M-x slime-connect` and specify the port you
-used above.  Then type `load ("bootstrap")` to start the browser.
+used above.  Then type `(load "bootstrap")` to start the browser.
 
 #### Eclipse
 
-TODO
+Currently not compatible with running interactively with Katello GUI
+automation.  Eclipse only supports nREPL protocol, not swank.  nREPL
+lib will be added to the binary soon to enable eclipse to communicate
+with it. 
 
 #### vim
 
-TODO
+Install [http://www.vim.org/scripts/script.php?script_id=2531](SLIMV),
+type `,c` to connect to whatever port you started the swank server on.
