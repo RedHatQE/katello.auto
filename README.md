@@ -39,7 +39,7 @@ tests in parallel.
 
 ### Viewing results
 
-After the tests finish running, there will be a file testng-report.xml in the current directory.  You can either view this file directly in an editor or browser, or if you prefer a nicely formatted HTML report, [http://jenkins-ci.org/](Jenkins) with the TestNG plugin can generate one for you.  The internal Red Hat QE Jenkins server has a [https://url.corp.redhat.com/e82371c](job set up to display the result) - just upload the xml file. 
+After the tests finish running, there will be a file testng-report.xml in the current directory.  You can either view this file directly in an editor or browser, or if you prefer a nicely formatted HTML report, [Jenkins](http://jenkins-ci.org/) with the TestNG plugin can generate one for you.  The internal Red Hat QE Jenkins server has a [job set up to display the result](https://url.corp.redhat.com/e82371c) - just upload the xml file. 
 
 If you are running your own Jenkins server, this job is very easy to set up.  Just add a file parameter `testng-report.xml`, and then check the box `Publish TestNG Results` and fill in `*.xml`.
 
