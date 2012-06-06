@@ -95,18 +95,16 @@
    that entity type is part of an org, or environment or product,
    those vars must be bound (see with-* macros)"
   [entity-type]
-  (rest/get
-   (api-url (uri-for-entity-type entity-type))
-   {:basic-auth [*user* *password*]}))
+  (rest/with-client-auth *user* *password* 
+    (rest/get (api-url (uri-for-entity-type entity-type)))))
 
 (defn get-by-name [entity-type entity-name]
-  (rest/get (api-url (uri-for-entity-type entity-type))
-            {:basic-auth [*user* *password*]
-             :query-params {:name entity-name}}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/get-with-params (api-url (uri-for-entity-type entity-type)) {:name entity-name})))
 
 (defn get-by-id [entity-type entity-id]
-  (rest/get (api-url "api/" (-> entity-type name pluralize) (str "/" entity-id))
-            {:basic-auth [*user* *password*]}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/get (api-url "api/" (-> entity-type name pluralize) (str "/" entity-id)))))
 
 (defn get-id-by-name [entity-type entity-name]
   (let [all (get-by-name entity-type entity-name)
@@ -115,7 +113,6 @@
       (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
                                                 ct (name entity-type) entity-name)))
       (-> all first :id))))
-
 
 (defmacro with-env
   "Executes body and makes any included katello api calls using the
@@ -126,28 +123,25 @@
      (do ~@body)))
 
 (defn create-provider [name & [{:keys [description]}]]
-  (rest/post
-   (api-url "api/providers")
-   *user* *password*
-   {:organization_id *org*
-    :provider  {:name name
-                :description description
-                :provider_type "Custom"}}))
+  (rest/with-client-auth *user* *password*
+                    (rest/post (api-url "api/providers")
+                        {:organization_id *org*
+                         :provider  {:name name
+                                     :description description
+                                     :provider_type "Custom"}})))
 
 (defn create-environment [name {:keys [description prior-env] :or {description "" prior-env library}}]
-  (rest/post
-   (api-url (uri-for-entity-type :environment))
-   *user* *password*
-   {:environment (assoc-if-set
-                  {:name name}
-                  {:description description
-                   :prior (and prior-env
-                               (get-id-by-name :environment prior-env))})}))
+  (rest/with-client-auth *user* *password*
+                    (rest/post (api-url (uri-for-entity-type :environment))
+                        {:environment (assoc-if-set
+                            {:name name}
+                            {:description description
+                             :prior (and prior-env
+                                       (get-id-by-name :environment prior-env))})})))
 
 (defn delete-environment [name]
-  (rest/delete
-   (api-url (uri-for-entity-type :environment) "/" name)
-   *user* *password*))
+  (rest/with-client-auth *user* *password*
+                         (rest/delete (api-url (uri-for-entity-type :environment) "/" name))))
 
 (defn ensure-env-exist
   "If an environment with the given name and prior environment doesn't
@@ -159,25 +153,24 @@
       (create-environment name {:prior-env prior}))))
 
 (defn create-product [name {:keys [provider-name description]}]
-  (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
-             *user* *password*
-             {:product (assoc-if-set {:name name}
-                                     {:description description})}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/post (api-url "api/providers/" (get-id-by-name :provider provider-name) "/product_create/")
+                                        {:product (assoc-if-set {:name name}
+                                        {:description description})})))
 
 (defn create-repo [name {:keys [product-name url]}]
-  (rest/post (api-url "api/repositories/")
-             *user* *password*
-             {:organization_id *org*
-              :product_id  (get-id-by-name :product product-name)
-              :name name
-              :url url}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/post (api-url "api/repositories/")
+                            {:organization_id *org*
+                             :product_id  (get-id-by-name :product product-name)
+                             :name name
+                             :url url})))
 
 (defn create-organization [name & [{:keys [description]}]]
-  (rest/post
-   (api-url (uri-for-entity-type :organization))
-   *user* *password*
-   {:name name
-    :description description}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/post (api-url (uri-for-entity-type :organization))
+                            {:name name
+                             :description description})))
 
 
 (defn random-facts
@@ -248,23 +241,21 @@
     }))
 
 (defn create-system [name {:keys [facts]}]
-  (rest/post (api-url "api/environments/" *env-id* "/consumers")
-             *user* *password*
-             {:name name
-              :cp_type "system"
-              :facts facts}))
+  (rest/with-client-auth *user* *password*
+                         (rest/post (api-url "api/environments/" *env-id* "/consumers")
+                                    {:name name
+                                    :cp_type "system"
+                                    :facts facts})))
 
 (defn create-changeset [name]
-  (rest/post (api-url (uri-for-entity-type :changeset))
-             *user* *password*
-             {:changeset {:name name}}))
+  (rest/with-client-auth *user* *password*
+                         (rest/post (api-url (uri-for-entity-type :changeset)) {:changeset {:name name}})))
 
 (defn add-to-changeset [changeset-name entity-type entity]
-  (rest/post (api-url "api/changesets/"
-                      (get-id-by-name :changeset changeset-name) "/"
-                      (-> entity-type name pluralize))
-             *user* *password*
-             entity))
+  (rest/with-client-auth *user* *password*
+                         (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/" 
+                                             (-> entity-type name pluralize))
+                                    entity)))
 
 (defn promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,
@@ -273,9 +264,7 @@
   [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
     (locking #'promotion-lock
-      (rest/post (api-url "api/changesets/" id "/promote")
-                 *user* *password*
-                 nil)
+      (rest/with-client-auth *user* *password* (rest/post (api-url "api/changesets/" id "/promote") nil))
       (loop-with-timeout 180000 [cs {}]
         (cond (-> cs :state (= "promoted")) cs
               :else (do (Thread/sleep 5000)
@@ -294,62 +283,70 @@
     (promote-changeset cs-name)))
 
 (defn create-template [{:keys [name description]}]
-  (rest/post (api-url "api/templates/")
-             *user* *password*
-             {:template {:name name
-                         :description description}
-              :environment_id *env-id*}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/post (api-url "api/templates/") {:template {:name name :description description} :environment_id *env-id*})))
 
 (defn add-to-template [template-name content]
   (comment "content like " {:repositories [{:product "myprod" :name "blah"}]})
   (doseq [[content-type items] content item items]
-    (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/"
-                        (name content-type))
-               *user* *password*
-               {:id (with-bindings (case content-type
-                                     :repositories {#'*product-id* (get-id-by-name :product
-                                                                                   (:product item))}
-                                     {})
-                      (get-id-by-name (singularize content-type) (:name item)))})))
+    (rest/with-client-auth *user* *password*
+                           (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/" (name content-type))
+                                      {:id (with-bindings (case content-type
+                                                            :repositories {#'*product-id* (get-id-by-name :product
+                                                                                                          (:product item))}
+                                                            {})
+                                                          (get-id-by-name (singularize content-type) (:name item)))}))))
 
 (defn create-user [username {:keys [password email disabled]}]
-  (rest/post (api-url (uri-for-entity-type :user))
-             *user* *password*
-             {:username username
-              :password password
-              :email email
-              :disabled (or disabled false)}))
+  (rest/with-client-auth *user* *password* 
+                         (rest/post (api-url (uri-for-entity-type :user))
+                                    {:username username
+                                    :password password
+                                    :email email
+                                    :disabled (or disabled false)})))
 
 (defn system-available-pools [system-name]
   (let [sysid  (-> (get-by-name :system system-name) first :uuid)]
-    (:pools (rest/get (api-url (format "api/systems/%s/pools" sysid))
-                      {:basic-auth [*user* *password*]}))))
+    (:pools (rest/with-client-auth *user* *password* 
+                                   (rest/get (api-url (format "api/systems/%s/pools" sysid)))))))
 
 (defn upload-manifest [file-name repo-url]
   (let [prov-id (get-id-by-name :provider "Red Hat")]
-    (rest/put (api-url "/api/providers/" prov-id) *user* *password* {:provider {:repository_url repo-url}})
-    (rest/post-multipart
-     (api-url "/api/providers/" prov-id "/import_manifest")
-     *user* *password*
-     {"Filename" file-name
-      "import" (clojure.java.io/file file-name)})))
+    (rest/with-client-auth *user* *password*    
+        (
+            (rest/put (api-url "/api/providers/" prov-id) {:provider {:repository_url repo-url}})  
+            (rest/post-multipart
+                (api-url "/api/providers/" prov-id "/import_manifest")
+                    [{:type :string
+                      :name "Filename"
+                      :value file-name
+                      :charset "UTF-8"
+                     }
+                     {:type :file
+                      :name file-name
+                      :file (clojure.java.io/file file-name)
+                      :mime-type "application/zip"
+                      :charset "UTF-8"}
+                    ])))))
 
 (defn sync-repo [repo-name & [timeout-ms]]
   (let [url (->> repo-name
                (get-id-by-name :repository)
                (format "/api/repositories/%s/sync")
                api-url)]
-    (rest/post url *user* *password* {})
-    (loop-with-timeout (or timeout-ms 180000) [sync-info {}]
-      (Thread/sleep 15000)
-      (if (-> sync-info :state (= "finished"))
-        sync-info
-        (recur (rest/get url {:basic-auth [*user* *password*]}))))))
+    (rest/with-client-auth *user* *password* 
+      (rest/post url {}) 
+      (loop-with-timeout (or timeout-ms 180000) [sync-info {}] 
+        (Thread/sleep 15000)
+        (if (-> sync-info :state (= "finished"))
+          sync-info
+          (recur (rest/get url)))))))
 
 (def get-server-version
   (memoize
    (fn [url]
-     (rest/get url {:basic-auth [*user* *password*]}))))
+     (rest/with-client-auth *user* *password*
+                            (rest/get url)))))
 
 (defn get-version []
   (try
