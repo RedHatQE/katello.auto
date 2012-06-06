@@ -7,66 +7,62 @@
 
 (def ^:dynamic *client* nil)
 
+(defmacro bind-client-with-open [client-val & body]
+  `(binding [*client* ~client-val]
+     (try ~@body
+          (finally
+           (.close *client*)))))
+
 (defmacro with-client-cert
   "Execute body and makes any included rest calls with the given certificate"
   [keystore keystorepassword certificate certificatealias & body]
-  `(binding [*client* (http/create-client :ssl-context (cert/ssl-context :keystore-file ~keystore :keystore-password ~keystorepassword :certificate-file ~certificate :certificate-alias ~certificatealias))]
-     (do
-       ~@body)))
+  `(bind-client-with-open (http/create-client :ssl-context (cert/ssl-context :keystore-file ~keystore :keystore-password ~keystorepassword :certificate-file ~certificate :certificate-alias ~certificatealias))
+     ~@body))
 
 (defmacro with-client-auth
   "Execute body and make any included rest calls with the given auth"
   [user password & body]
-  `(binding [*client* (http/create-client :auth {:user ~user :password ~password :preemptive true})]
-     (do
-       ~@body)))
+  `(bind-client-with-open (http/create-client :auth {:user ~user :password ~password :preemptive true})
+     ~@body))
 
 (defmacro with-no-auth
   "Execute body and make any included rest calls with no auth"
   [ & body ]
-  `(binding [*client* (http/create-client)]
-     (do
-       ~@body)))
+  `(bind-client-with-open (http/create-client)
+     ~@body))
 
 (defn- read-json-safe [s]
   (try (json/read-json s)
        (catch Exception e {:failed-json-object s :exception e})))
 
-(defmacro wait-for-string-and-decode-json
+(defn wait-for-string-and-decode-json
   "Execute body, wait for string, then decode json"
-  [ & body ]
-  `(do
-     (-> ~@body
-         http/await
-         http/string
-         read-json-safe)))
+  [response]
+  (-> response
+     http/await
+     http/string
+     read-json-safe))
 
 (defn get-with-params
   [url params & [req]]
-  (with-open [client *client*]
-    (wait-for-string-and-decode-json (http/GET client url :headers (merge req {:Accept "application/json"}) :query params))))
+  (wait-for-string-and-decode-json
+   (http/GET *client* url :headers (merge req {:Accept "application/json"}) :query params)))
 
 (defn get
   "Gets the url, and decodes JSON in the response body, returning a
    clojure datastructure"
    [url & [req]]
-   (with-open [client *client*] 
-    (-> (http/GET client url :headers (merge req {:Accept "application/json"}))
-        http/await
-        http/string
-        read-json-safe)))
+   (wait-for-string-and-decode-json
+    (http/GET *client* url :headers (merge req {:Accept "application/json"}))))
 
 (defn post
-    "Do the actual post"
-    [url body & [req]]
-    (with-open [client *client*]
-      (-> (http/POST client url
-                   :body (json/json-str body)
-                   :headers (merge req {:Accept "application/json"
-                                        :Content-Type "application/json"}))
-          http/await
-          http/string
-          read-json-safe)))
+  "Do the actual post"
+  [url body & [req]]
+  (wait-for-string-and-decode-json
+   (http/POST *client* url
+              :body (json/json-str body)
+              :headers (merge req {:Accept "application/json"
+                                   :Content-Type "application/json"}))))
 
 (defn post-multipart
   "Encodes datastructure in body to JSON, posts to url, using user and pw. 
@@ -79,32 +75,23 @@
         :bytearray - :name, :file-name, :data, :mime-type, :charset
       See http://neotyk.github.com/http.async.client/docs.html#sec-2-2-2-3"
   [url parts & [req]]
-    (with-open [client *client*]
-      (-> (http/POST client url :body parts :headers (merge req {:Accept "application/json"}))
-          http/await
-          http/string
-          read-json-safe)))
+  (wait-for-string-and-decode-json
+   (http/POST *client* url :body parts :headers (merge req {:Accept "application/json"}))))
 
 (defn put 
   "Encodes datastructure in body to JSON, puts to url"
   [url body & [req]]
-  (with-open [client *client*]
-    (-> (http/PUT client url
-            :headers (merge req {:Accept "application/json"
-                                 :Content-Type "application/json"})
-            :body (json/json-str body))
-        http/await
-        http/string
-        read-json-safe)))
+  (wait-for-string-and-decode-json
+   (http/PUT *client* url
+             :headers (merge req {:Accept "application/json"
+                                  :Content-Type "application/json"})
+             :body (json/json-str body))))
 
 (defn delete 
   "DELETEs to url"
   [url & [req]]
-  (with-open [client *client*]
-    (-> (http/DELETE client url :headers (merge req {:Accept "application/json"
-                                                   :Content-Type "application/json"}))
-        http/await
-        http/string
-        read-json-safe)))
+  (wait-for-string-and-decode-json
+   (http/DELETE *client* url :headers (merge req {:Accept "application/json"
+                                                  :Content-Type "application/json"}))))
 
   

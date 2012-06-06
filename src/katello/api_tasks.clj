@@ -96,7 +96,7 @@
    those vars must be bound (see with-* macros)"
   [entity-type]
   (rest/with-client-auth *user* *password* 
-                         (rest/get (api-url (uri-for-entity-type entity-type)))))
+    (rest/get (api-url (uri-for-entity-type entity-type)))))
 
 (defn get-by-name [entity-type entity-name]
   (rest/with-client-auth *user* *password* 
@@ -113,7 +113,6 @@
       (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
                                                 ct (name entity-type) entity-name)))
       (-> all first :id))))
-
 
 (defmacro with-env
   "Executes body and makes any included katello api calls using the
@@ -336,13 +335,12 @@
                (format "/api/repositories/%s/sync")
                api-url)]
     (rest/with-client-auth *user* *password* 
-                           (
-                            (rest/post url {}) 
-                            (loop-with-timeout (or timeout-ms 180000) [sync-info {}]
-                                               (Thread/sleep 15000)
-                                               (if (-> sync-info :state (= "finished"))
-                                                 sync-info
-                                                 (recur (rest/get url))))))))
+      (rest/post url {}) 
+      (loop-with-timeout (or timeout-ms 180000) [sync-info {}] 
+        (Thread/sleep 15000)
+        (if (-> sync-info :state (= "finished"))
+          sync-info
+          (recur (rest/get url)))))))
 
 (def get-server-version
   (memoize
