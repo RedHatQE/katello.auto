@@ -68,6 +68,10 @@
       (subscribe-system {:system-name (:name (register-new-test-system))
                          :add-products [product-name]})))
 
+  (deftest "Set a system to autosubscribe with no SLA preference"
+    (subscribe-system {:system-name (:name (register-new-test-system))
+                       :auto-subscribe true
+                       :sla "No Service Level Preference"}))
   
   (deftest "Create an activation key" 
     :blockers (open-bz-bugs "750354")
