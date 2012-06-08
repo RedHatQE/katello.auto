@@ -62,7 +62,8 @@
    repo-enable-checkbox ["Repo enable checkbox" "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
    role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
    slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
-   subscription-checkbox ["Subscription checkbox" "//div[@id='panel-frame']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
+   subscription-current-checkbox ["Subscription current checkbox" "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
+   subscription-available-checkbox ["Subscription available checkbox" "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
    sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
    tab ["Tab" "link=$1"]
    template-product ["Template product" "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"]
@@ -241,8 +242,10 @@
 (def systems {:system-name-text-edit "system[name]"
               :system-description-text-edit "system[description]"
               :system-location-text-edit "system[location]"
+              :system-service-level-select "system[serviceLevel]"
               ;;subscriptions pane
-              :subscribe "commit"
+              :subscribe "sub_submit"
+              :unsubscribe "unsub_submit"
 
               ;;Activationkeys subtab
               :new-activation-key "new"

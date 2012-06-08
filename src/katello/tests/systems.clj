@@ -66,7 +66,7 @@
         (api/create-provider provider-name)
         (api/create-product product-name {:provider-name provider-name}))
       (subscribe-system {:system-name (:name (register-new-test-system))
-                         :products [product-name]})))
+                         :add-products [product-name]})))
 
   
   (deftest "Create an activation key" 
