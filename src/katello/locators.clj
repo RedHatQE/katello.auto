@@ -29,14 +29,11 @@
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
-   
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
-
    link                            "link=$1"
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"
    org-switcher                    "//div[@id='orgbox']//a[.='$1']"
    permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"
-
    plus-icon                       "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"
    product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"
    product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"
@@ -72,209 +69,219 @@
 ;;UI locators - mapping of names to selenium locator strings.
 ;;
 
-(def common {:notification "//div[contains(@class,'jnotify-notification')]"
-             :error-message "//div[contains(@class,'jnotify-notification-error')]"
-             :success-message "//div[contains(@class,'jnotify-notification-message')]"
-             :spinner "//img[contains(@src,'spinner.gif')]"
-             :save-inplace-edit "//button[.='Save']"
-             :confirmation-dialog "//div[contains(@class, 'confirmation')]"
-             :confirmation-yes "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-             :confirmation-no "//div[contains(@class, 'confirmation')]//span[.='No']"
-             :search-bar "search"
-             :search-submit "//button[@form='search_form']"
-             ;;main banner
-             :account "//li[@class='hello']/a"
-             :log-out "//a[normalize-space(.)='Logout']"
-             :org-switcher "switcherButton"
-             :active-org "//*[@id='switcherButton']"
-             })
+(def common
+  {:notification        "//div[contains(@class,'jnotify-notification')]"
+   :error-message       "//div[contains(@class,'jnotify-notification-error')]"
+   :success-message     "//div[contains(@class,'jnotify-notification-message')]"
+   :spinner             "//img[contains(@src,'spinner.gif')]"
+   :save-inplace-edit   "//button[.='Save']"
+   :confirmation-dialog "//div[contains(@class, 'confirmation')]"
+   :confirmation-yes    "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+   :confirmation-no     "//div[contains(@class, 'confirmation')]//span[.='No']"
+   :search-bar          "search"
+   :search-submit       "//button[@form='search_form']"
+   ;;main banner
+   :account             "//li[@class='hello']/a"
+   :log-out             "//a[normalize-space(.)='Logout']"
+   :org-switcher        "switcherButton"
+   :active-org          "//*[@id='switcherButton']"})
 
-(def all-tabs (tabs [:organizations
-                     :administer
-                     :systems
-                     :content-management
-                     :dashboard
-                     :all
-                     :by-environments
-                     :create
+(def all-tabs
+  (tabs
+   [:organizations
+    :administer
+    :systems
+    :content-management
+    :dashboard
+    :all
+    :by-environments
+    :create
 
-                     ;;subtabs
-                     :content-providers
-                     :custom-content-providers
-                     :red-hat-content-provider
-                     :sync-management
-                     :sync-status
-                     :sync-plans
-                     :sync-schedule
-                     :promotions
-                     :system-templates
-                     :users
-                     :roles
-                     :activation-keys
-                     :details
+    ;;subtabs
+    :content-providers
+    :custom-content-providers
+    :red-hat-content-provider
+    :sync-management
+    :sync-status
+    :sync-plans
+    :sync-schedule
+    :promotions
+    :system-templates
+    :users
+    :roles
+    :activation-keys
+    :details
                      
-                     :registered
-                     :groups
-                     :general
-                     :subscriptions
-                     :facts
-                     :packages]))
+    :registered
+    :groups
+    :general
+    :subscriptions
+    :facts
+    :packages]))
 
-(def organizations {:new-organization "//a[@id='new']"
-                    :create-organization "organization_save"
-                    :org-name-text (textbox "name")
-                    :org-description-text (textbox "description")
-                    :org-environments (link "Environments")
-                    :edit-organization (link "Edit")
-                    :remove-organization (link "Remove Organization")
-                    :org-description-text-edit "organization[description]"
-                    :org-initial-env-name-text "envname"
-                    :org-initial-env-desc-text "envdescription"}
-                    )
+(def organizations
+  {:new-organization          "//a[@id='new']"
+   :create-organization       "organization_save"
+   :org-name-text             (textbox "name")
+   :org-description-text      (textbox "description")
+   :org-environments          (link "Environments")
+   :edit-organization         (link "Edit")
+   :remove-organization       (link "Remove Organization")
+   :org-description-text-edit "organization[description]"
+   :org-initial-env-name-text "envname"
+   :org-initial-env-desc-text "envdescription"})
 
-(def environments {:env-name-text (textbox "name")
-                   :env-description-text (textbox "description")
-                   :prior-environment "//select[@id='prior']"
-                   :create-environment "//input[@value='Create']"
-                   :new-environment "//div[normalize-space(.)='Add New Environment']"
-                   :remove-environment (link "Remove Environment")
-                   :env-name-text-edit "kt_environment[name]"
-                   :env-description-text-edit "kt_environment[description]"
-                   :env-prior-select-edit "kt_environment[prior]" })
+(def environments
+  {:env-name-text             (textbox "name")
+   :env-description-text      (textbox "description")
+   :prior-environment         "//select[@id='prior']"
+   :create-environment        "//input[@value='Create']"
+   :new-environment           "//div[normalize-space(.)='Add New Environment']"
+   :remove-environment        (link "Remove Environment")
+   :env-name-text-edit        "kt_environment[name]"
+   :env-description-text-edit "kt_environment[description]"
+   :env-prior-select-edit     "kt_environment[prior]" })
 
-(def providers {:new-provider "new"
-                :provider-name-text  "provider[name]"
-                :provider-description-text "provider[description]"
-                :provider-repository-url-text "provider[repository_url]"
-                :provider-cert-text (textbox "provider[certificate_attributes][contents]")
-                :provider-create-save "provider_save"
-                :remove-provider (link "Remove Provider")
-                :subscriptions (link "Subscriptions")
-                :redhat-provider-repository-url-text "provider[repository_url]"
-                :choose-file "provider_contents"
-                :upload "upload_submit"
-                :force-import-checkbox "force_import"
-                :enable-repositories-tab "//a[normalize-space(.)='Enable Repositories']"
-                :products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
+(def providers
+  {:new-provider                        "new"
+   :provider-name-text                  "provider[name]"
+   :provider-description-text           "provider[description]"
+   :provider-repository-url-text        "provider[repository_url]"
+   :provider-cert-text                  (textbox "provider[certificate_attributes][contents]")
+   :provider-create-save                "provider_save"
+   :remove-provider                     (link "Remove Provider")
+   :subscriptions                       (link "Subscriptions")
+   :redhat-provider-repository-url-text "provider[repository_url]"
+   :choose-file                         "provider_contents"
+   :upload                              "upload_submit"
+   :force-import-checkbox               "force_import"
+   :enable-repositories-tab             "//a[normalize-space(.)='Enable Repositories']"
+   :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
-                ;;add product
-                :add-product (button-div "Add Product")
-                :create-product "//input[@value='Create']"
-                :product-name-text "//*[@name='product[name]']"
-                :product-description-text "//*[@name='product[description]']"
-                :remove-product (link "Remove Product")
-                ;;add repo
-                :add-repository "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
-                :repo-name-text "repo[name]"
-                :repo-url-text "repo[feed]" 
-                :save-repository "//input[@value='Create']"
-                :remove-repository (link "Remove Repository")
+   ;;add product
+   :add-product                         (button-div "Add Product")
+   :create-product                      "//input[@value='Create']"
+   :product-name-text                   "//*[@name='product[name]']"
+   :product-description-text            "//*[@name='product[description]']"
+   :remove-product                      (link "Remove Product")
+   ;;add repo
+   :add-repository                      "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
+   :repo-name-text                      "repo[name]"
+   :repo-url-text                       "repo[feed]" 
+   :save-repository                     "//input[@value='Create']"
+   :remove-repository                   (link "Remove Repository")
 
-                ;;redhat page
-                :subscriptions-items "//table[@id='redhatSubscriptionTable']/tbody/tr"
+   ;;redhat page
+   :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
 
-                ;;gpg keys
-                :gpg-key-name-text "gpg_key_name"
-                :gpg-key-file-upload-text "gpg_key_content_upload"
-                :gpg-key-upload-button "upload_gpg_key"
-                :gpg-key-content-text "gpg_key_content"
-                :gpg-keys "//a[.='GPG Keys']"
-                :gpg-keys-save "save_gpg_key"
-                :new-gpg-key "new"
-                })
+   ;;gpg keys
+   :gpg-key-name-text                   "gpg_key_name"
+   :gpg-key-file-upload-text            "gpg_key_content_upload"
+   :gpg-key-upload-button               "upload_gpg_key"
+   :gpg-key-content-text                "gpg_key_content"
+   :gpg-keys                            "//a[.='GPG Keys']"
+   :gpg-keys-save                       "save_gpg_key"
+   :new-gpg-key                         "new"})
 
-(def promotions {:products-category (promotion-content-category "products")
-                 :expand-path "path-collapsed"
-                 :errata-category (promotion-content-category "errata")
-                 :packages-category (promotion-content-category "packages")
-                 :kickstart-trees-category (promotion-content-category "kickstart trees")
-                 :templates-category (promotion-content-category "templates")
-                 :promotion-eligible-home "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+(def promotions
+  {:products-category           (promotion-content-category "products")
+   :expand-path                 "path-collapsed"
+   :errata-category             (promotion-content-category "errata")
+   :packages-category           (promotion-content-category "packages")
+   :kickstart-trees-category    (promotion-content-category "kickstart trees")
+   :templates-category          (promotion-content-category "templates")
+   :promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
 
-                 :review-for-promotion "review_changeset"
-                 :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-                 :promotion-empty-list "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-                 :new-promotion-changeset "//a[contains(.,'New Promotion Changeset')]"
-                 :changeset-name-text (textbox "name")
-                 :save-changeset "save_changeset_button"
-                 :changeset-content "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
+   :review-for-promotion        "review_changeset"
+   :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+   :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
+   :new-promotion-changeset     "//a[contains(.,'New Promotion Changeset')]"
+   :changeset-name-text         (textbox "name")
+   :save-changeset              "save_changeset_button"
+   :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
 
-(def users {:roles-subsubtab "//div[@class='panel-content']//a[.='Roles']"
-            :environments-subsubtab "//div[@class='panel-content']//a[.='Environments']"
-            :user-default-org-select "org_id[org_id]"
-            :save-user-environment "update_user"
-            :new-user "//a[@id='new']"
-            :new-user-username-text "username_field"
-            :new-user-password-text "password_field"
-            :new-user-confirm-text "confirm_field"
-            :new-user-default-org "org_id[org_id]"
-            :new-user-email "email_field"
-            :save-user "save_user"
-            :remove-user (link "Remove User")
-            :enable-inline-help-checkbox "user[helptips_enabled]"
-            :clear-disabled-helptips "clear_helptips"
-            :change-password-text "password_field"
-            :confirm-password-text "confirm_field"
-            :user-email-text "user[email]"
-            :save-roles "save_roles"
-            :add-all (link "Add all")
-            :password-conflict "//div[@id='password_conflict' and string-length(.)>0]"})
+(def users
+  {:roles-subsubtab                      "//div[@class='panel-content']//a[.='Roles']"
+   :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
+   :user-default-org-select     "org_id[org_id]"
+   :save-user-environment       "update_user"
+   :new-user                    "//a[@id='new']"
+   :new-user-username-text      "username_field"
+   :new-user-password-text      "password_field"
+   :new-user-confirm-text       "confirm_field"
+   :new-user-default-org        "org_id[org_id]"
+   :new-user-email              "email_field"
+   :save-user                   "save_user"
+   :remove-user                 (link "Remove User")
+   :enable-inline-help-checkbox "user[helptips_enabled]"
+   :clear-disabled-helptips     "clear_helptips"
+   :change-password-text        "password_field"
+   :confirm-password-text       "confirm_field"
+   :user-email-text             "user[email]"
+   :save-roles                  "save_roles"
+   :add-all                     (link "Add all")
+   :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
-(def sync-plans {:new-sync-plan "new"
-                 :sync-plan-name-text "sync_plan[name]"
-                 :sync-plan-description-text "sync_plan[description]"
-                 :sync-plan-interval-select "sync_plan[interval]"
-                 :sync-plan-date-text "sync_plan[plan_date]"
-                 :sync-plan-time-text "sync_plan[plan_time]"
-                 :save-sync-plan "plan_save"})
+(def sync-plans
+  {:new-sync-plan              "new"
+   :sync-plan-name-text        "sync_plan[name]"
+   :sync-plan-description-text "sync_plan[description]"
+   :sync-plan-interval-select  "sync_plan[interval]"
+   :sync-plan-date-text        "sync_plan[plan_date]"
+   :sync-plan-time-text        "sync_plan[plan_time]"
+   :save-sync-plan             "plan_save"})
 
-(def systems {:system-name-text-edit "system[name]"
-              :system-description-text-edit "system[description]"
-              :system-location-text-edit "system[location]"
-              :system-service-level-select "system[serviceLevel]"
-              ;;subscriptions pane
-              :subscribe "sub_submit"
-              :unsubscribe "unsub_submit"
+(def systems
+  {:system-name-text-edit           "system[name]"
+   :system-description-text-edit    "system[description]"
+   :system-location-text-edit       "system[location]"
+   :system-service-level-select     "system[serviceLevel]"
+   ;;subscriptions pane
+   :subscribe                       "sub_submit"
+   :unsubscribe                     "unsub_submit"
 
-              ;;Activationkeys subtab
-              :new-activation-key "new"
-              :activation-key-name-text "activation_key[name]"
-              :activation-key-description-text "activation_key[description]"
-              :activation-key-template-select "activation_key[system_template_id]"
-              :save-activation-key "save_key"
-              :remove-activation-key (link "Remove Activation Key")
-              :subscriptions-right-nav "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
-              :release-version-text "system[releaseVer]"})
+   ;;Activationkeys subtab
+   :new-activation-key              "new"
+   :activation-key-name-text        "activation_key[name]"
+   :activation-key-description-text "activation_key[description]"
+   :activation-key-template-select  "activation_key[system_template_id]"
+   :save-activation-key             "save_key"
+   :remove-activation-key           (link "Remove Activation Key")
+   :subscriptions-right-nav         "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+   :release-version-text            "system[releaseVer]"})
 
-(def roles {:new-role "//a[@id='new']"
-            :new-role-name-text "role[name]"
-            :new-role-description-text "role[description]"
-            :save-role "role_save"
-            :save-user-edit "save_password"
-            :role-users "role_users"
-            :role-permissions "role_permissions"
-            :next "next_button"
-            :permission-resource-type-select "permission[resource_type_attributes[name]]"
-            :permission-verb-select "permission[verb_values][]"
-            :permission-tag-select "tags"
-            :permission-name-text "permission[name]"
-            :permission-description-text "permission[description]"
-            :save-permission "save_permission_button"
-            :remove-role "remove_role"
-            :add-permission "add_permission"})
+(def roles
+  {:new-role                        "//a[@id='new']"
+   :new-role-name-text              "role[name]"
+   :new-role-description-text       "role[description]"
+   :save-role                       "role_save"
+   :save-user-edit                  "save_password"
+   :role-users                      "role_users"
+   :role-permissions                "role_permissions"
+   :next                            "next_button"
+   :permission-resource-type-select "permission[resource_type_attributes[name]]"
+   :permission-verb-select          "permission[verb_values][]"
+   :permission-tag-select           "tags"
+   :permission-name-text            "permission[name]"
+   :permission-description-text     "permission[description]"
+   :save-permission                 "save_permission_button"
+   :remove-role                     "remove_role"
+   :add-permission                  "add_permission"})
 
-(def sync-schedules {:apply-sync-schedule "apply_button"})
+(def sync-schedules
+  {:apply-sync-schedule "apply_button"})
 
-(def templates {:new-template "new"
-                :template-name-text "system_template[name]"
-                :template-description-text "system_template[description]"
-                :save-new-template "template_save" ;;when creating
-                :template-eligible-package-groups (template-eligible-category "Package Groups")
-                :template-eligible-packages (template-eligible-category "Packages")
-                :template-eligible-repositories (template-eligible-category "Repositories")
-                :template-package-groups (slide-link "Package Groups")
-                :template-eligible-home "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-                :save-template "save_template"}) ;;when editing
+(def templates
+  {:new-template                     "new"
+   :template-name-text               "system_template[name]"
+   :template-description-text        "system_template[description]"
+   :save-new-template                "template_save" ;;when creating
+   :template-eligible-package-groups (template-eligible-category "Package Groups")
+   :template-eligible-packages       (template-eligible-category "Packages")
+   :template-eligible-repositories   (template-eligible-category "Repositories")
+   :template-package-groups          (slide-link "Package Groups")
+   :template-eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+   :save-template                    "save_template"}) ;;when editing
 
 ;;merge all the preceeding maps together, plus a few more items.
 (def ^{:doc "All the selenium locators for the Katello UI. Maps a
