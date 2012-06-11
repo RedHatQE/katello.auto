@@ -9,8 +9,8 @@
            [com.thoughtworks.selenium SeleniumException]))
 
 ;;ui layer
-(defn- template [descr templ]
-  (fn [& args] (Element. (LocatorTemplate. descr templ) (into-array args))))
+(defn- template [templ]
+  (fn [& args] (Element. (LocatorTemplate. "" templ) (into-array args))))
 
 (defmacro define-strategies
   "Expands into a function for each locator strategy in map m (which
@@ -21,58 +21,47 @@
   [m]
   `(do ~@(for [loc-strat (keys m)]
            `(def ~loc-strat 
-              (template ~@(m loc-strat))))))
+              (template ~(m loc-strat))))))
 
 (define-strategies
-  {add-repository ["Add Repository" "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"]
-   button-div ["Button"
-               "//div[contains(@class,'button') and normalize-space(.)='$1']"]
-   changeset ["Changeset"
-              "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"]
-   changeset-status ["Changeset status"  "//span[.='$1']/..//span[@class='changeset_status']"]
-   editable ["Editable" "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"]
+  {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+   button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
+   changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
+   changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
+   editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    
-   environment-link ["Environment"
-                     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"]
+   environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
 
-   link ["" "link=$1"]
-   notification-close-index ["Notification close button"
-                             "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"]
-   org-switcher ["Org switch list" "//div[@id='orgbox']//a[.='$1']"]
-   permission-org ["Permission Org" "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"]
+   link                            "link=$1"
+   notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"
+   org-switcher                    "//div[@id='orgbox']//a[.='$1']"
+   permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"
 
-   plus-icon ["Plus icon" "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"]
-   product-edit ["Product edit"
-                 "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"]
-   product-expand ["Expand product"
-                   "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"]
-   product-schedule ["Schedule for product" "//div[normalize-space(.)='$1']/following-sibling::div[1]"]
-   schedule ["Product to schedule" "//div[normalize-space(.)='$1']"]
-   promotion-add-content-item ["Add Content Item"
-                               "//a[@data-display_name='$1' and contains(.,'Add')]"]
-   promotion-content-category ["Content Category" "//div[@id='$1']"]
-   promotion-content-item-n ["Content item by index"
-                            "//div[@id='list']//li[$1]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"]
-   promotion-remove-content-item ["Remove Content Item"
-                                  "//a[@data-display_name='$1' and contains(.,'Remove')]"]
-   provider-sync-checkbox ["Provider sync checkbox"
-                           "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
-   provider-sync-progress ["Provider progress"
-                           "//tr[td/label[normalize-space(.)='$1']]/td[5]"]
-   repo-enable-checkbox ["Repo enable checkbox" "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"]
-   role-action ["Role action" "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"]
-   slide-link ["Slide Link" "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"]
-   subscription-current-checkbox ["Subscription current checkbox" "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
-   subscription-available-checkbox ["Subscription available checkbox" "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"]
-   sync-plan ["Sync Plan" "//div[@id='plans']//div[normalize-space(.)='$1']"]
-   tab ["Tab" "link=$1"]
-   template-product ["Template product" "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"]
-   template-action ["Template content action" "//a[@data-name='$2' and .='$1']"]
-   template-eligible-category ["Template category" "//div[@id='content_tree']//div[normalize-space()='$1']"]
-   textbox ["" "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"]
-   user ["User" "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"]
-   username-field ["Username field" "//div[@id='users']//div[normalize-space(.)='$1']"]
-   left-pane-field-list ["Left pane item#" "xpath=(//div[contains(@class,'ellipsis')])[$1]"]})
+   plus-icon                       "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"
+   product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"
+   product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"
+   product-schedule                "//div[normalize-space(.)='$1']/following-sibling::div[1]"
+   schedule                        "//div[normalize-space(.)='$1']"
+   promotion-add-content-item      "//a[@data-display_name='$1' and contains(.,'Add')]"
+   promotion-content-category      "//div[@id='$1']"
+   promotion-content-item-n        "//div[@id='list']//li[$1]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
+   promotion-remove-content-item   "//a[@data-display_name='$1' and contains(.,'Remove')]"
+   provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
+   provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
+   repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
+   role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
+   slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
+   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
+   subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
+   sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
+   tab                             "link=$1"
+   template-product                "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"
+   template-action                 "//a[@data-name='$2' and .='$1']"
+   template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='$1']"
+   textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"
+   user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"
+   username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"
+   left-pane-field-list            "xpath=(//div[contains(@class,'ellipsis')])[$1]"})
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
