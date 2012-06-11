@@ -14,8 +14,7 @@ to get a list of command line options (the `-m katello.tests.suite` is required 
 
 An example command line would be 
 
-    $ java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m katello.tests.suite -s \
-    https://my.host/katello katello.tests.suite/katello-tests
+    $ java -jar katello.auto-1.0.0-SNAPSHOT-standalone.jar -m katello.tests.suite -s https://my.host/katello katello.tests.suite/katello-tests
 
 where the last argument is the test
 group to run.  Existing test groups are
