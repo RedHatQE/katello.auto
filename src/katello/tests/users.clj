@@ -4,6 +4,7 @@
         katello.validation
         katello.tasks
         katello.ui-tasks
+        [katello.conf :only [config]]
         [bugzilla.checker :only [open-bz-bugs]]))
 
 ;;; Variables
@@ -38,7 +39,20 @@
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
         (create-user    username                generic-user-details)
-        (delete-user    username)))
+        (delete-user    username))
+
+      (deftest "Admin who deletes the original admin account can still do admin things"
+        (let [admin (@config :admin-user)
+              pw    (@config :admin-password)]
+          (try
+            (delete-user admin)
+            
+            (with-unique [org "deleteme"]
+              (create-organization org)
+              (delete-organization org))
+            (finally (create-user admin {:password pw
+                                         :email "root@localhost"})
+                     (assign-role {:user admin :roles ["Administrator"]}))))))
 
 
     (deftest "Two users with the same username is disallowed"
