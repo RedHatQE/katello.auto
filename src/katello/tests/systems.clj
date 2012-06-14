@@ -66,8 +66,12 @@
         (api/create-provider provider-name)
         (api/create-product product-name {:provider-name provider-name}))
       (subscribe-system {:system-name (:name (register-new-test-system))
-                         :products [product-name]})))
+                         :add-products [product-name]})))
 
+  (deftest "Set a system to autosubscribe with no SLA preference"
+    (subscribe-system {:system-name (:name (register-new-test-system))
+                       :auto-subscribe true
+                       :sla "No Service Level Preference"}))
   
   (deftest "Create an activation key" 
     :blockers (open-bz-bugs "750354")
