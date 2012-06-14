@@ -45,6 +45,7 @@
   (ui/login user pw))
 
 (defn stop-selenium []
+  (println "insie browser-stop function")
   (browser stop))
 
 (defn thread-runner
@@ -71,8 +72,9 @@
         (consume-fn)
         (stop-selenium)))))
 
-{teardown:
+{:teardown
  (fn []
+   (println "Inside teardown function")
   (when (selenium-server/selenium-server)
     (selenium-server/stop)))}
 
