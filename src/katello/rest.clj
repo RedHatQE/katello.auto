@@ -36,7 +36,7 @@
        (catch Exception e {:failed-json-object s :exception e})))
 
 (defn wait-for-string-and-decode-json
-  "Execute body, wait for string, then decode json"
+  "wait for response, then decode json"
   [response]
   (-> response
      http/await

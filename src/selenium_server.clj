@@ -18,5 +18,7 @@
         (catch Exception _ nil)))
     
     (def ^:dynamic selenium-server (SeleniumServer. rcconf))
+    (when (re-matches (re-pattern "^1\\.7.*") (System/getProperty "java.version"))
+      (System/setProperty "jsse.enableSNIExtension" "false"))
     (.start selenium-server)))
 

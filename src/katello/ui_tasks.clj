@@ -630,12 +630,24 @@
   (check-for-success))
 
 (defn subscribe-system
-  "Subscribes the given system to the products. (products should be a list)."
-  [{:keys [system-name products]}]
+  "Subscribes the given system to the products. (products should be a
+  list). Can also set the auto-subscribe for a particular SLA.
+  auto-subscribe must be either true or false to select a new setting
+  for auto-subscribe and SLA. If auto-subscribe is nil, no changes
+  will be made."
+  [{:keys [system-name add-products remove-products auto-subscribe sla]}]
   (navigate :system-subscriptions-page {:system-name system-name})
-  (doseq [product products]
-    (browser check (locators/subscription-checkbox product)))
-  (browser click :subscribe)
+  (when-not (nil? auto-subscribe)
+    (in-place-edit {:system-service-level-select (format "Auto-subscribe %s, %s"
+                                                         (if auto-subscribe "On" "Off")
+                                                         sla)}))
+  (let [sub-unsub-fn (fn [content checkbox-fn submit]
+                       (when-not (empty? content)
+                         (doseq [item content]
+                           (browser check (checkbox-fn item)))
+                         (browser click submit)) )]
+    (sub-unsub-fn add-products locators/subscription-available-checkbox :subscribe)
+    (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
   (check-for-success))
 
 (def syncplan-dateformat (SimpleDateFormat. "MM/dd/yyyy"))
