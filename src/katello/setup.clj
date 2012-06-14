@@ -67,19 +67,19 @@
                                                       (@config :client-ssh-key)
                                                       (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
-        (start-selenium)
-        (switch-new-admin-user *session-user* *session-password*)
-        (consume-fn)
-        (stop-selenium)))))
-
-{:teardown
- (fn []
-   (println "Inside teardown function")
-  (when (selenium-server/selenium-server)
-    (selenium-server/stop)))}
+        (try 
+          (start-selenium)
+          (switch-new-admin-user *session-user* *session-password*)
+          (consume-fn)
+          (finally 
+            (stop-selenium)))))))
 
 (def runner-config 
-  {:thread-runner thread-runner
+  {:teardown (fn []
+               (println "Inside teardown function")
+               (when selenium-server/selenium-server 
+                 (selenium-server/stop)))
+   :thread-runner thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
               :screencapture (watch/on-fail
                               (fn [t _] 

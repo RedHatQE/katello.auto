@@ -47,7 +47,7 @@
   ([group]
      (with-meta (-> group (or "katello.tests.suite/katello-tests")
                    symbol resolve deref)
-       (merge setup/runner-config))))
+       setup/runner-config)))
 
 (defn -main [ & args]
   (let [[opts [suite] banner]
