@@ -5,7 +5,8 @@
                      [api-tasks :as api]
                      [client :as client]) 
             [test.tree.watcher :as watch]
-            [test.tree.jenkins :as jenkins])
+            [test.tree.jenkins :as jenkins]
+            selenium-server)
   (:use [clojure.string :only [split replace]]
         katello.conf
         katello.tasks
@@ -69,6 +70,11 @@
         (switch-new-admin-user *session-user* *session-password*)
         (consume-fn)
         (stop-selenium)))))
+
+{teardown:
+ (fn []
+  (when (selenium-server/selenium-server)
+    (selenium-server/stop)))}
 
 (def runner-config 
   {:thread-runner thread-runner
