@@ -26,7 +26,7 @@
 
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
-    (edit-system (:name system) :new-name new-name)
+    (edit-system (:name system) {:new-name new-name})
     (navigate :named-systems-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
