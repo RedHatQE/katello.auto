@@ -45,9 +45,13 @@
 (defn make-suite
   ([] (make-suite nil))
   ([group]
-     (with-meta (-> group (or "katello.tests.suite/katello-tests")
-                   symbol resolve deref)
-       (merge setup/runner-config))))
+     (let [suite (try (-> group (or "katello.tests.suite/katello-tests")
+                         symbol resolve deref)
+                      (catch Exception e
+                        (throw (RuntimeException.
+                                (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))]
+       (with-meta suite 
+        (merge setup/runner-config)))))
 
 (defn -main [ & args]
   (let [[opts [suite] banner]
