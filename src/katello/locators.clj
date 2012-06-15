@@ -293,9 +293,9 @@
   (merge all-tabs common organizations environments roles users systems sync-plans
          sync-schedules promotions providers templates
          { ;; login page
-          :username-text (textbox "username")
-          :password-text (textbox "password")
-          :log-in "//input[@value='Log In']"
+          :username-text     "username"
+          :password-text     "password"
+          :log-in            "//input[@value='Log In' or @value='Login']"
 
               
           ;;tabs with special chars in name
@@ -303,7 +303,7 @@
                    
 
           ;;Sync Management subtab
-          :synchronize-now "sync_button"}))
+          :synchronize-now   "sync_button"}))
 
 ;;Tells the clojure selenium client where to look up keywords to get
 ;;real selenium locators (in uimap in this namespace).
