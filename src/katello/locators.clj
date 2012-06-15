@@ -236,6 +236,7 @@
    :system-description-text-edit    "system[description]"
    :system-location-text-edit       "system[location]"
    :system-service-level-select     "system[serviceLevel]"
+   :system-release-version-select   "system[releaseVer]"
    ;;subscriptions pane
    :subscribe                       "sub_submit"
    :unsubscribe                     "unsub_submit"

@@ -622,11 +622,12 @@
 (defn edit-system
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
-  [name & {:keys [new-name description location]}]
+  [name {:keys [new-name description location release-version]}]
   (navigate :named-systems-page {:system-name name})
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
-                  :system-location-text-edit location})
+                  :system-location-text-edit location
+                  :system-release-version-select release-version})
   (check-for-success))
 
 (defn subscribe-system
@@ -832,3 +833,11 @@
                    :gpg-key-content-text contents}
                   :gpg-keys-save)
   (check-for-success))
+
+(defn sync-and-promote [products from-env to-env]
+  (let [all-prods (map :name products)
+        all-repos (apply concat (map :repos products))
+        sync-results (sync-repos all-repos {:timeout 600000})]
+        (verify-that (every? (fn [[_ res]] (sync-success? res))
+                             sync-results))
+        (promote-content from-env to-env {:products all-prods})))
