@@ -21,17 +21,12 @@
    Example of products: [ {:name 'myprod' :poolName 'myprod
    24/7' :repos ['myrepoa' 'myrepob']} ]"
   [org-name target-env products packages-to-install]
-  (let [all-prods (map :name products)
-        all-pools (map #(or (:poolName %1)
+  (let [all-pools (map #(or (:poolName %1)
                             (:name %1)) products)
         all-packages (apply str (interpose " " packages-to-install))]
     
     (when (api/is-katello?)
-      (let [all-repos (apply concat (map :repos products))
-            sync-results (sync-repos all-repos {:timeout 600000})]
-        (verify-that (every? (fn [[_ res]] (sync-success? res))
-                             sync-results))
-        (promote-content library target-env {:products all-prods})))
+      (sync-and-promote products library target-env))
 
     ;;client side
     (client/setup-client)
@@ -79,9 +74,13 @@
                        :product-name product-name
                        :name repo-name
                        :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
-            (test-client-access (@config :admin-org)
-                                target-env
-                                [{:name product-name :repos [repo-name]}] [package-to-install] )))))))
+            (let [products [{:name product-name :repos [repo-name]}]]
+              (when (api/is-katello?)
+                (sync-and-promote products library target-env))
+              (test-client-access (@config :admin-org)
+                                  target-env
+                                  products
+                                  [package-to-install] ))))))))
 
 
 
