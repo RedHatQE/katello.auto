@@ -1,6 +1,7 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
   (:use [katello.conf :only [config]]
+        slingshot.slingshot
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
         [katello.tasks :only [uniqueify library promotion-lock]]))
@@ -266,9 +267,12 @@
     (locking #'promotion-lock
       (rest/with-client-auth *user* *password* (rest/post (api-url "api/changesets/" id "/promote") nil))
       (loop-with-timeout 180000 [cs {}]
-        (cond (-> cs :state (= "promoted")) cs
-              :else (do (Thread/sleep 5000)
-                        (recur (get-by-id :changeset id))))))))
+        (let [state (:state cs)]
+          (case state
+            "promoted" cs
+            "failed" (throw+ {:type :failed-promotion :response cs})    
+            (do (Thread/sleep 5000)
+                (recur (get-by-id :changeset id)))))))))
 
 (defn promote
   "Does a promotion of the given content (creates a changeset, adds
