@@ -5,7 +5,8 @@
                      [api-tasks :as api]
                      [client :as client]) 
             [test.tree.watcher :as watch]
-            [test.tree.jenkins :as jenkins])
+            [test.tree.jenkins :as jenkins]
+            selenium-server)
   (:use [clojure.string :only [split replace]]
         katello.conf
         katello.tasks
@@ -44,7 +45,7 @@
   (ui/login user pw))
 
 (defn stop-selenium []
-  (browser stop))
+   (browser stop))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
@@ -65,13 +66,18 @@
                                                       (@config :client-ssh-key)
                                                       (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
-        (start-selenium)
-        (switch-new-admin-user *session-user* *session-password*)
-        (consume-fn)
-        (stop-selenium)))))
+        (try 
+          (start-selenium)
+          (switch-new-admin-user *session-user* *session-password*)
+          (consume-fn)
+          (finally 
+            (stop-selenium)))))))
 
 (def runner-config 
-  {:thread-runner thread-runner
+  {:teardown (fn []
+                 (when selenium-server/selenium-server 
+                 (selenium-server/stop)))
+   :thread-runner thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
               :screencapture (watch/on-fail
                               (fn [t _] 

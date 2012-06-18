@@ -51,7 +51,7 @@
                         (throw (RuntimeException.
                                 (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))]
        (with-meta suite 
-        (merge setup/runner-config)))))
+            setup/runner-config)))
 
 (defn -main [ & args]
   (let [[opts [suite] banner]
