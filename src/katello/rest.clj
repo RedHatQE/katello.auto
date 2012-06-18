@@ -3,6 +3,7 @@
             [http.async.client :as http]
             [http.async.client.cert :as cert]
             [clojure.data.json :as json])
+  (:use slingshot.slingshot)
   (:refer-clojure :exclude (get)))
 
 (def ^:dynamic *client* nil)
@@ -31,6 +32,15 @@
   `(bind-client-with-open (http/create-client)
      ~@body))
 
+;;stolen from https://github.com/dakrone/clj-http/blob/master/src/clj_http/client.clj
+(def exceptional-status?
+  (complement #{200 201 202 203 204 205 206 207 300 301 302 303 307}))
+
+(defn detect-exceptional-status [res]
+  (if (-> res http/status :code exceptional-status?)
+    (throw+ {:type :exceptional-http-status :response res})
+    res))
+
 (defn- read-json-safe [s]
   (try (json/read-json s)
        (catch Exception e {:failed-json-object s :exception e})))
@@ -39,7 +49,7 @@
   "wait for response, then decode json"
   [response]
   (-> response
-     http/await
+     detect-exceptional-status
      http/string
      read-json-safe))
 
