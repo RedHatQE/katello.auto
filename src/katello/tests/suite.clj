@@ -3,7 +3,7 @@
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
                            systems users permissions templates
-                           e2e navigation)
+                           e2e navigation search)
             
             [test.tree.jenkins :as jenkins]
             [katello.setup :as setup]
@@ -18,6 +18,7 @@
   katello.tests.login/login-tests
   katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
+  katello.tests.search/search-tests
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
   katello.tests.promotions/promotion-tests
@@ -36,11 +37,11 @@
   katello.tests.login/login-tests
   katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
+  katello.tests.search/search-tests
   katello.tests.providers/redhat-content-provider-tests
   katello.tests.environments/environment-tests
   katello.tests.systems/system-tests
-  katello.tests.users/user-tests
-  )
+  katello.tests.users/user-tests)
 
 (defn make-suite
   ([] (make-suite nil))
@@ -51,7 +52,7 @@
                         (throw (RuntimeException.
                                 (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))]
        (with-meta suite 
-            setup/runner-config)))
+            setup/runner-config))))
 
 (defn -main [ & args]
   (let [[opts [suite] banner]

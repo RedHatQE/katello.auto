@@ -98,16 +98,6 @@
         (create-test-org     org-name)
         (edit-organization   org-name     :description     "edited description")))
 
-  
-    (deftest "Search for an organization"
-      :description "Search for organizations based on criteria." 
-      :blockers    (open-bz-bugs "750120")
-      
-      (with-unique [org-name "myfoobarorg"]
-        (create-test-org                               org-name)
-        (verify-all-search-results-contain-criteria    :organizations        {:criteria "myfoobar"})))
-
-
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     

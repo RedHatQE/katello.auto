@@ -209,23 +209,15 @@
                                   :to-env to-env
                                   :timeout-ms 300000})))
 
-(defn extract-left-pane-list [loc]
+(defn extract-left-pane-list []
   "Extract data from the left pane, accepts locator as argument
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
-                (loc (str index)))]
+                (locators/left-pane-field-list (str index)))]
     (take-while identity (for [elem elems]
                            (try (browser getText elem)
                                 (catch SeleniumException e nil))))))
 
-(defn verify-all-search-results-contain-criteria
-  "Validate a search request by checking that all results contain the
-  search criteria. Scope is currently not implemented."
-  [entity-type & [{:keys [criteria scope] :as search-opts}]]
-  (search entity-type  search-opts)
-  (if-not (every? (fn [s] (.contains s criteria))
-                  (extract-left-pane-list locators/left-pane-field-list))
-    (throw+ {:type :search-results-inaccurate :msg "Not all search results match criteria."})))
 
 (defn- extract-content []
   (let [elems (for [index (iterate inc 1)]
@@ -505,13 +497,21 @@
 
 (defn search
   "Search for criteria in entity-type, scope not yet implemented.
-   check for error with a 2s timeout.  In this case error is a 
-   error jnotify object."
-  [entity-type & [{:keys [criteria scope]}]]
+  if with-favorite is specified, criteria is ignored and the existing
+  search favorite is chosen from the search menu. If add-as-favorite
+  is true, use criteria and save it as a favorite, and also execute
+  the search."
+  [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (navigate (entity-type {:users :users-tab 
                           :organizations :organizations-tab}))
-  (browser type :search-bar criteria)
-  (browser click :search-submit)
+  (if with-favorite
+    (->browser (click :search-menu)
+               (click (locators/search-favorite with-favorite)))
+    (do (browser type :search-bar criteria)
+        (when add-as-favorite
+          (->browser (click :search-menu)
+                     (click :search-save-as-favorite)))
+        (browser click :search-submit)))
   (check-for-error 2000))
 
 (defn create-role

@@ -49,6 +49,7 @@
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
    schedule                        "//div[normalize-space(.)='$1']"
+   search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
@@ -80,6 +81,8 @@
    :confirmation-yes    "//div[contains(@class, 'confirmation')]//span[.='Yes']"
    :confirmation-no     "//div[contains(@class, 'confirmation')]//span[.='No']"
    :search-bar          "search"
+   :search-menu         "//form[@id='search_form']//span[@class='arrow']"
+   :search-save-as-favorite "search_favorite_save"
    :search-submit       "//button[@form='search_form']"
    ;;main banner
    :account             "//li[@class='hello']/a"

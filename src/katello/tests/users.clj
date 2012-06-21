@@ -65,12 +65,6 @@
       (expect-error-on-action :password-too-short  create-user (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"}))
 
 
-    (deftest "Search for a user"
-      (with-unique [username "mybazquuxuser"]
-        (create-user                                username                generic-user-details)
-        (verify-all-search-results-contain-criteria :users                  {:criteria "mybazquux"})))
-
-
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (create-user     username                generic-user-details)
