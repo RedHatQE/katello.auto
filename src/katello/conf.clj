@@ -56,6 +56,10 @@
     :parse-fn #(string/split % #",")]
 
 
+   #_("to regenerate the list of test namespaces to trace:"
+      (require 'katello.tests.suite)
+      (filter (fn [sym] (-> sym str (.startsWith "katello.tests"))) (loaded-libs)))
+   
    ["--trace" "Namespaces and functions to trace"
     :default '[katello.tasks
                katello.ui-tasks
@@ -65,17 +69,26 @@
                katello.setup/stop-selenium
                katello.setup/switch-new-admin-user
                tools.verify/check
+               http.async.client/GET
+               http.async.client/POST
+               http.async.client/PUT
+               http.async.client/DELETE
                com.redhat.qe.auto.selenium.selenium/call-sel
-               com.redhat.qe.config/property-map]
+               ;;tests
+               katello.tests.e2e katello.tests.environments katello.tests.login
+               katello.tests.navigation katello.tests.organizations katello.tests.permissions
+               katello.tests.promotions katello.tests.providers katello.tests.search
+               katello.tests.suite katello.tests.sync_management katello.tests.systems
+               katello.tests.templates katello.tests.users]
     :parse-fn #(->> (string/split % #",") (map symbol) vec)]
    
    ["--trace-excludes" "Functions to exclude from tracing"
-     :default #{'katello.tasks/notification 
-                'katello.tasks/success?
-                'katello.tasks/uniqueify
-                'katello.tasks/unique-names
-                'katello.tasks/timestamps}
-     :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
+    :default #{'katello.tasks/notification 
+               'katello.tasks/success?
+               'katello.tasks/uniqueify
+               'katello.tasks/unique-names
+               'katello.tasks/timestamps}
+    :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 
