@@ -772,12 +772,15 @@
                                    :packages ['rpm1' 'rpm2']}
                                   {:product 'prod6'
                                    :repositories ['x86_64']}]"
-  [name content]
-  (navigate :named-system-template-page {:template-name name})
+  [template content]
+  (navigate :named-system-template-page {:template-name template})
   (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
     (doseq [group content]
       (let [category-keyword (-> group (dissoc :product) keys first)
-            category-name (kw-to-text category-keyword capitalize)]
+            category-name (-> category-keyword
+                             name
+                             (.replace "-" " ")
+                             capitalize-all)]
         (->browser
          (getEval "window.onbeforeunload = function(){};") ;circumvent popup
          (sleep 2000)

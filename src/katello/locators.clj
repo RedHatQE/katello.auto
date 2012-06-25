@@ -2,7 +2,7 @@
   (:use [com.redhat.qe.auto.selenium.selenium :only
          [fill-form SeleniumLocatable browser ->browser sel-locator]]
         [katello.conf :only [config]]
-        [katello.tasks :only [same-name]]
+        [katello.tasks :only [capitalize-all]]
         [ui.navigate :only [nav-tree page-zip]]
         [clojure.string :only [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
@@ -64,8 +64,13 @@
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
-  [keys]
-  (same-name capitalize tab keys))
+  [kws]
+  (->> kws
+     (map (comp tab
+                capitalize-all
+                #(.replace % "-" " ")
+                name))
+     (zipmap kws)))
 
 ;;
 ;;UI locators - mapping of names to selenium locator strings.

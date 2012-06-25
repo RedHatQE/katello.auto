@@ -1,6 +1,6 @@
 (ns katello.tasks
   (:use slingshot.slingshot
-        [clojure.string :only [split join]]))
+        [clojure.string :only [split join capitalize]]))
 
 (def library "Library")                 
 
@@ -57,24 +57,10 @@
                    [k `(uniqueify ~v)])))
      ~@forms))
 
-
-(defn same-name
-  "takes a collection of keywords like :registration-settings and
-   returns a mapping like :registration-settings -> 'Registration
-   Settings'"
-  ([coll] (same-name identity identity coll))
-  ([word-fn coll] (same-name word-fn identity coll))
-  ([word-fn val-fn coll]
-     (zipmap coll (for [keyword coll]
-                    (->>
-                     (-> keyword name (split #"-"))
-                     (map word-fn) (join " ") val-fn)))))
-
-
-(defn kw-to-text
-  "Convert a keyword to plain text, eg, :hi-there 'Hi There'. Passes
-   each word through word-fn, and the entire text through val-fn."
-  ([kw] (kw-to-text kw identity identity))
-  ([kw word-fn] (kw-to-text kw word-fn identity))
-  ([kw word-fn val-fn] (->> (-> kw name (split #"-"))
-                          (map word-fn) (join " ") val-fn)))
+(defn capitalize-all [s]
+  (let [matcher (re-matcher #"(\S+)" s)
+        buffer (new StringBuffer)]
+    (while (.find matcher)
+      (.appendReplacement matcher buffer (capitalize (.group matcher 1))))
+    (.appendTail matcher buffer)
+    (.toString buffer)))

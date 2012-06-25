@@ -7,39 +7,27 @@
         [serializable.fn :only [fn]] 
         [tools.verify :only [verify-that]]))
 
-(defn cant-be-blank-errors
-  "Takes collection of keywords like :name and produces map entry like
-   :name-cant-be-blank #\"Name can't be blank"
-  [coll]
-  (same-name identity
-             (comp re-pattern
-                   string/capitalize
-                   #(string/replace % " cant " " can't "))
-             (map #(-> (name %) (str "-cant-be-blank") keyword)
-                  coll)))
-
-(def
-  ^{:doc "All the different validation error messages that Katello
-  can throw. The keys are keywords that can be used to refer to this
-  type of error, and the values are regexes that match the error
-  notification message in the UI. See also expect-error and
-  field-validation."}
+(def ^{:doc "All the different validation error messages that Katello
+             can throw. The keys are keywords that can be used to
+             refer to this type of error, and the values are regexes
+             that match the error notification message in the UI. See
+             also expect-error and field-validation."}
   validation-errors
-  (merge {:name-taken-error #"(Username|Name) has already been taken"
+  (merge {:name-taken-error                    #"(Username|Name) has already been taken"
           :name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
-          :name-must-not-contain-characters #"Name cannot contain characters other than"
-          :name-must-be-unique-within-org #"Name must be unique within one organization" 
-          :repository-url-invalid #"Repository url is invalid"
-          :start-date-time-cant-be-blank #"Date and Time can't be blank"
-          :password-too-short #"Password must be at least"
-          :product-must-be-unique-in-org #"Products within an organization must have unique name"}
-         (cant-be-blank-errors [:name
-                                :repository-url])))
+          :name-must-not-contain-characters    #"Name cannot contain characters other than"
+          :name-must-be-unique-within-org      #"Name must be unique within one organization" 
+          :repository-url-invalid              #"Repository url is invalid"
+          :start-date-time-cant-be-blank       #"Date and Time can't be blank"
+          :password-too-short                  #"Password must be at least"
+          :product-must-be-unique-in-org       #"Products within an organization must have unique name"
+          :repository-url-cant-be-blank        #"Repository url can't be blank",
+          :name-cant-be-blank                  #"Name can't be blank"}))
 
 (def trailing-whitespace-strings [ "abc123 ", " ", "abc  1-2-3   "]) 
-(def javascript-strings ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
-(def invalid-character-strings [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
-(def invalid-urls ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
+(def javascript-strings          ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
+(def invalid-character-strings   [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
+(def invalid-urls                ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
 
 
 (defn matching-validation-errors
