@@ -94,6 +94,13 @@
 
     (deftest "Upload the same manifest to an org using force"
       (upload-test-manifest-to-test-org {:force true}))
+    
+    (deftest "Upload the same manifest to an org without force"
+      (try+
+        (upload-test-manifest-to-test-org {:force false})
+      (throw ::unexpected-success)
+      (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
+      
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
