@@ -6,6 +6,7 @@
   (:use katello.tasks
         katello.ui-tasks
         katello.validation
+        slingshot.slingshot
         [katello.tests.e2e :only [test-client-access]]
         test.tree.script
         [test.tree.builder :only [data-driven]]
