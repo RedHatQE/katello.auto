@@ -25,7 +25,8 @@
   known-errors
   {::validation-failed #"Validation [Ff]ailed"
    ::invalid-credentials #"incorrect username"
-   ::promotion-already-in-progress #"Cannot promote.*while another changeset"})
+   ::promotion-already-in-progress #"Cannot promote.*while another changeset"
+   ::import-older-than-existing-data #"Import is older than existing data"})
 
 (defn matching-error
   "Returns a keyword of known error, if the message matches any of
