@@ -3,7 +3,6 @@
   (:require [clojure.string :as string])
   (:use [slingshot.slingshot :only [try+]]
         [katello.ui-tasks :only [success?]]
-        [katello.tasks :only [same-name]]
         [serializable.fn :only [fn]] 
         [tools.verify :only [verify-that]]))
 
