@@ -1,6 +1,7 @@
 (ns katello.tasks
   (:use slingshot.slingshot
-        [clojure.string :only [split join capitalize]]))
+        [clojure.string :only [split join capitalize]])
+  (:import java.util.Date))
 
 (def library "Library")                 
 
@@ -27,19 +28,21 @@
          (throw+ {:type :unexpected-success :expected ~selector})
          (catch ~selector e# nil)))
 
+(def date-format (java.text.SimpleDateFormat. "MMdd-HHmmss-SSS"))
+ 
 
-(defn timestamps
+(defn timestamps []
   "Returns an infinite lazy sequence of timestamps in ms, starting
   with the current time, incrementing the time by one on each
   successive item."
-  []
   (iterate inc (System/currentTimeMillis)))
+
 
 (defn unique-names
   "Returns an infinite lazy sequence of timestamped strings, uses s as
   the base string."
   [s]
-  (for [t (timestamps)] (str s "-" t)))
+  (for [t (timestamps)] (str s "-" (.format  date-format (Date. t)))))
 
 (defn uniqueify
   "Returns one unique string using s as the base string.
