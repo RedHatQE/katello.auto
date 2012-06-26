@@ -3,6 +3,9 @@
 ;; Variables
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
+(def org1-m1-manifest 
+  (str (System/getProperty "user.dir") "/manifests/manifest_D2_O2_M1.zip"))
+
 
 (def redhat-provider-test-org (atom nil))
 
@@ -38,11 +41,13 @@
 (defn enable-redhat-repositories-in-org [org repos]
   (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
-(defn upload-test-manifest-to-test-org [& [opts]]
-  (with-org @redhat-provider-test-org
-    (upload-subscription-manifest manifest-tmp-loc
+(defn upload-test-manifest-to-test-org 
+  ([opts] (upload-test-manifest-to-test-org manifest-tmp-loc @redhat-provider-test-org))
+  ([manifest-loc org opts]
+  (with-org org
+    (upload-subscription-manifest manifest-loc
                                   (merge {:repository-url (@config :redhat-repo-url)}
-                                         opts))))
+                                         opts)))))
 
 (defn promote-redhat-content-into-test-env []
   (api/with-admin
@@ -90,7 +95,7 @@
   :blockers    (open-bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
-    (upload-test-manifest-to-test-org)            
+    (upload-test-manifest-to-test-org {})            
 
     (deftest "Upload the same manifest to an org using force"
       (upload-test-manifest-to-test-org {:force true}))
@@ -100,7 +105,10 @@
         (upload-test-manifest-to-test-org {:force false})
       (throw ::unexpected-success)
       (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
-      
+    
+    (deftest "Load New manifest into same org without force"
+      (upload-test-manifest-to-test-org org1-m1-manifest @redhat-provider-test-org {}))
+
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
