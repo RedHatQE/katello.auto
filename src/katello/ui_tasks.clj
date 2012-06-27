@@ -829,13 +829,17 @@
   (check-for-success))
 
 (defn create-gpg-key [name & [{:keys [filename contents]}]]
+  (assert (not (and filename contents))
+          "Must specify one one of :filename or :contents.")
+  (assert (string? name))
   (navigate :new-gpg-key-page)
-  (when filename
-    (fill-ajax-form {:gpg-key-file-upload-text filename}
-                    :gpg-key-upload-button))
-  (fill-ajax-form {:gpg-key-name-text name
-                   :gpg-key-content-text contents}
-                  :gpg-keys-save)
+  (if filename
+    (fill-ajax-form {:gpg-key-name-text name
+                     :gpg-key-file-upload-text filename}
+                    :gpg-key-upload-button)
+    (fill-ajax-form {:gpg-key-name-text name
+                     :gpg-key-content-text contents}
+                    :gpg-keys-save))
   (check-for-success))
 
 (defn sync-and-promote [products from-env to-env]
