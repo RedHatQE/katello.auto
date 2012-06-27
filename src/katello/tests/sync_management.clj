@@ -34,12 +34,12 @@
   (= "Sync complete." sync-result))
 
 (defn plan-validate [arg expected]
-  (validate/field-validation create-sync-plan [arg]
-                             (validate/expect-error expected)))
+  (expecting-error (errtype expected)
+                   (create-sync-plan arg)))
 
 (defn plan-validation-data []
-  [[{:start-time (java.util.Date.) :interval "daily"} :name-cant-be-blank]
-   [{:name "blah" :start-time-literal "" :start-date-literal ""} :start-date-time-cant-be-blank]])
+  [[{:start-time (java.util.Date.) :interval "daily"} :katello.ui-tasks/name-cant-be-blank]
+   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.ui-tasks/start-date-time-cant-be-blank]])
 
 ;; Tests
 
@@ -88,10 +88,11 @@
 
 
     (deftest "Cannot create two sync plans with the same name"
-      (validate/duplicate-disallowed create-sync-plan [{:name (uniqueify "dupe")
-                                                        :start-date (java.util.Date.)
-                                                        :description "mydescription"
-                                                        :interval "daily"}]))
+      (expecting-error validate/duplicate-disallowed
+                       (create-sync-plan {:name (uniqueify "dupe")
+                                          :start-date (java.util.Date.)
+                                          :description "mydescription"
+                                          :interval "daily"})))
 
 
     (deftest "Assign a sync plan to multiple products"      

@@ -14,7 +14,7 @@
                  [org.seleniumhq.selenium/selenium-java "2.22.0"]
                  [com.redhat.qe/ssh-tools "1.0.0"]
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
-                 [slingshot "0.8.0"]
+                 [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  [http.async.client "0.4.5"]
                  [org.clojure/tools.cli "0.2.1"]

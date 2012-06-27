@@ -58,11 +58,14 @@
     (deftest "Two users with the same username is disallowed"
       :blockers (open-bz-bugs "738425")
 
-      (verify-2nd-try-fails-with       :name-taken-error     create-user    (uniqueify "dupeuser")    generic-user-details))
+      (with-unique [username "dupeuser"]
+        (expecting-error-2nd-try (errtype :name-taken-error)
+          (create-user username generic-user-details))))
 
 
     (deftest "User's minimum password length is enforced"
-      (expect-error-on-action :password-too-short  create-user (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"}))
+      (expecting-error (errtype :katello.ui-tasks/password-too-short)
+                       (create-user (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"})))
 
 
     (deftest "Admin assigns a role to user"
