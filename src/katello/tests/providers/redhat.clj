@@ -2,9 +2,28 @@
 
 ;; Variables
 
+;;(defn fully-qualify [file]
+;;  (str (System/getProperty "user.dir") file))
+
 (def manifest-tmp-loc "/tmp/manifest.zip")
-(def org1-m1-manifest 
+
+(def org1-m1-manifest
+  (str (System/getProperty "user.dir") "/manifests/manifest_D1_O1_M1.zip"))
+(def org2-m1-manifest 
+;;  (fully-qualify "/manifests/manifest_D2_O2_M1.zip"))
   (str (System/getProperty "user.dir") "/manifests/manifest_D2_O2_M1.zip"))
+(def org4-m1-manifest
+  (str (System/getProperty "user.dir") "/manifests/manifest_D4_O4_M1.zip"))
+(def scenario2_m1_d1_manifest
+  (str (System/getProperty "user.dir") "/manifests/scenario2_M1_D1.zip"))
+(def scenario5-o1-m2-manifest
+  (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M2.zip"))
+(def scenario5_o1_m1_manifest
+  (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M1.zip"))
+(def bz786963_manifest
+  (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
+
+
 
 
 (def redhat-provider-test-org (atom nil))
@@ -107,7 +126,7 @@
       (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
     
     (deftest "Load New manifest into same org without force"
-      (upload-test-manifest-to-test-org org1-m1-manifest @redhat-provider-test-org {}))
+      (upload-test-manifest-to-test-org scenario5-o1-m2-manifest @redhat-provider-test-org {}))
 
 
     (deftest "Enable Red Hat repositories"
