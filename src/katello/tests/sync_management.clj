@@ -121,7 +121,7 @@
 
     (deftest "Cannot create two sync plans with the same name"
       (with-unique [plan-name "dupe"]
-        (expecting-error-2nd-try validate/duplicate-disallowed
+        (validate/expecting-error-2nd-try validate/duplicate-disallowed
                                  (create-sync-plan {:name plan-name
                                                     :start-date (java.util.Date.)
                                                     :description "mydescription"
