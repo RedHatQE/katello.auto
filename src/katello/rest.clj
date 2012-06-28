@@ -104,4 +104,7 @@
    (http/DELETE *client* url :headers (merge req {:Accept "application/json"
                                                   :Content-Type "application/json"}))))
 
-  
+(defmethod print-method com.ning.http.client.AsyncHttpClient
+  [o ^java.io.Writer w]
+  (.write w (pr-str {:class (class o)
+                     :config {:realm (-> o .getConfig .getRealm .toString)}})))
