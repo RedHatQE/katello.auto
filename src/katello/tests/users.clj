@@ -59,7 +59,7 @@
       :blockers (open-bz-bugs "738425")
 
       (with-unique [username "dupeuser"]
-        (expecting-error-2nd-try (errtype :name-taken-error)
+        (expecting-error-2nd-try (errtype :katello.ui-tasks/name-taken-error)
           (create-user username generic-user-details))))
 
 

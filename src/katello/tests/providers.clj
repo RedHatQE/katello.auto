@@ -116,9 +116,9 @@
 
 
     (deftest "Cannot create two providers in the same org with the same name"
-      (expecting-error duplicate-disallowed
-                       (create-provider {:name (uniqueify "dupe")
-                                         :description "mydescription"})))
+      (expecting-error-2nd-try duplicate-disallowed
+                               (create-provider {:name (uniqueify "dupe")
+                                                 :description "mydescription"})))
     
     (deftest "Provider validation"
       :data-driven true
