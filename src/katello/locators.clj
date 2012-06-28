@@ -90,7 +90,7 @@
    :search-save-as-favorite "search_favorite_save"
    :search-submit       "//button[@form='search_form']"
    ;;main banner
-   :account             "//li[@class='hello']/a"
+   :account             "//a[@class='header-widget' and contains(@href,'users')]"
    :log-out             "//a[normalize-space(.)='Logout']"
    :org-switcher        "switcherButton"
    :active-org          "//*[@id='switcherButton']"})
