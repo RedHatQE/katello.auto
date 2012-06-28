@@ -68,3 +68,9 @@
       (.appendReplacement matcher buffer (capitalize (.group matcher 1))))
     (.appendTail matcher buffer)
     (.toString buffer)))
+
+(defn chain-envs
+  "Given a list of environments, return successive pairs (eg:
+   envs ['a' 'b' 'c'] -> ('a' 'b'), ('b' 'c')"
+  [envs]
+  (partition 2 1 envs))

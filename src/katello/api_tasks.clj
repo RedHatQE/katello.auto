@@ -4,7 +4,7 @@
         slingshot.slingshot
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify library promotion-lock]]))
+        [katello.tasks :only [uniqueify library promotion-lock chain-envs]]))
 
 (def ^:dynamic *user* nil)
 (def ^:dynamic *password* nil)
@@ -152,6 +152,10 @@
     (if-not (some #{name}
                   (map :name (all-entities :environment)))
       (create-environment name {:prior-env prior}))))
+
+(defn create-env-chain [envs]
+  (doseq [[prior curr] (chain-envs envs)]
+    (ensure-env-exist curr {:prior prior})))
 
 (defn create-product [name {:keys [provider-name description]}]
   (rest/with-client-auth *user* *password* 
