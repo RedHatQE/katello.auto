@@ -40,7 +40,7 @@
     (api/create-user user {:password pw
                            :email (str user "@myorg.org")}))
   (ui/assign-role {:user user
-                      :roles ["Administrator"]})
+                   :roles ["Administrator"]})
   (ui/logout)
   (ui/login user pw))
 

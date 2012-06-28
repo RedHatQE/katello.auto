@@ -1,6 +1,6 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
-  (:use [katello.conf :only [config]]
+  (:use [katello.conf :only [config *session-user* *session-password*]]
         slingshot.slingshot
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
@@ -25,8 +25,8 @@
   "Executes body and makes any included katello api calls using the
   admin user and password (which defaults to admin/admin)"
   [& body]
-  `(binding [*user* (@config :admin-user)
-             *password* (@config :admin-password)]
+  `(binding [*user* *session-user*
+             *password* *session-password*]
      (do ~@body)))
 
 (defmacro with-org
@@ -48,8 +48,8 @@
   "Executes body and makes any included katello api calls using the
   admin user, password, and organization."
   [& body]
-  `(binding [*user* (@config :admin-user)
-             *password* (@config :admin-password)
+  `(binding [*user* *session-user*
+             *password* *session-password*
              *org* (@config :admin-org)]
      (do ~@body)))
 
