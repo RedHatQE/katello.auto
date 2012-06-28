@@ -83,5 +83,5 @@
                     providers, where the providers are in the same
                     org. Verifies that a validation error is shown in
                     the UI when creating the 2nd provider."
-      (expecting-error (errtype :product-must-be-unique-in-org)
+      (expecting-error (errtype :katello.ui-tasks/product-must-be-unique-in-org)
                        (with-two-providers create-same-product-in-multiple-providers)))))

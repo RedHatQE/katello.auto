@@ -83,6 +83,7 @@
 
   (deftest "Sync a repository where username has non-ascii characters"
     :data-driven true
+    :blockers (open-bz-bugs "835586")
     sync-with-user
     [["Mané"]
      ["水煮鱼"]])
@@ -119,11 +120,12 @@
 
 
     (deftest "Cannot create two sync plans with the same name"
-      (expecting-error validate/duplicate-disallowed
-                       (create-sync-plan {:name (uniqueify "dupe")
-                                          :start-date (java.util.Date.)
-                                          :description "mydescription"
-                                          :interval "daily"})))
+      (with-unique [plan-name "dupe"]
+        (expecting-error validate/duplicate-disallowed
+                         (create-sync-plan {:name plan-name
+                                            :start-date (java.util.Date.)
+                                            :description "mydescription"
+                                            :interval "daily"}))))
 
 
     (deftest "Assign a sync plan to multiple products"      
