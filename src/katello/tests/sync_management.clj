@@ -5,6 +5,7 @@
   (:use katello.tasks
         katello.ui-tasks
         test.tree.script
+        [katello.tests.login :only [login-admin]]
         [bugzilla.checker :only [open-bz-bugs]]
         [tools.verify :only [verify-that]]
         [katello.conf :only [config *environments*]]))
@@ -41,6 +42,30 @@
   [[{:start-time (java.util.Date.) :interval "daily"} :katello.ui-tasks/name-cant-be-blank]
    [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.ui-tasks/start-date-time-cant-be-blank]])
 
+(defn sync-with-user [user]
+  (with-unique [user user
+                password "asdf"
+                org "org"
+                provider "prov"
+                product "prod"
+                repo "repo"]
+    (create-user user {:password password :email "blah@blah.com"})
+    (assign-role {:user user :roles ["Administrator"]})
+    (try
+      (login user password)
+      (create-organization org)
+      (api/with-creds user password
+        (api/with-org org
+          (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
+      (create-provider {:name provider})
+      (add-product {:provider-name provider :name product})
+      (add-repo {:provider-name provider
+                 :product-name product
+                 :name repo
+                 :url (@config :sync-repo)})
+      (sync-repos [repo])
+      (finally (login-admin)))))
+
 ;; Tests
 
 (defgroup sync-tests
@@ -55,6 +80,12 @@
      vals
      (every? is-complete?)
      verify-that))
+
+  (deftest "Sync a repository where username has non-ascii characters"
+    :data-driven true
+    sync-with-user
+    [["Mané"]
+     ["水煮鱼"]])
 
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")
