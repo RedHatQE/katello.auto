@@ -14,13 +14,13 @@
   (str (System/getProperty "user.dir") "/manifests/manifest_D2_O2_M1.zip"))
 (def org4-m1-manifest
   (str (System/getProperty "user.dir") "/manifests/manifest_D4_O4_M1.zip"))
-(def scenario2_m1_d1_manifest
+(def scenario2-m1-d1-manifest
   (str (System/getProperty "user.dir") "/manifests/scenario2_M1_D1.zip"))
 (def scenario5-o1-m2-manifest
   (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M2.zip"))
-(def scenario5_o1_m1_manifest
+(def scenario5-o1-m1-manifest
   (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M1.zip"))
-(def bz786963_manifest
+(def bz786963-manifest
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
 
 
@@ -54,19 +54,29 @@
                 outstream (io/output-stream manifest-tmp-loc)]
       (io/copy instream outstream))))
 
+(defn prepare-org []
+  (let [org-name (reset! redhat-provider-test-org (uniqueify "rh-manifest-test"))]
+    (api/with-admin (api/create-organization org-name))))
+
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync-complete-status repos))))
 
 (defn enable-redhat-repositories-in-org [org repos]
   (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
-(defn upload-test-manifest-to-test-org 
-  ([opts] (upload-test-manifest-to-test-org manifest-tmp-loc @redhat-provider-test-org))
-  ([manifest-loc org opts]
+
+(defn upload-test-manifest-to-test-org [& [opts]]
+  (with-org @redhat-provider-test-org
+    (upload-subscription-manifest manifest-tmp-loc
+                                  (merge {:repository-url (@config :redhat-repo-url)}
+                                         opts))))
+
+
+(defn upload-test-manifest [manifest-loc org opts]
   (with-org org
     (upload-subscription-manifest manifest-loc
                                   (merge {:repository-url (@config :redhat-repo-url)}
-                                         opts)))))
+                                         opts))))
 
 (defn promote-redhat-content-into-test-env []
   (api/with-admin
@@ -108,13 +118,56 @@
                             packages-to-install)))))
 
 
+(defgroup redhat-provider-one-org-multiple-manifest-tests
+  :group-setup prepare-org
+  
+  (deftest "Upload a subscription manifest"
+    (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {})            
+    
+    (deftest "Upload the same manifest to an org using force"
+      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {:force true}))
+    
+    (deftest "Upload the same manifest to an org without force"
+      (try+
+        (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {:force false})
+      (throw ::unexpected-success)
+      (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
+    
+    (deftest "Load New manifest into same org without force"
+      (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org {}))))
 
+(defgroup redhat-provider-second-org-one-manifest-tests
+  :group-setup prepare-org
+  
+  (deftest "Upload a manifest into a second org"
+    (upload-test-manifest org2-m1-manifest @redhat-provider-test-org {})))
+
+(defgroup redhat-provider-used-manifest-tests
+  :group-setup prepare-org
+  
+  (deftest "Upload a previously used manifest into another org"
+    (try+
+      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {})
+    (throw ::unexpected-success)
+    (catch [:type :katello-ui-tasks/distributor-has-already-been-imported] _ nil))))
+
+(defgroup redhat-provider-other-manifest-tests
+  :group-setup prepare-org
+  :blockers (open-bz-bugs "786963")
+  
+  (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
+    (upload-test-manifest bz786963-manifest @redhat-provider-test-org {})))
+  
+
+(defgroup redhat-content-provider-tests)
+
+(comment
 (defgroup redhat-content-provider-tests
   :group-setup prepare-manifest-and-org 
   :blockers    (open-bz-bugs "729364")
 
-  (deftest "Upload a subscription manifest"
-    (upload-test-manifest-to-test-org {})            
+    (deftest "Upload a subscription manifest"
+    (upload-test-manifest-to-test-org)            
 
     (deftest "Upload the same manifest to an org using force"
       (upload-test-manifest-to-test-org {:force true}))
@@ -124,10 +177,7 @@
         (upload-test-manifest-to-test-org {:force false})
       (throw ::unexpected-success)
       (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
-    
-    (deftest "Load New manifest into same org without force"
-      (upload-test-manifest-to-test-org scenario5-o1-m2-manifest @redhat-provider-test-org {}))
-
+      
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
@@ -139,6 +189,7 @@
           (verify-all-repos-not-synced repos))))
 
     redhat-promoted-content-tests))
+)
 
 
 
