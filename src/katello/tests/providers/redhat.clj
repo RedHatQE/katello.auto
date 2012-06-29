@@ -27,6 +27,10 @@
 
 
 (def redhat-provider-test-org (atom nil))
+(def redhat-provider-test-org2 (atom nil))
+(def redhat-provider-test-org3 (atom nil))
+(def redhat-provider-test-org4 (atom nil))
+(def redhat-provider-test-org5 (atom nil))
 
 (def redhat-provider-test-env (atom nil))
 
@@ -54,8 +58,9 @@
                 outstream (io/output-stream manifest-tmp-loc)]
       (io/copy instream outstream))))
 
-(defn prepare-org []
-  (let [org-name (reset! redhat-provider-test-org (uniqueify "rh-manifest-test"))]
+(defn prepare-org [a]
+  (let [org-name (uniqueify "rh-manifest-test")]
+    (reset! a org-name)
     (api/with-admin (api/create-organization org-name))))
 
 (defn verify-all-repos-not-synced [repos]
@@ -119,65 +124,52 @@
 
 
 (defgroup redhat-provider-one-org-multiple-manifest-tests
-  :group-setup prepare-org
+  :group-setup  (partial prepare-org redhat-provider-test-org2)
   
   (deftest "Upload a subscription manifest"
-    (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {})            
+    (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {})            
     
     (deftest "Upload the same manifest to an org using force"
-      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {:force true}))
+      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {:force true}))
     
     (deftest "Upload the same manifest to an org without force"
       (try+
-        (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {:force false})
-      (throw ::unexpected-success)
-      (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
+        (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {:force false})
+        (throw+ ::unexpected-success)
+        (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
     
     (deftest "Load New manifest into same org without force"
-      (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org {}))))
+      (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org2 {}))))
 
 (defgroup redhat-provider-second-org-one-manifest-tests
-  :group-setup prepare-org
+  :group-setup (partial prepare-org redhat-provider-test-org3)
   
   (deftest "Upload a manifest into a second org"
-    (upload-test-manifest org2-m1-manifest @redhat-provider-test-org {})))
+    (upload-test-manifest org2-m1-manifest @redhat-provider-test-org3 {})))
 
 (defgroup redhat-provider-used-manifest-tests
-  :group-setup prepare-org
+  :group-setup (partial prepare-org redhat-provider-test-org4)
   
   (deftest "Upload a previously used manifest into another org"
     (try+
-      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org {})
-    (throw ::unexpected-success)
-    (catch [:type :katello-ui-tasks/distributor-has-already-been-imported] _ nil))))
+      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org4 {})
+      (throw+ ::unexpected-success)
+      (catch [:type :katello.ui-tasks/distributor-has-already-been-imported] _ nil))))
 
 (defgroup redhat-provider-other-manifest-tests
-  :group-setup prepare-org
+  :group-setup (partial prepare-org redhat-provider-test-org5)
   :blockers (open-bz-bugs "786963")
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
-    (upload-test-manifest bz786963-manifest @redhat-provider-test-org {})))
+    (upload-test-manifest bz786963-manifest @redhat-provider-test-org5 {})))
   
 
-(defgroup redhat-content-provider-tests)
-
-(comment
 (defgroup redhat-content-provider-tests
   :group-setup prepare-manifest-and-org 
   :blockers    (open-bz-bugs "729364")
 
     (deftest "Upload a subscription manifest"
     (upload-test-manifest-to-test-org)            
-
-    (deftest "Upload the same manifest to an org using force"
-      (upload-test-manifest-to-test-org {:force true}))
-    
-    (deftest "Upload the same manifest to an org without force"
-      (try+
-        (upload-test-manifest-to-test-org {:force false})
-      (throw ::unexpected-success)
-      (catch [:type :katello.ui-tasks/import-older-than-existing-data] _ nil)))
-      
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
@@ -189,7 +181,6 @@
           (verify-all-repos-not-synced repos))))
 
     redhat-promoted-content-tests))
-)
 
 
 
