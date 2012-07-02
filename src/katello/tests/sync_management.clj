@@ -5,6 +5,7 @@
   (:use katello.tasks
         katello.ui-tasks
         test.tree.script
+        [katello.tests.login :only [login-admin]]
         [bugzilla.checker :only [open-bz-bugs]]
         [tools.verify :only [verify-that]]
         [katello.conf :only [config *environments*]]))
@@ -34,12 +35,36 @@
   (= "Sync complete." sync-result))
 
 (defn plan-validate [arg expected]
-  (validate/field-validation create-sync-plan [arg]
-                             (validate/expect-error expected)))
+  (expecting-error (errtype expected)
+                   (create-sync-plan arg)))
 
 (defn plan-validation-data []
-  [[{:start-time (java.util.Date.) :interval "daily"} :name-cant-be-blank]
-   [{:name "blah" :start-time-literal "" :start-date-literal ""} :start-date-time-cant-be-blank]])
+  [[{:start-time (java.util.Date.) :interval "daily"} :katello.ui-tasks/name-cant-be-blank]
+   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.ui-tasks/start-date-time-cant-be-blank]])
+
+(defn sync-with-user [user]
+  (with-unique [user user
+                password "asdf"
+                org "org"
+                provider "prov"
+                product "prod"
+                repo "repo"]
+    (create-user user {:password password :email "blah@blah.com"})
+    (assign-role {:user user :roles ["Administrator"]})
+    (try
+      (login user password)
+      (create-organization org)
+      (api/with-creds user password
+        (api/with-org org
+          (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
+      (create-provider {:name provider})
+      (add-product {:provider-name provider :name product})
+      (add-repo {:provider-name provider
+                 :product-name product
+                 :name repo
+                 :url (@config :sync-repo)})
+      (sync-repos [repo])
+      (finally (login-admin)))))
 
 ;; Tests
 
@@ -55,6 +80,13 @@
      vals
      (every? is-complete?)
      verify-that))
+
+  (deftest "Sync a repository where username has non-ascii characters"
+    :data-driven true
+    :blockers (open-bz-bugs "835586")
+    sync-with-user
+    [["Mané"]
+     ["水煮鱼"]])
 
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")
@@ -88,10 +120,12 @@
 
 
     (deftest "Cannot create two sync plans with the same name"
-      (validate/duplicate-disallowed create-sync-plan [{:name (uniqueify "dupe")
-                                                        :start-date (java.util.Date.)
-                                                        :description "mydescription"
-                                                        :interval "daily"}]))
+      (with-unique [plan-name "dupe"]
+        (validate/expecting-error-2nd-try validate/duplicate-disallowed
+                                 (create-sync-plan {:name plan-name
+                                                    :start-date (java.util.Date.)
+                                                    :description "mydescription"
+                                                    :interval "daily"}))))
 
 
     (deftest "Assign a sync plan to multiple products"      

@@ -90,7 +90,10 @@
 
     
     (deftest "activation-key-dupe-disallowed"
-      (val/duplicate-disallowed create-activation-key [{:name (uniqueify "auto-key")
-                                                        :description "my description"
-                                                        :environment test-environment}]))))
+      (with-unique [ak-name "auto-key"]
+        (val/expecting-error-2nd-try val/duplicate-disallowed
+                                     (create-activation-key
+                                      {:name ak-name
+                                       :description "my description"
+                                       :environment test-environment}))))))
 

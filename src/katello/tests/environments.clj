@@ -86,13 +86,13 @@
                                                   :description "simple environment description"})
 
     (deftest "Create parallel sequential environments"
-         :description "Creates two parallel environment paths: one with 5 environments and the
+      :description "Creates two parallel environment paths: one with 5 environments and the
                       other with 2 environments, both off the Library."
-         (let [envs1 (take 5 (unique-names "envpath1"))
-               envs2 (take 2 (unique-names "envpath2"))
-               org (@config :admin-org)]
-           (create-environment-path org envs1)
-           (create-environment-path org envs2)))
+      (let [envs1 (take 5 (unique-names "envpath1"))
+            envs2 (take 2 (unique-names "envpath2"))
+            org (@config :admin-org)]
+        (create-environment-path org envs1)
+        (create-environment-path org envs2)))
 
     (deftest "Delete an environment"
       :blockers (open-bz-bugs "790246")
@@ -135,10 +135,11 @@
     (deftest "Cannot create two environments in the same org with the same name"
       :blockers (open-bz-bugs "726724")
 
-      (verify-2nd-try-fails-with :name-must-be-unique-within-org
-                                 create-environment
-                                 (uniqueify "test-dup")
-                                 {:org-name @test-org-name :description "dup env description"}))
+      (with-unique [env-name "test-dup"]
+        (expecting-error-2nd-try (errtype :katello.ui-tasks/name-must-be-unique-within-org)
+                                 (create-environment env-name
+                                                     {:org-name @test-org-name
+                                                      :description "dup env description"}))))
 
 
     (deftest "Rename an environment"
@@ -160,5 +161,6 @@
 
 
   (deftest "Enviroment name is required"
-    (name-field-required create-environment [nil {:org-name @test-org-name
-                                                  :description "env description"}])))
+    (expecting-error name-field-required
+                     (create-environment nil {:org-name @test-org-name
+                                              :description "env description"}))))

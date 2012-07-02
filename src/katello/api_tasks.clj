@@ -1,10 +1,10 @@
 (ns katello.api-tasks
   (:require [katello.rest :as rest])
-  (:use [katello.conf :only [config]]
+  (:use [katello.conf :only [config *session-user* *session-password*]]
         slingshot.slingshot
         [inflections.core :only [pluralize singularize]]
         [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify library promotion-lock]]))
+        [katello.tasks :only [uniqueify library promotion-lock chain-envs]]))
 
 (def ^:dynamic *user* nil)
 (def ^:dynamic *password* nil)
@@ -25,8 +25,8 @@
   "Executes body and makes any included katello api calls using the
   admin user and password (which defaults to admin/admin)"
   [& body]
-  `(binding [*user* (@config :admin-user)
-             *password* (@config :admin-password)]
+  `(binding [*user* *session-user*
+             *password* *session-password*]
      (do ~@body)))
 
 (defmacro with-org
@@ -48,8 +48,8 @@
   "Executes body and makes any included katello api calls using the
   admin user, password, and organization."
   [& body]
-  `(binding [*user* (@config :admin-user)
-             *password* (@config :admin-password)
+  `(binding [*user* *session-user*
+             *password* *session-password*
              *org* (@config :admin-org)]
      (do ~@body)))
 
@@ -152,6 +152,10 @@
     (if-not (some #{name}
                   (map :name (all-entities :environment)))
       (create-environment name {:prior-env prior}))))
+
+(defn create-env-chain [envs]
+  (doseq [[prior curr] (chain-envs envs)]
+    (ensure-env-exist curr {:prior prior})))
 
 (defn create-product [name {:keys [provider-name description]}]
   (rest/with-client-auth *user* *password* 

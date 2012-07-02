@@ -33,7 +33,7 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (v/field-validation create-organization [name] (v/expect-error expected-error)))
+  (expecting-error (errtype expected-error) (create-organization name)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (create-organization org-name {:description "org to delete and recreate"})
@@ -52,9 +52,9 @@
 (def bad-org-names
   (concat
    (for [inv-char-str v/invalid-character-strings]
-     [inv-char-str :name-must-not-contain-characters])
+     [inv-char-str :katello.ui-tasks/name-must-not-contain-characters])
    (for [trailing-ws-str v/trailing-whitespace-strings]
-     [trailing-ws-str :name-no-leading-trailing-whitespace])))
+     [trailing-ws-str :katello.ui-tasks/name-no-leading-trailing-whitespace])))
 
 ;; Tests
 
@@ -76,13 +76,15 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (v/verify-2nd-try-fails-with :name-taken-error create-organization org-name {:description "org-description"})))
+        (v/expecting-error-2nd-try (errtype :katello.ui-tasks/name-taken-error)
+                                   (create-organization org-name {:description "org-description"}))))
 
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
       
-      (v/name-field-required create-organization ["" {:description "org description"}]))
+      (expecting-error v/name-field-required
+                       (create-organization "" {:description "org with empty name"})))
 
     
     (deftest "Verify proper error message when invalid org name is used"
@@ -123,4 +125,4 @@
             (Thread/sleep                        30000)
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
             (finally
-             (switch-org                         (@config :admin-org)))))))))
+              (switch-org                         (@config :admin-org)))))))))

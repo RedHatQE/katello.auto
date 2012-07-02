@@ -19,23 +19,45 @@
 ;;UI tasks
 
 
+(def ^{:doc "All the different validation error messages that Katello
+             can throw. The keys are keywords that can be used to
+             refer to this type of error, and the values are regexes
+             that match the error notification message in the UI."}
+  validation-errors
+  (let [errors {::name-taken-error                    #"(Username|Name) has already been taken"
+                ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
+                ::name-must-not-contain-characters    #"Name cannot contain characters other than"
+                ::name-must-be-unique-within-org      #"Name must be unique within one organization" 
+                ::repository-url-invalid              #"Repository url is invalid"
+                ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
+                ::password-too-short                  #"Password must be at least"
+                ::product-must-be-unique-in-org       #"Products within an organization must have unique name"
+                ::repository-url-cant-be-blank        #"Repository url can't be blank",
+                ::name-cant-be-blank                  #"Name can't be blank"}]
+    (doseq [e (keys errors)]
+      (derive e ::validation-error))  ; validation-error is a parent type
+                                      ; so you can catch that type to
+                                      ; mean "any" validation error.
+    errors))
+
 (def ^{:doc "A mapping of known errors in Katello. This helps
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  {::validation-failed #"Validation [Ff]ailed"
-   ::invalid-credentials #"incorrect username"
-   ::promotion-already-in-progress #"Cannot promote.*while another changeset"
-   ::import-older-than-existing-data #"Import is older than existing data"})
+  (let [errors {::invalid-credentials             #"incorrect username"
+                ::promotion-already-in-progress   #"Cannot promote.*while another changeset"
+                ::import-older-than-existing-data #"Import is older than existing data"}]
+    (doseq [e (conj (keys errors) ::validation-error)]
+      (derive e ::katello-error))
+    (merge errors validation-errors)))
 
-(defn matching-error
-  "Returns a keyword of known error, if the message matches any of
-   them.  If no matches, returns :katello-error."
-  [message]
-  (or (some #(let [re (known-errors %)]
-               (if (re-find re message) % false) )
-            (keys known-errors))
-      ::katello-error))
+(defn matching-errors
+  "Returns a set of matching known errors"
+  [m]
+  (->> known-errors
+     (filter (fn [[_ v]] (re-find v (:msg m))))
+     (map key)
+     set))
 
 (defn- clear-all-notifications []
   (doseq [closebutton (map (comp locators/notification-close-index str)
@@ -43,11 +65,13 @@
           :while (browser isElementPresent closebutton)]
     (browser click closebutton)))
 
-(defn success?
+(def success?
   "Returns true if the given notification is a 'success' type
   notification (aka green notification in the UI)."
-  [notif]
-  (-> notif :type (= :success)))
+  ^{:type :serializable.fn/serializable-fn
+    :serializable.fn/source 'success?}
+  (fn [notif]
+    (-> notif :type (= :success))))
 
 (defn notification
   "Gets the notification from the page, returns a map object
@@ -58,13 +82,28 @@
   (try (browser waitForElement :notification (str (or max-wait-ms 15000)))
        (let [msg (browser getText :notification)
              classattr ((into {} (browser getAttributes :notification)) "class")
-             type ({"jnotify-notification-error" :error
-                    "jnotify-notification-message" :message
-                    "jnotify-notification-success" :success}
-                   (-> (string/split classattr #" ") second))]
+             type (-> classattr
+                     (string/split #" ")
+                     second
+                     {"jnotify-notification-error" :error
+                      "jnotify-notification-message" :message
+                      "jnotify-notification-success" :success})]
          (clear-all-notifications)
          {:type type :msg msg})
        (catch SeleniumException e nil)))
+
+(defn errtype
+  "creates a predicate that matches a caught UI error of the given
+   type (see known-errors). Use this predicate in a slingshot 'catch'
+   statement. If any of the error types match (in case of multiple
+   validation errors), the predicate will return true. Uses isa? for
+   comparison, so hierarchies will be checked.
+   example (try+ (dothat) (catch (errtype ::validation-error) _ nil))"
+  [t]
+  (with-meta
+    (fn [e] (some #(isa? % t) (:types e)))
+    {:type :serializable.fn/serializable-fn
+     :serializable.fn/source `(errtype ~t)}) )
 
 (defn check-for-success
   "Gets any notification from the UI, if there is none, or it's not a
@@ -72,18 +111,15 @@
    and text of the message. Takes an optional max amount of time to
    wait, in ms."
   [ & [max-wait-ms]]
-  (let [notif (notification max-wait-ms)
-        msg (:msg notif)]
-    (cond (not notif) (throw+
-                       {:type ::no-success-message-error}
+  (let [notif (notification max-wait-ms)]
+    (cond (not notif) (throw+ {:type ::no-success-message-error}
                        "Expected a success notification, but none appeared within the timeout period.")
-          ((complement success?) notif) (let [errtype (matching-error msg)]
-                                 (throw+ (assoc notif :type errtype) "Notification: %s" (pr-str %)))
+          ((complement success?) notif) (throw+ {:types (matching-errors notif) :notification notif}  "UI Error: %s" (pr-str %))
           :else notif)))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
-  an exception if timeout is hit or error notification appears."
+  an exception if error notification appears."
   [ & [timeout]]
   (try+ (check-for-success timeout)
         (catch [:type ::no-success-message-error] _)))
@@ -829,13 +865,25 @@
   (check-for-success))
 
 (defn create-gpg-key [name & [{:keys [filename contents]}]]
+  (assert (not (and filename contents))
+          "Must specify one one of :filename or :contents.")
+  (assert (string? name))
   (navigate :new-gpg-key-page)
-  (when filename
-    (fill-ajax-form {:gpg-key-file-upload-text filename}
-                    :gpg-key-upload-button))
-  (fill-ajax-form {:gpg-key-name-text name
-                   :gpg-key-content-text contents}
-                  :gpg-keys-save)
+  (if filename
+    (fill-ajax-form {:gpg-key-name-text name
+                     :gpg-key-file-upload-text filename}
+                    :gpg-key-upload-button)
+    (fill-ajax-form {:gpg-key-name-text name
+                     :gpg-key-content-text contents}
+                    :gpg-keys-save))
+  (check-for-success))
+
+(defn remove-gpg-key 
+  "Deletes existing GPG keys"
+  [gpg-key-name]
+  (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
+  (browser click :remove-gpg-key )
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn sync-and-promote [products from-env to-env]

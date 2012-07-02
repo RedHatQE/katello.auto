@@ -19,22 +19,12 @@
 
 ;; Functions
 
-(defn chain-envs
-  "Given a list of environments, and a function of two neighboring
-   environments in the chain, invoke f on each successive pair (eg:
-   envs ['a' 'b' 'c'] -> (f 'a' 'b'), (f 'b' 'c')"
-  [envs f]
-  (doseq [[from-env target-env] (partition 2 1 envs)]
-      (f from-env target-env)))
-
 (defn create-test-provider-and-envs "Create a test provider and enviroments." []
   (reset! provider-name (uniqueify "promo-"))
-  
   (api/with-admin
     (api/create-provider  @provider-name {:description "test provider for promotions"})
     (reset! envs (conj *environments* library))
-    (chain-envs @envs (fn [prior curr] 
-                        (api/ensure-env-exist curr {:prior prior})))))
+    (api/create-env-chain @envs)))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -73,9 +63,9 @@
                                     :description "template to be promoted"})
               (api/add-to-template template-name {:repositories [{:product product-name
                                                                   :name repo-name}]}))))))
-    (chain-envs envs (fn [from-env target-env]
-                      (promote-content from-env target-env content)
-                      (verify-all-content-present content (environment-content target-env))))))
+    (doseq [[from-env target-env] (chain-envs envs)] 
+      (promote-content from-env target-env content)
+      (verify-all-content-present content (environment-content target-env)))))
 
 (def promo-data
   (runtime-data

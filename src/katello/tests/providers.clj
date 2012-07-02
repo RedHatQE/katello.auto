@@ -65,26 +65,39 @@
 (defn validation
   "Attempts to creates a provider and validates the result using
    pred."
-  [pred provider]
-  (field-validation create-provider [provider] pred))
+  [provider pred]
+  (expecting-error pred (create-provider provider)))
 
 (defn get-validation-data
   []
   (concat
-   [[(expect-error :name-cant-be-blank) {:name nil :description "blah" :url "http://sdf.com"}]
-    [success?  {:name (uniqueify "mytestcp4") :description nil :url "http://sdf.com"}]]
+   [[{:name nil
+      :description "blah"
+      :url "http://sdf.com"} (errtype :katello.ui-tasks/name-cant-be-blank)]
+
+    [{:name (uniqueify "mytestcp4")
+      :description nil
+      :url "http://sdf.com"} success?]]
 
    (for [js-str javascript-strings]
-     [success?  {:name (uniqueify "mytestcp5") :url "http://sdf.com" :description js-str}])
+     [{:name (uniqueify "mytestcp5")
+       :description js-str
+       :url "http://sdf.com"}  success?])
     
    (for [trailing-ws-str trailing-whitespace-strings]
-     [(expect-error :name-no-leading-trailing-whitespace) {:name trailing-ws-str :description nil :url "http://sdf.com"}])
+     [{:name trailing-ws-str
+       :description nil
+       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
-     [(expect-error :name-must-not-contain-characters) {:name inv-char-str :description nil :url "http://sdf.com"}])
+     [{:name inv-char-str
+       :description nil
+       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])
 
    (for [inv-url invalid-urls]
-     (with-meta [(expect-error :repository-url-invalid) {:name (uniqueify "mytestcp") :description "blah" :url inv-url}]
+     (with-meta [{:name (uniqueify "mytestcp")
+                  :description "blah"
+                  :url inv-url} (errtype :katello.ui-tasks/repository-url-invalid)]
        {:blockers (open-bz-bugs "703528" "742983")
         :description "Test that invalid URL is rejected."}))))
 
@@ -103,8 +116,10 @@
 
 
     (deftest "Cannot create two providers in the same org with the same name"
-      (duplicate-disallowed create-provider [{:name (uniqueify "dupe")
-                                                  :description "mydescription"}]))
+      (with-unique [provider-name "dupe"]
+        (expecting-error-2nd-try duplicate-disallowed
+          (create-provider {:name provider-name
+                            :description "mydescription"}))))
     
     (deftest "Provider validation"
       :data-driven true
@@ -132,10 +147,15 @@
     (deftest "Create two providers with the same name, in two different orgs"
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
-
     custom-product-tests)
+ 
   
-  redhat-content-provider-tests)
+  (deftest "Delete GPG keys" 
+    (with-unique [test-key "test-key"]
+      (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})
+      (katello.ui-tasks/remove-gpg-key test-key)))
+    
+    redhat-content-provider-tests)
 
  
 
