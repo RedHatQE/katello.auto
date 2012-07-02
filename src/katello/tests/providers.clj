@@ -147,33 +147,12 @@
     (deftest "Create two providers with the same name, in two different orgs"
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
-
     custom-product-tests)
-  
-  redhat-content-provider-tests)
-
  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  (deftest "Delete GPG keys" 
+    (with-unique [test-key "test-key"]
+      (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})
+      (katello.ui-tasks/remove-gpg-key test-key)))
+    
+    redhat-content-provider-tests)

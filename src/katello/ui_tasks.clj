@@ -878,6 +878,14 @@
                     :gpg-keys-save))
   (check-for-success))
 
+(defn remove-gpg-key 
+  "Deletes existing GPG keys"
+  [gpg-key-name]
+  (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
+  (browser click :remove-gpg-key )
+  (browser click :confirmation-yes)
+  (check-for-success))
+
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)
         all-repos (apply concat (map :repos products))
