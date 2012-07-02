@@ -150,7 +150,12 @@
 
     custom-product-tests)
   
-  redhat-content-provider-tests)
+  redhat-content-provider-tests
+  redhat-provider-one-org-multiple-manifest-tests
+  redhat-provider-second-org-one-manifest-tests
+  redhat-provider-used-manifest-tests
+  redhat-provider-other-manifest-tests
+  )
 
  
 
