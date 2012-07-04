@@ -39,7 +39,7 @@
     (verify-simple-search :organizations #(create-organization %) "myfoobar"))
 
   (deftest "Search for a user"
-    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux")))
+    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
 (deftest "Perform search operation on an organization"
        :description "Search for organizations based on criteria." 
@@ -210,4 +210,5 @@
             (search   :sync-plans        {:criteria "sync_date:2012-07-07"})
             (search   :sync-plans        {:criteria "name:my_*" :add-as-favorite "true"})
             (search   :sync-plans        {:criteria "interval:hourly" :add-as-favorite "true"})
-            (search   :sync-plans        {:with-favorite "interval:hourly"}))
+            (search   :sync-plans        {:with-favorite "interval:hourly"})))
+     
