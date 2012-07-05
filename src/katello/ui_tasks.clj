@@ -464,6 +464,11 @@
   (if-not (logged-out?)
     (browser clickAndWait :log-out)))
 
+(defn switch-org "Switch to the given organization in the UI."
+  [org-name]
+  (browser click :org-switcher)
+  (browser clickAndWait (locators/org-switcher org-name)))
+
 (defn login
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
@@ -831,11 +836,6 @@
         (browser click :template-eligible-home)))
     (browser click :save-template)
     (check-for-success)))
-
-(defn switch-org "Switch to the given organization in the UI."
-  [org-name]
-  (browser click :org-switcher)
-  (browser clickAndWait (locators/org-switcher org-name)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
