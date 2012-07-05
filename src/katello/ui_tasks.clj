@@ -543,7 +543,7 @@
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (navigate (entity-type {:users :users-tab 
-                          :organizations :organizations-tab}))
+                          :organizations :manage-organizations-tab}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
@@ -780,7 +780,7 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url force]}]]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (when force (browser check :force-import-checkbox))
@@ -793,7 +793,7 @@
   "Returns true if the current organization already has Red Hat
   content uploaded."
   []
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser isElementPresent :subscriptions-items))
 
 (defn create-template
@@ -840,7 +840,7 @@
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser click :enable-repositories-tab)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
