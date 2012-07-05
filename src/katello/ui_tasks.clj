@@ -253,9 +253,9 @@
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
                 (locators/left-pane-field-list (str index)))]
-    (take-while identity (for [elem elems]
-                           (try (browser getText elem)
-                                (catch SeleniumException e nil))))))
+    (doall (take-while identity (for [elem elems]
+                                  (try (browser getText elem)
+                                       (catch SeleniumException e nil)))))))
 
 
 (defn- extract-content []
@@ -463,6 +463,11 @@
   []
   (if-not (logged-out?)
     (browser clickAndWait :log-out)))
+
+(defn switch-org "Switch to the given organization in the UI."
+  [org-name]
+  (browser click :org-switcher)
+  (browser clickAndWait (locators/org-switcher org-name)))
 
 (defn login
   "Logs in a user to the UI with the given username and password. If
@@ -831,11 +836,6 @@
         (browser click :template-eligible-home)))
     (browser click :save-template)
     (check-for-success)))
-
-(defn switch-org "Switch to the given organization in the UI."
-  [org-name]
-  (browser click :org-switcher)
-  (browser clickAndWait (locators/org-switcher org-name)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
