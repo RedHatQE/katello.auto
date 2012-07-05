@@ -148,11 +148,70 @@
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
     custom-product-tests)
- 
   
-  (deftest "Delete GPG keys" 
-    (with-unique [test-key "test-key"]
-      (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})
-      (katello.ui-tasks/remove-gpg-key test-key)))
+  redhat-content-provider-tests)
+
+	  
     
-    redhat-content-provider-tests)
+
+
+  (defgroup gpg-key-tests
+
+    (deftest "Create new GPG keys test" 
+     (with-unique [test-key "test-key"]
+      (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})))
+      
+     (deftest "Delete existing GPG key" 
+       (with-unique [test-key "test-key"]
+         (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})
+           (katello.ui-tasks/remove-gpg-key test-key))))
+  
+         
+         
+
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
