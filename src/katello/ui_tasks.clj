@@ -6,6 +6,7 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         katello.tasks
+        [katello.conf :only [config]]
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
         [tools.verify :only [verify-that]]
@@ -466,14 +467,15 @@
 (defn login
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
-  [username password]
+  [username password & [org]]
   (when (logged-in?)
     (logout))
-  (do (fill-form {:username-text username
-                  :password-text password}
-                 :log-in)
-      (comment "removed on suspicion the success notif disappears sometimes before it can be read"
-               (check-for-success))))
+  (fill-ajax-form {:username-text username
+                 :password-text password}
+                :log-in)
+  (switch-org (or org (@config :admin-org)))
+  #_(comment "removed on suspicion the success notif disappears sometimes before it can be read"
+             (check-for-success)))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
