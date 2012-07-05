@@ -44,9 +44,10 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials             #"incorrect username"
-                ::promotion-already-in-progress   #"Cannot promote.*while another changeset"
-                ::import-older-than-existing-data #"Import is older than existing data"}]
+  (let [errors {::invalid-credentials                   #"incorrect username"
+                ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
+                ::import-older-than-existing-data       #"Import is older than existing data"
+                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))
