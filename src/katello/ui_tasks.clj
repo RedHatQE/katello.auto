@@ -253,9 +253,9 @@
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
                 (locators/left-pane-field-list (str index)))]
-    (take-while identity (for [elem elems]
-                           (try (browser getText elem)
-                                (catch SeleniumException e nil))))))
+    (doall (take-while identity (for [elem elems]
+                                  (try (browser getText elem)
+                                       (catch SeleniumException e nil)))))))
 
 
 (defn- extract-content []
