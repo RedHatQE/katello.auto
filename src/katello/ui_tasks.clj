@@ -476,10 +476,10 @@
   [username password & [org]]
   (when (logged-in?)
     (logout)
-    (Thread/sleep 3000))  ;wait for already-dismissed logout message
-                          ;to disappear
+    (Thread/sleep 3000))    ;wait for already-dismissed logout message
+                            ;to disappear
   (fill-ajax-form {:username-text username
-                 :password-text password}
+                   :password-text password}
                   :log-in)
   (check-for-success)
   (switch-org (or org (@config :admin-org))))

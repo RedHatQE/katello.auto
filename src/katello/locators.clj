@@ -30,7 +30,7 @@
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
-   left-pane-field-list            "xpath=(//div[contains(@class,'ellipsis')])[$1]"
+   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis')])[$1]"
    link                            "link=$1"
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"
    notification-index              "xpath=(//div[contains(@class,'jnotify-notification-error')])[$1]"
