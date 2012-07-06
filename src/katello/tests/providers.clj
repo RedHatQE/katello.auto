@@ -15,6 +15,10 @@
         [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [config no-clients-defined]]))
 
+;; Constants
+
+(def tmpfile (str (System/getProperty "user.dir") "/output.txt"))
+
 ;; Functions
 
 (defn get-all-providers "Uses API to return all provider names in the admin org"
@@ -101,6 +105,22 @@
 (load "providers/redhat")
 
 
+(defgroup gpg-key-tests
+
+  (deftest "Create new GPG keys test"
+    :blocked-by (open-bz-bugs "835902")
+
+    (with-unique [test-key "test-key"]
+      (spit "output.txt" "test")
+      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})))
+      
+  (deftest "Delete existing GPG key" 
+    (with-unique [test-key "test-key"]
+      (spit "output.txt" "test")
+      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})
+      (katello.ui-tasks/remove-gpg-key test-key))))
+
+
 (defgroup provider-tests
   
   (deftest "Create a custom provider" 
@@ -143,72 +163,10 @@
     custom-product-tests)
   
   redhat-content-provider-tests
+  gpg-key-tests
   redhat-provider-one-org-multiple-manifest-tests
   redhat-provider-second-org-one-manifest-tests
   redhat-provider-used-manifest-tests
-  redhat-provider-other-manifest-tests
-  )
-
-	  
-  (defgroup gpg-key-tests
-
-    (deftest "Create new GPG keys test" :blocked-by (open-bz-bugs "835902")
-     (with-unique [test-key "test-key"]
-       (spit "output.txt" "test")
-       (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})))
-      
-     (deftest "Delete existing GPG key" 
-       (with-unique [test-key "test-key"]
-         (spit "output.txt" "test")
-         (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})
-              (katello.ui-tasks/remove-gpg-key test-key))))
-  
-         
-         
+  redhat-provider-other-manifest-tests)
 
 
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      

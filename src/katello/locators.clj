@@ -194,7 +194,7 @@
    ;;redhat page
    :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
 
-   ;;z keys
+   ;;gpg keys
    :gpg-key-name-text                   "gpg_key_name"
    :gpg-key-file-upload-text            "gpg_key_content_upload"
    :gpg-key-upload-button               "upload_gpg_key"
