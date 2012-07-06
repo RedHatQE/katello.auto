@@ -194,14 +194,15 @@
    ;;redhat page
    :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
 
-   ;;gpg keys
+   ;;z keys
    :gpg-key-name-text                   "gpg_key_name"
    :gpg-key-file-upload-text            "gpg_key_content_upload"
    :gpg-key-upload-button               "upload_gpg_key"
    :gpg-key-content-text                "gpg_key_content"
    :gpg-keys                            "//a[.='GPG Keys']"
    :gpg-keys-save                       "save_gpg_key"
-   :new-gpg-key                         "new"})
+   :new-gpg-key                         "new"
+   :remove-gpg-key                      (link "Remove GPG Key")})
 
 (def promotions
   {:products-category           (promotion-content-category "products")
@@ -439,7 +440,8 @@
          [:provider-subscriptions-page [] (browser click :subscriptions)]]]
        [:redhat-repositories-tab [] (browser clickAndWait :red-hat-repositories)]
        [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
-        [:new-gpg-key-page [] (browser click :new-gpg-key)]]]
+        [:new-gpg-key-page [] (browser click :new-gpg-key)]
+        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
        [:sync-status-page [] (browser clickAndWait :sync-status)]
        [:sync-plans-page [] (browser clickAndWait :sync-plans)
