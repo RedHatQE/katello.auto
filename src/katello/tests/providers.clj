@@ -92,14 +92,7 @@
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])
-
-   (for [inv-url invalid-urls]
-     (with-meta [{:name (uniqueify "mytestcp")
-                  :description "blah"
-                  :url inv-url} (errtype :katello.ui-tasks/repository-url-invalid)]
-       {:blockers (open-bz-bugs "703528" "742983")
-        :description "Test that invalid URL is rejected."}))))
+       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])))
 
 ;; Tests
 
