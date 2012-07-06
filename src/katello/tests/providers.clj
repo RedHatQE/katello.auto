@@ -157,19 +157,18 @@
   )
 
 	  
-    
-
-
   (defgroup gpg-key-tests
 
-    (deftest "Create new GPG keys test" 
+    (deftest "Create new GPG keys test" :blocked-by (open-bz-bugs "835902")
      (with-unique [test-key "test-key"]
-      (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})))
+       (spit "output.txt" "test")
+       (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})))
       
      (deftest "Delete existing GPG key" 
        (with-unique [test-key "test-key"]
-         (katello.ui-tasks/create-gpg-key test-key {:filename "/home/sneh0986/Desktop/readme.txt" :content "test_content"})
-           (katello.ui-tasks/remove-gpg-key test-key))))
+         (spit "output.txt" "test")
+         (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})
+              (katello.ui-tasks/remove-gpg-key test-key))))
   
          
          
