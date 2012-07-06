@@ -118,7 +118,7 @@
                                      (api/with-env (first conf/*environments*)
                                        (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
                              (navigate-fn :systems-all-page)]
-           :disallowed-actions (conj (navigate-all :providers-tab :organizations-tab)
+           :disallowed-actions (conj (navigate-all :providers-tab :manage-organizations-tab)
                                      (fn [] (create-organization (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757775"))
    
@@ -128,7 +128,7 @@
                                          :verbs ["Read Activation Keys"]
                                          :name "akaccess"}]}]
            :allowed-actions [(navigate-fn :activation-keys-page)]
-           :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+           :disallowed-actions (conj (navigate-all :content-tab :manage-organizations-tab :administration-tab
                                                    :systems-all-page :systems-by-environment-page)
                                      create-an-ak)])
     assoc :blockers (open-bz-bugs "757817"))
@@ -139,7 +139,7 @@
                                          :verbs ["Administer Activation Keys"]
                                          :name "akmang"}]}]
            :allowed-actions [create-an-ak]
-           :disallowed-actions (conj (navigate-all :content-management-tab :organizations-tab :administration-tab
+           :disallowed-actions (conj (navigate-all :content-tab :manage-organizations-tab :administration-tab
                                                    :systems-all-page :systems-by-environment-page)
                                      (fn [] (create-organization (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757817"))
@@ -149,7 +149,7 @@
                                         :verbs ["Read System Templates"]
                                         :name "stread"}]}]
           :allowed-actions [(navigate-fn :system-templates-page)]
-          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-tab :administration-tab
                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
                                     create-a-st
                                     (fn [] (create-organization (uniqueify "cantdothis")))
@@ -160,7 +160,7 @@
                                         :verbs ["Administer System Templates"]
                                         :name "stmang"}]}]
           :allowed-actions [create-a-st]
-          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :administration-tab
+          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-tab :administration-tab
                                                   :custom-content-providers-tab :sync-status-page :promotions-page)
                                     (fn [] (create-organization (uniqueify "cantdothis")))
                                     create-an-env)])
@@ -170,7 +170,7 @@
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
           :allowed-actions [(navigate-fn :users-tab)]
-          :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-tab :roles-tab
                                                   :content-management-tab)
                                     (fn [] (create-organization (uniqueify "cantdothis")))
                                     create-an-env
@@ -183,7 +183,7 @@
                                           :verbs ["Modify Users"]
                                           :name "usermod"}]}]
             :allowed-actions [(fn [] (edit-user user {:new-email "blah@me.com"}))]
-            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+            :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-tab :roles-tab
                                                     :content-management-tab)
                                       (fn [] (let [username (uniqueify "deleteme")]
                                               (create-user username {:password "password" :email "mee@mee.com"})
@@ -196,7 +196,7 @@
                                           :name "userdel"}]}]
             :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
             :allowed-actions [(fn [] (delete-user user))]
-            :disallowed-actions (conj (navigate-all :systems-tab :organizations-tab :roles-tab
+            :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-tab :roles-tab
                                                     :content-management-tab)
                                       create-a-user)]))
 

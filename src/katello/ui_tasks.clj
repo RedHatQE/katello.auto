@@ -6,6 +6,7 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         katello.tasks
+        [katello.conf :only [config]]
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
         [tools.verify :only [verify-that]]
@@ -252,9 +253,9 @@
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
                 (locators/left-pane-field-list (str index)))]
-    (take-while identity (for [elem elems]
-                           (try (browser getText elem)
-                                (catch SeleniumException e nil))))))
+    (doall (take-while identity (for [elem elems]
+                                  (try (browser getText elem)
+                                       (catch SeleniumException e nil)))))))
 
 
 (defn- extract-content []
@@ -463,17 +464,23 @@
   (if-not (logged-out?)
     (browser clickAndWait :log-out)))
 
+(defn switch-org "Switch to the given organization in the UI."
+  [org-name]
+  (browser click :org-switcher)
+  (browser clickAndWait (locators/org-switcher org-name)))
+
 (defn login
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
-  [username password]
+  [username password & [org]]
   (when (logged-in?)
     (logout))
-  (do (fill-form {:username-text username
-                  :password-text password}
-                 :log-in)
-      (comment "removed on suspicion the success notif disappears sometimes before it can be read"
-               (check-for-success))))
+  (fill-ajax-form {:username-text username
+                 :password-text password}
+                :log-in)
+  (switch-org (or org (@config :admin-org)))
+  #_(comment "removed on suspicion the success notif disappears sometimes before it can be read"
+             (check-for-success)))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -541,7 +548,7 @@
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (navigate (entity-type {:users :users-tab 
-                          :organizations :organizations-tab}))
+                          :organizations :manage-organizations-tab}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
@@ -778,20 +785,21 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url force]}]]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-subscriptions-tab)
+  (when-not (browser isElementPresent :choose-file)
+    (browser click :import-manifest))
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (when force (browser check :force-import-checkbox))
-  (fill-form {:choose-file file-path}
-             :upload
-             (fn [] (browser waitForPageToLoad "300000")))
+  (fill-ajax-form {:choose-file file-path}
+                  :upload)
   (check-for-success))
 
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
   content uploaded."
   []
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser isElementPresent :subscriptions-items))
 
 (defn create-template
@@ -830,15 +838,10 @@
     (browser click :save-template)
     (check-for-success)))
 
-(defn switch-org "Switch to the given organization in the UI."
-  [org-name]
-  (browser click :org-switcher)
-  (browser clickAndWait (locators/org-switcher org-name)))
-
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser click :enable-repositories-tab)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
