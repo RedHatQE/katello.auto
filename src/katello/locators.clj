@@ -77,23 +77,24 @@
 ;;
 
 (def common
-  {:notification        "//div[contains(@class,'jnotify-notification')]"
-   :error-message       "//div[contains(@class,'jnotify-notification-error')]"
-   :success-message     "//div[contains(@class,'jnotify-notification-message')]"
-   :spinner             "//img[contains(@src,'spinner.gif')]"
-   :save-inplace-edit   "//button[.='Save']"
-   :confirmation-dialog "//div[contains(@class, 'confirmation')]"
-   :confirmation-yes    "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-   :confirmation-no     "//div[contains(@class, 'confirmation')]//span[.='No']"
-   :search-bar          "search"
-   :search-menu         "//form[@id='search_form']//span[@class='arrow']"
+  {:notification            "//div[contains(@class,'jnotify-notification')]"
+   :error-message           "//div[contains(@class,'jnotify-notification-error')]"
+   :success-message         "//div[contains(@class,'jnotify-notification-message')]"
+   :spinner                 "//img[contains(@src,'spinner.gif')]"
+   :save-inplace-edit       "//button[.='Save']"
+   :confirmation-dialog     "//div[contains(@class, 'confirmation')]"
+   :confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+   :confirmation-no         "//div[contains(@class, 'confirmation')]//span[.='No']"
+   :search-bar              "search"
+   :search-menu             "//form[@id='search_form']//span[@class='arrow']"
    :search-save-as-favorite "search_favorite_save"
-   :search-submit       "//button[@form='search_form']"
+   :search-clear-the-search "search_clear"
+   :search-submit           "//button[@form='search_form']"
    ;;main banner
-   :account             "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out             "//a[normalize-space(.)='Logout']"
-   :org-switcher        "switcherButton"
-   :active-org          "//*[@id='switcherButton']"})
+   :account                 "//a[@class='header-widget' and contains(@href,'users')]"
+   :log-out                 "//a[normalize-space(.)='Logout']"
+   :org-switcher            "switcherButton"
+   :active-org              "//*[@id='switcherButton']"})
 
 (def all-tabs
   (tabs

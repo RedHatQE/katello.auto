@@ -542,6 +542,10 @@
     (in-place-edit {:user-email-text new-email})
     (check-for-success)))
 
+(defn clear-search []
+  (->browser (click :search-menu)
+             (click :search-clear-the-search)))
+
 (defn search
   "Search for criteria in entity-type, scope not yet implemented.
   if with-favorite is specified, criteria is ignored and the existing
