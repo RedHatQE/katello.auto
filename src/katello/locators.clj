@@ -105,7 +105,8 @@
       :dashboard
       :content
       [:subscriptions
-       [:activation-keys
+       [:red-hat-subscriptions
+        :activation-keys
         :import-history]
        :repositories
        [:custom-content-repositories
@@ -169,9 +170,10 @@
    :provider-create-save                "provider_save"
    :remove-provider                     (link "Remove Provider")
    :subscriptions                       (link "Subscriptions")
+   :import-manifest                     "new"
    :redhat-provider-repository-url-text "provider[repository_url]"
    :choose-file                         "provider_contents"
-   :upload                              "upload_submit"
+   :upload                              "provider_submit"
    :force-import-checkbox               "force_import"
    :enable-repositories-tab             "//a[normalize-space(.)='Enable Repositories']"
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
@@ -420,6 +422,7 @@
    
      [:content-tab [] (browser mouseOver :content)
       [:subscriptions-tab [] (browser mouseOver :subscriptions)
+       [:redhat-subscriptions-tab [] (browser clickAndWait :red-hat-subscriptions)]
        [:activation-keys-page [] (browser clickAndWait :activation-keys)
         [:named-activation-key-page [activation-key-name]
          (choose-left-pane (left-pane-item activation-key-name))]

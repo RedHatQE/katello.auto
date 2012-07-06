@@ -785,13 +785,14 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url force]}]]
-  (navigate :redhat-repositories-tab)
+  (navigate :redhat-subscriptions-tab)
+  (when-not (browser isElementPresent :choose-file)
+    (browser click :import-manifest))
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (when force (browser check :force-import-checkbox))
-  (fill-form {:choose-file file-path}
-             :upload
-             (fn [] (browser waitForPageToLoad "300000")))
+  (fill-ajax-form {:choose-file file-path}
+                  :upload)
   (check-for-success))
 
 (defn manifest-already-uploaded?
