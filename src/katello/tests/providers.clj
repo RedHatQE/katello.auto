@@ -140,7 +140,6 @@
     (deftest "Create two providers with the same name, in two different orgs"
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
-
     custom-product-tests)
   
   redhat-content-provider-tests
@@ -150,28 +149,66 @@
   redhat-provider-other-manifest-tests
   )
 
- 
+	  
+  (defgroup gpg-key-tests
+
+    (deftest "Create new GPG keys test" :blocked-by (open-bz-bugs "835902")
+     (with-unique [test-key "test-key"]
+       (spit "output.txt" "test")
+       (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})))
+      
+     (deftest "Delete existing GPG key" 
+       (with-unique [test-key "test-key"]
+         (spit "output.txt" "test")
+         (katello.ui-tasks/create-gpg-key test-key {:filename (str (System/getProperty "user.dir") "/output.txt")})
+              (katello.ui-tasks/remove-gpg-key test-key))))
+  
+         
+         
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
