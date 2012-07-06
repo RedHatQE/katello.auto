@@ -461,8 +461,9 @@
 (defn logout
   "Logs out the current user from the UI."
   []
-  (if-not (logged-out?)
-    (browser clickAndWait :log-out)))
+  (when-not (logged-out?)
+    (browser clickAndWait :log-out)
+    (check-for-success)))
 
 (defn switch-org "Switch to the given organization in the UI."
   [org-name]
@@ -474,13 +475,14 @@
    any user is currently logged in, he will be logged out first."
   [username password & [org]]
   (when (logged-in?)
-    (logout))
+    (logout)
+    (Thread/sleep 3000))  ;wait for already-dismissed logout message
+                          ;to disappear
   (fill-ajax-form {:username-text username
                  :password-text password}
-                :log-in)
-  (switch-org (or org (@config :admin-org)))
-  #_(comment "removed on suspicion the success notif disappears sometimes before it can be read"
-             (check-for-success)))
+                  :log-in)
+  (check-for-success)
+  (switch-org (or org (@config :admin-org))))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
