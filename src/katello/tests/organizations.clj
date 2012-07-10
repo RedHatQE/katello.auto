@@ -62,7 +62,7 @@
 
   (deftest "Create new organization via Manage Organizations link"
     (with-unique [org-name "managed-org"]
-      (new-organization        org-name)
+      (create-organization       org-name {:go-through-org-switcher true})
       (verify-that         (org-exists? org-name))))
   
   (deftest "Create an organization"
