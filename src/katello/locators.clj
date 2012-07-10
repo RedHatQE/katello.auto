@@ -30,7 +30,7 @@
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
-   left-pane-field-list            "xpath=(//div[contains(@class,'ellipsis')])[$1]"
+   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis')])[$1]"
    link                            "link=$1"
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification-error')]//a[@class='jnotify-close'])[$1]"
    notification-index              "xpath=(//div[contains(@class,'jnotify-notification-error')])[$1]"
@@ -77,56 +77,67 @@
 ;;
 
 (def common
-  {:notification        "//div[contains(@class,'jnotify-notification')]"
-   :error-message       "//div[contains(@class,'jnotify-notification-error')]"
-   :success-message     "//div[contains(@class,'jnotify-notification-message')]"
-   :spinner             "//img[contains(@src,'spinner.gif')]"
-   :save-inplace-edit   "//button[.='Save']"
-   :confirmation-dialog "//div[contains(@class, 'confirmation')]"
-   :confirmation-yes    "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-   :confirmation-no     "//div[contains(@class, 'confirmation')]//span[.='No']"
-   :search-bar          "search"
-   :search-menu         "//form[@id='search_form']//span[@class='arrow']"
+  {:notification            "//div[contains(@class,'jnotify-notification')]"
+   :error-message           "//div[contains(@class,'jnotify-notification-error')]"
+   :success-message         "//div[contains(@class,'jnotify-notification-message')]"
+   :spinner                 "//img[contains(@src,'spinner.gif')]"
+   :save-inplace-edit       "//button[.='Save']"
+   :confirmation-dialog     "//div[contains(@class, 'confirmation')]"
+   :confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+   :confirmation-no         "//div[contains(@class, 'confirmation')]//span[.='No']"
+   :search-bar              "search"
+   :search-menu             "//form[@id='search_form']//span[@class='arrow']"
    :search-save-as-favorite "search_favorite_save"
-   :search-submit       "//button[@form='search_form']"
+   :search-clear-the-search "search_clear"
+   :search-submit           "//button[@form='search_form']"
    ;;main banner
-   :account             "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out             "//a[normalize-space(.)='Logout']"
-   :org-switcher        "switcherButton"
-   :active-org          "//*[@id='switcherButton']"})
+   :account                 "//a[@class='header-widget' and contains(@href,'users')]"
+   :log-out                 "//a[normalize-space(.)='Logout']"
+   :org-switcher            "switcherButton"
+   :active-org              "//*[@id='switcherButton']"})
 
 (def all-tabs
   (tabs
-   [:organizations
-    :administer
-    :systems
-    :content-management
-    :dashboard
-    :all
-    :by-environments
-    :create
+   (flatten
+    '[:administer
+      [:users
+       :roles
+       :manage-organizations]
+      :dashboard
+      :content
+      [:subscriptions
+       [:red-hat-subscriptions
+        :activation-keys
+        :import-history]
+       :repositories
+       [:custom-content-repositories
+        :red-hat-repositories
+        :package-filters
+        ;; GPG Keys is defined below, because it's all caps
+        ]
+       :sync-management
+       [:sync-status
+        :sync-plans
+        :sync-schedule]
+       :system-templates
+       :changeset-promotions
+       [:promotions
+        :changeset-promotion-history]]
+      :systems
+      [:all
+       :by-environments
+       :system-groups]
+      
 
-    ;;subtabs
-    :content-providers
-    :custom-content-providers
-    :red-hat-content-provider
-    :sync-management
-    :sync-status
-    :sync-plans
-    :sync-schedule
-    :promotions
-    :system-templates
-    :users
-    :roles
-    :activation-keys
-    :details
-                     
-    :registered
-    :groups
-    :general
-    :subscriptions
-    :facts
-    :packages]))
+      ;;3rd level subtabs
+      :create
+      :promotions
+      :details
+      :registered
+      :groups
+      :general
+      :facts
+      :packages])))
 
 (def organizations
   {:new-organization          "//a[@id='new']"
@@ -160,9 +171,10 @@
    :provider-create-save                "provider_save"
    :remove-provider                     (link "Remove Provider")
    :subscriptions                       (link "Subscriptions")
+   :import-manifest                     "new"
    :redhat-provider-repository-url-text "provider[repository_url]"
    :choose-file                         "provider_contents"
-   :upload                              "upload_submit"
+   :upload                              "provider_submit"
    :force-import-checkbox               "force_import"
    :enable-repositories-tab             "//a[normalize-space(.)='Enable Repositories']"
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
@@ -190,7 +202,8 @@
    :gpg-key-content-text                "gpg_key_content"
    :gpg-keys                            "//a[.='GPG Keys']"
    :gpg-keys-save                       "save_gpg_key"
-   :new-gpg-key                         "new"})
+   :new-gpg-key                         "new"
+   :remove-gpg-key                      (link "Remove GPG Key")})
 
 (def promotions
   {:products-category           (promotion-content-category "products")
@@ -403,13 +416,21 @@
   provider). Finally some code to navigate to the location from its
   parent location. See also katello.tasks/navigate."}
   page-tree
-  (page-zip (nav-tree
+  (page-zip
+   (nav-tree
     [:top-level [] (if (or (not (browser isElementPresent :log-out))
                            (browser isElementPresent :confirmation-dialog))
                      (browser open (@config :server-url)))
-     [:content-management-tab [] (browser mouseOver :content-management)
-      [:content-providers-tab [] (browser mouseOver :content-providers)
-       [:custom-content-providers-tab [] (browser clickAndWait :custom-content-providers)
+   
+     [:content-tab [] (browser mouseOver :content)
+      [:subscriptions-tab [] (browser mouseOver :subscriptions)
+       [:redhat-subscriptions-tab [] (browser clickAndWait :red-hat-subscriptions)]
+       [:activation-keys-page [] (browser clickAndWait :activation-keys)
+        [:named-activation-key-page [activation-key-name]
+         (choose-left-pane (left-pane-item activation-key-name))]
+        [:new-activation-key-page [] (browser click :new-activation-key)]]]
+      [:repositories-tab [] (browser mouseOver :repositories)
+       [:custom-content-repositories-tab [] (browser clickAndWait :custom-content-repositories)
         [:new-provider-page [] (browser click :new-provider)]
         [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
          [:provider-products-repos-page [] (->browser (click :products-and-repositories)
@@ -418,9 +439,10 @@
           [:named-repo-page [product-name repo-name] (browser click (editable repo-name))]]
          [:provider-details-page [] (browser click :details)]
          [:provider-subscriptions-page [] (browser click :subscriptions)]]]
-       [:redhat-provider-tab [] (browser clickAndWait :red-hat-content-provider)]
+       [:redhat-repositories-tab [] (browser clickAndWait :red-hat-repositories)]
        [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
-        [:new-gpg-key-page [] (browser click :new-gpg-key)]]]
+        [:new-gpg-key-page [] (browser click :new-gpg-key)]
+        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
        [:sync-status-page [] (browser clickAndWait :sync-status)]
        [:sync-plans-page [] (browser clickAndWait :sync-plans)
@@ -428,31 +450,24 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
-      [:promotions-page [] (browser clickAndWait :promotions)
-       [:named-environment-promotions-page [env-name next-env-name]
-        (select-environment-widget env-name {:next-env-name next-env-name :wait true})
-        [:named-changeset-promotions-page [changeset-name]
-         (browser click (changeset changeset-name))]]]
+      [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
+       [:promotions-page [] (browser clickAndWait :promotions)
+        [:named-environment-promotions-page [env-name next-env-name]
+         (select-environment-widget env-name {:next-env-name next-env-name :wait true})
+         [:named-changeset-promotions-page [changeset-name]
+          (browser click (changeset changeset-name))]]]]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
        [:new-system-template-page [] (browser click :new-template)]]]
      [:systems-tab [] (browser mouseOver :systems)
       [:systems-all-page [] (browser clickAndWait :all)
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
-         [:named-systems-page [] (browser click :details)]]]
-      [:activation-keys-page [] (browser clickAndWait :activation-keys)
-       [:named-activation-key-page [activation-key-name]
-        (choose-left-pane (left-pane-item activation-key-name))]
-       [:new-activation-key-page [] (browser click :new-activation-key)]]
+        [:named-systems-page [] (browser click :details)]]]
       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]
          (choose-left-pane (left-pane-item system-name))]]]]
-     [:organizations-tab [] (browser clickAndWait :organizations)
-      [:new-organization-page [] (browser click :new-organization)]
-      [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
-       [:new-environment-page [] (browser click :new-environment)]
-       [:named-environment-page [env-name] (browser click (environment-link env-name))]]]
+     
      [:administer-tab [] (browser mouseOver :administer)
       [:users-tab [] (browser clickAndWait :users)
        [:named-user-page [username] (choose-left-pane (user username))
@@ -461,9 +476,14 @@
       [:roles-tab [] (browser clickAndWait :roles)
        [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
         [:named-role-users-page [] (browser click :role-users)]
-        [:named-role-permissions-page [] (browser click :role-permissions)]]]]])))
+        [:named-role-permissions-page [] (browser click :role-permissions)]]]
+      [:manage-organizations-tab [] (browser clickAndWait :manage-organizations)
+       [:new-organization-page [] (browser click :new-organization)]
+       [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
+        [:new-environment-page [] (browser click :new-environment)]
+        [:named-environment-page [env-name] (browser click (environment-link env-name))]]]]])))
 
-(def tab-list '(:redhat-provider-tab 
+(def tab-list '(:redhat-repositories-tab 
                 :roles-tab :users-tab 
                 :systems-all-page
                 :activation-keys-page

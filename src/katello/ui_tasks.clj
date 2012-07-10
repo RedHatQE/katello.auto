@@ -6,6 +6,7 @@
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
         katello.tasks
+        [katello.conf :only [config]]
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
         [tools.verify :only [verify-that]]
@@ -44,9 +45,10 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials             #"incorrect username"
-                ::promotion-already-in-progress   #"Cannot promote.*while another changeset"
-                ::import-older-than-existing-data #"Import is older than existing data"}]
+  (let [errors {::invalid-credentials                   #"incorrect username"
+                ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
+                ::import-older-than-existing-data       #"Import is older than existing data"
+                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))
@@ -251,9 +253,9 @@
    for example, extract-left-pane-list locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
                 (locators/left-pane-field-list (str index)))]
-    (take-while identity (for [elem elems]
-                           (try (browser getText elem)
-                                (catch SeleniumException e nil))))))
+    (doall (take-while identity (for [elem elems]
+                                  (try (browser getText elem)
+                                       (catch SeleniumException e nil)))))))
 
 
 (defn- extract-content []
@@ -459,20 +461,28 @@
 (defn logout
   "Logs out the current user from the UI."
   []
-  (if-not (logged-out?)
-    (browser clickAndWait :log-out)))
+  (when-not (logged-out?)
+    (browser clickAndWait :log-out)
+    (check-for-success)))
+
+(defn switch-org "Switch to the given organization in the UI."
+  [org-name]
+  (browser click :org-switcher)
+  (browser clickAndWait (locators/org-switcher org-name)))
 
 (defn login
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
-  [username password]
+  [username password & [org]]
   (when (logged-in?)
-    (logout))
-  (do (fill-form {:username-text username
-                  :password-text password}
-                 :log-in)
-      (comment "removed on suspicion the success notif disappears sometimes before it can be read"
-               (check-for-success))))
+    (logout)
+    (Thread/sleep 3000))    ;wait for already-dismissed logout message
+                            ;to disappear
+  (fill-ajax-form {:username-text username
+                   :password-text password}
+                  :log-in)
+  (check-for-success)
+  (switch-org (or org (@config :admin-org))))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -532,6 +542,10 @@
     (in-place-edit {:user-email-text new-email})
     (check-for-success)))
 
+(defn clear-search []
+  (->browser (click :search-menu)
+             (click :search-clear-the-search)))
+
 (defn search
   "Search for criteria in entity-type, scope not yet implemented.
   if with-favorite is specified, criteria is ignored and the existing
@@ -540,13 +554,7 @@
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (navigate (entity-type {:users :users-tab 
-                          :organizations :organizations-tab
-                          :roles :roles-tab
-                          :content-providers :content-providers-tab
-                          :gpg-keys :gpg-keys-tab
-                          :sync-plans :sync-plans-page
-                          :systems  :systems-tab
-                          :activation-keys :activation-keys-page}))
+                          :organizations :manage-organizations-tab}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
@@ -783,20 +791,21 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url force]}]]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-subscriptions-tab)
+  (when-not (browser isElementPresent :choose-file)
+    (browser click :import-manifest))
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (when force (browser check :force-import-checkbox))
-  (fill-form {:choose-file file-path}
-             :upload
-             (fn [] (browser waitForPageToLoad "300000")))
+  (fill-ajax-form {:choose-file file-path}
+                  :upload)
   (check-for-success))
 
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
   content uploaded."
   []
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser isElementPresent :subscriptions-items))
 
 (defn create-template
@@ -835,15 +844,10 @@
     (browser click :save-template)
     (check-for-success)))
 
-(defn switch-org "Switch to the given organization in the UI."
-  [org-name]
-  (browser click :org-switcher)
-  (browser clickAndWait (locators/org-switcher org-name)))
-
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
-  (navigate :redhat-provider-tab)
+  (navigate :redhat-repositories-tab)
   (browser click :enable-repositories-tab)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
@@ -881,7 +885,15 @@
                     :gpg-key-upload-button)
     (fill-ajax-form {:gpg-key-name-text name
                      :gpg-key-content-text contents}
-                    :gpg-keys-save))
+                    :gpg-keys-save)))
+  ;(check-for-success))
+
+(defn remove-gpg-key 
+  "Deletes existing GPG keys"
+  [gpg-key-name]
+  (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
+  (browser click :remove-gpg-key )
+  (browser click :confirmation-yes)
   (check-for-success))
 
 (defn sync-and-promote [products from-env to-env]

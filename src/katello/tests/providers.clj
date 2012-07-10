@@ -15,6 +15,10 @@
         [bugzilla.checker :only [open-bz-bugs]]
         [katello.conf :only [config no-clients-defined]]))
 
+;; Constants
+
+(def tmpfile (str (System/getProperty "user.dir") "/output.txt"))
+
 ;; Functions
 
 (defn get-all-providers "Uses API to return all provider names in the admin org"
@@ -92,20 +96,29 @@
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])
-
-   (for [inv-url invalid-urls]
-     (with-meta [{:name (uniqueify "mytestcp")
-                  :description "blah"
-                  :url inv-url} (errtype :katello.ui-tasks/repository-url-invalid)]
-       {:blockers (open-bz-bugs "703528" "742983")
-        :description "Test that invalid URL is rejected."}))))
+       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])))
 
 ;; Tests
 
 ;; Load more tests groups into this namespace
 (load "providers/custom-product")
 (load "providers/redhat")
+
+
+(defgroup gpg-key-tests
+
+  (deftest "Create new GPG keys test"
+    :blocked-by (open-bz-bugs "835902")
+
+    (with-unique [test-key "test-key"]
+      (spit "output.txt" "test")
+      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})))
+      
+  (deftest "Delete existing GPG key" 
+    (with-unique [test-key "test-key"]
+      (spit "output.txt" "test")
+      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})
+      (katello.ui-tasks/remove-gpg-key test-key))))
 
 
 (defgroup provider-tests
@@ -147,33 +160,13 @@
     (deftest "Create two providers with the same name, in two different orgs"
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
-
     custom-product-tests)
   
-  redhat-content-provider-tests)
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  redhat-content-provider-tests
+  gpg-key-tests
+  redhat-provider-one-org-multiple-manifest-tests
+  redhat-provider-second-org-one-manifest-tests
+  redhat-provider-used-manifest-tests
+  redhat-provider-other-manifest-tests)
 
 
