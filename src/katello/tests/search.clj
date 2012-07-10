@@ -210,5 +210,37 @@
             (search   :sync-plans        {:criteria "sync_date:2012-07-07"})
             (search   :sync-plans        {:criteria "name:my_*" :add-as-favorite "true"})
             (search   :sync-plans        {:criteria "interval:hourly" :add-as-favorite "true"})
-            (search   :sync-plans        {:with-favorite "interval:hourly"})))
+            (search   :sync-plans        {:with-favorite "interval:hourly"}))
      
+(deftest "Promote Product"
+       :description "End to End promotion and then performing search with promotion changeset history"
+           (let [provider-name (uniqueify "ami")
+            product-name "safari-1_0"
+            repo-name (uniqueify "safari-x86_64")
+            org-name (uniqueify "test_org")
+            temp-name (uniqueify "test_template")]
+      (create-organization org-name {:initial-env-name "test"})
+      (create-environment "dev" {:org-name org-name :prior-env "test"})
+      (switch-org org-name)
+      (create-provider {:name provider-name :description "my ami"})
+      (add-product {:provider-name provider-name
+                    :name product-name})
+      (add-repo {:provider-name provider-name
+                 :product-name product-name
+                 :name repo-name
+                 :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"})
+       (sync-repos [repo-name] 120000)
+       #_(create-changeset "Library" "test" "newset")
+       #_(add-to-changeset "newset" "Library" "test" {:product ["safari-1_0"]})
+       (promote-content "Library" "dev" {:products [product-name]})
+       (create-template {:name temp-name :description "template to perform search operations"})
+       (add-to-template temp-name [{:product product-name
+                                   :repositories [repo-name]}])
+       (promote-content "Library" "dev" {:templates [temp-name]})
+       (search :promotion-changeset-history {:criteria "changeset*"})
+       (search :promotion-changeset-history {:criteria "product:safari-1_0"})
+       (search :promotion-changeset-history {:criteria "user:admin"})
+       (search :promotion-changeset-history {:criteria "system_template:\"test_template*\""})
+       (search :promotion-changeset-history {:criteria "system_template:\"test_template*\"" :add-as-favorite "true"})
+       (search :promotion-changeset-history {:criteria "product:safari-1_0" :add-as-favorite "true"})
+       (search :promotion-changeset-history {:with-favorite "product:safari-1_0"}))))

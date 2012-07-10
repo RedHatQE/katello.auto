@@ -554,7 +554,14 @@
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (navigate (entity-type {:users :users-tab 
-                          :organizations :manage-organizations-tab}))
+                          :organizations :manage-organizations-tab
+                          :roles :roles-tab
+                          :content-providers :content-providers-tab
+                          :gpg-keys :gpg-keys-tab
+                          :sync-plans :sync-plans-page
+                          :systems  :systems-tab
+                          :activation-keys :activation-keys-page
+                          :promotion-changeset-history :promotion-changeset-history-tab}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))

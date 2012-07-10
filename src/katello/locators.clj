@@ -122,7 +122,8 @@
        :system-templates
        :changeset-promotions
        [:promotions
-        :changeset-promotion-history]]
+        :changeset-promotion-history
+        :promotion-changeset-history]]
       :systems
       [:all
        :by-environments
@@ -450,6 +451,7 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
+      [:promotion-changeset-history-tab [] (browser clickAndWait :promotion-changeset-history)]
       [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
        [:promotions-page [] (browser clickAndWait :promotions)
         [:named-environment-promotions-page [env-name next-env-name]
