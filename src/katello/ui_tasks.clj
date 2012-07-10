@@ -561,7 +561,7 @@
                           :sync-plans :sync-plans-page
                           :systems  :systems-tab
                           :activation-keys :activation-keys-page
-                          :promotion-changeset-history :promotion-changeset-history-tab}))
+                          :changeset-promotion-history :changeset-promotion-history-tab}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
