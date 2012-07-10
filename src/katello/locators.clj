@@ -254,11 +254,27 @@
    :save-sync-plan             "plan_save"})
 
 (def systems
-  {:system-name-text-edit           "system[name]"
+  {:new-system                      "//a[@id='new']"
+   :create-system                   "system_save"
+   :system-name-text                "system[name]"
+   :system-sockets-text             "system[sockets]"
+   :system-arch-select              "arch[arch_id]"
+   ;;system-edit details
+   :system-name-text-edit           "system[name]"
    :system-description-text-edit    "system[description]"
    :system-location-text-edit       "system[location]"
    :system-service-level-select     "system[serviceLevel]"
    :system-release-version-select   "system[releaseVer]"
+   ;;systemgroups pane
+   :new-system-groups               "//a[@id='new']"
+   :create-system-groups            "group_save"
+   :system-group-name-text          "system_group[name]"
+   :system-group-description-text   "system_group[description]"
+   :systems-sg                      "//div[@class='panel-content']//a[.='Systems']"
+   :system-groups-hostname-toadd    "add_system_input"
+   :system-groups-add-system        "add_system"
+   :system-groups-remove-system     "remove_systems"
+
    ;;subscriptions pane
    :subscribe                       "sub_submit"
    :unsubscribe                     "unsub_submit"
@@ -461,8 +477,13 @@
        [:new-system-template-page [] (browser click :new-template)]]]
      [:systems-tab [] (browser mouseOver :systems)
       [:systems-all-page [] (browser clickAndWait :all)
+       [:new-system-page [] (browser click :new-system)]
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
         [:named-systems-page [] (browser click :details)]]]
+      [:system-groups-tab [] (browser clickAndWait :system-groups)
+       [:new-system-groups-page [] (browser click :new-system-groups)]
+       [:system-groups-page [system-group] (choose-left-pane (left-pane-item system-group))
+        [:named-system-groups-page [] (browser click :systems-sg)]]]
       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]

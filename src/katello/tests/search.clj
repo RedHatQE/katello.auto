@@ -39,4 +39,12 @@
     (verify-simple-search :organizations #(create-organization %) "myfoobar"))
 
   (deftest "Search for a user"
-    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux")))
+    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
+
+  (deftest "Search System Facts"
+    (create-environment "dev3k" {:org-name "ACME_Corporation"
+                                 :description "simple dev env"
+                                 :prior-env "Library"})
+    (create-system "dhcp201-101.englab.pnq.redhat.com" {:sockets "1"})
+    (create-system-groups "bid7" {:description "kar system-group"})
+    (add-system-system-groups "dhcp201-101.englab.pnq.redhat.com" "ked")))
