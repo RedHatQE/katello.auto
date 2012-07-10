@@ -60,6 +60,11 @@
 
 (defgroup org-tests
 
+  (deftest "Create new organization via Manage Organizations link"
+    (with-unique [org-name "managed-org"]
+      (new-organization        org-name)
+      (verify-that         (org-exists? org-name))))
+  
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
       (create-organization     org-name)

@@ -297,6 +297,22 @@
                                      (locators/promotion-add-content-item item))
                             true)
                         (catch Exception e false))))))))
+(defn manage-orgs "Navigates to the organizations page using dropdown menu."
+  []
+  (browser click :org-switcher)
+  (browser clickAndWait :manage-organizations))
+
+(defn new-organization
+  "Creates a new organization from the Manage Organizations link."
+  [name & [{:keys [description initial-env-name initial-env-description]}]]
+  (manage-orgs)
+  (navigate :new-organization-page)
+  (fill-ajax-form {:org-name-text name
+                   :org-description-text description
+                   :org-initial-env-name-text initial-env-name
+                   :org-initial-env-desc-text initial-env-description}
+                  :create-organization)
+  (check-for-success))
 
 (defn create-organization
   "Creates an organization with the given name and optional description."
