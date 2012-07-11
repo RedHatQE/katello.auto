@@ -906,11 +906,11 @@
 
 (defn create-system
   "Creates a system"
-   [name & [{:keys [sockets]}]]
+   [name & [{:keys [sockets system-arch]}]]
    (navigate :new-system-page)
    (fill-ajax-form {:system-name-text name
                     :system-sockets-text sockets
-                    :system-arch-select "x86_64"}
+                    :system-arch-select (or system-arch "x86_64")}
                     :create-system)
    (check-for-success))
 

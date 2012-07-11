@@ -254,7 +254,7 @@
    :save-sync-plan             "plan_save"})
 
 (def systems
-  {:new-system                      "//a[@id='new']"
+  {:new-system                      "new"
    :create-system                   "system_save"
    :system-name-text                "system[name]"
    :system-sockets-text             "system[sockets]"
