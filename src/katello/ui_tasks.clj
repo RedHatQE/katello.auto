@@ -906,14 +906,12 @@
 
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
-  (assert description)
-          "Must specify description :description "
   (assert (string? name))
   (navigate :new-package-filter-page)
     (fill-ajax-form {:new-package-filter-name  name
                      :new-package-filter-description description}
                      :save-new-package-filter)
-      (check-for-success))
+  (check-for-success))
 
 (defn remove-package-filter 
   "Deletes existing Package Filter"
