@@ -903,3 +903,20 @@
         (verify-that (every? (fn [[_ res]] (sync-success? res))
                              sync-results))
         (promote-content from-env to-env {:products all-prods})))
+
+(defn create-package-filter [name & [{:keys [description]}]]
+  "Creates new Package Filter"
+  (assert (string? name))
+  (navigate :new-package-filter-page)
+    (fill-ajax-form {:new-package-filter-name  name
+                     :new-package-filter-description description}
+                     :save-new-package-filter)
+  (check-for-success))
+
+(defn remove-package-filter 
+  "Deletes existing Package Filter"
+  [package-filter-name]
+  (navigate :named-package-filter-page {:package-filter-name package-filter-name})
+  (browser click :remove-package-filter-key )
+  (browser click :confirmation-yes)
+  (check-for-success))
