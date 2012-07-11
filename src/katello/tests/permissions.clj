@@ -20,7 +20,7 @@
 
 (def denied-access? (fn [r] (-> r class (isa? Throwable))))
 
-(def has-access? (fn [r] (not (denied-access? r))))
+(def has-access? (complement denied-access?))
 
 (defn- try-all [fs]
   (zipmap fs (doall (for [f fs]
@@ -128,8 +128,9 @@
                                          :verbs ["Read Activation Keys"]
                                          :name "akaccess"}]}]
            :allowed-actions [(navigate-fn :activation-keys-page)]
-           :disallowed-actions (conj (navigate-all :content-tab :manage-organizations-tab :administration-tab
-                                                   :systems-all-page :systems-by-environment-page)
+           :disallowed-actions (conj (navigate-all :manage-organizations-tab :administration-tab
+                                                   :systems-all-page :systems-by-environment-page
+                                                   :redhat-repositories-tab)
                                      create-an-ak)])
     assoc :blockers (open-bz-bugs "757817"))
    
