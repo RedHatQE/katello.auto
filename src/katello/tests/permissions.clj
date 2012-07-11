@@ -140,8 +140,9 @@
                                          :verbs ["Administer Activation Keys"]
                                          :name "akmang"}]}]
            :allowed-actions [create-an-ak]
-           :disallowed-actions (conj (navigate-all :content-tab :manage-organizations-tab :administration-tab
-                                                   :systems-all-page :systems-by-environment-page)
+           :disallowed-actions (conj (navigate-all :manage-organizations-tab :administration-tab
+                                                   :systems-all-page :systems-by-environment-page
+                                                   :redhat-repositories-tab)
                                      (fn [] (create-organization (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757817"))
 
