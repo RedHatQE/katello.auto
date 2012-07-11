@@ -121,6 +121,18 @@
       (katello.ui-tasks/remove-gpg-key test-key))))
 
 
+(defgroup package-filter-tests
+
+  (deftest "Create new Package Filter test"
+    (with-unique [test-package-filter "test-package-filter"]
+      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})))
+      
+  (deftest "Delete existing Package Filter test" 
+    (with-unique [test-package-filter "test-package-filter"]
+      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})
+      (katello.ui-tasks/remove-package-filter test-package-filter))))
+
+
 (defgroup provider-tests
   
   (deftest "Create a custom provider" 
@@ -164,6 +176,7 @@
   
   redhat-content-provider-tests
   gpg-key-tests
+  package-filter-tests
   redhat-provider-one-org-multiple-manifest-tests
   redhat-provider-second-org-one-manifest-tests
   redhat-provider-used-manifest-tests

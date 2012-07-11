@@ -203,8 +203,19 @@
    :gpg-keys                            "//a[.='GPG Keys']"
    :gpg-keys-save                       "save_gpg_key"
    :new-gpg-key                         "new"
-   :remove-gpg-key                      (link "Remove GPG Key")})
+   :remove-gpg-key                      (link "Remove GPG Key")
 
+
+   ;;Package Filters
+   :package-filter-page                      "//a[.='Package Filters']"
+   :create-new-package-filter                (link "+ New Filter")
+   :new-package-filter-name                  "filter_name"
+   :new-package-filter-description           "filter_description"
+   :save-new-package-filter                  "filter_save"
+   :remove-package-filter-key                (link "Remove Filter")})
+   
+   
+   
 (def promotions
   {:products-category           (promotion-content-category "products")
    :expand-path                 "path-collapsed"
@@ -442,7 +453,10 @@
        [:redhat-repositories-tab [] (browser clickAndWait :red-hat-repositories)]
        [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
         [:new-gpg-key-page [] (browser click :new-gpg-key)]
-        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]]
+        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]
+       [:package-filters-tab [] (browser clickAndWait :package-filter-page)
+        [:new-package-filter-page [] (browser click :create-new-package-filter)]
+        [:named-package-filter-page [package-filter-name] (choose-left-pane (left-pane-item package-filter-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
        [:sync-status-page [] (browser clickAndWait :sync-status)]
        [:sync-plans-page [] (browser clickAndWait :sync-plans)
