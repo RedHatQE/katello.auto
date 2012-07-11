@@ -29,7 +29,6 @@
     (verify-that (valid-search-results (extract-left-pane-list)))))
 
 ;; Tests
-
 (defgroup search-tests
   
   (deftest "Search for an organization"
@@ -41,25 +40,30 @@
   (deftest "Search for a user"
     (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
-(deftest "Perform search operation on an organization"
-       :description "Search for organizations based on criteria." 
-       (with-unique[org-name "test"  env-name "dev"
-                    org-name1 "test123" env-name1 "test"
-                    org-name2 "test-123" env-name2 "dev"
-                    org-name3 "test_123" env-name3 "test"]
-         (create-organization    org-name {:description "This is a test org" :initial-env-name env-name})
-         (create-organization    org-name1 {:description "This is a test123 org" :initial-env-name env-name1})
-         (create-organization    org-name2 {:description "This is a test-123 org" :initial-env-name env-name2})
-         (create-organization    org-name3 {:description "This is a test_123 org" :initial-env-name env-name3})
-          (search    :organizations        {:criteria "test123*"})
-          (search    :organizations        {:criteria "name:test-123*"})
-          (search    :organizations        {:criteria "description:\"This is a test org\""})
-          (search    :organizations        {:criteria "description:(+test+org)"})
-          (search    :organizations        {:criteria "environment:dev*"})
-          (search    :organizations        {:criteria "name:test*" :add-as-favorite "true"})
-          (search    :organizations        {:with-favorite "name:test*"})
-          (clear-search)))
-  
+
+  (deftest "Perform search operation on an organization"
+    :data-driven true
+    :description "Search for organizations based on criteria." 
+ 
+    (fn [org searchterms]
+      (let [[name opts] org
+            unique-org [(uniqueify name) opts]]
+        (apply create-organization unique-org)
+        (search :organizations searchterms)
+        (let [valid-search-results (search-results-valid?
+                                    (constantly true)
+                                    [(first unique-org)])]
+          (verify-that (valid-search-results (extract-left-pane-list))))
+        (if-let [favname (:add-as-favorite searchterms)]
+          (search :organizations {:with-favorite favname}))))
+    
+    [[["test123" {:initial-env-name "test" :description "This is a test123 org"}] {:criteria "test123*"}]
+     [["test-123" {:initial-env-name "dev" :description "This is a test-123 org"}] {:criteria "name:test-123*"}]
+     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:\"This is a test org\""}]
+     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:(+test+org)"}]
+     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "name:test*" :add-as-favorite "true"}]])
+
   
   (deftest "Perform search using strings contatining latin-1 characters"
        :description "Search for organizations names including latin-1 characters in search string." 
