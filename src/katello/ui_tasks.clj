@@ -556,7 +556,7 @@
   (navigate (entity-type {:users :users-tab 
                           :organizations :manage-organizations-tab
                           :roles :roles-tab
-                          :content-providers :content-providers-tab
+                          :content :content-tab
                           :gpg-keys :gpg-keys-tab
                           :sync-plans :sync-plans-page
                           :systems  :systems-tab

@@ -57,7 +57,8 @@
           (search    :organizations        {:criteria "description:(+test+org)"})
           (search    :organizations        {:criteria "environment:dev*"})
           (search    :organizations        {:criteria "name:test*" :add-as-favorite "true"})
-          (search    :organizations        {:with-favorite "name:test*"})))
+          (search    :organizations        {:with-favorite "name:test*"})
+          (clear-search)))
   
   
   (deftest "Perform search using strings contatining latin-1 characters"
@@ -70,7 +71,8 @@
          (search    :organizations        {:criteria "bilingüe"})
          (search    :organizations        {:criteria "misión"})
          (search    :organizations        {:criteria "name:?iños"})
-         (search    :organizations        {:criteria "description:\"This is a test org with spanish char misión,biños\""}))
+         (search    :organizations        {:criteria "description:\"This is a test org with spanish char misión,biños\""})
+         (clear-search))
 
   (deftest "Perform search using strings containing multi-byte characters"
        :description "Search for organizations names including multi-byte characters in search string." 
@@ -83,27 +85,31 @@
          (search    :organizations        {:criteria "test_华语華語"})
          (search    :organizations        {:criteria "తెలుగు"})
          (search    :organizations        {:criteria "name:test_华语華語"})
-         (search    :organizations        {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}))
+         (search    :organizations        {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""})
+         (clear-search))
 
   (deftest "'Save as favourite' should save the selected search criteria/pattern"
        :description "Save selected search criteria as favorite."
        (with-unique[username "test"]
          (create-user    username generic-user-details)
-          (search :users        {:criteria "test*" :add-as-favorite "true"})))
+          (search :users        {:criteria "test*" :add-as-favorite "true"})
+          (clear-search)))
   
   (deftest "Re-save same search criteria as favorite"
        :description "Save existing saved search criteria again as favorite."
        (with-unique[username "test123"]
         (create-user    username generic-user-details)
          (search :users        {:criteria "test123*" :add-as-favorite "true"})
-         (search :users        {:criteria "test123*" :add-as-favorite "true"})))
+         (search :users        {:criteria "test123*" :add-as-favorite "true"})
+         (clear-search)))
      
   (deftest "use the existing saved favorite search pattern"
        :description "using saved search pattern from favorite list"
        (with-unique[username "saved_user"]
         (create-user    username generic-user-details)
          (search :users        {:criteria "saved_user*" :add-as-favorite "true"})
-         (search :users       {:with-favorite "saved_user*"})))
+         (search :users       {:with-favorite "saved_user*"})
+         (clear-search)))
   
   (deftest "Search for users"
        :description "Search for a user based on default criteria i.e. name" 
@@ -116,9 +122,10 @@
                                  :email (str username2"@my.org")})
          (search    :users        {:criteria "user1"})
          (search    :users        {:criteria "username:user2*"})
-         (search    :users        {:criteria "email:user1@my.org"})
+         (search    :users        {:criteria "email:\"user1@my.org\""})
          (search    :users        {:criteria "username:\"\" "})
-         (search    :users        {:criteria " "})))
+         (search    :users        {:criteria " "})
+         (clear-search)))
   
    (deftest "use of lucene syntax with search queries"
       :description "using lucene synataxes in search queries"
@@ -131,7 +138,8 @@
          (search    :users        {:criteria "lucene?"})
          (search    :users        {:criteria "email:\"*@my.org\""})
          (search    :users        {:criteria "email:@my.org"})
-         (search    :users        {:criteria "email:my.org"})))
+         (search    :users        {:criteria "email:my.org"})
+         (clear-search)))
    
    (deftest "search for roles"
         (let [rolename1 (uniqueify "manager")
@@ -141,25 +149,29 @@
         (search    :roles        {:criteria "manager*"})
         (search :roles {:criteria "name:power_user*"})
         (search :roles {:criteria "description:\"This role is to manage an org\""})
-        (search :roles {:criteria "description:(+manage+org)"})))
+        (search :roles {:criteria "description:(+manage+org)"})
+        (clear-search)))
    
   (deftest "ROLES:'Save as favourite' should save the selected search criteria/pattern"
        :description "ROLES:Save selected search criteria as favorite."
        (create-role (uniqueify "test") {:description "This role is to test save favorite function"})
-       (search :roles        {:criteria "test*" :add-as-favorite "true"}))
+       (search :roles        {:criteria "test*" :add-as-favorite "true"})
+       (clear-search))
   
   (deftest "ROLES: Re-save same search criteria as favorite"
        :description "Save existing saved search criteria again as favorite."
      (create-role "role1" {:description "This role is to test save favorite function"})
      (create-role "role2" {:description "This role is to test save favorite function"})
        (search :roles        {:criteria "name:role?" :add-as-favorite "true"})
-       (search :roles        {:criteria "name:role?" :add-as-favorite "true"}))
+       (search :roles        {:criteria "name:role?" :add-as-favorite "true"})
+       (clear-search))
      
   (deftest "ROLES: use the existing saved favorite search pattern"
        :description "using saved search pattern from favorite list"
       (create-role (uniqueify "saved_role"){:description "This role is to test save favorite function"})
        (search :roles        {:criteria "name:saved*" :add-as-favorite "true"})
-       (search :roles       {:with-favorite "name:saved*"}))
+       (search :roles       {:with-favorite "name:saved*"})
+       (clear-search))
   
   (deftest "search providers"
         :description "search providers by defualt criteria  i.e. name"
@@ -174,13 +186,14 @@
                     :product-name product-name
                     :name repo-name
                     :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"})
-          (search    :content-providers        {:criteria "myprovider*"})
-          (search    :content-providers        {:criteria "description:\"my test provider\""})
-          (search    :content-providers        {:criteria "repo:testproduct*"})
-          (search    :content-providers        {:criteria "product:testproduct*"})
-          (search    :content-providers        {:criteria "description:\"my test provider\"" :add-as-favorite "true"})
-          (search    :content-providers        {:criteria "repo:test*" :add-as-favorite "true"})
-          (search    :content-providers        {:with-favorite "repo:test*"})))
+          (search    :content       {:criteria "myprovider*"})
+          (search    :content        {:criteria "description:\"my test provider\""})
+          (search    :content        {:criteria "repo:testproduct*"})
+          (search    :content        {:criteria "product:testproduct*"})
+          (search    :content        {:criteria "description:\"my test provider\"" :add-as-favorite "true"})
+          (search    :content        {:criteria "repo:test*" :add-as-favorite "true"})
+          (search    :content        {:with-favorite "repo:test*"})
+          (clear-search)))
      
      (deftest "search activation keys"
          :description "search activation keys by default criteria i.e. name"
@@ -196,7 +209,8 @@
             (search   :activation-keys        {:criteria "environment:dev*"})
             (search   :activation-keys        {:criteria "*-key*" :add-as-favorite "true"})
             (search   :activation-keys        {:criteria "environment:dev*" :add-as-favorite "true"})
-            (search   :activation-keys        {:with-favorite "environment:dev*"}))
+            (search   :activation-keys        {:with-favorite "environment:dev*"})
+            (clear-search))
      
      (deftest "search sync_plan"
          :description "search sync plans by default criteria i.e. name"
@@ -210,9 +224,10 @@
             (search   :sync-plans        {:criteria "sync_date:2012-07-07"})
             (search   :sync-plans        {:criteria "name:my_*" :add-as-favorite "true"})
             (search   :sync-plans        {:criteria "interval:hourly" :add-as-favorite "true"})
-            (search   :sync-plans        {:with-favorite "interval:hourly"}))
+            (search   :sync-plans        {:with-favorite "interval:hourly"})
+            (clear-search))
      
-(deftest "Promote Product"
+(deftest "Search on changeset-history"
        :description "End to End promotion and then performing search with promotion changeset history"
            (let [provider-name (uniqueify "ami")
             product-name "safari-1_0"
@@ -238,9 +253,11 @@
                                    :repositories [repo-name]}])
        (promote-content "Library" "dev" {:templates [temp-name]})
        (search :changeset-promotion-history {:criteria "changeset*"})
+       (clear-search)
        (search :changeset-promotion-history {:criteria "product:safari-1_0"})
        (search :changeset-promotion-history {:criteria "user:admin"})
        (search :changeset-promotion-history {:criteria "system_template:\"test_template*\""})
        (search :changeset-promotion-history {:criteria "system_template:\"test_template*\"" :add-as-favorite "true"})
        (search :changeset-promotion-history {:criteria "product:safari-1_0" :add-as-favorite "true"})
-       (search :changeset-promotion-history {:with-favorite "product:safari-1_0"}))))
+       (search :changeset-promotion-history {:with-favorite "product:safari-1_0"})
+       (clear-search))))
