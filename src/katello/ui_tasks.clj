@@ -300,8 +300,8 @@
 
 (defn create-organization
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [description initial-env-name initial-env-description]}]]
-  (navigate :new-organization-page)
+  [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
+  (navigate (if go-through-org-switcher (:new-organization-page-via-org-switcher) (:new-organization-page)))
   (fill-ajax-form {:org-name-text name
                    :org-description-text description
                    :org-initial-env-name-text initial-env-name
