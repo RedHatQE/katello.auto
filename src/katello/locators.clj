@@ -91,10 +91,13 @@
    :search-clear-the-search "search_clear"
    :search-submit           "//button[@form='search_form']"
    ;;main banner
-   :account                 "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out                 "//a[normalize-space(.)='Logout']"
-   :org-switcher            "switcherButton"
-   :active-org              "//*[@id='switcherButton']"})
+   :account             "//a[@class='header-widget' and contains(@href,'users')]"
+   :log-out             "//a[normalize-space(.)='Logout']"
+   :org-switcher        "switcherButton"
+   :active-org          "//*[@id='switcherButton']"
+   ;;inside the org switcher
+   :manage-organizations-link  "manage_orgs"
+   })
 
 (def all-tabs
   (tabs
@@ -481,7 +484,9 @@
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]
          (choose-left-pane (left-pane-item system-name))]]]]
-     
+     [:organizations-page-via-org-switcher [] (browser click :org-switcher)
+      [:organizations-link-via-org-switcher [] (browser clickAndWait :manage-organizations-link)
+       [:new-organization-page-via-org-switcher [] (browser click :new-organization)]]]
      [:administer-tab [] (browser mouseOver :administer)
       [:users-tab [] (browser clickAndWait :users)
        [:named-user-page [username] (choose-left-pane (user username))
