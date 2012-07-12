@@ -80,12 +80,7 @@
      [(expect-error :name-no-leading-trailing-whitespace) {:name trailing-ws-str :description nil :url "http://sdf.com"}])
     
    (for [inv-char-str invalid-character-strings]
-     [(expect-error :name-must-not-contain-characters) {:name inv-char-str :description nil :url "http://sdf.com"}])
-
-   (for [inv-url invalid-urls]
-     (with-meta [(expect-error :repository-url-invalid) {:name (uniqueify "mytestcp") :description "blah" :url inv-url}]
-       {:blockers (open-bz-bugs "703528" "742983")
-        :description "Test that invalid URL is rejected."}))))
+     [(expect-error :name-must-not-contain-characters) {:name inv-char-str :description nil :url "http://sdf.com"}])))
 
 ;; Tests
 
