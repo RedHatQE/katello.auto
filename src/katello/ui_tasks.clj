@@ -921,3 +921,31 @@
   (browser click :remove-package-filter-key )
   (browser click :confirmation-yes)
   (check-for-success))
+
+(defn create-system
+  "Creates a system"
+   [name & [{:keys [sockets system-arch]}]]
+   (navigate :new-system-page)
+   (fill-ajax-form {:system-name-text name
+                    :system-sockets-text sockets
+                    :system-arch-select (or system-arch "x86_64")}
+                    :create-system)
+   (check-for-success))
+
+(defn create-system-groups
+  "Creates a system-groups"
+   [name & [{:keys [description ]}]]
+   (navigate :new-system-groups-page)
+   (fill-ajax-form {:system-group-name-text name
+                    :system-group-description-text description}
+                    :create-system-groups)
+   (check-for-success))
+
+(defn add-system-system-groups
+  "Adds a system to a System-Group"
+   [name systemgroup]
+   (navigate :named-system-groups-page {:system-group systemgroup})
+   (fill-ajax-form {:system-groups-hostname-toadd name}
+                    :system-groups-add-system)
+   (check-for-success))
+

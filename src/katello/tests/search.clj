@@ -6,7 +6,8 @@
         [katello.tests.organizations :only [create-test-org]]
         [katello.tests.users :only [generic-user-details]]
         [bugzilla.checker :only [open-bz-bugs]]
-        slingshot.slingshot))
+        slingshot.slingshot)
+  (:require (katello [api-tasks :as api])))
 
 ;; Functions
 
@@ -39,4 +40,14 @@
     (verify-simple-search :organizations #(create-organization %) "myfoobar"))
 
   (deftest "Search for a user"
-    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux")))
+    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
+
+  (deftest "Search System Facts"
+    (with-unique [system-name "mysystem"
+                  system-groups-name "fed"]
+      (api/with-admin
+        (api/ensure-env-exist "dev" {:prior "Library"}))
+        (create-system system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (create-system-groups system-groups-name {:description "rh system-group"})
+        (add-system-system-groups system-name system-groups-name))))
