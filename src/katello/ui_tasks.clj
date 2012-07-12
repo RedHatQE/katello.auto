@@ -795,7 +795,8 @@
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
+    (in-place-edit {:redhat-provider-repository-url-text repository-url})
+    (check-for-success))
   (when force (browser check :force-import-checkbox))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
