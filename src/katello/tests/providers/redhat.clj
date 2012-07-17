@@ -129,12 +129,6 @@
   (deftest "Upload a subscription manifest"
     (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {})            
     
-    (deftest "Upload the same manifest to an org using force"
-      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {:force true}))
-    
-    (deftest "Upload the same manifest to an org without force"
-      (expecting-error (errtype :katello.ui-tasks/import-older-than-existing-data)
-        (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {:force false})))
     
     (deftest "Load New manifest into same org without force"
       (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org2 {}))))

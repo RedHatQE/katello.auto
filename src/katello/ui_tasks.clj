@@ -790,18 +790,17 @@
    selenium browser. Optionally specify a new repository url for Red
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
-  [file-path & [{:keys [repository-url force]}]]
+  [file-path & [{:keys [repository-url]}]]
   (navigate :redhat-subscriptions-tab)
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url})
     (check-for-success))
-  (when force (browser check :force-import-checkbox))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
   (check-for-success))
-
+  
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
   content uploaded."
