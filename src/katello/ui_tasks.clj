@@ -799,7 +799,7 @@
     (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success)
+  (check-for-success))
   
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
