@@ -797,7 +797,7 @@
   (when repository-url
     (in-place-edit {:redhat-provider-repository-url-text repository-url})
     (check-for-success))
-  (when force (browser check :force-import-checkbox))
+  (when force 
   (fill-ajax-form {:choose-file file-path}
                   :upload)
   (check-for-success))
