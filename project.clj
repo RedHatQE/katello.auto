@@ -50,3 +50,5 @@
              (katello.tests.sync_management/setup)
              (katello.tests.templates/setup-content))
          )
+;; adding autodoc-publish task to leiningen
+(load "autodoc-publish")
