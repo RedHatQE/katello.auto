@@ -35,7 +35,7 @@
 (defgroup login-tests
 
   (deftest "login as valid user"
-    login-admin []) 
+    (login-admin)) 
 
   (deftest "login as invalid user"
     :data-driven true
