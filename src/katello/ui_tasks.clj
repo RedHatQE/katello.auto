@@ -462,8 +462,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (browser clickAndWait :log-out)
-    (check-for-success)))
+    (browser clickAndWait :log-out)))
 
 (defn switch-org "Switch to the given organization in the UI."
   [org-name]
