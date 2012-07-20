@@ -19,11 +19,8 @@
   message appears in the UI."
   [username password]
   (try+
-   (logout)
-   (login username password)
-   (when (-> (notification) :type (= :success))
-     (throw (RuntimeException. "Login succeeded with bad credentials.")))
-   (catch [:type :katello.ui-tasks/invalid-credentials] _)
+    (expecting-error (errtype :katello.ui-tasks/invalid-credentials) 
+                     (login username password))
    (finally
     (login *session-user* *session-password*))))
 
@@ -36,6 +33,9 @@
 ;;; Tests
 
 (defgroup login-tests
+
+  (deftest "login as valid user"
+    (login-admin)) 
 
   (deftest "login as invalid user"
     :data-driven true
