@@ -808,7 +808,8 @@
     (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success))
+  (async-notification 600000)) ;using asynchronous noification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  ;(check-for-success))
   
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
