@@ -197,7 +197,7 @@
 
 (defn- async-notification [& [timeout]]
   (Thread/sleep 3000)
-  (loop-with-timeout (or timeout 1800000) []
+  (loop-with-timeout (or timeout 180000) []
     (or (notification)
         (do (browser refresh)
             (recur)))))
