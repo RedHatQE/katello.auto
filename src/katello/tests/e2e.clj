@@ -36,6 +36,7 @@
                       :org org-name
                       :env target-env
                       :force true})
+                      
     (doseq [pool-name all-pools]
       (if-let [matching-pool (->> (api/system-available-pools (-> client/*runner* .getConnection .getHostname))
                                 (filter #(= (:poolName %) pool-name))

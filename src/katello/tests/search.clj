@@ -6,7 +6,8 @@
         [katello.tests.organizations :only [create-test-org]]
         [katello.tests.users :only [generic-user-details]]
         [bugzilla.checker :only [open-bz-bugs]]
-        slingshot.slingshot))
+        slingshot.slingshot)
+  (:require (katello [api-tasks :as api])))
 
 ;; Functions
 
@@ -40,6 +41,7 @@
   (deftest "Search for a user"
     (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
+<<<<<<< HEAD
 
   (deftest "Perform search operation on an organization"
     :data-driven true
@@ -265,3 +267,14 @@
        (search :changeset-promotion-history {:criteria "product:safari-1_0" :add-as-favorite "true"})
        (search :changeset-promotion-history {:with-favorite "product:safari-1_0"})
        (clear-search))))
+=======
+  (deftest "Search System Facts"
+    (with-unique [system-name "mysystem"
+                  system-groups-name "fed"]
+      (api/with-admin
+        (api/ensure-env-exist "dev" {:prior "Library"}))
+        (create-system system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (create-system-groups system-groups-name {:description "rh system-group"})
+        (add-system-system-groups system-name system-groups-name))))
+>>>>>>> a7db6686a174e0140c8d4457d7bd2d3557e1a5d1

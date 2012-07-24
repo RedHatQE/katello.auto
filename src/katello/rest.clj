@@ -49,6 +49,7 @@
   "wait for response, then decode json"
   [response]
   (-> response
+     http/await
      detect-exceptional-status
      http/string
      read-json-safe))

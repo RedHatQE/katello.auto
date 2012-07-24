@@ -91,10 +91,13 @@
    :search-clear-the-search "search_clear"
    :search-submit           "//button[@form='search_form']"
    ;;main banner
-   :account                 "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out                 "//a[normalize-space(.)='Logout']"
-   :org-switcher            "switcherButton"
-   :active-org              "//*[@id='switcherButton']"})
+   :account             "//a[@class='header-widget' and contains(@href,'users')]"
+   :log-out             "//a[normalize-space(.)='Logout']"
+   :org-switcher        "switcherButton"
+   :active-org          "//*[@id='switcherButton']"
+   ;;inside the org switcher
+   :manage-organizations-link  "manage_orgs"
+   })
 
 (def all-tabs
   (tabs
@@ -203,8 +206,19 @@
    :gpg-keys                            "//a[.='GPG Keys']"
    :gpg-keys-save                       "save_gpg_key"
    :new-gpg-key                         "new"
-   :remove-gpg-key                      (link "Remove GPG Key")})
+   :remove-gpg-key                      (link "Remove GPG Key")
 
+
+   ;;Package Filters
+   :package-filter-page                      "//a[.='Package Filters']"
+   :create-new-package-filter                (link "+ New Filter")
+   :new-package-filter-name                  "filter_name"
+   :new-package-filter-description           "filter_description"
+   :save-new-package-filter                  "filter_save"
+   :remove-package-filter-key                (link "Remove Filter")})
+   
+   
+   
 (def promotions
   {:products-category           (promotion-content-category "products")
    :expand-path                 "path-collapsed"
@@ -254,11 +268,27 @@
    :save-sync-plan             "plan_save"})
 
 (def systems
-  {:system-name-text-edit           "system[name]"
+  {:new-system                      "new"
+   :create-system                   "system_save"
+   :system-name-text                "system[name]"
+   :system-sockets-text             "system[sockets]"
+   :system-arch-select              "arch[arch_id]"
+   ;;system-edit details
+   :system-name-text-edit           "system[name]"
    :system-description-text-edit    "system[description]"
    :system-location-text-edit       "system[location]"
    :system-service-level-select     "system[serviceLevel]"
    :system-release-version-select   "system[releaseVer]"
+   ;;systemgroups pane
+   :new-system-groups               "//a[@id='new']"
+   :create-system-groups            "group_save"
+   :system-group-name-text          "system_group[name]"
+   :system-group-description-text   "system_group[description]"
+   :systems-sg                      "//div[@class='panel-content']//a[.='Systems']"
+   :system-groups-hostname-toadd    "add_system_input"
+   :system-groups-add-system        "add_system"
+   :system-groups-remove-system     "remove_systems"
+
    ;;subscriptions pane
    :subscribe                       "sub_submit"
    :unsubscribe                     "unsub_submit"
@@ -442,7 +472,10 @@
        [:redhat-repositories-tab [] (browser clickAndWait :red-hat-repositories)]
        [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
         [:new-gpg-key-page [] (browser click :new-gpg-key)]
-        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]]
+        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]
+       [:package-filters-tab [] (browser clickAndWait :package-filter-page)
+        [:new-package-filter-page [] (browser click :create-new-package-filter)]
+        [:named-package-filter-page [package-filter-name] (choose-left-pane (left-pane-item package-filter-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
        [:sync-status-page [] (browser clickAndWait :sync-status)]
        [:sync-plans-page [] (browser clickAndWait :sync-plans)
@@ -462,13 +495,20 @@
        [:new-system-template-page [] (browser click :new-template)]]]
      [:systems-tab [] (browser mouseOver :systems)
       [:systems-all-page [] (browser clickAndWait :all)
+       [:new-system-page [] (browser click :new-system)]
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
         [:named-systems-page [] (browser click :details)]]]
+      [:system-groups-tab [] (browser clickAndWait :system-groups)
+       [:new-system-groups-page [] (browser click :new-system-groups)]
+       [:system-groups-page [system-group] (choose-left-pane (left-pane-item system-group))
+        [:named-system-groups-page [] (browser click :systems-sg)]]]
       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]
          (choose-left-pane (left-pane-item system-name))]]]]
-     
+     [:organizations-page-via-org-switcher [] (browser click :org-switcher)
+      [:organizations-link-via-org-switcher [] (browser clickAndWait :manage-organizations-link)
+       [:new-organization-page-via-org-switcher [] (browser click :new-organization)]]]
      [:administer-tab [] (browser mouseOver :administer)
       [:users-tab [] (browser clickAndWait :users)
        [:named-user-page [username] (choose-left-pane (user username))

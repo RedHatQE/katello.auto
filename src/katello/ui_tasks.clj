@@ -75,6 +75,18 @@
   (fn [notif]
     (-> notif :type (= :success))))
 
+(defn wait-for-notification-gone
+  "Waits for a notification to disappear within the timeout period. If no
+   notification is present, the function returns immediately. The default
+   timeout is 3 seconds."
+  [ & [max-wait-ms]]
+  (loop-with-timeout (or max-wait-ms 3000) []
+    (if ( browser isElementPresent :notification)
+      (do (Thread/sleep 100) (recur)))
+    (throw+ {:type :wait-for-notification-gone-timeout} 
+            "Notification did not disappear within the specified timeout")
+    ))
+
 (defn notification
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
@@ -108,7 +120,7 @@
      :serializable.fn/source `(errtype ~t)}) )
 
 (defn check-for-success
-  "Gets any notification from the UI, if there is none, or it's not a
+  "Gets any notification from the UI. If there is none, or it's not a
    success notification, raise an exception. Otherwise return the type
    and text of the message. Takes an optional max amount of time to
    wait, in ms."
@@ -300,8 +312,8 @@
 
 (defn create-organization
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [description initial-env-name initial-env-description]}]]
-  (navigate :new-organization-page)
+  [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
+  (navigate (if go-through-org-switcher :new-organization-page-via-org-switcher :new-organization-page))
   (fill-ajax-form {:org-name-text name
                    :org-description-text description
                    :org-initial-env-name-text initial-env-name
@@ -462,8 +474,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (browser clickAndWait :log-out)
-    (check-for-success)))
+    (browser clickAndWait :log-out)))
 
 (defn switch-org "Switch to the given organization in the UI."
   [org-name]
@@ -474,15 +485,13 @@
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
   [username password & [org]]
-  (when (logged-in?)
-    (logout)
-    (Thread/sleep 3000))    ;wait for already-dismissed logout message
-                            ;to disappear
+  (when (logged-in?) (logout))
   (fill-ajax-form {:username-text username
                    :password-text password}
                   :log-in)
-  (check-for-success)
-  (switch-org (or org (@config :admin-org))))
+  (let [retVal (check-for-success)]
+    (switch-org (or org (@config :admin-org)))
+    retVal))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -797,17 +806,18 @@
    selenium browser. Optionally specify a new repository url for Red
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
-  [file-path & [{:keys [repository-url force]}]]
+  [file-path & [{:keys [repository-url]}]]
   (navigate :redhat-subscriptions-tab)
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
-  (when force (browser check :force-import-checkbox))
+    (in-place-edit {:redhat-provider-repository-url-text repository-url})
+    (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success))
-
+  (async-notification 600000)) ;using asynchronous noification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  ;(check-for-success))
+  
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
   content uploaded."
@@ -910,3 +920,48 @@
         (verify-that (every? (fn [[_ res]] (sync-success? res))
                              sync-results))
         (promote-content from-env to-env {:products all-prods})))
+
+(defn create-package-filter [name & [{:keys [description]}]]
+  "Creates new Package Filter"
+  (assert (string? name))
+  (navigate :new-package-filter-page)
+    (fill-ajax-form {:new-package-filter-name  name
+                     :new-package-filter-description description}
+                     :save-new-package-filter)
+  (check-for-success))
+
+(defn remove-package-filter 
+  "Deletes existing Package Filter"
+  [package-filter-name]
+  (navigate :named-package-filter-page {:package-filter-name package-filter-name})
+  (browser click :remove-package-filter-key )
+  (browser click :confirmation-yes)
+  (check-for-success))
+
+(defn create-system
+  "Creates a system"
+   [name & [{:keys [sockets system-arch]}]]
+   (navigate :new-system-page)
+   (fill-ajax-form {:system-name-text name
+                    :system-sockets-text sockets
+                    :system-arch-select (or system-arch "x86_64")}
+                    :create-system)
+   (check-for-success))
+
+(defn create-system-groups
+  "Creates a system-groups"
+   [name & [{:keys [description ]}]]
+   (navigate :new-system-groups-page)
+   (fill-ajax-form {:system-group-name-text name
+                    :system-group-description-text description}
+                    :create-system-groups)
+   (check-for-success))
+
+(defn add-system-system-groups
+  "Adds a system to a System-Group"
+   [name systemgroup]
+   (navigate :named-system-groups-page {:system-group systemgroup})
+   (fill-ajax-form {:system-groups-hostname-toadd name}
+                    :system-groups-add-system)
+   (check-for-success))
+
