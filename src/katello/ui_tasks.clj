@@ -75,6 +75,18 @@
   (fn [notif]
     (-> notif :type (= :success))))
 
+(defn wait-for-notification-gone
+  "Waits for a notification to disappear within the timeout period. If no
+   notification is present, the function returns immediately. The default
+   timeout is 3 seconds."
+  [ & [max-wait-ms]]
+  (loop-with-timeout (or max-wait-ms 3000) []
+    (if ( browser isElementPresent :notification)
+      (do (Thread/sleep 100) (recur)))
+    (throw+ {:type :wait-for-notification-gone-timeout} 
+            "Notification did not disappear within the specified timeout")
+    ))
+
 (defn notification
   "Gets the notification from the page, returns a map object
    representing the notification (or nil if no notification is present
@@ -108,7 +120,7 @@
      :serializable.fn/source `(errtype ~t)}) )
 
 (defn check-for-success
-  "Gets any notification from the UI, if there is none, or it's not a
+  "Gets any notification from the UI. If there is none, or it's not a
    success notification, raise an exception. Otherwise return the type
    and text of the message. Takes an optional max amount of time to
    wait, in ms."
@@ -473,15 +485,13 @@
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
   [username password & [org]]
-  (when (logged-in?)
-    (logout)
-    (Thread/sleep 3000))    ;wait for already-dismissed logout message
-                            ;to disappear
+  (when (logged-in?) (logout))
   (fill-ajax-form {:username-text username
                    :password-text password}
                   :log-in)
-  (check-for-success)
-  (switch-org (or org (@config :admin-org))))
+  (let [retVal (check-for-success)]
+    (switch-org (or org (@config :admin-org)))
+    retVal))
 
 (defn current-user
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -798,7 +808,8 @@
     (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success))
+  (async-notification 600000)) ;using asynchronous noification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  ;(check-for-success))
   
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat

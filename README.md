@@ -3,7 +3,7 @@
 ## Usage
 
 There are several options for running automation.  You'll need to download [the latest
-binary](https://github.com/downloads/weissjeffm/katello.auto/katello.auto-1.0.0-SNAPSHOT-standalone.jar).
+binary](https://github.com/downloads/RedHatQE/katello.auto/katello.auto-1.0.0-SNAPSHOT-standalone.jar).
 
 ### Running pre-packaged tests from command line
 Run 
