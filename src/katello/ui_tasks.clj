@@ -930,20 +930,19 @@
                     :create-system)
    (check-for-success))
 
-(defn create-system-groups
+(defn create-system-group
   "Creates a system-groups"
-   [name & [{:keys [description ]}]]
+   [name & [{:keys [description]}]]
    (navigate :new-system-groups-page)
    (fill-ajax-form {:system-group-name-text name
                     :system-group-description-text description}
                     :create-system-groups)
    (check-for-success))
 
-(defn add-system-system-groups
+(defn add-to-system-group
   "Adds a system to a System-Group"
-   [name systemgroup]
-   (navigate :named-system-groups-page {:system-group systemgroup})
-   (fill-ajax-form {:system-groups-hostname-toadd name}
-                    :system-groups-add-system)
-   (check-for-success))
+   [system-group system-name]
+   (navigate :named-system-groups-page {:system-group system-group})
+   (fill-ajax-form {:system-groups-hostname-toadd system-name}
+                    :system-groups-add-system))
 

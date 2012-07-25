@@ -44,10 +44,10 @@
 
   (deftest "Search System Facts"
     (with-unique [system-name "mysystem"
-                  system-groups-name "fed"]
+                  system-group-name "fed"]
       (api/with-admin
         (api/ensure-env-exist "dev" {:prior "Library"}))
         (create-system system-name {:sockets "1"
                                     :system-arch "x86_64"})
-        (create-system-groups system-groups-name {:description "rh system-group"})
-        (add-system-system-groups system-name system-groups-name))))
+        (create-system-group system-group-name {:description "rh system-group"})
+        (add-to-system-group  system-group-name system-name))))
