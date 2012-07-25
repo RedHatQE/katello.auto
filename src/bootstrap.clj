@@ -8,8 +8,9 @@
 (require 'selenium-server)
 (require 'katello.conf)
 (require 'katello.setup)
-
- 
+(require 'test.tree.jenkins)
+(require 'test.tree)
+(require 'fn.trace)
 (defn new-browser []
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
   (katello.setup/start-selenium))
@@ -36,3 +37,25 @@
   `(fn.trace/dotrace (remove (@katello.conf/config :trace-excludes)
                              (fn.trace/all-fns (@katello.conf/config :trace)))
                      ~@body))
+
+(defn wrap-swank
+  "Allows you to place (swank.core/break) statements anywhere, and the
+  swank debugger will stop there, no matter which thread hits that
+  line."
+  [runner]
+  (let [conn swank.core.connection/*current-connection*]
+    (fn [test]
+      (binding [swank.core.connection/*current-connection* conn]
+        (runner test)))))
+
+(defn debug [tree]
+  (with-redefs [test.tree/runner (-> test.tree/execute
+                                    test.tree.jenkins/wrap-tracing
+                                    test.tree/wrap-blockers
+                                    test.tree/wrap-timer
+                                    test.tree/wrap-data-driven
+                                    wrap-swank)]
+    
+    (trace (let [results (test.tree/run tree)]
+             (doall (->> results second deref vals (map (comp deref :promise))))
+             results))))
