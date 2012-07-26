@@ -112,13 +112,14 @@
 
     (with-unique [test-key "test-key"]
       (spit "output.txt" "test")
-      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})))
-      
-  (deftest "Delete existing GPG key" 
-    (with-unique [test-key "test-key"]
-      (spit "output.txt" "test")
-      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})
-      (katello.ui-tasks/remove-gpg-key test-key))))
+      (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile}))
+
+    
+    (deftest "Delete existing GPG key" 
+      (with-unique [test-key "test-key"]
+        (spit "output.txt" "test")
+        (katello.ui-tasks/create-gpg-key test-key {:filename tmpfile})
+        (katello.ui-tasks/remove-gpg-key test-key)))))
 
 
 (defgroup package-filter-tests
