@@ -481,6 +481,11 @@
   (browser click :org-switcher)
   (browser clickAndWait (locators/org-switcher org-name)))
 
+(defn ensure-org "Switch to the given org if the UI shows we are not already there."
+  [org-name]
+  (when-not (-> (browser getText :org-switcher) (= org-name))
+    (switch-org org-name)))
+
 (defn login
   "Logs in a user to the UI with the given username and password. If
    any user is currently logged in, he will be logged out first."
