@@ -483,6 +483,7 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
+      [:changeset-promotion-history-tab [] (browser clickAndWait :changeset-promotion-history)]
       [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
        [:promotions-page [] (browser clickAndWait :promotions)
         [:named-environment-promotions-page [env-name next-env-name]
