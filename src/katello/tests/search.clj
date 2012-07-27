@@ -50,11 +50,5 @@
         (api/ensure-env-exist "dev" {:prior "Library"}))
         (create-system system-name {:sockets "1"
                                     :system-arch "x86_64"})
-<<<<<<< HEAD
-        (create-system-groups system-groups-name {:description "rh system-group"})
-        (add-system-system-groups system-name system-groups-name))))
->>>>>>> a7db6686a174e0140c8d4457d7bd2d3557e1a5d1
-=======
         (create-system-group system-group-name {:description "rh system-group"})
         (add-to-system-group  system-group-name system-name))))
->>>>>>> 30768583ede3ba433b4db8f57e710f1b0e6ed11c
