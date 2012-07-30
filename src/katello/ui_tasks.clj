@@ -128,16 +128,16 @@
    notification if present). Otherwise return the type and text of the message.
    Takes an optional max amount of time to wait, in ms."
   [ & [max-wait-ms]]
-  (loop-with-timeout (or max-wait-ms 2000) [excpNotifs #{}]
+  (loop-with-timeout (or max-wait-ms 2000) [excp-notifs #{}]
     (let [notif (notification max-wait-ms)]
       (cond 
-        (not notif) (recur excpNotifs)
-        ((complement success?) notif) (recur (set (conj excpNotifs notif)))
-        (empty? excpNotifs) (set [notif])))
-    (if (empty? excpNotifs) 
+        (not notif) (recur excp-notifs)
+        ((complement success?) notif) (recur (set (conj excp-notifs notif)))
+        (empty? excp-notifs) (set [notif])))
+    (if (empty? excp-notifs) 
       (throw+ {:type ::no-success-message-error}
                "Expected a success notification, but none appeared within the timeout period.")
-      (throw+ {:types (matching-errors excpNotifs) :notifications excpNotifs}))))
+      (throw+ {:types (matching-errors excp-notifs) :notifications excp-notifs}))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
