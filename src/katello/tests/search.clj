@@ -36,8 +36,8 @@
     :description "Search for organizations based on criteria." 
     :blockers    (open-bz-bugs "750120")
       
-    (verify-simple-search :organizations create-organization "myfoobar")
-    (throw (Exception. "oh noes")))
+    (verify-simple-search :organizations create-organization "myfoobar"))
+  
 
   (deftest "Search for a user"
     (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
