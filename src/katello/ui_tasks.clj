@@ -55,9 +55,9 @@
 
 (defn matching-errors
   "Returns a set of matching known errors"
-  [m]
+  [notifSet]
   (->> known-errors
-     (filter (fn [[_ v]] (re-find v (:msg m))))
+     (filter (fn [[_ v]] (some not-empty (for [msg (map :msg notifSet)] (re-find v msg)))))
      (map key)
      set))
 
@@ -73,7 +73,7 @@
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'success?}
   (fn [notif]
-    (-> notif :type (= :success))))
+    (and notif (-> notif :type (= :success)))))
 
 (defn wait-for-notification-gone
   "Waits for a notification to disappear within the timeout period. If no
@@ -107,7 +107,7 @@
        (catch SeleniumException e nil)))
 
 (defn errtype
-  "creates a predicate that matches a caught UI error of the given
+  "Creates a predicate that matches a caught UI error of the given
    type (see known-errors). Use this predicate in a slingshot 'catch'
    statement. If any of the error types match (in case of multiple
    validation errors), the predicate will return true. Uses isa? for
@@ -120,16 +120,24 @@
      :serializable.fn/source `(errtype ~t)}) )
 
 (defn check-for-success
-  "Gets any notification from the UI. If there is none, or it's not a
-   success notification, raise an exception. Otherwise return the type
-   and text of the message. Takes an optional max amount of time to
-   wait, in ms."
+  "Returns information about a success notification from the UI. Will wait for a
+   success notification until timeout occurs, collecting any failure
+   notifications captured in that time. If there are no notifications or any
+   failure notifications are captured, an exception is thrown containing
+   information about all captured notifications (including a success 
+   notification if present). Otherwise return the type and text of the message.
+   Takes an optional max amount of time to wait, in ms."
   [ & [max-wait-ms]]
-  (let [notif (notification max-wait-ms)]
-    (cond (not notif) (throw+ {:type ::no-success-message-error}
-                       "Expected a success notification, but none appeared within the timeout period.")
-          ((complement success?) notif) (throw+ {:types (matching-errors notif) :notification notif}  "UI Error: %s" (pr-str %))
-          :else notif)))
+  (loop-with-timeout (or max-wait-ms 2000) [excpNotifs #{}]
+    (let [notif (notification max-wait-ms)]
+      (cond 
+        (not notif) (recur excpNotifs)
+        ((complement success?) notif) (recur (set (conj excpNotifs notif)))
+        (empty? excpNotifs) (set [notif])))
+    (if (empty? excpNotifs) 
+      (throw+ {:type ::no-success-message-error}
+               "Expected a success notification, but none appeared within the timeout period.")
+      (throw+ {:types (matching-errors excpNotifs) :notifications excpNotifs}))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
@@ -140,7 +148,7 @@
 
 (defn verify-success
   "Calls task-fn and checks for a success message afterwards. If none
-  is found, or an error notification appears, throws an exception."
+   is found, or an error notification appears, throws an exception."
   [task-fn]
   (let [notification (task-fn)]
     (verify-that (success? notification))))
