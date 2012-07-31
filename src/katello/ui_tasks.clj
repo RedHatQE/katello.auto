@@ -10,7 +10,8 @@
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
         [tools.verify :only [verify-that]]
-        [clojure.string :only [capitalize]])
+        [clojure.string :only [capitalize]]
+        [clojure.set :only [union]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -84,27 +85,34 @@
     (if ( browser isElementPresent :notification)
       (do (Thread/sleep 100) (recur)))
     (throw+ {:type :wait-for-notification-gone-timeout} 
-            "Notification did not disappear within the specified timeout")
-    ))
+            "Notification did not disappear within the specified timeout")))
 
-(defn notification
-  "Gets the notification from the page, returns a map object
-   representing the notification (or nil if no notification is present
-   within the optional timeout period). Default timeout is 15
-   seconds."
-  [ & [max-wait-ms]]
-  (try (browser waitForElement :notification (str (or max-wait-ms 15000)))
-       (let [msg (browser getText :notification)
-             classattr ((into {} (browser getAttributes :notification)) "class")
-             type (-> classattr
-                     (string/split #" ")
-                     second
-                     {"jnotify-notification-error" :error
-                      "jnotify-notification-message" :message
-                      "jnotify-notification-success" :success})]
-         (clear-all-notifications)
-         {:type type :msg msg})
-       (catch SeleniumException e nil)))
+
+
+(defn notifications
+  "Gets all notifications from the page, returns a list of maps
+   representing the notifications. Waits for timeout-ms for at least
+   one notification to appear. Does not do any extra waiting after the
+   first notification is detected. Clears all the notifications from
+   the UI. Default timeout is 15 seconds."
+  [ & [{:keys [timeout-ms] :or {timeout-ms 2000}}]]
+  (try
+    (browser waitForElement :notification (str timeout-ms))
+    (let [notif-at-index (fn [idx]
+                           (let [notif (locators/notification-index (str idx))]
+                             (when (browser isElementPresent notif)
+                               (let [msg (browser getText notif)
+                                     classattr ((into {}
+                                                       (browser getAttributes notif))
+                                                "class")
+                                     type ({"jnotify-notification-error" :error
+                                            "jnotify-notification-message" :message
+                                            "jnotify-notification-success" :success}
+                                           (-> (string/split classattr #" ") second))]
+                                 {:type type :msg msg}))))]
+      (doall (take-while identity (map notif-at-index (iterate inc 1)))))
+    (catch SeleniumException e '())
+    (finally (clear-all-notifications))))
 
 (defn errtype
   "Creates a predicate that matches a caught UI error of the given
@@ -129,19 +137,20 @@
    Otherwise return the type and text of the message. Takes an
    optional max amount of time to wait, in ms, and whether to refresh
    the page periodically while waiting for a notification."
-  [ & {:keys [timeout-ms refresh?]}]
-  (loop-with-timeout (or timeout-ms 2000) [excp-notifs #{}]
-    (let [notif (notification timeout-ms)]
-      (cond 
-        (not notif) (do (when refresh?
-                          (browser refresh))
-                        (recur excp-notifs))
-        ((complement success?) notif) (recur (set (conj excp-notifs notif)))
-        (empty? excp-notifs) (set [notif])))
-    (if (empty? excp-notifs) 
+  [ & [{:keys [timeout-ms refresh?] :or {timeout-ms 2000}}]]
+  (loop-with-timeout timeout-ms [error-notifs #{}]
+    (let [new-notifs (set (notifications
+                           {:timeout-ms (if refresh? 15000 timeout-ms)}))
+          error-notifs (union error-notifs (filter #(= (:type %) :error) new-notifs))] 
+      (if (and (not-empty new-notifs) (empty? error-notifs))
+        new-notifs 
+        (do (when refresh?
+              (browser refresh))
+            (recur error-notifs))))
+    (if (empty? error-notifs) 
       (throw+ {:type ::no-success-message-error}
-               "Expected a success notification, but none appeared within the timeout period.")
-      (throw+ {:types (matching-errors excp-notifs) :notifications excp-notifs}))))
+              "Expected a success notification, but none appeared within the timeout period.")
+      (throw+ {:types (matching-errors error-notifs) :notifications error-notifs}))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
@@ -333,6 +342,7 @@
   (browser click :remove-organization)
   (browser click :confirmation-yes)
   (check-for-success) ;queueing success
+  (wait-for-notification-gone)
   (check-for-success {:timeout-ms 180000 :refresh? true})) ;for actual delete
 
 (defn create-environment

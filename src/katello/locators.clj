@@ -33,6 +33,7 @@
    left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis')])[$1]"
    link                            "link=$1"
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification')]//a[@class='jnotify-close'])[$1]"
+   notification-index              "xpath=(//div[contains(@class,'jnotify-notification')])[$1]"
    org-switcher                    "//div[@id='orgbox']//a[.='$1']"
    permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"
    plus-icon                       "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"
