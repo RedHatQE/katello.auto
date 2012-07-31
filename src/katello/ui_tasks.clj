@@ -120,18 +120,22 @@
      :serializable.fn/source `(errtype ~t)}) )
 
 (defn check-for-success
-  "Returns information about a success notification from the UI. Will wait for a
-   success notification until timeout occurs, collecting any failure
-   notifications captured in that time. If there are no notifications or any
-   failure notifications are captured, an exception is thrown containing
-   information about all captured notifications (including a success 
-   notification if present). Otherwise return the type and text of the message.
-   Takes an optional max amount of time to wait, in ms."
-  [ & [max-wait-ms]]
-  (loop-with-timeout (or max-wait-ms 2000) [excp-notifs #{}]
-    (let [notif (notification max-wait-ms)]
+  "Returns information about a success notification from the UI. Will
+   wait for a success notification until timeout occurs, collecting
+   any failure notifications captured in that time. If there are no
+   notifications or any failure notifications are captured, an
+   exception is thrown containing information about all captured
+   notifications (including a success notification if present).
+   Otherwise return the type and text of the message. Takes an
+   optional max amount of time to wait, in ms, and whether to refresh
+   the page periodically while waiting for a notification."
+  [ & {:keys [timeout-ms refresh?]}]
+  (loop-with-timeout (or timeout-ms 2000) [excp-notifs #{}]
+    (let [notif (notification timeout-ms)]
       (cond 
-        (not notif) (recur excp-notifs)
+        (not notif) (do (when refresh?
+                          (browser refresh))
+                        (recur excp-notifs))
         ((complement success?) notif) (recur (set (conj excp-notifs notif)))
         (empty? excp-notifs) (set [notif])))
     (if (empty? excp-notifs) 
@@ -142,8 +146,8 @@
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
-  [ & [timeout]]
-  (try+ (check-for-success timeout)
+  [ & {:keys [timeout-ms] :as m}]
+  (try+ (check-for-success m)
         (catch [:type ::no-success-message-error] _)))
 
 (defn verify-success
@@ -215,13 +219,6 @@
     (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
-(defn- async-notification [& [timeout]]
-  (Thread/sleep 3000)
-  (loop-with-timeout (or timeout 180000) []
-    (or (notification)
-        (do (browser refresh)
-            (recur)))))
-
 (defn promote-changeset
   "Promotes the given changeset to its target environment. An optional
    timeout-ms key will specify how long to wait for the promotion to
@@ -254,7 +251,7 @@
               (recur (browser getText
                               (locators/changeset-status changeset-name))))))
       ;;wait for async success notif
-      (async-notification))))
+      (check-for-success {:timeout-ms 180000 :refresh? true}))))
 
 (defn promote-content
   "Promotes the given content from one environment to another. Example
@@ -336,7 +333,7 @@
   (browser click :remove-organization)
   (browser click :confirmation-yes)
   (check-for-success) ;queueing success
-  (async-notification))  ;for actual delete
+  (check-for-success {:timeout-ms 180000 :refresh? true})) ;for actual delete
 
 (defn create-environment
   "Creates an environment with the given name, and a map containing
@@ -828,7 +825,7 @@
     (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (async-notification 600000)) ;using asynchronous noification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  (check-for-success {:timeout-ms 600000 :refresh? true})) ;using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
   ;(check-for-success))
   
 (defn manifest-already-uploaded?
