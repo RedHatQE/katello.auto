@@ -105,10 +105,7 @@
                                      classattr ((into {}
                                                        (browser getAttributes notif))
                                                 "class")
-                                     type ({"jnotify-notification-error" :error
-                                            "jnotify-notification-message" :message
-                                            "jnotify-notification-success" :success}
-                                           (-> (string/split classattr #" ") second))]
+                                     type (second (re-find #"jnotify-notification-(\w+)"))]
                                  {:type type :msg msg}))))]
       (doall (take-while identity (map notif-at-index (iterate inc 1)))))
     (catch SeleniumException e '())
