@@ -63,10 +63,10 @@
      set))
 
 (defn- clear-all-notifications []
-  (doseq [closebutton (map (comp locators/notification-close-index str)
-                           (iterate inc 1))
-          :while (browser isElementPresent closebutton)]
-    (browser click closebutton)))
+  (try
+    (doseq [i (iterate inc 1)]
+      (browser click (locators/notification-close-index (str i))))
+    (catch SeleniumException _ nil)))
 
 (def success?
   "Returns true if the given notification is a 'success' type
@@ -161,10 +161,10 @@
 
 (defn verify-success
   "Calls task-fn and checks for a success message afterwards. If none
-   is found, or an error notification appears, throws an exception."
+   is found, or error notifications appear, throws an exception."
   [task-fn]
-  (let [notification (task-fn)]
-    (verify-that (success? notification))))
+  (let [notifications (task-fn)]
+    (verify-that (every? success? notifications))))
 
 (def ^{:doc "Navigates to a named location in the UI. The first
   argument should be a keyword for the place in the page tree to
@@ -599,7 +599,7 @@
           (->browser (click :search-menu)
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
-  (check-for-error 2000))
+  (check-for-error {:timeout-ms 2000}))
 
 (defn create-role
   "Creates a role with the given name and optional description."

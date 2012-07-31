@@ -9,7 +9,7 @@
   "Navigates to a tab"
   [tab]
   (navigate tab)
-  (check-for-error 2000))
+  (check-for-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs
   (map vector tab-list))
