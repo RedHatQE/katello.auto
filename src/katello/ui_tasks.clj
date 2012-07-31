@@ -155,7 +155,7 @@
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
-  [ & {:keys [timeout-ms] :as m}]
+  [ & [{:keys [timeout-ms] :as m}]]
   (try+ (check-for-success m)
         (catch [:type ::no-success-message-error] _)))
 
