@@ -16,3 +16,5 @@ automation-properties.clj
 bin/
 pom.xml
 .settings/
+autodoc/**
+
