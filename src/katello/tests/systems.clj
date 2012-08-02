@@ -69,6 +69,7 @@
                          :add-products [product-name]})))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
+    :blockers (open-bz-bugs "845261")
     (subscribe-system {:system-name (:name (register-new-test-system))
                        :auto-subscribe true
                        :sla "No Service Level Preference"}))
