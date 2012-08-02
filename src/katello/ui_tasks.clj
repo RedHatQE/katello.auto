@@ -882,7 +882,7 @@
   "Enable the given list of repos in the current org."
   [repos]
   (navigate :redhat-repositories-tab)
-   (doseq [repo repos]
+  (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
 
 (defn current-org []
