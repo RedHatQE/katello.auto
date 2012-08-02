@@ -162,18 +162,17 @@
   :blockers    (open-bz-bugs "729364")
 
     (deftest "Upload a subscription manifest"
-    (upload-test-manifest-to-test-org)            
+   (upload-test-manifest-to-test-org)            
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
       
-      (let [repos ["Nature Enterprise x86_64 15" "Nature Enterprise x86_64 16"]]
-        (with-org @redhat-provider-test-org
+      (let [repos ["Red Hat Developer Toolset Debug RPMs for Red Hat Enterprise Linux 5 Server i386 5.6" "Red Hat Developer Toolset RPMs for Red Hat Enterprise Linux 5 Server i386 5.6"]]
           (enable-redhat-repositories repos)
           (navigate :sync-status-page)
-          (verify-all-repos-not-synced repos))))
+          (verify-all-repos-not-synced repos)))
 
-    redhat-promoted-content-tests))
+    redhat-promoted-content-tests)
 
 
 

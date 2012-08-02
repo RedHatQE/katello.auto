@@ -179,7 +179,6 @@
    :choose-file                         "provider_contents"
    :upload                              "provider_submit"
    :force-import-checkbox               "force_import"
-   :enable-repositories-tab             "//a[normalize-space(.)='Enable Repositories']"
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
    ;;add product
