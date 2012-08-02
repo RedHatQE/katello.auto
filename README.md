@@ -54,9 +54,9 @@ as follows:
 
 That will open a single browser and leave you back at the prompt with
 the ability to run arbitrary tests and commands.  See the [API
-Documentation](http://weissjeffm.github.com/katello.auto/) for
+Documentation](http://RedHatQE.github.com/katello.auto/) for
 details, especially the
-[katello.ui-tasks](http://weissjeffm.github.com/katello.auto/katello.ui-tasks-api.html)
+[katello.ui-tasks](http://RedHatQE.github.com/katello.auto/katello.ui-tasks-api.html)
 namespace.  All those tasks can be accessed directly from the prompt,
 for example
 
