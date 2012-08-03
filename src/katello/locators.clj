@@ -168,7 +168,7 @@
    :provider-description-text           "provider[description]"
    :provider-repository-url-text        "provider[repository_url]"
    :provider-cert-text                  (textbox "provider[certificate_attributes][contents]")
-   :provider-create-save                "provider_save"
+   :provider-create-save                "provider_submit"
    :remove-provider                     (link "Remove Provider")
    :subscriptions                       (link "Subscriptions")
    :import-manifest                     "new"
