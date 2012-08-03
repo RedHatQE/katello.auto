@@ -158,11 +158,11 @@
   
 
 (defgroup redhat-content-provider-tests
-  :group-setup prepare-manifest-and-org 
-  :blockers    (open-bz-bugs "729364")
+  :group-setup prepare-manifest-and-org
+  :blockers (open-bz-bugs "729364")
 
     (deftest "Upload a subscription manifest"
-    (upload-test-manifest-to-test-org)            
+    (upload-test-manifest-to-test-org)
 
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
