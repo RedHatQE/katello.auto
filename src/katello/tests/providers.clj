@@ -126,12 +126,12 @@
 
   (deftest "Create new Package Filter test"
     (with-unique [test-package-filter "test-package-filter"]
-      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})))
-      
-  (deftest "Delete existing Package Filter test" 
-    (with-unique [test-package-filter "test-package-filter"]
-      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})
-      (katello.ui-tasks/remove-package-filter test-package-filter))))
+      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"}))
+    
+    (deftest "Delete existing Package Filter test" 
+      (with-unique [test-package-filter "test-package-filter"]
+        (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})
+        (katello.ui-tasks/remove-package-filter test-package-filter)))))
 
 
 (defgroup provider-tests
