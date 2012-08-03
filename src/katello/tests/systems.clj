@@ -40,6 +40,26 @@
 
 ;; Tests
 
+(defgroup system-group-tests
+  :group-setup (fn []
+                 (api/with-admin
+                   (api/ensure-env-exist "dev" {:prior "Library"})))
+  
+  (deftest "Create a system group"
+    (with-unique [system-group-name "fed"]
+      (create-system-group system-group-name {:description "rh system-group"}))
+
+
+    (deftest "Add a system to a system group"
+      :blockers (open-bz-bugs "845668")
+      (with-unique [system-name "mysystem"
+                    system-group-name "fed"]
+        (create-system system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (create-system-group system-group-name {:description "rh system-group"})
+        (add-to-system-group system-group-name system-name)))))
+
+
 
 (defgroup system-tests
   :group-setup create-test-environment
@@ -96,5 +116,6 @@
                                      (create-activation-key
                                       {:name ak-name
                                        :description "my description"
-                                       :environment test-environment}))))))
+                                       :environment test-environment})))))
+  system-group-tests)
 

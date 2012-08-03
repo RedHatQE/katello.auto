@@ -42,16 +42,6 @@
   (deftest "Search for a user"
     (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
-
-  (deftest "Search System Facts"
-    (with-unique [system-name "mysystem"
-                  system-group-name "fed"]
-      (api/with-admin
-        (api/ensure-env-exist "dev" {:prior "Library"}))
-      (create-system system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (create-system-group system-group-name {:description "rh system-group"})
-      (add-to-system-group  system-group-name system-name)))
   
   (deftest "Perform search operation on an organization"
     :data-driven true
