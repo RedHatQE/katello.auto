@@ -10,7 +10,7 @@
 (require 'katello.setup)
 (require 'test.tree.jenkins)
 (require 'test.tree)
-(require 'fn.trace)
+
 (defn new-browser []
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
   (katello.setup/start-selenium))
