@@ -376,25 +376,12 @@
 (defn edit-environment
   "Edits an environment with the given name. Also takes a map
    containing the name of the environment's organization, and optional
-   fields: a new name, a new description, and a new prior
-   environment."
-  [env-name {:keys [org-name new-name description prior]}]
+   fields: a new description."
+  [env-name {:keys [org-name description]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (in-place-edit {:env-name-text new-name
-                  :env-description-text description
-                  :env-prior-select-edit prior})
+  (in-place-edit {:env-description-text description})
   (check-for-success))
-
-
-(defn environment-other-possible-priors
-  "Returns a set of priors that are selectable for the given
-   environment (will not include the currently selected prior)."
-  [org-name env-name]
-  (navigate :named-environment-page {:org-name org-name
-                                     :env-name env-name})
-  (activate-in-place :env-prior-select-edit)
-  (set (browser getSelectOptions :env-prior-select-edit)))
 
 (defn create-environment-path
   "Creates a path of environments in the given org. All the names in
