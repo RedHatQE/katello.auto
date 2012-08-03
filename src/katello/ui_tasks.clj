@@ -370,7 +370,7 @@
    can be edited is the org's description."
   [org-name & {:keys [description]}]
   (navigate :named-organization-page {:org-name org-name})
-  (in-place-edit {:org-description-text-edit description})
+  (in-place-edit {:org-description-text description})
   (check-for-success))
 
 (defn edit-environment
@@ -381,8 +381,8 @@
   [env-name {:keys [org-name new-name description prior]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (in-place-edit {:env-name-text-edit new-name
-                  :env-description-text-edit description
+  (in-place-edit {:env-name-text new-name
+                  :env-description-text description
                   :env-prior-select-edit prior})
   (check-for-success))
 
@@ -530,11 +530,11 @@
   (browser click :new-user)
   (let [env-chooser (fn [env] (when env
                                (locators/select-environment-widget env)))]
-    (fill-ajax-form [:new-user-username-text username
-                     :new-user-password-text password
-                     :new-user-confirm-text (or password-confirm password)
-                     :new-user-email email
-                     :new-user-default-org default-org
+    (fill-ajax-form [:user-username-text username
+                     :user-password-text password
+                     :user-confirm-text (or password-confirm password)
+                     :user-email-text email
+                     :user-default-org default-org
                      env-chooser [default-env]]
                     :save-user))
   (check-for-success))
@@ -553,8 +553,8 @@
                     new-password new-password-confirm new-email]}]
   (navigate :named-user-page {:username username})
   (when new-password
-    (browser setText :change-password-text new-password)
-    (browser setText :confirm-password-text (or new-password-confirm new-password))
+    (browser setText :user-password-text new-password)
+    (browser setText :user-confirm-text (or new-password-confirm new-password))
 
     ;;hack alert - force the page to check the passwords (selenium
     ;;doesn't fire the event by itself

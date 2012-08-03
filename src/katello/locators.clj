@@ -144,25 +144,22 @@
 
 (def organizations
   {:new-organization          "//a[@id='new']"
-   :create-organization       "organization_save"
-   :org-name-text             (textbox "name")
-   :org-description-text      (textbox "description")
+   :create-organization       "organization_submit"
+   :org-name-text             "organization[name]"
+   :org-description-text      "organization[description]"
    :org-environments          (link "Environments")
    :edit-organization         (link "Edit")
    :remove-organization       (link "Remove Organization")
-   :org-description-text-edit "organization[description]"
-   :org-initial-env-name-text "envname"
-   :org-initial-env-desc-text "envdescription"})
+   :org-initial-env-name-text "environment[name]"
+   :org-initial-env-desc-text "environment[description]"})
 
 (def environments
-  {:env-name-text             (textbox "name")
-   :env-description-text      (textbox "description")
+  {:env-name-text             "kt_environment[name]"
+   :env-description-text      "kt_environment[description]"
    :prior-environment         "//select[@id='prior']"
    :create-environment        "//input[@value='Create']"
    :new-environment           "//div[normalize-space(.)='Add New Environment']"
    :remove-environment        (link "Remove Environment")
-   :env-name-text-edit        "kt_environment[name]"
-   :env-description-text-edit "kt_environment[description]"
    :env-prior-select-edit     "kt_environment[prior]" })
 
 (def providers
@@ -209,11 +206,10 @@
 
 
    ;;Package Filters
-   :package-filter-page                      "//a[.='Package Filters']"
    :create-new-package-filter                (link "+ New Filter")
-   :new-package-filter-name                  "filter_name"
-   :new-package-filter-description           "filter_description"
-   :save-new-package-filter                  "filter_save"
+   :new-package-filter-name                  "filter[name]"
+   :new-package-filter-description           "filter[description]"
+   :save-new-package-filter                  "filter_submit"
    :remove-package-filter-key                (link "Remove Filter")})
    
    
@@ -241,18 +237,16 @@
    :user-default-org-select     "org_id[org_id]"
    :save-user-environment       "update_user"
    :new-user                    "//a[@id='new']"
-   :new-user-username-text      "username_field"
-   :new-user-password-text      "password_field"
-   :new-user-confirm-text       "confirm_field"
-   :new-user-default-org        "org_id[org_id]"
-   :new-user-email              "email_field"
+   :user-username-text          "user[username]"
+   :user-password-text          "password_field" ; use id attr 
+   :user-confirm-text           "confirm_field"  ; for these two (name
+                                                 ; is the same)
+   :user-default-org            "org_id[org_id]"
+   :user-email-text             "user[email]"
    :save-user                   "save_user"
    :remove-user                 (link "Remove User")
    :enable-inline-help-checkbox "user[helptips_enabled]"
    :clear-disabled-helptips     "clear_helptips"
-   :change-password-text        "password_field"
-   :confirm-password-text       "confirm_field"
-   :user-email-text             "user[email]"
    :save-roles                  "save_roles"
    :add-all                     (link "Add all")
    :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
@@ -268,7 +262,7 @@
 
 (def systems
   {:new-system                      "new"
-   :create-system                   "system_save"
+   :create-system                   "system_submit"
    :system-name-text                "system[name]"
    :system-sockets-text             "system[sockets]"
    :system-arch-select              "arch[arch_id]"
@@ -472,7 +466,7 @@
        [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
         [:new-gpg-key-page [] (browser click :new-gpg-key)]
         [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]
-       [:package-filters-tab [] (browser clickAndWait :package-filter-page)
+       [:package-filters-tab [] (browser clickAndWait :package-filters)
         [:new-package-filter-page [] (browser click :create-new-package-filter)]
         [:named-package-filter-page [package-filter-name] (choose-left-pane (left-pane-item package-filter-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
