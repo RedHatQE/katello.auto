@@ -156,7 +156,7 @@
 (def environments
   {:env-name-text             "kt_environment[name]"
    :env-description-text      "kt_environment[description]"
-   :prior-environment         "//select[@id='prior']"
+   :prior-environment         "//select[@id='kt_environment_prior']"
    :create-environment        "//input[@value='Create']"
    :new-environment           "//div[normalize-space(.)='Add New Environment']"
    :remove-environment        (link "Remove Environment")
@@ -168,7 +168,7 @@
    :provider-description-text           "provider[description]"
    :provider-repository-url-text        "provider[repository_url]"
    :provider-cert-text                  (textbox "provider[certificate_attributes][contents]")
-   :provider-create-save                "provider_save"
+   :provider-create-save                "provider_submit"
    :remove-provider                     (link "Remove Provider")
    :subscriptions                       (link "Subscriptions")
    :import-manifest                     "new"
