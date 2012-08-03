@@ -124,17 +124,17 @@
 
 
 (defgroup redhat-provider-one-org-multiple-manifest-tests
-  :group-setup  (partial prepare-org redhat-provider-test-org2)
+  :group-setup  (fn []
+                  (prepare-org redhat-provider-test-org2)
+                  (upload-test-manifest scenario5-o1-m1-manifest
+                                        @redhat-provider-test-org2 {}))
   
-  (deftest "Upload a subscription manifest"
-    (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2 {})            
-    
-    (deftest "Upload the same manifest to an org, expecting an error message"	  	
-      (expecting-error (errtype :katello.ui-tasks/import-older-than-existing-data)
-                       (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2)))
-    
-    (deftest "Load New manifest into same org"
-      (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org2 {}))))
+  (deftest "Upload the same manifest to an org, expecting an error message"	  	
+    (expecting-error (errtype :katello.ui-tasks/import-older-than-existing-data)
+                     (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2)))
+  
+  (deftest "Load New manifest into same org"
+    (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org2 {})))
 
 (defgroup redhat-provider-second-org-one-manifest-tests
   :group-setup (partial prepare-org redhat-provider-test-org3)
@@ -161,7 +161,7 @@
   :group-setup prepare-manifest-and-org 
   :blockers    (open-bz-bugs "729364")
 
-    (deftest "Upload a subscription manifest"
+  (deftest "Upload a subscription manifest"
     (upload-test-manifest-to-test-org)            
 
     (deftest "Enable Red Hat repositories"
