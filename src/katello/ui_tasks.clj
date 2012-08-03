@@ -882,7 +882,6 @@
   "Enable the given list of repos in the current org."
   [repos]
   (navigate :redhat-repositories-tab)
-  (browser click :enable-repositories-tab)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
 
