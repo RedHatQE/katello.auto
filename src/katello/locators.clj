@@ -227,7 +227,7 @@
    :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
    :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
    :new-promotion-changeset     "//a[contains(.,'New Promotion Changeset')]"
-   :changeset-name-text         (textbox "name")
+   :changeset-name-text         "changeset[name]"
    :save-changeset              "save_changeset_button"
    :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
 
