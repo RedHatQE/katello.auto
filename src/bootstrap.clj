@@ -2,6 +2,7 @@
 
 (use 'katello.ui-tasks)
 (use '[com.redhat.qe.auto.selenium.selenium :only [browser]])
+(use '[clojure.pprint :only (pp pprint)])
 
 (require '[katello.locators :as locators])
 (require 'fn.trace)
