@@ -906,8 +906,9 @@
                     :gpg-key-upload-button)
     (fill-ajax-form {:gpg-key-name-text name
                      :gpg-key-content-text contents}
-                    :gpg-keys-save)))
-  ;(check-for-success))
+                    :gpg-keys-save))
+  (check-for-success))
+ 
 
 (defn remove-gpg-key 
   "Deletes existing GPG keys"
