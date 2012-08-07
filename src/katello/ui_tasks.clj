@@ -513,7 +513,7 @@
 (defn create-user
   "Creates a user with the given name and properties."
   [username {:keys [password password-confirm email default-org default-env]}]
-  (navigate :users-tab)
+  (navigate :users-page)
   (browser click :new-user)
   (let [env-chooser (fn [env] (when env
                                (locators/select-environment-widget env)))]
@@ -566,15 +566,15 @@
   is true, use criteria and save it as a favorite, and also execute
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
-  (navigate (entity-type {:users :users-tab 
-                          :organizations :manage-organizations-tab
-                          :roles :roles-tab
-                          :content :content-tab
-                          :gpg-keys :gpg-keys-tab
+  (navigate (entity-type {:users :users-page 
+                          :organizations :manage-organizations-page
+                          :roles :roles-page
+                          :subscriptions :redhat-subscriptions-page
+                          :gpg-keys :gpg-keys-page
                           :sync-plans :sync-plans-page
-                          :systems  :systems-tab
+                          :systems  :systems-all-page
                           :activation-keys :activation-keys-page
-                          :changeset-promotion-history :changeset-promotion-history-tab}))
+                          :changeset-promotion-history :changeset-promotion-history-page}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
@@ -588,7 +588,7 @@
 (defn create-role
   "Creates a role with the given name and optional description."
   [name & [{:keys [description]}]]
-  (navigate :roles-tab)
+  (navigate :roles-page)
   (browser click :new-role)
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
@@ -811,7 +811,7 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url]}]]
-  (navigate :redhat-subscriptions-tab)
+  (navigate :redhat-subscriptions-page)
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
@@ -826,7 +826,7 @@
   "Returns true if the current organization already has Red Hat
   content uploaded."
   []
-  (navigate :redhat-repositories-tab)
+  (navigate :redhat-repositories-page)
   (browser isElementPresent :subscriptions-items))
 
 (defn create-template
@@ -868,7 +868,7 @@
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
-  (navigate :redhat-repositories-tab)
+  (navigate :redhat-repositories-page)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
 

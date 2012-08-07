@@ -447,13 +447,13 @@
    
      [:content-tab [] (browser mouseOver :content)
       [:subscriptions-tab [] (browser mouseOver :subscriptions)
-       [:redhat-subscriptions-tab [] (browser clickAndWait :red-hat-subscriptions)]
+       [:redhat-subscriptions-page [] (browser clickAndWait :red-hat-subscriptions)]
        [:activation-keys-page [] (browser clickAndWait :activation-keys)
         [:named-activation-key-page [activation-key-name]
          (choose-left-pane (left-pane-item activation-key-name))]
         [:new-activation-key-page [] (browser click :new-activation-key)]]]
       [:repositories-tab [] (browser mouseOver :repositories)
-       [:custom-content-repositories-tab [] (browser clickAndWait :custom-content-repositories)
+       [:custom-content-repositories-page [] (browser clickAndWait :custom-content-repositories)
         [:new-provider-page [] (browser click :new-provider)]
         [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
          [:provider-products-repos-page [] (->browser (click :products-and-repositories)
@@ -462,11 +462,11 @@
           [:named-repo-page [product-name repo-name] (browser click (editable repo-name))]]
          [:provider-details-page [] (browser click :details)]
          [:provider-subscriptions-page [] (browser click :subscriptions)]]]
-       [:redhat-repositories-tab [] (browser clickAndWait :red-hat-repositories)]
-       [:gpg-keys-tab [] (browser clickAndWait :gpg-keys)
+       [:redhat-repositories-page [] (browser clickAndWait :red-hat-repositories)]
+       [:gpg-keys-page [] (browser clickAndWait :gpg-keys)
         [:new-gpg-key-page [] (browser click :new-gpg-key)]
         [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]
-       [:package-filters-tab [] (browser clickAndWait :package-filters)
+       [:package-filters-page [] (browser clickAndWait :package-filters)
         [:new-package-filter-page [] (browser click :create-new-package-filter)]
         [:named-package-filter-page [package-filter-name] (choose-left-pane (left-pane-item package-filter-name))]]]
       [:sync-management-page [] (browser mouseOver :sync-management)
@@ -476,7 +476,7 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
-      [:changeset-promotion-history-tab [] (browser clickAndWait :changeset-promotion-history)]
+      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-promotion-history)]
       [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
        [:promotions-page [] (browser clickAndWait :promotions)
         [:named-environment-promotions-page [env-name next-env-name]
@@ -491,7 +491,7 @@
        [:new-system-page [] (browser click :new-system)]
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
         [:named-systems-page [] (browser click :details)]]]
-      [:system-groups-tab [] (browser clickAndWait :system-groups)
+      [:system-groups-page [] (browser clickAndWait :system-groups)
        [:new-system-groups-page [] (browser click :new-system-groups)]
        [:system-groups-page [system-group] (choose-left-pane (left-pane-item system-group))
         [:named-system-groups-page [] (browser click :systems-sg)]]]
@@ -503,22 +503,22 @@
       [:organizations-link-via-org-switcher [] (browser clickAndWait :manage-organizations-link)
        [:new-organization-page-via-org-switcher [] (browser click :new-organization)]]]
      [:administer-tab [] (browser mouseOver :administer)
-      [:users-tab [] (browser clickAndWait :users)
+      [:users-page [] (browser clickAndWait :users)
        [:named-user-page [username] (choose-left-pane (user username))
         [:user-environments-page [] (browser click :environments-subsubtab)]
         [:user-roles-permissions-page [] (browser click :roles-subsubtab)]]]
-      [:roles-tab [] (browser clickAndWait :roles)
+      [:roles-page [] (browser clickAndWait :roles)
        [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
         [:named-role-users-page [] (browser click :role-users)]
         [:named-role-permissions-page [] (browser click :role-permissions)]]]
-      [:manage-organizations-tab [] (browser clickAndWait :manage-organizations)
+      [:manage-organizations-page [] (browser clickAndWait :manage-organizations)
        [:new-organization-page [] (browser click :new-organization)]
        [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
         [:new-environment-page [] (browser click :new-environment)]
         [:named-environment-page [env-name] (browser click (environment-link env-name))]]]]])))
 
-(def tab-list '(:redhat-repositories-tab 
-                :roles-tab :users-tab 
+(def tab-list '(:redhat-repositories-page 
+                :roles-page :users-page 
                 :systems-all-page
                 :activation-keys-page
                 :systems-by-environment-page))
