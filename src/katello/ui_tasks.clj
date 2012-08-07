@@ -573,6 +573,7 @@
                           :gpg-keys :gpg-keys-page
                           :sync-plans :sync-plans-page
                           :systems  :systems-all-page
+                          :system-groups :system-groups-page
                           :activation-keys :activation-keys-page
                           :changeset-promotion-history :changeset-promotion-history-page}))
   (if with-favorite
