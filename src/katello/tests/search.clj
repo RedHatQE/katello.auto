@@ -42,7 +42,35 @@
   (deftest "Search for a user"
     (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
-  
+   (deftest "Perform search operation on systems"
+    :data-driven true
+    :description "Search for a system based on criteria."
+    
+    (fn [system searchterms & [system-group]]
+      (api/with-admin
+        (api/ensure-env-exist "dev" {:prior "Library"}))
+      (let [[name opts] system
+            unique-system [(uniqueify name) opts]
+            [sgname opt] system-group
+            unique-sg [(uniqueify sgname) opt]]
+        (apply create-system unique-system)
+        (if (not (nil? system-group))
+          (do
+           (edit-system (first unique-system) {:description "most unique system"})
+           (apply create-system-group unique-sg)
+           (add-to-system-group (first unique-sg) (first unique-system))))
+        (search :systems searchterms)
+        (let [valid-search-results (search-results-valid?
+                                     (constantly true)
+                                     [(first unique-system)])]
+          (verify-that (valid-search-results (extract-left-pane-list))))))
+    [[["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"most unique system\""} ["fed" {:description "centos system-group"}]]
+     [["mysystem3" {:sockets "2" :system-arch "x86"}] {:criteria "system_group:fed1*"} ["fed1" {:description "rh system-group"}]]
+     [["mysystem1" {:sockets "1" :system-arch "x86_64"}] {:criteria "name:mysystem1*"}]
+     [["mysystem-123" {:sockets "1" :system-arch "x86"}] {:criteria "network.hostname:mysystem-123*"}]
+     [["mysystem2" {:sockets "2" :system-arch "i686"}] {:criteria "mysystem2*"}]])
+
+
   (deftest "Perform search operation on an organization"
     :data-driven true
     :description "Search for organizations based on criteria." 
