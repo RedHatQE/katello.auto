@@ -363,9 +363,9 @@
   are multiple environment paths, and you wish to select Library,
   'next' is required."
   [name & [next]]
-  (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')]"]
+  (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
     (Element. (format 
-               (str prefix (if next "/../../..//a[normalize-space(.)='%s']" ""))
+               (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
                name next))))
 
 (defn inactive-edit-field
