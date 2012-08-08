@@ -486,7 +486,7 @@
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
        [:new-system-template-page [] (browser click :new-template)]]]
-     [:systems-tab [] (browser clickAndWait :systems)
+     [:systems-tab [] (browser mouseOver :systems)
       [:systems-all-page [] (browser clickAndWait :all)
        [:new-system-page [] (browser click :new-system)]
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
