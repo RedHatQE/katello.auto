@@ -954,7 +954,7 @@
    (check-for-success))
 
 (defn create-system-group
-  "Creates a system-groups"
+  "Creates a system-group"
    [name & [{:keys [description]}]]
    (navigate :new-system-groups-page)
    (fill-ajax-form {:system-group-name-text name
@@ -969,3 +969,22 @@
    (fill-ajax-form {:system-groups-hostname-toadd system-name}
                     :system-groups-add-system))
 
+(defn copy-system-group
+  "Clones a system group, given the name of the original system group
+   to clone, and the new name and description."
+  [orig-name new-name & [{:keys [description]}]]
+  (navigate :named-system-groups-page {:system-group orig-name})
+  (browser click :system-group-copy)
+  (fill-ajax-form {:system-group-copy-name-text new-name
+                   :system-group-copy-description-text description}
+                  :system-group-copy-submit)
+  (check-for-success))
+
+(defn remove-system-group [system-group & [{:keys [also-remove-systems?]}]]
+  (navigate :named-system-groups-page {:system-group system-group})
+  (browser click :system-group-remove)
+  (browser click :confirmation-yes)
+  (browser click (if also-remove-systems?
+                   :confirmation-yes
+                   :system-group-confirm-only-system-group))
+  (check-for-success))

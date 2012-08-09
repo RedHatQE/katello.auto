@@ -82,7 +82,8 @@
 
 (defgroup promotion-tests
   :group-setup create-test-provider-and-envs
-  :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853")
+  :blockers (open-bz-bugs "711144" "712318" "714297" "738054" "745315" "784853"
+                          "845096")
           
   (dep-chain
    (deftest "Promote content"

@@ -61,6 +61,11 @@
                    [k `(uniqueify ~v)])))
      ~@forms))
 
+(defn uniqueify-vals
+  "Uniquifies the values in map m"
+  [m]
+  (zipmap (keys m) (map uniqueify (vals m))))
+
 (defn capitalize-all [s]
   (let [matcher (re-matcher #"(\S+)" s)
         buffer (new StringBuffer)]
