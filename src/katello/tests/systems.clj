@@ -39,57 +39,41 @@
                   (api/with-admin
                     (api/get-id-by-name :environment test-environment)))))
 
-(defmacro defstep
-  "Creates a simple step function where the return value does not need
-   to be kept. Step functions can be threaded together to all use the
-   same input map. Each step function has a list of relevant keys in
-   the map that it cares about (ones that are referred to in the body
-   expression). When threaded together, each step function will be
-   executed and then call the next step (if any). The options arg is
-   for steps where the relevant key might change depending on how the
-   step is used. For example, you might have a step to copy something
-   and step to delete something. The step to delete might be used to
-   delete the original or the copy. The body can then refer to any of
-   the symbols in the options list."
-  [stepname docstring relevant-keys & body]
-  `(defn ~stepname [continue-fn#]
-     (fn [{:keys ~relevant-keys :as req#}] 
-       ~@body
-       (continue-fn# req#))))
-
-(defstep step-add-new-system-to-new-group
+(defn step-add-new-system-to-new-group
     "Creates a system and system group, adds the system to the system group."
-  [group-name system-name]
+  [{:keys [group-name system-name]}]
   (do (create-system system-name {:sockets "1"
                                   :system-arch "x86_64"})
       (create-system-group group-name {:description "rh system-group"})
       (add-to-system-group group-name system-name)))
 
-(defn step-remove-system-group
-  "Removes a system group given a request map. Optional arg
-   which-group determines which key contains the group to remove.
+(defn mkstep-remove-system-group
+  "Creates a fn to remove a system group given a request map. Optional
+   arg which-group determines which key contains the group to remove.
    Defaults to :system-group."
-  [continue-fn which-group]
-  (fn [{:keys [system-group also-remove-systems?] :as req}]
-    (remove-system-group (req which-group system-group)
-                         {:also-remove-systems? also-remove-systems?})
-    (continue-fn req)))
+  ([] (mkstep-remove-system-group :system-group))
+  ([which-group]
+      (fn [{:keys [system-group also-remove-systems?] :as req}]
+        (remove-system-group (req which-group)
+                             {:also-remove-systems? also-remove-systems?}))))
 
-(defstep step-verify-system-presence ""
-  [system-name also-remove-systems?] 
+(def step-remove-system-group (mkstep-remove-system-group))
+(def step-remove-system-group-copy (mkstep-remove-system-group :copy-name))
+
+(defn step-verify-system-presence ""
+  [{:keys [system-name also-remove-systems?]}]
   (let [all-system-names (map :name (api/with-admin (api/all-entities :system)))]
     (if also-remove-systems?
       (verify-that (some #{system-name} all-system-names))
       (verify-that (not (some #{system-name} all-system-names))))))
 
-(defstep step-copy-system-group ""
+(defn step-copy-system-group ""
   [system-group copy-name]
-  (copy-system-group system-group copy-name {:description "copied system group"}))
+  (fn [{:keys [system-group copy-name]}]
+    (copy-system-group system-group copy-name {:description "copied system group"})))
 
-(def step0 (constantly {}))
-(defmacro steps-> "Builds a request/response fn and calls it with map m."
-  [m & steps]
-  `((-> ~@(reverse (conj steps `step0))) ~m))
+(defn do-steps [m & fs]
+  ((apply juxt fs) m))
 
 ;; Tests
 
@@ -105,39 +89,33 @@
 
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
-      (steps-> (uniqueify-vals
-                {:system-name "mysystem"
-                 :group-name "my-group"})
-               step-add-new-system-to-new-group))
-
+      (do-steps (uniqueify-vals
+                  {:system-name "mysystem"
+                   :group-name "my-group"})
+                step-add-new-system-to-new-group))
 
     (deftest "Delete a system group"
       :data-driven true
 
       (fn [data]
-        (steps-> (merge data
-                        (uniqueify-vals
-                         {:system-name "mysystem"
-                          :group-name "to-del"}))
-                 step-create-system
-                 step-create-group
-                 step-add-system-to-group
-                 step-remove-system-group
-                 step-verify-system-presence))
+        (do-steps (merge data
+                         (uniqueify-vals {:system-name "mysystem"
+                                          :group-name "to-del"}))
+                    step-add-new-system-to-new-group
+                    step-remove-system-group
+                    step-verify-system-presence))
       
       [[{:also-remove-systems? true}]
        [{:also-remove-systems? false}]])
     
 
     (deftest "Copy a system group"
-      (steps-> (uniqueify-vals
+      (do-steps (uniqueify-vals
                 {:system-name  "mysystem"
                  :group-name  "copyme"
                  :copy-name  "imthecopy"})
-               step-create-system
-               step-create-group
-               step-add-system-to-group
-               step-copy-system-group)
+                step-add-new-system-to-new-group
+                step-copy-system-group)
       
 
       (deftest "Delete a copied system group"
@@ -148,11 +126,10 @@
                                 {:system-name  "mysystem"
                                  :group-name  "to-del"
                                  :copy-name  "imthecopy"}))
-                   step-create-system
-                   step-create-group
-                   step-add-system-to-group
+                   step-add-new-system-to-new-group 
                    step-copy-system-group
-                   (step-remove-system-group :copy-name)))
+                   step-remove-system-group-copy
+                   step-verify-system-presence))
       
         [[{:also-remove-systems? true}]
          [{:also-remove-systems? false}]]))))
