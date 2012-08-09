@@ -80,8 +80,6 @@
   :group-setup create-test-org
 
   (deftest "Create an environment"
-    :blockers (open-bz-bugs "693797" "707274")
-
     (create-environment (uniqueify "simple-env") {:org-name @test-org-name
                                                   :description "simple environment description"})
 

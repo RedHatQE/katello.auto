@@ -99,7 +99,7 @@
   :group-setup promote-redhat-content-into-test-env
 
   (deftest "Admin can set Release Version on system"
-    :blockers (open-bz-bugs ["832192"])
+    :blockers (open-bz-bugs "832192")
     
     (with-unique [system-name "system"]
       (api/with-admin
@@ -151,7 +151,6 @@
 
 (defgroup redhat-provider-other-manifest-tests
   :group-setup (partial prepare-org redhat-provider-test-org5)
-  :blockers (open-bz-bugs "786963")
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
     (upload-test-manifest bz786963-manifest @redhat-provider-test-org5 {})))

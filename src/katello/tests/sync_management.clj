@@ -72,9 +72,6 @@
   :group-setup create-sync-test-repo
   
   (deftest "Sync a small repo"
-    :blockers (open-bz-bugs "705355" "711105" "712318" "715004"
-                            "727674" "727627" "790246")
-    
     (->>
      (sync-repos [@repo-name] 120000)
      vals
@@ -122,10 +119,10 @@
     (deftest "Cannot create two sync plans with the same name"
       (with-unique [plan-name "dupe"]
         (validate/expecting-error-2nd-try validate/duplicate-disallowed
-                                 (create-sync-plan {:name plan-name
-                                                    :start-date (java.util.Date.)
-                                                    :description "mydescription"
-                                                    :interval "daily"}))))
+          (create-sync-plan {:name plan-name
+                             :start-date (java.util.Date.)
+                             :description "mydescription"
+                             :interval "daily"}))))
 
 
     (deftest "Assign a sync plan to multiple products"      
