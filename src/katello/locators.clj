@@ -288,7 +288,12 @@
    :system-group-copy-description-text     "description_input"
    :system-group-copy-submit               "copy_button"
    :system-group-remove                    (link "Remove")
+   :system-group-info                      "system_group_info"
    :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
+   :system-group-limit                     "unlimited_members"
+   :save-new-limit                         (link "Save")
+   :system-group-limit-value               "system_group[max_systems]"
+   
    ;;subscriptions pane
    :subscribe                              "sub_submit"
    :unsubscribe                            "unsub_submit"

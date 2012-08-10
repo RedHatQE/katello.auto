@@ -140,11 +140,13 @@
       (katello.ui-tasks/create-system-group test-system {:description "test description"})
       (katello.ui-tasks/copy-system-group test-system copied-test-system {:description "test description"})
       (katello.ui-tasks/remove-system-group test-system {:also-remove-systems? true}))))
+
   
-  (deftest "Test Case 183437"))
+  (deftest "Test Case 13437"
+    (with-unique [test-system "test-system"]
+      (katello.ui-tasks/create-system-group test-system {:description "test description"})
+      (katello.ui-tasks/change-systemgroup-limit test-system 1))))
     
-
-
 (defgroup package-filter-tests
 
   (deftest "Create new Package Filter test"

@@ -988,3 +988,12 @@
                    :confirmation-yes
                    :system-group-confirm-only-system-group))
   (check-for-success))
+
+(defn change-systemgroup-limit
+  "Change the value of limit field in system group"
+  [name new-limt]
+  (navigate :named-system-groups-page {:system-group name})
+  (browser click :system-group-limit )
+  (fill-ajax-form {:system-group-limit-value  new-limit}
+                   :save-new-limit )
+  (check-for-success))
