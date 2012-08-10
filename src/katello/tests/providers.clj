@@ -129,17 +129,15 @@
 (defgroup tcms-tests-automation
   
   (deftest "Test Case 171799"
-    (with-unique [test-system "test-system"]
-    (with-unique [copied-test-system "copied-test-system"]
+    (with-unique [test-system "test-system" copied-test-system "copied-test-system"]
       (katello.ui-tasks/create-system-group test-system {:description "test description"})
-      (katello.ui-tasks/copy-system-group test-system copied-test-system {:description "test description"}))))
+      (katello.ui-tasks/copy-system-group test-system copied-test-system {:description "test description"})))
   
   (deftest "Test Case 182428"
-    (with-unique [test-system "test-system"]
-    (with-unique [copied-test-system "copied-test-system"]
+    (with-unique [test-system "test-system" copied-test-system "copied-test-system"]
       (katello.ui-tasks/create-system-group test-system {:description "test description"})
       (katello.ui-tasks/copy-system-group test-system copied-test-system {:description "test description"})
-      (katello.ui-tasks/remove-system-group test-system {:also-remove-systems? true}))))
+      (katello.ui-tasks/remove-system-group test-system {:also-remove-systems? true})))
 
   
   (deftest "Test Case 183437"
