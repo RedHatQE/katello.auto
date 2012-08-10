@@ -44,33 +44,31 @@
   [{:keys [group-name system-name]}]
   (do (create-system system-name {:sockets "1"
                                   :system-arch "x86_64"})
-      (create-system-group group-name {:description "rh system-group"})
+      (create-system-group group-name {:description "rh system group"})
       (add-to-system-group group-name system-name)))
 
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
    arg which-group determines which key contains the group to remove.
    Defaults to :system-group."
-  ([] (mkstep-remove-system-group :system-group))
-  ([which-group]
-      (fn [{:keys [system-group also-remove-systems?] :as req}]
-        (remove-system-group (req which-group)
-                             {:also-remove-systems? also-remove-systems?}))))
+  [which-group]
+  (fn [{:keys [group-name also-remove-systems?] :as req}]
+    (remove-system-group (req which-group)
+                         {:also-remove-systems? also-remove-systems?})))
 
-(def step-remove-system-group (mkstep-remove-system-group))
+(def step-remove-system-group (mkstep-remove-system-group :group-name))
 (def step-remove-system-group-copy (mkstep-remove-system-group :copy-name))
 
 (defn step-verify-system-presence ""
   [{:keys [system-name also-remove-systems?]}]
   (let [all-system-names (map :name (api/with-admin (api/all-entities :system)))]
     (if also-remove-systems?
-      (verify-that (some #{system-name} all-system-names))
-      (verify-that (not (some #{system-name} all-system-names))))))
+      (verify-that (not (some #{system-name} all-system-names)))
+      (verify-that (some #{system-name} all-system-names)))))
 
 (defn step-copy-system-group ""
-  [system-group copy-name]
-  (fn [{:keys [system-group copy-name]}]
-    (copy-system-group system-group copy-name {:description "copied system group"})))
+  [{:keys [group-name copy-name]}]
+  (copy-system-group group-name copy-name {:description "copied system group"}))
 
 (defn do-steps [m & fs]
   ((apply juxt fs) m))
@@ -90,8 +88,8 @@
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
       (do-steps (uniqueify-vals
-                  {:system-name "mysystem"
-                   :group-name "my-group"})
+                 {:system-name "mysystem"
+                  :group-name "my-group"})
                 step-add-new-system-to-new-group))
 
     (deftest "Delete a system group"
@@ -101,9 +99,9 @@
         (do-steps (merge data
                          (uniqueify-vals {:system-name "mysystem"
                                           :group-name "to-del"}))
-                    step-add-new-system-to-new-group
-                    step-remove-system-group
-                    step-verify-system-presence))
+                  step-add-new-system-to-new-group
+                  step-remove-system-group
+                  step-verify-system-presence))
       
       [[{:also-remove-systems? true}]
        [{:also-remove-systems? false}]])
@@ -111,9 +109,9 @@
 
     (deftest "Copy a system group"
       (do-steps (uniqueify-vals
-                {:system-name  "mysystem"
-                 :group-name  "copyme"
-                 :copy-name  "imthecopy"})
+                 {:system-name  "mysystem"
+                  :group-name  "copyme"
+                  :copy-name  "imthecopy"})
                 step-add-new-system-to-new-group
                 step-copy-system-group)
       
@@ -122,14 +120,14 @@
         :data-driven true
 
         (fn [data]
-          (steps-> (merge data (uniqueify-vals
-                                {:system-name  "mysystem"
-                                 :group-name  "to-del"
-                                 :copy-name  "imthecopy"}))
-                   step-add-new-system-to-new-group 
-                   step-copy-system-group
-                   step-remove-system-group-copy
-                   step-verify-system-presence))
+          (do-steps (merge data (uniqueify-vals
+                                 {:system-name  "mysystem"
+                                  :group-name  "to-del"
+                                  :copy-name  "imthecopy"}))
+                    step-add-new-system-to-new-group 
+                    step-copy-system-group
+                    step-remove-system-group-copy
+                    step-verify-system-presence))
       
         [[{:also-remove-systems? true}]
          [{:also-remove-systems? false}]]))))
