@@ -7,7 +7,6 @@
         [test.tree.builder :only [data-driven dep-chain]]
         [serializable.fn :only [fn]]
         [bugzilla.checker :only [open-bz-bugs]]
-        [clj-http.client :only [with-connection-pool]]
         [tools.verify :only [verify-that]])
   (:refer-clojure :exclude [fn]))
 
@@ -33,39 +32,38 @@
       (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
-  (with-connection-pool {:timeout 10 :threads 1 :insecure? true}
-    (let [create-repo-fn
-          (fn [prod]
-            (let [product-id (-> prod
-                                (api/create-product
-                                 {:provider-name @provider-name
-                                  :description "test product"})
-                                :id)
-                  repo-name (uniqueify "mytestrepo")]
-              (api/create-repo repo-name
-                               {:product-name prod
-                                :url (@config :sync-repo)})
-              (binding [api/*product-id* product-id]
-                (api/sync-repo repo-name))
-              {:repo-name repo-name
-               :product-id product-id}))]
-      (doseq [product-name (content :products)]
-        (api/with-admin (create-repo-fn product-name)))
-      (doseq [template-name (content :templates)]
-        (api/with-admin
-          (let [product-name (uniqueify "templ-prod")
-                {:keys [product-id repo-name]} (create-repo-fn product-name)] 
-            (doseq [to-env (drop 1 envs)]
-              (api/with-env to-env
-                (api/promote {:products [{:product_id product-id}]} )))
-            (api/with-env library
-              (api/create-template {:name template-name
-                                    :description "template to be promoted"})
-              (api/add-to-template template-name {:repositories [{:product product-name
-                                                                  :name repo-name}]}))))))
-    (doseq [[from-env target-env] (chain-envs envs)] 
-      (promote-content from-env target-env content)
-      (verify-all-content-present content (environment-content target-env)))))
+  (let [create-repo-fn
+        (fn [prod]
+          (let [product-id (-> prod
+                              (api/create-product
+                               {:provider-name @provider-name
+                                :description "test product"})
+                              :id)
+                repo-name (uniqueify "mytestrepo")]
+            (api/create-repo repo-name
+                             {:product-name prod
+                              :url (@config :sync-repo)})
+            (binding [api/*product-id* product-id]
+              (api/sync-repo repo-name))
+            {:repo-name repo-name
+             :product-id product-id}))]
+    (doseq [product-name (content :products)]
+      (api/with-admin (create-repo-fn product-name)))
+    (doseq [template-name (content :templates)]
+      (api/with-admin
+        (let [product-name (uniqueify "templ-prod")
+              {:keys [product-id repo-name]} (create-repo-fn product-name)] 
+          (doseq [to-env (drop 1 envs)]
+            (api/with-env to-env
+              (api/promote {:products [{:product_id product-id}]} )))
+          (api/with-env library
+            (api/create-template {:name template-name
+                                  :description "template to be promoted"})
+            (api/add-to-template template-name {:repositories [{:product product-name
+                                                                :name repo-name}]}))))))
+  (doseq [[from-env target-env] (chain-envs envs)] 
+    (promote-content from-env target-env content)
+    (verify-all-content-present content (environment-content target-env))))
 
 (def promo-data
   (runtime-data
