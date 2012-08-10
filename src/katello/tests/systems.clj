@@ -198,6 +198,3 @@
                                        :description "my description"
                                        :environment test-environment})))))
   system-group-tests)
-
-
-

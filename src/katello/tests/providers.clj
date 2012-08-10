@@ -145,7 +145,12 @@
   (deftest "Test Case 183437"
     (with-unique [test-system "test-system"]
       (katello.ui-tasks/create-system-group test-system {:description "test description"})
-      (katello.ui-tasks/change-systemgroup-limit test-system 1))))
+      (katello.ui-tasks/change-systemgroup-limit test-system 1)))
+  
+  (deftest "Test Case 184125"
+    (with-unique [test-system "test-system"]
+      (katello.ui-tasks/create-system-group test-system {:description "test description"})
+      (katello.ui-tasks/copy-system-group test-system test-system {:description "test description"}))))
     
 (defgroup package-filter-tests
 
