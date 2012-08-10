@@ -261,40 +261,47 @@
    :save-sync-plan             "plan_save"})
 
 (def systems
-  {:new-system                      "new"
-   :create-system                   "system_submit"
-   :system-name-text                "system[name]"
-   :system-sockets-text             "system[sockets]"
-   :system-arch-select              "arch[arch_id]"
-   ;;system-edit details
-   :system-name-text-edit           "system[name]"
-   :system-description-text-edit    "system[description]"
-   :system-location-text-edit       "system[location]"
-   :system-service-level-select     "system[serviceLevel]"
-   :system-release-version-select   "system[releaseVer]"
-   ;;systemgroups pane
-   :new-system-groups               "//a[@id='new']"
-   :create-system-groups            "group_save"
-   :system-group-name-text          "system_group[name]"
-   :system-group-description-text   "system_group[description]"
-   :systems-sg                      "//div[@class='panel-content']//a[.='Systems']"
-   :system-groups-hostname-toadd    "add_system_input"
-   :system-groups-add-system        "add_system"
-   :system-groups-remove-system     "remove_systems"
+  {:new-system                             "new"
+   :create-system                          "system_submit"
+   :system-name-text                       "system[name]"
+   :system-sockets-text                    "system[sockets]"
+   :system-arch-select                     "arch[arch_id]"
 
+   ;;system-edit details
+   :system-name-text-edit                  "system[name]"
+   :system-description-text-edit           "system[description]"
+   :system-location-text-edit              "system[location]"
+   :system-service-level-select            "system[serviceLevel]"
+   :system-release-version-select          "system[releaseVer]"
+
+   ;;systemgroups pane
+   :new-system-groups                      "//a[@id='new']"
+   :create-system-groups                   "group_save"
+   :system-group-name-text                 "system_group[name]"
+   :system-group-description-text          "system_group[description]"
+   :systems-sg                             "//div[@class='panel-content']//a[.='Systems']"
+   :system-groups-hostname-toadd           "add_system_input"
+   :system-groups-add-system               "add_system"
+   :system-groups-remove-system            "remove_systems"
+   :system-group-copy                      (link "Copy")
+   :system-group-copy-name-text            "name_input"
+   :system-group-copy-description-text     "description_input"
+   :system-group-copy-submit               "copy_button"
+   :system-group-remove                    (link "Remove")
+   :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
    ;;subscriptions pane
-   :subscribe                       "sub_submit"
-   :unsubscribe                     "unsub_submit"
+   :subscribe                              "sub_submit"
+   :unsubscribe                            "unsub_submit"
 
    ;;Activationkeys subtab
-   :new-activation-key              "new"
-   :activation-key-name-text        "activation_key[name]"
-   :activation-key-description-text "activation_key[description]"
-   :activation-key-template-select  "activation_key[system_template_id]"
-   :save-activation-key             "save_key"
-   :remove-activation-key           (link "Remove Activation Key")
-   :subscriptions-right-nav         "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
-   :release-version-text            "system[releaseVer]"})
+   :new-activation-key                     "new"
+   :activation-key-name-text               "activation_key[name]"
+   :activation-key-description-text        "activation_key[description]"
+   :activation-key-template-select         "activation_key[system_template_id]"
+   :save-activation-key                    "save_key"
+   :remove-activation-key                  (link "Remove Activation Key")
+   :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+   :release-version-text                   "system[releaseVer]"})
 
 (def roles
   {:new-role                        "//a[@id='new']"

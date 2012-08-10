@@ -7,7 +7,8 @@
         [serializable.fn :only [fn]]
         [katello.conf :only [config *environments*]]
         [tools.verify :only [verify-that]]
-        [bugzilla.checker :only [open-bz-bugs]])
+        [bugzilla.checker :only [open-bz-bugs]]
+        [slingshot.slingshot :only [throw+]])
   (:require (katello [api-tasks :as api]
                      [validation :as val])))
 
@@ -38,6 +39,47 @@
                   (api/with-admin
                     (api/get-id-by-name :environment test-environment)))))
 
+(defn step-add-new-system-to-new-group
+  "Creates a system and system group, adds the system to the system group."
+  [{:keys [group-name system-name]}]
+  (do (create-system system-name {:sockets "1"
+                                  :system-arch "x86_64"})
+      (create-system-group group-name {:description "rh system group"})
+      (add-to-system-group group-name system-name)))
+
+(defn mkstep-remove-system-group
+  "Creates a fn to remove a system group given a request map. Optional
+   arg which-group determines which key contains the group to remove.
+   Defaults to :system-group."
+  [which-group]
+  (fn [{:keys [group-name also-remove-systems?] :as req}]
+    (remove-system-group (req which-group)
+                         {:also-remove-systems? also-remove-systems?})))
+
+(def step-remove-system-group (mkstep-remove-system-group :group-name))
+(def step-remove-system-group-copy (mkstep-remove-system-group :copy-name))
+
+(defn step-verify-system-presence
+  "Verifies that the system is either present, or not present after
+   removing its system group. Depends on whether :also-remove-systems?
+   is true in the input map (if true, then verifies system is *not*
+   present."
+  [{:keys [system-name also-remove-systems?]}]
+  (let [all-system-names (map :name (api/with-admin (api/all-entities :system)))]
+    (if also-remove-systems?
+      (verify-that (not (some #{system-name} all-system-names)))
+      (verify-that (some #{system-name} all-system-names)))))
+
+(defn step-copy-system-group
+  "Copies a system group with a hardcoded description."
+  [{:keys [group-name copy-name]}]
+  (copy-system-group group-name copy-name {:description "copied system group"}))
+
+(defn do-steps
+  "Call all fs in order, with single argument m"
+  [m & fs]
+  ((apply juxt fs) m))
+
 ;; Tests
 
 (defgroup system-group-tests
@@ -46,18 +88,56 @@
                    (api/ensure-env-exist "dev" {:prior "Library"})))
   
   (deftest "Create a system group"
-    (with-unique [system-group-name "fed"]
-      (create-system-group system-group-name {:description "rh system-group"}))
+    (with-unique [group-name "fed"]
+      (create-system-group group-name {:description "rh system-group"}))
 
 
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
-      (with-unique [system-name "mysystem"
-                    system-group-name "fed"]
-        (create-system system-name {:sockets "1"
-                                    :system-arch "x86_64"})
-        (create-system-group system-group-name {:description "rh system-group"})
-        (add-to-system-group system-group-name system-name)))))
+      (do-steps (uniqueify-vals
+                 {:system-name "mysystem"
+                  :group-name "my-group"})
+                step-add-new-system-to-new-group))
+
+    (deftest "Delete a system group"
+      :data-driven true
+
+      (fn [data]
+        (do-steps (merge data
+                         (uniqueify-vals {:system-name "mysystem"
+                                          :group-name "to-del"}))
+                  step-add-new-system-to-new-group
+                  step-remove-system-group
+                  step-verify-system-presence))
+      
+      [[{:also-remove-systems? true}]
+       [{:also-remove-systems? false}]])
+    
+
+    (deftest "Copy a system group"
+      (do-steps (uniqueify-vals
+                 {:system-name  "mysystem"
+                  :group-name  "copyme"
+                  :copy-name  "imthecopy"})
+                step-add-new-system-to-new-group
+                step-copy-system-group)
+      
+
+      (deftest "Delete a copied system group"
+        :data-driven true
+
+        (fn [data]
+          (do-steps (merge data (uniqueify-vals
+                                 {:system-name  "mysystem"
+                                  :group-name  "to-del"
+                                  :copy-name  "imthecopy"}))
+                    step-add-new-system-to-new-group 
+                    step-copy-system-group
+                    step-remove-system-group-copy
+                    step-verify-system-presence))
+      
+        [[{:also-remove-systems? true}]
+         [{:also-remove-systems? false}]]))))
 
 
 
