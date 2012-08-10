@@ -142,7 +142,7 @@
       (katello.ui-tasks/remove-system-group test-system {:also-remove-systems? true}))))
 
   
-  (deftest "Test Case 13437"
+  (deftest "Test Case 183437"
     (with-unique [test-system "test-system"]
       (katello.ui-tasks/create-system-group test-system {:description "test description"})
       (katello.ui-tasks/change-systemgroup-limit test-system 1))))
