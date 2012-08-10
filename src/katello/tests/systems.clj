@@ -40,7 +40,7 @@
                     (api/get-id-by-name :environment test-environment)))))
 
 (defn step-add-new-system-to-new-group
-    "Creates a system and system group, adds the system to the system group."
+  "Creates a system and system group, adds the system to the system group."
   [{:keys [group-name system-name]}]
   (do (create-system system-name {:sockets "1"
                                   :system-arch "x86_64"})
@@ -59,18 +59,25 @@
 (def step-remove-system-group (mkstep-remove-system-group :group-name))
 (def step-remove-system-group-copy (mkstep-remove-system-group :copy-name))
 
-(defn step-verify-system-presence ""
+(defn step-verify-system-presence
+  "Verifies that the system is either present, or not present after
+   removing its system group. Depends on whether :also-remove-systems?
+   is true in the input map (if true, then verifies system is *not*
+   present."
   [{:keys [system-name also-remove-systems?]}]
   (let [all-system-names (map :name (api/with-admin (api/all-entities :system)))]
     (if also-remove-systems?
       (verify-that (not (some #{system-name} all-system-names)))
       (verify-that (some #{system-name} all-system-names)))))
 
-(defn step-copy-system-group ""
+(defn step-copy-system-group
+  "Copies a system group with a hardcoded description."
   [{:keys [group-name copy-name]}]
   (copy-system-group group-name copy-name {:description "copied system group"}))
 
-(defn do-steps [m & fs]
+(defn do-steps
+  "Call all fs in order, with single argument m"
+  [m & fs]
   ((apply juxt fs) m))
 
 ;; Tests
