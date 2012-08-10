@@ -820,7 +820,7 @@
     (check-for-success))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success {:timeout-ms 600000 :refresh? true})) ;using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  (check-for-success {:timeout-ms 300000 :refresh? true})) ;using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
   ;(check-for-success))
   
 (defn manifest-already-uploaded?
