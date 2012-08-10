@@ -97,47 +97,47 @@
       (do-steps (uniqueify-vals
                  {:system-name "mysystem"
                   :group-name "my-group"})
-                step-add-new-system-to-new-group))
+                step-add-new-system-to-new-group)
 
-    (deftest "Delete a system group"
-      :data-driven true
-
-      (fn [data]
-        (do-steps (merge data
-                         (uniqueify-vals {:system-name "mysystem"
-                                          :group-name "to-del"}))
-                  step-add-new-system-to-new-group
-                  step-remove-system-group
-                  step-verify-system-presence))
-      
-      [[{:also-remove-systems? true}]
-       [{:also-remove-systems? false}]])
-    
-
-    (deftest "Copy a system group"
-      (do-steps (uniqueify-vals
-                 {:system-name  "mysystem"
-                  :group-name  "copyme"
-                  :copy-name  "imthecopy"})
-                step-add-new-system-to-new-group
-                step-copy-system-group)
-      
-
-      (deftest "Delete a copied system group"
+      (deftest "Delete a system group"
         :data-driven true
 
         (fn [data]
-          (do-steps (merge data (uniqueify-vals
-                                 {:system-name  "mysystem"
-                                  :group-name  "to-del"
-                                  :copy-name  "imthecopy"}))
-                    step-add-new-system-to-new-group 
-                    step-copy-system-group
-                    step-remove-system-group-copy
+          (do-steps (merge data
+                           (uniqueify-vals {:system-name "mysystem"
+                                            :group-name "to-del"}))
+                    step-add-new-system-to-new-group
+                    step-remove-system-group
                     step-verify-system-presence))
-      
+        
         [[{:also-remove-systems? true}]
-         [{:also-remove-systems? false}]]))))
+         [{:also-remove-systems? false}]])
+      
+
+      (deftest "Copy a system group"
+        (do-steps (uniqueify-vals
+                   {:system-name  "mysystem"
+                    :group-name  "copyme"
+                    :copy-name  "imthecopy"})
+                  step-add-new-system-to-new-group
+                  step-copy-system-group)
+        
+
+        (deftest "Delete a copied system group"
+          :data-driven true
+
+          (fn [data]
+            (do-steps (merge data (uniqueify-vals
+                                   {:system-name  "mysystem"
+                                    :group-name  "to-del"
+                                    :copy-name  "imthecopy"}))
+                      step-add-new-system-to-new-group 
+                      step-copy-system-group
+                      step-remove-system-group-copy
+                      step-verify-system-presence))
+          
+          [[{:also-remove-systems? true}]
+           [{:also-remove-systems? false}]])))))
 
 
 
