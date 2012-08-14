@@ -983,11 +983,16 @@
                    :system-group-confirm-only-system-group))
   (check-for-success))
 
-(defn change-systemgroup-limit
-  "Change the value of limit field in system group"
-  [name new-limit]
-  (navigate :named-system-groups-page {:system-group name})
-  (browser click :system-group-limit )
-  (fill-ajax-form {:system-group-limit-value  new-limit}
-                   :save-new-limit )
-  (check-for-success))
+(defn edit-system-group "Change the value of limit field in system group"
+  [sg-name {:keys [new-limit new-sg-name description]}]
+  (navigate :system-group-details-page {:system-group-name sg-name})
+  (let [needed-flipping (not= (= new-limit :unlimited)
+                              (browser isChecked :system-group-unlimited))]
+    (if (and new-limit (not= new-limit :unlimited))
+      (do (browser uncheck :system-group-unlimited)
+          (fill-ajax-form {:system-group-limit-value (str new-limit)}
+                          :save-new-limit ))
+      (browser check :system-group-unlimited))
+    (when needed-flipping (check-for-success)))
+  (in-place-edit {:system-group-name-text new-sg-name
+                  :system-group-description-text description}))

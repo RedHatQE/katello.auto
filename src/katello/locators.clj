@@ -290,8 +290,8 @@
    :system-group-remove                    (link "Remove")
    :system-group-info                      "system_group_info"
    :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
-   :system-group-limit                     "unlimited_members"
-   :save-new-limit                         (link "Save")
+   :system-group-unlimited                 "//input[@class='unlimited_members']"
+   :save-new-limit                          "//button[.='Save']"
    :system-group-limit-value               "system_group[max_systems]"
    
    ;;subscriptions pane
@@ -505,8 +505,9 @@
         [:named-systems-page [] (browser click :details)]]]
       [:system-groups-page [] (browser clickAndWait :system-groups)
        [:new-system-groups-page [] (browser click :new-system-groups)]
-       [:system-groups-page [system-group] (choose-left-pane (left-pane-item system-group))
-        [:named-system-groups-page [] (browser click :systems-sg)]]]
+       [:named-system-group-page [system-group-name] (choose-left-pane (left-pane-item system-group-name))
+        [:system-group-systems-page [] (browser click :systems-sg)]
+        [:system-group-details-page [] (browser click :details)]]]
       [:systems-by-environment-page [] (browser clickAndWait :by-environments)
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]
