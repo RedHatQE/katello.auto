@@ -167,3 +167,24 @@
      [{:name (uniqueify "new_plan2") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "interval:hourly"}]
      [{:name (uniqueify "new_plan3") :description "my sync plan" :interval "weekly" :start-date (java.util.Date.)} {:criteria "description:\"my sync plan\""}]
      [{:name (uniqueify "new_plan4") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "name:new_plan?*"}]]))
+
+(deftest "Perform search operation on system groups"
+    :data-driven true
+    :description "search for a system group based on criteria"
+    
+    (fn [system-group system searchterms]
+      (let [[name opts] system
+            unique-system [(uniqueify name) opts]
+            [sgname opt] system-group
+            unique-sg [(uniqueify sgname) opt]]
+        (apply create-system unique-system)
+        (apply create-system-group unique-sg)
+        (add-to-system-group (first unique-sg) (first unique-system))
+        (search :system-groups searchterms)
+         (let [valid-search-results (search-results-valid?
+                                     (constantly true)
+                                     [(first unique-sg)])]
+          (verify-that (valid-search-results (extract-left-pane-list))))))
+    [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]
+     [["sg-fed1" {:description "the rh system-group"}] ["mysystem1" {:sockets "2" :system-arch "x86"}] {:criteria "name:sg-fed1*"}]
+     [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]])
