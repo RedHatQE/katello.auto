@@ -39,12 +39,21 @@
                   (api/with-admin
                     (api/get-id-by-name :environment test-environment)))))
 
+(defn step-create-system-group
+  [{:keys [group-name]}]
+  (create-system-group group-name {:description "rh system group"}))
+
+(defn step-edit-system-group
+  [{:keys [group-name group-new-limit group-new-description]}]
+  (edit-system-group group-name {:new-limit group-new-limit
+                                 :description group-new-description}))
+
 (defn step-add-new-system-to-new-group
   "Creates a system and system group, adds the system to the system group."
-  [{:keys [group-name system-name]}]
+  [{:keys [group-name system-name] :as m}]
   (do (create-system system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (create-system-group group-name {:description "rh system group"})
+                              :system-arch "x86_64"})
+      (step-create-system-group m)
       (add-to-system-group group-name system-name)))
 
 (defn mkstep-remove-system-group
@@ -91,6 +100,48 @@
     (with-unique [group-name "fed"]
       (create-system-group group-name {:description "rh system-group"}))
 
+    (deftest "Edit a system group"
+      :data-driven true
+      
+      (fn [data]
+        (do-steps (merge data
+                         (uniqueify-vals {:group-name "sg"}))
+                  step-create-system-group
+                  step-edit-system-group))
+
+      [[{:group-new-limit 4}]
+       [{:group-new-limit 8
+         :group-new-description "updated description"}]
+       [{:group-new-description "updated description"}]])
+    
+
+    (deftest "Edit system limit of a system group"
+      (with-unique [group-name "sg"]
+        (create-system-group group-name)
+        (edit-system-group group-name {:new-limit 4}))
+
+      
+      (deftest "Edit system limit of a system group, then set back to unlimited"
+        (with-unique [group-name "sg"]
+          (create-system-group group-name)
+          (edit-system-group group-name {:new-limit 4})
+          (edit-system-group group-name {:new-limit :unlimited}))
+        
+
+        (deftest "System group system limit validation"
+          :data-driven true
+
+          (fn [limit pred]
+            (with-unique [group-name "sg-val"]
+              (create-system-group group-name)
+              (expecting-error pred (edit-system-group
+                                     group-name {:new-limit limit}))))
+          
+          [["-1"   (errtype :katello.ui-tasks/max-systems-must-be-positive)]
+           ["-100" (errtype :katello.ui-tasks/max-systems-must-be-positive)]
+           [""     (errtype :katello.ui-tasks/max-systems-must-be-positive)]
+           ["0"    (errtype :katello.ui-tasks/max-systems-may-not-be-zero)]])))
+    
 
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")

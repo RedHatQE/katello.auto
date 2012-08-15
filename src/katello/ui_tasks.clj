@@ -35,7 +35,10 @@
                 ::password-too-short                  #"Password must be at least"
                 ::product-must-be-unique-in-org       #"Products within an organization must have unique name"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank",
-                ::name-cant-be-blank                  #"Name can't be blank"}]
+                ::name-cant-be-blank                  #"Name can't be blank"
+                ::max-systems-must-be-positive        #"Max systems must be a positive"
+                ::max-systems-may-not-be-zero         #"Max systems may not be set to 0"}]
+    
     (doseq [e (keys errors)]
       (derive e ::validation-error))  ; validation-error is a parent type
                                       ; so you can catch that type to
@@ -986,8 +989,9 @@
 (defn edit-system-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
   (navigate :system-group-details-page {:system-group-name sg-name})
-  (let [needed-flipping (not= (= new-limit :unlimited)
-                              (browser isChecked :system-group-unlimited))]
+  (let [needed-flipping (and new-limit
+                            (not= (= new-limit :unlimited)
+                                  (browser isChecked :system-group-unlimited)))]
     (if (and new-limit (not= new-limit :unlimited))
       (do (browser uncheck :system-group-unlimited)
           (fill-ajax-form {:system-group-limit-value (str new-limit)}
