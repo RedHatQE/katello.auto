@@ -691,6 +691,19 @@
                            (do (Thread/sleep 10000)
                                (recur)))))))
 
+(defn search-for-content
+  [content-type & [{:keys [prods repos pkgs errata]}]]
+  (navigate :content-search-page)
+  (browser select :content-search-type content-type)
+  (doseq [prod prods]
+    (browser setText :prod-auto-complete prod) 
+    (swank.core/break)
+    (browser click "//ul[contains(@class,'ui-autocomplete')]/li")
+    (swank.core/break)
+    (browser click :add-prod))
+    (swank.core/break)
+  (browser click :browse-button))
+
 (defn edit-system
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."

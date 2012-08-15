@@ -122,6 +122,7 @@
        [:sync-status
         :sync-plans
         :sync-schedule]
+       :content-search
        :system-templates
        :changeset-promotions
        [:promotions
@@ -260,6 +261,20 @@
    :sync-plan-time-text        "sync_plan[plan_time]"
    :save-sync-plan             "plan_save"})
 
+(def content-search
+  {:content-search-type        "//select[@id='content']"
+   :add-prod                   "add_product"
+   :add-repo                   "add_repo"
+   :add-pkg                    "add_package"
+   :repo-auto-complete-radio   "repos_auto_complete_radio"
+   :pkg-auto-complete-radio    "packages_auto_complete_radio"
+   :prod-auto-complete         "product_auto_complete"
+   :repo-auto-complete         "repo_auto_complete"
+   :pkg-auto-complete          "packages_auto_complete"
+   :errata-search              "//input[@id='search']"
+   :browse-button              "//input[@id='browse_button']"
+  })
+
 (def systems
   {:new-system                             "new"
    :create-system                          "system_submit"
@@ -288,12 +303,7 @@
    :system-group-copy-description-text     "description_input"
    :system-group-copy-submit               "copy_button"
    :system-group-remove                    (link "Remove")
-   :system-group-info                      "system_group_info"
    :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
-   :system-group-limit                     "unlimited_members"
-   :save-new-limit                         (link "Save")
-   :system-group-limit-value               "system_group[max_systems]"
-   
    ;;subscriptions pane
    :subscribe                              "sub_submit"
    :unsubscribe                            "unsub_submit"
@@ -348,7 +358,7 @@
   SeleniumLocatable protocol."}
   uimap
   (merge all-tabs common organizations environments roles users systems sync-plans
-         sync-schedules promotions providers templates
+         content-search sync-schedules promotions providers templates
          { ;; login page
           :username-text     "username"
           :password-text     "password"
@@ -495,6 +505,7 @@
          (select-environment-widget env-name {:next-env-name next-env-name :wait true})
          [:named-changeset-promotions-page [changeset-name]
           (browser click (changeset changeset-name))]]]]
+      [:content-search-page [] (browser clickAndWait :content-search)]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
        [:new-system-template-page [] (browser click :new-template)]]]
