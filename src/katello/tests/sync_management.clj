@@ -46,10 +46,7 @@
 (defgroup sync-tests
   :group-setup create-sync-test-repo
   
-  (deftest "Sync a small repo"
-    :blockers (open-bz-bugs "705355" "711105" "712318" "715004"
-                            "727674" "727627" "790246")
-    
+  (deftest "Sync a small repo"   
     (->>
      (sync-repos [@repo-name] 120000)
      vals
