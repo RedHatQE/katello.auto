@@ -11,6 +11,7 @@
 (require 'katello.setup)
 (require 'test.tree.jenkins)
 (require 'test.tree)
+(require 'test.tree.reporter)
 
 (defn new-browser []
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
@@ -60,3 +61,13 @@
     (trace (let [results (test.tree/run tree)]
              (doall (->> results second deref vals (map (comp deref :promise))))
              results))))
+
+(defn quick-report [result]
+  (let [reports (-> result second)]
+    (binding [test.tree.reporter/*reports* reports]
+      (let [fails (into {}
+                        (filter (fn [[k v]] (test.tree.reporter/failed? k)) @reports))]
+        {:failed-tests fails
+         :counts {:failed (count fails)
+                  :passed (count (test.tree.reporter/passed-tests))
+                  :skipped (count (test.tree.reporter/skipped-tests))}}))))
