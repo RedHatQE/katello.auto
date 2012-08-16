@@ -40,6 +40,24 @@
                              (fn.trace/all-fns (@katello.conf/config :trace)))
                      ~@body))
 
+(defmacro wrap-swank-conn-maybe
+  "Produce a wrap-swank function that does nothing, if swank is not available."
+  []
+  `(defn wrap-swank
+     "Allows you to place (swank.core/break) statements anywhere, and the
+  swank debugger will stop there, no matter which thread hits that
+  line."
+     [runner#]
+     ~(if (resolve 'swank.core.connection/*current-connection*)
+       `(fn [test#]
+          (let [conn# swank.core.connection/*current-connection*]
+            (binding [swank.core.connection/*current-connection* conn#]
+              (runner# test#))))
+       `(fn [test#]
+          (runner# test#)))))
+
+(wrap-swank-conn-maybe)
+
 (defn wrap-swank
   "Allows you to place (swank.core/break) statements anywhere, and the
   swank debugger will stop there, no matter which thread hits that
