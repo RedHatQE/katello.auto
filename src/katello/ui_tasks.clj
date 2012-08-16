@@ -35,7 +35,10 @@
                 ::password-too-short                  #"Password must be at least"
                 ::product-must-be-unique-in-org       #"Products within an organization must have unique name"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank",
-                ::name-cant-be-blank                  #"Name can't be blank"}]
+                ::name-cant-be-blank                  #"Name can't be blank"
+                ::max-systems-must-be-positive        #"Max systems must be a positive"
+                ::max-systems-may-not-be-zero         #"Max systems may not be set to 0"}]
+    
     (doseq [e (keys errors)]
       (derive e ::validation-error))  ; validation-error is a parent type
                                       ; so you can catch that type to
@@ -189,16 +192,17 @@
   (browser click (locators/inactive-edit-field loc)))
 
 (defn in-place-edit
-  "Fill out a form that uses in-place editing.  Takes a map of
-   locators to values.  The locators given should be for the
-   editing-mode version of the input, it will be activated from its
-   read-only state automatically."
-  [items]
-  (doseq [[loc val] items]
-    (if-not (nil? val)
-      (do (activate-in-place loc)
-          (fill-item loc val)
-          (browser click :save-inplace-edit)))))
+  "Fill out a form that uses in-place editing. Takes a map of locators
+   to values. Each item will be activated, filled in and saved, and
+   checks for success notification. Returns all the success
+   notifications (or nil if notthing was changed)."
+  [items] 
+  (doall (for [[loc val] items]
+           (if-not (nil? val)
+             (do (activate-in-place loc)
+                 (fill-item loc val)
+                 (browser click :save-inplace-edit)
+                 (check-for-success))))))
 
 (defn create-changeset
   "Creates a changeset for promotion from env-name to next-env name."
@@ -370,8 +374,7 @@
    can be edited is the org's description."
   [org-name & {:keys [description]}]
   (navigate :named-organization-page {:org-name org-name})
-  (in-place-edit {:org-description-text description})
-  (check-for-success))
+  (in-place-edit {:org-description-text description}))
 
 (defn edit-environment
   "Edits an environment with the given name. Also takes a map
@@ -380,8 +383,7 @@
   [env-name {:keys [org-name description]}]
   (navigate :named-environment-page {:org-name org-name
                                      :env-name env-name})
-  (in-place-edit {:env-description-text description})
-  (check-for-success))
+  (in-place-edit {:env-description-text description}))
 
 (defn create-environment-path
   "Creates a path of environments in the given org. All the names in
@@ -455,8 +457,7 @@
   new description." [{:keys [name new-name description]}]
   (navigate :provider-details-page {:provider-name name})
   (in-place-edit {:provider-name-text new-name
-                  :provider-description-text description})
-  (check-for-success))
+                  :provider-description-text description}))
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
@@ -552,8 +553,7 @@
     (browser click :save-user-edit) 
     (check-for-success))
   (when new-email
-    (in-place-edit {:user-email-text new-email})
-    (check-for-success)))
+    (in-place-edit {:user-email-text new-email})))
 
 (defn clear-search []
   (->browser (click :search-menu)
@@ -699,8 +699,7 @@
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
                   :system-location-text-edit location
-                  :system-release-version-select release-version})
-  (check-for-success))
+                  :system-release-version-select release-version}))
 
 (defn subscribe-system
   "Subscribes the given system to the products. (products should be a
@@ -762,8 +761,7 @@
                     :sync-plan-description-text description
                     :sync-plan-interval-select interval
                     :sync-plan-time-text time
-                    :sync-plan-date-text date}))
-  (check-for-success))
+                    :sync-plan-date-text date})))
 
 (defn sync-schedule
   "Schedules the given list of products to be synced using the given
@@ -816,8 +814,7 @@
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url})
-    (check-for-success))
+    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
   (check-for-success {:timeout-ms 300000 :refresh? true})) ;using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
@@ -989,11 +986,17 @@
                    :system-group-confirm-only-system-group))
   (check-for-success))
 
-(defn change-systemgroup-limit
-  "Change the value of limit field in system group"
-  [name new-limit]
-  (navigate :named-system-groups-page {:system-group name})
-  (browser click :system-group-limit )
-  (fill-ajax-form {:system-group-limit-value  new-limit}
-                   :save-new-limit )
-  (check-for-success))
+(defn edit-system-group "Change the value of limit field in system group"
+  [sg-name {:keys [new-limit new-sg-name description]}]
+  (navigate :system-group-details-page {:system-group-name sg-name})
+  (let [needed-flipping (and new-limit
+                            (not= (= new-limit :unlimited)
+                                  (browser isChecked :system-group-unlimited)))]
+    (if (and new-limit (not= new-limit :unlimited))
+      (do (browser uncheck :system-group-unlimited)
+          (fill-ajax-form {:system-group-limit-value (str new-limit)}
+                          :save-new-limit ))
+      (browser check :system-group-unlimited))
+    (when needed-flipping (check-for-success)))
+  (in-place-edit {:system-group-name-text new-sg-name
+                  :system-group-description-text description}))
