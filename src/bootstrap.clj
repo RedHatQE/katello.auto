@@ -47,14 +47,14 @@
      "Allows you to place (swank.core/break) statements anywhere, and the
   swank debugger will stop there, no matter which thread hits that
   line."
-     [runner#]
+     [runner]
      ~(if (resolve 'swank.core.connection/*current-connection*)
-       `(fn [test#]
+       `(fn [test]
           (let [conn# swank.core.connection/*current-connection*]
             (binding [swank.core.connection/*current-connection* conn#]
-              (runner# test#))))
-       `(fn [test#]
-          (runner# test#)))))
+              (runner test))))
+       `(fn [test]
+          (runner test)))))
 
 (wrap-swank-conn-maybe)
 
