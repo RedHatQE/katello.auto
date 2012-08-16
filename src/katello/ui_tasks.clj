@@ -275,15 +275,26 @@
                                   :to-env to-env
                                   :timeout-ms 300000})))
 
-(defn extract-left-pane-list []
-  "Extract data from the left pane, accepts locator as argument
-   for example, extract-left-pane-list locators/left-pane-field-list"
+(defn extract-list [f]
+  "Extract a list of items from the UI, accepts locator function as
+   argument for example, extract-left-pane-list
+   locators/left-pane-field-list"
   (let [elems (for [index (iterate inc 1)]
-                (locators/left-pane-field-list (str index)))]
+                (f (str index)))]
     (doall (take-while identity (for [elem elems]
                                   (try (browser getText elem)
                                        (catch SeleniumException e nil)))))))
+ 
+(defn extract-left-pane-list []
+  (extract-list locators/left-pane-field-list))
 
+{"Library" ["prod1" "prod2" "prod3"]
+ "Development" ["prod1" "prod2"]
+ "QA" ["prod2"]}
+
+{"prod1" ["Library" "Development" "QA"]
+ "prod2" ["Library" "Development"]
+ "prod3" ["Library"]}
 
 (defn- extract-content []
   (let [elems (for [index (iterate inc 1)]
@@ -1000,3 +1011,8 @@
     (when needed-flipping (check-for-success)))
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
+
+(defn extract-content-search-results
+  "Gets the content search results from the current page"
+  []
+  (extract-list locators/content-search-result-item-n))
