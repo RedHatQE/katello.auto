@@ -705,11 +705,14 @@
 (defn search-for-content
   "Performs a search for the specified content type using any product,
    repository, package or errata filters specified. Note that while prods,
-   repos and pkgs should be vectors, errata is expected to be a string."
+   repos and pkgs should be vectors, errata is expected to be a string.
+   Example: search-for-content :errata-type {:prods ['myprod'] 
+                                             :repos ['myrepo']
+                                             :errata 'myerrata'}"
   [content-type & [{:keys [prods repos pkgs errata]}]]
 
   (case content-type 
-    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata))) 
+    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
     :repo-type   (assert (and (empty? pkgs) (empty? errata)))
     :pkg-type    (assert (empty? errata))
     :errata-type (assert (empty? pkgs)))
@@ -725,22 +728,21 @@
 
   ; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
-          (map list
-            [:prod-auto-complete :repo-auto-complete :pkg-auto-complete] 
-            [:add-prod :add-repo :add-pkg] 
-            [prods repos pkgs])]
+          [[:prod-auto-complete :add-prod prods] 
+           [:add-repo :repo-auto-complete repos] 
+           [:add-pkg :pkg-auto-complete pkgs]]]
     (doseq [cont-item cont-items]
       (browser setText auto-comp-box cont-item)
       ; typeKeys is necessary to trigger drop-down list
       (browser typeKeys auto-comp-box cont-item)
       (let [elem (locators/auto-complete-item cont-item)] 
-        (->browser (waitForElement elem "2000") 
-                   (mouseOver elem) 
+        (->browser (waitForElement elem "2000")
+                   (mouseOver elem)
                    (click elem)))
       (browser click add-button)))
 
   ; Add errata
-  (if (not (empty? errata)) (browser setText :errata-search errata))
+  (when-not (empty? errata) (browser setText :errata-search errata))
   (browser click :browse-button))
 
 (defn edit-system
