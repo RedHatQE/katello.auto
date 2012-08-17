@@ -25,6 +25,7 @@
 
 (define-strategies
   {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+   auto-complete-item              "//ul[contains(@class,'ui-autocomplete')]//a[.='$1']"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
