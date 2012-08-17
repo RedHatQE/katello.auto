@@ -692,16 +692,44 @@
                                (recur)))))))
 
 (defn search-for-content
+  "Performs a search for the specified content type using any product,
+   repository, package or errata filters specified. Note that while prods,
+   repos and pkgs should be vectors, errata is expected to be a string."
   [content-type & [{:keys [prods repos pkgs errata]}]]
-  (navigate :content-search-page)
-  (browser select :content-search-type content-type)
-  (doseq [prod prods]
-    (browser setText :prod-auto-complete prod) 
-    (swank.core/break)
-    (browser click "//ul[contains(@class,'ui-autocomplete')]/li")
-    (swank.core/break)
-    (browser click :add-prod))
-    (swank.core/break)
+
+  (case content-type 
+    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata))) 
+    :repo-type   (assert (and (empty? pkgs) (empty? errata)))
+    :pkg-type    (assert (empty? errata))
+    :errata-type (assert (empty? pkgs)))
+
+  ; Navigate to content search page and select content type
+  (let [ctype-map {:prod-type   "Products"
+                   :repo-type   "Repositories"
+                   :pkg-type    "Packages"
+                   :errata-type "Errata"}
+        ctype-str (ctype-map content-type)]
+    (navigate :content-search-page)
+    (browser select :content-search-type ctype-str))
+
+  ; Add content filters using auto-complete
+  (doseq [[auto-comp-box add-button cont-items] 
+          (map list
+            [:prod-auto-complete :repo-auto-complete :pkg-auto-complete] 
+            [:add-prod :add-repo :add-pkg] 
+            [prods repos pkgs])]
+    (doseq [cont-item cont-items]
+      (browser setText auto-comp-box cont-item)
+      ; typeKeys is necessary to trigger drop-down list
+      (browser typeKeys auto-comp-box cont-item)
+      (let [elem (locators/auto-complete-item cont-item)] 
+        (->browser (waitForElement elem "2000") 
+                   (mouseOver elem) 
+                   (click elem)))
+      (browser click add-button)))
+
+  ; Add errata
+  (if (not (empty? errata)) (browser setText :errata-search errata))
   (browser click :browse-button))
 
 (defn edit-system
