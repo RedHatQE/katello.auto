@@ -212,7 +212,7 @@
             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :promotions-page )
-                                      (fn [] (switch-org org))
+                                      (fn [] (switch-organization org))
                                       (fn [] (navigate :named-organization-page {:org-name org})))]))
    
    ])

@@ -67,18 +67,18 @@
   (verify-that (every? nil? (map sync-complete-status repos))))
 
 (defn enable-redhat-repositories-in-org [org repos]
-  (with-org @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
+  (with-organization @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
 
 
 (defn upload-test-manifest-to-test-org [& [opts]]
-  (with-org @redhat-provider-test-org
+  (with-organization @redhat-provider-test-org
     (upload-subscription-manifest manifest-tmp-loc
                                   (merge {:repository-url (@config :redhat-repo-url)}
                                          opts))))
 
 
 (defn upload-test-manifest [manifest-loc org opts]
-  (with-org org
+  (with-organization org
     (upload-subscription-manifest manifest-loc
                                   (merge {:repository-url (@config :redhat-repo-url)}
                                          opts))))
@@ -89,7 +89,7 @@
       (let [target-env (reset! redhat-provider-test-env (uniqueify "redhat"))]
         (api/ensure-env-exist target-env {:prior library})
         (when (api/is-katello?)
-          (with-org @redhat-provider-test-org
+          (with-organization @redhat-provider-test-org
             (enable-redhat-repositories redhat-repos)
             (sync-and-promote redhat-products library target-env)))))))
 
@@ -167,7 +167,7 @@
       :blockers api/katello-only
       
       (let [repos ["Nature Enterprise x86_64 15" "Nature Enterprise x86_64 16"]]
-        (with-org @redhat-provider-test-org
+        (with-organization @redhat-provider-test-org
           (enable-redhat-repositories repos)
           (navigate :sync-status-page)
           (verify-all-repos-not-synced repos))))
