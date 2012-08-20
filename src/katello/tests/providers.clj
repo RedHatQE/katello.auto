@@ -4,6 +4,7 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
+        [katello.notifications :only [success?]]
         katello.ui-tasks
         katello.validation
         slingshot.slingshot
