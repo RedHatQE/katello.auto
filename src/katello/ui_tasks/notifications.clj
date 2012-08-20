@@ -1,11 +1,8 @@
-(ns katello.notifications
-  (:require [katello.locators :as locators])
-  (:use [com.redhat.qe.auto.selenium.selenium
-         :only [browser loop-with-timeout]] 
-        [slingshot.slingshot :only [throw+ try+]]
-        [tools.verify :only [verify-that]]
-        [clojure.set :only [union]])
-  (:import [com.thoughtworks.selenium SeleniumException]))
+(in-ns 'katello.ui-tasks)
+
+;;
+;; Notifications
+;;
 
 (def ^{:doc "All the different validation error messages that Katello
              can throw. The keys are keywords that can be used to

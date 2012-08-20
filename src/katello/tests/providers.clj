@@ -4,7 +4,6 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
-        [katello.notifications :only [success?]]
         katello.ui-tasks
         katello.validation
         slingshot.slingshot
@@ -46,7 +45,7 @@
       (api/with-admin (api/create-organization org)))
     (try
       (f ent-name orgs)
-      (finally (switch-org (@config :admin-org))))))
+      (finally (switch-organization (@config :admin-org))))))
 
 (defn with-two-providers
   "Create two providers with unique names, and call f with a unique
@@ -64,7 +63,7 @@
   "Create providers with the same name in multiple orgs."
   [prov-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-provider {:name prov-name})))
 
 (defn validation

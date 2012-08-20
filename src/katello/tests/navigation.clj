@@ -1,6 +1,5 @@
 (ns katello.tests.navigation
   (:use test.tree.script
-        [katello.notifications :only [check-for-error]] 
         katello.ui-tasks
         [katello.locators :only [tab-list]] ))
 
