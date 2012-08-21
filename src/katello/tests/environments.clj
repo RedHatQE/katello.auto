@@ -30,7 +30,7 @@
    automatically."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-environment env-name {:org-name org}))
   (delete-environment env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
@@ -43,7 +43,7 @@
    verify-delete-env-restricted-to-this-org."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-environment env-name {:org-name org})))
 
 (defn setup-environment-with-promoted-content

@@ -64,7 +64,7 @@
           target-env (first *environments*)
           cs-name (uniqueify "promo-safari")
           package-to-install "cheetah"]
-      (with-org (@config :admin-org)
+      (with-organization (@config :admin-org)
         (api/with-admin
           (api/with-admin-org
             (api/ensure-env-exist target-env {:prior library})

@@ -23,7 +23,7 @@
 (defn create-same-product-name-in-multiple-orgs
   [product-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (let [provider-name (uniqueify "prov")]
       (api/with-admin
         (api/with-org org

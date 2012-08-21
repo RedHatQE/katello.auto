@@ -37,7 +37,7 @@
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (create-organization org-name {:description "org to delete and recreate"})
-  (switch-org org-name)
+  (switch-organization org-name)
   (create-provider {:name provider-name
                     :description "provider to del and recreate"})
   (add-product {:provider-name provider-name
@@ -124,10 +124,10 @@
                       repo-url       "http://blah.com/blah"]
           (try
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
-            (switch-org                          (@config :admin-org))
+            (switch-organization                          (@config :admin-org))
             (delete-organization                 org-name)
             ;;wait for delayed job to delete org
             (Thread/sleep                        30000)
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
             (finally
-              (switch-org                         (@config :admin-org)))))))))
+              (switch-organization                         (@config :admin-org)))))))))
