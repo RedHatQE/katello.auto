@@ -52,6 +52,8 @@
   (fill-form items submit (constantly nil)))
 
 
+(declare in-place-edit)
+
 ;; Load peripherals
 (load "ui_tasks/notifications")
 (load "ui_tasks/changesets")
