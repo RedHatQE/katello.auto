@@ -501,5 +501,17 @@
 
 (defn extract-content-search-results
   "Gets the content search results from the current page"
-  []
-  (extract-list locators/content-search-result-item-n))
+  [loc-strat]
+  (let [entity-type (-> (browser getAttributes (loc-strat "1")) ; 1st row
+                       (.get "data-id")
+                       (string/split #"_")
+                       first
+                       keyword)]
+    
+    {entity-type (extract-list loc-strat)}))
+
+(comment {:products '({:product "safari-1_0-0815-160809-122"} "safari-1_0-0815-083951-952")}
+
+         
+
+         )

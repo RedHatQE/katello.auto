@@ -412,6 +412,12 @@
                              (.substring name 0 32) ;workaround for bz 737678
                              name))])))
 
+(defn content-search-expand-strategy
+  "Returns a locator strategy function for the expansion of the
+  current row. The function returned will get any cell by index
+  number."
+  [current-loc]
+  (format "%s/following-sibling::ul[$1]" current-loc))
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
