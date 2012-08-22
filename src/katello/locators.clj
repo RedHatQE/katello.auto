@@ -417,7 +417,7 @@
   current row. The function returned will get any cell by index
   number."
   [current-loc n]
-  (template (format "%s/following-sibling::ul[%s]/li[$1]" current-loc n)))
+  (template (format "%s/../ul[%s]/li[$1]" current-loc n)))
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]

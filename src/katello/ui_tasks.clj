@@ -11,7 +11,8 @@
         [slingshot.slingshot :only [throw+ try+]]
         [tools.verify :only [verify-that]]
         [clojure.string :only [capitalize]]
-        [clojure.set :only [union]])
+        [clojure.set :only [union]]
+        [inflections.core :only [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -94,30 +95,41 @@
                                   (try (browser getText elem)
                                        (catch SeleniumException e nil)))))))
 
+(defn content-search-entity-type-from-attribute [attr-val]
+  (let [words (string/split attr-val  #"_")
+        known-types #{"product" "repo" "errata" "package"}
+        mypluralize (fn [s] (if (= s "errata") ; because dev mixed plural and singular
+                             "errata"
+                             (pluralize s)))]
+    (->> words
+       (filter known-types)
+       last
+       mypluralize
+       keyword)))
+
 (defn extract-tree [f]
   "Extract a tree of items from the UI (currently content search
    results), accepts locator function as argument for example,
    extract-left-pane-list locators/left-pane-field-list"
 
-  (let [entity-type (-> (browser getAttributes (f "1")) ; 1st row
-                       (.get "data-id")
-                       (string/split #"_")
-                       first
-                       keyword)]
-    
-    {entity-type
-     (doall (take-while identity
-                        (for [index (iterate inc 1)]
-                          (let [loc (-> index str f)
-                                plain-item (try (browser getText loc)
-                                                (catch SeleniumException _ nil))
-                                next-f (locators/content-search-expand-strategy (.getLocator loc)
-                                                                                index)
-                                children (try (extract-tree next-f)
-                                              (catch SeleniumException _ []))]
-                            (if (empty? children)
-                              plain-item
-                              (assoc children :name plain-item))))))}))
+  (let [first-row (f "1")]
+    (if (browser isElementPresent first-row)
+      (let [entity-type (-> (browser getAttributes first-row) 
+                           (.get "data-id")
+                           content-search-entity-type-from-attribute)] 
+        {entity-type
+         (doall (take-while identity
+                            (for [index (iterate inc 1)]
+                              (let [loc (-> index str f)
+                                    plain-item (try (browser getText loc)
+                                                    (catch SeleniumException _ nil))
+                                    next-f (locators/content-search-expand-strategy (.getLocator loc)
+                                                                                    index)
+                                    children (and plain-item (extract-tree next-f))]
+                                (if (empty? children)
+                                  plain-item
+                                  (assoc children :name plain-item))))))})
+      (list))))
 
  
 (defn extract-left-pane-list []
