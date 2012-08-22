@@ -274,6 +274,7 @@
    :pkg-auto-complete          "packages_auto_complete"
    :errata-search              "//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
+   :content-search-load-more   "//a[contains(@class,'load_row_link')]"
   })
 
 (def systems

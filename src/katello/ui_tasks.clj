@@ -107,6 +107,10 @@
        mypluralize
        keyword)))
 
+(defn content-search-get-all-results []
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more)))
+
 (defn extract-tree [f]
   "Extract a tree of items from the UI (currently content search
    results), accepts locator function as argument for example,
@@ -114,21 +118,22 @@
 
   (let [first-row (f "1")]
     (if (browser isElementPresent first-row)
-      (let [entity-type (-> (browser getAttributes first-row) 
-                           (.get "data-id")
-                           content-search-entity-type-from-attribute)] 
-        {entity-type
-         (doall (take-while identity
-                            (for [index (iterate inc 1)]
-                              (let [loc (-> index str f)
-                                    plain-item (try (browser getText loc)
-                                                    (catch SeleniumException _ nil))
-                                    next-f (locators/content-search-expand-strategy (.getLocator loc)
-                                                                                    index)
-                                    children (and plain-item (extract-tree next-f))]
-                                (if (empty? children)
-                                  plain-item
-                                  (assoc children :name plain-item))))))})
+      (do (content-search-get-all-results)
+          (let [entity-type (-> (browser getAttributes first-row) 
+                               (.get "data-id")
+                               content-search-entity-type-from-attribute)] 
+            {entity-type
+             (doall (take-while not-empty
+                                (for [index (iterate inc 1)]
+                                  (let [loc (-> index str f)
+                                        plain-item (try (browser getText loc)
+                                                        (catch SeleniumException _ nil))
+                                        next-f (locators/content-search-expand-strategy (.getLocator loc)
+                                                                                        index)
+                                        children (and plain-item (extract-tree next-f))]
+                                    (if (empty? children)
+                                      plain-item
+                                      (assoc children :name plain-item))))))}))
       (list))))
 
  
