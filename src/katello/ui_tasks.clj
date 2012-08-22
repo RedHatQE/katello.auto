@@ -93,6 +93,32 @@
     (doall (take-while identity (for [elem elems]
                                   (try (browser getText elem)
                                        (catch SeleniumException e nil)))))))
+
+(defn extract-tree [f]
+  "Extract a tree of items from the UI (currently content search
+   results), accepts locator function as argument for example,
+   extract-left-pane-list locators/left-pane-field-list"
+
+  (let [entity-type (-> (browser getAttributes (f "1")) ; 1st row
+                       (.get "data-id")
+                       (string/split #"_")
+                       first
+                       keyword)]
+    
+    {entity-type
+     (doall (take-while identity
+                        (for [index (iterate inc 1)]
+                          (let [loc (-> index str f)
+                                plain-item (try (browser getText loc)
+                                                (catch SeleniumException _ nil))
+                                next-f (locators/content-search-expand-strategy (.getLocator loc)
+                                                                                index)
+                                children (try (extract-tree next-f)
+                                              (catch SeleniumException _ []))]
+                            (if (empty? children)
+                              plain-item
+                              (assoc children :name plain-item))))))}))
+
  
 (defn extract-left-pane-list []
   (extract-list locators/left-pane-field-list))
@@ -499,19 +525,4 @@
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
-(defn extract-content-search-results
-  "Gets the content search results from the current page"
-  [loc-strat]
-  (let [entity-type (-> (browser getAttributes (loc-strat "1")) ; 1st row
-                       (.get "data-id")
-                       (string/split #"_")
-                       first
-                       keyword)]
-    
-    {entity-type (extract-list loc-strat)}))
 
-(comment {:products '({:product "safari-1_0-0815-160809-122"} "safari-1_0-0815-083951-952")}
-
-         
-
-         )

@@ -416,8 +416,8 @@
   "Returns a locator strategy function for the expansion of the
   current row. The function returned will get any cell by index
   number."
-  [current-loc]
-  (format "%s/following-sibling::ul[$1]" current-loc))
+  [current-loc n]
+  (template (format "%s/following-sibling::ul[%s]/li[$1]" current-loc n)))
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
