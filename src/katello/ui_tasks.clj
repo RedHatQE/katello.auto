@@ -97,14 +97,6 @@
 (defn extract-left-pane-list []
   (extract-list locators/left-pane-field-list))
 
-{"Library" ["prod1" "prod2" "prod3"]
- "Development" ["prod1" "prod2"]
- "QA" ["prod2"]}
-
-{"prod1" ["Library" "Development" "QA"]
- "prod2" ["Library" "Development"]
- "prod3" ["Library"]}
-
 (defn clear-search []
   (->browser (click :search-menu)
              (click :search-clear-the-search)))
