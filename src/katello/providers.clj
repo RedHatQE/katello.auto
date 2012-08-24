@@ -1,4 +1,8 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.providers
+  (:require [katello.locators :as locators]) 
+  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]] 
+        [katello.notifications :only [check-for-success]]
+        [katello.ui-tasks :only [navigate fill-ajax-form in-place-edit]]))
 
 ;;
 ;; Providers

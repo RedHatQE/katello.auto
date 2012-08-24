@@ -1,7 +1,12 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
+        [katello.providers :only [create-provider]]
+        katello.roles
+        katello.users
+        [katello.environments :only [create-environment]]
         katello.ui-tasks
+        katello.organizations
         test.tree.script
         [serializable.fn :only [fn]]
         [tools.verify :only [verify-that]]

@@ -1,4 +1,13 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.changesets
+  (:require [katello.locators :as locators])
+  (:use [com.redhat.qe.auto.selenium.selenium
+         :only  [browser ->browser loop-with-timeout]]
+        [slingshot.slingshot :only [throw+ try+]]
+        [tools.verify :only [verify-that]]
+        katello.tasks
+        katello.ui-tasks
+        [katello.sync-management :only [sync-repos sync-success?]]
+        [katello.notifications :only [check-for-success]]))
 
 ;;
 ;; Changesets
@@ -74,3 +83,11 @@
     (promote-changeset changeset {:from-env from-env
                                   :to-env to-env
                                   :timeout-ms 300000})))
+
+(defn sync-and-promote [products from-env to-env]
+  (let [all-prods (map :name products)
+        all-repos (apply concat (map :repos products))
+        sync-results (sync-repos all-repos {:timeout 600000})]
+        (verify-that (every? (fn [[_ res]] (sync-success? res))
+                             sync-results))
+        (promote-content from-env to-env {:products all-prods})))

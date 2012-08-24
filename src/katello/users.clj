@@ -1,4 +1,11 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.users
+  (:require [katello.locators :as locators]) 
+  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]]
+        [katello.conf :only [config]]
+        [slingshot.slingshot :only [throw+ try+]]
+        [katello.ui-tasks :only [navigate fill-ajax-form in-place-edit]]
+        [katello.notifications :only [check-for-success]]
+        [katello.organizations :only [switch-organization]]))
 
 ;;
 ;; Users
@@ -89,4 +96,13 @@
   [username password]
   (if-not (= (current-user) username)
     (login username password)))
+
+(defn assign-user-default-org-and-env 
+  "Assigns a default organization and environment to a user"
+  [username org-name env-name]
+  (navigate :user-environments-page {:username username})
+  (browser select :user-default-org-select org-name)
+  (browser click (locators/environment-link env-name))
+  (browser click :save-user-environment)
+  (check-for-success))
 

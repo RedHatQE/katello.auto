@@ -80,3 +80,9 @@
          :counts {:failed (count fails)
                   :passed (count (test.tree.reporter/passed-tests))
                   :skipped (count (test.tree.reporter/skipped-tests))}}))))
+
+(defn clear-all-ns
+  "Clears all but the required swank namespaces."
+  []
+  (map )
+  )

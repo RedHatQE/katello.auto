@@ -2,8 +2,9 @@
   (:refer-clojure :exclude [fn])
   (:use test.tree.script
         katello.conf
+        [katello.ui-tasks :only [navigate errtype]]
         katello.tasks
-        katello.ui-tasks
+        katello.users
         slingshot.slingshot
         [bugzilla.checker :only [open-bz-bugs]]
         [tools.verify :only [verify-that]]))

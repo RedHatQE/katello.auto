@@ -4,6 +4,12 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
+        [katello.notifications :only [success?]]
+        [katello.organizations :only [with-organization switch-organization]]
+        [katello.changesets :only [sync-and-promote]]
+        [katello.sync-management :only [sync-complete-status]]
+        [katello.systems :only [edit-system]]
+        katello.providers
         katello.ui-tasks
         katello.validation
         slingshot.slingshot

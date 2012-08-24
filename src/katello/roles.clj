@@ -1,4 +1,9 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.roles
+  (:require [katello.locators :as locators]) 
+  (:use [com.redhat.qe.auto.selenium.selenium :only [browser ->browser]]
+        [katello.notifications :only [check-for-success]]
+        [katello.ui-tasks :only [fill-ajax-form navigate]])
+    )
 
 ;;
 ;; Roles
