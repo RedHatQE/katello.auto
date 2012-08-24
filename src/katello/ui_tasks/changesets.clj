@@ -7,9 +7,9 @@
 (defn create-changeset
   "Creates a changeset for promotion from env-name to next-env name."
   [env-name next-env-name changeset-name]
-  (navigate :named-environment-promotions-page {:env-name env-name
+  (navigate :named-environment-changesets-page {:env-name env-name
                                                 :next-env-name next-env-name})
-  (->browser (click :new-promotion-changeset)
+  (->browser (click :new-changeset)
              (setText :changeset-name-text changeset-name)
              (click :save-changeset))
   (check-for-success))
@@ -19,7 +19,7 @@
    and target environments need to be specified to find to locate the
    changeset."
   [changeset-name from-env to-env content]
-  (navigate :named-changeset-promotions-page {:env-name from-env
+  (navigate :named-changeset-page {:env-name from-env
                                               :next-env-name to-env
                                               :changeset-name changeset-name})
   (doseq [category (keys content)]
@@ -34,7 +34,7 @@
    timeout-ms key will specify how long to wait for the promotion to
    complete successfully."
   [changeset-name {:keys [from-env to-env timeout-ms]}]
-  (let [nav-to-cs (fn [] (navigate :named-changeset-promotions-page
+  (let [nav-to-cs (fn [] (navigate :named-changeset-page
                                   {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name}))]
@@ -52,8 +52,8 @@
       ;;for confirmation
       (loop-with-timeout (or timeout-ms 120000) [status ""]
         (case status
-          "Promoted" status
-          "Promotion Failed" (throw+ {:type :promotion-failed
+          "Applied" status
+          "Apply Failed" (throw+ {:type :promotion-failed
                                       :changeset changeset-name
                                       :from-env from-env
                                       :to-env to-env})
@@ -64,7 +64,7 @@
       (check-for-success {:timeout-ms 180000 :refresh? true}))))
 
 (defn promote-content
-  "Promotes the given content from one environment to another. Example
+  "Promotes the given content from one environment to anot Example
   content:
      {:products ['Product1' 'Product2']} "
   [from-env to-env content]

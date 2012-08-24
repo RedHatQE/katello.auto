@@ -124,9 +124,9 @@
         :sync-plans
         :sync-schedule]
        :system-templates
-       :changeset-promotions
-       [:promotions
-        :changeset-promotion-history]]
+       :changeset-management
+       [:changesets
+        :changeset-history]]
       :systems
       [:all
        :by-environments
@@ -135,7 +135,6 @@
 
       ;;3rd level subtabs
       :create
-      :promotions
       :details
       :registered
       :groups
@@ -227,7 +226,7 @@
    :review-for-promotion        "review_changeset"
    :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
    :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-   :new-promotion-changeset     "//a[contains(.,'New Promotion Changeset')]"
+   :new-changeset     "//a[contains(.,'New Changeset')]"
    :changeset-name-text         "changeset[name]"
    :save-changeset              "save_changeset_button"
    :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
@@ -489,12 +488,12 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
-      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-promotion-history)]
-      [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
-       [:promotions-page [] (browser clickAndWait :promotions)
-        [:named-environment-promotions-page [env-name next-env-name]
+      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-history)]
+      [:changeset-promotions-tab [] (browser mouseOver :changeset-management)
+       [:changesets-page [] (browser clickAndWait :changesets)
+        [:named-environment-changesets-page [env-name next-env-name]
          (select-environment-widget env-name {:next-env-name next-env-name :wait true})
-         [:named-changeset-promotions-page [changeset-name]
+         [:named-changeset-page [changeset-name]
           (browser click (changeset changeset-name))]]]]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
