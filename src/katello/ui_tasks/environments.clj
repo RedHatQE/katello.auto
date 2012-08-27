@@ -57,7 +57,7 @@
 (defn environment-content
   "Returns the content that is available to promote, in the given environment."
   [env-name]
-  (navigate :named-environment-promotions-page {:env-name env-name
+  (navigate :named-environment-changesets-page {:env-name env-name
                                                 :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
@@ -70,12 +70,12 @@
                          result)))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
-  (navigate :named-environment-promotions-page {:env-name env}))
+  (navigate :named-environment-changesets-page {:env-name env}))
 
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (navigate :named-environment-promotions-page {:env-name env :next-env-name ""})
+  (navigate :named-environment-changesets-page {:env-name env :next-env-name ""})
   (every? true?
           (flatten
            (for [category (keys content)]
