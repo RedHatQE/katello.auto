@@ -130,7 +130,7 @@
                                         @redhat-provider-test-org2 {}))
   
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
-    (expecting-error (errtype :katello.ui-tasks/import-older-than-existing-data)
+    (expecting-error (errtype :katello.notifications/import-older-than-existing-data)
                      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2)))
   
   (deftest "Load New manifest into same org"
@@ -146,7 +146,7 @@
   :group-setup (partial prepare-org redhat-provider-test-org4)
   
   (deftest "Upload a previously used manifest into another org"
-    (expecting-error (errtype :katello.ui-tasks/distributor-has-already-been-imported)
+    (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
       (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org4 {}))))
 
 (defgroup redhat-provider-other-manifest-tests

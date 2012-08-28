@@ -137,7 +137,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.ui-tasks/name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
                                  (create-environment env-name
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))

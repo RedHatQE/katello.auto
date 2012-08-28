@@ -18,8 +18,8 @@
 
 ;; Named types of validation errors 
 
-(def duplicate-disallowed (errtype :katello.ui-tasks/name-taken-error))
-(def name-field-required (errtype :katello.ui-tasks/name-cant-be-blank))
+(def duplicate-disallowed (errtype :katello.notifications/name-taken-error))
+(def name-field-required (errtype :katello.notifications/name-cant-be-blank))
 
 (defmacro expecting-error-2nd-try
   "Executes body twice, the 2nd time will catch any error that matches

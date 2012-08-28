@@ -62,12 +62,12 @@
       :blockers (open-bz-bugs "738425")
 
       (with-unique [username "dupeuser"]
-        (expecting-error-2nd-try (errtype :katello.ui-tasks/name-taken-error)
+        (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
           (create-user username generic-user-details))))
 
 
     (deftest "User's minimum password length is enforced"
-      (expecting-error (errtype :katello.ui-tasks/password-too-short)
+      (expecting-error (errtype :katello.notifications/password-too-short)
                        (create-user (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"})))
 
 

@@ -44,8 +44,8 @@
                    (create-sync-plan arg)))
 
 (defn plan-validation-data []
-  [[{:start-time (java.util.Date.) :interval "daily"} :katello.ui-tasks/name-cant-be-blank]
-   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.ui-tasks/start-date-time-cant-be-blank]])
+  [[{:start-time (java.util.Date.) :interval "daily"} :katello.notifications/name-cant-be-blank]
+   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.notifications/start-date-time-cant-be-blank]])
 
 (defn sync-with-user [user]
   (with-unique [user user
