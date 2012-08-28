@@ -1,7 +1,8 @@
 (ns katello.ui-tasks
   (:require [katello.locators :as locators]
             [ui.navigate :as nav]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.data.json :as json])
   (:use [com.redhat.qe.auto.selenium.selenium
          :only [connect browser ->browser fill-form fill-item
                 loop-with-timeout]]
@@ -136,7 +137,12 @@
                                       (assoc children :name plain-item))))))}))
       (list))))
 
- 
+
+(defn extract-content-search-results []
+  (->>  "JSON.stringify(window.comparison_grid.export_data());"
+      (browser getEval)
+      (json/read-json)))
+
 (defn extract-left-pane-list []
   (extract-list locators/left-pane-field-list))
 
@@ -541,5 +547,3 @@
     (when needed-flipping (check-for-success)))
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
-
-
