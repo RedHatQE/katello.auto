@@ -88,7 +88,9 @@
      [["test-123" {:initial-env-name "dev" :description "This is a test-123 org"}] {:criteria "name:test-123*"}]
      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:\"This is a test org\""}]
      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:(+test+org)"}]
-     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]])
+     (with-meta
+       [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+       {:blockers (open-bz-bugs "852119")})])
      
  
 
