@@ -3,7 +3,12 @@
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
-        katello.ui-tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        [katello.users :only [login create-user]]
+        [katello.roles :only [assign-role]]
+        [katello.organizations :only [create-organization]]
+        katello.sync-management
+        [katello.ui-tasks :only [navigate errtype]]
         test.tree.script
         [katello.tests.login :only [login-admin]]
         [bugzilla.checker :only [open-bz-bugs]]

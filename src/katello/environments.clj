@@ -1,4 +1,10 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.environments
+  (:require [katello.locators :as locators]) 
+  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]]
+        [slingshot.slingshot :only [throw+ try+]]
+        [katello.tasks :only [library]]
+        [katello.notifications :only [check-for-success]]
+        [katello.ui-tasks :only [navigate fill-ajax-form in-place-edit]]))
 
 ;;
 ;; Environments

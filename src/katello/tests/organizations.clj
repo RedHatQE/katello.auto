@@ -3,6 +3,8 @@
   (:require (katello [api-tasks :as api]
                      [validation :as v]))
   (:use katello.tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        katello.organizations
         katello.ui-tasks
         [katello.conf :only [config]]
         [tools.verify :only [verify-that]]

@@ -2,8 +2,11 @@
 
   (:use test.tree.script
         katello.validation
+        [katello.organizations :only [create-organization delete-organization]]
+        [katello.roles :only [assign-role]]
+        katello.users
         katello.tasks
-        katello.ui-tasks
+        [katello.ui-tasks :only [errtype]]
         [katello.conf :only [config]]
         [bugzilla.checker :only [open-bz-bugs]]))
 

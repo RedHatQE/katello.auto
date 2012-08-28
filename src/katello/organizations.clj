@@ -1,4 +1,8 @@
-(in-ns 'katello.ui-tasks)
+(ns katello.organizations
+  (:require [katello.locators :as locators]) 
+  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]]
+        katello.ui-tasks
+        katello.notifications))
 
 ;;
 ;; Organizations

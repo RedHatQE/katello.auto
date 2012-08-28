@@ -4,6 +4,9 @@
   (:refer-clojure :exclude [fn])
   (:use [serializable.fn :only [fn]]
         katello.tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        [katello.changesets :only [sync-and-promote]]
+        [katello.organizations :only [with-organization]]
         katello.ui-tasks
         test.tree.script
         test.tree.builder

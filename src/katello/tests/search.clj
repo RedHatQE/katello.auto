@@ -1,7 +1,11 @@
 (ns katello.tests.search
   (:use test.tree.script
         katello.tasks
+        [katello.organizations :only [create-organization]]
+        [katello.users :only [create-user]]
+        [katello.sync-management :only [create-sync-plan]]
         katello.ui-tasks
+        katello.systems
         [tools.verify :only [verify-that]]
         [katello.tests.organizations :only [create-test-org]]
         [katello.tests.users :only [generic-user-details]]

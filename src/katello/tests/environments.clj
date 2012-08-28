@@ -3,7 +3,10 @@
   (:require [katello.api-tasks :as api])
   (:use test.tree.script
         katello.tasks
-        katello.ui-tasks
+        [katello.organizations :only [switch-organization]]
+        [katello.ui-tasks :only [navigate errtype]]
+        [katello.sync-management :only [sync-repos]]
+        katello.environments
         katello.validation
         slingshot.slingshot
         [katello.conf :only [config]]

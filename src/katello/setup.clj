@@ -1,8 +1,7 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
   (:require [clojure.data :as data]
-            (katello [ui-tasks :as ui]
-                     [api-tasks :as api]
+            (katello [api-tasks :as api]
                      [client :as client]) 
             [test.tree.watcher :as watch]
             [test.tree.jenkins :as jenkins]
@@ -10,6 +9,8 @@
   (:use [clojure.string :only [split replace]]
         katello.conf
         katello.tasks
+        [katello.users :only [login logout]]
+        [katello.roles :only [assign-role]]
         fn.trace 
         com.redhat.qe.auto.selenium.selenium))
 
@@ -30,7 +31,7 @@
    (open (@config :server-url) false)
    (setTimeout "60000"))
   
-  (ui/login (@config :admin-user) (@config :admin-password)))
+  (login (@config :admin-user) (@config :admin-password)))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
@@ -39,10 +40,10 @@
   (api/with-creds (@config :admin-user) (@config :admin-password)
     (api/create-user user {:password pw
                            :email (str user "@myorg.org")}))
-  (ui/assign-role {:user user
+  (assign-role {:user user
                    :roles ["Administrator"]})
-  (ui/logout)
-  (ui/login user pw))
+  (logout)
+  (login user pw))
 
 (defn stop-selenium []
    (browser stop))

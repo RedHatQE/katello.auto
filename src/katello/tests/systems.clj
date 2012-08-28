@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
         katello.ui-tasks
+        katello.systems
         test.tree.script
         [test.tree.builder :only [union]]
         [serializable.fn :only [fn]]

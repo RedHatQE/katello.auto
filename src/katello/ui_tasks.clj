@@ -3,9 +3,9 @@
             [ui.navigate :as nav]
             [clojure.string :as string])
   (:use [com.redhat.qe.auto.selenium.selenium
-         :only [connect browser ->browser fill-form fill-item
-                loop-with-timeout]]
+         :only [browser ->browser fill-form fill-item]]
         katello.tasks
+        katello.notifications
         [katello.conf :only [config]]
         [katello.api-tasks :only [when-katello when-headpin]]
         [slingshot.slingshot :only [throw+ try+]]
@@ -50,19 +50,6 @@
    Submit should be a locator for the form submit button."
   [items submit]
   (fill-form items submit (constantly nil)))
-
-
-(declare in-place-edit)
-
-;; Load peripherals
-(load "ui_tasks/notifications")
-(load "ui_tasks/changesets")
-(load "ui_tasks/organizations")
-(load "ui_tasks/environments")
-(load "ui_tasks/providers")
-(load "ui_tasks/roles")
-(load "ui_tasks/users")
-
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing
@@ -127,130 +114,6 @@
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
   (check-for-error {:timeout-ms 2000}))
-
-(def sync-messages {:ok "Sync complete."
-                    :fail "Error syncing!"})
-
-(defn sync-complete-status
-  "Returns final status if complete. If sync is still in progress, not
-  synced, or queued, returns nil."
-  [product]
-  (some #{(browser getText (locators/provider-sync-progress product))}
-        (vals sync-messages)))
-
-(defn sync-success? "Returns true if given sync result is a success."
-  [res]
-  (= res (:ok sync-messages)))
-
-
-(defn sync-repos
-  "Syncs the given list of repositories. Also takes an optional
-  timeout (in ms) of how long to wait for the sync to complete before
-  throwing an error.  Default timeout is 2 minutes."
-  [repos & [{:keys [timeout]}]]
-  (navigate :sync-status-page)
-  (doseq [repo repos]
-    (browser check (locators/provider-sync-checkbox repo)))
-  (browser click :synchronize-now)
-  (browser sleep 10000)
-  (zipmap repos (for [repo repos]
-                     (loop-with-timeout (or timeout 120000) []
-                       (or (sync-complete-status repo)
-                           (do (Thread/sleep 10000)
-                               (recur)))))))
-
-(defn edit-system
-  "Edits the properties of the given system. Optionally specify a new
-  name, a new description, and a new location."
-  [name {:keys [new-name description location release-version]}]
-  (navigate :named-systems-page {:system-name name})
-  (in-place-edit {:system-name-text-edit new-name
-                  :system-description-text-edit description
-                  :system-location-text-edit location
-                  :system-release-version-select release-version}))
-
-(defn subscribe-system
-  "Subscribes the given system to the products. (products should be a
-  list). Can also set the auto-subscribe for a particular SLA.
-  auto-subscribe must be either true or false to select a new setting
-  for auto-subscribe and SLA. If auto-subscribe is nil, no changes
-  will be made."
-  [{:keys [system-name add-products remove-products auto-subscribe sla]}]
-  (navigate :system-subscriptions-page {:system-name system-name})
-  (when-not (nil? auto-subscribe)
-    (in-place-edit {:system-service-level-select (format "Auto-subscribe %s, %s"
-                                                         (if auto-subscribe "On" "Off")
-                                                         sla)}))
-  (let [sub-unsub-fn (fn [content checkbox-fn submit]
-                       (when-not (empty? content)
-                         (doseq [item content]
-                           (browser check (checkbox-fn item)))
-                         (browser click submit)) )]
-    (sub-unsub-fn add-products locators/subscription-available-checkbox :subscribe)
-    (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
-  (check-for-success))
-
-(def syncplan-dateformat (SimpleDateFormat. "MM/dd/yyyy"))
-(def syncplan-timeformat (SimpleDateFormat. "hh:mm aa"))
-(defn date-str [d] (.format syncplan-dateformat d))
-(defn time-str [d] (.format syncplan-timeformat d))
-
-(defn- split-date [{:keys [start-date start-date-literal start-time-literal]}]
-  (list (if start-date (date-str start-date) start-date-literal)
-        (if start-date (time-str start-date) start-time-literal)))
-
-(defn create-sync-plan
-  "Creates a sync plan with the given properties. Either specify a
-  start-date (as a java.util.Date object) or a separate string for
-  start-date-literal 'MM/dd/yyyy', and start-time-literal 'hh:mm aa'
-  The latter can also be used to specify invalid dates for validation
-  tests."
-  [{:keys [name description interval start-date
-           start-date-literal start-time-literal] :as m}]
-  (navigate :new-sync-plan-page)
-  (let [[date time] (split-date m)]
-    (fill-ajax-form {:sync-plan-name-text name
-                     :sync-plan-description-text description
-                     :sync-plan-interval-select interval
-                     :sync-plan-time-text time
-                     :sync-plan-date-text date}
-                    :save-sync-plan)
-    (check-for-success)))
-
-(defn edit-sync-plan
-  "Edits the given sync plan with optional new properties. See also
-  create-sync-plan for more details."
-  [name {:keys [new-name
-                description interval start-date start-date-literal
-                start-time-literal] :as m}]
-  (navigate :named-sync-plan-page {:sync-plan-name name})
-  (let [[date time] (split-date m)]
-    (in-place-edit {:sync-plan-name-text new-name
-                    :sync-plan-description-text description
-                    :sync-plan-interval-select interval
-                    :sync-plan-time-text time
-                    :sync-plan-date-text date})))
-
-(defn sync-schedule
-  "Schedules the given list of products to be synced using the given
-  sync plan name."
-  [{:keys [products plan-name]}]
-  (navigate :sync-schedule-page)
-  (doseq [product products]
-    (browser click (locators/schedule product)))
-  (browser click (locators/sync-plan plan-name))
-  (browser clickAndWait :apply-sync-schedule )
-  (check-for-success))
-
-(defn current-sync-plan
-  "Returns a map of what sync plan a product is currently scheduled
-  for. nil if UI says 'None'"
-  [product-names]
-  (navigate :sync-schedule-page)
-  (zipmap product-names
-          (replace {"None" nil}
-                   (doall (for [product-name product-names]
-                            (browser getText (locators/product-schedule product-name)))))))
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
@@ -338,15 +201,6 @@
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
 
-(defn assign-user-default-org-and-env 
-  "Assigns a default organization and environment to a user"
-  [username org-name env-name]
-  (navigate :user-environments-page {:username username})
-  (browser select :user-default-org-select org-name)
-  (browser click (locators/environment-link env-name))
-  (browser click :save-user-environment)
-  (check-for-success))
-
 (defn create-gpg-key [name & [{:keys [filename contents]}]]
   (assert (not (and filename contents))
           "Must specify one one of :filename or :contents.")
@@ -370,14 +224,6 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn sync-and-promote [products from-env to-env]
-  (let [all-prods (map :name products)
-        all-repos (apply concat (map :repos products))
-        sync-results (sync-repos all-repos {:timeout 600000})]
-        (verify-that (every? (fn [[_ res]] (sync-success? res))
-                             sync-results))
-        (promote-content from-env to-env {:products all-prods})))
-
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
   (assert (string? name))
@@ -394,67 +240,6 @@
   (browser click :remove-package-filter-key )
   (browser click :confirmation-yes)
   (check-for-success))
-
-(defn create-system
-  "Creates a system"
-   [name & [{:keys [sockets system-arch]}]]
-   (navigate :new-system-page)
-   (fill-ajax-form {:system-name-text name
-                    :system-sockets-text sockets
-                    :system-arch-select (or system-arch "x86_64")}
-                    :create-system)
-   (check-for-success))
-
-(defn create-system-group
-  "Creates a system-group"
-   [name & [{:keys [description]}]]
-   (navigate :new-system-groups-page)
-   (fill-ajax-form {:system-group-name-text name
-                    :system-group-description-text description}
-                    :create-system-groups)
-   (check-for-success))
-
-(defn add-to-system-group
-  "Adds a system to a System-Group"
-   [system-group system-name]
-   (navigate :named-system-group-page {:system-group-name system-group})
-   (fill-ajax-form {:system-groups-hostname-toadd system-name}
-                    :system-groups-add-system))
-
-(defn copy-system-group
-  "Clones a system group, given the name of the original system group
-   to clone, and the new name and description."
-  [orig-name new-name & [{:keys [description]}]]
-  (navigate :named-system-group-page {:system-group-name orig-name})
-  (browser click :system-group-copy)
-  (fill-ajax-form {:system-group-copy-name-text new-name
-                   :system-group-copy-description-text description}
-                  :system-group-copy-submit)
-  (check-for-success))
-
-(defn remove-system-group [system-group & [{:keys [also-remove-systems?]}]]
-  (navigate :named-system-group-page {:system-group-name system-group})
-  (browser click :system-group-remove)
-  (browser click :confirmation-yes)
-  (browser click (if also-remove-systems?
-                   :confirmation-yes
-                   :system-group-confirm-only-system-group))
-  (check-for-success))
-
-(defn edit-system-group "Change the value of limit field in system group"
-  [sg-name {:keys [new-limit new-sg-name description]}]
-  (navigate :system-group-details-page {:system-group-name sg-name})
-  (let [needed-flipping (and new-limit
-                            (not= (= new-limit :unlimited)
-                                  (browser isChecked :system-group-unlimited)))]
-    (if (and new-limit (not= new-limit :unlimited))
-      (do (browser uncheck :system-group-unlimited)
-          (fill-ajax-form {:system-group-limit-value (str new-limit)}
-                          :save-new-limit ))
-      (browser check :system-group-unlimited))
-    (when needed-flipping (check-for-success)))
-  (in-place-edit {:system-group-name-text new-sg-name
-                  :system-group-description-text description}))
 
 (defn extract-content-search-results
   "Gets the content search results from the current page"

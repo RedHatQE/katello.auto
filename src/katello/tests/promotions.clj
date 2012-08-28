@@ -2,6 +2,8 @@
   (:require [katello.api-tasks :as api])
   (:use test.tree.script
         katello.tasks
+        [katello.changesets :only [promote-content]] 
+        [katello.environments :only [environment-content]]
         katello.ui-tasks
         [katello.conf :only [config *environments*]]
         [test.tree.builder :only [data-driven dep-chain]]
