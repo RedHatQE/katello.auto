@@ -54,9 +54,9 @@
 (def bad-org-names
   (concat
    (for [inv-char-str v/invalid-character-strings]
-     [inv-char-str :katello.ui-tasks/name-must-not-contain-characters])
+     [inv-char-str :katello.notifications/name-must-not-contain-characters])
    (for [trailing-ws-str v/trailing-whitespace-strings]
-     [trailing-ws-str :katello.ui-tasks/name-no-leading-trailing-whitespace])))
+     [trailing-ws-str :katello.notifications/name-no-leading-trailing-whitespace])))
 
 ;; Tests
 
@@ -83,7 +83,7 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (v/expecting-error-2nd-try (errtype :katello.ui-tasks/name-taken-error)
+        (v/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
                                    (create-organization org-name {:description "org-description"}))))
 
   

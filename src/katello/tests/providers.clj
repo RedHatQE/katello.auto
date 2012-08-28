@@ -83,7 +83,7 @@
   (concat
    [[{:name nil
       :description "blah"
-      :url "http://sdf.com"} (errtype :katello.ui-tasks/name-cant-be-blank)]
+      :url "http://sdf.com"} (errtype :katello.notifications/name-cant-be-blank)]
 
     [{:name (uniqueify "mytestcp4")
       :description nil
@@ -97,12 +97,12 @@
    (for [trailing-ws-str trailing-whitespace-strings]
      [{:name trailing-ws-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-no-leading-trailing-whitespace)])
+       :url "http://sdf.com"} (errtype :katello.notifications/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])))
+       :url "http://sdf.com"} (errtype :katello.notifications/name-must-not-contain-characters)])))
 
 ;; Tests
 

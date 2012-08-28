@@ -20,7 +20,7 @@
   message appears in the UI."
   [username password]
   (try+
-    (expecting-error (errtype :katello.ui-tasks/invalid-credentials) 
+    (expecting-error (errtype :katello.notifications/invalid-credentials) 
                      (login username password))
    (finally
     (login *session-user* *session-password*))))

@@ -4,14 +4,16 @@
             [clojure.string :as string]
             [com.redhat.qe.auto.selenium.selenium
               :refer [browser ->browser fill-form fill-item]]
-            [katello.tasks :refer :all] 
-            [katello.notifications :refer :all] 
-            [katello.conf :refer [config]]
-            [katello.api-tasks :refer [when-katello when-headpin]]
+            (katello [tasks :refer :all] 
+                     [notifications :refer :all] 
+                     [conf :refer [config]] 
+                     [api-tasks :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify :refer [verify-that]]
-            [clojure.string :refer [capitalize]]
-            [clojure.set :refer [union]])
+            [inflections.core :refer [pluralize]] 
+            (clojure [string :refer [capitalize]] 
+                     [set :refer [union]])
+            [clojure.data.json :as json])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -80,7 +82,54 @@
     (doall (take-while identity (for [elem elems]
                                   (try (browser getText elem)
                                        (catch SeleniumException e nil)))))))
- 
+
+(defn content-search-entity-type-from-attribute [attr-val]
+  (let [words (string/split attr-val  #"_")
+        known-types #{"product" "repo" "errata" "package"}
+        mypluralize (fn [s] (if (= s "errata") ; because dev mixed plural and singular
+                             "errata"
+                             (pluralize s)))]
+    (->> words
+       (filter known-types)
+       last
+       mypluralize
+       keyword)))
+
+(defn content-search-get-all-results []
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more)))
+
+(defn extract-tree [f]
+  "Extract a tree of items from the UI (currently content search
+   results), accepts locator function as argument for example,
+   extract-left-pane-list locators/left-pane-field-list"
+
+  (let [first-row (f "1")]
+    (if (browser isElementPresent first-row)
+      (do (content-search-get-all-results)
+          (let [entity-type (-> (browser getAttributes first-row) 
+                               (.get "data-id")
+                               content-search-entity-type-from-attribute)] 
+            {entity-type
+             (doall (take-while not-empty
+                                (for [index (iterate inc 1)]
+                                  (let [loc (-> index str f)
+                                        plain-item (try (browser getText loc)
+                                                        (catch SeleniumException _ nil))
+                                        next-f (locators/content-search-expand-strategy (.getLocator loc)
+                                                                                        index)
+                                        children (and plain-item (extract-tree next-f))]
+                                    (if (empty? children)
+                                      plain-item
+                                      (assoc children :name plain-item))))))}))
+      (list))))
+
+
+(defn extract-content-search-results []
+  (->>  "JSON.stringify(window.comparison_grid.export_data());"
+      (browser getEval)
+      (json/read-json)))
+
 (defn extract-left-pane-list []
   (extract-list locators/left-pane-field-list))
 
@@ -114,6 +163,49 @@
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
   (check-for-error {:timeout-ms 2000}))
+
+(defn search-for-content
+  "Performs a search for the specified content type using any product,
+   repository, package or errata filters specified. Note that while prods,
+   repos and pkgs should be vectors, errata is expected to be a string.
+   Example: search-for-content :errata-type {:prods ['myprod'] 
+                                             :repos ['myrepo']
+                                             :errata 'myerrata'}"
+  [content-type & [{:keys [prods repos pkgs errata]}]]
+
+  (case content-type 
+    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
+    :repo-type   (assert (and (empty? pkgs) (empty? errata)))
+    :pkg-type    (assert (empty? errata))
+    :errata-type (assert (empty? pkgs)))
+
+  ; Navigate to content search page and select content type
+  (let [ctype-map {:prod-type   "Products"
+                   :repo-type   "Repositories"
+                   :pkg-type    "Packages"
+                   :errata-type "Errata"}
+        ctype-str (ctype-map content-type)]
+    (navigate :content-search-page)
+    (browser select :content-search-type ctype-str))
+
+  ; Add content filters using auto-complete
+  (doseq [[auto-comp-box add-button cont-items] 
+          [[:prod-auto-complete :add-prod prods] 
+           [:add-repo :repo-auto-complete repos] 
+           [:add-pkg :pkg-auto-complete pkgs]]]
+    (doseq [cont-item cont-items]
+      (browser setText auto-comp-box cont-item)
+      ; typeKeys is necessary to trigger drop-down list
+      (browser typeKeys auto-comp-box cont-item)
+      (let [elem (locators/auto-complete-item cont-item)] 
+        (->browser (waitForElement elem "2000")
+                   (mouseOver elem)
+                   (click elem)))
+      (browser click add-button)))
+
+  ; Add errata
+  (when-not (empty? errata) (browser setText :errata-search errata))
+  (browser click :browse-button))
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
@@ -241,7 +333,3 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn extract-content-search-results
-  "Gets the content search results from the current page"
-  []
-  (extract-list locators/content-search-result-item-n))
