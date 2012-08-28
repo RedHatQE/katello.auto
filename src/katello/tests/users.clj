@@ -1,14 +1,14 @@
 (ns katello.tests.users
 
-  (:use test.tree.script
-        katello.validation
-        [katello.organizations :only [create-organization delete-organization]]
-        [katello.roles :only [assign-role]]
-        katello.users
-        katello.tasks
-        [katello.ui-tasks :only [errtype]]
-        [katello.conf :only [config]]
-        [bugzilla.checker :only [open-bz-bugs]]))
+  (:require (katello [validation :refer :all] 
+                     [organizations :refer [create-organization delete-organization]] 
+                     [roles :refer [assign-role]] 
+                     [users :refer :all]
+                     [tasks :refer :all]
+                     [ui-tasks :refer [errtype]] 
+                     [conf :refer [config]]) 
+            [test.tree.script :refer :all] 
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;;; Variables
 
@@ -55,7 +55,7 @@
               (delete-organization org))
             (finally (create-user admin {:password pw
                                          :email "root@localhost"})
-                     (assign-role {:user admin :roles ["Administrator"]}))))))
+                     (assign-role {:requirer admin :roles ["Administrator"]}))))))
 
 
     (deftest "Two users with the same username is disallowed"
@@ -74,4 +74,4 @@
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (create-user     username                generic-user-details)
-        (assign-role     {:user username, :roles ["Administrator"]})))))
+        (assign-role     {:requirer username, :roles ["Administrator"]})))))

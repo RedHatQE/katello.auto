@@ -1,19 +1,19 @@
 (ns katello.tests.sync_management
-  (:require [katello.api-tasks :as api]
-            [katello.validation :as validate])
-  (:refer-clojure :exclude [fn])
-  (:use katello.tasks
-        [katello.providers :only [create-provider add-product add-repo]]
-        [katello.users :only [login create-user]]
-        [katello.roles :only [assign-role]]
-        [katello.organizations :only [create-organization]]
-        katello.sync-management
-        [katello.ui-tasks :only [navigate errtype]]
-        test.tree.script
-        [katello.tests.login :only [login-admin]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        [tools.verify :only [verify-that]]
-        [katello.conf :only [config *environments*]]))
+  (:require (katello [api-tasks :as api] 
+                     [validation :as validate] 
+                     [providers :refer [create-provider add-product add-repo]] 
+                     [users :refer [login create-user]] 
+                     [roles :refer [assign-role]] 
+                     [organizations :refer [create-organization]] 
+                     [tasks :refer :all]
+                     [sync-management :refer :all]
+                     [ui-tasks :refer [navigate errtype]] 
+                     [conf :refer [config *environments*]]) 
+            [katello.tests.login :refer [login-admin]] 
+            [test.tree.script :refer :all] 
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [tools.verify :refer [verify-that]])
+  (:refer-clojure :exclude [fn]))
 
 ;; Variables
 
@@ -55,7 +55,7 @@
                 product "prod"
                 repo "repo"]
     (create-user user {:password password :email "blah@blah.com"})
-    (assign-role {:user user :roles ["Administrator"]})
+    (assign-role {:requirer user :roles ["Administrator"]})
     (try
       (login user password)
       (create-organization org)

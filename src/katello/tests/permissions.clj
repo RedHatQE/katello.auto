@@ -1,19 +1,19 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
-  (:use katello.tasks
-        [katello.providers :only [create-provider]]
-        katello.roles
-        katello.users
-        [katello.environments :only [create-environment]]
-        katello.ui-tasks
-        katello.organizations
-        test.tree.script
-        [serializable.fn :only [fn]]
-        [tools.verify :only [verify-that]]
-        [bugzilla.checker :only [open-bz-bugs]])
   (:require (katello [validation :as v]
                      [api-tasks :as api]
-                     [conf :as conf]))
+                     [conf :as conf]
+                     [tasks :refer :all]
+                     [providers :refer [create-provider]]
+                     [environments :refer [create-environment]]
+                     [roles :refer :all]
+                     [users :refer :all]
+                     [ui-tasks :refer :all]
+                     [organizations :refer :all])
+        [test.tree.script :refer :all] 
+        [serializable.fn :refer [fn]]
+        [tools.verify :refer [verify-that]]
+        [bugzilla.checker :refer [open-bz-bugs]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 
@@ -60,7 +60,7 @@
     
     (create-role rolename)
     (edit-role rolename {:add-permissions permissions
-                         :users [username]})
+                         :requirers [username]})
     
     (try
       (let [with-perm-results (do (login username pw)
@@ -176,7 +176,7 @@
                          :permissions [{:resource-type "Users"
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
-          :allowed-actions [(navigate-fn :users-page)]
+          :allowed-actions [(navigate-fn :requirers-page)]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
                                                   :content-management-tab)
                                     (fn [] (create-organization (uniqueify "cantdothis")))
@@ -246,7 +246,7 @@
                                      :permissions [{:name "blah2"
                                                     :resource-type "Organizations"
                                                     :verbs ["Read Organization"]}]}]
-                  :users [user-name]}))
+                  :requirers [user-name]}))
 
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true

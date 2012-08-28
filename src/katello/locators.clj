@@ -1,10 +1,10 @@
 (ns katello.locators
-  (:use [com.redhat.qe.auto.selenium.selenium :only
-         [fill-form SeleniumLocatable browser ->browser sel-locator]]
-        [katello.conf :only [config]]
-        [katello.tasks :only [capitalize-all]]
-        [ui.navigate :only [nav-tree page-zip]]
-        [clojure.string :only [capitalize]])
+  (:require [com.redhat.qe.auto.selenium.selenium :refer
+              [fill-form SeleniumLocatable browser ->browser sel-locator]]
+            (katello [conf :refer [config]] 
+                     [tasks :refer [capitalize-all]]) 
+            [ui.navigate :refer [nav-tree page-zip]]
+            [clojure.string :refer [capitalize]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
            [com.thoughtworks.selenium SeleniumException]))
 

@@ -1,10 +1,10 @@
 (ns katello.api-tasks
-  (:require [katello.rest :as rest])
-  (:use [katello.conf :only [config *session-user* *session-password*]]
-        slingshot.slingshot
-        [inflections.core :only [pluralize singularize]]
-        [com.redhat.qe.auto.selenium.selenium :only [loop-with-timeout]]
-        [katello.tasks :only [uniqueify library promotion-lock chain-envs]]))
+  (:require [slingshot.slingshot :refer [throw+]] 
+            [inflections.core :refer [pluralize singularize]]
+            [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
+            (katello [rest :as rest] 
+                     [conf :refer [config *session-user* *session-password*]] 
+                     [tasks :refer [uniqueify library promotion-lock chain-envs]])))
 
 (def ^:dynamic *user* nil)
 (def ^:dynamic *password* nil)

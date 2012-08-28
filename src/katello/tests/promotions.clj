@@ -1,15 +1,15 @@
 (ns katello.tests.promotions
-  (:require [katello.api-tasks :as api])
-  (:use test.tree.script
-        katello.tasks
-        [katello.changesets :only [promote-content]] 
-        [katello.environments :only [environment-content]]
-        katello.ui-tasks
-        [katello.conf :only [config *environments*]]
-        [test.tree.builder :only [data-driven dep-chain]]
-        [serializable.fn :only [fn]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        [tools.verify :only [verify-that]])
+  (:require (katello [api-tasks :as api] 
+                     [changesets :refer [promote-content]] 
+                     [environments :refer [environment-content]] 
+                     [tasks :refer :all] 
+                     [ui-tasks :refer :all] 
+                     [conf :refer [config *environments*]]) 
+            (test.tree [script :refer :all]
+                       [builder :refer [data-driven dep-chain]])
+            [serializable.fn :refer [fn]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [tools.verify :refer [verify-that]])
   (:refer-clojure :exclude [fn]))
 
 ;; Variables

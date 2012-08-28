@@ -1,8 +1,8 @@
 (ns katello.tests.navigation
-  (:use test.tree.script
-        [katello.notifications :only [check-for-error]]
-        katello.ui-tasks
-        [katello.locators :only [tab-list]] ))
+  (:require [test.tree.script :refer :all] 
+            (katello [notifications :refer [check-for-error]]
+                     [ui-tasks :refer :all]
+                     [locators :refer [tab-list]])))
 
 ;;; Functions
 

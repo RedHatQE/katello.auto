@@ -1,13 +1,13 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:use test.tree.script
-        katello.conf
-        [katello.ui-tasks :only [navigate errtype]]
-        katello.tasks
-        katello.users
-        slingshot.slingshot
-        [bugzilla.checker :only [open-bz-bugs]]
-        [tools.verify :only [verify-that]]))
+  (:require (katello [conf :refer :all] 
+                     [ui-tasks :refer [navigate errtype]]
+                     [tasks :refer :all]
+                     [users :refer :all])
+            [test.tree.script :refer :all]
+            [slingshot.slingshot :refer :all]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [tools.verify :refer [verify-that]]))
 
 ;;; Functions
 

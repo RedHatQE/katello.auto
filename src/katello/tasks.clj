@@ -1,9 +1,9 @@
 (ns katello.tasks
-  (:use slingshot.slingshot
-        [clojure.string :only [split join capitalize]])
+  (:require [slingshot.slingshot :refer :all] 
+            [clojure.string :refer [split join capitalize]])
   (:import java.util.Date))
 
-(def library "Library")                 
+(def library "Library")
 
 ;;var for synchronizing promotion calls, since only one can be done in
 ;;the system at a time.

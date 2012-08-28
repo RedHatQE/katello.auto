@@ -1,17 +1,18 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:use katello.tasks
-        katello.ui-tasks
-        katello.systems
-        test.tree.script
-        [test.tree.builder :only [union]]
-        [serializable.fn :only [fn]]
-        [katello.conf :only [config *environments*]]
-        [tools.verify :only [verify-that]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        [slingshot.slingshot :only [throw+]])
   (:require (katello [api-tasks :as api]
-                     [validation :as val])))
+                     [validation :as val]
+                     [tasks :refer :all] 
+                     [ui-tasks :refer :all] 
+                     [systems :refer :all] 
+                     [conf :refer [config *environments*]]) 
+            (test.tree [script :refer :all] 
+                       [builder :refer [union]]) 
+            [serializable.fn :refer [fn]]
+            [tools.verify :refer [verify-that]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [slingshot.slingshot :refer [throw+]]))
+
 
 ;; Functions
 

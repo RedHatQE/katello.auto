@@ -1,17 +1,18 @@
 (ns katello.tests.search
-  (:use test.tree.script
-        katello.tasks
-        [katello.organizations :only [create-organization]]
-        [katello.users :only [create-user]]
-        [katello.sync-management :only [create-sync-plan]]
-        katello.ui-tasks
-        katello.systems
-        [tools.verify :only [verify-that]]
-        [katello.tests.organizations :only [create-test-org]]
-        [katello.tests.users :only [generic-user-details]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        slingshot.slingshot)
-  (:require (katello [api-tasks :as api])))
+  (:require (katello [api-tasks :as api]
+                     [organizations :refer [create-organization]]
+                     [users :refer [create-user]]
+                     [sync-management :refer [create-sync-plan]]
+                     [tasks :refer :all]
+                     [ui-tasks :refer :all]
+                     [systems :refer :all])
+            [katello.tests.organizations :refer [create-test-org]]
+            [katello.tests.users :refer [generic-user-details]]
+            [test.tree.script :refer :all]
+            [tools.verify :refer [verify-that]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [slingshot.slingshot :refer :all]))
+
 
 ;; Functions
 
@@ -44,7 +45,7 @@
   
 
   (deftest "Search for a user"
-    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
+    (verify-simple-search :requirers #(create-user % generic-user-details) "mybazquux"))
 
    (deftest "Perform search operation on systems"
     :data-driven true
@@ -129,14 +130,14 @@
       (let [[name opts] user
             unique-user [(uniqueify name) opts]]
         (apply create-user unique-user)
-        (search :users searchterms)
+        (search :requirers searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-user)])]
           (verify-that (valid-search-results (extract-left-pane-list))))))
     
     [[["username1" {:password "password" :email "username1@my.org"}] {:criteria "username1*"}]
-     [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:username?*"}]
+     [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:requirername?*"}]
      [["lucene4"   {:password "password" :email "lucene4@my.org"}] {:criteria "email:\"*@my.org\""}]
      [["lucene5"   {:password "password" :email "lucene5@my.org"}]  {:criteria "email:@my.org"}]
      [["lucene6"   {:password "password" :email "lucene6@my.org"}]  {:criteria "email:my.org"}]])

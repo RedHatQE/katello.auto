@@ -4,13 +4,12 @@
                            sync_management login environments
                            systems users permissions templates
                            e2e navigation search)
-            
-            [test.tree.jenkins :as jenkins]
             [katello.setup :as setup]
             [katello.conf :as conf] 
             [clojure.tools.cli :as cli]
-            serializable.fn)
-  (:use test.tree.script))
+            [serializable.fn :refer :all] 
+            [test.tree.jenkins :as jenkins]
+            [test.tree.script :refer :all]))
 
 (defgroup katello-tests
   :test-setup katello.tests.login/navigate-toplevel
