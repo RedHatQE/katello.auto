@@ -25,6 +25,7 @@
 
 (define-strategies
   {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+   auto-complete-item              "//ul[contains(@class,'ui-autocomplete')]//a[.='$1']"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
@@ -123,6 +124,7 @@
        [:sync-status
         :sync-plans
         :sync-schedule]
+       :content-search
        :system-templates
        :changeset-management
        [:changesets
@@ -260,6 +262,20 @@
    :sync-plan-time-text        "sync_plan[plan_time]"
    :save-sync-plan             "plan_save"})
 
+(def content-search
+  {:content-search-type        "//select[@id='content']"
+   :add-prod                   "add_product"
+   :add-repo                   "add_repo"
+   :add-pkg                    "add_package"
+   :repo-auto-complete-radio   "repos_auto_complete_radio"
+   :pkg-auto-complete-radio    "packages_auto_complete_radio"
+   :prod-auto-complete         "product_auto_complete"
+   :repo-auto-complete         "repo_auto_complete"
+   :pkg-auto-complete          "packages_auto_complete"
+   :errata-search              "//input[@id='search']"
+   :browse-button              "//input[@id='browse_button']"
+  })
+
 (def systems
   {:new-system                             "new"
    :create-system                          "system_submit"
@@ -348,7 +364,7 @@
   SeleniumLocatable protocol."}
   uimap
   (merge all-tabs common organizations environments roles users systems sync-plans
-         sync-schedules promotions providers templates
+         content-search sync-schedules promotions providers templates
          { ;; login page
           :username-text     "username"
           :password-text     "password"
@@ -495,6 +511,7 @@
          (select-environment-widget env-name {:next-env-name next-env-name :wait true})
          [:named-changeset-page [changeset-name]
           (browser click (changeset changeset-name))]]]]
+      [:content-search-page [] (browser clickAndWait :content-search)]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
        [:new-system-template-page [] (browser click :new-template)]]]

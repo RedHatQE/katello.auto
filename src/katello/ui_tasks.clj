@@ -159,6 +159,49 @@
                            (do (Thread/sleep 10000)
                                (recur)))))))
 
+(defn search-for-content
+  "Performs a search for the specified content type using any product,
+   repository, package or errata filters specified. Note that while prods,
+   repos and pkgs should be vectors, errata is expected to be a string.
+   Example: search-for-content :errata-type {:prods ['myprod'] 
+                                             :repos ['myrepo']
+                                             :errata 'myerrata'}"
+  [content-type & [{:keys [prods repos pkgs errata]}]]
+
+  (case content-type 
+    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
+    :repo-type   (assert (and (empty? pkgs) (empty? errata)))
+    :pkg-type    (assert (empty? errata))
+    :errata-type (assert (empty? pkgs)))
+
+  ; Navigate to content search page and select content type
+  (let [ctype-map {:prod-type   "Products"
+                   :repo-type   "Repositories"
+                   :pkg-type    "Packages"
+                   :errata-type "Errata"}
+        ctype-str (ctype-map content-type)]
+    (navigate :content-search-page)
+    (browser select :content-search-type ctype-str))
+
+  ; Add content filters using auto-complete
+  (doseq [[auto-comp-box add-button cont-items] 
+          [[:prod-auto-complete :add-prod prods] 
+           [:add-repo :repo-auto-complete repos] 
+           [:add-pkg :pkg-auto-complete pkgs]]]
+    (doseq [cont-item cont-items]
+      (browser setText auto-comp-box cont-item)
+      ; typeKeys is necessary to trigger drop-down list
+      (browser typeKeys auto-comp-box cont-item)
+      (let [elem (locators/auto-complete-item cont-item)] 
+        (->browser (waitForElement elem "2000")
+                   (mouseOver elem)
+                   (click elem)))
+      (browser click add-button)))
+
+  ; Add errata
+  (when-not (empty? errata) (browser setText :errata-search errata))
+  (browser click :browse-button))
+
 (defn edit-system
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
