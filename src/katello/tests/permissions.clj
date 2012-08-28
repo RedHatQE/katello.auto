@@ -60,7 +60,7 @@
     
     (create-role rolename)
     (edit-role rolename {:add-permissions permissions
-                         :requirers [username]})
+                         :users [username]})
     
     (try
       (let [with-perm-results (do (login username pw)
@@ -176,7 +176,7 @@
                          :permissions [{:resource-type "Users"
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
-          :allowed-actions [(navigate-fn :requirers-page)]
+          :allowed-actions [(navigate-fn :users-page)]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
                                                   :content-management-tab)
                                     (fn [] (create-organization (uniqueify "cantdothis")))
@@ -246,7 +246,7 @@
                                      :permissions [{:name "blah2"
                                                     :resource-type "Organizations"
                                                     :verbs ["Read Organization"]}]}]
-                  :requirers [user-name]}))
+                  :users [user-name]}))
 
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true

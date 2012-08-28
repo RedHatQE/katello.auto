@@ -34,7 +34,7 @@
     ;;client side
     (client/setup-client)
     (client/run-cmd (format "rpm -e %s" all-packages))
-    (client/register {:requirername *session-user*
+    (client/register {:username *session-user*
                       :password *session-password*
                       :org org-name
                       :env target-env

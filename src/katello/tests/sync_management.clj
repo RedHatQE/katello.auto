@@ -55,7 +55,7 @@
                 product "prod"
                 repo "repo"]
     (create-user user {:password password :email "blah@blah.com"})
-    (assign-role {:requirer user :roles ["Administrator"]})
+    (assign-role {:user user :roles ["Administrator"]})
     (try
       (login user password)
       (create-organization org)

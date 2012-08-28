@@ -55,7 +55,7 @@
               (delete-organization org))
             (finally (create-user admin {:password pw
                                          :email "root@localhost"})
-                     (assign-role {:requirer admin :roles ["Administrator"]}))))))
+                     (assign-role {:user admin :roles ["Administrator"]}))))))
 
 
     (deftest "Two users with the same username is disallowed"
@@ -74,4 +74,4 @@
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (create-user     username                generic-user-details)
-        (assign-role     {:requirer username, :roles ["Administrator"]})))))
+        (assign-role     {:user username, :roles ["Administrator"]})))))

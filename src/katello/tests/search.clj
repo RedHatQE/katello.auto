@@ -45,7 +45,7 @@
   
 
   (deftest "Search for a user"
-    (verify-simple-search :requirers #(create-user % generic-user-details) "mybazquux"))
+    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
 
    (deftest "Perform search operation on systems"
     :data-driven true
@@ -130,14 +130,14 @@
       (let [[name opts] user
             unique-user [(uniqueify name) opts]]
         (apply create-user unique-user)
-        (search :requirers searchterms)
+        (search :users searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-user)])]
           (verify-that (valid-search-results (extract-left-pane-list))))))
     
     [[["username1" {:password "password" :email "username1@my.org"}] {:criteria "username1*"}]
-     [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:requirername?*"}]
+     [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:username?*"}]
      [["lucene4"   {:password "password" :email "lucene4@my.org"}] {:criteria "email:\"*@my.org\""}]
      [["lucene5"   {:password "password" :email "lucene5@my.org"}]  {:criteria "email:@my.org"}]
      [["lucene6"   {:password "password" :email "lucene6@my.org"}]  {:criteria "email:my.org"}]])
