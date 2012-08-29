@@ -25,6 +25,8 @@
 
 
     (deftest "Admin creates a user with a default organization"
+      :blockers (open-bz-bugs "852119")
+      
       (with-unique [org-name "auto-org"
                     env-name "environment"
                     username "autouser"]
