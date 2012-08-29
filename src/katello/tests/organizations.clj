@@ -1,15 +1,15 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
-                     [validation :as v]))
-  (:use katello.tasks
-        [katello.providers :only [create-provider add-product add-repo]]
-        katello.organizations
-        katello.ui-tasks
-        [katello.conf :only [config]]
-        [tools.verify :only [verify-that]]
-        test.tree.script
-        [bugzilla.checker :only [open-bz-bugs]]))
+                     [validation :as v] 
+                     [providers :refer [create-provider add-product add-repo]] 
+                     [tasks :refer :all] 
+                     [organizations :refer :all] 
+                     [ui-tasks :refer :all] 
+                     [conf :refer [config]])
+            [tools.verify :refer [verify-that]]
+            [test.tree.script :refer :all] 
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Functions
 

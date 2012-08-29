@@ -1,11 +1,11 @@
 (ns katello.users
-  (:require [katello.locators :as locators]) 
-  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]]
-        [katello.conf :only [config]]
-        [slingshot.slingshot :only [throw+ try+]]
-        [katello.ui-tasks :only [navigate fill-ajax-form in-place-edit]]
-        [katello.notifications :only [check-for-success]]
-        [katello.organizations :only [switch-organization]]))
+  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+            [slingshot.slingshot :refer [throw+ try+]]
+            (katello [locators :as locators] 
+                     [conf :refer [config]] 
+                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
+                     [notifications :refer [check-for-success]] 
+                     [organizations :refer [switch-organization]])))
 
 ;;
 ;; Users

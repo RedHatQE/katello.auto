@@ -1,10 +1,10 @@
 (ns katello.notifications
-  (:require [katello.locators :as locators])
-  (:use [com.redhat.qe.auto.selenium.selenium 
-         :only [browser loop-with-timeout]] 
-        [slingshot.slingshot :only [throw+ try+]]
-        [tools.verify :only [verify-that]]
-        [clojure.set :only [union]])
+  (:require [katello.locators :as locators]
+            [com.redhat.qe.auto.selenium.selenium 
+              :refer [browser loop-with-timeout]] 
+            [slingshot.slingshot :refer [throw+ try+]]
+            [tools.verify :refer [verify-that]]
+            [clojure.set :refer [union]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;

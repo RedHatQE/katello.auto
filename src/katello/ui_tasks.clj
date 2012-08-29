@@ -2,18 +2,18 @@
   (:require [katello.locators :as locators]
             [ui.navigate :as nav]
             [clojure.string :as string]
+            [com.redhat.qe.auto.selenium.selenium
+              :refer [browser ->browser fill-form fill-item]]
+            (katello [tasks :refer :all] 
+                     [notifications :refer :all] 
+                     [conf :refer [config]] 
+                     [api-tasks :refer [when-katello when-headpin]]) 
+            [slingshot.slingshot :refer [throw+ try+]]
+            [tools.verify :refer [verify-that]]
+            [inflections.core :refer [pluralize]] 
+            (clojure [string :refer [capitalize]] 
+                     [set :refer [union]])
             [clojure.data.json :as json])
-  (:use [com.redhat.qe.auto.selenium.selenium
-         :only [browser ->browser fill-form fill-item]]
-        katello.tasks
-        katello.notifications
-        [katello.conf :only [config]]
-        [katello.api-tasks :only [when-katello when-headpin]]
-        [slingshot.slingshot :only [throw+ try+]]
-        [tools.verify :only [verify-that]]
-        [clojure.string :only [capitalize]]
-        [clojure.set :only [union]]
-        [inflections.core :only [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 

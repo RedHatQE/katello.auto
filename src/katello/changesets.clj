@@ -1,13 +1,13 @@
 (ns katello.changesets
-  (:require [katello.locators :as locators])
-  (:use [com.redhat.qe.auto.selenium.selenium
-         :only  [browser ->browser loop-with-timeout]]
-        [slingshot.slingshot :only [throw+ try+]]
-        [tools.verify :only [verify-that]]
-        katello.tasks
-        katello.ui-tasks
-        [katello.sync-management :only [sync-repos sync-success?]]
-        [katello.notifications :only [check-for-success]]))
+  (:require [katello.locators :as locators]
+            [com.redhat.qe.auto.selenium.selenium
+              :refer  [browser ->browser loop-with-timeout]]
+            [slingshot.slingshot :refer [throw+ try+]]
+            [tools.verify :refer [verify-that]]
+            [katello.tasks :refer :all] 
+            [katello.ui-tasks :refer :all] 
+            [katello.sync-management :refer [sync-repos sync-success?]]
+            [katello.notifications :refer [check-for-success]]))
 
 ;;
 ;; Changesets

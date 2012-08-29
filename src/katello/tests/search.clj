@@ -1,17 +1,18 @@
 (ns katello.tests.search
-  (:use test.tree.script
-        katello.tasks
-        [katello.organizations :only [create-organization]]
-        [katello.users :only [create-user]]
-        [katello.sync-management :only [create-sync-plan]]
-        katello.ui-tasks
-        katello.systems
-        [tools.verify :only [verify-that]]
-        [katello.tests.organizations :only [create-test-org]]
-        [katello.tests.users :only [generic-user-details]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        slingshot.slingshot)
-  (:require (katello [api-tasks :as api])))
+  (:require (katello [api-tasks :as api]
+                     [organizations :refer [create-organization]]
+                     [users :refer [create-user]]
+                     [sync-management :refer [create-sync-plan]]
+                     [tasks :refer :all]
+                     [ui-tasks :refer :all]
+                     [systems :refer :all])
+            [katello.tests.organizations :refer [create-test-org]]
+            [katello.tests.users :refer [generic-user-details]]
+            [test.tree.script :refer :all]
+            [tools.verify :refer [verify-that]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [slingshot.slingshot :refer :all]))
+
 
 ;; Functions
 

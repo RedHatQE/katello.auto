@@ -1,8 +1,8 @@
 (ns katello.systems
-  (:require [katello.locators :as locators]) 
-  (:use [com.redhat.qe.auto.selenium.selenium :only [browser]]
-        [katello.notifications :only [check-for-success]] 
-        katello.ui-tasks))
+  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+            (katello [locators :as locators] 
+                     [notifications :refer [check-for-success]] 
+                     [ui-tasks :refer :all])))
 
 (defn create-system
   "Creates a system"

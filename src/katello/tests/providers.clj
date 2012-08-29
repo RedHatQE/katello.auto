@@ -2,24 +2,24 @@
   (:refer-clojure :exclude [fn])
   (:require [katello.api-tasks :as api]
             [clj-http.client :as http]
-            [clojure.java.io :as io])
-  (:use katello.tasks
-        [katello.notifications :only [success?]]
-        [katello.organizations :only [with-organization switch-organization]]
-        [katello.changesets :only [sync-and-promote]]
-        [katello.sync-management :only [sync-complete-status]]
-        [katello.systems :only [edit-system]]
-        katello.providers
-        katello.ui-tasks
-        katello.validation
-        slingshot.slingshot
-        [katello.tests.e2e :only [test-client-access]]
-        test.tree.script
-        [test.tree.builder :only [data-driven]]
-        [serializable.fn :only [fn]]
-        [tools.verify :only [verify-that]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        [katello.conf :only [config no-clients-defined]]))
+            [clojure.java.io :as io]
+            [slingshot.slingshot :refer :all]
+            [test.tree.script :refer :all]
+            [test.tree.builder :refer [data-driven]]
+            [serializable.fn :refer [fn]]
+            [tools.verify :refer [verify-that]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [katello.tests.e2e :refer [test-client-access]] 
+            (katello [tasks :refer :all]
+                     [notifications :refer [success?]] 
+                     [organizations :refer [with-organization switch-organization]] 
+                     [changesets :refer [sync-and-promote]] 
+                     [sync-management :refer [sync-complete-status]] 
+                     [systems :refer [edit-system]] 
+                     [providers :refer :all]
+                     [ui-tasks :refer :all]
+                     [validation :refer :all]
+                     [conf :refer [config no-clients-defined]])))
 
 ;; Constants
 
