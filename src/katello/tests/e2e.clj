@@ -4,6 +4,9 @@
   (:refer-clojure :exclude [fn])
   (:use [serializable.fn :only [fn]]
         katello.tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        [katello.changesets :only [sync-and-promote]]
+        [katello.organizations :only [with-organization]]
         katello.ui-tasks
         test.tree.script
         test.tree.builder
@@ -64,7 +67,7 @@
           target-env (first *environments*)
           cs-name (uniqueify "promo-safari")
           package-to-install "cheetah"]
-      (with-org (@config :admin-org)
+      (with-organization (@config :admin-org)
         (api/with-admin
           (api/with-admin-org
             (api/ensure-env-exist target-env {:prior library})

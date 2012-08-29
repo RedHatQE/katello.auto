@@ -2,8 +2,9 @@
   (:refer-clojure :exclude [fn])
   (:use test.tree.script
         katello.conf
+        [katello.ui-tasks :only [navigate errtype]]
         katello.tasks
-        katello.ui-tasks
+        katello.users
         slingshot.slingshot
         [bugzilla.checker :only [open-bz-bugs]]
         [tools.verify :only [verify-that]]))
@@ -19,7 +20,7 @@
   message appears in the UI."
   [username password]
   (try+
-    (expecting-error (errtype :katello.ui-tasks/invalid-credentials) 
+    (expecting-error (errtype :katello.notifications/invalid-credentials) 
                      (login username password))
    (finally
     (login *session-user* *session-password*))))

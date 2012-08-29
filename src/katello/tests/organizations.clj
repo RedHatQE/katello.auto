@@ -3,6 +3,8 @@
   (:require (katello [api-tasks :as api]
                      [validation :as v]))
   (:use katello.tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        katello.organizations
         katello.ui-tasks
         [katello.conf :only [config]]
         [tools.verify :only [verify-that]]
@@ -37,7 +39,7 @@
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (create-organization org-name {:description "org to delete and recreate"})
-  (switch-org org-name)
+  (switch-organization org-name)
   (create-provider {:name provider-name
                     :description "provider to del and recreate"})
   (add-product {:provider-name provider-name
@@ -52,9 +54,9 @@
 (def bad-org-names
   (concat
    (for [inv-char-str v/invalid-character-strings]
-     [inv-char-str :katello.ui-tasks/name-must-not-contain-characters])
+     [inv-char-str :katello.notifications/name-must-not-contain-characters])
    (for [trailing-ws-str v/trailing-whitespace-strings]
-     [trailing-ws-str :katello.ui-tasks/name-no-leading-trailing-whitespace])))
+     [trailing-ws-str :katello.notifications/name-no-leading-trailing-whitespace])))
 
 ;; Tests
 
@@ -81,7 +83,7 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (v/expecting-error-2nd-try (errtype :katello.ui-tasks/name-taken-error)
+        (v/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
                                    (create-organization org-name {:description "org-description"}))))
 
   
@@ -124,10 +126,10 @@
                       repo-url       "http://blah.com/blah"]
           (try
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
-            (switch-org                          (@config :admin-org))
+            (switch-organization                          (@config :admin-org))
             (delete-organization                 org-name)
             ;;wait for delayed job to delete org
             (Thread/sleep                        30000)
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
             (finally
-              (switch-org                         (@config :admin-org)))))))))
+              (switch-organization                         (@config :admin-org)))))))))

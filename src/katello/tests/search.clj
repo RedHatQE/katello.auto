@@ -1,7 +1,11 @@
 (ns katello.tests.search
   (:use test.tree.script
         katello.tasks
+        [katello.organizations :only [create-organization]]
+        [katello.users :only [create-user]]
+        [katello.sync-management :only [create-sync-plan]]
         katello.ui-tasks
+        katello.systems
         [tools.verify :only [verify-that]]
         [katello.tests.organizations :only [create-test-org]]
         [katello.tests.users :only [generic-user-details]]
@@ -88,7 +92,9 @@
      [["test-123" {:initial-env-name "dev" :description "This is a test-123 org"}] {:criteria "name:test-123*"}]
      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:\"This is a test org\""}]
      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:(+test+org)"}]
-     [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]])
+     (with-meta
+       [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+       {:blockers (open-bz-bugs "852119")})])
      
  
 

@@ -3,7 +3,10 @@
   (:require [katello.api-tasks :as api])
   (:use test.tree.script
         katello.tasks
-        katello.ui-tasks
+        [katello.organizations :only [switch-organization]]
+        [katello.ui-tasks :only [navigate errtype]]
+        [katello.sync-management :only [sync-repos]]
+        katello.environments
         katello.validation
         slingshot.slingshot
         [katello.conf :only [config]]
@@ -30,7 +33,7 @@
    automatically."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-environment env-name {:org-name org}))
   (delete-environment env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
@@ -43,7 +46,7 @@
    verify-delete-env-restricted-to-this-org."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-environment env-name {:org-name org})))
 
 (defn setup-environment-with-promoted-content
@@ -134,7 +137,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.ui-tasks/name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
                                  (create-environment env-name
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))

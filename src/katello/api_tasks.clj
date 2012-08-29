@@ -252,9 +252,14 @@
                 :cp_type "system"
                 :facts facts})))
 
-(defn create-changeset [name]
+(defn create-changeset
+  "Creates a changeset. type defaults to 'PROMOTION', can also be
+   'DELETION'."
+  [name & [{:keys [type]}]]
   (rest/with-client-auth *user* *password*
-    (rest/post (api-url (uri-for-entity-type :changeset)) {:changeset {:name name}})))
+    (rest/post (api-url (uri-for-entity-type :changeset))
+               {:changeset {:name name
+                            :type (or type "PROMOTION")}})))
 
 (defn add-to-changeset [changeset-name entity-type entity]
   (rest/with-client-auth *user* *password*

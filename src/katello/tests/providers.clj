@@ -4,6 +4,12 @@
             [clj-http.client :as http]
             [clojure.java.io :as io])
   (:use katello.tasks
+        [katello.notifications :only [success?]]
+        [katello.organizations :only [with-organization switch-organization]]
+        [katello.changesets :only [sync-and-promote]]
+        [katello.sync-management :only [sync-complete-status]]
+        [katello.systems :only [edit-system]]
+        katello.providers
         katello.ui-tasks
         katello.validation
         slingshot.slingshot
@@ -45,7 +51,7 @@
       (api/with-admin (api/create-organization org)))
     (try
       (f ent-name orgs)
-      (finally (switch-org (@config :admin-org))))))
+      (finally (switch-organization (@config :admin-org))))))
 
 (defn with-two-providers
   "Create two providers with unique names, and call f with a unique
@@ -63,7 +69,7 @@
   "Create providers with the same name in multiple orgs."
   [prov-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (create-provider {:name prov-name})))
 
 (defn validation
@@ -77,7 +83,7 @@
   (concat
    [[{:name nil
       :description "blah"
-      :url "http://sdf.com"} (errtype :katello.ui-tasks/name-cant-be-blank)]
+      :url "http://sdf.com"} (errtype :katello.notifications/name-cant-be-blank)]
 
     [{:name (uniqueify "mytestcp4")
       :description nil
@@ -91,12 +97,12 @@
    (for [trailing-ws-str trailing-whitespace-strings]
      [{:name trailing-ws-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-no-leading-trailing-whitespace)])
+       :url "http://sdf.com"} (errtype :katello.notifications/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.ui-tasks/name-must-not-contain-characters)])))
+       :url "http://sdf.com"} (errtype :katello.notifications/name-must-not-contain-characters)])))
 
 ;; Tests
 

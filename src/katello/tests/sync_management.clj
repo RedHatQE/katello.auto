@@ -3,7 +3,12 @@
             [katello.validation :as validate])
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
-        katello.ui-tasks
+        [katello.providers :only [create-provider add-product add-repo]]
+        [katello.users :only [login create-user]]
+        [katello.roles :only [assign-role]]
+        [katello.organizations :only [create-organization]]
+        katello.sync-management
+        [katello.ui-tasks :only [navigate errtype]]
         test.tree.script
         [katello.tests.login :only [login-admin]]
         [bugzilla.checker :only [open-bz-bugs]]
@@ -39,8 +44,8 @@
                    (create-sync-plan arg)))
 
 (defn plan-validation-data []
-  [[{:start-time (java.util.Date.) :interval "daily"} :katello.ui-tasks/name-cant-be-blank]
-   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.ui-tasks/start-date-time-cant-be-blank]])
+  [[{:start-time (java.util.Date.) :interval "daily"} :katello.notifications/name-cant-be-blank]
+   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.notifications/start-date-time-cant-be-blank]])
 
 (defn sync-with-user [user]
   (with-unique [user user
@@ -138,8 +143,9 @@
                              {:product-name second-product-name
                               :url (@config :sync-repo)}))
           (api/with-env (first *environments*)
-            (api/promote {:products (for [product product-names]
-                                      {:product_id (api/get-id-by-name :product product)})})))
+            (api/promote {:products (doall
+                                     (for [product product-names]
+                                       {:product_id (api/get-id-by-name :product product)}))})))
         (sync-schedule {:plan-name @plan-name
                         :products product-names})
         (let [expected-plan @plan-name

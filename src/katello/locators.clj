@@ -25,13 +25,14 @@
 
 (define-strategies
   {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+   auto-complete-item              "//ul[contains(@class,'ui-autocomplete')]//a[.='$1']"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
-   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis')])[$1]"
+   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[$1]"
    link                            "link=$1"
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification')]//a[@class='jnotify-close'])[$1]"
    notification-index              "xpath=(//div[contains(@class,'jnotify-notification')])[$1]"
@@ -123,10 +124,11 @@
        [:sync-status
         :sync-plans
         :sync-schedule]
+       :content-search
        :system-templates
-       :changeset-promotions
-       [:promotions
-        :changeset-promotion-history]]
+       :changeset-management
+       [:changesets
+        :changeset-history]]
       :systems
       [:all
        :by-environments
@@ -135,7 +137,6 @@
 
       ;;3rd level subtabs
       :create
-      :promotions
       :details
       :registered
       :groups
@@ -227,7 +228,7 @@
    :review-for-promotion        "review_changeset"
    :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
    :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-   :new-promotion-changeset     "//a[contains(.,'New Promotion Changeset')]"
+   :new-changeset     "//a[contains(.,'New Changeset')]"
    :changeset-name-text         "changeset[name]"
    :save-changeset              "save_changeset_button"
    :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
@@ -261,6 +262,21 @@
    :sync-plan-time-text        "sync_plan[plan_time]"
    :save-sync-plan             "plan_save"})
 
+(def content-search
+  {:content-search-type        "//select[@id='content']"
+   :add-prod                   "add_product"
+   :add-repo                   "add_repo"
+   :add-pkg                    "add_package"
+   :repo-auto-complete-radio   "repos_auto_complete_radio"
+   :pkg-auto-complete-radio    "packages_auto_complete_radio"
+   :prod-auto-complete         "product_auto_complete"
+   :repo-auto-complete         "repo_auto_complete"
+   :pkg-auto-complete          "packages_auto_complete"
+   :errata-search              "//input[@id='search']"
+   :browse-button              "//input[@id='browse_button']"
+   :content-search-load-more   "//a[contains(@class,'load_row_link')]"
+  })
+
 (def systems
   {:new-system                             "new"
    :create-system                          "system_submit"
@@ -289,7 +305,6 @@
    :system-group-copy-description-text     "description_input"
    :system-group-copy-submit               "copy_button"
    :system-group-remove                    (link "Remove")
-   :system-group-info                      "system_group_info"
    :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
    :system-group-unlimited                 "//input[@class='unlimited_members']"
    :save-new-limit                          "//button[.='Save']"
@@ -349,7 +364,7 @@
   SeleniumLocatable protocol."}
   uimap
   (merge all-tabs common organizations environments roles users systems sync-plans
-         sync-schedules promotions providers templates
+         content-search sync-schedules promotions providers templates
          { ;; login page
           :username-text     "username"
           :password-text     "password"
@@ -398,6 +413,12 @@
                              (.substring name 0 32) ;workaround for bz 737678
                              name))])))
 
+(defn content-search-expand-strategy
+  "Returns a locator strategy function for the expansion of the
+  current row. The function returned will get any cell by index
+  number."
+  [current-loc n]
+  (template (format "%s/../ul[%s]/li[$1]" current-loc n)))
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
@@ -489,13 +510,14 @@
          (choose-left-pane (left-pane-item sync-plan-name))]
         [:new-sync-plan-page [] (browser click :new-sync-plan)]]
        [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
-      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-promotion-history)]
-      [:changeset-promotions-tab [] (browser mouseOver :changeset-promotions)
-       [:promotions-page [] (browser clickAndWait :promotions)
-        [:named-environment-promotions-page [env-name next-env-name]
+      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-history)]
+      [:changeset-promotions-tab [] (browser mouseOver :changeset-management)
+       [:changesets-page [] (browser clickAndWait :changesets)
+        [:named-environment-changesets-page [env-name next-env-name]
          (select-environment-widget env-name {:next-env-name next-env-name :wait true})
-         [:named-changeset-promotions-page [changeset-name]
+         [:named-changeset-page [changeset-name]
           (browser click (changeset changeset-name))]]]]
+      [:content-search-page [] (browser clickAndWait :content-search)]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]
        [:new-system-template-page [] (browser click :new-template)]]]

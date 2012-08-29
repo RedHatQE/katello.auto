@@ -1,7 +1,12 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
+        [katello.providers :only [create-provider]]
+        katello.roles
+        katello.users
+        [katello.environments :only [create-environment]]
         katello.ui-tasks
+        katello.organizations
         test.tree.script
         [serializable.fn :only [fn]]
         [tools.verify :only [verify-that]]
@@ -88,7 +93,7 @@
           :allowed-actions [(access-org (@conf/config :admin-org))]
           :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                   :custom-content-providers-tab :system-templates-page
-                                                  :promotions-page )
+                                                  :changesets-page )
                                     (fn [] (create-organization (uniqueify "cantdothis")))
                                     create-an-env)])
 
@@ -104,7 +109,7 @@
                               create-an-env]
             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
-                                                    :promotions-page )
+                                                    :changesets-page )
                                       (fn [] (create-provider {:name "myprov"}))
                                       (fn [] (api/create-provider "myprov")))]))
    
@@ -152,7 +157,7 @@
                                         :name "stread"}]}]
           :allowed-actions [(navigate-fn :system-templates-page)]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
-                                                  :custom-content-providers-tab :sync-status-page :promotions-page)
+                                                  :custom-content-providers-tab :sync-status-page :changesets-page)
                                     create-a-st
                                     (fn [] (create-organization (uniqueify "cantdothis")))
                                     create-an-env)])
@@ -163,7 +168,7 @@
                                         :name "stmang"}]}]
           :allowed-actions [create-a-st]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
-                                                  :custom-content-providers-tab :sync-status-page :promotions-page)
+                                                  :custom-content-providers-tab :sync-status-page :changesets-page)
                                     (fn [] (create-organization (uniqueify "cantdothis")))
                                     create-an-env)])
    
@@ -211,8 +216,8 @@
             :allowed-actions [(access-org (@conf/config :admin-org))]
             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
-                                                    :promotions-page )
-                                      (fn [] (switch-org org))
+                                                    :changesets-page )
+                                      (fn [] (switch-organization org))
                                       (fn [] (navigate :named-organization-page {:org-name org})))]))
    
    ])

@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:use katello.tasks
         katello.ui-tasks
+        katello.systems
         test.tree.script
         [test.tree.builder :only [union]]
         [serializable.fn :only [fn]]
@@ -137,10 +138,10 @@
               (expecting-error pred (edit-system-group
                                      group-name {:new-limit limit}))))
           
-          [["-1"   (errtype :katello.ui-tasks/max-systems-must-be-positive)]
-           ["-100" (errtype :katello.ui-tasks/max-systems-must-be-positive)]
-           [""     (errtype :katello.ui-tasks/max-systems-must-be-positive)]
-           ["0"    (errtype :katello.ui-tasks/max-systems-may-not-be-zero)]])))
+          [["-1"   (errtype :katello.notifications/max-systems-must-be-positive)]
+           ["-100" (errtype :katello.notifications/max-systems-must-be-positive)]
+           [""     (errtype :katello.notifications/max-systems-must-be-positive)]
+           ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
 
     (deftest "Add a system to a system group"

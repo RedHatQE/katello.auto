@@ -23,7 +23,7 @@
 (defn create-same-product-name-in-multiple-orgs
   [product-name orgs]
   (doseq [org orgs]
-    (switch-org org)
+    (switch-organization org)
     (let [provider-name (uniqueify "prov")]
       (api/with-admin
         (api/with-org org
@@ -83,5 +83,5 @@
                     providers, where the providers are in the same
                     org. Verifies that a validation error is shown in
                     the UI when creating the 2nd provider."
-      (expecting-error (errtype :katello.ui-tasks/product-must-be-unique-in-org)
+      (expecting-error (errtype :katello.notifications/product-must-be-unique-in-org)
                        (with-two-providers create-same-product-in-multiple-providers)))))
