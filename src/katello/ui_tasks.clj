@@ -95,41 +95,6 @@
        mypluralize
        keyword)))
 
-(defn content-search-get-all-results []
-  (while (browser isElementPresent :content-search-load-more)
-    (browser click :content-search-load-more)))
-
-(defn extract-tree [f]
-  "Extract a tree of items from the UI (currently content search
-   results), accepts locator function as argument for example,
-   extract-left-pane-list locators/left-pane-field-list"
-
-  (let [first-row (f "1")]
-    (if (browser isElementPresent first-row)
-      (do (content-search-get-all-results)
-          (let [entity-type (-> (browser getAttributes first-row) 
-                               (.get "data-id")
-                               content-search-entity-type-from-attribute)] 
-            {entity-type
-             (doall (take-while not-empty
-                                (for [index (iterate inc 1)]
-                                  (let [loc (-> index str f)
-                                        plain-item (try (browser getText loc)
-                                                        (catch SeleniumException _ nil))
-                                        next-f (locators/content-search-expand-strategy (.getLocator loc)
-                                                                                        index)
-                                        children (and plain-item (extract-tree next-f))]
-                                    (if (empty? children)
-                                      plain-item
-                                      (assoc children :name plain-item))))))}))
-      (list))))
-
-
-(defn extract-content-search-results []
-  (->>  "JSON.stringify(window.comparison_grid.export_data());"
-      (browser getEval)
-      (json/read-json)))
-
 (defn extract-left-pane-list []
   (extract-list locators/left-pane-field-list))
 
@@ -166,9 +131,11 @@
 
 (defn search-for-content
   "Performs a search for the specified content type using any product,
-   repository, package or errata filters specified. Note that while prods,
-   repos and pkgs should be vectors, errata is expected to be a string.
-   Example: search-for-content :errata-type {:prods ['myprod'] 
+   repository, package or errata filters specified. Note that while
+   prods, repos and pkgs should be vectors, errata is expected to be a
+   string. Returns the search results as raw data from the browser
+   javascript.
+   Example: search-for-content :errata-type {:prods ['myprod']
                                              :repos ['myrepo']
                                              :errata 'myerrata'}"
   [content-type & [{:keys [prods repos pkgs errata]}]]
@@ -179,7 +146,7 @@
     :pkg-type    (assert (empty? errata))
     :errata-type (assert (empty? pkgs)))
 
-  ; Navigate to content search page and select content type
+  ;; Navigate to content search page and select content type
   (let [ctype-map {:prod-type   "Products"
                    :repo-type   "Repositories"
                    :pkg-type    "Packages"
@@ -187,15 +154,15 @@
         ctype-str (ctype-map content-type)]
     (navigate :content-search-page)
     (browser select :content-search-type ctype-str))
-
-  ; Add content filters using auto-complete
+  
+  ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
           [[:prod-auto-complete :add-prod prods] 
            [:add-repo :repo-auto-complete repos] 
            [:add-pkg :pkg-auto-complete pkgs]]]
     (doseq [cont-item cont-items]
       (browser setText auto-comp-box cont-item)
-      ; typeKeys is necessary to trigger drop-down list
+      ;; typeKeys is necessary to trigger drop-down list
       (browser typeKeys auto-comp-box cont-item)
       (let [elem (locators/auto-complete-item cont-item)] 
         (->browser (waitForElement elem "2000")
@@ -203,9 +170,19 @@
                    (click elem)))
       (browser click add-button)))
 
-  ; Add errata
+  ;; Add errata
   (when-not (empty? errata) (browser setText :errata-search errata))
-  (browser click :browse-button))
+  
+  (browser click :browse-button)
+
+  ;; load all results
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more))
+  
+  ;;extract and return content
+  (->>  "JSON.stringify(window.comparison_grid.export_data());"
+      (browser getEval)
+      (json/read-json))) 
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
