@@ -1,19 +1,19 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require [katello.api-tasks :as api])
-  (:use test.tree.script
-        katello.tasks
-        [katello.organizations :only [switch-organization]]
-        [katello.ui-tasks :only [navigate errtype]]
-        [katello.sync-management :only [sync-repos]]
-        katello.environments
-        katello.validation
-        slingshot.slingshot
-        [katello.conf :only [config]]
-        [katello.tests.providers :only [with-n-new-orgs]]
-        [tools.verify :only [verify-that]]
-        [serializable.fn :only [fn]]
-        [bugzilla.checker :only [open-bz-bugs]]))
+  (:require (katello  [api-tasks :as api] 
+                      [organizations :refer [switch-organization]] 
+                      [ui-tasks :refer [navigate errtype]] 
+                      [sync-management :refer [sync-repos]] 
+                      [tasks :refer :all] 
+                      [environments :refer :all] 
+                      [validation :refer :all] 
+                      [conf :refer [config]]) 
+            [katello.tests.providers :refer [with-n-new-orgs]] 
+            [test.tree.script :refer :all]
+            [slingshot.slingshot :refer :all]
+            [tools.verify :refer [verify-that]]
+            [serializable.fn :refer [fn]]
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Variables
 

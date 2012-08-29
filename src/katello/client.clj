@@ -1,6 +1,6 @@
 (ns katello.client
-  (:use [katello.conf :only [config]]
-        [slingshot.slingshot :only [try+ throw+]])
+  (:require [katello.conf :refer [config]]
+            [slingshot.slingshot :refer [try+ throw+]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [java.io File]))
 

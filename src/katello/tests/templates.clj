@@ -1,14 +1,14 @@
 (ns katello.tests.templates
   (:refer-clojure :exclude [fn])
-  (:require [katello.api-tasks :as api]
-            [clj-http.client :as http]
-            [clojure.java.io :as io])
-  (:use katello.tasks
-        katello.ui-tasks
-        test.tree.script
-        [serializable.fn :only [fn]]
-        [bugzilla.checker :only [open-bz-bugs]]
-        [katello.conf :only [*environments*]]))
+  (:require [clj-http.client :as http]
+            [clojure.java.io :as io]
+            [test.tree.script :refer :all] 
+            [serializable.fn :refer [fn]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            (katello [api-tasks :as api] 
+                     [tasks :refer :all] 
+                     [ui-tasks :refer :all] 
+                     [conf :refer [*environments*]])))
 
 ;; Variables
 

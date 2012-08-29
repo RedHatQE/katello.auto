@@ -2,8 +2,8 @@
   (:require [clj-http.client :as httpclient]
             [http.async.client :as http]
             [http.async.client.cert :as cert]
-            [clojure.data.json :as json])
-  (:use slingshot.slingshot)
+            [clojure.data.json :as json]
+            [slingshot.slingshot :refer [throw+]])
   (:refer-clojure :exclude (get)))
 
 (def ^:dynamic *client* nil)

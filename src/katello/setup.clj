@@ -1,18 +1,18 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
   (:require [clojure.data :as data]
-            (katello [api-tasks :as api]
-                     [client :as client]) 
             [test.tree.watcher :as watch]
             [test.tree.jenkins :as jenkins]
-            selenium-server)
-  (:use [clojure.string :only [split replace]]
-        katello.conf
-        katello.tasks
-        [katello.users :only [login logout]]
-        [katello.roles :only [assign-role]]
-        fn.trace 
-        com.redhat.qe.auto.selenium.selenium))
+            [selenium-server :refer :all] 
+            [clojure.string :refer [split replace]]
+            (katello [api-tasks :as api]
+                     [client :as client]) 
+                     [katello.conf :refer :all]
+                     [katello.tasks :refer :all]
+            [katello.users :refer [login logout]]
+            [katello.roles :refer [assign-role]]
+            [fn.trace :refer :all]
+            [com.redhat.qe.auto.selenium.selenium :refer :all]))
 
 (defn new-selenium
   "Returns a new selenium client. If running in a REPL or other

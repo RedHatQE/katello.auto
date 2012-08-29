@@ -1,19 +1,19 @@
 (ns katello.tests.e2e
-  (:require (katello [client :as client]
-                     [api-tasks :as api]))
   (:refer-clojure :exclude [fn])
-  (:use [serializable.fn :only [fn]]
-        katello.tasks
-        [katello.providers :only [create-provider add-product add-repo]]
-        [katello.changesets :only [sync-and-promote]]
-        [katello.organizations :only [with-organization]]
-        katello.ui-tasks
-        test.tree.script
-        test.tree.builder
-        [bugzilla.checker :only [open-bz-bugs]]
-        [tools.verify :only [verify-that]]
-        slingshot.slingshot
-        [katello.conf :only [*session-user* *session-password* *environments* config no-clients-defined]]))
+  (:require (katello [client :as client]
+                     [api-tasks :as api]
+                     [providers :refer [create-provider add-product add-repo]]
+                     [changesets :refer [sync-and-promote]]
+                     [organizations :refer [with-organization]]
+                     [tasks :refer :all]
+                     [ui-tasks :refer :all]
+                     [conf :refer [*session-user* *session-password* *environments* config no-clients-defined]]) 
+            (test.tree [script :refer :all]
+                       [builder :refer :all])
+            [serializable.fn :refer [fn]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [tools.verify :refer [verify-that]]
+            [slingshot.slingshot :refer :all]))
 
 ;; Functions
 

@@ -1,11 +1,11 @@
 (ns katello.validation
   (:refer-clojure :exclude [fn])
-  (:require [clojure.string :as string])
-  (:use slingshot.slingshot
-        [katello.tasks :only [expecting-error]]
-        [katello.ui-tasks :only [errtype]]
-        [serializable.fn :only [fn]] 
-        [tools.verify :only [verify-that]]))
+  (:require [clojure.string :as string]
+            [slingshot.slingshot :refer :all]
+            [katello.tasks :refer [expecting-error]]
+            [katello.ui-tasks :refer [errtype]]
+            [serializable.fn :refer [fn]] 
+            [tools.verify :refer [verify-that]]))
 
 
 ;; Types of bad data

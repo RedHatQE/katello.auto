@@ -1,9 +1,9 @@
 (ns katello.sync-management
-  (:require [katello.locators :as locators]) 
-  (:use [com.redhat.qe.auto.selenium.selenium 
-         :only [browser loop-with-timeout]]
-        [katello.notifications :only [check-for-success]]
-        [katello.ui-tasks :only [navigate fill-ajax-form in-place-edit]])
+  (:require [com.redhat.qe.auto.selenium.selenium 
+              :refer [browser loop-with-timeout]]
+            (katello [locators :as locators] 
+                     [notifications :refer [check-for-success]] 
+                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
