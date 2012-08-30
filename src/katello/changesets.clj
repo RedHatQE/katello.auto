@@ -6,7 +6,7 @@
             [tools.verify :refer [verify-that]]
             [katello.tasks :refer :all] 
             [katello.ui-tasks :refer :all] 
-            [katello.sync-management :refer [sync-repos sync-success?]]
+            [katello.sync-management :as sync]
             [katello.notifications :refer [check-for-success]]))
 
 ;;
@@ -87,7 +87,7 @@
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)
         all-repos (apply concat (map :repos products))
-        sync-results (sync-repos all-repos {:timeout 600000})]
-        (verify-that (every? (fn [[_ res]] (sync-success? res))
+        sync-results (sync/perform-sync all-repos {:timeout 600000})]
+        (verify-that (every? (fn [[_ res]] (sync/success? res))
                              sync-results))
         (promote-content from-env to-env {:products all-prods})))

@@ -10,7 +10,7 @@
                      [katello.conf :refer :all]
                      [katello.tasks :refer :all]
             [katello.users :refer [login logout]]
-            [katello.roles :refer [assign-role]]
+            [katello.roles :as role]
             [fn.trace :refer :all]
             [com.redhat.qe.auto.selenium.selenium :refer :all]))
 
@@ -40,7 +40,7 @@
   (api/with-creds (@config :admin-user) (@config :admin-password)
     (api/create-user user {:password pw
                            :email (str user "@myorg.org")}))
-  (assign-role {:user user
+  (role/assign {:user user
                    :roles ["Administrator"]})
   (logout)
   (login user pw))

@@ -1,8 +1,8 @@
 (ns katello.tests.search
   (:require (katello [api-tasks :as api]
-                     [organizations :refer [create-organization]]
-                     [users :refer [create-user]]
-                     [sync-management :refer [create-sync-plan]]
+                     [organizations :as organization]
+                     [users :as user]
+                     [sync-management :as sync]
                      [tasks :refer :all]
                      [ui-tasks :refer :all]
                      [systems :refer :all])
@@ -41,11 +41,11 @@
     :description "Search for organizations based on criteria." 
     :blockers    (open-bz-bugs "750120")
       
-    (verify-simple-search :organizations create-organization "myfoobar"))
+    (verify-simple-search :organizations organization/create "myfoobar"))
   
 
   (deftest "Search for a user"
-    (verify-simple-search :users #(create-user % generic-user-details) "mybazquux"))
+    (verify-simple-search :users #(user/create % generic-user-details) "mybazquux"))
 
   (deftest "Perform search operation on systems"
     :data-driven true
@@ -83,7 +83,7 @@
     (fn [org searchterms]
       (let [[name opts] org
             unique-org [(uniqueify name) opts]]
-        (apply create-organization unique-org)
+        (apply organization/create unique-org)
         (search :organizations searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
@@ -114,6 +114,7 @@
             [["hill_山"  {:description "This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語" :initial-env-name "dev"}] {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}]
             [["తెలుగు" {:description "This is a test_123 org" :initial-env-name "dev"}] {:criteria "తెలుగు*"}]]]
 
+
        ;;modify each above row with metadata specific to multibyte
        ;;testing
            
@@ -130,7 +131,7 @@
     (fn [user searchterms]
       (let [[name opts] user
             unique-user [(uniqueify name) opts]]
-        (apply create-user unique-user)
+        (apply user/create unique-user)
         (search :users searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
@@ -165,7 +166,7 @@
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
     (fn [key_opt searchterms]
-      (create-sync-plan key_opt)
+      (sync/create-plan key_opt)
       (search :sync-plans searchterms)
       (let [valid-search-results (search-results-valid?
                                   (constantly true)

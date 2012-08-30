@@ -3,7 +3,7 @@
   (:require (katello [conf :refer :all] 
                      [ui-tasks :refer [navigate errtype]]
                      [tasks :refer :all]
-                     [users :refer :all])
+                     [users :as user])
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -21,14 +21,14 @@
   [username password]
   (try+
     (expecting-error (errtype :katello.notifications/invalid-credentials) 
-                     (login username password))
+                     (user/login username password))
    (finally
-    (login *session-user* *session-password*))))
+    (user/login *session-user* *session-password*))))
 
 (defn login-admin []
-  (logout)
-  (login         *session-user*         *session-password*)
-  (verify-that   (= (current-user) *session-user*)))
+  (user/logout)
+  (user/login         *session-user*         *session-password*)
+  (verify-that   (= (user/current) *session-user*)))
 
 
 ;;; Tests

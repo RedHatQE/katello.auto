@@ -10,7 +10,7 @@
 ;; Environments
 ;;
 
-(defn create-environment
+(defn create
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
@@ -22,7 +22,7 @@
                   :create-environment)
   (check-for-success))
 
-(defn delete-environment
+(defn delete
   "Deletes an environment from the given organization."
   [env-name {:keys [org-name]}]
   (navigate :named-environment-page {:org-name org-name
@@ -33,7 +33,7 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-environment
+(defn edit
   "Edits an environment with the given name. Also takes a map
    containing the name of the environment's organization, and optional
    fields: a new description."
@@ -42,14 +42,14 @@
                                      :env-name env-name})
   (in-place-edit {:env-description-text description}))
 
-(defn create-environment-path
+(defn create-path
   "Creates a path of environments in the given org. All the names in
   the environment list must not already exist in the given org. Example:
-  (create-environment-path 'ACME_Corporation' ['Dev' 'QA' 'Production'])"
+  (create-path 'ACME_Corporation' ['Dev' 'QA' 'Production'])"
   [org-name environments]
   (let [env-chain  (partition 2 1 (concat [library] environments))]
     (doseq [[prior curr] env-chain]
-      (create-environment curr {:prior-env prior
+      (create curr {:prior-env prior
                                 :org-name org-name}))))
 
 (defn- extract-content []
@@ -60,7 +60,7 @@
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set)))
 
-(defn environment-content
+(defn content
   "Returns the content that is available to promote, in the given environment."
   [env-name]
   (navigate :named-environment-changesets-page {:env-name env-name
@@ -78,7 +78,7 @@
 (defn ^{:TODO "finish me"} change-set-content [env]
   (navigate :named-environment-changesets-page {:env-name env}))
 
-(defn environment-has-content?
+(defn has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
   (navigate :named-environment-changesets-page {:env-name env :next-env-name ""})

@@ -1,7 +1,7 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
                      [changesets :refer [promote-content]] 
-                     [environments :refer [environment-content]] 
+                     [environments :as environment]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [conf :refer [config *environments*]]) 
@@ -65,7 +65,7 @@
                                                                 :name repo-name}]}))))))
   (doseq [[from-env target-env] (chain-envs envs)] 
     (promote-content from-env target-env content)
-    (verify-all-content-present content (environment-content target-env))))
+    (verify-all-content-present content (environment/content target-env))))
 
 (def promo-data
   (runtime-data
