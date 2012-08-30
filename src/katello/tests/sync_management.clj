@@ -1,12 +1,12 @@
 (ns katello.tests.sync_management
   (:require (katello [api-tasks :as api] 
                      [validation :as validate] 
-                     [providers :refer [create-provider add-product add-repo]] 
-                     [users :refer [login create-user]] 
-                     [roles :refer [assign-role]] 
-                     [organizations :refer [create-organization]] 
+                     [providers :as provider] 
+                     [users :as user] 
+                     [roles :as role] 
+                     [organizations :as organization] 
                      [tasks :refer :all]
-                     [sync-management :refer :all]
+                     [sync-management :as sync]
                      [ui-tasks :refer [navigate errtype]] 
                      [conf :refer [config *environments*]]) 
             [katello.tests.login :refer [login-admin]] 
@@ -41,7 +41,7 @@
 
 (defn plan-validate [arg expected]
   (expecting-error (errtype expected)
-                   (create-sync-plan arg)))
+                   (sync/create-plan arg)))
 
 (defn plan-validation-data []
   [[{:start-time (java.util.Date.) :interval "daily"} :katello.notifications/name-cant-be-blank]
@@ -54,21 +54,22 @@
                 provider "prov"
                 product "prod"
                 repo "repo"]
-    (create-user user {:password password :email "blah@blah.com"})
-    (assign-role {:user user :roles ["Administrator"]})
+    (user/create user {:password password :email "blah@blah.com"})
+    (role/assign {:user user :roles ["Administrator"]})
     (try
-      (login user password)
-      (create-organization org)
+      (user/login user password)
+      (organization/create org)
       (api/with-creds user password
         (api/with-org org
           (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
-      (create-provider {:name provider})
-      (add-product {:provider-name provider :name product})
-      (add-repo {:provider-name provider
-                 :product-name product
-                 :name repo
-                 :url (@config :sync-repo)})
-      (sync-repos [repo])
+      (provider/create {:name provider})
+      (provider/add-product {:provider-name provider 
+                              :name product})
+      (provider/add-repo {:provider-name provider
+                           :product-name product
+                           :name repo
+                           :url (@config :sync-repo)})
+      (sync/perform-sync [repo])
       (finally (login-admin)))))
 
 ;; Tests
@@ -78,7 +79,7 @@
   
   (deftest "Sync a small repo"
     (->>
-     (sync-repos [@repo-name] 120000)
+     (sync/perform-sync [@repo-name] 120000)
      vals
      (every? is-complete?)
      verify-that))
@@ -93,23 +94,23 @@
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")
 
-    (create-sync-plan {:name (reset! plan-name (uniqueify "plan"))
+    (sync/create-plan {:name (reset! plan-name (uniqueify "plan"))
                        :description "my plan"
                        :interval "hourly"
                        :start-date (java.util.Date.)})
 
     (deftest "Change interval of an existing sync plan"
-      (edit-sync-plan @plan-name {:interval "Daily"}))
+      (sync/edit-plan @plan-name {:interval "Daily"}))
 
 
     (deftest "Rename an existing sync plan"
       (with-unique [myplan-name "myplan"
                     new-name "renamedplan"]
-        (create-sync-plan {:name myplan-name
+        (sync/create-plan {:name myplan-name
                            :description "my plan"
                            :interval "hourly"
                            :start-date (java.util.Date.)})
-        (edit-sync-plan myplan-name {:new-name new-name })
+        (sync/edit-plan myplan-name {:new-name new-name })
         (navigate :named-sync-plan-page {:sync-plan-name new-name})))
 
     
@@ -124,7 +125,7 @@
     (deftest "Cannot create two sync plans with the same name"
       (with-unique [plan-name "dupe"]
         (validate/expecting-error-2nd-try validate/duplicate-disallowed
-          (create-sync-plan {:name plan-name
+          (sync/create-plan {:name plan-name
                              :start-date (java.util.Date.)
                              :description "mydescription"
                              :interval "daily"}))))
@@ -146,10 +147,10 @@
             (api/promote {:products (doall
                                      (for [product product-names]
                                        {:product_id (api/get-id-by-name :product product)}))})))
-        (sync-schedule {:plan-name @plan-name
+        (sync/schedule {:plan-name @plan-name
                         :products product-names})
         (let [expected-plan @plan-name
-              actual-plans (vals (current-sync-plan product-names))]
+              actual-plans (vals (sync/current-plan product-names))]
           (verify-that (every? #(= % expected-plan) actual-plans))))
 
       
@@ -159,9 +160,9 @@
                         :description "my new plan"
                         :interval "daily"
                         :start-date (java.util.Date.)}]
-          (create-sync-plan new-plan)
-          (sync-schedule {:plan-name plan-name
+          (sync/create-plan new-plan)
+          (sync/schedule {:plan-name plan-name
                           :products [@product-name]})
           (let [product @product-name]
-            (verify-that (= ((current-sync-plan [product]) product)
+            (verify-that (= ((sync/current-plan [product]) product)
                             plan-name))))))))

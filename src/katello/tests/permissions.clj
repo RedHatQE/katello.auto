@@ -4,12 +4,12 @@
                      [api-tasks :as api]
                      [conf :as conf]
                      [tasks :refer :all]
-                     [providers :refer [create-provider]]
-                     [environments :refer [create-environment]]
-                     [roles :refer :all]
-                     [users :refer :all]
+                     [providers :as providers]
+                     [environments :as environment]
+                     [roles :as role]
+                     [users :as user]
                      [ui-tasks :refer :all]
-                     [organizations :refer :all])
+                     [organizations :as organization])
         [test.tree.script :refer :all] 
         [serializable.fn :refer [fn]]
         [tools.verify :refer [verify-that]]
@@ -58,22 +58,22 @@
                                  :email (str username "@my.org")})
       (when setup (setup)))
     
-    (create-role rolename)
-    (edit-role rolename {:add-permissions permissions
+    (role/create rolename)
+    (role/edit rolename {:add-permissions permissions
                          :users [username]})
     
     (try
-      (let [with-perm-results (do (login username pw)
+      (let [with-perm-results (do (user/login username pw)
                                   (api/with-creds username pw
                                     (try-all allowed-actions)))
             no-perm-results (try-all disallowed-actions)]
         (verify-that (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
       (finally
-       (login conf/*session-user* conf/*session-password*)))))
+       (user/login conf/*session-user* conf/*session-password*)))))
 
 (def create-an-env
-  (fn [] (create-environment (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
+  (fn [] (environment/create (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
 
 (def create-an-ak
   (fn [] (create-activation-key {:name (uniqueify "blah")
@@ -83,7 +83,7 @@
   (fn [] (create-template {:name (uniqueify "blah")})))
 
 (def create-a-user
-  (fn [] (create-user (uniqueify "blah") {:password "password" :email "me@me.com"})))
+  (fn [] (user/create (uniqueify "blah") {:password "password" :email "me@me.com"})))
 
 (def access-test-data
   [(fn [] [:permissions [{:org "Global Permissions"
@@ -94,7 +94,7 @@
           :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                   :custom-content-providers-tab :system-templates-page
                                                   :changesets-page )
-                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
 
 
@@ -104,13 +104,13 @@
                            :permissions [{:resource-type "Organizations"
                                           :verbs ["Administer Organization"]
                                           :name "orgcreate"}]}]
-            :allowed-actions [(fn [] (create-organization org-name {:description "mydescription"}))
-                              (fn [] (delete-organization org-name))
+            :allowed-actions [(fn [] (organization/create org-name {:description "mydescription"}))
+                              (fn [] (organization/delete org-name))
                               create-an-env]
             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
-                                      (fn [] (create-provider {:name "myprov"}))
+                                      (fn [] (providers/create {:name "myprov"}))
                                       (fn [] (api/create-provider "myprov")))]))
    
    
@@ -124,7 +124,7 @@
                                        (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
                              (navigate-fn :systems-all-page)]
            :disallowed-actions (conj (navigate-all :providers-tab :manage-organizations-page)
-                                     (fn [] (create-organization (uniqueify "cantdothis"))))])
+                                     (fn [] (organization/create (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757775"))
    
    (vary-meta
@@ -148,7 +148,7 @@
            :disallowed-actions (conj (navigate-all :manage-organizations-page :administration-tab
                                                    :systems-all-page :systems-by-environment-page
                                                    :redhat-repositories-page)
-                                     (fn [] (create-organization (uniqueify "cantdothis"))))])
+                                     (fn [] (organization/create (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757817"))
 
    (fn [] [:permissions [{:org "Global Permissions"
@@ -159,7 +159,7 @@
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
                                     create-a-st
-                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
 
    (fn [] [:permissions [{:org "Global Permissions"
@@ -169,7 +169,7 @@
           :allowed-actions [create-a-st]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
-                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
    
    (fn [] [:permissions [{:org "Global Permissions"
@@ -179,7 +179,7 @@
           :allowed-actions [(navigate-fn :users-page)]
           :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
                                                   :content-management-tab)
-                                    (fn [] (create-organization (uniqueify "cantdothis")))
+                                    (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env
                                     create-a-user)])
 
@@ -189,12 +189,12 @@
                            :permissions [{:resource-type "Users"
                                           :verbs ["Modify Users"]
                                           :name "usermod"}]}]
-            :allowed-actions [(fn [] (edit-user user {:new-email "blah@me.com"}))]
+            :allowed-actions [(fn [] (user/edit user {:new-email "blah@me.com"}))]
             :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
                                                     :content-management-tab)
                                       (fn [] (let [username (uniqueify "deleteme")]
-                                              (create-user username {:password "password" :email "mee@mee.com"})
-                                              (delete-user username))))]))
+                                              (user/create username {:password "password" :email "mee@mee.com"})
+                                              (user/delete username))))]))
 
    (fn [] (let [user (uniqueify "user")]
            [:permissions [{:org "Global Permissions"
@@ -202,7 +202,7 @@
                                           :verbs ["Delete Users"]
                                           :name "userdel"}]}]
             :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
-            :allowed-actions [(fn [] (delete-user user))]
+            :allowed-actions [(fn [] (user/delete user))]
             :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
                                                     :content-management-tab)
                                       create-a-user)]))
@@ -217,7 +217,7 @@
             :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
-                                      (fn [] (switch-organization org))
+                                      (fn [] (organization/switch org))
                                       (fn [] (navigate :named-organization-page {:org-name org})))]))
    
    ])
@@ -227,21 +227,21 @@
 (defgroup permission-tests
   
   (deftest "Create a role"
-    (create-role (uniqueify "testrole")))
+    (role/create (uniqueify "testrole")))
 
  
   (deftest "Remove a role"
     (let [role-name (uniqueify "deleteme-role")]
-      (create-role role-name)
-      (remove-role role-name)))
+      (role/create role-name)
+      (role/delete role-name)))
 
  
   (deftest "Add a permission and user to a role"
     (with-unique [user-name "role-user"
                   role-name "edit-role"]
-      (create-user user-name {:password "abcd1234" :email "me@my.org"})
-      (create-role role-name)
-      (edit-role role-name
+      (user/create user-name {:password "abcd1234" :email "me@my.org"})
+      (role/create role-name)
+      (role/edit role-name
                  {:add-permissions [{:org "Global Permissions"
                                      :permissions [{:name "blah2"
                                                     :resource-type "Organizations"

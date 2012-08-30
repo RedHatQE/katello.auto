@@ -1,11 +1,11 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
   (:require (katello  [api-tasks :as api] 
-                      [organizations :refer [switch-organization]] 
+                      [organizations :as organization] 
                       [ui-tasks :refer [navigate errtype]] 
-                      [sync-management :refer [sync-repos]] 
+                      [sync-management :as sync] 
                       [tasks :refer :all] 
-                      [environments :refer :all] 
+                      [environments :as environment] 
                       [validation :refer :all] 
                       [conf :refer [config]]) 
             [katello.tests.providers :refer [with-n-new-orgs]] 
@@ -33,9 +33,9 @@
    automatically."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-organization org)
-    (create-environment env-name {:org-name org}))
-  (delete-environment env-name {:org-name (first orgs)})
+    (organization/switch org)
+    (environment/create env-name {:org-name org}))
+  (environment/delete env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
     (navigate :named-environment-page {:env-name env-name
                                        :org-name org})))
@@ -46,8 +46,8 @@
    verify-delete-env-restricted-to-this-org."
   [env-name orgs]
   (doseq [org orgs]
-    (switch-organization org)
-    (create-environment env-name {:org-name org})))
+    (organization/switch org)
+    (environment/create env-name {:org-name org})))
 
 (defn setup-environment-with-promoted-content
   "Creates a new environment in the admin org, and promotes a
@@ -61,7 +61,7 @@
       (api/create-provider provider-name)
       (api/create-product product-name {:provider-name provider-name})
       (api/create-repo repo-name {:product-name product-name :url (@config :sync-repo)})
-      (sync-repos [repo-name])
+      (sync/perform-sync [repo-name])
       (api/with-env env-name
         (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]})))))
 
@@ -83,7 +83,7 @@
   :group-setup create-test-org
 
   (deftest "Create an environment"
-    (create-environment (uniqueify "simple-env") {:org-name @test-org-name
+    (environment/create (uniqueify "simple-env") {:org-name @test-org-name
                                                   :description "simple environment description"})
 
     (deftest "Create parallel sequential environments"
@@ -92,16 +92,16 @@
       (let [envs1 (take 5 (unique-names "envpath1"))
             envs2 (take 2 (unique-names "envpath2"))
             org (@config :admin-org)]
-        (create-environment-path org envs1)
-        (create-environment-path org envs2)))
+        (environment/create-path org envs1)
+        (environment/create-path org envs2)))
 
     (deftest "Delete an environment"
       :blockers (open-bz-bugs "790246")
 
       (with-unique [env-name "delete-env"]
-        (create-environment env-name {:org-name @test-org-name
+        (environment/create env-name {:org-name @test-org-name
                                       :description "simple environment description"})
-        (delete-environment env-name {:org-name @test-org-name}))
+        (environment/delete env-name {:org-name @test-org-name}))
 
 
       (deftest "Deleting an environment does not affect another org with the same name environment"
@@ -113,7 +113,7 @@
 
         (with-unique [env-name "del-w-content"]
           (setup-environment-with-promoted-content env-name)
-          (delete-environment env-name {:org-name (@config :admin-org)})))
+          (environment/delete env-name {:org-name (@config :admin-org)})))
 
 
 
@@ -127,10 +127,10 @@
 
         (let [envs (take 3 (unique-names "env"))
               org (@config :admin-org)]
-          (create-environment-path org envs)
+          (environment/create-path org envs)
           (expecting-error [:type :env-cant-be-deleted]
-                           (delete-environment (second envs) {:org-name org}))
-          (delete-environment (last envs) {:org-name org}))))
+                           (environment/delete (second envs) {:org-name org}))
+          (environment/delete (last envs) {:org-name org}))))
 
 
     (deftest "Cannot create two environments in the same org with the same name"
@@ -138,7 +138,7 @@
 
       (with-unique [env-name "test-dup"]
         (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
-                                 (create-environment env-name
+                                 (environment/create env-name
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))
 
@@ -148,9 +148,9 @@
 
       (with-unique [env-name  "rename"
                     new-name  "newname"]
-        (create-environment env-name {:org-name @test-org-name
+        (environment/create env-name {:org-name @test-org-name
                                       :description "try to rename me!"})
-        (edit-environment env-name {:org-name @test-org-name
+        (environment/edit env-name {:org-name @test-org-name
                                     :new-name new-name})
         (navigate :named-environment-page
                   {:org-name @test-org-name
@@ -163,5 +163,5 @@
 
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
-                     (create-environment nil {:org-name @test-org-name
+                     (environment/create nil {:org-name @test-org-name
                                               :description "env description"}))))

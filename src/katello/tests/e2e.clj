@@ -2,9 +2,9 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [client :as client]
                      [api-tasks :as api]
-                     [providers :refer [create-provider add-product add-repo]]
+                     [providers :as provider]
                      [changesets :refer [sync-and-promote]]
-                     [organizations :refer [with-organization]]
+                     [organizations :as organization]
                      [tasks :refer :all]
                      [ui-tasks :refer :all]
                      [conf :refer [*session-user* *session-password* *environments* config no-clients-defined]]) 
@@ -67,17 +67,17 @@
           target-env (first *environments*)
           cs-name (uniqueify "promo-safari")
           package-to-install "cheetah"]
-      (with-organization (@config :admin-org)
+      (organization/execute-with (@config :admin-org)
         (api/with-admin
           (api/with-admin-org
             (api/ensure-env-exist target-env {:prior library})
-            (create-provider {:name provider-name})
-            (add-product {:provider-name provider-name
-                          :name product-name})
-            (add-repo {:provider-name provider-name
-                       :product-name product-name
-                       :name repo-name
-                       :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
+            (provider/create {:name provider-name})
+            (provider/add-product {:provider-name provider-name
+                                    :name product-name})
+            (provider/add-repo {:provider-name provider-name
+                                 :product-name product-name
+                                 :name repo-name
+                                 :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
             (let [products [{:name product-name :repos [repo-name]}]]
               (when (api/is-katello?)
                 (sync-and-promote products library target-env))
@@ -85,10 +85,3 @@
                                   target-env
                                   products
                                   [package-to-install] ))))))))
-
-
-
-
-
-
-

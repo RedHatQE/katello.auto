@@ -12,11 +12,11 @@
             [katello.tests.e2e :refer [test-client-access]] 
             (katello [tasks :refer :all]
                      [notifications :refer [success?]] 
-                     [organizations :refer [with-organization switch-organization]] 
+                     [organizations :as organization] 
                      [changesets :refer [sync-and-promote]] 
-                     [sync-management :refer [sync-complete-status]] 
+                     [sync-management :as sync] 
                      [systems :refer [edit-system]] 
-                     [providers :refer :all]
+                     [providers :as provider]
                      [ui-tasks :refer :all]
                      [validation :refer :all]
                      [conf :refer [config no-clients-defined]])))
@@ -51,7 +51,7 @@
       (api/with-admin (api/create-organization org)))
     (try
       (f ent-name orgs)
-      (finally (switch-organization (@config :admin-org))))))
+      (finally (organization/switch (@config :admin-org))))))
 
 (defn with-two-providers
   "Create two providers with unique names, and call f with a unique
@@ -69,14 +69,14 @@
   "Create providers with the same name in multiple orgs."
   [prov-name orgs]
   (doseq [org orgs]
-    (switch-organization org)
-    (create-provider {:name prov-name})))
+    (organization/switch org)
+    (provider/create {:name prov-name})))
 
 (defn validation
-  "Attempts to creates a provider and validates the result using
+  "Attempts to create a provider and validates the result using
    pred."
   [provider pred]
-  (expecting-error pred (create-provider provider)))
+  (expecting-error pred (provider/create provider)))
 
 (defn get-validation-data
   []
@@ -147,14 +147,14 @@
 (defgroup provider-tests
   
   (deftest "Create a custom provider" 
-    (create-provider {:name (uniqueify "auto-cp")
+    (provider/create {:name (uniqueify "auto-cp")
                       :description "my description"})
 
 
     (deftest "Cannot create two providers in the same org with the same name"
       (with-unique [provider-name "dupe"]
         (expecting-error-2nd-try duplicate-disallowed
-          (create-provider {:name provider-name
+          (provider/create {:name provider-name
                             :description "mydescription"}))))
     
     (deftest "Provider validation"
@@ -169,15 +169,15 @@
     (deftest "Rename a custom provider"
       (with-unique [old-name  "rename"
                     new-name  "newname"]
-        (create-provider {:name old-name :description "my description"})
-        (edit-provider {:name old-name :new-name new-name})
+        (provider/create {:name old-name :description "my description"})
+        (provider/edit {:name old-name :new-name new-name})
         (verify-provider-renamed old-name new-name)))
     
     
     (deftest "Delete a custom provider"
       (with-unique [provider-name "auto-provider-delete"]
-        (create-provider {:name provider-name :description "my description"})
-        (delete-provider provider-name)))
+        (provider/create {:name provider-name :description "my description"})
+        (provider/delete provider-name)))
 
     
     (deftest "Create two providers with the same name, in two different orgs"
