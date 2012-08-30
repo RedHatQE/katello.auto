@@ -9,7 +9,7 @@
 ;; Roles
 ;;
 
-(defn create-role
+(defn create
   "Creates a role with the given name and optional description."
   [name & [{:keys [description]}]]
   (navigate :roles-page)
@@ -19,7 +19,7 @@
                   :save-role)
   (check-for-success))
 
-(defn assign-role
+(defn assign
   "Assigns the given user to the given roles. Roles should be a list
   of roles to assign."
   [{:keys [user roles]}]
@@ -29,7 +29,7 @@
   (browser click :save-roles)
   (check-for-success))
 
-(defn edit-role
+(defn edit
   "Edits a role to add new permissions, remove existing permissions,
   and assign users to the role. Example:
 
@@ -75,7 +75,7 @@
                                   :save-permission))
                 (check-for-success)))))
 
-(defn remove-role
+(defn delete
   "Deletes the given role."
   [name]
   (navigate :named-role-page {:role-name name})

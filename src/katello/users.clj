@@ -5,7 +5,7 @@
                      [conf :refer [config]] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
                      [notifications :refer [check-for-success]] 
-                     [organizations :refer [switch-organization]])))
+                     [organizations :as organization])))
 
 ;;
 ;; Users
@@ -37,10 +37,10 @@
                    :password-text password}
                   :log-in)
   (let [retVal (check-for-success)]
-    (switch-organization (or org (@config :admin-org)))
+    (organization/switch (or org (@config :admin-org)))
     retVal))
 
-(defn create-user
+(defn create
   "Creates a user with the given name and properties."
   [username {:keys [password password-confirm email default-org default-env]}]
   (navigate :users-page)
@@ -56,14 +56,14 @@
                     :save-user))
   (check-for-success))
 
-(defn delete-user "Deletes the given user."
+(defn delete "Deletes the given user."
   [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
   (browser click :confirmation-yes)
   (check-for-success))
   
-(defn edit-user
+(defn edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once)."
   [username {:keys [inline-help clear-disabled-helptips
@@ -84,20 +84,13 @@
   (when new-email
     (in-place-edit {:user-email-text new-email})))
 
-(defn current-user
+(defn current
   "Returns the name of the currently logged in user, or nil if logged out."
   []
   (when (logged-in?)
     (browser getText :account)))
 
-(defn ensure-current-user
-  "If username is already logged in, does nothing. Otherwise logs in
-  with given username and password."
-  [username password]
-  (if-not (= (current-user) username)
-    (login username password)))
-
-(defn assign-user-default-org-and-env 
+(defn assign-default-org-and-env 
   "Assigns a default organization and environment to a user"
   [username org-name env-name]
   (navigate :user-environments-page {:username username})

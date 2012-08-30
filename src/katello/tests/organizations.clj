@@ -2,9 +2,9 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
                      [validation :as v] 
-                     [providers :refer [create-provider add-product add-repo]] 
+                     [providers :as provider] 
                      [tasks :refer :all] 
-                     [organizations :refer :all] 
+                     [organizations :as organization] 
                      [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
@@ -35,19 +35,19 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (expecting-error (errtype expected-error) (create-organization name)))
+  (expecting-error (errtype expected-error) (organization/create name)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
-  (create-organization org-name {:description "org to delete and recreate"})
-  (switch-organization org-name)
-  (create-provider {:name provider-name
-                    :description "provider to del and recreate"})
-  (add-product {:provider-name provider-name
-                :name product-name})
-  (add-repo {:name repo-name
-             :provider-name provider-name
-             :product-name product-name
-             :url repo-url}))
+  (organization/create org-name {:description "org to delete and recreate"})
+  (organization/switch org-name)
+  (provider/create {:name provider-name
+                     :description "provider to del and recreate"})
+  (provider/add-product {:provider-name provider-name
+                          :name product-name})
+  (provider/add-repo {:name repo-name
+                       :provider-name provider-name
+                       :product-name product-name
+                       :url repo-url}))
 
 ;; Data (Generated)
 
@@ -64,19 +64,19 @@
 
   (deftest "Create new organization via Manage Organizations link"
     (with-unique [org-name "managed-org"]
-      (create-organization       org-name {:go-through-org-switcher true})
+      (organization/create       org-name {:go-through-org-switcher true})
       (verify-that         (org-exists? org-name))))
   
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
-      (create-organization     org-name)
+      (organization/create     org-name)
       (verify-that         (org-exists? org-name)))
 
     
     (deftest "Create an organization with an initial environment"
       (with-unique [org-name "auto-org"
                     env-name "environment"]
-        (create-organization     org-name  {:initial-env-name env-name})
+        (organization/create     org-name  {:initial-env-name env-name})
         (verify-that         (org-exists? org-name))))
   
     (deftest "Two organizations with the same name is disallowed"
@@ -84,14 +84,14 @@
       
       (with-unique [org-name "test-dup"]
         (v/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
-                                   (create-organization org-name {:description "org-description"}))))
+                                   (organization/create org-name {:description "org-description"}))))
 
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
       
       (expecting-error v/name-field-required
-                       (create-organization "" {:description "org with empty name"})))
+                       (organization/create "" {:description "org with empty name"})))
 
     
     (deftest "Verify proper error message when invalid org name is used"
@@ -105,15 +105,15 @@
     (deftest "Edit an organization"
       (with-unique [org-name "auto-edit"]
         (create-test-org     org-name)
-        (edit-organization   org-name     :description     "edited description")))
+        (organization/edit   org-name     :description     "edited description")))
 
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
       (with-unique [org-name "auto-del"]
-        (create-test-org              org-name)
-        (delete-organization          org-name)
-        (verify-that                  (org-does-not-exist? org-name)))
+        (create-test-org     org-name)
+        (organization/delete org-name)
+        (verify-that         (org-does-not-exist? org-name)))
 
     
       (deftest "Create an org with content, delete it and recreate it"
@@ -126,10 +126,10 @@
                       repo-url       "http://blah.com/blah"]
           (try
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
-            (switch-organization                          (@config :admin-org))
-            (delete-organization                 org-name)
+            (organization/switch                          (@config :admin-org))
+            (organization/delete                 org-name)
             ;;wait for delayed job to delete org
             (Thread/sleep                        30000)
             (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
             (finally
-              (switch-organization                         (@config :admin-org)))))))))
+              (organization/switch                        (@config :admin-org)))))))))

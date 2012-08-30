@@ -8,7 +8,7 @@
 ;; Providers
 ;;
 
-(defn create-provider
+(defn create
   "Creates a custom provider with the given name and description."
   [{:keys [name description]}]
   (navigate :new-provider-page)
@@ -57,7 +57,7 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn delete-provider
+(defn delete
   "Deletes the named custom provider."
   [name]
   (navigate :named-provider-page {:provider-name name})
@@ -65,7 +65,7 @@
   (browser click :confirmation-yes)
   (check-for-success))
 
-(defn edit-provider
+(defn edit
   "Edits the named custom provider. Takes an optional new name, and
   new description." [{:keys [name new-name description]}]
   (navigate :provider-details-page {:provider-name name})
