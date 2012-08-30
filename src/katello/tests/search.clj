@@ -118,7 +118,7 @@
        ;;testing
            
        (with-meta row
-         {:blocked-by (open-bz-bugs "832978")
+         {:blockers (open-bz-bugs "832978")
           :description "Search for organizations names including
                         latin-1/multi-byte characters in search
                         string."}))))
