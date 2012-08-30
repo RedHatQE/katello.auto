@@ -139,7 +139,9 @@
               (expecting-error pred (edit-system-group
                                      group-name {:new-limit limit}))))
           
-          [["-1"   (errtype :katello.notifications/max-systems-must-be-positive)]
+          [(with-meta
+             ["-1"   (errtype :katello.notifications/max-systems-must-be-positive)]
+             {:blockers (open-bz-bugs "848564")})
            ["-100" (errtype :katello.notifications/max-systems-must-be-positive)]
            [""     (errtype :katello.notifications/max-systems-must-be-positive)]
            ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
