@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             clojure.tools.cli
-            selenium-server)
+            selenium-server
+            [fn.trace :refer [all-fns]])
   
   (:import [java.io PushbackReader FileNotFoundException]
            [java.util.logging Level Logger]))
@@ -61,38 +62,30 @@
       (filter (fn [sym] (-> sym str (.startsWith "katello.tests"))) (loaded-libs)))
    
    ["--trace" "Namespaces and functions to trace"
-    :default '[katello.tasks
-               katello.ui-tasks
-               katello.api-tasks
-               katello.client
-               katello.setup/start-selenium
-               katello.setup/stop-selenium
-               katello.setup/switch-new-admin-user
-               tools.verify/check
-               http.async.client/GET
-               http.async.client/POST
-               http.async.client/PUT
-               http.async.client/DELETE
-               com.redhat.qe.auto.selenium.selenium/call-sel
-               ;;tests
-               katello.tests.e2e katello.tests.environments katello.tests.login
-               katello.tests.navigation katello.tests.organizations katello.tests.permissions
-               katello.tests.promotions katello.tests.providers katello.tests.search
-               katello.tests.suite katello.tests.sync_management katello.tests.systems
-               katello.tests.templates katello.tests.users]
     :parse-fn #(->> (string/split % #",") (map symbol) vec)]
    
    ["--trace-excludes" "Functions to exclude from tracing"
-    :default #{'katello.tasks/notification 
-               'katello.tasks/success?
-               'katello.tasks/uniqueify
-               'katello.tasks/unique-names
-               'katello.tasks/timestamps}
     :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 
 (def config (atom {}))
+
+(defn trace-list
+  "Creates a list of functions to trace. Includes all katello
+   namespaces (except a few functions), and some of the API and
+   underlying lib namespaces."
+  []
+  (->> (loaded-libs)
+     (filter (fn [sym] (-> sym str (.startsWith "katello"))))
+     all-fns
+     (concat '(tools.verify/check)) ;;extra fns to add
+     
+     (remove #{'katello.notifications/success? ;;fns to remove
+               'katello.tasks/uniqueify
+               'katello.tasks/unique-names
+               'katello.tasks/uniqueify-vals
+               'katello.tasks/timestamps})))
 
 
 (declare ^:dynamic *session-user*
