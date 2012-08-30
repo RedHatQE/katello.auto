@@ -1,17 +1,17 @@
 #!/bin/bash
 
-rm -rf autodoc/
-git clone git@github.com:RedHatQE/katello.auto.git autodoc
+rm -rf doc/
+git clone git@github.com:RedHatQE/katello.auto.git doc
 
-cd autodoc
+cd doc
 git symbolic-ref HEAD refs/heads/gh-pages
 rm .git/index
 git clean -fdx
 cd ..
 
-lein autodoc 
+lein doc 
 
-cd autodoc
+cd doc
 git add -A
 git commit -m "Documentation update"
-git push origin gh-pages
+git push --force origin gh-pages

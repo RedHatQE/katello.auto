@@ -21,15 +21,14 @@
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
   :dev-dependencies [[lein-autodoc "0.9.0"]]
-  :checksum-deps false
+;  :checksum-deps false
   :jvm-opts ["-Xmx192m" "-Xms96m"]
   ;; :repl-init bootstrap
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
-  :autodoc {:name "Katello GUI Automation"
-            :web-src-dir "https://github.com/weissjeffm/katello.auto/blob/"})
+  :plugins [[codox "0.6.1"]])
 
 ;; if you're looking for that comment block to start selenium, that's
 ;; been replaced by something easier. You no longer need to start
