@@ -45,7 +45,8 @@
 
 (defn plan-validation-data []
   [[{:start-time (java.util.Date.) :interval "daily"} :katello.notifications/name-cant-be-blank]
-   [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.notifications/start-date-time-cant-be-blank]])
+   (with-meta [{:name "blah" :start-time-literal "" :start-date-literal ""} :katello.notifications/start-date-time-cant-be-blank]
+     {:blockers (open-bz-bugs "853229")})])
 
 (defn sync-with-user [user]
   (with-unique [user user
