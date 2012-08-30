@@ -279,7 +279,7 @@
 
 (def systems
   {:new-system                             "new"
-   :create-system                          "system_save"
+   :create-system                          "system_submit"
    :system-name-text                       "system[name]"
    :system-sockets-text                    "system[sockets]"
    :system-arch-select                     "arch[arch_id]"

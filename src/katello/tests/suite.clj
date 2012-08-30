@@ -64,4 +64,6 @@
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
         (jenkins/run-suite
          (vary-meta (make-suite suite) assoc :threads (:num-threads opts)) 
-         {:to-trace (@conf/config :trace) :do-not-trace (@conf/config :trace-excludes)})))))
+         {:to-trace-fn conf/trace-list
+          :to-trace (@conf/config :trace)
+          :do-not-trace (@conf/config :trace-excludes)})))))

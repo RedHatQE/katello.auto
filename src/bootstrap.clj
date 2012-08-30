@@ -36,8 +36,7 @@
 (new-browser)
 
 (defmacro trace [& body]
-  `(fn.trace/dotrace (remove (@katello.conf/config :trace-excludes)
-                             (fn.trace/all-fns (@katello.conf/config :trace)))
+  `(fn.trace/dotrace (katello.conf/trace-list)
                      ~@body))
 
 (defmacro wrap-swank-conn-maybe

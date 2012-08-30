@@ -78,10 +78,8 @@
       (with-n-new-orgs 2 create-same-product-name-in-multiple-orgs))
 
 
-    (deftest "Product name must be unique within org"
-      :description "Creates providers with the same name in different
+    (deftest "Create two products with same name in same org different provider"
+      :description "Creates products with the same name in different
                     providers, where the providers are in the same
-                    org. Verifies that a validation error is shown in
-                    the UI when creating the 2nd provider."
-      (expecting-error (errtype :katello.notifications/product-must-be-unique-in-org)
-                       (with-two-providers create-same-product-in-multiple-providers)))))
+                    org."
+      (with-two-providers create-same-product-in-multiple-providers))))
