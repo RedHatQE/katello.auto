@@ -23,7 +23,6 @@
                 ::repository-url-invalid              #"Repository url is invalid"
                 ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
                 ::password-too-short                  #"Password must be at least"
-                ::product-must-be-unique-in-org       #"Products within an organization must have unique name"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank",
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"Max systems must be a positive"
