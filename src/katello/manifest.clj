@@ -1,30 +1,8 @@
 (ns katello.manifest
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.data.json :as json])
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))
-
-(defn clone
-  "Takes a manifest file location, copies it,and updates it internally
-   so that it will be accepted by katello as a new manifest. Also
-   specify file output location for the clone (full path string)"
-  [source-path dest-path]
-  
-  )
-
-(comment (defn replace-in-zipfile-stream [zis path content]
-   (let [baos (ByteArrayOutputStream.)]
-     (with-open [dzos (ZipOutputStream. boas)]
-       (let [zif (ZipFile. infile)
-             entries (enumeration-seq (.entries zif))]
-         (doseq [entry entries]
-           (let [dest-content-is (if-let [r (replacements (.getName entry))]
-                                   (ByteArrayInputStream. r)
-                                   (.getInputStream zif entry))]
-          
-             (->> entry .getName ZipEntry. (.putNextEntry dzos))
-             (io/copy dest-content-is dzos)
-             (.closeEntry dzos)))))
-     (ByteArrayInputStream. (.getBytes baos)))))
 
 (defn copy-n-bytes [is os n]
   (let [buffer (make-array Byte/TYPE 1024)]
@@ -65,3 +43,15 @@
               
               (recur (.getNextEntry zis)))))
         (ByteArrayInputStream. (.toByteArray baos)))))
+
+(defn clone
+  "Takes a manifest file location, copies it,and updates it internally
+   so that it will be accepted by katello as a new manifest. Also
+   specify file output location for the clone (full path string)"
+  [source-path dest-path]
+  (io/copy
+   (update-in-nested-zip
+    (-> source-path java.io.FileInputStream. ZipInputStream.) 
+    '("consumer_export.zip" "export/consumer.json")
+    (->> (java.util.UUID/randomUUID) .toString (hash-map :uuid) json/json-str .getBytes))
+   (java.io.File. dest-path)))
