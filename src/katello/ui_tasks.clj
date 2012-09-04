@@ -14,8 +14,7 @@
             (clojure [string :refer [capitalize]] 
                      [set :refer [union]])
             [clojure.data.json :as json])
-  (:import [com.thoughtworks.selenium SeleniumException]
-           [java.text SimpleDateFormat]))
+  (:import [com.thoughtworks.selenium SeleniumException]))
 
 (declare search)
 
