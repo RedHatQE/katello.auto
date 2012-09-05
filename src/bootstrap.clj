@@ -58,7 +58,7 @@
 
 (wrap-swank-conn-maybe)
 
-(defn debug [tree]
+(defn debug [tree & results-ref]
   (with-redefs [test.tree/runner (-> test.tree/execute
                                     test.tree.jenkins/wrap-tracing
                                     test.tree/wrap-blockers
@@ -67,6 +67,7 @@
                                     wrap-swank)]
     
     (trace (let [results (test.tree/run tree)]
+             (when (not (nil? results-ref)) (reset! results-ref results))
              (doall (->> results second deref vals (map (comp deref :promise))))
              results))))
 
