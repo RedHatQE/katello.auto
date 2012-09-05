@@ -553,8 +553,13 @@
         [:new-environment-page [] (browser click :new-environment)]
         [:named-environment-page [env-name] (browser click (environment-link env-name))]]]]])))
 
-(def tab-list '(:redhat-repositories-page 
-                :roles-page :users-page 
+
+(def tab-list '(:roles-page
+                :users-page 
                 :systems-all-page
                 :activation-keys-page
                 :systems-by-environment-page))
+
+(def ^{:doc "Tabs that don't exist in headpin"}
+  katello-only-tabs
+  '(:redhat-repositories-page))
