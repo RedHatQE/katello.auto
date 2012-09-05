@@ -83,9 +83,14 @@
      
      (remove #{'katello.notifications/success? ;;fns to remove
                'katello.tasks/uniqueify
-               'katello.tasks/unique-names
                'katello.tasks/uniqueify-vals
-               'katello.tasks/timestamps})))
+               'katello.tasks/unique-format
+               'katello.tasks/unique-names
+               'katello.tasks/uniques-formatted
+               'katello.tasks/uniqueify-vals
+               'katello.tasks/timestamps
+               'katello.tasks/date-string
+               'katello.tasks/timestamped-seq})))
 
 
 (declare ^:dynamic *session-user*
