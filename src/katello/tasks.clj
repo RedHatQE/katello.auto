@@ -38,18 +38,36 @@
   successive item."
   (iterate inc (System/currentTimeMillis)))
 
+(defn date-string
+  "Formats a (long) timestamp ts as string using a date format"
+  [ts]
+  (.format date-format (Date. ts)))
+
+(defn timestamped-seq
+  "Returns an infinite lazy sequence of timestamped values. f is a
+   function to pass each timestamp (a long) to."
+  [f]
+  (map f (timestamps)))
+
+(defn uniques-formatted
+  "Returns an infinite lazy sequence of timestamped strings, uses s as
+  a format string (should have only one %s in it)."
+  [s]
+  (timestamped-seq (comp (partial format s) date-string)))
 
 (defn unique-names
   "Returns an infinite lazy sequence of timestamped strings, uses s as
   the base string."
   [s]
-  (for [t (timestamps)] (str s "-" (.format  date-format (Date. t)))))
+  (uniques-formatted (str s "-%s")))
 
-(defn uniqueify
-  "Returns one unique string using s as the base string.
-   Example: (unique-name 'joe') -> 'joe-12694956934'"
-  [s]
-  (first (unique-names s)))
+(def ^{:doc "Returns one unique string using s as the base string.
+             Example: (unique-name 'joe') -> 'joe-12694956934'"}
+  uniqueify (comp first unique-names))
+
+(def ^{:doc "Returns one unique string using s as the format string.
+             Example: (unique-name 'joe-%s.zip') -> 'joe-12694956934.zip'"}
+  unique-format (comp first uniques-formatted))
 
 (defmacro with-unique
   "Binds variables to unique strings. Example:
