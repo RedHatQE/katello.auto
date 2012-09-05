@@ -37,10 +37,12 @@
   (in-place-edit {:org-description-text description}))
 
 (defn switch
-  "Switch to the given organization in the UI."
-  [org-name]
-  (browser click :org-switcher)
-  (browser clickAndWait (locators/org-switcher org-name)))
+  "Switch to the given organization in the UI. If force? is true,
+  switch even if the org switcher is already on the requested org."
+  [org-name & [force?]]
+  (when (or force? (not= (browser getText :org-switcher) org-name)) 
+    (browser click :org-switcher)
+    (browser clickAndWait (locators/org-switcher org-name))))
 
 (defn current []
   "Return the currently active org (a string) shown in the org switcher."
