@@ -83,7 +83,6 @@
      
      (remove #{'katello.notifications/success? ;;fns to remove
                'katello.tasks/uniqueify
-               'katello.tasks/uniqueify-vals
                'katello.tasks/unique-format
                'katello.tasks/unique-names
                'katello.tasks/uniques-formatted
