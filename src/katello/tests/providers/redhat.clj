@@ -1,176 +1,174 @@
 (in-ns 'katello.tests.providers)
 
-;; Variables
-
-;;(defn fully-qualify [file]
-;;  (str (System/getProperty "user.dir") file))
+;; Constants
 
 (def manifest-tmp-loc "/tmp/manifest.zip")
 
-(def org1-m1-manifest
-  (str (System/getProperty "user.dir") "/manifests/manifest_D1_O1_M1.zip"))
-(def org2-m1-manifest 
-;;  (fully-qualify "/manifests/manifest_D2_O2_M1.zip"))
-  (str (System/getProperty "user.dir") "/manifests/manifest_D2_O2_M1.zip"))
-(def org4-m1-manifest
-  (str (System/getProperty "user.dir") "/manifests/manifest_D4_O4_M1.zip"))
-(def scenario2-m1-d1-manifest
-  (str (System/getProperty "user.dir") "/manifests/scenario2_M1_D1.zip"))
-(def scenario5-o1-m2-manifest
-  (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M2.zip"))
-(def scenario5-o1-m1-manifest
-  (str (System/getProperty "user.dir") "/manifests/scenario5_O1_M1.zip"))
+
 (def bz786963-manifest
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
 
-
-
-
-(def redhat-provider-test-org (atom nil))
-(def redhat-provider-test-org2 (atom nil))
-(def redhat-provider-test-org3 (atom nil))
-(def redhat-provider-test-org4 (atom nil))
-(def redhat-provider-test-org5 (atom nil))
-
-(def redhat-provider-test-env (atom nil))
-
-(def redhat-products [{:name       "Nature Enterprise"
-                       :poolName   "Nature Enterprise 8/5"
-                       :repos      ["Nature Enterprise x86_64 6Server"
+(def fake-products [#_{:name       "Nature Enterprise"
+                       :poolName   "Nature Enterprise 1.1"
+                       :repos      ["Nature Enterprise x86_64 1.1"
                                     "Nature Enterprise x86_64 5Server"
                                     "Nature Enterprise x86_64 16"]}
-                      #_{:name     "Zoo Enterprise"
-                         :poolName "Zoo Enterprise 24/7"
-                         :repos    ["Zoo Enterprise x86_64 6Server"
-                                    "Zoo Enterprise x86_64 5Server"]}])
-
-(def redhat-repos (apply concat (map :repos redhat-products)))
-
-(def packages-to-install ["cheetah" "elephant"])
-
+                    {:name     "Zoo Enterprise"
+                     :poolName "Zoo Enterprise"
+                     :repos    ["Zoo Enterprise x86_64 6.2"
+                                "Zoo Enterprise x86_64 6.3"
+                                "Zoo Enterprise x86_64 6.4"
+                                "Zoo Enterprise x86_64 5.8"
+                                "Zoo Enterprise x86_64 5.7"]}])
 
 ;; Functions
+(defn all-repos [products]
+  (apply concat (map :repos products)))
 
-(defn prepare-manifest-and-org []
-  (let [org-name (reset! redhat-provider-test-org (uniqueify "rh-test"))]
-    (api/with-admin (api/create-organization org-name))
-    (with-open [instream (io/input-stream (java.net.URL. (@config :redhat-manifest-url)))
-                outstream (io/output-stream manifest-tmp-loc)]
-      (io/copy instream outstream))))
+(defn download-original-manifest []
+  (io/copy (java.net.URL. (@config :redhat-manifest-url))
+           (java.io.File. manifest-tmp-loc)))
 
-(defn prepare-org [a]
-  (let [org-name (uniqueify "rh-manifest-test")]
-    (reset! a org-name)
-    (api/with-admin (api/create-organization org-name))))
+(defn step-create-org [{:keys [org-name]}]
+  (api/with-admin (api/create-organization org-name)))
 
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync/complete-status repos))))
 
 (defn enable-redhat-repositories-in-org [org repos]
-  (organization/execute-with @redhat-provider-test-org (enable-redhat-repositories redhat-repos)))
+  (organization/execute-with org (enable-redhat-repositories repos)))
 
+(defn unique-manifest-loc []
+  (format "/tmp/%s.zip" (uniqueify "manifest")))
 
-(defn upload-test-manifest-to-test-org [& [opts]]
-  (organization/execute-with @redhat-provider-test-org
-    (upload-subscription-manifest manifest-tmp-loc
-                                  (merge {:repository-url (@config :redhat-repo-url)}
-                                         opts))))
+(defn step-clone-manifest [{:keys [manifest-loc]}]
+  (manifest/clone manifest-tmp-loc manifest-loc))
 
-
-(defn upload-test-manifest [manifest-loc org opts]
-  (organization/execute-with org
+(defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
+  (organization/execute-with org-name
     (upload-subscription-manifest manifest-loc
-                                  (merge {:repository-url (@config :redhat-repo-url)}
-                                         opts))))
+                                  (select-keys m :repository-url))))
 
-(defn promote-redhat-content-into-test-env []
+(defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
+  (organization/execute-with org-name
+    (enable-redhat-repositories enable-repos)
+    (navigate :sync-status-page)
+    (verify-all-repos-not-synced enable-repos)))
+
+(defn step-promote-redhat-content-into-test-env [{:keys [org-name env-name products]}]
   (api/with-admin
-    (api/with-org @redhat-provider-test-org       
-      (let [target-env (reset! redhat-provider-test-env (uniqueify "redhat"))]
-        (api/ensure-env-exist target-env {:prior library})
-        (when (api/is-katello?)
-          (organization/execute-with @redhat-provider-test-org
-            (enable-redhat-repositories redhat-repos)
-            (sync-and-promote redhat-products library target-env)))))))
+    (api/with-org org-name       
+      (api/ensure-env-exist env-name {:prior library})
+      (when (api/is-katello?)
+        (organization/execute-with org-name
+          (enable-redhat-repositories (all-repos products))
+          (sync-and-promote products library env-name))))))
+
+(defn step-create-system [{:keys [system-name org-name env-name]}]
+  (api/with-admin
+    (api/with-org org-name
+      (api/with-env env-name
+        (api/create-system system-name {:facts (api/random-facts)})))))
+
+(defn step-set-system-release-version [{:keys [release-version system-name org-name] :as m}]
+  (organization/execute-with org-name
+    (edit-system system-name (select-keys m [release-version]))))
+
+(defn step-verify-client-access [{:keys [org-name env-name products install-packages]}]
+  (api/with-admin
+      (api/with-org org-name       
+        (test-client-access org-name env-name products install-packages))))
+
 
 ;; Tests
-
 (defgroup redhat-promoted-content-tests
-  :group-setup promote-redhat-content-into-test-env
-
   (deftest "Admin can set Release Version on system"
     :blockers (open-bz-bugs "832192")
-    
-    (with-unique [system-name "system"]
-      (api/with-admin
-        (api/with-org @redhat-provider-test-org
-          (api/with-env @redhat-provider-test-env
-            (api/create-system system-name {:facts (api/random-facts)}))))
-      (edit-system system-name {:release-version "16"})))
-  
+
+    (do-steps (merge (uniqueify-vals {:system-name "system"
+                                      :org-name "relver-test"})
+                     {:release-version "16"
+                      :env-name "Development"
+                      :products fake-products
+                      :repository-url (@config :redhat-repo-url)})
+              step-create-org
+              step-clone-manifest
+              step-upload-manifest
+              step-promote-redhat-content-into-test-env
+              step-create-system
+              step-set-system-release-version))
 
   (deftest "Clients can access Red Hat content"
     :description "Enable repositories, promote content into an
-                    environment, register a system to that environment
-                    and install some packages."
+                  environment, register a system to that environment
+                  and install some packages."
     :blockers no-clients-defined
       
-    (api/with-admin
-      (api/with-org @redhat-provider-test-org       
-        (test-client-access @redhat-provider-test-org
-                            @redhat-provider-test-env
-                            redhat-products
-                            packages-to-install)))))
+    (do-steps (merge (uniqueify-vals {:system-name "system"
+                                      :org-name "relver-test"})
+                     {:env-name "Development"
+                      :products fake-products
+                      :repository-url (@config :redhat-repo-url)
+                      :install-packages ["cheetah" "elephant"] })
+              step-create-org
+              step-clone-manifest
+              step-upload-manifest
+              step-verify-client-access))) 
 
-
-(defgroup redhat-provider-one-org-multiple-manifest-tests
-  :group-setup  (fn []
-                  (prepare-org redhat-provider-test-org2)
-                  (upload-test-manifest scenario5-o1-m1-manifest
-                                        @redhat-provider-test-org2 {}))
-  
+(defgroup manifest-tests
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
-    (expecting-error (errtype :katello.notifications/import-older-than-existing-data)
-                     (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org2)))
-  
-  (deftest "Load New manifest into same org"
-    (upload-test-manifest scenario5-o1-m2-manifest @redhat-provider-test-org2 {})))
+    (let [org-name (uniqueify "dup-manifest")
+          test-manifest (unique-manifest-loc)
+          upload #(upload-subscription-manifest % {:repository-url
+                                                   (@config :redhat-repo-url)})]
+      (api/with-admin (api/create-organization org-name))
+      (organization/execute-with org-name
+        (manifest/clone manifest-tmp-loc test-manifest)
+        (upload test-manifest)
+        (expecting-error (errtype :katello.notifications/import-older-than-existing-data)
+                         (upload test-manifest)))))
 
-(defgroup redhat-provider-second-org-one-manifest-tests
-  :group-setup (partial prepare-org redhat-provider-test-org3)
-  
-  (deftest "Upload a manifest into a second org"
-    (upload-test-manifest org2-m1-manifest @redhat-provider-test-org3 {})))
-
-(defgroup redhat-provider-used-manifest-tests
-  :group-setup (partial prepare-org redhat-provider-test-org4)
-  
   (deftest "Upload a previously used manifest into another org"
-    (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
-      (upload-test-manifest scenario5-o1-m1-manifest @redhat-provider-test-org4 {}))))
-
-(defgroup redhat-provider-other-manifest-tests
-  :group-setup (partial prepare-org redhat-provider-test-org5)
+    (let [two-orgs (take 2 (unique-names "man-reuse"))
+          test-manifest (unique-manifest-loc)
+          upload (fn [loc]
+                   (upload-subscription-manifest loc
+                                                 {:repository-url
+                                                  (@config :redhat-repo-url)}))]
+      (api/with-admin (doseq [org two-orgs]
+                        (api/create-organization org)))
+      (manifest/clone manifest-tmp-loc test-manifest)
+      (organization/execute-with (first two-orgs)
+        (upload test-manifest))
+      (organization/execute-with (second two-orgs)
+        (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
+                         (upload test-manifest)))))
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
-    (upload-test-manifest bz786963-manifest @redhat-provider-test-org5 {})))
-  
+    (do-steps {:org-name (uniqueify "bz786963")
+               :manifest-loc bz786963-manifest}
+              step-create-org
+              step-upload-manifest)))  
 
-(defgroup redhat-content-provider-tests
-  :group-setup prepare-manifest-and-org 
+(defgroup redhat-content-provider-tests 
   :blockers    (open-bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
-    (upload-test-manifest-to-test-org)            
-
+    (do-steps {:org-name (uniqueify "manifest-upload")}
+              step-create-org
+              step-clone-manifest
+              step-upload-manifest)
+    
+               
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
-      
-      (let [repos ["Nature Enterprise x86_64 15" "Nature Enterprise x86_64 16"]]
-        (organization/execute-with @redhat-provider-test-org
-          (enable-redhat-repositories repos)
-          (navigate :sync-status-page)
-          (verify-all-repos-not-synced repos))))
+      (do-steps {:org-name (uniqueify "enablerepos")
+                 :enable-repos ["Nature Enterprise x86_64 1.0"
+                                "Nature Enterprise x86_64 1.1"]}
+                step-create-org
+                step-clone-manifest
+                step-upload-manifest
+                step-verify-enabled-repositories))
 
     redhat-promoted-content-tests))
 
