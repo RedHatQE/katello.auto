@@ -79,7 +79,8 @@
   (->> (loaded-libs)
      (filter (fn [sym] (-> sym str (.startsWith "katello"))))
      all-fns
-     (concat '(tools.verify/check)) ;;extra fns to add
+     (concat '(tools.verify/check
+               com.redhat.qe.auto.selenium.selenium/call-sel)) ;;extra fns to add
      
      (remove #{'katello.notifications/success? ;;fns to remove
                'katello.tasks/uniqueify

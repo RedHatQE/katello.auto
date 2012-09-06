@@ -33,11 +33,9 @@
                   (io/copy content dzos)
 
                   ;;nested zip
-                  (io/copy (update-in-nested-zip
-                            (new-zip-inputstream zis this-entry)
-                            (pop path)
-                            content)
-                           dzos))
+                  (with-open [this-entry-is (new-zip-inputstream zis this-entry)]
+                    (io/copy (update-in-nested-zip this-entry-is (pop path) content)
+                             dzos)))
                 ;;non-matching file
                 (copy-n-bytes zis dzos (.getSize this-entry)))
               
@@ -53,5 +51,5 @@
    (update-in-nested-zip
     (-> source-path java.io.FileInputStream. ZipInputStream.) 
     '("consumer_export.zip" "export/consumer.json")
-    (->> (java.util.UUID/randomUUID) .toString (hash-map :uuid) json/json-str .getBytes))
+    (->> (java.util.UUID/randomUUID) .toString (hash-map :uuid) json/json-str))
    (java.io.File. dest-path)))
