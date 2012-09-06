@@ -97,3 +97,8 @@
    envs ['a' 'b' 'c'] -> ('a' 'b'), ('b' 'c')"
   [envs]
   (partition 2 1 envs))
+
+(defn do-steps
+  "Call all fs in order, with single argument m"
+  [m & fs]
+  ((apply juxt fs) m))

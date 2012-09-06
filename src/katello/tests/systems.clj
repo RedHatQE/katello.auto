@@ -86,11 +86,6 @@
   [{:keys [group-name copy-name]}]
   (copy-system-group group-name copy-name {:description "copied system group"}))
 
-(defn do-steps
-  "Call all fs in order, with single argument m"
-  [m & fs]
-  ((apply juxt fs) m))
-
 ;; Tests
 
 (defgroup system-group-tests
