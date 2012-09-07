@@ -11,6 +11,7 @@
             [test.tree.jenkins :as jenkins]
             [test.tree.script :refer :all]))
 
+
 (defgroup katello-tests
   :test-setup katello.tests.login/navigate-toplevel
 

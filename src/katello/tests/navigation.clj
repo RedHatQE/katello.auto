@@ -2,7 +2,8 @@
   (:require [test.tree.script :refer :all] 
             (katello [notifications :refer [check-for-error]]
                      [ui-tasks :refer :all]
-                     [locators :refer [tab-list]])))
+                     [api-tasks :refer [katello-only]]
+                     [locators :refer [tab-list katello-only-tabs]])))
 
 ;;; Functions
 
@@ -13,7 +14,9 @@
   (check-for-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs
-  (map vector tab-list))
+  (concat (map vector tab-list)
+          (for [t katello-only-tabs]
+            (with-meta (vector t) {:blockers katello-only}))))
 
 
 ;;; Tests

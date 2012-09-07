@@ -216,9 +216,12 @@
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success {:timeout-ms 300000 :refresh? true})) ;using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  (check-for-success {:timeout-ms 120000}))
+  ;;now the page seems to refresh on its own, but sometimes the ajax count
+  ;; does not update. 
+  ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
   ;(check-for-success))
-  
+
 (defn manifest-already-uploaded?
   "Returns true if the current organization already has Red Hat
   content uploaded."

@@ -17,6 +17,7 @@
                      [sync-management :as sync] 
                      [systems :refer [edit-system]] 
                      [providers :as provider]
+                     [manifest :as manifest]
                      [ui-tasks :refer :all]
                      [validation :refer :all]
                      [conf :refer [config no-clients-defined]])))

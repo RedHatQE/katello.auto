@@ -9,9 +9,8 @@
 (require 'selenium-server)
 (require 'katello.conf)
 (require 'katello.setup)
-(require 'test.tree.jenkins)
-(require 'test.tree)
-(require 'test.tree.reporter)
+(require 'test.tree.debug)
+
 
 (defn new-browser []
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
@@ -19,6 +18,13 @@
 
 
 ;;-------------
+
+(defmacro trace [& body]
+  `(fn.trace/dotrace (katello.conf/trace-list)
+     ~@body))
+
+(defmacro debug [tree]
+  `(test.tree.debug/debug ~tree (katello.conf/trace-list)))
 
 (katello.conf/init {:selenium-address "localhost:4444"})
 
@@ -34,49 +40,3 @@
                            (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
 (selenium-server/start)
 (new-browser)
-
-(defmacro trace [& body]
-  `(fn.trace/dotrace (katello.conf/trace-list)
-                     ~@body))
-
-(defmacro wrap-swank-conn-maybe
-  "Produce a wrap-swank function that does nothing, if swank is not available."
-  []
-  (let [runnersym (gensym "runner")]
-    `(defn wrap-swank
-       "Allows you to place (swank.core/break) statements anywhere, and the
-  swank debugger will stop there, no matter which thread hits that
-  line."
-       [~runnersym]
-       ~(if (resolve 'swank.core.connection/*current-connection*)
-          `(fn [test#]
-             (let [conn# swank.core.connection/*current-connection*]
-               (binding [swank.core.connection/*current-connection* conn#]
-                 (~runnersym test#))))
-          `(fn [test#]
-             (~runnersym test#))))))
-
-(wrap-swank-conn-maybe)
-
-(defn debug [tree & results-ref]
-  (with-redefs [test.tree/runner (-> test.tree/execute
-                                    test.tree.jenkins/wrap-tracing
-                                    test.tree/wrap-blockers
-                                    test.tree/wrap-timer
-                                    test.tree/wrap-data-driven
-                                    wrap-swank)]
-    
-    (trace (let [results (test.tree/run tree)]
-             (when (not (nil? results-ref)) (reset! results-ref results))
-             (doall (->> results second deref vals (map (comp deref :promise))))
-             results))))
-
-(defn quick-report [result]
-  (let [reports (-> result second)]
-    (binding [test.tree.reporter/*reports* reports]
-      (let [fails (into {}
-                        (filter (fn [[k v]] (test.tree.reporter/failed? k)) @reports))]
-        {:failed-tests fails
-         :counts {:failed (count fails)
-                  :passed (count (test.tree.reporter/passed-tests))
-                  :skipped (count (test.tree.reporter/skipped-tests))}}))))

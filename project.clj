@@ -4,7 +4,7 @@
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [swank-clojure "1.4.2"]
-                 [test.tree.jenkins "0.1.0-SNAPSHOT"]
+                 [test.tree.jenkins "0.2.0-SNAPSHOT"]
                  [test.tree "0.7.5-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
@@ -21,10 +21,7 @@
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]
                  [seesaw "1.4.2"]]
-  :dev-dependencies [[lein-autodoc "0.9.0"]]
-;  :checksum-deps false
-  :jvm-opts ["-Xmx192m" "-Xms96m"]
-  ;; :repl-init bootstrap
+  :jvm-opts ["-Xmx384m" "-Xms48m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"

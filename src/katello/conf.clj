@@ -79,13 +79,18 @@
   (->> (loaded-libs)
      (filter (fn [sym] (-> sym str (.startsWith "katello"))))
      all-fns
-     (concat '(tools.verify/check)) ;;extra fns to add
+     (concat '(tools.verify/check
+               com.redhat.qe.auto.selenium.selenium/call-sel)) ;;extra fns to add
      
      (remove #{'katello.notifications/success? ;;fns to remove
                'katello.tasks/uniqueify
+               'katello.tasks/unique-format
                'katello.tasks/unique-names
+               'katello.tasks/uniques-formatted
                'katello.tasks/uniqueify-vals
-               'katello.tasks/timestamps})))
+               'katello.tasks/timestamps
+               'katello.tasks/date-string
+               'katello.tasks/timestamped-seq})))
 
 
 (declare ^:dynamic *session-user*
