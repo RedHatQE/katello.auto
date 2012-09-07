@@ -1,19 +1,20 @@
 (ns katello.ui-tasks
   (:require [katello.locators :as locators]
-            [ui.navigate :as nav]
-            [clojure.string :as string]
+            [ui.navigate      :as nav]
+            [clojure.string   :as string]
             [com.redhat.qe.auto.selenium.selenium
-              :refer [browser ->browser fill-form fill-item]]
-            (katello [tasks :refer :all] 
+             :refer [browser ->browser fill-form fill-item]]
+            (katello [locators      :as locators]
+                     [tasks         :refer :all] 
                      [notifications :refer :all] 
-                     [conf :refer [config]] 
-                     [api-tasks :refer [when-katello when-headpin]]) 
+                     [conf          :refer [config]] 
+                     [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
-            [tools.verify :refer [verify-that]]
-            [inflections.core :refer [pluralize]] 
-            (clojure [string :refer [capitalize]] 
-                     [set :refer [union]])
-            [clojure.data.json :as json])
+            [tools.verify        :refer [verify-that]]
+            [inflections.core    :refer [pluralize]] 
+            (clojure [string     :refer [capitalize]] 
+                     [set        :refer [union]]
+                     [data.json  :as json]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -203,32 +204,6 @@
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (check-for-success))
-
-(defn upload-subscription-manifest
-  "Uploads a subscription manifest from the filesystem local to the
-   selenium browser. Optionally specify a new repository url for Red
-   Hat content- if not specified, the default url is kept. Optionally
-   specify whether to force the upload."
-  [file-path & [{:keys [repository-url]}]]
-  (navigate :redhat-subscriptions-page)
-  (when-not (browser isElementPresent :choose-file)
-    (browser click :import-manifest))
-  (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
-  (fill-ajax-form {:choose-file file-path}
-                  :upload)
-  (check-for-success {:timeout-ms 120000}))
-  ;;now the page seems to refresh on its own, but sometimes the ajax count
-  ;; does not update. 
-  ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  ;(check-for-success))
-
-(defn manifest-already-uploaded?
-  "Returns true if the current organization already has Red Hat
-  content uploaded."
-  []
-  (navigate :redhat-repositories-page)
-  (browser isElementPresent :subscriptions-items))
 
 (defn create-template
   "Creates a system template with the given name and optional

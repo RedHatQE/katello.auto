@@ -24,7 +24,7 @@
 
 ;; Constants
 
-(def tmpfile (str (System/getProperty "user.dir") "/output.txt"))
+(def tmp-gpg-keyfile (tmpfile "output.txt"))
 
 ;; Functions
 
@@ -123,13 +123,13 @@
 
     (with-unique [test-key "test-key"]
       (spit "output.txt" "test")
-      (create-gpg-key test-key {:filename tmpfile}))
+      (create-gpg-key test-key {:filename tmp-gpg-keyfile}))
 
     
     (deftest "Delete existing GPG key" 
       (with-unique [test-key "test-key"]
         (spit "output.txt" "test")
-        (create-gpg-key test-key {:filename tmpfile})
+        (create-gpg-key test-key {:filename tmp-gpg-keyfile})
         (remove-gpg-key test-key)))))
 
 

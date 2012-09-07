@@ -2,8 +2,7 @@
 
 ;; Constants
 
-(def manifest-tmp-loc "/tmp/manifest.zip")
-
+(def manifest-tmp-loc (tmpfile "manifest.zip"))
 
 (def bz786963-manifest
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
@@ -25,10 +24,6 @@
 (defn all-repos [products]
   (apply concat (map :repos products)))
 
-(defn download-original-manifest []
-  (io/copy (java.net.URL. (@config :redhat-manifest-url))
-           (java.io.File. manifest-tmp-loc)))
-
 (defn step-create-org [{:keys [org-name]}]
   (api/with-admin (api/create-organization org-name)))
 
@@ -38,16 +33,12 @@
 (defn enable-redhat-repositories-in-org [org repos]
   (organization/execute-with org (enable-redhat-repositories repos)))
 
-(defn unique-manifest-loc []
-  (format "/tmp/%s.zip" (uniqueify "manifest")))
-
 (defn step-clone-manifest [{:keys [manifest-loc]}]
   (manifest/clone manifest-tmp-loc manifest-loc))
 
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
   (organization/execute-with org-name
-    (upload-subscription-manifest manifest-loc
-                                  (select-keys m :repository-url))))
+    (manifest/upload manifest-loc (select-keys m :repository-url))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
   (organization/execute-with org-name
@@ -116,13 +107,13 @@
               step-verify-client-access))) 
 
 (defgroup manifest-tests
-  :group-setup download-original-manifest
+  :group-setup (partial manifest/download-original manifest-tmp-loc)
   
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
     (let [org-name (uniqueify "dup-manifest")
-          test-manifest (unique-manifest-loc)
-          upload #(upload-subscription-manifest % {:repository-url
-                                                   (@config :redhat-repo-url)})]
+          test-manifest (manifest/new-tmp-loc)
+          upload #(manifest/upload % {:repository-url
+                                      (@config :redhat-repo-url)})]
       (api/with-admin (api/create-organization org-name))
       (organization/execute-with org-name
         (manifest/clone manifest-tmp-loc test-manifest)
@@ -132,11 +123,10 @@
 
   (deftest "Upload a previously used manifest into another org"
     (let [two-orgs (take 2 (unique-names "man-reuse"))
-          test-manifest (unique-manifest-loc)
+          test-manifest (manifest/new-tmp-loc)
           upload (fn [loc]
-                   (upload-subscription-manifest loc
-                                                 {:repository-url
-                                                  (@config :redhat-repo-url)}))]
+                   (manifest/upload loc {:repository-url
+                                         (@config :redhat-repo-url)}))]
       (api/with-admin (doseq [org two-orgs]
                         (api/create-organization org)))
       (manifest/clone manifest-tmp-loc test-manifest)
