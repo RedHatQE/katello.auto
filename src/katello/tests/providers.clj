@@ -189,9 +189,6 @@
   redhat-content-provider-tests
   gpg-key-tests
   package-filter-tests
-  redhat-provider-one-org-multiple-manifest-tests
-  redhat-provider-second-org-one-manifest-tests
-  redhat-provider-used-manifest-tests
-  redhat-provider-other-manifest-tests)
+  manifest-tests)
 
 
