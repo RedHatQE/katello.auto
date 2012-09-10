@@ -1,7 +1,6 @@
 (ns katello.ui-tasks
-  (:require [katello.locators :as locators]
+  (:require [clojure.data.json  :as json]
             [ui.navigate      :as nav]
-            [clojure.string   :as string]
             [com.redhat.qe.auto.selenium.selenium
              :refer [browser ->browser fill-form fill-item]]
             (katello [locators      :as locators]
@@ -14,7 +13,7 @@
             [inflections.core    :refer [pluralize]] 
             (clojure [string     :refer [capitalize]] 
                      [set        :refer [union]]
-                     [data.json  :as json]))
+                     [string     :as string]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -131,16 +130,18 @@
   (check-for-error {:timeout-ms 2000}))
 
 (defn search-for-content
-  "Performs a search for the specified content type using any product,
-   repository, package or errata filters specified. Note that while
-   prods, repos and pkgs should be vectors, errata is expected to be a
-   string. Returns the search results as raw data from the browser
-   javascript.
-   Example: search-for-content :errata-type {:prods ['myprod']
+  "Performs a search for the specified content
+   type (:prod-type, :repo-type, :pkg-type, :errata-type) using any
+   product, repository, package or errata filters specified. Note that
+   while prods, repos and pkgs should be vectors, errata is expected
+   to be a string. Returns the search results as raw data from the
+   browser javascript. Example: search-for-content :errata-type
+                                             {:prods ['myprod']
                                              :repos ['myrepo']
                                              :errata 'myerrata'}"
   [content-type & [{:keys [prods repos pkgs errata]}]]
-
+  (assert (some #{content-type} [:prod-type :repo-type :pkg-type :errata-type])
+          "Unknown content search type.")
   (case content-type 
     :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
     :repo-type   (assert (and (empty? pkgs) (empty? errata)))
