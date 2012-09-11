@@ -1,26 +1,18 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require [katello.api-tasks :as api]
-            [clj-http.client :as http]
-            [clojure.java.io :as io]
-            [slingshot.slingshot :refer :all]
-            [test.tree.script :refer :all]
-            [test.tree.builder :refer [data-driven]]
-            [serializable.fn :refer [fn]]
-            [tools.verify :refer [verify-that]]
-            [bugzilla.checker :refer [open-bz-bugs]]
-            [katello.tests.e2e :refer [test-client-access]] 
-            (katello [tasks :refer :all]
-                     [notifications :refer [success?]] 
-                     [organizations :as organization] 
-                     [changesets :refer [sync-and-promote]] 
+            [test.tree.script  :refer [deftest defgroup]]
+            [serializable.fn   :refer [fn]]
+            [tools.verify      :refer [verify-that]]
+            [bugzilla.checker  :refer [open-bz-bugs]]
+            (katello [tasks           :refer :all]
+                     [notifications   :refer [success?]]
+                     [organizations   :as organization]
                      [sync-management :as sync] 
-                     [systems :refer [edit-system]] 
-                     [providers :as provider]
-                     [manifest :as manifest]
-                     [ui-tasks :refer :all]
-                     [validation :refer :all]
-                     [conf :refer [config no-clients-defined]])))
+                     [providers       :as provider]
+                     [ui-tasks        :refer :all]
+                     [validation      :refer :all]
+                     [conf            :refer [config]])))
 
 ;; Constants
 
@@ -185,10 +177,8 @@
       (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
 
     custom-product-tests)
-  
-  redhat-content-provider-tests
+
   gpg-key-tests
-  package-filter-tests
-  manifest-tests)
+  package-filter-tests)
 
 

@@ -4,6 +4,7 @@
                            sync_management login environments
                            systems users permissions templates
                            e2e navigation search)
+            katello.tests.providers.redhat
             [katello.setup :as setup]
             [katello.conf :as conf] 
             [clojure.tools.cli :as cli]
@@ -25,7 +26,9 @@
   katello.tests.systems/system-tests
   katello.tests.sync_management/sync-tests
   katello.tests.users/user-tests
-  katello.tests.e2e/end-to-end-tests)
+  katello.tests.e2e/end-to-end-tests
+  katello.tests.providers.redhat/manifest-tests
+  katello.tests.providers.redhat/redhat-content-provider-tests)
 
 
 
@@ -37,10 +40,11 @@
   katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
   katello.tests.search/search-tests
-  katello.tests.providers/redhat-content-provider-tests
   katello.tests.environments/environment-tests
   katello.tests.systems/system-tests
-  katello.tests.users/user-tests)
+  katello.tests.users/user-tests
+  katello.tests.providers.redhat/manifest-tests
+  katello.tests.providers.redhat/redhat-content-provider-tests)
 
 (defn make-suite
   ([] (make-suite nil))
