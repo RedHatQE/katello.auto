@@ -101,7 +101,7 @@
 
 ;; Load more tests groups into this namespace
 (load "providers/custom-product")
-(load "providers/redhat")
+
 
 
 (defgroup gpg-key-tests

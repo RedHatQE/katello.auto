@@ -5,6 +5,7 @@
                            systems users permissions templates
                            e2e navigation search)
             katello.tests.providers.redhat
+            katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
             [clojure.tools.cli :as cli]
@@ -44,7 +45,8 @@
   katello.tests.systems/system-tests
   katello.tests.users/user-tests
   katello.tests.providers.redhat/manifest-tests
-  katello.tests.providers.redhat/redhat-content-provider-tests)
+  katello.tests.providers.redhat/redhat-content-provider-tests
+  katello.tests.providers.custom/custom-product-tests)
 
 (defn make-suite
   ([] (make-suite nil))
