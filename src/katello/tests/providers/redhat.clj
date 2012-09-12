@@ -116,6 +116,8 @@
               step-verify-client-access))) 
 
 (defgroup manifest-tests
+  :group-setup download-original-manifest
+  
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
     (let [org-name (uniqueify "dup-manifest")
           test-manifest (unique-manifest-loc)
