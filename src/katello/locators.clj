@@ -95,7 +95,7 @@
    :search-submit           "//button[@form='search_form']"
    ;;main banner
    :account             "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out             "//a[normalize-space(.)='Logout']"
+   :log-out             "//a[normalize-space(.)='Log Out']"
    :org-switcher        "switcherButton"
    :active-org          "//*[@id='switcherButton']"
    ;;inside the org switcher
