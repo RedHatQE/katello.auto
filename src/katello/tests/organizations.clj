@@ -8,6 +8,7 @@
                      [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
+            [serializable.fn :refer [fn]]
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]))
 
@@ -71,6 +72,16 @@
     (with-unique [org-name "auto-org"]
       (organization/create     org-name)
       (verify-that         (org-exists? org-name)))
+    
+    (deftest "Create an organization with i18n characters"
+      :data-driven true
+      
+      (fn [org]
+        (with-unique [org-name org]
+          (organization/create     org-name)
+          (verify-that         (org-exists? org-name))))
+      
+      [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
     
     (deftest "Create an organization with an initial environment"
