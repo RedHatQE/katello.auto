@@ -95,7 +95,9 @@
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
-      (create-system-group group-name {:description "rh system-group"}))
+      (create-system-group group-name {:description "rh system-group"})
+      (expecting-error (errtype :katello.notifications/sg-name-taken-error)
+      (copy-system-group group-name group-name {:description "copied system group"})))
 
     (deftest "Edit a system group"
       :data-driven true
