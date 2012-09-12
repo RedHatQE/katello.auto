@@ -4,10 +4,12 @@
             [clojure.string :as string]
             [com.redhat.qe.auto.selenium.selenium
               :refer [browser ->browser fill-form fill-item]]
-            (katello [tasks :refer :all] 
+            (katello [locators :as locators] 
+                     [tasks :refer :all] 
                      [notifications :refer :all] 
                      [conf :refer [config]] 
-                     [api-tasks :refer [when-katello when-headpin]]) 
+                     [api-tasks :refer [when-katello when-headpin]]
+                     [content-search-results :refer [create-result]])
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify :refer [verify-that]]
             [inflections.core :refer [pluralize]] 
@@ -180,9 +182,10 @@
     (browser click :content-search-load-more))
   
   ;;extract and return content
-  (->>  "JSON.stringify(window.comparison_grid.export_data());"
+  (create-result  
+    (->> "JSON.stringify(window.comparison_grid.export_data());"
       (browser getEval)
-      (json/read-json))) 
+      (json/read-json)))) 
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
