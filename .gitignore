@@ -1,5 +1,7 @@
 *.bak
 *.swp
+#ignore generated autodoc files
+autodoc/**
 lib/
 classes/
 target/
@@ -16,5 +18,3 @@ automation-properties.clj
 bin/
 pom.xml
 .settings/
-autodoc/**
-
