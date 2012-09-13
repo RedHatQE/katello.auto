@@ -270,7 +270,7 @@
           (create-activation-key {:name ak-name
                                 :description "my description"
                                 :environment test-environment} )))
-       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
+       val/i8n-chars)
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]

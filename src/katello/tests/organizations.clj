@@ -1,7 +1,7 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
-                     [validation :as v] 
+                     [validation :as validation] 
                      [providers :as provider] 
                      [tasks :refer :all] 
                      [organizations :as organization] 
@@ -54,9 +54,9 @@
 
 (def bad-org-names
   (concat
-   (for [inv-char-str v/invalid-character-strings]
+   (for [inv-char-str validation/invalid-character-strings]
      [inv-char-str :katello.notifications/name-must-not-contain-characters])
-   (for [trailing-ws-str v/trailing-whitespace-strings]
+   (for [trailing-ws-str validation/trailing-whitespace-strings]
      [trailing-ws-str :katello.notifications/name-no-leading-trailing-whitespace])))
 
 ;; Tests
@@ -79,11 +79,10 @@
       (fn [org]
         (with-unique [org-name org]
           (organization/create     org-name)
-          (verify-that         (org-exists? org-name))))
+          (verify-that      (org-exists? org-name))))
       
-      [["صالح"] ["Гесер"] ["洪"]["標準語"]])
+      validation/i8n-chars)
 
-    
     (deftest "Create an organization with an initial environment"
       (with-unique [org-name "auto-org"
                     env-name "environment"]
@@ -94,14 +93,14 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (v/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
+        (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
                                    (organization/create org-name {:description "org-description"}))))
 
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
       
-      (expecting-error v/name-field-required
+      (expecting-error validation/name-field-required
                        (organization/create "" {:description "org with empty name"})))
 
     
