@@ -152,14 +152,26 @@
            [""     (errtype :katello.notifications/max-systems-must-be-positive)]
            ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
-
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
       (do-steps (uniqueify-vals
                  {:system-name "mysystem"
                   :group-name "my-group"})
                 step-add-new-system-to-new-group)
-
+      
+      (deftest "Add a system to a system group and check count is +1"
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (do
+            (create-system-group group-name)
+            (let [syscount  (get-system-group-system-count group-name)]
+            (create-system system-name {:sockets "1"
+                              :system-arch "x86_64"})
+            (add-to-system-group group-name system-name)
+            (verify-that (= (inc syscount) (get-system-group-system-count group-name)))))))
+           
+           
+      
       (deftest "Delete a system group"
         :data-driven true
 
@@ -251,6 +263,14 @@
                             :description "my description"
                             :environment test-environment})
 
+    (deftest "Create an activation key with i18n characters"
+      :data-driven true
+      (fn [name]
+        (with-unique [ak-name name]
+          (create-activation-key {:name ak-name
+                                :description "my description"
+                                :environment test-environment} )))
+       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]

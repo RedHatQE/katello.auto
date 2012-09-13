@@ -103,4 +103,9 @@
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
+(defn get-system-group-system-count "Get number of systems in system group"
+  [sg-name]
+  (navigate :system-group-details-page {:system-group-name sg-name})
+  (Integer/parseInt (browser getText :system-group-total)))
+   
 
