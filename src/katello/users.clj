@@ -30,14 +30,23 @@
 
 (defn login
   "Logs in a user to the UI with the given username and password. If
-   any user is currently logged in, he will be logged out first."
-  [username password & [org]]
+   any user is currently logged in, he will be logged out first. If
+   the user doesn't have a default org selected, the value of optional
+   org provided will be selected, and optionally also select a future
+   default-org. The org and default-org do not have to be the same. If
+   the user does have a default already, the org and/or default-org
+   will be set after logging in on the dashboard page."
+  [username password & [{:keys [org default-org]}]]
   (when (logged-in?) (logout))
   (fill-ajax-form {:username-text username
                    :password-text password}
                   :log-in)
   (let [retVal (check-for-success)]
-    (organization/switch (or org (@config :admin-org)))
+    (when (or org
+              (not (logged-in?)))
+      (Thread/sleep 3000)
+      (organization/switch (or org (@config :admin-org))
+                           {:default-org default-org}))
     retVal))
 
 (defn create

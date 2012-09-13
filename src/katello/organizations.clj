@@ -2,7 +2,8 @@
   (:require [katello.locators :as locators]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [katello.ui-tasks :refer :all] 
-            [katello.notifications :refer :all]))
+            [katello.notifications :refer :all])
+  (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;
 ;; Organizations
@@ -38,10 +39,20 @@
 
 (defn switch
   "Switch to the given organization in the UI. If force? is true,
-  switch even if the org switcher is already on the requested org."
-  [org-name & [force?]]
-  (when (or force? (not= (browser getText :org-switcher) org-name)) 
+  switch even if the org switcher is already on the requested org.
+  Optionally also select the default org for this user. Using force is
+  not necessary if also setting the default-org."
+  [org-name & [{:keys [force? default-org]}]]
+  (when (or force?
+            default-org
+            (not= (browser getText :org-switcher) org-name)) 
     (browser click :org-switcher)
+    (when default-org
+      (let [current-default (try (browser getText :default-org)
+                                 (catch SeleniumException _ nil))]
+        (when (not= current-default default-org)
+          (browser click (locators/default-org-star default-org))
+          (check-for-success))))
     (browser clickAndWait (locators/org-switcher org-name))))
 
 (defn current []
