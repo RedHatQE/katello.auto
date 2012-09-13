@@ -61,6 +61,13 @@
    (fill-ajax-form {:system-groups-hostname-toadd system-name}
                     :system-groups-add-system))
 
+(defn remove-sys-from-system-group
+  "Remove a system from a System-Group"
+   [system-group system-name]
+   (navigate :named-system-group-page {:system-group-name system-group})
+   (browser click (system-checkbox system-name))
+   (browser click :system-groups-remove-system))
+
 (defn copy-system-group
   "Clones a system group, given the name of the original system group
    to clone, and the new name and description."
