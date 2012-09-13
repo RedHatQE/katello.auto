@@ -28,14 +28,16 @@
 ;; Content Search Row Object
 
 (defprotocol RowProtocol
-  (getChildren [this])
+  (getChildren [this result])
   (getCells    [this])
   )
 
 (deftype Row [id name data-type value comparable? children cells]
   RowProtocol
 
-  (getChildren [this] children)
+  (getChildren [this result]
+    (for [child children]
+      (.getRowById result child)))
   
   (getCells [this] cells)
   )
@@ -72,7 +74,7 @@
     (count (filter #(.visible? %) cols)))
 
   (getRowById [this id]
-    (->> rows (filter #(= (.id %) id) first)))
+    (->> rows (filter #(= (.id %) id)) first))
   )
 
 (defn create-result [result-map]
