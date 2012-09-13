@@ -158,8 +158,8 @@
   ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
           [[:prod-auto-complete :add-prod prods] 
-           [:add-repo :repo-auto-complete repos] 
-           [:add-pkg :pkg-auto-complete pkgs]]]
+           [:repo-auto-complete :add-repo repos] 
+           [:pkg-auto-complete  :add-pkg  pkgs]]]
     (doseq [cont-item cont-items]
       (browser setText auto-comp-box cont-item)
       ;; typeKeys is necessary to trigger drop-down list
