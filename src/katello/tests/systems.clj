@@ -230,6 +230,14 @@
                             :description "my description"
                             :environment test-environment})
 
+    (deftest "Create an activation key with i18n characters"
+      :data-driven true
+      (fn [name]
+        (with-unique [ak-name name]
+          (create-activation-key {:name ak-name
+                                :description "my description"
+                                :environment test-environment} )))
+       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]
