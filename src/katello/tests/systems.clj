@@ -141,7 +141,6 @@
            [""     (errtype :katello.notifications/max-systems-must-be-positive)]
            ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
-
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
       (do-steps (uniqueify-vals
