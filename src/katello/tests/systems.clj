@@ -94,6 +94,7 @@
 ;; Tests
 
 (defgroup system-group-tests
+  :blockers api/katello-only
   :group-setup (fn []
                  (api/with-admin
                    (api/ensure-env-exist "dev" {:prior "Library"})))
