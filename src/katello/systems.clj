@@ -65,7 +65,7 @@
   "Remove a system from a System-Group"
    [system-group system-name]
    (navigate :named-system-group-page {:system-group-name system-group})
-   (browser click (system-checkbox system-name))
+   (browser click (locators/system-checkbox system-name))
    (browser click :system-groups-remove-system))
 
 (defn copy-system-group
