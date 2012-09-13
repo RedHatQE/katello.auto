@@ -5,9 +5,8 @@
 (deftype Cell [hover])
 
 (defn create-cells [cells-map]
-  (mapcat 
-    (fn [cell-key] [(-> (cell-key cells-map) :hover Cell.)])
-    (keys cells-map))
+  (for [cell-key (keys cells-map)]
+    (-> (cell-key cells-map) :hover Cell.))
   )
 
 
@@ -16,15 +15,13 @@
 (deftype Column [id span visible? content custom?])
 
 (defn create-columns [cols]
-  (mapcat
-    (fn [col]
-      (let [col-display (:to_display col)] 
-        [(Column. (:id col)
-                  (:span col)
-                  (:shown col)
-                  (:content col-display)
-                  (:custom col-display))]))
-    cols)
+  (for [col cols]
+    (let [col-display (:display col)]
+      (Column. (:id col) 
+               (:span col) 
+               (:shown col) 
+               (:content col-display) 
+               (:custom col-display))))
   )
 
 
@@ -44,17 +41,15 @@
   )
 
 (defn create-rows [rows-map]
-  (mapcat 
-    (fn [row-key]
-      (let [row-map  (row-key rows-map)] 
-        [(Row. (:id row-map) 
-               (:name row-map) 
-               (:data_type row-map) 
-               (:value row-map)
-               (:comparable row-map)
-               (:child_ids row-map)
-               (create-cells (:cells row-map)))]))
-    (keys rows-map)) 
+  (for [row-key (keys rows-map)]
+    (let [row-map  (row-key rows-map)] 
+      (Row. (:id row-map) 
+            (:name row-map) 
+            (:data_type row-map) 
+            (:value row-map)
+            (:comparable row-map)
+            (:child_ids row-map)
+            (create-cells (:cells row-map)))) )
   )
 
 ;; Content Search Result Object
@@ -74,11 +69,10 @@
   (getColumns [this] cols)
 
   (getVisibleColumnCount [this]
-    (->> (mapcat (fn [col] [(.visible? col)]) cols) (filter true?) count))
+    (count (filter #(.visible? %) cols)))
 
   (getRowById [this id]
-    (filter (fn [row] (not (nil? row)))
-            (map (fn [row] (when (= (.id row) id) row)) rows)))
+    (->> rows (filter #(= (.id %) id) first)))
   )
 
 (defn create-result [result-map]
