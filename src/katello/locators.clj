@@ -56,6 +56,7 @@
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
+   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]" 
    tab                             "link=$1"
    template-action                 "//a[@data-name='$2' and .='$1']"
    template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='$1']"
@@ -94,7 +95,7 @@
    :search-submit           "//button[@form='search_form']"
    ;;main banner
    :account             "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out             "//a[normalize-space(.)='Logout']"
+   :log-out             "//a[normalize-space(.)='Log Out']"
    :org-switcher        "switcherButton"
    :active-org          "//*[@id='switcherButton']"
    ;;inside the org switcher
