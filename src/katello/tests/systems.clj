@@ -86,6 +86,11 @@
   [{:keys [group-name copy-name]}]
   (copy-system-group group-name copy-name {:description "copied system group"}))
 
+(defn step-remove-sys-from-copied-system-group
+  "Remove the system from copied system group."
+  [{:keys [copy-name system-name]}]
+  (remove-sys-from-system-group copy-name system-name))
+
 ;; Tests
 
 (defgroup system-group-tests
@@ -169,6 +174,15 @@
         [[{:also-remove-systems? true}]
          [{:also-remove-systems? false}]])
       
+      (deftest "Remove a system from copied system group"
+        :blockers (open-bz-bugs "857031")
+        (do-steps (uniqueify-vals
+                   {:system-name  "mysys"
+                    :group-name  "copygrp"
+                    :copy-name  "copy_mysys"})
+                  step-add-new-system-to-new-group
+                  step-copy-system-group
+                  step-remove-sys-from-copied-system-group))
 
       (deftest "Copy a system group"
         (do-steps (uniqueify-vals
