@@ -30,6 +30,7 @@
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
+   default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
    left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[$1]"
@@ -98,6 +99,7 @@
    :log-out             "//a[normalize-space(.)='Log Out']"
    :org-switcher        "switcherButton"
    :active-org          "//*[@id='switcherButton']"
+   :default-org         "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
    ;;inside the org switcher
    :manage-organizations-link  "manage_orgs"
    })
@@ -446,8 +448,7 @@
   "Returns a function that returns a locator for the given on/off text
    and locator strategy. Used for clicking things like +Add/Remove for
    items in changesets or permission lists."
-  [[on-text off-text]
-   loc-strategy]
+  [[on-text off-text] loc-strategy]
   (fn [associated-text on?]
     (loc-strategy (if on? on-text off-text) associated-text)))
 
