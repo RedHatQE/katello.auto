@@ -169,6 +169,7 @@
          [{:also-remove-systems? false}]])
       
       (deftest "Remove a system from copied system group"
+        :blockers (open-bz-bugs "857031")
         (do-steps (uniqueify-vals
                    {:system-name  "mysys"
                     :group-name  "copygrp"
