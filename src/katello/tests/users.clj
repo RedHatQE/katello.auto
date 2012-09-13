@@ -21,8 +21,14 @@
 (defgroup user-tests
 
   (deftest "Admin creates a user"
-    (user/create       (uniqueify "autouser")   generic-user-details)
-
+    (user/create  (uniqueify "autouser")   generic-user-details)
+    
+    (deftest "Admin creates a user with i18n characters"
+      :data-driven true
+      
+      (fn [username]
+          (user/create   (uniqueify username)   generic-user-details))
+      [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
     (deftest "Admin creates a user with a default organization"
       :blockers (open-bz-bugs "852119")
