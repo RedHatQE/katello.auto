@@ -306,6 +306,7 @@
    :system-group-copy-description-text     "description_input"
    :system-group-copy-submit               "copy_button"
    :system-group-remove                    (link "Remove")
+   :system-group-total                     "//fieldset[contains(.,'Total')]/div[2]/a"
    :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
    :system-group-unlimited                 "//input[@class='unlimited_members']"
    :save-new-limit                          "//button[.='Save']"
