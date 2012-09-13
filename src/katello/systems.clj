@@ -65,8 +65,8 @@
   "Remove a system from a System-Group"
    [system-group system-name]
    (navigate :named-system-group-page {:system-group-name system-group})
-   (browser click (system-checkbox system-name)
-                  :system-groups-remove-system))
+   (browser click (system-checkbox system-name))
+   (browser click :system-groups-remove-system))
 
 (defn copy-system-group
   "Clones a system group, given the name of the original system group
