@@ -1,4 +1,11 @@
-(in-ns 'katello.tests.providers)
+(ns katello.tests.providers.custom
+  (:require (katello [api-tasks :as api]
+                     [providers :as provider]
+                     [tasks :refer :all]
+                     [organizations :as organization])
+            [test.tree.script :refer [defgroup deftest]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [katello.tests.providers :refer [with-n-new-orgs with-two-providers]]))
 
 ;; Variables
 
