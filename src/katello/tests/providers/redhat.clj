@@ -119,6 +119,7 @@
       :blockers api/katello-only
       (do-steps {:org-name (uniqueify "enablerepos")
                  :manifest-loc (manifest/new-tmp-loc)
+                 :repository-url (@config :redhat-repo-url)
                  :enable-repos ["Nature Enterprise x86_64 1.0"
                                 "Nature Enterprise x86_64 1.1"]}
                 step-create-org
