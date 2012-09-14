@@ -97,6 +97,7 @@
                                       :org-name "relver-test"})
                      {:env-name "Development"
                       :products fake-content/some-product-repos
+                      :manifest-loc (manifest/new-tmp-loc)
                       :repository-url (@config :redhat-repo-url)
                       :install-packages ["cheetah" "elephant"] })
               step-create-org
