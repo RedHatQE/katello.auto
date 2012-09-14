@@ -3,7 +3,8 @@
   (:require (katello [conf :refer :all] 
                      [ui-tasks :refer [navigate errtype]]
                      [tasks :refer :all]
-                     [users :as user])
+                     [users :as user]
+                     [organizations :as organization])
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -11,9 +12,7 @@
 
 ;;; Functions
 
-(defn navigate-toplevel [& _]
-  ;;to be used as a :before-test for all tests
-  (navigate :top-level))
+
 
 (defn verify-invalid-login-rejected
   "Try to login with the given credentials, verify that a proper error
@@ -27,9 +26,16 @@
 
 (defn login-admin []
   (user/logout)
-  (user/login         *session-user*         *session-password*)
-  (verify-that   (= (user/current) *session-user*)))
+  (user/login *session-user* *session-password* {:org (@config :admin-org)})
+  (verify-that (= (user/current) *session-user*)))
 
+(defn navigate-toplevel [& _]
+  ;;to be used as a :before-test for all tests
+  (navigate :top-level)
+  (if (= (organization/current) "Select an Organization:") ;;see bz 857173
+    (try (organization/switch (@config :admin-org))
+         (catch Exception _
+           (login-admin))))) 
 
 ;;; Tests
 
