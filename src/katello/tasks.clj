@@ -102,3 +102,13 @@
   "Call all fs in order, with single argument m"
   [m & fs]
   ((apply juxt fs) m))
+
+(def tmpdir (System/getProperty "java.io.tmpdir"))
+
+(defn tmpfile
+  "Given a filename or path, get a path to the file within the local system's temporary dir"
+  [filename]
+  (-> tmpdir
+     (str "/" filename)
+     (java.io.File.)
+     (.getCanonicalPath)))
