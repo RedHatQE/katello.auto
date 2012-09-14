@@ -36,7 +36,7 @@
 
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
   (organization/execute-with org-name
-    (manifest/upload manifest-loc (select-keys m :repository-url))))
+    (manifest/upload manifest-loc (select-keys m [:repository-url]))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
   (organization/execute-with org-name
