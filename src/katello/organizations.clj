@@ -37,6 +37,10 @@
   (navigate :named-organization-page {:org-name org-name})
   (in-place-edit {:org-description-text description}))
 
+(defn current []
+  "Return the currently active org (a string) shown in the org switcher."
+  ((->> :active-org (browser getAttributes) (into {})) "title"))
+
 (defn switch
   "Switch to the given organization in the UI. If force? is true,
   switch even if the org switcher is already on the requested org.
@@ -45,7 +49,7 @@
   [org-name & [{:keys [force? default-org]}]]
   (when (or force?
             default-org
-            (not= (browser getText :org-switcher) org-name)) 
+            (not= (current) org-name)) 
     (browser click :org-switcher)
     (when default-org
       (let [current-default (try (browser getText :default-org)
@@ -54,10 +58,6 @@
           (browser click (locators/default-org-star default-org))
           (check-for-success))))
     (browser clickAndWait (locators/org-switcher org-name))))
-
-(defn current []
-  "Return the currently active org (a string) shown in the org switcher."
-  (browser getText :active-org))
 
 (defmacro execute-with
   "Switch to organization org-name, then execute the code in body. Finally,
