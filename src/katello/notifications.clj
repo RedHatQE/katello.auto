@@ -124,9 +124,7 @@
         (do (when refresh?
               (browser refresh))
             (recur error-notifs))))
-    (if (empty? error-notifs) 
-      (throw+ {:type ::no-success-message-error}
-              "Expected a success notification, but none appeared within the timeout period.")
+    (when-not (empty? error-notifs) 
       (throw+ {:types (matching-errors error-notifs) :notifications error-notifs}))))
 
 (defn check-for-error
