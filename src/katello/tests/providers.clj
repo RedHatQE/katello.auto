@@ -99,11 +99,6 @@
 
 ;; Tests
 
-;; Load more tests groups into this namespace
-(load "providers/custom-product")
-
-
-
 (defgroup gpg-key-tests
 
   (deftest "Create a new GPG key from text input"
@@ -174,9 +169,7 @@
 
     
     (deftest "Create two providers with the same name, in two different orgs"
-      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs))
-
-    custom-product-tests)
+      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs)))
 
   gpg-key-tests
   package-filter-tests)
