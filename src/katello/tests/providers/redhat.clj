@@ -108,7 +108,8 @@
   :blockers    (open-bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
-    (do-steps {:org-name (uniqueify "manifest-upload")}
+    (do-steps {:org-name (uniqueify "manifest-upload")
+               :manifest-loc (manifest/new-tmp-loc)}
               step-create-org
               step-clone-manifest
               step-upload-manifest)
@@ -117,6 +118,7 @@
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
       (do-steps {:org-name (uniqueify "enablerepos")
+                 :manifest-loc (manifest/new-tmp-loc)
                  :enable-repos ["Nature Enterprise x86_64 1.0"
                                 "Nature Enterprise x86_64 1.1"]}
                 step-create-org
