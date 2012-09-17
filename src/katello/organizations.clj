@@ -37,8 +37,9 @@
   (navigate :named-organization-page {:org-name org-name})
   (in-place-edit {:org-description-text description}))
 
-(defn current []
+(defn current
   "Return the currently active org (a string) shown in the org switcher."
+  []
   ((->> :active-org (browser getAttributes) (into {})) "title"))
 
 (defn switch
