@@ -8,7 +8,6 @@
                      [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
-            [clojure.string :refer [capitalize upper-case lower-case]]
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]))
@@ -97,19 +96,6 @@
         (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
                                    (organization/create org-name {:description "org-description"}))))
 
-    (deftest "Two organizations whose names only differ by upper/lower case are allowed"
-      :data-driven true
-
-      (fn [orig-org-name modify-case-fn]
-        (with-unique [org-name orig-org-name]
-          (organization/create org-name)
-          (organization/create (modify-case-fn org-name))))
-
-      [["org"      capitalize]
-       ["your org" capitalize]
-       ["org"      upper-case]
-       ["My Org"   upper-case]
-       ["YOUR Org" lower-case]])
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
