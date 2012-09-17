@@ -142,7 +142,22 @@
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))
 
+    (deftest "Two environments with name that differs only in case are dissalowed"
+      :blockers (open-bz-bugs "847037")
+      :data-driven true
 
+      (fn [orig-org-name modify-case-fn]
+        (validation/expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
+          (with-unique [name orig-name]
+            (environment/create name generic-user-details)
+            (environment/create (modify-case-fn name) generic-user-details))))
+
+      [["env"      capitalize]
+       ["yourenv" capitalize]
+       ["env"      upper-case]
+       ["MyEnv"   upper-case]
+       ["YOUREnv" lower-case]])
+      
     (deftest "Rename an environment"
       :blockers (constantly ["Renaming is not supported for v1"])
 
