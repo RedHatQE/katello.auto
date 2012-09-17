@@ -13,6 +13,7 @@
             [slingshot.slingshot :refer :all]
             [tools.verify :refer [verify-that]]
             [serializable.fn :refer [fn]]
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Variables
@@ -146,11 +147,13 @@
       :blockers (open-bz-bugs "847037")
       :data-driven true
 
-      (fn [orig-org-name modify-case-fn]
-        (validation/expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
+      (fn [orig-name modify-case-fn]
+        (expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
           (with-unique [name orig-name]
-            (environment/create name generic-user-details)
-            (environment/create (modify-case-fn name) generic-user-details))))
+            (environment/create name {:org-name @test-org-name
+                                                      :description "dup env description"})
+            (environment/create (modify-case-fn name) {:org-name @test-org-name
+                                                      :description "dup env description"}))))
 
       [["env"      capitalize]
        ["yourenv" capitalize]

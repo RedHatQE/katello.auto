@@ -102,7 +102,7 @@
       :data-driven true
 
       (fn [orig-org-name modify-case-fn]
-        (validation/expecting-error (errtype :katello.notifications/name-taken-error)
+        (expecting-error (errtype :katello.notifications/name-taken-error)
           (with-unique [org-name orig-org-name]
             (organization/create org-name)
             (organization/create (modify-case-fn org-name)))))

@@ -8,6 +8,7 @@
                      [ui-tasks :refer [errtype]] 
                      [conf :refer [config]]) 
             [test.tree.script :refer :all] 
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;;; Variables
@@ -82,8 +83,8 @@
       :blockers (open-bz-bugs "857876")
       :data-driven true
 
-      (fn [orig-org-name modify-case-fn]
-        (validation/expecting-error (errtype :katello.notifications/name-taken-error)
+      (fn [orig-name modify-case-fn]
+        (expecting-error (errtype :katello.notifications/name-taken-error)
           (with-unique [name orig-name]
             (user/create name generic-user-details)
             (user/create (modify-case-fn name) generic-user-details))))
