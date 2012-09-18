@@ -8,6 +8,7 @@
                      [ui-tasks :refer [errtype]] 
                      [conf :refer [config]]) 
             [test.tree.script :refer :all] 
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;;; Variables
@@ -65,6 +66,11 @@
                                          :email "root@localhost"})
                      (role/assign {:user admin :roles ["Administrator"]}))))))
 
+    (deftest "User with the same username as password is disallowed"
+      :blockers (open-bz-bugs "841499")
+      (expecting-error (errtype :katello.notifications/password-same-as-username)
+        (with-unique [username "passwduser"]
+          (user/create    username (merge generic-user-details {:password username})))))
 
     (deftest "Two users with the same username is disallowed"
       :blockers (open-bz-bugs "738425")
@@ -72,7 +78,6 @@
       (with-unique [username "dupeuser"]
         (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
           (user/create username generic-user-details))))
-
 
     (deftest "User's minimum password length is enforced"
       (expecting-error (errtype :katello.notifications/password-too-short)
