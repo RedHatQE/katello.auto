@@ -166,11 +166,24 @@
           (do
             (create-system-group group-name)
             (let [syscount  (get-system-group-system-count group-name)]
+              (create-system system-name {:sockets "1"
+                                :system-arch "x86_64"})
+              (add-to-system-group group-name system-name)
+              (verify-that (= (inc syscount) (get-system-group-system-count group-name)))))))
+       
+      (deftest "Remove a system from a system group and check count is -1"
+        :blockers (open-bz-bugs "857031")
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (do
+            (create-system-group group-name)
             (create-system system-name {:sockets "1"
                               :system-arch "x86_64"})
             (add-to-system-group group-name system-name)
-            (verify-that (= (inc syscount) (get-system-group-system-count group-name)))))))
-           
+            (let [syscount  (get-system-group-system-count group-name)]
+              (remove-sys-from-system-group group-name system-name)
+              (verify-that (= (dec syscount) (get-system-group-system-count group-name)))))))
+       
            
       
       (deftest "Delete a system group"
