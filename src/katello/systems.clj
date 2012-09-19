@@ -4,7 +4,7 @@
                      [notifications :refer [check-for-success]] 
                      [ui-tasks :refer :all])))
 
-(defn create-system
+(defn create
   "Creates a system"
    [name & [{:keys [sockets system-arch]}]]
    (navigate :new-system-page)
@@ -14,7 +14,7 @@
                     :create-system)
    (check-for-success))
 
-(defn edit-system
+(defn edit
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [name {:keys [new-name description location release-version]}]
@@ -24,7 +24,7 @@
                   :system-location-text-edit location
                   :system-release-version-select release-version}))
 
-(defn subscribe-system
+(defn subscribe
   "Subscribes the given system to the products. (products should be a
   list). Can also set the auto-subscribe for a particular SLA.
   auto-subscribe must be either true or false to select a new setting
@@ -45,7 +45,7 @@
     (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
   (check-for-success))
 
-(defn create-system-group
+(defn create-group
   "Creates a system-group"
    [name & [{:keys [description]}]]
    (navigate :new-system-groups-page)
@@ -54,21 +54,21 @@
                     :create-system-groups)
    (check-for-success))
 
-(defn add-to-system-group
+(defn add-to-group
   "Adds a system to a System-Group"
    [system-group system-name]
    (navigate :named-system-group-page {:system-group-name system-group})
    (fill-ajax-form {:system-groups-hostname-toadd system-name}
                     :system-groups-add-system))
 
-(defn remove-sys-from-system-group
+(defn remove-from-group
   "Remove a system from a System-Group"
    [system-group system-name]
    (navigate :named-system-group-page {:system-group-name system-group})
    (browser click (locators/system-checkbox system-name))
    (browser click :system-groups-remove-system))
 
-(defn copy-system-group
+(defn copy-group
   "Clones a system group, given the name of the original system group
    to clone, and the new name and description."
   [orig-name new-name & [{:keys [description]}]]
@@ -79,7 +79,7 @@
                   :system-group-copy-submit)
   (check-for-success))
 
-(defn remove-system-group [system-group & [{:keys [also-remove-systems?]}]]
+(defn remove-group [system-group & [{:keys [also-remove-systems?]}]]
   (navigate :named-system-group-page {:system-group-name system-group})
   (browser click :system-group-remove)
   (browser click :confirmation-yes)
@@ -88,7 +88,7 @@
                    :system-group-confirm-only-system-group))
   (check-for-success))
 
-(defn edit-system-group "Change the value of limit field in system group"
+(defn edit-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
   (navigate :system-group-details-page {:system-group-name sg-name})
   (let [needed-flipping (and new-limit
@@ -103,9 +103,7 @@
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
-(defn get-system-group-system-count "Get number of systems in system group"
+(defn get-group-system-count "Get number of systems in system group"
   [sg-name]
   (navigate :system-group-details-page {:system-group-name sg-name})
   (Integer/parseInt (browser getText :system-group-total)))
-   
-

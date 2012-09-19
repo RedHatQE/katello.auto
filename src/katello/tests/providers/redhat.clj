@@ -6,7 +6,7 @@
                      [ui-tasks        :refer [navigate enable-redhat-repositories errtype]]
                      [manifest        :as manifest]
                      [changesets      :as changesets]
-                     [systems         :as systems]
+                     [systems         :as system]
                      [fake-content    :as fake-content]
                      [conf            :refer [config no-clients-defined]])
             [test.tree.script :refer [defgroup deftest]]
@@ -62,7 +62,7 @@
 
 (defn step-set-system-release-version [{:keys [release-version system-name org-name] :as m}]
   (organization/execute-with org-name
-    (systems/edit-system system-name (select-keys m [release-version]))))
+    (system/edit system-name (select-keys m [release-version]))))
 
 (defn step-verify-client-access [{:keys [org-name env-name products install-packages]}]
   (api/with-admin
