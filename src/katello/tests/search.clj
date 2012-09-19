@@ -165,6 +165,8 @@
   (deftest "search sync plans"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
+    :blockers api/katello-only
+    
     (fn [key_opt searchterms]
       (sync/create-plan key_opt)
       (search :sync-plans searchterms)
@@ -180,6 +182,7 @@
   (deftest "search system groups"
     :data-driven true
     :description "search for a system group based on criteria"
+    :blockers api/katello-only
     
     (fn [system-group system searchterms]
       (api/with-admin
