@@ -2,7 +2,7 @@
   (:require clojure.pprint
             [katello.tests.suite :as suite]
             [bugzilla.checker :refer [open-bz-bugs]]
-            test.tree.debug
+            [test.tree :refer [state]] 
             katello.conf
             [clojure.pprint :refer [pprint]]
    )
@@ -10,27 +10,64 @@
         seesaw.chooser)
   (:import [javax.swing.tree DefaultMutableTreeNode]
            [javax.swing JTree]
+           [javax.swing.tree DefaultTreeModel]
            [javax.swing.tree TreePath]
+           [javax.swing.tree DefaultTreeCellRenderer]
            [java.text SimpleDateFormat]
-           [java.lang.System])
+           [java.lang.System]
+           )
   )
 
 (def win-width 900)
 (def win-height 600)
 (def win-title "Katello Test Runner")
 
+(def prog-bar (progress-bar :value 0))
 (def test-map suite/katello-tests)
 (def test-tree-root (DefaultMutableTreeNode. "Test Tree")) 
 (def test-tree (JTree. test-tree-root)) 
 (def output-tree-root (DefaultMutableTreeNode. "Test Results")) 
-(def output-tree (JTree. output-tree-root))
-(def test-output (text :multi-line? true :wrap-lines? true))
+(def output-tree-model (DefaultTreeModel. output-tree-root))
+(def output-tree (JTree. output-tree-model))
+(def output-tree-scroll (scrollable output-tree :hscroll :as-needed :vscroll :always)) 
+(def output-tree-lock (atom nil))
 
-(def is-running? (atom false))
+(def scroll-pos 0)
+(def running-test nil)
 (def test-results-ref (atom nil))
 (def in-repl? true)
 (def need-save? false)
 
+(def output-tree-renderer 
+  (proxy [DefaultTreeCellRenderer] []
+    (getTreeCellRendererComponent [tree value selected? expanded? leaf? row hasFocus?]
+      (let [this (proxy-super getTreeCellRendererComponent tree value selected? expanded? leaf? row hasFocus?)] 
+        (.setOpaque this true)
+        (.setBackground this java.awt.Color/white)
+        (let [child-enum (.children value)]
+          (def continue (atom true))
+          (while (and child-enum (.hasMoreElements child-enum) @continue)
+            (let [child (.nextElement child-enum)
+                  child-str (str child)
+                  status (->> child-str (re-find #"Status: (\w+)") second keyword)
+                  result (->> child-str (re-find #"Result: (\w+)") second keyword)
+                  ]
+              (when (keyword? status)
+                (.setBackground this 
+                                (cond (= status :queued)  java.awt.Color/magenta
+                                      (= status :running) java.awt.Color/yellow
+                                      (= status :done)    (if (= result :pass) 
+                                                              java.awt.Color/green
+                                                              java.awt.Color/red))) 
+                (reset! continue false)))))
+        this))))
+
+(defn is-running? []
+  (let [test-results @test-results-ref] 
+    (if (nil? test-results)
+        false
+        (not= (state (first test-results) (second test-results)) :finished)))
+  )
 
 (defn add-test-groups
   [test-group tree-node]
@@ -43,20 +80,21 @@
     (when (contains? test-group :more)
       (.setUserObject new-node (first (:groups test-group)))
       (doseq [child-group (:more test-group)]
-        (add-test-groups child-group new-node)))
-    )
+        (add-test-groups child-group new-node))))
   )
 
 (defn get-test-entry-from-path
   [test-map path path-idx]
-  (let [next-path-idx (inc path-idx) 
-        cur-node (.getPathComponent path path-idx) 
-        child-node (.getPathComponent path (inc path-idx))
+  (let [next-path-idx (inc path-idx)]
+  (if (<= (.getPathCount path) next-path-idx)
+    test-map
+  (let [cur-node (.getPathComponent path path-idx) 
+        child-node (.getPathComponent path next-path-idx)
         index (.getIndex cur-node child-node)
         child-test-map (nth (:more test-map) (.getIndex cur-node child-node))]
     (if (<= (dec (.getPathCount path)) next-path-idx)
       child-test-map
-      (get-test-entry-from-path child-test-map path next-path-idx))) 
+      (get-test-entry-from-path child-test-map path next-path-idx))))) 
   )
 
 (defn selected-item-changed
@@ -66,67 +104,104 @@
     (text! test-info (str "Groups: " (:groups sel-test) "\n" 
                           "Parameters: " (:parameters sel-test) "\n"
                           "Blockers: " (str (:blockers sel-test)) "\n"
-                          "Steps: " (str (:steps sel-test))))
-    )
-  )
-
-(defn keyword-to-string [keywrd]
-  (when keywrd (name keywrd))
-  )
+                          "Steps: " (str (:steps sel-test))))))
 
 (defn get-date-string [d]
   (when (not (nil? d))
-    (.format (SimpleDateFormat. "MM/dd/yyyy hh:mm:ss") d))
-  )
+    (.format (SimpleDateFormat. "MM/dd/yyyy hh:mm:ss") d)))
 
-(defn add-output-node [parent-node key-str val-str]
-  (.add parent-node 
-        (DefaultMutableTreeNode. (str key-str ": " (keyword-to-string val-str))))
-  )
+(defn add-report-node [parent-node key-str val-str]
+  (def node (atom nil))
+  (let [node-str (str key-str ": " (if (keyword val-str) (name val-str) val-str))]
+    ; Search through children for existing node
+    (when (.getChildCount parent-node)
+      (let [child-enum (.children parent-node)]
+        (while (and (not @node) (.hasMoreElements child-enum))
+          (let [child-node (.nextElement child-enum)
+                child-str  (str child-node)]
+            (when (-> child-str (.startsWith (str key-str ": "))) 
+              (when (not= child-str node-str) (.setUserObject child-node node-str))
+              (reset! node child-node))))))
+    (when-not @node
+      (.add parent-node (DefaultMutableTreeNode. node-str)))))
+
+
+(defn update-output-node [report-group report test-group output-node]
+  (when (contains? test-group :more)
+    (let [child-enum (.children output-node)]
+      (doseq [child-group (:more test-group)
+              :while (not (update-output-node report-group
+                                              report
+                                              child-group 
+                                              (.nextElement child-enum)))])) 
+    )
+
+  (let [results (:report report)]
+    (if (= test-group report-group)
+      (do
+        (add-report-node output-node "Status" (:status report)) 
+        (add-report-node output-node "Result" (:result results))
+        (add-report-node output-node "Start Time" (get-date-string (:start-time results))) 
+        (add-report-node output-node "End Time" (get-date-string (:end-time results))) 
+        (add-report-node output-node "Parameters" (:parameters results)) 
+        (add-report-node output-node "Return Value" (:returned results)) 
+        (add-report-node output-node "Promise" (:promise report)) 
+        (.nodeChanged output-tree-model output-node)
+        true)
+      false)))
+
 
 (defn refresh-test-output [watch-key watch-ref old-state new-state]
+  (locking output-tree-lock
+    (let [scroll-bar (.getVerticalScrollBar output-tree-scroll)
+          vp (.getViewport output-tree-scroll)
+          test-total (atom 0)
+          test-done  (atom 0)]
+      (.setValue scroll-bar scroll-pos)  
+      (doseq [report-key (keys new-state)
+              :let [report-val (get new-state report-key)]]
+          (when (= (:status report-val) :done) (swap! test-done inc))
+          (swap! test-total inc) 
+          (update-output-node report-key 
+                              report-val
+                              running-test 
+                              (.getFirstChild output-tree-root)))
+      (.setMaximum prog-bar @test-total)
+      (.setValue prog-bar @test-done)))
+  (def need-save? true))
 
-  (.removeAllChildren output-tree-root)
-
-  (doseq [report-key (keys new-state)] 
-    (let [report-val (get new-state report-key) 
-          report-root (DefaultMutableTreeNode. (:name report-key))
-          report      (:report report-val)]
-      (.add output-tree-root report-root) 
-      (add-output-node report-root "Start Time" (get-date-string (:start-time report)))
-      (add-output-node report-root "End Time" (get-date-string (:end-time report)))
-      (add-output-node report-root "Parameters" (:parameters report))
-      (add-output-node report-root "Return Value" (:returned report))
-      (add-output-node report-root "Status" (:status report-val))
-      (add-output-node report-root "Promise" (:promise report-val))
-      (.expandPath output-tree (TreePath. (.getPath report-root)))
-      )
-    )
-
-  (try (.updateUI output-tree) (catch Exception e nil))
-  (def need-save? true)
-  )
 
 (defn run-test-click [test-tree]
-  ; TODO: Check need-save?
+  ; TODO:) Check need-save?
   (let [sel-path (.getSelectionPath test-tree)
-        sel-test (get-test-entry-from-path test-map sel-path 1)] 
-      (reset! is-running? true)
-      (future 
-        (do 
-          (try (reset! test-results-ref 
-                       (test.tree.debug/debug 
-                         (with-meta sel-test {:watchers {:test-runner-watch refresh-test-output}}) 
-                         (katello.conf/trace-list))) 
-             (catch Exception e (println (str "Exception: " (str e)))))
-            (reset! is-running? false)
-            )
-        )
-    )
+        sel-test (get-test-entry-from-path test-map sel-path 1)]
+
+    (def running-test sel-test)
+
+    (.setStringPainted prog-bar true)
+    (.removeAllChildren output-tree-root)
+    (add-test-groups sel-test output-tree-root)
+    (.nodeStructureChanged output-tree-model output-tree-root)
+    (doseq [node-index [0 1]] (.expandRow output-tree node-index))
+
+    ; Start test run
+    (try 
+      (reset! test-results-ref  
+              (test.tree/run 
+                (with-meta sel-test 
+                           {:watchers {:test-runner-watch refresh-test-output}}))) 
+      (catch Exception e (println (str "Exception: " (str e))))))
+
+  ; Monitor for test completion
+  (future 
+    (while (is-running?) (Thread/sleep 500)) 
+    (alert "Test Run Complete")
+    (.setValue prog-bar 0)
+    (.setStringPainted prog-bar false))
   )
 
-(defn mouse-pressed [e]
 
+(defn mouse-pressed [e]
   (when (= (.getButton e) 3)
     (let [x (.getX e)
           y (.getY e)]
@@ -138,8 +213,9 @@
                                 :listen [:action (fn [sender] (test.tree/terminate-all-tests (second @test-results-ref)))])
                      (popup :items [run-menu-item terminate-menu-item] 
                             :id :popup-menu)]
-        (config! run-menu-item :enabled? (not @is-running?))
-        (config! terminate-menu-item :enabled? @is-running?)
+        (let [running? (is-running?)]
+          (config! run-menu-item :enabled? (not running?)) 
+          (config! terminate-menu-item :enabled? running?)) 
         (->> (.getPathForLocation test-tree x y) (.setSelectionPath test-tree))
         (.show popup-menu test-tree x y)))) 
   )
@@ -149,7 +225,7 @@
   )
 
 (defn save-results [sender]
-  (cond @is-running?  (alert "Wait for tests to complete before saving results.")
+  (cond (is-running?)  (alert "Wait for tests to complete before saving results.")
         (nil? @test-results-ref) (alert "No results available.")
         :else (let [filename (choose-file (to-root sender)
                                           :type :save
@@ -163,18 +239,26 @@
                 ))
   )
 
+(defn reset-state []
+  (reset! test-results-ref nil)
+  ;(.setBackgroundSelectionColor output-tree-renderer java.awt.Color/red)
+  (.removeAllChildren output-tree-root)
+  (.setCellRenderer output-tree output-tree-renderer)
+  )
+
 (defn start-gui [& args]
 
-  ; Reset state
-  (reset! test-results-ref nil)
+  (reset-state)
 
   (let [tree-scroll-pane (scrollable test-tree :hscroll :as-needed :vscroll :always)
         test-info (text :editable? false :multi-line? true :rows 5)
         info-scroll-pane (scrollable test-info :hscroll :as-needed :vscroll :as-needed)
-        left-pane (top-bottom-split tree-scroll-pane info-scroll-pane :divider-location (/ (* win-height 3) 4))
-        right-pane (scrollable output-tree :hscroll :as-needed :vscroll :always)]
+        left-pane (top-bottom-split tree-scroll-pane info-scroll-pane :divider-location (/ (* win-height 3) 4))]
 
-    (with-widgets [(left-right-split left-pane right-pane :id :main-panel :divider-location (/ win-width 3))
+    (with-widgets [(border-panel :id :right-pane
+                                 :center output-tree-scroll
+                                 :south  prog-bar) 
+                   (left-right-split left-pane right-pane :id :main-panel :divider-location (/ win-width 3))
                    (menu-item :text "Open Results" 
                               :id :open-menu 
                               :listen [:action #(open-results %)])
@@ -201,6 +285,8 @@
         :selection #(selected-item-changed test-info %))
       (listen test-tree
         :mouse-pressed #(mouse-pressed %))
+      (listen output-tree-scroll 
+        :mouse-wheel (fn [e] (def scroll-pos (-> output-tree-scroll .getVerticalScrollBar .getValue))))
 
       (add-test-groups test-map test-tree-root)
       (doseq [node-index [0 1]]  (.expandRow test-tree node-index))
