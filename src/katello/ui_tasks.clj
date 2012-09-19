@@ -1,20 +1,21 @@
 (ns katello.ui-tasks
-  (:require [katello.locators :as locators]
-            [ui.navigate :as nav]
-            [clojure.string :as string]
+  (:require [clojure.data.json  :as json]
+            [ui.navigate      :as nav]
             [com.redhat.qe.auto.selenium.selenium
-              :refer [browser ->browser fill-form fill-item]]
-            (katello [tasks :refer :all] 
+             :refer [browser ->browser fill-form fill-item]]
+            (katello [locators      :as locators]
+                     [tasks         :refer :all] 
                      [notifications :refer :all] 
-                     [conf :refer [config]] 
-                     [api-tasks :refer [when-katello when-headpin]]) 
+                     [conf          :refer [config]] 
+                     [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
-            [tools.verify :refer [verify-that]]
-            [inflections.core :refer [pluralize]] 
-            (clojure [string :refer [capitalize]] 
-                     [set :refer [union]])
-            [clojure.data.json :as json])
-  (:import [com.thoughtworks.selenium SeleniumException]))
+            [tools.verify        :refer [verify-that]]
+            [inflections.core    :refer [pluralize]] 
+            (clojure [string     :refer [capitalize]] 
+                     [set        :refer [union]]
+                     [string     :as string]))
+  (:import [com.thoughtworks.selenium SeleniumException]
+           [java.text SimpleDateFormat]))
 
 (declare search)
 
@@ -129,16 +130,18 @@
   (check-for-error {:timeout-ms 2000}))
 
 (defn search-for-content
-  "Performs a search for the specified content type using any product,
-   repository, package or errata filters specified. Note that while
-   prods, repos and pkgs should be vectors, errata is expected to be a
-   string. Returns the search results as raw data from the browser
-   javascript.
-   Example: search-for-content :errata-type {:prods ['myprod']
+  "Performs a search for the specified content
+   type (:prod-type, :repo-type, :pkg-type, :errata-type) using any
+   product, repository, package or errata filters specified. Note that
+   while prods, repos and pkgs should be vectors, errata is expected
+   to be a string. Returns the search results as raw data from the
+   browser javascript. Example: search-for-content :errata-type
+                                             {:prods ['myprod']
                                              :repos ['myrepo']
                                              :errata 'myerrata'}"
   [content-type & [{:keys [prods repos pkgs errata]}]]
-
+  (assert (some #{content-type} [:prod-type :repo-type :pkg-type :errata-type])
+          "Unknown content search type.")
   (case content-type 
     :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
     :repo-type   (assert (and (empty? pkgs) (empty? errata)))
@@ -157,8 +160,8 @@
   ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
           [[:prod-auto-complete :add-prod prods] 
-           [:add-repo :repo-auto-complete repos] 
-           [:add-pkg :pkg-auto-complete pkgs]]]
+           [:repo-auto-complete :add-repo repos] 
+           [:pkg-auto-complete  :add-pkg  pkgs]]]
     (doseq [cont-item cont-items]
       (browser setText auto-comp-box cont-item)
       ;; typeKeys is necessary to trigger drop-down list
@@ -202,32 +205,6 @@
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (check-for-success))
-
-(defn upload-subscription-manifest
-  "Uploads a subscription manifest from the filesystem local to the
-   selenium browser. Optionally specify a new repository url for Red
-   Hat content- if not specified, the default url is kept. Optionally
-   specify whether to force the upload."
-  [file-path & [{:keys [repository-url]}]]
-  (navigate :redhat-subscriptions-page)
-  (when-not (browser isElementPresent :choose-file)
-    (browser click :import-manifest))
-  (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
-  (fill-ajax-form {:choose-file file-path}
-                  :upload)
-  (check-for-success {:timeout-ms 120000}))
-  ;;now the page seems to refresh on its own, but sometimes the ajax count
-  ;; does not update. 
-  ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  ;(check-for-success))
-
-(defn manifest-already-uploaded?
-  "Returns true if the current organization already has Red Hat
-  content uploaded."
-  []
-  (navigate :redhat-repositories-page)
-  (browser isElementPresent :subscriptions-items))
 
 (defn create-template
   "Creates a system template with the given name and optional

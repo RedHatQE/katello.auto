@@ -229,6 +229,12 @@
   (deftest "Create a role"
     (role/create (uniqueify "testrole")))
 
+  (deftest "Create a role with i18n characters"
+      :data-driven true
+      
+      (fn [username]
+          (role/create   (uniqueify username)))
+      [["صالح"] ["Гесер"] ["洪"]["標準語"]])
  
   (deftest "Remove a role"
     (let [role-name (uniqueify "deleteme-role")]

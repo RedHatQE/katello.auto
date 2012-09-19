@@ -61,6 +61,13 @@
    (fill-ajax-form {:system-groups-hostname-toadd system-name}
                     :system-groups-add-system))
 
+(defn remove-sys-from-system-group
+  "Remove a system from a System-Group"
+   [system-group system-name]
+   (navigate :named-system-group-page {:system-group-name system-group})
+   (browser click (locators/system-checkbox system-name))
+   (browser click :system-groups-remove-system))
+
 (defn copy-system-group
   "Clones a system group, given the name of the original system group
    to clone, and the new name and description."
@@ -96,4 +103,9 @@
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
+(defn get-system-group-system-count "Get number of systems in system group"
+  [sg-name]
+  (navigate :system-group-details-page {:system-group-name sg-name})
+  (Integer/parseInt (browser getText :system-group-total)))
+   
 

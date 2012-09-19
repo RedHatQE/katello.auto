@@ -379,4 +379,4 @@
    if run against a non-katello (eg SAM or headpin) deployment"
   [_]
   (if (->> (get-version) :name (= "Headpin") with-admin-creds)
-    ["This test is for Katello based deployments only and this is aheadpin-based server."] []))
+    ["This test is for Katello based deployments only and this is a headpin-based server."] []))

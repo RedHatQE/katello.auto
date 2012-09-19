@@ -29,7 +29,8 @@
         all-packages (apply str (interpose " " packages-to-install))]
     
     (when (api/is-katello?)
-      (sync-and-promote products library target-env))
+      (organization/execute-with org-name
+        (sync-and-promote products library target-env)))
 
     ;;client side
     (client/setup-client)

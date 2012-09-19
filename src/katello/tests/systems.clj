@@ -86,9 +86,15 @@
   [{:keys [group-name copy-name]}]
   (copy-system-group group-name copy-name {:description "copied system group"}))
 
+(defn step-remove-sys-from-copied-system-group
+  "Remove the system from copied system group."
+  [{:keys [copy-name system-name]}]
+  (remove-sys-from-system-group copy-name system-name))
+
 ;; Tests
 
 (defgroup system-group-tests
+  :blockers api/katello-only
   :group-setup (fn []
                  (api/with-admin
                    (api/ensure-env-exist "dev" {:prior "Library"})))
@@ -96,6 +102,12 @@
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
       (create-system-group group-name {:description "rh system-group"}))
+    
+    (deftest "Copying with similar sg-name not allowed"
+      (with-unique [group-name "fed1"]
+        (create-system-group group-name {:description "rh system-group"})
+        (expecting-error (errtype :katello.notifications/sg-name-taken-error)
+          (copy-system-group group-name group-name {:description "copied system group"}))))
 
     (deftest "Edit a system group"
       :data-driven true
@@ -141,14 +153,39 @@
            [""     (errtype :katello.notifications/max-systems-must-be-positive)]
            ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
-
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
       (do-steps (uniqueify-vals
                  {:system-name "mysystem"
                   :group-name "my-group"})
                 step-add-new-system-to-new-group)
-
+      
+      (deftest "Add a system to a system group and check count is +1"
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (do
+            (create-system-group group-name)
+            (let [syscount  (get-system-group-system-count group-name)]
+              (create-system system-name {:sockets "1"
+                                :system-arch "x86_64"})
+              (add-to-system-group group-name system-name)
+              (verify-that (= (inc syscount) (get-system-group-system-count group-name)))))))
+       
+      (deftest "Remove a system from a system group and check count is -1"
+        :blockers (open-bz-bugs "857031")
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (do
+            (create-system-group group-name)
+            (create-system system-name {:sockets "1"
+                              :system-arch "x86_64"})
+            (add-to-system-group group-name system-name)
+            (let [syscount  (get-system-group-system-count group-name)]
+              (remove-sys-from-system-group group-name system-name)
+              (verify-that (= (dec syscount) (get-system-group-system-count group-name)))))))
+       
+           
+      
       (deftest "Delete a system group"
         :data-driven true
 
@@ -163,6 +200,15 @@
         [[{:also-remove-systems? true}]
          [{:also-remove-systems? false}]])
       
+      (deftest "Remove a system from copied system group"
+        :blockers (open-bz-bugs "857031")
+        (do-steps (uniqueify-vals
+                   {:system-name  "mysys"
+                    :group-name  "copygrp"
+                    :copy-name  "copy_mysys"})
+                  step-add-new-system-to-new-group
+                  step-copy-system-group
+                  step-remove-sys-from-copied-system-group))
 
       (deftest "Copy a system group"
         (do-steps (uniqueify-vals
@@ -231,6 +277,14 @@
                             :description "my description"
                             :environment test-environment})
 
+    (deftest "Create an activation key with i18n characters"
+      :data-driven true
+      (fn [name]
+        (with-unique [ak-name name]
+          (create-activation-key {:name ak-name
+                                :description "my description"
+                                :environment test-environment} )))
+       val/i8n-chars)
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]

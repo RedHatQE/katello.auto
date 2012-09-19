@@ -17,6 +17,7 @@
              that match the error notification message in the UI."}
   validation-errors
   (let [errors {::name-taken-error                    #"(Username|Name) has already been taken"
+                ::sg-name-taken-error                 #"Name must be unique within one organization"
                 ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
                 ::name-must-not-contain-characters    #"Name cannot contain characters other than"
                 ::name-must-be-unique-within-org      #"Name must be unique within one organization" 
@@ -123,9 +124,7 @@
         (do (when refresh?
               (browser refresh))
             (recur error-notifs))))
-    (if (empty? error-notifs) 
-      (throw+ {:type ::no-success-message-error}
-              "Expected a success notification, but none appeared within the timeout period.")
+    (when-not (empty? error-notifs) 
       (throw+ {:types (matching-errors error-notifs) :notifications error-notifs}))))
 
 (defn check-for-error
