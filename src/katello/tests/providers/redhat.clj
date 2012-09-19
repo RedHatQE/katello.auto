@@ -10,6 +10,7 @@
                      [fake-content    :as fake-content]
                      [conf            :refer [config no-clients-defined]])
             [test.tree.script :refer [defgroup deftest]]
+            [test.tree.builder :refer [union]]
             [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.e2e :as e2e]
             [tools.verify :refer [verify-that]]))
@@ -76,7 +77,8 @@
 ;; Tests
 (defgroup redhat-promoted-content-tests
   (deftest "Admin can set Release Version on system"
-    :blockers (open-bz-bugs "832192")
+    :blockers (union (open-bz-bugs "832192")
+                     api/katello-only)
 
     (do-steps (merge (uniqueify-vals {:system-name "system"
                                       :org-name "relver-test"})
