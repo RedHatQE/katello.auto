@@ -4,8 +4,7 @@
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree :refer [state]] 
             katello.conf
-            [clojure.pprint :refer [pprint]]
-   )
+            [clojure.pprint :refer [pprint]])
   (:use seesaw.core
         seesaw.chooser)
   (:import [javax.swing.tree DefaultMutableTreeNode]
@@ -14,8 +13,7 @@
            [javax.swing.tree TreePath]
            [javax.swing.tree DefaultTreeCellRenderer]
            [java.text SimpleDateFormat]
-           [java.lang.System]
-           )
+           [java.lang.System])
   )
 
 (def win-width 900)
@@ -32,7 +30,6 @@
 (def output-tree-scroll (scrollable output-tree :hscroll :as-needed :vscroll :always)) 
 (def output-tree-lock (atom nil))
 
-(def scroll-pos 0)
 (def running-test nil)
 (def test-results-ref (atom nil))
 (def in-repl? true)
@@ -42,25 +39,26 @@
   (proxy [DefaultTreeCellRenderer] []
     (getTreeCellRendererComponent [tree value selected? expanded? leaf? row hasFocus?]
       (let [this (proxy-super getTreeCellRendererComponent tree value selected? expanded? leaf? row hasFocus?)] 
-        (.setOpaque this true)
-        (.setBackground this java.awt.Color/white)
+        (locking output-tree-lock
+        (.setOpaque this false) 
         (let [child-enum (.children value)]
           (def continue (atom true))
-          (while (and child-enum (.hasMoreElements child-enum) @continue)
+          (while (and (.hasMoreElements child-enum) @continue)
             (let [child (.nextElement child-enum)
                   child-str (str child)
                   status (->> child-str (re-find #"Status: (\w+)") second keyword)
-                  result (->> child-str (re-find #"Result: (\w+)") second keyword)
-                  ]
+                  result (->> child-str (re-find #"Result: (\w+)") second keyword)]
               (when (keyword? status)
+                (.setOpaque this true)
                 (.setBackground this 
                                 (cond (= status :queued)  java.awt.Color/magenta
                                       (= status :running) java.awt.Color/yellow
                                       (= status :done)    (if (= result :pass) 
                                                               java.awt.Color/green
-                                                              java.awt.Color/red))) 
-                (reset! continue false)))))
-        this))))
+                                                              java.awt.Color/red)
+                                      :else java.awt.Color/white)) 
+                (reset! continue false))))) 
+        this)))))
 
 (defn is-running? []
   (let [test-results @test-results-ref] 
@@ -119,11 +117,15 @@
         (while (and (not @node) (.hasMoreElements child-enum))
           (let [child-node (.nextElement child-enum)
                 child-str  (str child-node)]
-            (when (-> child-str (.startsWith (str key-str ": "))) 
-              (when (not= child-str node-str) (.setUserObject child-node node-str))
+            (when (.startsWith child-str (str key-str ": ")) 
+              (when (not= child-str node-str) 
+                (.setUserObject child-node node-str)
+                (.nodeChanged output-tree-model child-node)
+                (when (.startsWith child-str "Status: ") 
+                  (.nodeChanged output-tree-model parent-node)))
               (reset! node child-node))))))
     (when-not @node
-      (.add parent-node (DefaultMutableTreeNode. node-str)))))
+      (.insertNodeInto output-tree-model (DefaultMutableTreeNode. node-str) parent-node 0))))
 
 
 (defn update-output-node [report-group report test-group output-node]
@@ -146,18 +148,15 @@
         (add-report-node output-node "Parameters" (:parameters results)) 
         (add-report-node output-node "Return Value" (:returned results)) 
         (add-report-node output-node "Promise" (:promise report)) 
-        (.nodeChanged output-tree-model output-node)
         true)
       false)))
 
 
 (defn refresh-test-output [watch-key watch-ref old-state new-state]
   (locking output-tree-lock
-    (let [scroll-bar (.getVerticalScrollBar output-tree-scroll)
-          vp (.getViewport output-tree-scroll)
-          test-total (atom 0)
+    (let [test-total (atom 0)
           test-done  (atom 0)]
-      (.setValue scroll-bar scroll-pos)  
+      (when (.getChildCount output-tree-root)
       (doseq [report-key (keys new-state)
               :let [report-val (get new-state report-key)]]
           (when (= (:status report-val) :done) (swap! test-done inc))
@@ -165,9 +164,10 @@
           (update-output-node report-key 
                               report-val
                               running-test 
-                              (.getFirstChild output-tree-root)))
+                              (.getFirstChild output-tree-root)))) 
       (.setMaximum prog-bar @test-total)
-      (.setValue prog-bar @test-done)))
+      (.setValue prog-bar @test-done))
+    )
   (def need-save? true))
 
 
@@ -210,7 +210,7 @@
                                 :listen [:action (fn [sender] (run-test-click test-tree))]) 
                      (menu-item :text "Terminate Run" 
                                 :id :terminate-menu-item
-                                :listen [:action (fn [sender] (test.tree/terminate-all-tests (second @test-results-ref)))])
+                                :listen [:action (fn [sender] (test.tree/terminate-all-tests (first @test-results-ref)))])
                      (popup :items [run-menu-item terminate-menu-item] 
                             :id :popup-menu)]
         (let [running? (is-running?)]
@@ -285,8 +285,6 @@
         :selection #(selected-item-changed test-info %))
       (listen test-tree
         :mouse-pressed #(mouse-pressed %))
-      (listen output-tree-scroll 
-        :mouse-wheel (fn [e] (def scroll-pos (-> output-tree-scroll .getVerticalScrollBar .getValue))))
 
       (add-test-groups test-map test-tree-root)
       (doseq [node-index [0 1]]  (.expandRow test-tree node-index))
