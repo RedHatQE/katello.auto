@@ -4,7 +4,7 @@
                      [validation :as val]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
-                     [systems :refer :all] 
+                     [systems :refer :all :as system] 
                      [conf :refer [config *environments*]]) 
             (test.tree [script :refer :all] 
                        [builder :refer [union]]) 
@@ -29,7 +29,7 @@
 
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
-    (edit-system (:name system) {:new-name new-name})
+    (system/edit (:name system) {:new-name new-name})
     (navigate :named-systems-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
@@ -43,20 +43,20 @@
 
 (defn step-create-system-group
   [{:keys [group-name]}]
-  (create-system-group group-name {:description "rh system group"}))
+  (system/create-group group-name {:description "rh system group"}))
 
 (defn step-edit-system-group
   [{:keys [group-name group-new-limit group-new-description]}]
-  (edit-system-group group-name {:new-limit group-new-limit
+  (system/edit-group group-name {:new-limit group-new-limit
                                  :description group-new-description}))
 
 (defn step-add-new-system-to-new-group
   "Creates a system and system group, adds the system to the system group."
   [{:keys [group-name system-name] :as m}]
-  (do (create-system system-name {:sockets "1"
+  (do (system/create system-name {:sockets "1"
                               :system-arch "x86_64"})
       (step-create-system-group m)
-      (add-to-system-group group-name system-name)))
+      (system/add-to-group group-name system-name)))
 
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
@@ -64,7 +64,7 @@
    Defaults to :system-group."
   [which-group]
   (fn [{:keys [group-name also-remove-systems?] :as req}]
-    (remove-system-group (req which-group)
+    (system/remove-group (req which-group)
                          {:also-remove-systems? also-remove-systems?})))
 
 (def step-remove-system-group (mkstep-remove-system-group :group-name))
@@ -84,12 +84,12 @@
 (defn step-copy-system-group
   "Copies a system group with a hardcoded description."
   [{:keys [group-name copy-name]}]
-  (copy-system-group group-name copy-name {:description "copied system group"}))
+  (system/copy-group group-name copy-name {:description "copied system group"}))
 
 (defn step-remove-sys-from-copied-system-group
   "Remove the system from copied system group."
   [{:keys [copy-name system-name]}]
-  (remove-sys-from-system-group copy-name system-name))
+  (system/remove-from-group copy-name system-name))
 
 ;; Tests
 
@@ -101,13 +101,13 @@
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
-      (create-system-group group-name {:description "rh system-group"}))
+      (system/create-group group-name {:description "rh system-group"}))
     
     (deftest "Copying with similar sg-name not allowed"
       (with-unique [group-name "fed1"]
-        (create-system-group group-name {:description "rh system-group"})
+        (system/create-group group-name {:description "rh system-group"})
         (expecting-error (errtype :katello.notifications/sg-name-taken-error)
-          (copy-system-group group-name group-name {:description "copied system group"}))))
+          (system/copy-group group-name group-name {:description "copied system group"}))))
 
     (deftest "Edit a system group"
       :data-driven true
@@ -126,15 +126,15 @@
 
     (deftest "Edit system limit of a system group"
       (with-unique [group-name "sg"]
-        (create-system-group group-name)
-        (edit-system-group group-name {:new-limit 4}))
+        (system/create-group group-name)
+        (system/edit-group group-name {:new-limit 4}))
 
       
       (deftest "Edit system limit of a system group, then set back to unlimited"
         (with-unique [group-name "sg"]
-          (create-system-group group-name)
-          (edit-system-group group-name {:new-limit 4})
-          (edit-system-group group-name {:new-limit :unlimited}))
+          (system/create-group group-name)
+          (system/edit-group group-name {:new-limit 4})
+          (system/edit-group group-name {:new-limit :unlimited}))
         
 
         (deftest "System group system limit validation"
@@ -142,8 +142,8 @@
 
           (fn [limit pred]
             (with-unique [group-name "sg-val"]
-              (create-system-group group-name)
-              (expecting-error pred (edit-system-group
+              (system/create-group group-name)
+              (expecting-error pred (system/edit-group
                                      group-name {:new-limit limit}))))
           
           [(with-meta
@@ -164,25 +164,25 @@
         (with-unique [system-name "mysystem"
                       group-name "my-group"]
           (do
-            (create-system-group group-name)
-            (let [syscount  (get-system-group-system-count group-name)]
-              (create-system system-name {:sockets "1"
+            (system/create-group group-name)
+            (let [syscount  (system/get-group-system-count group-name)]
+              (system/create system-name {:sockets "1"
                                 :system-arch "x86_64"})
-              (add-to-system-group group-name system-name)
-              (verify-that (= (inc syscount) (get-system-group-system-count group-name)))))))
+              (system/add-to-group group-name system-name)
+              (verify-that (= (inc syscount) (system/get-group-system-count group-name)))))))
        
       (deftest "Remove a system from a system group and check count is -1"
         :blockers (open-bz-bugs "857031")
         (with-unique [system-name "mysystem"
                       group-name "my-group"]
           (do
-            (create-system-group group-name)
-            (create-system system-name {:sockets "1"
-                              :system-arch "x86_64"})
-            (add-to-system-group group-name system-name)
-            (let [syscount  (get-system-group-system-count group-name)]
-              (remove-sys-from-system-group group-name system-name)
-              (verify-that (= (dec syscount) (get-system-group-system-count group-name)))))))
+            (system/create-group group-name)
+            (system/create system-name {:sockets "1"
+                           :system-arch "x86_64"})
+            (system/add-to-group group-name system-name)
+            (let [syscount  (system/get-group-system-count group-name)]
+              (system/remove-from-group group-name system-name)
+              (verify-that (= (dec syscount) (system/get-group-system-count group-name)))))))
        
            
       
@@ -261,12 +261,12 @@
       (api/with-admin
         (api/create-provider provider-name)
         (api/create-product product-name {:provider-name provider-name}))
-      (subscribe-system {:system-name (:name (register-new-test-system))
+      (system/subscribe {:system-name (:name (register-new-test-system))
                          :add-products [product-name]})))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
     :blockers (open-bz-bugs "845261")
-    (subscribe-system {:system-name (:name (register-new-test-system))
+    (system/subscribe {:system-name (:name (register-new-test-system))
                        :auto-subscribe true
                        :sla "No Service Level Preference"}))
   
