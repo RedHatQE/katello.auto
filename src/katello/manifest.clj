@@ -69,7 +69,7 @@
     (in-place-edit {:redhat-provider-repository-url-text repository-url}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success {:timeout-ms 120000}))
+  (check-for-success {:timeout-ms 240000}))
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.

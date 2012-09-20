@@ -8,16 +8,14 @@
 
 
 (def some-product-repos [{:name       "Nature Enterprise"
-                  :poolName   "Nature Enterprise"
-                  :repos      ["Nature Enterprise x86_64 1.0"
-                               "Nature Enterprise x86_64 1.1"]}
-                 {:name     "Zoo Enterprise"
-                  :poolName "Zoo Enterprise"
-                  :repos    ["Zoo Enterprise x86_64 6.2"
-                             "Zoo Enterprise x86_64 6.3"
-                             "Zoo Enterprise x86_64 6.4"
-                             "Zoo Enterprise x86_64 5.8"
-                             "Zoo Enterprise x86_64 5.7"]}])
+                          :repos      ["Nature Enterprise x86_64 1.0"
+                                       "Nature Enterprise x86_64 1.1"]}
+                         {:name     "Zoo Enterprise"
+                          :repos    ["Zoo Enterprise x86_64 6.2"
+                                     "Zoo Enterprise x86_64 6.3"
+                                     "Zoo Enterprise x86_64 6.4"
+                                     "Zoo Enterprise x86_64 5.8"
+                                     "Zoo Enterprise x86_64 5.7"]}])
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})

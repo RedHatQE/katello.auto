@@ -21,12 +21,14 @@
   "In an org named org-name, promotes products into target-env. Then
    on a client machine, registers the client to the Katello server,
    subscribes to the products, and then installs packages-to-install.
-   Example of products: [ {:name 'myprod' :poolName 'myprod
+   Example of products: [ {:name 'myprod' :productName 'myprod
    24/7' :repos ['myrepoa' 'myrepob']} ]"
   [org-name target-env products packages-to-install]
-  (let [all-pools (map #(or (:poolName %1)
-                            (:name %1)) products)
-        all-packages (apply str (interpose " " packages-to-install))]
+  (let [all-products (map #(or (:productName %1) (:name %1)) products)
+        all-packages (apply str (interpose " " packages-to-install))
+        pool-provides-product (fn [prod pool]
+                                (some #(= (:productName %) prod)
+                                      (:providedProducts pool)))]
     
     (when (api/is-katello?)
       (organization/execute-with org-name
@@ -41,13 +43,13 @@
                       :env target-env
                       :force true})
                       
-    (doseq [pool-name all-pools]
+    (doseq [product-name all-products]
       (if-let [matching-pool (->> (api/system-available-pools (-> client/*runner* .getConnection .getHostname))
-                                (filter #(= (:poolName %) pool-name))
+                                (filter (partial pool-provides-product product-name))
                                 first
-                                :poolId)]
+                                :id)]
         (client/subscribe matching-pool)
-        (throw+ {:type :no-matching-pool :pool-name pool-name})))
+        (throw+ {:type :no-matching-pool :product-name product-name})))
     (let [cmd-results [(client/run-cmd "yum repolist")
                        (client/run-cmd (format "yum install -y --nogpg %s" all-packages))
                        (client/run-cmd (format "rpm -q %s" all-packages))]]

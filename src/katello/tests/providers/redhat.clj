@@ -23,8 +23,12 @@
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
 
 ;; Functions
-(defn step-create-org [{:keys [org-name]}]
-  (api/with-admin (api/create-organization org-name)))
+(defn step-create-org [{:keys [org-name env-name]}]
+  (api/with-admin
+    (api/create-organization org-name)
+    (when env-name
+      (api/with-org org-name
+        (api/create-environment env-name {})))))
 
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync/complete-status repos))))
@@ -83,7 +87,8 @@
     (do-steps (merge (uniqueify-vals {:system-name "system"
                                       :org-name "relver-test"})
                      (new-fake-manifest)
-                     {:release-version "16"
+                     {:org-name (uniqueify "relver-test")
+                      :release-version "16"
                       :env-name "Development"
                       :products fake-content/some-product-repos})
               step-create-org
@@ -99,15 +104,16 @@
                   and install some packages."
     :blockers no-clients-defined
       
-    (do-steps (merge (uniqueify-vals {:system-name "system"
-                                      :org-name "relver-test"})
-                     (new-fake-manifest)
-                     {:env-name "Development"
+    (do-steps (merge (new-fake-manifest)
+                     {:org-name (uniqueify "rh-content-test")
+                      :env-name "Development"
                       :products fake-content/some-product-repos
-                      :install-packages ["cheetah" "elephant"] })
+                      :install-packages ["cheetah" "elephant"]
+                      :enable-repos (mapcat :repos fake-content/some-product-repos)})
               step-create-org
               step-clone-manifest
               step-upload-manifest
+              step-verify-enabled-repositories
               step-verify-client-access))) 
 
 (defgroup redhat-content-provider-tests 
