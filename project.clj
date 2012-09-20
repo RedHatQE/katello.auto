@@ -19,7 +19,8 @@
                  [http.async.client "0.4.5"]
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
-                 [fn.trace "1.3.2.0-SNAPSHOT"]]
+                 [fn.trace "1.3.2.0-SNAPSHOT"]
+                 [seesaw "1.4.2"]]
   :jvm-opts ["-Xmx384m" "-Xms48m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}

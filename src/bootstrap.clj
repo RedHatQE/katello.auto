@@ -40,5 +40,3 @@
                            (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
 (selenium-server/start)
 (new-browser)
-
-
