@@ -4,7 +4,7 @@
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree :refer [state]] 
             katello.conf
-            [clojure.pprint :refer [pprint]])
+            [clojure.pprint :refer [pprint *print-right-margin*]])
   (:use seesaw.core
         seesaw.chooser)
   (:import [javax.swing.tree DefaultMutableTreeNode]
@@ -40,25 +40,25 @@
     (getTreeCellRendererComponent [tree value selected? expanded? leaf? row hasFocus?]
       (let [this (proxy-super getTreeCellRendererComponent tree value selected? expanded? leaf? row hasFocus?)] 
         (locking output-tree-lock
-        (.setOpaque this false) 
-        (let [child-enum (.children value)]
-          (def continue (atom true))
-          (while (and (.hasMoreElements child-enum) @continue)
-            (let [child (.nextElement child-enum)
-                  child-str (str child)
-                  status (->> child-str (re-find #"Status: (\w+)") second keyword)
-                  result (->> child-str (re-find #"Result: (\w+)") second keyword)]
-              (when (keyword? status)
-                (.setOpaque this true)
-                (.setBackground this 
-                                (cond (= status :queued)  java.awt.Color/magenta
-                                      (= status :running) java.awt.Color/yellow
-                                      (= status :done)    (if (= result :pass) 
+          (.setOpaque this false) 
+          (let [child-enum (.children value)]
+            (def continue (atom true))
+            (while (and (.hasMoreElements child-enum) @continue)
+              (let [child (.nextElement child-enum)
+                    child-str (str child)
+                    status (->> child-str (re-find #"Status: (\w+)") second keyword)
+                    result (->> child-str (re-find #"Result: (\w+)") second keyword)]
+                (when (keyword? status)
+                  (.setOpaque this true)
+                  (.setBackground this 
+                                  (cond (= status :queued)  java.awt.Color/magenta
+                                        (= status :running) java.awt.Color/yellow
+                                        (= status :done)    (if (= result :pass) 
                                                               java.awt.Color/green
                                                               java.awt.Color/red)
-                                      :else java.awt.Color/white)) 
-                (reset! continue false))))) 
-        this)))))
+                                        :else java.awt.Color/white)) 
+                  (reset! continue false))))) 
+          this)))))
 
 (defn is-running? []
   (let [test-results @test-results-ref] 
@@ -98,15 +98,22 @@
 (defn selected-item-changed
   [test-info event-info]
   (let [path (.getPath event-info)
-        sel-test (get-test-entry-from-path test-map path 1)]
+        sel-test (get-test-entry-from-path test-map path 1)
+        panel-print (fn [& stuff]
+                      (binding [*print-right-margin* 60]
+                        (with-out-str 
+                          (apply pprint stuff))))]
     (text! test-info (str "Groups: " (:groups sel-test) "\n" 
-                          "Parameters: " (:parameters sel-test) "\n"
-                          "Blockers: " (str (:blockers sel-test)) "\n"
-                          "Steps: " (str (:steps sel-test))))))
+                          "Parameters: " (panel-print (:parameters sel-test)) "\n"
+                          "Blockers: " (panel-print (:blockers sel-test)) "\n"
+                          "Steps: \n" (panel-print (:steps sel-test))))))
+
+
+(def dateformat (SimpleDateFormat. "MM/dd/yyyy hh:mm:ss") )
 
 (defn get-date-string [d]
-  (when (not (nil? d))
-    (.format (SimpleDateFormat. "MM/dd/yyyy hh:mm:ss") d)))
+  (when-not (nil? d)
+    (.format dateformat d)))
 
 (defn add-report-node [parent-node key-str val-str]
   (def node (atom nil))
