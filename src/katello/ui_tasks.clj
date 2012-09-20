@@ -196,11 +196,10 @@
     (browser click :content-search-load-more))
   
   ;;extract and return content
-  (validate-content-search-results 
-    (->> "JSON.stringify(window.comparison_grid.export_data());"
-         (browser getEval)
-         (json/read-json)))) 
-
+  (->> "JSON.stringify(window.comparison_grid.export_data());"
+       (browser getEval)
+       (json/read-json)
+       validate-content-search-results))
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
