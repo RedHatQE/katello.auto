@@ -129,6 +129,20 @@
         (browser click :search-submit)))
   (check-for-error {:timeout-ms 2000}))
 
+
+(defn validate-content-search-results [results]
+  (let [cols (:columns results)
+        vis-col-count (->> cols (filter #(:shown %)) count) 
+        rows (vals (:rows results))]
+    (doseq [row rows]
+      (assert (= vis-col-count (-> (:cells row) keys count))
+              "Number of cells in row does not match number of visible columns")
+      (doseq [child-id (:child_ids (:cells row))]
+        (assert (= 1 (count (filter #(= (:id %) child-id) rows)))
+                (str "Child ID not found: " child-id)))))
+    results)
+
+
 (defn search-for-content
   "Performs a search for the specified content
    type (:prod-type, :repo-type, :pkg-type, :errata-type) using any
@@ -182,9 +196,10 @@
     (browser click :content-search-load-more))
   
   ;;extract and return content
-  (->>  "JSON.stringify(window.comparison_grid.export_data());"
-      (browser getEval)
-      (json/read-json))) 
+  (->> "JSON.stringify(window.comparison_grid.export_data());"
+       (browser getEval)
+       (json/read-json)
+       validate-content-search-results))
 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
