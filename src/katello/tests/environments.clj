@@ -184,7 +184,7 @@
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
                      (environment/create nil {:org-name @test-org-name
-                                              :description "env description"}))))
+                                              :description "env description"})))
 
   (deftest "Move systems from one env to another"
     (with-unique [env-dev  "dev" env-test  "test"]
@@ -201,6 +201,6 @@
         (verify-that (client/does-system-belong-to-an-environment? system env-dev))
         (edit-system-environment (:name system) {:environment env-test})
         (verify-that (= env-test (get-system-env system)))
-        (verify-that (client/does-system-belong-to-an-environment? system env-test)))))
+        (verify-that (client/does-system-belong-to-an-environment? system env-test))))))
         
         

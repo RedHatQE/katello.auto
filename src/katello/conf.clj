@@ -33,7 +33,7 @@
     :default "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
 
    ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
-    :default "http://inecas.fedorapeople.org/fakerepos/cds/"]
+    :default "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/cds/"]
 
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]

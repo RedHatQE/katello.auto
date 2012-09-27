@@ -5,7 +5,7 @@
                      [sync-management :as sync]
                      [tasks :refer :all]
                      [ui-tasks :refer :all]
-                     [systems :refer :all])
+                     [systems :refer :all :as system])
             [katello.tests.organizations :refer [create-test-org]]
             [katello.tests.users :refer [generic-user-details]]
             [test.tree.script :refer :all]
@@ -58,12 +58,12 @@
             unique-system [(uniqueify name) opts]
             [sgname opt] system-group
             unique-sg [(uniqueify sgname) opt]]
-        (apply create-system unique-system)
+        (apply system/create unique-system)
         (if (not (nil? system-group))
           (do
-            (edit-system (first unique-system) {:description "most unique system"})
-            (apply create-system-group unique-sg)
-            (add-to-system-group (first unique-sg) (first unique-system))))
+            (system/edit (first unique-system) {:description "most unique system"})
+            (apply system/create-group unique-sg)
+            (system/add-to-group (first unique-sg) (first unique-system))))
         (search :systems searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
@@ -165,6 +165,8 @@
   (deftest "search sync plans"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
+    :blockers api/katello-only
+    
     (fn [key_opt searchterms]
       (sync/create-plan key_opt)
       (search :sync-plans searchterms)
@@ -180,6 +182,7 @@
   (deftest "search system groups"
     :data-driven true
     :description "search for a system group based on criteria"
+    :blockers api/katello-only
     
     (fn [system-group system searchterms]
       (api/with-admin
@@ -188,9 +191,9 @@
             unique-system [(uniqueify name) opts]
             [sgname opt] system-group
             unique-sg [(uniqueify sgname) opt]]
-        (apply create-system unique-system)
-        (apply create-system-group unique-sg)
-        (add-to-system-group (first unique-sg) (first unique-system))
+        (apply system/create unique-system)
+        (apply system/create-group unique-sg)
+        (system/add-to-group (first unique-sg) (first unique-system))
         (search :system-groups searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)

@@ -82,7 +82,6 @@
     (deftest "Two users with username that differs only in case are disalowed"
       :blockers (open-bz-bugs "857876")
       :data-driven true
-
       (fn [orig-name modify-case-fn]
         (expecting-error (errtype :katello.notifications/name-taken-error)
           (with-unique [name orig-name]

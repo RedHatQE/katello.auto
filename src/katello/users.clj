@@ -41,7 +41,7 @@
   (fill-ajax-form {:username-text username
                    :password-text password}
                   :log-in)
-  (let [retVal (check-for-success)]
+  (let [retVal (check-for-success {:timeout-ms 20000})]
     (when (or org
               (not (logged-in?)))
       (Thread/sleep 3000)

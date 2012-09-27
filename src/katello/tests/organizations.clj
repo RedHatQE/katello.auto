@@ -8,7 +8,6 @@
                      [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
-            [clojure.string :refer [capitalize upper-case lower-case]]
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]))

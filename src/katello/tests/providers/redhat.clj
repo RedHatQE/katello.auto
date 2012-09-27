@@ -6,10 +6,11 @@
                      [ui-tasks        :refer [navigate enable-redhat-repositories errtype]]
                      [manifest        :as manifest]
                      [changesets      :as changesets]
-                     [systems         :as systems]
+                     [systems         :as system]
                      [fake-content    :as fake-content]
                      [conf            :refer [config no-clients-defined]])
             [test.tree.script :refer [defgroup deftest]]
+            [test.tree.builder :refer [union]]
             [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.e2e :as e2e]
             [tools.verify :refer [verify-that]]))
@@ -22,8 +23,12 @@
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
 
 ;; Functions
-(defn step-create-org [{:keys [org-name]}]
-  (api/with-admin (api/create-organization org-name)))
+(defn step-create-org [{:keys [org-name env-name]}]
+  (api/with-admin
+    (api/create-organization org-name)
+    (when env-name
+      (api/with-org org-name
+        (api/create-environment env-name {})))))
 
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync/complete-status repos))))
@@ -61,25 +66,31 @@
 
 (defn step-set-system-release-version [{:keys [release-version system-name org-name] :as m}]
   (organization/execute-with org-name
-    (systems/edit-system system-name (select-keys m [release-version]))))
+    (system/edit system-name (select-keys m [release-version]))))
 
 (defn step-verify-client-access [{:keys [org-name env-name products install-packages]}]
   (api/with-admin
       (api/with-org org-name       
         (e2e/test-client-access org-name env-name products install-packages))))
 
+(defn new-fake-manifest []
+  {:repository-url (@config :redhat-repo-url)
+   :manifest-loc (manifest/new-tmp-loc)})
+
 
 ;; Tests
 (defgroup redhat-promoted-content-tests
   (deftest "Admin can set Release Version on system"
-    :blockers (open-bz-bugs "832192")
+    :blockers (union (open-bz-bugs "832192")
+                     api/katello-only)
 
     (do-steps (merge (uniqueify-vals {:system-name "system"
                                       :org-name "relver-test"})
-                     {:release-version "16"
+                     (new-fake-manifest)
+                     {:org-name (uniqueify "relver-test")
+                      :release-version "16"
                       :env-name "Development"
-                      :products fake-content/some-product-repos
-                      :repository-url (@config :redhat-repo-url)})
+                      :products fake-content/some-product-repos})
               step-create-org
               step-clone-manifest
               step-upload-manifest
@@ -93,24 +104,25 @@
                   and install some packages."
     :blockers no-clients-defined
       
-    (do-steps (merge (uniqueify-vals {:system-name "system"
-                                      :org-name "relver-test"})
-                     {:env-name "Development"
+    (do-steps (merge (new-fake-manifest)
+                     {:org-name (uniqueify "rh-content-test")
+                      :env-name "Development"
                       :products fake-content/some-product-repos
-                      :manifest-loc (manifest/new-tmp-loc)
-                      :repository-url (@config :redhat-repo-url)
-                      :install-packages ["cheetah" "elephant"] })
+                      :install-packages ["cheetah" "elephant"]
+                      :enable-repos (mapcat :repos fake-content/some-product-repos)})
               step-create-org
               step-clone-manifest
               step-upload-manifest
+              step-verify-enabled-repositories
               step-verify-client-access))) 
 
 (defgroup redhat-content-provider-tests 
   :blockers    (open-bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
-    (do-steps {:org-name (uniqueify "manifest-upload")
-               :manifest-loc (manifest/new-tmp-loc)}
+    (do-steps (merge (new-fake-manifest)
+                     {:org-name (uniqueify "manifest-upload")
+                      :manifest-loc (manifest/new-tmp-loc)})
               step-create-org
               step-clone-manifest
               step-upload-manifest)
@@ -118,11 +130,10 @@
                
     (deftest "Enable Red Hat repositories"
       :blockers api/katello-only
-      (do-steps {:org-name (uniqueify "enablerepos")
-                 :manifest-loc (manifest/new-tmp-loc)
-                 :repository-url (@config :redhat-repo-url)
-                 :enable-repos ["Nature Enterprise x86_64 1.0"
-                                "Nature Enterprise x86_64 1.1"]}
+      (do-steps (merge (new-fake-manifest)
+                       {:org-name (uniqueify "enablerepos")
+                        :enable-repos ["Nature Enterprise x86_64 1.0"
+                                       "Nature Enterprise x86_64 1.1"]})
                 step-create-org
                 step-clone-manifest
                 step-upload-manifest
