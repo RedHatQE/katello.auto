@@ -145,7 +145,7 @@
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))
 
-    (deftest "Two environments with name that differs only in case are dissalowed"
+    (deftest "Two environments with name that differs only in case are disalowed"
       :blockers (open-bz-bugs "847037")
       :data-driven true
 
@@ -184,24 +184,23 @@
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
                      (environment/create nil {:org-name @test-org-name
-                                              :description "env description"})))
-  
-  )
+                                              :description "env description"}))))
+
   (deftest "Move systems from one env to another"
-      (with-unique [env-dev  "dev" env-test  "test"]
-        (environment/create env-dev {:org-name @test-org-name})
-        (environment/create env-test {:org-name @test-org-name})
-        (client/setup-client)
-        (client/register {:username *session-user*
+    (with-unique [env-dev  "dev" env-test  "test"]
+      (environment/create env-dev {:org-name @test-org-name})
+      (environment/create env-test {:org-name @test-org-name})
+      (client/setup-client)
+      (client/register {:username *session-user*
                       :password *session-password*
                       :org @test-org-name
                       :env env-dev
                       :force true})
-        (let [system (client/server-hostname)]
-          (verify-that (= env-dev (get-system-env system)))
-          (verify-that (client/does-system-belong-to-an-environment? system env-dev))
-          (edit-system-environment (:name system) {:environment env-test})
-          (verify-that (= env-test (get-system-env system)))
-          (verify-that (client/does-system-belong-to-an-environment? system env-test)))))
+      (let [system (client/server-hostname)]
+        (verify-that (= env-dev (get-system-env system)))
+        (verify-that (client/does-system-belong-to-an-environment? system env-dev))
+        (edit-system-environment (:name system) {:environment env-test})
+        (verify-that (= env-test (get-system-env system)))
+        (verify-that (client/does-system-belong-to-an-environment? system env-test)))))
         
         

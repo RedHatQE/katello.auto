@@ -79,7 +79,7 @@
         (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
           (user/create username generic-user-details))))
     
-    (deftest "Two users with username that differs only in case are dissalowed"
+    (deftest "Two users with username that differs only in case are disalowed"
       :blockers (open-bz-bugs "857876")
       :data-driven true
 

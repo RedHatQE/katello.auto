@@ -26,11 +26,11 @@
                   :system-release-version-select release-version}))
 
 (defn edit-system-environment [name environment]
-  (if (not (blank? environment))
-    (navigate :named-systems-page {:system-name name})
-    ((browser click :system-environment)
-     (browser check (locators/system-environment-checkbox environment))
-     (browser click :save-inplace-edit))))
+  (assert (not (blank? environment))) 
+  (navigate :named-systems-page {:system-name name})
+  (browser click :system-environment)
+  (browser check (locators/system-environment-checkbox environment))
+  (browser click :save-inplace-edit))
 
 (defn subscribe-system
   "Subscribes the given system to the products. (products should be a
