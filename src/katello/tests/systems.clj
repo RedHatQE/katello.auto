@@ -19,7 +19,7 @@
 (defn create-test-environment [] 
   (def test-environment (first *environments*))
   (api/with-admin
-    (api/ensure-env-exist test-environment {:prior library})))
+    (api/ensure-env-exist test-environment {:prior library}))) 
 
 (defn register-new-test-system []
   (api/with-admin

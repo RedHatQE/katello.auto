@@ -1,5 +1,6 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+            [clojure.string :refer [blank?]]
             (katello [locators :as locators] 
                      [notifications :refer [check-for-success]] 
                      [ui-tasks :refer :all])))
@@ -17,12 +18,19 @@
 (defn edit-system
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
-  [name {:keys [new-name description location release-version]}]
+  [name {:keys [new-name description location release-versio]}]
   (navigate :named-systems-page {:system-name name})
   (in-place-edit {:system-name-text-edit new-name
                   :system-description-text-edit description
                   :system-location-text-edit location
                   :system-release-version-select release-version}))
+
+(defn edit-system-environment [name environment]
+  (if (not (blank? environment))
+    (navigate :named-systems-page {:system-name name})
+    ((browser click :system-environment)
+     (browser check (locators/system-environment-checkbox environment))
+     (browser click :save-inplace-edit))))
 
 (defn subscribe-system
   "Subscribes the given system to the products. (products should be a
@@ -107,5 +115,9 @@
   [sg-name]
   (navigate :system-group-details-page {:system-group-name sg-name})
   (Integer/parseInt (browser getText :system-group-total)))
-   
+
+(defn get-system-env "Get current environment of the system"
+  [system-name]
+  (navigate :named-systems-page {:system-name system-name})
+  (browser getText :system-environment))
 
