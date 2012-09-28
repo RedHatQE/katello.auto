@@ -30,6 +30,7 @@
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
+   content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
    default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
@@ -269,15 +270,14 @@
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
    :add-repo                   "add_repo"
-   :add-pkg                    "add_package"
    :repo-auto-complete-radio   "repos_auto_complete_radio"
-   :pkg-auto-complete-radio    "packages_auto_complete_radio"
    :prod-auto-complete         "product_auto_complete"
    :repo-auto-complete         "repo_auto_complete"
-   :pkg-auto-complete          "packages_auto_complete"
+   :pkg-search                 "//div[@id='package_search']/input[@id='search']"
    :errata-search              "//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
    :content-search-load-more   "//a[contains(@class,'load_row_link')]"
+   :column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
   })
 
 (def systems

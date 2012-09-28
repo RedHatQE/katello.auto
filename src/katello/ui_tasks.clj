@@ -135,8 +135,8 @@
         vis-col-count (->> cols (filter #(:shown %)) count) 
         rows (vals (:rows results))]
     (doseq [row rows]
-      (assert (= vis-col-count (-> (:cells row) keys count))
-              "Number of cells in row does not match number of visible columns")
+      (assert (>= (count cols) (-> (:cells row) keys count))
+              "Number of cells in row is greater than the number of columns")
       (doseq [child-id (:child_ids (:cells row))]
         (assert (= 1 (count (filter #(= (:id %) child-id) rows)))
                 (str "Child ID not found: " child-id)))))
@@ -144,23 +144,23 @@
 
 
 (defn search-for-content
-  "Performs a search for the specified content
-   type (:prod-type, :repo-type, :pkg-type, :errata-type) using any
-   product, repository, package or errata filters specified. Note that
-   while prods, repos and pkgs should be vectors, errata is expected
-   to be a string. Returns the search results as raw data from the
-   browser javascript. Example: search-for-content :errata-type
-                                             {:prods ['myprod']
+  "Performs a search for the specified content type (:prod-type, :repo-type,
+   :pkg-type, :errata-type) using any product, repository, package or errata
+   filters specified. Note that while prods and repos should be vectors, errata
+   and pkgs are expected to be strings. A vector of environments corresponding
+   to table columns may also be specified.  Returns the search results as raw
+   data from the browser javascript. 
+   Example: search-for-content :errata-type {:prods ['myprod']
                                              :repos ['myrepo']
                                              :errata 'myerrata'}"
-  [content-type & [{:keys [prods repos pkgs errata]}]]
+  [content-type & [{:keys [envs prods repos pkg errata]}]]
   (assert (some #{content-type} [:prod-type :repo-type :pkg-type :errata-type])
           "Unknown content search type.")
   (case content-type 
-    :prod-type   (assert (and (empty? repos) (empty? pkgs) (empty? errata)))
-    :repo-type   (assert (and (empty? pkgs) (empty? errata)))
+    :prod-type   (assert (and (empty? repos) (empty? pkg) (empty? errata)))
+    :repo-type   (assert (and (empty? pkg) (empty? errata)))
     :pkg-type    (assert (empty? errata))
-    :errata-type (assert (empty? pkgs)))
+    :errata-type (assert (empty? pkg)))
 
   ;; Navigate to content search page and select content type
   (let [ctype-map {:prod-type   "Products"
@@ -171,11 +171,18 @@
     (navigate :content-search-page)
     (browser select :content-search-type ctype-str))
   
+  ;; Select environments (columns)
+  (doseq [env envs]
+    (let [col-locator (locators/content-search-column env)]
+    (browser mouseOver :column-selector) 
+    (browser mouseOver col-locator) 
+    (browser click     col-locator)
+    (browser mouseOut :column-selector)))
+
   ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
           [[:prod-auto-complete :add-prod prods] 
-           [:repo-auto-complete :add-repo repos] 
-           [:pkg-auto-complete  :add-pkg  pkgs]]]
+           [:repo-auto-complete :add-repo repos]]]
     (doseq [cont-item cont-items]
       (browser setText auto-comp-box cont-item)
       ;; typeKeys is necessary to trigger drop-down list
@@ -185,6 +192,9 @@
                    (mouseOver elem)
                    (click elem)))
       (browser click add-button)))
+
+  ;; Add package
+  (when-not (empty? pkg) (browser setText :pkg-search pkg))
 
   ;; Add errata
   (when-not (empty? errata) (browser setText :errata-search errata))
