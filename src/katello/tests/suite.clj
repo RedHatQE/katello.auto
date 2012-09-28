@@ -34,8 +34,8 @@
 
 
 
-(defgroup sam-tests
-  :description "All the tests that apply to SAM or headpin."
+(defgroup headpin-tests
+  :description "All the tests that apply to headpin or SAM."
   :test-setup katello.tests.login/navigate-toplevel
   
   katello.tests.login/login-tests
