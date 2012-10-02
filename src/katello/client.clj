@@ -1,6 +1,7 @@
 (ns katello.client
   (:require [katello.conf :refer [config]]
-            [slingshot.slingshot :refer [try+ throw+]])
+            [slingshot.slingshot :refer [try+ throw+]]
+            [clojure.string :refer [split]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [java.io File]))
 
@@ -42,6 +43,8 @@
 (defn server-hostname []
   (-> (@config :server-url) (java.net.URL.) .getHost))
 
+
+
 (defn new-runner [hostname user password keyfile keypassphrase]
   (SSHCommandRunner. hostname user (File. ^String keyfile) keypassphrase nil))
 
@@ -65,6 +68,12 @@
 
 (defn register [opts]
   (sm-cmd :register opts))
+
+(defn get-client-facts []
+  (apply hash-map (split (:stdout (run-cmd "subscription-manager facts --list")) #"\n|: ")))
+
+(defn get-distro []
+  ((get-client-facts) "distribution.name"))
 
 (comment (def ^:dynamic *runner*
            (SSHCommandRunner. "katello-client1.usersys.redhat.com"
