@@ -78,6 +78,22 @@
       (with-unique [username "dupeuser"]
         (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
           (user/create username generic-user-details))))
+    
+    (deftest "Two users with username that differs only in case are disalowed"
+      :blockers (open-bz-bugs "857876")
+      :data-driven true
+      (fn [orig-name modify-case-fn]
+        (expecting-error (errtype :katello.notifications/name-taken-error)
+          (with-unique [name orig-name]
+            (user/create name generic-user-details)
+            (user/create (modify-case-fn name) generic-user-details))))
+
+      [["usr"      capitalize]
+       ["yourusr" capitalize]
+       ["usr"      upper-case]
+       ["MyUsr"   upper-case]
+       ["YOURUsr" lower-case]])
+     
 
     (deftest "User's minimum password length is enforced"
       (expecting-error (errtype :katello.notifications/password-too-short)

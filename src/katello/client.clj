@@ -53,6 +53,15 @@
                [k v] settings]
            (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
+(defn does-system-belong-to-an-environment? [username password org system environment]
+  (let [result
+				  ((run-cmd 
+				    (format 
+				      "katello -u%s -p%s system info --org %s --name %s --environment %s"
+				      username password org system environment))
+            :stdout)]
+        (and (.contains result system) (not (.contains result "Found ambiguous")))))
+
 (defn setup-client []
   (let [rpm-name-prefix "candlepin-cert-consumer"
         cmds [["subscription-manager clean"] 
