@@ -7,12 +7,15 @@
                       [tasks :refer :all] 
                       [environments :as environment] 
                       [validation :refer :all] 
-                      [conf :refer [config]]) 
+                      [client :as client]
+                      [systems :refer :all]
+                      [conf :refer [*session-user* *session-password* config no-clients-defined]]) 
             [katello.tests.providers :refer [with-n-new-orgs]] 
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [tools.verify :refer [verify-that]]
             [serializable.fn :refer [fn]]
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Variables
@@ -142,7 +145,24 @@
                                                      {:org-name @test-org-name
                                                       :description "dup env description"}))))
 
+    (deftest "Two environments with name that differs only in case are disalowed"
+      :blockers (open-bz-bugs "847037")
+      :data-driven true
 
+      (fn [orig-name modify-case-fn]
+        (expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
+          (with-unique [name orig-name]
+            (environment/create name {:org-name @test-org-name
+                                                      :description "dup env description"})
+            (environment/create (modify-case-fn name) {:org-name @test-org-name
+                                                      :description "dup env description"}))))
+
+      [["env"      capitalize]
+       ["yourenv" capitalize]
+       ["env"      upper-case]
+       ["MyEnv"   upper-case]
+       ["YOUREnv" lower-case]])
+      
     (deftest "Rename an environment"
       :blockers (constantly ["Renaming is not supported for v1"])
 
@@ -164,4 +184,23 @@
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
                      (environment/create nil {:org-name @test-org-name
-                                              :description "env description"}))))
+                                              :description "env description"})))
+
+  (deftest "Move systems from one env to another"
+    (with-unique [env-dev  "dev" env-test  "test"]
+      (environment/create env-dev {:org-name @test-org-name})
+      (environment/create env-test {:org-name @test-org-name})
+      (client/setup-client)
+      (client/register {:username *session-user*
+                      :password *session-password*
+                      :org @test-org-name
+                      :env env-dev
+                      :force true})
+      (let [system (client/server-hostname)]
+        (verify-that (= env-dev (get-system-env system)))
+        (verify-that (client/does-system-belong-to-an-environment? system env-dev))
+        (edit-system-environment (:name system) {:environment env-test})
+        (verify-that (= env-test (get-system-env system)))
+        (verify-that (client/does-system-belong-to-an-environment? system env-test))))))
+        
+        

@@ -19,7 +19,7 @@
 (defn create-test-environment [] 
   (def test-environment (first *environments*))
   (api/with-admin
-    (api/ensure-env-exist test-environment {:prior library})))
+    (api/ensure-env-exist test-environment {:prior library}))) 
 
 (defn register-new-test-system []
   (api/with-admin
@@ -183,8 +183,6 @@
             (let [syscount  (system/get-group-system-count group-name)]
               (system/remove-from-group group-name system-name)
               (verify-that (= (dec syscount) (system/get-group-system-count group-name)))))))
-       
-           
       
       (deftest "Delete a system group"
         :data-driven true
