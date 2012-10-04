@@ -136,8 +136,7 @@
   
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
-  (when (@config :clients)
-    (def ^:dynamic *clients* (@config :clients)))
+  (def ^:dynamic *clients* (@config :clients))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (@config :environments))) 
 
