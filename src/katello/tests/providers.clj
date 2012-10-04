@@ -22,7 +22,7 @@
 
 (defn get-all-providers "Uses API to return all provider names in the admin org"
   []
-  (map :name (api/with-admin (api/all-entities :provider))))
+  (map :name (api/all-entities :provider)))
 
 (defn verify-provider-renamed
   "Verifies that a provider named old-name doesn't exist, that that a
@@ -41,7 +41,7 @@
   (let [ent-name (uniqueify "samename")
         orgs (take n (unique-names "ns-org"))]
     (doseq [org orgs]
-      (api/with-admin (api/create-organization org)))
+      (api/create-organization org))
     (try
       (f ent-name orgs)
       (finally (organization/switch (@config :admin-org))))))
@@ -55,7 +55,7 @@
   (let [ent-name (uniqueify "samename")
         providers (take 2 (unique-names "ns-provider"))]
     (doseq [provider providers]
-      (api/with-admin (api/create-provider provider)))
+      (api/create-provider provider))
     (f ent-name providers)))
 
 (defn create-same-provider-in-multiple-orgs

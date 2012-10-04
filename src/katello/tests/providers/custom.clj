@@ -32,11 +32,10 @@
   (doseq [org orgs]
     (organization/switch org)
     (let [provider-name (uniqueify "prov")]
-      (api/with-admin
-        (api/with-org org
-          (api/create-provider provider-name))
-        (provider/add-product {:provider-name provider-name
-                                :name product-name})))))
+      (api/with-org org
+        (api/create-provider provider-name))
+      (provider/add-product {:provider-name provider-name
+                             :name product-name}))))
 
 ;; Tests
 

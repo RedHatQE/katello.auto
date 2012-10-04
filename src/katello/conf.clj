@@ -95,6 +95,7 @@
 
 (declare ^:dynamic *session-user*
          ^:dynamic *session-password*
+         ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *environments*)
 
@@ -136,6 +137,7 @@
   
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
+  (def ^:dynamic *session-org* (@config :admin-org))
   (def ^:dynamic *clients* (@config :clients))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (@config :environments))) 

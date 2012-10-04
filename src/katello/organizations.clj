@@ -60,11 +60,13 @@
           (check-for-success))))
     (browser clickAndWait (locators/org-switcher org-name))))
 
-(defmacro execute-with
-  "Switch to organization org-name, then execute the code in body. Finally,
-   switch back to the previous org, even if there was an error."
-   [org-name & body]
-  `(let [curr-org# (current)]
-     (try (switch ~org-name)
-          ~@body
-          (finally (switch curr-org#)))))
+(defmacro with-org
+  "Switch to organization org-name, then execute the code in body.
+   Also changes what org is used for api calls within body. Does not
+   switch the UI back to the previous org - any code that needs a
+   specific org should call this macro, and not depend on some
+   previous action to leave the UI on the right org."
+  [org-name & body]
+   `(binding [*session-org* org-name]
+      (switch ~org-name)
+      ~@body))
