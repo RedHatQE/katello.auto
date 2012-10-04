@@ -2,7 +2,8 @@
   (:require [katello.locators :as locators]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [katello.ui-tasks :refer :all] 
-            [katello.notifications :refer :all])
+            [katello.notifications :refer :all]
+            [katello.conf :refer [*session-org*]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;
@@ -67,6 +68,6 @@
    specific org should call this macro, and not depend on some
    previous action to leave the UI on the right org."
   [org-name & body]
-   `(binding [*session-org* org-name]
+   `(binding [*session-org* ~org-name]
       (switch ~org-name)
       ~@body))
