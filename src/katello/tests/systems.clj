@@ -305,11 +305,12 @@
   
     (deftest "Check whether the OS of the registered system is displayed in the UI"
       (client/setup-client)
-      (client/register {:username *session-user*
-                  :password *session-password*
-                  :org "ACME_Corporation"
-                  :env test-environment
-                  :force true})
+      (client/register 
+	{:username *session-user*
+         :password *session-password*
+         :org "ACME_Corporation"
+         :env test-environment
+         :force true})
       (let [system (client/server-hostname)]
         (verify-that (= (client/get-distro) (get-system-os system)))))
     
