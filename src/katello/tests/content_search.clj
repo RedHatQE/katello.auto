@@ -31,15 +31,14 @@
 (defgroup content-search-tests
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
-                 (api/with-admin
-                   (api/create-organization test-org)
-                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))))
+                 (api/create-organization test-org)
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
   
   (deftest "Search for content"
     :data-driven true
 
     (fn [search-params pred]
-      (let [search-res (org/execute-with test-org
+      (let [search-res (org/with-org test-org
                          (apply search-for-content search-params))]
         (verify-that (pred search-res))))
 

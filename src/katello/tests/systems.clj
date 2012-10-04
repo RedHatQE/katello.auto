@@ -18,14 +18,12 @@
 
 (defn create-test-environment [] 
   (def test-environment (first *environments*))
-  (api/with-admin
-    (api/ensure-env-exist test-environment {:prior library}))) 
+  (api/ensure-env-exist test-environment {:prior library}))
 
 (defn register-new-test-system []
-  (api/with-admin
-    (api/with-env test-environment
-      (api/create-system (uniqueify "newsystem")
-                         {:facts (api/random-facts)}))))
+  (api/with-env test-environment
+    (api/create-system (uniqueify "newsystem")
+                       {:facts (api/random-facts)})))
 
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
@@ -38,8 +36,7 @@
             {:env-name test-environment
              :system-name (:name system)})
   (verify-that (= (:environment_id system)
-                  (api/with-admin
-                    (api/get-id-by-name :environment test-environment)))))
+                  (api/get-id-by-name :environment test-environment))))
 
 (defn step-create-system-group
   [{:keys [group-name]}]
@@ -76,7 +73,7 @@
    is true in the input map (if true, then verifies system is *not*
    present."
   [{:keys [system-name also-remove-systems?]}]
-  (let [all-system-names (map :name (api/with-admin (api/all-entities :system)))]
+  (let [all-system-names (map :name (api/all-entities :system))]
     (if also-remove-systems?
       (verify-that (not (some #{system-name} all-system-names)))
       (verify-that (some #{system-name} all-system-names)))))
@@ -96,8 +93,7 @@
 (defgroup system-group-tests
   :blockers api/katello-only
   :group-setup (fn []
-                 (api/with-admin
-                   (api/ensure-env-exist "dev" {:prior "Library"})))
+                 (api/ensure-env-exist "dev" {:prior "Library"}))
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
@@ -256,9 +252,8 @@
 
     (with-unique [provider-name "subscr-prov"
                   product-name "subscribe-me"]
-      (api/with-admin
-        (api/create-provider provider-name)
-        (api/create-product product-name {:provider-name provider-name}))
+      (api/create-provider provider-name)
+      (api/create-product product-name {:provider-name provider-name})
       (system/subscribe {:system-name (:name (register-new-test-system))
                          :add-products [product-name]})))
 

@@ -53,10 +53,9 @@
   (let [rolename (uniqueify "role")
         username (uniqueify "user-perm")
         pw "password"]
-    (api/with-admin
-      (api/create-user username {:password pw
-                                 :email (str username "@my.org")})
-      (when setup (setup)))
+    (api/create-user username {:password pw
+                               :email (str username "@my.org")})
+    (when setup (setup))
     
     (role/create rolename)
     (role/edit rolename {:add-permissions permissions
@@ -119,9 +118,8 @@
                           :permissions [{:resource-type "Organizations"
                                          :verbs ["Register Systems"]
                                          :name "systemreg"}]}]
-           :allowed-actions [(fn [] (api/with-admin-org
-                                     (api/with-env (first conf/*environments*)
-                                       (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
+           :allowed-actions [(fn [] (api/with-env (first conf/*environments*)
+                                     (api/create-system (uniqueify "system") {:facts (api/random-facts)})))
                              (navigate-fn :systems-all-page)]
            :disallowed-actions (conj (navigate-all :providers-tab :manage-organizations-page)
                                      (fn [] (organization/create (uniqueify "cantdothis"))))])

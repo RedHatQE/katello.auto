@@ -30,7 +30,7 @@
   [org-name repos]
   (let [dl-loc (manifest/new-tmp-loc)]
     (download-original dl-loc)
-    (org/execute-with org-name
+    (org/with-org org-name
       (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
       (enable-redhat-repositories repos)
       (sync/perform-sync repos))))
