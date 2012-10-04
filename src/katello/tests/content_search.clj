@@ -3,7 +3,7 @@
                      [ui-tasks      :refer :all]
                      [organizations :as org] 
                      [manifest      :as manifest]
-                     [conf          :refer [config]]
+                     [conf          :refer [config with-org]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
@@ -38,7 +38,8 @@
     :data-driven true
 
     (fn [search-params pred]
-      (let [search-res (org/with-org test-org
+      (let [search-res (with-org test-org
+                         (org/switch)
                          (apply search-for-content search-params))]
         (verify-that (pred search-res))))
 

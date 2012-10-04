@@ -63,7 +63,7 @@
     
     (try
       (let [with-perm-results (do (user/login username pw)
-                                  (api/with-creds username pw
+                                  (conf/with-creds username pw
                                     (try-all allowed-actions)))
             no-perm-results (try-all disallowed-actions)]
         (verify-that (and (every? denied-access? (vals no-perm-results))

@@ -2,7 +2,8 @@
   (:require (katello [api-tasks :as api]
                      [providers :as provider]
                      [tasks :refer :all]
-                     [organizations :as organization])
+                     [organizations :as organization]
+                     [conf :refer [with-org]])
             [test.tree.script :refer [defgroup deftest]]
             [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.providers :refer [with-n-new-orgs with-two-providers]]))
@@ -30,12 +31,12 @@
 (defn create-same-product-name-in-multiple-orgs
   [product-name orgs]
   (doseq [org orgs]
-    (organization/switch org)
-    (let [provider-name (uniqueify "prov")]
-      (api/with-org org
-        (api/create-provider provider-name))
-      (provider/add-product {:provider-name provider-name
-                             :name product-name}))))
+    (with-org org
+      (organization/switch)
+      (let [provider-name (uniqueify "prov")]
+        (api/create-provider provider-name)
+        (provider/add-product {:provider-name provider-name
+                               :name product-name})))))
 
 ;; Tests
 

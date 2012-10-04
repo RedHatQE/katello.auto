@@ -8,7 +8,7 @@
                      [changesets      :as changesets]
                      [systems         :as system]
                      [fake-content    :as fake-content]
-                     [conf            :refer [config no-clients-defined]])
+                     [conf            :refer [config no-clients-defined with-org]])
             [test.tree.script :refer [defgroup deftest]]
             [test.tree.builder :refer [union]]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -26,47 +26,54 @@
 (defn step-create-org [{:keys [org-name env-name]}]
   (api/create-organization org-name)
   (when env-name
-    (api/with-org org-name
+    (with-org org-name
+      (organization/switch)
       (api/create-environment env-name {}))))
 
 (defn verify-all-repos-not-synced [repos]
   (verify-that (every? nil? (map sync/complete-status repos))))
 
 (defn enable-redhat-repositories-in-org [org repos]
-  (organization/with-org org (enable-redhat-repositories repos)))
+  (with-org org
+    (organization/switch)
+    (enable-redhat-repositories repos)))
 
 (defn step-clone-manifest [{:keys [manifest-loc]}]
   (manifest/clone manifest-tmp-loc manifest-loc))
 
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
-  (organization/with-org org-name
+  (with-org org-name
+    (organization/switch)
     (manifest/upload manifest-loc (select-keys m [:repository-url]))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
-  (organization/with-org org-name
+  (with-org org-name
+    (organization/switch)
     (enable-redhat-repositories enable-repos)
     (navigate :sync-status-page)
     (verify-all-repos-not-synced enable-repos)))
 
 (defn step-promote-redhat-content-into-test-env [{:keys [org-name env-name products]}]
-  (api/with-org org-name       
+  (with-org org-name
+    (organization/switch)
     (api/ensure-env-exist env-name {:prior library})
     (when (api/is-katello?)
-      (organization/with-org org-name
-        (enable-redhat-repositories (mapcat :repos products))
-        (changesets/sync-and-promote products library env-name)))))
+      (enable-redhat-repositories (mapcat :repos products))
+      (changesets/sync-and-promote products library env-name))))
 
 (defn step-create-system [{:keys [system-name org-name env-name]}]
-  (api/with-org org-name
+  (with-org org-name
     (api/with-env env-name
       (api/create-system system-name {:facts (api/random-facts)}))))
 
 (defn step-set-system-release-version [{:keys [release-version system-name org-name] :as m}]
-  (organization/with-org org-name
+  (with-org org-name
+    (organization/switch)
     (system/edit system-name (select-keys m [release-version]))))
 
 (defn step-verify-client-access [{:keys [org-name env-name products install-packages]}]
-  (api/with-org org-name       
+  (with-org org-name
+    (organization/switch)
     (e2e/test-client-access org-name env-name products install-packages)))
 
 (defn new-fake-manifest []
@@ -146,7 +153,8 @@
           upload #(manifest/upload % {:repository-url
                                       (@config :redhat-repo-url)})]
       (api/create-organization org-name)
-      (organization/with-org org-name
+      (with-org org-name
+        (organization/switch)
         (manifest/clone manifest-tmp-loc test-manifest)
         (upload test-manifest)
         (expecting-error (errtype :katello.notifications/import-older-than-existing-data)
@@ -161,9 +169,11 @@
       (doseq [org two-orgs]
         (api/create-organization org))
       (manifest/clone manifest-tmp-loc test-manifest)
-      (organization/with-org (first two-orgs)
+      (with-org (first two-orgs)
+        (organization/switch)
         (upload test-manifest))
-      (organization/with-org (second two-orgs)
+      (with-org (second two-orgs)
+        (organization/switch)
         (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
                          (upload test-manifest)))))
   

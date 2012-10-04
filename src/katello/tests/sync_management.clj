@@ -8,7 +8,7 @@
                      [tasks :refer :all]
                      [sync-management :as sync]
                      [ui-tasks :refer [navigate errtype]] 
-                     [conf :refer [config *environments*]]) 
+                     [conf :refer [config *environments* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -59,8 +59,8 @@
     (try
       (user/login user password)
       (organization/create org)
-      (api/with-creds user password
-        (api/with-org org
+      (with-creds user password
+        (with-org org
           (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
       (provider/create {:name provider})
       (provider/add-product {:provider-name provider 

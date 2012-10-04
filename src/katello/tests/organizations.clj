@@ -9,7 +9,8 @@
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
             [serializable.fn :refer [fn]]
-            [test.tree.script :refer :all] 
+            [test.tree.script :refer :all]
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Functions

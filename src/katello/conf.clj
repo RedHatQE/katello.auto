@@ -148,3 +148,20 @@
     []
     ["No clients were specified - see --clients option"]))
 
+(defmacro with-creds
+  "Execute body and with the given user and password, all api calls
+   will use these creds.  No explicit logging in/out is done in the
+   UI."
+  [user password & body]
+  `(binding [*session-user* ~user
+             *session-password* ~password]
+     ~@body))
+
+(defmacro with-org
+  "Binds *session-org* to a new value within body, all api calls will
+   use this org. Does not switch the org in the UI - see
+   katello.organizations/switch for that."
+  [org-name & body]
+   `(binding [*session-org* ~org-name]
+      ~@body))
+

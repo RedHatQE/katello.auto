@@ -9,23 +9,6 @@
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
 
-(defmacro with-creds
-  "Execute body and makes any included katello api calls with the
-   given user and password."
-  [user password & body]
-  `(binding [*session-user* ~user
-             *session-password* ~password]
-     (do 
-       ~@body)))
-
-(defmacro with-org
-  "Executes body and makes any included katello api calls using the
-  given organization."
-  [org & body]
-  `(binding [*session-org* ~org]
-     (do 
-       ~@body)))
-
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
   [m newmap]

@@ -37,11 +37,10 @@
   "Creates a new user with a unique name, assigns him admin
    permissions and logs in as that user."
   [user pw]
-  (api/with-creds (@config :admin-user) (@config :admin-password)
-    (api/create-user user {:password pw
-                           :email (str user "@myorg.org")}))
+  (api/create-user user {:password pw
+                         :email (str user "@myorg.org")})
   (role/assign {:user user
-                   :roles ["Administrator"]})
+                :roles ["Administrator"]})
   (logout)
   (login user pw))
 
@@ -54,23 +53,23 @@
    off tests, and stops it after all tests are done."
   [consume-fn]
   (fn []
-    (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)]
+    (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)
+          user (uniqueify (str (@config :admin-user) thread-number))]
       (binding [tracer (per-thread-tracer)
                 sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))
-                *session-user* (uniqueify
-                                (str (@config :admin-user)
-                                     thread-number))
+                
                 client/*runner* (when *clients*
                                   (try (client/new-runner (nth *clients* thread-number)
-                                                      "root" nil
-                                                      (@config :client-ssh-key)
-                                                      (@config :client-ssh-key-passphrase))
+                                                          "root" nil
+                                                          (@config :client-ssh-key)
+                                                          (@config :client-ssh-key-passphrase))
                                        (catch Exception e (do (.printStackTrace e) e))))]
         (try 
           (start-selenium)
-          (switch-new-admin-user *session-user* *session-password*)
-          (consume-fn)
+          (switch-new-admin-user user *session-password*)
+          (binding [*session-user* user]
+            (consume-fn))
           (finally 
             (stop-selenium)))))))
 
