@@ -9,7 +9,8 @@
                      [conf :refer [config]])
             [tools.verify :refer [verify-that]]
             [serializable.fn :refer [fn]]
-            [test.tree.script :refer :all] 
+            [test.tree.script :refer :all]
+            [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Functions
@@ -17,17 +18,14 @@
 (defn create-test-org
   "Creates an organization named org-name via the API"
   [org-name]
-  (api/with-admin-creds
-    (api/create-organization org-name
-                             {:description "organization used to test environments."})))
+  (api/create-organization org-name
+                           {:description "organization used to test environments."}))
 
 (defn get-all-org-names
   "Returns a list of the names of all the organizations in the system.
    Uses the API."
   []
-  (doall (map :name
-              (api/with-admin-creds
-                (api/all-entities :organization)))))
+  (doall (map :name (api/all-entities :organization))))
 
 (defn org-exists? [org-name]
   (some #{org-name} (get-all-org-names)))

@@ -59,14 +59,13 @@
   (with-unique [provider-name  "prov"
                 product-name  "prod"
                 repo-name  "repo"]
-    (api/with-admin
-      (api/create-environment env-name {})
-      (api/create-provider provider-name)
-      (api/create-product product-name {:provider-name provider-name})
-      (api/create-repo repo-name {:product-name product-name :url (@config :sync-repo)})
-      (sync/perform-sync [repo-name])
-      (api/with-env env-name
-        (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]})))))
+    (api/create-environment env-name {})
+    (api/create-provider provider-name)
+    (api/create-product product-name {:provider-name provider-name})
+    (api/create-repo repo-name {:product-name product-name :url (@config :sync-repo)})
+    (sync/perform-sync [repo-name])
+    (api/with-env env-name
+      (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]}))))
 
 ;; Setup
 
@@ -74,10 +73,9 @@
   "Creates a new org for testing environments
    using the API."
   []
-  (api/with-admin-creds
-    (api/create-organization
-     (reset! test-org-name (uniqueify "env-test"))
-     {:description "organization used to test environments."})))
+  (api/create-organization
+   (reset! test-org-name (uniqueify "env-test"))
+   {:description "organization used to test environments."}))
 
 
 ;; Tests

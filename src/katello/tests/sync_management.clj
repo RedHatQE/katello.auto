@@ -8,7 +8,7 @@
                      [tasks :refer :all]
                      [sync-management :as sync]
                      [ui-tasks :refer [navigate errtype]] 
-                     [conf :refer [config *environments*]]) 
+                     [conf :refer [config *environments* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -28,13 +28,12 @@
   (let [myprovider (reset! provider-name (uniqueify "sync"))
         myproduct (reset! product-name (uniqueify "sync-test1"))
         myrepo (reset! repo-name (uniqueify "testrepo"))]
-    (api/with-admin
-      (api/create-provider myprovider {:description "provider to test syncing"})
-      (api/create-product myproduct {:provider-name myprovider
-                                     :description "testing sync"})
-      (api/create-repo myrepo
-                       {:product-name myproduct
-                        :url (@config :sync-repo)}))))
+    (api/create-provider myprovider {:description "provider to test syncing"})
+    (api/create-product myproduct {:provider-name myprovider
+                                   :description "testing sync"})
+    (api/create-repo myrepo
+                     {:product-name myproduct
+                      :url (@config :sync-repo)})))
 
 (defn is-complete? [sync-result]
   (= "Sync complete." sync-result))
@@ -60,8 +59,8 @@
     (try
       (user/login user password)
       (organization/create org)
-      (api/with-creds user password
-        (api/with-org org
+      (with-creds user password
+        (with-org org
           (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
       (provider/create {:name provider})
       (provider/add-product {:provider-name provider 
@@ -137,17 +136,16 @@
       
       (let [second-product-name (uniqueify "MySecondProduct")
             product-names [@product-name second-product-name]]
-        (api/with-admin
-          (api/with-env library
-            (api/create-product second-product-name {:provider-name @provider-name
-                                                     :description "testing sync"})
-            (api/create-repo (uniqueify "testrepo")
-                             {:product-name second-product-name
-                              :url (@config :sync-repo)}))
-          (api/with-env (first *environments*)
-            (api/promote {:products (doall
-                                     (for [product product-names]
-                                       {:product_id (api/get-id-by-name :product product)}))})))
+        (api/with-env library
+          (api/create-product second-product-name {:provider-name @provider-name
+                                                   :description "testing sync"})
+          (api/create-repo (uniqueify "testrepo")
+                           {:product-name second-product-name
+                            :url (@config :sync-repo)}))
+        (api/with-env (first *environments*)
+          (api/promote {:products (doall
+                                   (for [product product-names]
+                                     {:product_id (api/get-id-by-name :product product)}))}))
         (sync/schedule {:plan-name @plan-name
                         :products product-names})
         (let [expected-plan @plan-name
