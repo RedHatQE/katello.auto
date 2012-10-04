@@ -7,7 +7,9 @@
                      [organizations :as organization]
                      [tasks :refer :all]
                      [ui-tasks :refer :all]
-                     [conf :refer [*session-user* *session-password* *environments* config no-clients-defined]]) 
+                     [conf :refer [*session-user* *session-password*
+                                   *environments* config no-clients-defined
+                                   with-org]]) 
             (test.tree [script :refer :all]
                        [builder :refer :all])
             [serializable.fn :refer [fn]]
@@ -31,7 +33,8 @@
                                       (:providedProducts pool)))]
     
     (when (api/is-katello?)
-      (organization/execute-with org-name
+      (with-org org-name
+        (organization/switch)
         (sync-and-promote products library target-env)))
 
     ;;client side
@@ -70,21 +73,19 @@
           target-env (first *environments*)
           cs-name (uniqueify "promo-safari")
           package-to-install "cheetah"]
-      (organization/execute-with (@config :admin-org)
-        (api/with-admin
-          (api/with-admin-org
-            (api/ensure-env-exist target-env {:prior library})
-            (provider/create {:name provider-name})
-            (provider/add-product {:provider-name provider-name
-                                    :name product-name})
-            (provider/add-repo {:provider-name provider-name
-                                 :product-name product-name
-                                 :name repo-name
-                                 :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
-            (let [products [{:name product-name :repos [repo-name]}]]
-              (when (api/is-katello?)
-                (sync-and-promote products library target-env))
-              (test-client-access (@config :admin-org)
-                                  target-env
-                                  products
-                                  [package-to-install] ))))))))
+      (organization/switch)
+      (api/ensure-env-exist target-env {:prior library})
+      (provider/create {:name provider-name})
+      (provider/add-product {:provider-name provider-name
+                             :name product-name})
+      (provider/add-repo {:provider-name provider-name
+                          :product-name product-name
+                          :name repo-name
+                          :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
+      (let [products [{:name product-name :repos [repo-name]}]]
+        (when (api/is-katello?)
+          (sync-and-promote products library target-env))
+        (test-client-access (@config :admin-org)
+                            target-env
+                            products
+                            [package-to-install] )))))

@@ -3,7 +3,7 @@
                      [ui-tasks      :refer :all]
                      [organizations :as org] 
                      [manifest      :as manifest]
-                     [conf          :refer [config]]
+                     [conf          :refer [config with-org]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
@@ -31,15 +31,15 @@
 (defgroup content-search-tests
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
-                 (api/with-admin
-                   (api/create-organization test-org)
-                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))))
+                 (api/create-organization test-org)
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
   
   (deftest "Search for content"
     :data-driven true
 
     (fn [search-params pred]
-      (let [search-res (org/execute-with test-org
+      (let [search-res (with-org test-org
+                         (org/switch)
                          (apply search-for-content search-params))]
         (verify-that (pred search-res))))
 

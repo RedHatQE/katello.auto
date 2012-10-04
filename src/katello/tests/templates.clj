@@ -22,24 +22,21 @@
 (defn setup-custom-content []  
   (let [provider-name (uniqueify "template")
         cs-name (uniqueify "cs")]
-    (api/with-admin
-      (api/create-provider provider-name))
+    (api/create-provider provider-name)
     (reset! products (take 3 (unique-names "templateProduct")))
     (reset! repos [])
     (let [prods (doall
                  (for [product @products]
-                   (api/with-admin
-                     (let [created-prod (api/create-product
-                                         product {:provider-name provider-name
-                                                  :description "product to test templates"})
-                           repo-name (uniqueify "templ")]
-                       (api/create-repo repo-name {:product-name product :url "http://my.fakerepo.com/blah/blah"})
-                       (swap! repos conj {:product product :repositories [repo-name]})
-                       created-prod))))
+                   (let [created-prod (api/create-product
+                                       product {:provider-name provider-name
+                                                :description "product to test templates"})
+                         repo-name (uniqueify "templ")]
+                     (api/create-repo repo-name {:product-name product :url "http://my.fakerepo.com/blah/blah"})
+                     (swap! repos conj {:product product :repositories [repo-name]})
+                     created-prod)))
           content {:products (for [prod prods] {:product_id (:id prod)})}]
-      (api/with-admin
-        (api/with-env (first *environments*)
-          (api/promote content))))))
+      (api/with-env (first *environments*)
+        (api/promote content)))))
 
 ;; Tests
 
