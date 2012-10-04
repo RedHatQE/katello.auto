@@ -50,6 +50,7 @@
    provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
+   system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='$1']" 
    role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
    schedule                        "//div[normalize-space(.)='$1']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
@@ -86,6 +87,7 @@
    :success-message         "//div[contains(@class,'jnotify-notification-message')]"
    :spinner                 "//img[contains(@src,'spinner.gif')]"
    :save-inplace-edit       "//button[.='Save']"
+   :save-inplace-edit-inputbutton       "//input[@value='Save']"
    :confirmation-dialog     "//div[contains(@class, 'confirmation')]"
    :confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
    :confirmation-no         "//div[contains(@class, 'confirmation')]//span[.='No']"
@@ -160,6 +162,7 @@
 
 (def environments
   {:env-name-text             "kt_environment[name]"
+   :env-label-text             "kt_environment[label]"
    :env-description-text      "kt_environment[description]"
    :prior-environment         "kt_environment[prior]"
    :create-environment        "//input[@value='Create']"
@@ -293,6 +296,8 @@
    :system-location-text-edit              "system[location]"
    :system-service-level-select            "system[serviceLevel]"
    :system-release-version-select          "system[releaseVer]"
+   :system-environment                     "//div[@id='environment_path_selector']"
+
 
    ;;systemgroups pane
    :new-system-groups                      "//a[@id='new']"
