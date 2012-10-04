@@ -5,7 +5,8 @@
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [systems :refer :all :as system] 
-                     [conf :refer [config *environments*]]) 
+                     [client :as client]
+                     [conf :refer [*session-user* *session-password* config *environments* no-clients-defined]]) 
             (test.tree [script :refer :all] 
                        [builder :refer [union]]) 
             [serializable.fn :refer [fn]]
@@ -301,5 +302,17 @@
                                       {:name ak-name
                                        :description "my description"
                                        :environment test-environment})))))
+  
+    (deftest "Check whether the OS of the registered system is displayed in the UI"
+      (client/setup-client)
+      (client/register 
+	{:username *session-user*
+         :password *session-password*
+         :org "ACME_Corporation"
+         :env test-environment
+         :force true})
+      (let [system (client/server-hostname)]
+        (verify-that (= (client/get-distro) (get-system-os system)))))
+    
   system-group-tests)
 

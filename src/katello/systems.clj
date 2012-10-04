@@ -107,3 +107,9 @@
   [sg-name]
   (navigate :system-group-details-page {:system-group-name sg-name})
   (Integer/parseInt (browser getText :system-group-total)))
+
+(defn get-os "Get operating system of the system"
+  [name]
+  (navigate :named-systems-page {:system-name name})
+  (browser getText :system-operating-system))
+
