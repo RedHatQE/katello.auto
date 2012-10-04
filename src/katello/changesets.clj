@@ -13,7 +13,7 @@
 ;; Changesets
 ;;
 
-(defn create-changeset
+(defn create
   "Creates a changeset for promotion from env-name to next-env name."
   [env-name next-env-name changeset-name]
   (navigate :named-environment-changesets-page {:env-name env-name
@@ -23,7 +23,7 @@
              (click :save-changeset))
   (check-for-success))
 
-(defn add-to-changeset
+(defn add-content
   "Adds the given content to an existing changeset. The originating
    and target environments need to be specified to find to locate the
    changeset."
@@ -38,7 +38,7 @@
     (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
-(defn promote-changeset
+(defn promote
   "Promotes the given changeset to its target environment. An optional
    timeout-ms key will specify how long to wait for the promotion to
    complete successfully."
@@ -73,16 +73,15 @@
       (check-for-success {:timeout-ms 180000 :refresh? true}))))
 
 (defn promote-content
-  "Promotes the given content from one environment to anot Example
-  content:
-     {:products ['Product1' 'Product2']} "
+  "Promotes the given content from one environment to another 
+   Example content: {:products ['Product1' 'Product2']} "
   [from-env to-env content]
   (let [changeset (uniqueify "changeset")]
-    (create-changeset from-env to-env changeset)
-    (add-to-changeset changeset from-env to-env content)
-    (promote-changeset changeset {:from-env from-env
-                                  :to-env to-env
-                                  :timeout-ms 300000})))
+    (create from-env to-env changeset)
+    (add-content changeset from-env to-env content)
+    (promote changeset {:from-env from-env
+                        :to-env to-env
+                        :timeout-ms 300000})))
 
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)
