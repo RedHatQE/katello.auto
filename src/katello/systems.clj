@@ -120,3 +120,9 @@
   [system-name]
   (navigate :named-systems-page {:system-name system-name})
   (browser getText :system-environment))
+
+(defn get-os "Get operating system of the system"
+  [name]
+  (navigate :named-systems-page {:system-name name})
+  (browser getText :system-operating-system))
+
