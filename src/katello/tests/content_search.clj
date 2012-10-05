@@ -32,11 +32,36 @@
     (api/with-admin
       (api/create-organization test-org)
       (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
-      (env/create-path test-org envs))
+      (if (not (nil? envs)) (env/create-path test-org envs))
 
 
 (defgroup content-search-tests
+  :group-setup (fn []
+                 (def ^:dynamic test-org (uniqueify "contentsearch"))
+                 (api/with-admin
+                   (api/create-organization test-org)
+                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))))
   
+  (deftest "Search for content"
+    :data-driven true
+
+    (fn [search-params pred]
+      (let [search-res (org/execute-with test-org
+                         (apply search-for-content search-params))]
+        (verify-that (pred search-res))))
+
+
+    ;;some simple search tests for *all* the entities of a given type
+    [[[[:repo-type] (fn [results] (= (set (repo-names results))
+                                    (set (mapcat :repos fake/some-product-repos))))]]
+     [[:prod-type] (fn [results] (= (set (product-names results))
+                                   (set (map :name fake/some-product-repos))))]
+     [[:errata-type] (fn [results] (let [all-errata (errata-names results)]
+                                    (and (= (set all-errata)
+                                            fake/errata)
+                                         (= (count all-errata)
+                                            (* (count fake/errata)
+                                               (count (repo-names results)))))))]])
   
   
   (deftest "Ensure for Library Env, Content Search"
@@ -44,10 +69,7 @@
 
     (fn [envs search-params pred & [paral-env]]
       (with-unique [test-org1 "redhat-org"]
-        (if (not (nil? envs)) (setup-org test-org1 envs) 
-                              (api/with-admin
-                                (api/create-organization test-org1)
-                                (fake/prepare-org test-org1 (mapcat :repos fake/some-product-repos))))
+        (setup-org test-org1 envs)
         (if (not (nil? paral-env))
           (do
             (env/create-path test-org1 (take 3 (unique-names "env3")))))
