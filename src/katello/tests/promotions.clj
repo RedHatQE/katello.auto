@@ -2,6 +2,7 @@
   (:require (katello [api-tasks :as api] 
                      [changesets :refer [promote-content]] 
                      [environments :as environment]
+                     [organizations :as org]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [conf :refer [config *environments*]]) 
@@ -33,6 +34,7 @@
       (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
+  (org/switch)
   (let [create-repo-fn
         (fn [prod]
           (let [product-id (-> prod
