@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
                      [validation :as val]
+                     [organizations :as org]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [systems :as system] 
@@ -93,8 +94,8 @@
 
 (defgroup system-group-tests
   :blockers api/katello-only
-  :group-setup (fn []
-                 (api/ensure-env-exist "dev" {:prior "Library"}))
+  :group-setup #(api/ensure-env-exist "dev" {:prior "Library"})
+  :test-setup #(org/switch)
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
