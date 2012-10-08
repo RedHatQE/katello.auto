@@ -185,6 +185,8 @@
                                               :description "env description"})))
 
   (deftest "Move systems from one env to another"
+    :blockers no-clients-defined
+    
     (with-unique [env-dev  "dev" env-test  "test"]
       (environment/create env-dev {:org-name @test-org-name})
       (environment/create env-test {:org-name @test-org-name})
