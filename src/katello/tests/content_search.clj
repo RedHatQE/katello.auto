@@ -32,7 +32,8 @@
     (api/with-admin
       (api/create-organization test-org)
       (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
-      (if (not (nil? envs)) (env/create-path test-org envs))
+      (if (not (nil? envs)) (env/create-path test-org envs) 
+                            (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"})))
 
 
 (defgroup content-search-tests
@@ -40,7 +41,8 @@
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/with-admin
                    (api/create-organization test-org)
-                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))))
+                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+                   (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
   
   (deftest "Search for content"
     :data-driven true
@@ -52,8 +54,8 @@
 
 
     ;;some simple search tests for *all* the entities of a given type
-    [[[[:repo-type] (fn [results] (= (set (repo-names results))
-                                    (set (mapcat :repos fake/some-product-repos))))]]
+    [[[:repo-type] (fn [results] (= (set (repo-names results))
+                                    (set (mapcat :repos fake/some-product-repos))))]
      [[:prod-type] (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
      [[:errata-type] (fn [results] (let [all-errata (errata-names results)]
@@ -67,25 +69,23 @@
   (deftest "Ensure for Library Env, Content Search"
     :data-driven true
 
-    (fn [envs search-params pred & [paral-env]]
+    (fn [envz search-params pred & [paral-env]]
       (with-unique [test-org1 "redhat-org"]
-        (setup-org test-org1 envs)
-        (if (not (nil? paral-env))
-          (do
-            (env/create-path test-org1 (take 3 (unique-names "env3")))))
+        (setup-org test-org1 envz)
+        (if (not (nil? paral-env)) (env/create-path test-org1 (take 3 (unique-names "env3"))))
         (let [search-res (org/execute-with test-org1                       
-                           (apply search-for-content search-params))]
+                           (apply search-for-content [search-params {:envs envz}]))]
           (verify-that (pred search-res)))))
 
 
     ;;ensure that Library is the First env and always visible
-    [[(take 3 (unique-names "env1")) [:prod-type] (fn [results] (= (set (product-names results))
+    
+     [[(take 3 (unique-names "env1")) :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
-     [(take 1 (unique-names "env2")) [:prod-type] (fn [results] (= (set (product-names results))
+     [(take 1 (unique-names "env2")) :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
-     [(take 3 (unique-names "env3")) [:prod-type] (fn [results] (= (set (product-names results))
+     [(take 3 (unique-names "env3")) :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos)))) ["parallel-env"]]
-     [ nil [:prod-type] (fn [results] (= (set (product-names results))
+     [ nil :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]]))
-
 
