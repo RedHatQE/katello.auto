@@ -40,6 +40,9 @@
 (defn ok? [res]
   (= 0 (:exit-code res)))
 
+(defn hostname []
+  (-> *runner* .getConnection .getHostname))
+
 (defn server-hostname []
   (-> (@config :server-url) (java.net.URL.) .getHost))
 

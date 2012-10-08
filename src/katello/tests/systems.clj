@@ -4,7 +4,7 @@
                      [validation :as val]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
-                     [systems :refer :all :as system] 
+                     [systems :as system] 
                      [client :as client]
                      [conf :refer [*session-user* *session-password* config *environments* no-clients-defined]]) 
             (test.tree [script :refer :all] 
@@ -306,8 +306,8 @@
          :org "ACME_Corporation"
          :env test-environment
          :force true})
-      (let [system (client/server-hostname)]
-        (verify-that (= (client/get-distro) (get-system-os system)))))
+      (verify-that (= (client/get-distro)
+                      (system/get-os (client/hostname)))))
     
   system-group-tests)
 
