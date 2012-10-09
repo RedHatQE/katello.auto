@@ -2,9 +2,10 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
                      [validation :as val]
+                     [organizations :as org]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
-                     [systems :refer :all :as system] 
+                     [systems :as system] 
                      [client :as client]
                      [conf :refer [*session-user* *session-password* config *environments* no-clients-defined]]) 
             (test.tree [script :refer :all] 
@@ -93,8 +94,8 @@
 
 (defgroup system-group-tests
   :blockers api/katello-only
-  :group-setup (fn []
-                 (api/ensure-env-exist "dev" {:prior "Library"}))
+  :group-setup #(api/ensure-env-exist "dev" {:prior "Library"})
+  :test-setup (fn [& _] (org/switch))
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
@@ -306,8 +307,7 @@
          :org "ACME_Corporation"
          :env test-environment
          :force true})
-      (let [system (client/server-hostname)]
-        (verify-that (= (client/get-distro) (get-os system)))))
-    
+      (verify-that (= (client/get-distro)
+                      (system/get-os (client/hostname)))))
   system-group-tests)
 
