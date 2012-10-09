@@ -35,6 +35,9 @@
       (if (not (nil? envs)) (env/create-path test-org envs) 
                             (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"})))
 
+(defn ens-env [results]
+  (let [cols (-> results :columns first :to_display :content)]
+    cols))
 
 (defgroup content-search-tests
   :group-setup (fn []
@@ -75,10 +78,11 @@
         (if (not (nil? paral-env)) (env/create-path test-org1 (take 3 (unique-names "env3"))))
         (let [search-res (org/execute-with test-org1                       
                            (apply search-for-content [search-params {:envs envz}]))]
-          (verify-that (pred search-res)))))
-
-
-    ;;ensure that Library is the First env and always visible
+          (verify-that (pred search-res))
+          (verify-that (-> search-res ens-env (= "Library"))))))
+    
+          
+    ;;setup different org & env scenarios to ensure that Library is the First env and always visible
     
      [[(take 3 (unique-names "env1")) :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
