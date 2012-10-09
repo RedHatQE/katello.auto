@@ -307,7 +307,7 @@
          :env test-environment
          :force true})
       (let [system (client/server-hostname)]
-        (verify-that (= (client/get-distro) (get-system-os system)))))
+        (verify-that (= (client/get-distro) (get-os system)))))
     
   system-group-tests)
 

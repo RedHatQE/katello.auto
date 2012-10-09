@@ -25,7 +25,7 @@
 
 (define-strategies
   {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-   auto-complete-item              "//ul[contains(@class,'ui-autocomplete')]//a[.='$1']"
+   auto-complete-item              "//ul[@role='listbox']//a[contains(.,'$1')]"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
@@ -50,11 +50,15 @@
    promotion-remove-content-item   "//a[@data-display_name='$1' and contains(.,'Remove')]"
    provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
+   repo-compare-checkbox           "//input[@type='checkbox' and @name='$1']"
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='$1']" 
    role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
    schedule                        "//div[normalize-space(.)='$1']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
+   search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'$1')]"
+   search-result-line-id           "//ul[@id='grid_row_headers']/li[contains(.,'$1')]"
+   search-result-cell              "//div[@id='grid_row_$1']/div[contains(@class,'cell_$2')]/i"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
@@ -279,6 +283,7 @@
    :pkg-search                 "//div[@id='package_search']/input[@id='search']"
    :errata-search              "//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
+   :repo-compare-button        "//a[@id='compare_repos_btn']"
    :content-search-load-more   "//a[contains(@class,'load_row_link')]"
    :column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
   })
