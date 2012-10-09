@@ -210,7 +210,7 @@
 (defn add-to-changeset [changeset-name entity-type entity]
   (rest/post (api-url "api/changesets/" (get-id-by-name :changeset changeset-name) "/" 
                       (-> entity-type name pluralize))
-             entity))
+             {:body entity}))
 
 (defn promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,
@@ -251,18 +251,18 @@
   (doseq [[content-type items] content item items]
     (rest/post (api-url "api/templates/" (get-id-by-name :template template-name) "/" (name content-type))
                {:body {:id (with-bindings
-                               (case content-type
-                                 :repositories {#'*product-id* (get-id-by-name :product
-                                                                               (:product item))}
-                                 {})
+                             (case content-type
+                               :repositories {#'*product-id* (get-id-by-name :product
+                                                                             (:product item))}
+                               {})
                              (get-id-by-name (singularize content-type) (:name item)))}})))
 
 (defn create-user [username {:keys [password email disabled]}]
   (rest/post (api-url (uri-for-entity-type :user))
              {:body {:username username
-               :password password
-               :email email
-               :disabled (or disabled false)}}))
+                     :password password
+                     :email email
+                     :disabled (or disabled false)}}))
 
 (defn system-available-pools [system-name]
   (let [sysid  (-> (get-by-name :system system-name) first :uuid)]
@@ -285,7 +285,7 @@
                (get-id-by-name :repository)
                (format "/api/repositories/%s/sync")
                api-url)]
-    (rest/post url {}) 
+    (rest/post url) 
     (loop-with-timeout (or timeout-ms 180000) [sync-info {}] 
       (Thread/sleep 15000)
       (if (-> sync-info :state (= "finished"))
