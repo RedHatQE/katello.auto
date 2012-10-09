@@ -20,8 +20,7 @@
 
 (defn create-test-environment [] 
   (def test-environment (first *environments*))
-  (api/ensure-env-exist test-environment {:prior library})
-  (org/switch))
+  (api/ensure-env-exist test-environment {:prior library}))
 
 (defn register-new-test-system []
   (api/with-env test-environment
@@ -237,6 +236,7 @@
 (defgroup system-tests
   :group-setup create-test-environment
   :blockers (open-bz-bugs "717408" "728357")
+  :test-setup (fn [& _] (org/switch))
   
   (deftest "Rename an existing system"
     :blockers (open-bz-bugs "729364") 
