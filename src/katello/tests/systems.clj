@@ -20,7 +20,8 @@
 
 (defn create-test-environment [] 
   (def test-environment (first *environments*))
-  (api/ensure-env-exist test-environment {:prior library}))
+  (api/ensure-env-exist test-environment {:prior library})
+  (org/switch))
 
 (defn register-new-test-system []
   (api/with-env test-environment
@@ -302,7 +303,7 @@
       
       (client/setup-client)
       (client/register 
-	{:username *session-user*
+	      {:username *session-user*
          :password *session-password*
          :org "ACME_Corporation"
          :env test-environment
