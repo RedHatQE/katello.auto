@@ -2,6 +2,7 @@
   (:require (katello [api-tasks :as api] 
                      [changesets :refer [promote-content]] 
                      [environments :as environment]
+                     [organizations :as org]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [conf :refer [config *environments*]]) 
@@ -22,10 +23,9 @@
 
 (defn create-test-provider-and-envs "Create a test provider and enviroments." []
   (reset! provider-name (uniqueify "promo-"))
-  (api/with-admin
-    (api/create-provider  @provider-name {:description "test provider for promotions"})
-    (reset! envs (conj *environments* library))
-    (api/create-env-chain @envs)))
+  (api/create-provider  @provider-name {:description "test provider for promotions"})
+  (reset! envs (conj *environments* library))
+  (api/create-env-chain @envs))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -34,6 +34,7 @@
       (verify-that (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
+  (org/switch)
   (let [create-repo-fn
         (fn [prod]
           (let [product-id (-> prod
@@ -50,19 +51,18 @@
             {:repo-name repo-name
              :product-id product-id}))]
     (doseq [product-name (content :products)]
-      (api/with-admin (create-repo-fn product-name)))
+      (create-repo-fn product-name))
     (doseq [template-name (content :templates)]
-      (api/with-admin
-        (let [product-name (uniqueify "templ-prod")
-              {:keys [product-id repo-name]} (create-repo-fn product-name)] 
-          (doseq [to-env (drop 1 envs)]
-            (api/with-env to-env
-              (api/promote {:products [{:product_id product-id}]} )))
-          (api/with-env library
-            (api/create-template {:name template-name
-                                  :description "template to be promoted"})
-            (api/add-to-template template-name {:repositories [{:product product-name
-                                                                :name repo-name}]}))))))
+      (let [product-name (uniqueify "templ-prod")
+            {:keys [product-id repo-name]} (create-repo-fn product-name)] 
+        (doseq [to-env (drop 1 envs)]
+          (api/with-env to-env
+            (api/promote {:products [{:product_id product-id}]} )))
+        (api/with-env library
+          (api/create-template {:name template-name
+                                :description "template to be promoted"})
+          (api/add-to-template template-name {:repositories [{:product product-name
+                                                              :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
     (promote-content from-env target-env content)
     (verify-all-content-present content (environment/content target-env))))

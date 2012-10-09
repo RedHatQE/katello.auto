@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [locators :as locators] 
-                     [conf :refer [config]] 
+                     [conf :refer [config *session-user*
+                                   *session-password* *session-org*]] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
                      [notifications :refer [check-for-success]] 
                      [organizations :as organization])))
@@ -30,24 +31,27 @@
 
 (defn login
   "Logs in a user to the UI with the given username and password. If
-   any user is currently logged in, he will be logged out first. If
-   the user doesn't have a default org selected, the value of optional
-   org provided will be selected, and optionally also select a future
+   none are given, the current value of katello.conf/*session-user*
+   *session-password* and *session-org* are used. If any user is
+   currently logged in, he will be logged out first. If the user
+   doesn't have a default org selected, the value of optional org
+   provided will be selected, and optionally also select a future
    default-org. The org and default-org do not have to be the same. If
    the user does have a default already, the org and/or default-org
    will be set after logging in on the dashboard page."
-  [username password & [{:keys [org default-org]}]]
-  (when (logged-in?) (logout))
-  (fill-ajax-form {:username-text username
-                   :password-text password}
-                  :log-in)
-  (let [retVal (check-for-success {:timeout-ms 20000})]
-    (when (or org
-              (not (logged-in?)))
-      (Thread/sleep 3000)
-      (organization/switch (or org (@config :admin-org))
-                           {:default-org default-org}))
-    retVal))
+  ([] (login *session-user* *session-password* {:org *session-org*}))
+  ([username password & [{:keys [org default-org]}]]
+     (when (logged-in?) (logout))
+     (fill-ajax-form {:username-text username
+                      :password-text password}
+                     :log-in)
+     (let [retVal (check-for-success {:timeout-ms 20000})]
+       (when (or org
+                 (not (logged-in?)))
+         (Thread/sleep 3000)
+         (organization/switch (or org (@config :admin-org))
+                              {:default-org default-org}))
+       retVal)))
 
 (defn create
   "Creates a user with the given name and properties."

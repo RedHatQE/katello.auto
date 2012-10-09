@@ -52,8 +52,9 @@
     :description "Search for a system based on criteria."
     
     (fn [system searchterms & [system-group]]
-      (api/with-admin
-        (api/ensure-env-exist "dev" {:prior "Library"}))
+      (organization/switch)
+      (api/ensure-env-exist "dev" {:prior "Library"})
+      
       (let [[name opts] system
             unique-system [(uniqueify name) opts]
             [sgname opt] system-group
@@ -148,8 +149,8 @@
     :data-driven true
     :description "search activation keys by default criteria i.e. name"
     (fn [key_opt searchterms]
-      (api/with-admin
-        (api/ensure-env-exist "dev" {:prior "Library"}))
+      (organization/switch)
+      (api/ensure-env-exist "dev" {:prior "Library"})
       (create-activation-key key_opt)
       (search :activation-keys searchterms)
       (let [valid-search-results (search-results-valid?
@@ -185,8 +186,8 @@
     :blockers api/katello-only
     
     (fn [system-group system searchterms]
-      (api/with-admin
-        (api/ensure-env-exist "dev" {:prior "Library"}))
+      (organization/switch)
+      (api/ensure-env-exist "dev" {:prior "Library"})
       (let [[name opts] system
             unique-system [(uniqueify name) opts]
             [sgname opt] system-group

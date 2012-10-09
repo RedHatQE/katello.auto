@@ -52,25 +52,26 @@
   [& {:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
   (let [rolename (uniqueify "role")
         username (uniqueify "user-perm")
-        pw "password"]
-    (api/with-admin
-      (api/create-user username {:password pw
-                                 :email (str username "@my.org")})
-      (when setup (setup)))
+        pw "password"
+        try-all-with-user (fn [actions]
+                            (conf/with-creds username pw
+                              (user/login)
+                              (try-all actions)) )]
+    (api/create-user username {:password pw
+                               :email (str username "@my.org")})
+    (when setup (setup))
     
     (role/create rolename)
     (role/edit rolename {:add-permissions permissions
                          :users [username]})
     
     (try
-      (let [with-perm-results (do (user/login username pw)
-                                  (api/with-creds username pw
-                                    (try-all allowed-actions)))
-            no-perm-results (try-all disallowed-actions)]
+      (let [with-perm-results (try-all-with-user allowed-actions)
+            no-perm-results (try-all-with-user disallowed-actions)]
         (verify-that (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
       (finally
-       (user/login conf/*session-user* conf/*session-password*)))))
+        (user/login conf/*session-user* conf/*session-password*)))))
 
 (def create-an-env
   (fn [] (environment/create (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
@@ -91,7 +92,7 @@
                                         :verbs ["Read Organization"]
                                         :name "orgaccess"}]}]
           :allowed-actions [(access-org (@conf/config :admin-org))]
-          :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+          :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
                                                   :custom-content-providers-tab :system-templates-page
                                                   :changesets-page )
                                     (fn [] (organization/create (uniqueify "cantdothis")))
@@ -107,7 +108,7 @@
             :allowed-actions [(fn [] (organization/create org-name {:description "mydescription"}))
                               (fn [] (organization/delete org-name))
                               create-an-env]
-            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+            :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
                                       (fn [] (providers/create {:name "myprov"}))
@@ -119,9 +120,8 @@
                           :permissions [{:resource-type "Organizations"
                                          :verbs ["Register Systems"]
                                          :name "systemreg"}]}]
-           :allowed-actions [(fn [] (api/with-admin-org
-                                     (api/with-env (first conf/*environments*)
-                                       (api/create-system (uniqueify "system") {:facts (api/random-facts)}))))
+           :allowed-actions [(fn [] (api/with-env (first conf/*environments*)
+                                     (api/create-system (uniqueify "system") {:facts (api/random-facts)})))
                              (navigate-fn :systems-all-page)]
            :disallowed-actions (conj (navigate-all :providers-tab :manage-organizations-page)
                                      (fn [] (organization/create (uniqueify "cantdothis"))))])
@@ -133,7 +133,7 @@
                                          :verbs ["Read Activation Keys"]
                                          :name "akaccess"}]}]
            :allowed-actions [(navigate-fn :activation-keys-page)]
-           :disallowed-actions (conj (navigate-all :manage-organizations-page :administration-tab
+           :disallowed-actions (conj (navigate-all :manage-organizations-page
                                                    :systems-all-page :systems-by-environment-page
                                                    :redhat-repositories-page)
                                      create-an-ak)])
@@ -145,7 +145,7 @@
                                          :verbs ["Administer Activation Keys"]
                                          :name "akmang"}]}]
            :allowed-actions [create-an-ak]
-           :disallowed-actions (conj (navigate-all :manage-organizations-page :administration-tab
+           :disallowed-actions (conj (navigate-all :manage-organizations-page
                                                    :systems-all-page :systems-by-environment-page
                                                    :redhat-repositories-page)
                                      (fn [] (organization/create (uniqueify "cantdothis"))))])
@@ -156,7 +156,7 @@
                                         :verbs ["Read System Templates"]
                                         :name "stread"}]}]
           :allowed-actions [(navigate-fn :system-templates-page)]
-          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
+          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
                                     create-a-st
                                     (fn [] (organization/create (uniqueify "cantdothis")))
@@ -167,7 +167,7 @@
                                         :verbs ["Administer System Templates"]
                                         :name "stmang"}]}]
           :allowed-actions [create-a-st]
-          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :administration-tab
+          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
@@ -214,7 +214,7 @@
                                            :name "orgaccess"}]}]
             :setup (fn [] (api/create-organization org))
             :allowed-actions [(access-org (@conf/config :admin-org))]
-            :disallowed-actions (conj (navigate-all :administration-tab :systems-tab :sync-status-page
+            :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
                                       (fn [] (organization/switch org))

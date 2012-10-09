@@ -297,7 +297,7 @@
    :system-service-level-select            "system[serviceLevel]"
    :system-release-version-select          "system[releaseVer]"
    :system-environment                     "//div[@id='environment_path_selector']"
-
+   :system-operating-system                "//label[contains(.,'OS')]/../following-sibling::*[1]"
 
    ;;systemgroups pane
    :new-system-groups                      "//a[@id='new']"

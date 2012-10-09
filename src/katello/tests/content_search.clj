@@ -4,7 +4,7 @@
                      [organizations :as org]
                      [environments  :as env]
                      [manifest      :as manifest]
-                     [conf          :refer [config]]
+                     [conf          :refer [config with-org]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
@@ -29,9 +29,8 @@
 (name-fns ["repo" "product" "errata" "package"])
 
 (defn setup-org [test-org envs]
-    (api/with-admin
       (api/create-organization test-org)
-      (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+      (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
       (if (not (nil? envs)) (env/create-path test-org envs) 
                             (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"})))
 
@@ -42,16 +41,16 @@
 (defgroup content-search-tests
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
-                 (api/with-admin
-                   (api/create-organization test-org)
-                   (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
-                   (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
+                 (api/create-organization test-org)
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
+                 (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
   
   (deftest "Search for content"
     :data-driven true
 
     (fn [search-params pred]
-      (let [search-res (org/execute-with test-org
+      (let [search-res (with-org test-org
+                         (org/switch)
                          (apply search-for-content search-params))]
         (verify-that (pred search-res))))
 
@@ -76,7 +75,8 @@
       (with-unique [test-org1 "redhat-org"]
         (setup-org test-org1 envz)
         (if (not (nil? paral-env)) (env/create-path test-org1 (take 3 (unique-names "env3"))))
-        (let [search-res (org/execute-with test-org1                       
+        (let [search-res (with-org test-org1
+			   (org/switch)                       
                            (apply search-for-content [search-params {:envs envz}]))]
           (verify-that (pred search-res))
           (verify-that (-> search-res ens-env (= "Library"))))))
