@@ -17,14 +17,16 @@
                   :insecure?  true))))
 
 (defn wrap-json-body
-  "Convert the request :body to json string."
+  "Convert the request :body to json string. also accept json response."
   [method]
   (fn [url & [req]]
-    (method url (if-let [body (:body req)]
-                  (assoc req
-                    :body         (json/json-str body)
-                    :content-type :json
-                    :accept       :json)))))
+    (method url
+            (merge req
+                   (if-let [body (:body req)]
+                     {:body         (json/json-str body)
+                      :content-type :json}
+                     {})
+                   {:accept :json}))))
 
 (defn wrap-body-get
   "Return just the body of the response."
