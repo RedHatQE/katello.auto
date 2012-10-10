@@ -37,6 +37,18 @@
 (defn envs [results]
   (->> results :columns (map (comp :content :to_display))))
 
+(defgroup content-search-repo-compare
+  :group-setup (fn []
+                 (def ^:dynamic test-org (uniqueify "contentsearch"))
+                 (api/create-organization test-org)
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
+                 (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
+  
+  (deftest "Differences between repos can be qualified"
+    )
+  )
+
+
 
 (defgroup content-search-tests
   :group-setup (fn []

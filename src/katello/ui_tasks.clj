@@ -21,6 +21,9 @@
 
 
 ;;UI tasks
+(defn validify-for-label [label]
+  (string/join "_" (string/split label #"\W+")))
+
 
 (defn errtype
   "Creates a predicate that matches a caught UI error of the given
@@ -175,15 +178,31 @@
       (browser check (locators/repo-compare-checkbox (repo-id-map repository))))
     (browser click :repo-compare-button)
     repo-id-map))
+
+(defn get-all-of-locator [locatorfn] 
+  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
+     (reduce (fn [acumulator number]
+               (conj 
+                 acumulator 
+                 (browser getText (locatorfn (str number)))))
+             []
+             (range 1 (inc count)))))
+
+(defn get-repo-compare-packages [] 
+  (get-all-of-locator locators/content-search-package-name))
+ 
+(defn get-repo-compare-repositories [] 
+  (get-all-of-locator locators/content-search-repo-header-name))
   
-(defn package-in-repository? [package repository-id]
+(defn package-in-repository? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
-                                       (locators/search-result-line-id package)
+                                       (locators/search-result-row-id package)
+                                       "data-id"))
+       col-id (browser getAttribute (attr-loc 
+                                       (locators/search-result-col-id repository)
                                        "data-id"))]
-    (let [text (browser getText 
-                  (locators/search-result-cell 
-                    row-id (replace-first  repository-id "repo_" "")))]
-      (not (= text "--")))))
+      (not (= "--" 
+              (browser getText (locators/search-result-cell row-id col-id))))))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,

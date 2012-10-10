@@ -4,7 +4,7 @@
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
             [ui.navigate :refer [nav-tree page-zip]]
-            [clojure.string :refer [capitalize]])
+            [clojure.string :refer [capitalize ]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
            [com.thoughtworks.selenium SeleniumException]))
 
@@ -30,6 +30,8 @@
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
+   content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
+   content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
    content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
    default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
@@ -57,7 +59,8 @@
    schedule                        "//div[normalize-space(.)='$1']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
    search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'$1')]"
-   search-result-line-id           "//ul[@id='grid_row_headers']/li[contains(.,'$1')]"
+   search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'$1')]"
+   search-result-row-id            "//ul[@id='grid_row_headers']/li[contains(.,'$1')]"
    search-result-cell              "//div[@id='grid_row_$1']/div[contains(@class,'cell_$2')]/i"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
@@ -195,11 +198,13 @@
    :add-product                         (button-div "Add Product")
    :create-product                      "//input[@value='Create']"
    :product-name-text                   "//*[@name='product[name]']"
+   :product-label-text                  "//*[@name='product[label]']"
    :product-description-text            "//*[@name='product[description]']"
    :remove-product                      (link "Remove Product")
    ;;add repo
    :add-repository                      "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
    :repo-name-text                      "repo[name]"
+   :repo-label-text                     "repo[label]"
    :repo-url-text                       "repo[feed]" 
    :save-repository                     "//input[@value='Create']"
    :remove-repository                   (link "Remove Repository")
@@ -277,6 +282,8 @@
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
    :add-repo                   "add_repo"
+   :row-headers                "//ul[@id='grid_row_headers']/li"
+   :col-headers                "//ul[@id='column_headers']/li"
    :repo-auto-complete-radio   "repos_auto_complete_radio"
    :prod-auto-complete         "product_auto_complete"
    :repo-auto-complete         "repo_auto_complete"

@@ -3,6 +3,7 @@
             (katello [manifest :as manifest]
                      [conf :refer [config with-org]]
                      [organizations :as org]
+                     [providers :as providers]
                      [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
@@ -36,3 +37,17 @@
       (enable-redhat-repositories repos)
       (sync/perform-sync repos))))
 
+(defn prepare-org-custom-provider
+  "Clones a manifest, uploads it to the given org, and then enables
+  and syncs the given repos"
+  [org-name repos]
+    (with-org org-name
+      (org/switch)
+      (providers/create {:name "test-prov"})
+      (providers/add-product {:provider-name "test-prov" 
+                              :name "Com Nature Enterprise" 
+                              :description ""})
+      (providers/add-repo {:provider-name "test-prov" 
+                           :product-name "Com Nature Enterprise" 
+                           :name "Com Zoo 1" :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}) 
+      (sync/perform-sync ["Com Zoo 1"])))
