@@ -3,7 +3,7 @@
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
                            systems users permissions templates
-                           e2e navigation search)
+                           e2e navigation search content_search)
             katello.tests.providers.redhat
             katello.tests.providers.custom
             [katello.setup :as setup]
@@ -30,7 +30,8 @@
   katello.tests.e2e/end-to-end-tests
   katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests
-  katello.tests.providers.custom/custom-product-tests)
+  katello.tests.providers.custom/custom-product-tests
+  katello.tests.content-search/content-search-tests)
 
 
 
