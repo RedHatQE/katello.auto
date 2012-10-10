@@ -8,6 +8,7 @@
                      [api-tasks     :as api]
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
+            [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]))
 
 (declare test-org)
@@ -31,8 +32,7 @@
 (defn setup-org [test-org envs]
       (api/create-organization test-org)
       (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
-      (if (not (nil? envs)) (env/create-path test-org envs) 
-                            (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"})))
+      (if (not (nil? envs)) (env/create-path test-org envs)))
 
 (defn envs [results]
   (->> results :columns (map (comp :content :to_display))))
@@ -48,6 +48,7 @@
   
   (deftest "Search for content"
     :data-driven true
+    :blockers (open-bz-bugs "855945")
 
     (fn [search-params pred]
       (let [search-res (with-org test-org
@@ -90,7 +91,8 @@
                                    (set (map :name fake/some-product-repos))))]
      [(take 3 (unique-names "env3")) :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos)))) ["parallel-env"]]
+     (with-meta
      [ nil :prod-type (fn [results] (= (set (product-names results))
-                                   (set (map :name fake/some-product-repos))))]]))
-
+                                   (set (map :name fake/some-product-repos))))]
+     {:blockers (open-bz-bugs "855945")})]))
 
