@@ -236,6 +236,7 @@
 (defgroup system-tests
   :group-setup create-test-environment
   :blockers (open-bz-bugs "717408" "728357")
+  :test-setup (fn [& _] (org/switch))
   
   (deftest "Rename an existing system"
     :blockers (open-bz-bugs "729364") 
@@ -302,7 +303,7 @@
       
       (client/setup-client)
       (client/register 
-	{:username *session-user*
+	      {:username *session-user*
          :password *session-password*
          :org "ACME_Corporation"
          :env test-environment
