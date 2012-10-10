@@ -12,7 +12,7 @@
 ;; Notifications
 ;;
 
-(def notice-array-js-var "window.noticeArray")
+(def notice-array-js-var "window.notices.noticeArray")
 
 (def ^{:doc "All the different validation error messages that Katello
              can throw. The keys are keywords that can be used to
