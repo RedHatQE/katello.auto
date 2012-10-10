@@ -86,7 +86,10 @@
   [ & [{:keys [timeout-ms] :or {timeout-ms 2000}}]]
   (try
     (loop-with-timeout timeout-ms []
-      (let [noticeArray (json/read-json (browser getEval (str "JSON.stringify(" notice-array-js-var ")")))]
+      (let [noticeArray (->> notice-array-js-var
+                             (format "JSON.stringify(%s)") 
+                             (browser getEval)
+                             json/read-json)]
         (if (empty? noticeArray) 
           (recur)
           (for [notice noticeArray] 
