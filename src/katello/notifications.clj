@@ -1,6 +1,5 @@
 (ns katello.notifications
-  (:require [clojure.data.json :as json]
-            [katello.locators :as locators]
+  (:require [katello.locators :as locators]
             [com.redhat.qe.auto.selenium.selenium 
               :refer [browser loop-with-timeout]] 
             [slingshot.slingshot :refer [throw+ try+]]
@@ -11,8 +10,6 @@
 ;;
 ;; Notifications
 ;;
-
-(def notice-array-js-var "window.notices.noticeArray")
 
 (def ^{:doc "All the different validation error messages that Katello
              can throw. The keys are keywords that can be used to
@@ -59,6 +56,12 @@
      (map key)
      set))
 
+(defn- clear-all-notifications []
+  (try
+    (doseq [i (iterate inc 1)]
+      (browser click (locators/notification-close-index (str i))))
+    (catch SeleniumException _ nil)))
+
 (def success?
   "Returns true if the given notification is a 'success' type
   notification (aka green notification in the UI)."
@@ -78,24 +81,29 @@
     (throw+ {:type :wait-for-notification-gone-timeout} 
             "Notification did not disappear within the specified timeout")))
 
+
+
 (defn notifications
   "Gets all notifications from the page, returns a list of maps
    representing the notifications. Waits for timeout-ms for at least
    one notification to appear. Does not do any extra waiting after the
-   first notification is detected. Default timeout is 15 seconds."
+   first notification is detected. Clears all the notifications from
+   the UI. Default timeout is 15 seconds."
   [ & [{:keys [timeout-ms] :or {timeout-ms 2000}}]]
   (try
-    (loop-with-timeout timeout-ms []
-      (let [noticeArray (->> notice-array-js-var
-                             (format "JSON.stringify(%s)") 
-                             (browser getEval)
-                             json/read-json)]
-        (if (empty? noticeArray) 
-          (recur)
-          (for [notice noticeArray] 
-            (assoc notice :type (keyword (:level notice)) 
-                          :msg (str (:validationErrors notice) (:notices notice)))))))
-    (catch SeleniumException e '())))
+    (browser waitForElement :notification (str timeout-ms))
+    (let [notif-at-index (fn [idx]
+                           (let [notif (locators/notification-index (str idx))]
+                             (when (browser isElementPresent notif)
+                               (let [msg (browser getText notif)
+                                     classattr ((into {}
+                                                       (browser getAttributes notif))
+                                                "class")
+                                     type (->> classattr (re-find #"jnotify-notification-(\w+)") second keyword)]
+                                 {:type type :msg msg}))))]
+      (doall (take-while identity (map notif-at-index (iterate inc 1)))))
+    (catch SeleniumException e '())
+    (finally (clear-all-notifications))))
 
 (defn check-for-success
   "Returns information about a success notification from the UI. Will
@@ -108,12 +116,17 @@
    optional max amount of time to wait, in ms, and whether to refresh
    the page periodically while waiting for a notification."
   [ & [{:keys [timeout-ms refresh?] :or {timeout-ms 2000}}]]
-  (loop-with-timeout timeout-ms []
+  (loop-with-timeout timeout-ms [error-notifs #{}]
     (let [new-notifs (set (notifications
-                           {:timeout-ms (if refresh? 15000 timeout-ms)}))]
-      (cond (every? success? new-notifs) new-notifs
-            (empty? new-notifs) (do (when refresh? (browser refresh)) (recur))
-            :else (throw+ {:types (matching-errors new-notifs) :notifications new-notifs})))))
+                           {:timeout-ms (if refresh? 15000 timeout-ms)}))
+          error-notifs (union error-notifs (filter #(= (:type %) :error) new-notifs))] 
+      (if (and (not-empty new-notifs) (empty? error-notifs))
+        new-notifs 
+        (do (when refresh?
+              (browser refresh))
+            (recur error-notifs))))
+    (when-not (empty? error-notifs) 
+      (throw+ {:types (matching-errors error-notifs) :notifications error-notifs}))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
