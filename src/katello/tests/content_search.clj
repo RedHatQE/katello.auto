@@ -42,8 +42,7 @@
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/create-organization test-org)
-                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
-                 (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
   
   
   (deftest "Search for content"
