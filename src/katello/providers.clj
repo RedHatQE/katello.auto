@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
             (katello [locators :as locators] 
                      [notifications :refer [check-for-success]] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
+                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit validify-for-label]])))
 
 ;;
 ;; Providers
@@ -23,6 +23,7 @@
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
+                   :product-label-text (validify-for-label name)
                    :product-description-text description}
                   :create-product)
   (check-for-success))
@@ -43,6 +44,7 @@
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click (locators/add-repository product-name))
   (fill-ajax-form {:repo-name-text name
+                   :repo-label-text (validify-for-label name)
                    :repo-url-text url}
                   :save-repository)
   (check-for-success))
