@@ -9,7 +9,8 @@
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [test.tree.script :refer [defgroup deftest]]))
+            [test.tree.script :refer [defgroup deftest]]
+            [clojure.set :refer [intersection difference union]]))
 
 (declare test-org)
 
@@ -41,13 +42,34 @@
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/create-organization test-org)
-                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
+                 (fake/prepare-org-custom-provider test-org fake/custom-providers)
                  (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
   
-  (deftest "Differences between repos can be qualified"
-    )
-  )
+  (deftest "Repo compare: Differences between repos can be qualified"
+    :data-driven true
+    
+    (fn [first second]
+      (let [first-repo-list (get-repo-packages first)
+            second-repo-list (get-repo-packages second)]
+        (let [union (union first-repo-list second-repo-list)
+              inter (intersection first-repo-list second-repo-list)
+              diffs (difference first-repo-list second-repo-list)
+              difsf difference second-repo-list first-repo-list]
+        (compare-repositories first second)
+        (doseq [package inter]
+          (verify-that (package-in-repository? package first))
+          (verify-that (package-in-repository? package second)))
+        (doseq [package diffs]
+          (verify-that (package-in-repository? package first))
+          (verify-that (not (package-in-repository? package second))))
+         (doseq [package difsf]
+          (verify-that (not(package-in-repository? package first)))
+          (verify-that (package-in-repository? package second))))))
+   
+    [["CompareZoo1" "CompareZoo2"]])
 
+    (deftest "Repo compare: Add many repos to compare"
+      ))
 
 
 (defgroup content-search-tests

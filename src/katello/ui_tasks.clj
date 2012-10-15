@@ -19,10 +19,9 @@
 
 (declare search)
 
-
 ;;UI tasks
 (defn validify-for-label [label]
-  (string/join "_" (string/split label #"\W+")))
+  (str (string/join "_" (string/split label #"\W+")) "_label"))
 
 
 (defn errtype
@@ -158,6 +157,10 @@
 (defn attr-loc [locator attribute]
   (str (.getLocator locator) "@" attribute))
 
+(defn load-all-results []
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more)))
+
 (defn compare-repositories [& repositories]
   (navigate :content-search-page)
   (browser select :content-search-type "Repositories")
@@ -177,6 +180,7 @@
     (doseq [repository repositories]
       (browser check (locators/repo-compare-checkbox (repo-id-map repository))))
     (browser click :repo-compare-button)
+    (load-all-results)
     repo-id-map))
 
 (defn get-all-of-locator [locatorfn] 
@@ -190,7 +194,11 @@
 
 (defn get-repo-compare-packages [] 
   (get-all-of-locator locators/content-search-package-name))
- 
+
+(defn get-repo-packages [repo] 
+  (compare-repositories repo)
+  (get-repo-compare-packages))
+
 (defn get-repo-compare-repositories [] 
   (get-all-of-locator locators/content-search-repo-header-name))
   
@@ -255,9 +263,8 @@
   
   (browser click :browse-button)
 
-  ;; load all results
-  (while (browser isElementPresent :content-search-load-more)
-    (browser click :content-search-load-more))
+  (load-all-results)
+
   
   ;;extract and return content
   (->> "JSON.stringify(window.comparison_grid.export_data());"

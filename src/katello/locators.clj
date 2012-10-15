@@ -91,6 +91,7 @@
 
 (def common
   {:notification            "//div[contains(@class,'jnotify-notification')]"
+   :notification-container  "//div[contains(@class,'jnotify-container')]"
    :error-message           "//div[contains(@class,'jnotify-notification-error')]"
    :success-message         "//div[contains(@class,'jnotify-notification-message')]"
    :spinner                 "//img[contains(@src,'spinner.gif')]"

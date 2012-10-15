@@ -7,7 +7,6 @@
                      [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
-
 (def some-product-repos [{:name       "Nature Enterprise"
                           :repos      ["Nature Enterprise x86_64 1.0"
                                        "Nature Enterprise x86_64 1.1"]}
@@ -17,6 +16,37 @@
                                      "Zoo Enterprise x86_64 6.4"
                                      "Zoo Enterprise x86_64 5.8"
                                      "Zoo Enterprise x86_64 5.7"]}])
+
+(def custom-providers [{:name "Custom Provider"
+                        :products [{:name "Com Nature Enterprise"
+                                    :repos [{:name "CompareZoo1" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "CompareZoo2" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
+                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                    :repos [{:name "洪صالح" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "Гесер" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
+                                   {:name "ManyRepository Enterprise"
+                                    :repos [{:name "ManyRepositoryA" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryB" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryC" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryD" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryE" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryF" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryG" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryH" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryI" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})
@@ -40,14 +70,20 @@
 (defn prepare-org-custom-provider
   "Clones a manifest, uploads it to the given org, and then enables
   and syncs the given repos"
-  [org-name repos]
+  [org-name providers]
     (with-org org-name
       (org/switch)
-      (providers/create {:name "test-prov"})
-      (providers/add-product {:provider-name "test-prov" 
-                              :name "Com Nature Enterprise" 
-                              :description ""})
-      (providers/add-repo {:provider-name "test-prov" 
-                           :product-name "Com Nature Enterprise" 
-                           :name "Com Zoo 1" :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}) 
-      (sync/perform-sync ["Com Zoo 1"])))
+      (doseq [provider providers]
+        (print (provider :name))
+        (providers/create {:name (provider :name)})
+        (doseq [product (provider :products)]  
+          (print (product :name))
+          (providers/add-product {:provider-name (provider :name) 
+                                  :name (product :name)})
+          (doseq [repo (product :repos)]
+            (print  (repo :name))
+            (providers/add-repo {:provider-name (provider :name)  
+                                 :product-name (product :name)
+                                 :name (repo :name) 
+                                 :url (repo :url)}) 
+            (sync/perform-sync [(repo :name)]))))))
