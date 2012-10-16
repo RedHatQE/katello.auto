@@ -67,14 +67,13 @@
   (fn [notif]
     (and notif (-> notif :type (= :success)))))
 
-(def no-error?
-  "Returns true if the given notification is a 'success' or 'notification' type
-  notification (aka green notification in the UI)."
+(def error?
+  "Returns true if the given notification is an 'error' type notification (aka
+   gray notification in the UI)."
   ^{:type :serializable.fn/serializable-fn
-    :serializable.fn/source 'success?}
+    :serializable.fn/source 'error?}
   (fn [notif]
-    (and notif (some #{(:type notif)} [:success :message]))))
-
+    (and notif (-> notif :type (= :error)))))
 
 (defn wait-for-notification-gone
   "Waits for a notification to disappear within the timeout period. If no
@@ -100,7 +99,7 @@
                              (browser getEval)
                              json/read-json)]
         (if (empty? noticeArray) 
-          (recur)
+          (do (Thread/sleep 500) (recur)) 
           (for [notice noticeArray] 
             (assoc notice :type (keyword (:level notice)) 
                           :msg (str (:validationErrors notice) (:notices notice)))))))
@@ -120,9 +119,9 @@
   (loop-with-timeout timeout-ms []
     (let [new-notifs (set (notifications
                            {:timeout-ms (if refresh? 15000 timeout-ms)}))]
-      (cond (every? no-error? new-notifs) new-notifs
-            (empty? new-notifs) (do (when refresh? (browser refresh)) (recur))
-            :else (throw+ {:types (matching-errors new-notifs) :notifications new-notifs})))))
+      (cond (not-any? success? new-notifs) (do (when refresh? (browser refresh)) (recur))
+            (some error? new-notifs) (throw+ {:types (matching-errors new-notifs) :notifications new-notifs})
+            :else new-notifs))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
