@@ -49,8 +49,8 @@
     :data-driven true
     
     (fn [first second]
-      (let [first-repo-list (get-repo-packages first)
-            second-repo-list (get-repo-packages second)]
+      (let [first-repo-list (set (get-repo-packages first))
+            second-repo-list (set (get-repo-packages second))]
         (let [union (union first-repo-list second-repo-list)
               inter (intersection first-repo-list second-repo-list)
               diffs (difference first-repo-list second-repo-list)
@@ -69,7 +69,16 @@
     [["CompareZoo1" "CompareZoo2"]])
 
     (deftest "Repo compare: Add many repos to compare"
-      ))
+      (let [repos (difference (fake/get-all-custom-repos) (fake/get-i18n-repos) ) ]
+        (compare-repositories repos)
+        (verify-that (= repos
+                        (get-repo-compare-repositories)))))
+  
+    (deftest "Repo compare: repos render correctly when internationalized"
+      (let [repos (fake/get-all-repos fake/custom-providers)]
+        (compare-repositories repos)
+        (verify-that (= repos
+                        (get-repo-compare-repositories))))))
 
 
 (defgroup content-search-tests

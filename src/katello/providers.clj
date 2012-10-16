@@ -23,8 +23,7 @@
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
-                   :product-label-text (validify-for-label name)
-                   :product-description-text description}
+                  :product-description-text description}
                   :create-product)
   (check-for-success))
 
@@ -44,7 +43,6 @@
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click (locators/add-repository product-name))
   (fill-ajax-form {:repo-name-text name
-                   :repo-label-text (validify-for-label name)
                    :repo-url-text url}
                   :save-repository)
   (check-for-success))

@@ -24,6 +24,7 @@
                                             {:name "CompareZoo2" 
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
                                    {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                    :i18n true
                                     :repos [{:name "洪صالح" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "Гесер" 
@@ -47,6 +48,24 @@
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "ManyRepositoryI" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
+
+(defn get-custom-repos [custom-providers-v & {:keys [filter-product?] :or {filter-product? (fn [product] true)}}]
+  (set (remove nil? (flatten 
+    (for [provider custom-providers-v]
+     (for [product (:products provider)]
+       (when (filter-product? product)
+        (for [ repo (:repos product)]
+          (:name repo)))))))))
+
+
+(defn get-all-custom-repos []
+  (get-custom-repos custom-providers )) 
+  
+
+(defn get-i18n-repos []
+  (get-custom-repos custom-providers 
+                    :filter-product? (fn [product] (contains? product :i18n)))) 
+  
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})

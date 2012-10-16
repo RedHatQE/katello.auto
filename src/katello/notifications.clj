@@ -67,6 +67,15 @@
   (fn [notif]
     (and notif (-> notif :type (= :success)))))
 
+(def no-error?
+  "Returns true if the given notification is a 'success' or 'notification' type
+  notification (aka green notification in the UI)."
+  ^{:type :serializable.fn/serializable-fn
+    :serializable.fn/source 'success?}
+  (fn [notif]
+    (and notif (some #{(:type notif)} [:success :message]))))
+
+
 (defn wait-for-notification-gone
   "Waits for a notification to disappear within the timeout period. If no
    notification is present, the function returns immediately. The default
@@ -111,7 +120,7 @@
   (loop-with-timeout timeout-ms []
     (let [new-notifs (set (notifications
                            {:timeout-ms (if refresh? 15000 timeout-ms)}))]
-      (cond (every? success? new-notifs) new-notifs
+      (cond (every? no-error? new-notifs) new-notifs
             (empty? new-notifs) (do (when refresh? (browser refresh)) (recur))
             :else (throw+ {:types (matching-errors new-notifs) :notifications new-notifs})))))
 
