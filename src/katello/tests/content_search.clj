@@ -9,7 +9,8 @@
                      [fake-content  :as fake])
             [tools.verify :refer [verify-that]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [test.tree.script :refer [defgroup deftest]]))
+            [test.tree.script :refer [defgroup deftest]]
+            [clojure.set :refer [intersection difference union]]))
 
 (declare test-org)
 
@@ -37,6 +38,73 @@
 (defn envs [results]
   (->> results :columns (map (comp :content :to_display))))
 
+(defgroup content-search-repo-compare
+  :group-setup (fn []
+                 (def ^:dynamic test-org (uniqueify "contentsearch"))
+                 (api/create-organization test-org)
+                 (fake/prepare-org-custom-provider test-org fake/custom-providers)
+                 (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
+  
+  (deftest "Repo compare: Differences between repos can be qualified"
+    :data-driven true
+    
+    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
+      (compare-repositories [first second])
+      (doseq [package packages-in-both]
+        (verify-that (package-in-repository? package first))
+        (verify-that (package-in-repository? package second)))
+      (doseq [package packages-only-in-first]
+        (verify-that (package-in-repository? package first))
+        (verify-that (not (package-in-repository? package second))))
+      (doseq [package packages-only-in-second]
+        (verify-that (not(package-in-repository? package first)))
+        (verify-that (package-in-repository? package second))))
+   
+    [["CompareZoo1" "CompareZoo2" [] 
+                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
+                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
+  
+  (deftest "Repo compare: Differences between repos can be qualified"
+    :data-driven true
+    
+    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
+      (compare-repositories [first second])
+      (doseq [package packages-in-both]
+        (verify-that (package-in-repository? package first))
+        (verify-that (package-in-repository? package second)))
+      (doseq [package packages-only-in-first]
+        (verify-that (package-in-repository? package first))
+        (verify-that (not (package-in-repository? package second))))
+      (doseq [package packages-only-in-second]
+        (verify-that (not(package-in-repository? package first)))
+        (verify-that (package-in-repository? package second))))
+   
+    [["CompareZoo1" "CompareZoo2" [] 
+                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
+                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
+  
+  
+    (deftest "Repo compare: Add and remove repos to compare"
+      :data-driven true
+      (fn [to-add to-remove]
+        (compare-repositories to-add)
+        (remove-repositories to-remove)
+        (let [expected (difference (set to-add) (set to-remove))
+              result   (set (get-search-result-repositories))]
+          (verify-that (= expected result))))
+            
+        [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]]])
+  
+  
+    (deftest "Repo compare: Add many repos to compare"
+      (let [repos (difference (fake/get-all-custom-repos) (fake/get-i18n-repos))]
+        (verify-that (= repos
+                        (set (compare-repositories (into [] repos)))))))
+  
+    (deftest "Repo compare: repos render correctly when internationalized"
+      (let [expected (fake/get-i18n-repos)
+            result (set (compare-repositories (into [] expected)))]
+        (verify-that (= expected result)))))
 
 (defgroup content-search-tests
   :group-setup (fn []

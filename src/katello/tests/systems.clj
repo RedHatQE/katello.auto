@@ -304,7 +304,6 @@
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
       
-      
     (provision/with-client "check-distro"
          ssh-conn
         (client/register ssh-conn
