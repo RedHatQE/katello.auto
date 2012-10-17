@@ -1,15 +1,11 @@
 (ns katello.client
   (:require [katello.conf :refer [config]]
             [slingshot.slingshot :refer [try+ throw+]]
-            [clojure.string :refer [split]])
+            [clojure.string :refer [split trim]])
   (:import [com.redhat.qe.tools SSHCommandRunner]
            [java.io File]))
 
 ;;some functions to control RHSM on a remote machine via ssh
-
-(def script (atom nil))
-
-(declare  ^:dynamic *runner*)
 
 (defn build-sm-cmd [cmd & [optmap]]
   (let [collect (fn [coll] (apply str (interpose " " coll)))]
@@ -20,16 +16,16 @@
                          (format "--%s" (name opt))
                          (format "--%s='%s'" (name opt) v)))))))
 
-(defn run-cmd [cmd]
-  (let [result (.runCommandAndWait *runner* cmd)]
+(defn run-cmd [runner cmd]
+  (let [result (.runCommandAndWait runner cmd)]
     {:stdout (.getStdout result)
      :stderr (.getStderr result)
      :exit-code (.getExitCode result)}))
 
 (defn sm-cmd
   "Runs a subscription manager command with the given options."
-  [cmd & [optmap]]
-  (let [res (run-cmd (build-sm-cmd cmd optmap))]
+  [runner cmd & [optmap]]
+  (let [res (run-cmd runner (build-sm-cmd cmd optmap))]
     (if (-> res :exit-code (not= 0))
       (throw+ (assoc res :type ::rhsm-error)
               "RHSM Error '%s'" (if (-> res :stderr count (> 0))
@@ -40,55 +36,56 @@
 (defn ok? [res]
   (= 0 (:exit-code res)))
 
-(defn hostname []
-  (-> *runner* .getConnection .getHostname))
+(defn hostname [runner]
+  (-> runner .getConnection .getHostname))
+
+(defn my-hostname "hostname according to the client itself"
+  [runner]
+  (-> runner (run-cmd "hostname") :stdout trim))
 
 (defn server-hostname []
   (-> (@config :server-url) (java.net.URL.) .getHost))
 
+(defn new-runner
+  ([hostname]
+     (SSHCommandRunner. hostname "root"
+                        (File. ^String (@config :client-ssh-key))
+                        (@config :client-ssh-key-passphrase) nil))
+  ([hostname user password keyfile keypassphrase]
+     (SSHCommandRunner. hostname user (File. ^String keyfile) keypassphrase nil)))
 
-
-(defn new-runner [hostname user password keyfile keypassphrase]
-  (SSHCommandRunner. hostname user (File. ^String keyfile) keypassphrase nil))
-
-(defn connect [runner]
-  (def ^:dynamic *runner* runner))
-
-(defn configure-client [m]
+(defn configure-client [runner m]
   (doall (for [[heading settings] m
                [k v] settings]
            (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
-(defn does-system-belong-to-an-environment? [username password org system environment]
-  (let [result
-				  ((run-cmd 
-				    (format 
-				      "katello -u%s -p%s system info --org %s --name %s --environment %s"
-				      username password org system environment))
-            :stdout)]
-        (and (.contains result system) (not (.contains result "Found ambiguous")))))
+(defn does-system-belong-to-an-environment?
+  [runner username password org system environment]
+  (let [result ((run-cmd runner 
+                         (format 
+                          "katello -u%s -p%s system info --org %s --name %s --environment %s"
+                          username password org system environment))
+                :stdout)]
+    (and (.contains result system) (not (.contains result "Found ambiguous")))))
 
-(defn setup-client []
+(defn setup-client [runner]
   (let [rpm-name-prefix "candlepin-cert-consumer"
         cmds [["subscription-manager clean"] 
               ["yum remove -y '%s*'" rpm-name-prefix]
-              ["rpm -ivh http://%1$s/pub/%2$s-%1$s-1.0-1.noarch.rpm" (server-hostname) rpm-name-prefix]]]
-    (doall (for [cmd cmds] (run-cmd (apply format cmd))))))
+              ["rm -f *.rpm"]
+              ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]
+              ["rpm -ivh candlepin*.noarch.rpm"]]]
+    (doall (for [cmd cmds] (run-cmd runner (apply format cmd))))))
 
-(defn subscribe [poolid]
-  (sm-cmd :subscribe {:pool poolid}))
+(defn subscribe [runner poolid]
+  (sm-cmd runner :subscribe {:pool poolid}))
 
-(defn register [opts]
-  (sm-cmd :register opts))
+(defn register [runner opts]
+  (sm-cmd runner :register opts))
 
-(defn get-client-facts []
-  (apply hash-map (split (:stdout (run-cmd "subscription-manager facts --list")) #"\n|: ")))
+(defn get-client-facts [runner]
+  (apply hash-map (split (:stdout (run-cmd runner "subscription-manager facts --list")) #"\n|: ")))
 
-(defn get-distro []
-  ((get-client-facts) "distribution.name"))
+(defn get-distro [runner]
+  ((get-client-facts runner) "distribution.name"))
 
-(comment (def ^:dynamic *runner*
-           (SSHCommandRunner. "katello-client1.usersys.redhat.com"
-                              "root"
-                              (File. "/home/jweiss/workspace/automatjon/sm/.ssh/id_auto_dsa")
-                              "dog8code" nil)))

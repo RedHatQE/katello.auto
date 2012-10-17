@@ -9,14 +9,16 @@
                       [validation :refer :all] 
                       [client :as client]
                       [systems :refer :all]
-                      [conf :refer [*session-user* *session-password* config no-clients-defined]]) 
-            [katello.tests.providers :refer [with-n-new-orgs]] 
+                      [conf :as conf]) 
+            [katello.tests.providers :refer [with-n-new-orgs]]
+            [katello.client.provision :as provision]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [tools.verify :refer [verify-that]]
             [serializable.fn :refer [fn]]
-            [clojure.string :refer [capitalize upper-case lower-case]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [clojure.string :refer [capitalize upper-case lower-case trim]]
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [deltacloud :as cloud]))
 
 ;; Variables
 
@@ -62,7 +64,7 @@
     (api/create-environment env-name {})
     (api/create-provider provider-name)
     (api/create-product product-name {:provider-name provider-name})
-    (api/create-repo repo-name {:product-name product-name :url (@config :sync-repo)})
+    (api/create-repo repo-name {:product-name product-name :url (@conf/config :sync-repo)})
     (sync/perform-sync [repo-name])
     (api/with-env env-name
       (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]}))))
@@ -92,7 +94,7 @@
                       other with 2 environments, both off the Library."
       (let [envs1 (take 5 (unique-names "envpath1"))
             envs2 (take 2 (unique-names "envpath2"))
-            org (@config :admin-org)]
+            org (@conf/config :admin-org)]
         (environment/create-path org envs1)
         (environment/create-path org envs2)))
 
@@ -114,7 +116,7 @@
 
         (with-unique [env-name "del-w-content"]
           (setup-environment-with-promoted-content env-name)
-          (environment/delete env-name {:org-name (@config :admin-org)})))
+          (environment/delete env-name {:org-name (@conf/config :admin-org)})))
 
 
 
@@ -127,7 +129,7 @@
         :blockers    (open-bz-bugs "794799")
 
         (let [envs (take 3 (unique-names "env"))
-              org (@config :admin-org)]
+              org (@conf/config :admin-org)]
           (environment/create-path org envs)
           (expecting-error [:type :env-cant-be-deleted]
                            (environment/delete (second envs) {:org-name org}))
@@ -139,9 +141,9 @@
 
       (with-unique [env-name "test-dup"]
         (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
-                                 (environment/create env-name
-                                                     {:org-name @test-org-name
-                                                      :description "dup env description"}))))
+          (environment/create env-name
+                              {:org-name @test-org-name
+                               :description "dup env description"}))))
 
     (deftest "Two environments with name that differs only in case are disalowed"
       :blockers (open-bz-bugs "847037")
@@ -149,11 +151,11 @@
 
       (fn [orig-name modify-case-fn]
         (expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
-          (with-unique [name orig-name]
-            (environment/create name {:org-name @test-org-name
-                                                      :description "dup env description"})
-            (environment/create (modify-case-fn name) {:org-name @test-org-name
-                                                      :description "dup env description"}))))
+                         (with-unique [name orig-name]
+                           (environment/create name {:org-name @test-org-name
+                                                     :description "dup env description"})
+                           (environment/create (modify-case-fn name) {:org-name @test-org-name
+                                                                      :description "dup env description"}))))
 
       [["env"      capitalize]
        ["yourenv" capitalize]
@@ -185,22 +187,24 @@
                                               :description "env description"})))
 
   (deftest "Move systems from one env to another"
-    :blockers no-clients-defined
+    :blockers conf/no-clients-defined
     
-    (with-unique [env-dev  "dev" env-test  "test"]
-      (environment/create env-dev {:org-name @test-org-name})
-      (environment/create env-test {:org-name @test-org-name})
-      (client/setup-client)
-      (client/register {:username *session-user*
-                      :password *session-password*
-                      :org @test-org-name
-                      :env env-dev
-                      :force true})
-      (let [system (client/server-hostname)]
-        (verify-that (= env-dev (get-system-env system)))
-        (verify-that (client/does-system-belong-to-an-environment? system env-dev))
-        (edit-system-environment (:name system) {:environment env-test})
-        (verify-that (= env-test (get-system-env system)))
-        (verify-that (client/does-system-belong-to-an-environment? system env-test))))))
+    (provision/with-client "envmovetest" ssh-conn
+      (with-unique [env-dev  "dev"
+                    env-test  "test"]
+        (environment/create env-dev {:org-name @test-org-name})
+        (environment/create env-test {:org-name @test-org-name})
+        (client/setup-client ssh-conn)
+        (client/register ssh-conn {:username conf/*session-user*
+                                   :password conf/*session-password*
+                                   :org @test-org-name
+                                   :env env-dev
+                                   :force true})
+        (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
+          (verify-that (= env-dev (get-system-env client-hostname)))
+          (verify-that (client/does-system-belong-to-an-environment? ssh-conn client-hostname env-dev))
+          (edit-system-environment (:name client-hostname) {:environment env-test})
+          (verify-that (= env-test (get-system-env client-hostname)))
+          (verify-that (client/does-system-belong-to-an-environment? ssh-conn client-hostname env-test)))))))
         
         

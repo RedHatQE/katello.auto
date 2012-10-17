@@ -3,17 +3,20 @@
   (:require (katello [api-tasks :as api]
                      [validation :as val]
                      [organizations :as org]
+                     [client :as client]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [systems :as system] 
-                     [client :as client]
-                     [conf :refer [*session-user* *session-password* config *environments* no-clients-defined]]) 
+                     [conf :refer [*session-user* *session-password* config *environments*]]) 
+            [katello.client.provision :as provision]
             (test.tree [script :refer :all] 
-                       [builder :refer [union]]) 
+                       [builder :refer [union]])
+            
             [serializable.fn :refer [fn]]
             [tools.verify :refer [verify-that]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [slingshot.slingshot :refer [throw+]]))
+            [slingshot.slingshot :refer [throw+]]
+            [deltacloud :as cloud]))
 
 
 ;; Functions
@@ -278,9 +281,9 @@
       (fn [name]
         (with-unique [ak-name name]
           (create-activation-key {:name ak-name
-                                :description "my description"
-                                :environment test-environment} )))
-       val/i8n-chars)
+                                  :description "my description"
+                                  :environment test-environment} )))
+      val/i8n-chars)
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]
@@ -293,23 +296,25 @@
     (deftest "activation-key-dupe-disallowed"
       (with-unique [ak-name "auto-key"]
         (val/expecting-error-2nd-try val/duplicate-disallowed
-                                     (create-activation-key
-                                      {:name ak-name
-                                       :description "my description"
-                                       :environment test-environment})))))
+          (create-activation-key
+           {:name ak-name
+            :description "my description"
+            :environment test-environment})))))
   
-    (deftest "Check whether the OS of the registered system is displayed in the UI"
-      :blockers no-clients-defined
+  (deftest "Check whether the OS of the registered system is displayed in the UI"
+    ;;:blockers no-clients-defined
       
-      (client/setup-client)
-      (client/register 
-	      {:username *session-user*
-         :password *session-password*
-         :org "ACME_Corporation"
-         :env test-environment
-         :force true})
-      (verify-that (= (client/get-distro)
-                      (system/get-os (client/hostname)))))
+      
+    (provision/with-client "check-distro"
+         ssh-conn
+        (client/register ssh-conn
+                         {:username *session-user*
+                          :password *session-password*
+                          :org "ACME_Corporation"
+                          :env test-environment
+                          :force true})
+        (verify-that (= (client/get-distro ssh-conn)
+                        (system/get-os (client/my-hostname ssh-conn))))))
     
   system-group-tests)
 
