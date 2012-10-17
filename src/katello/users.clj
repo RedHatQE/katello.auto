@@ -45,8 +45,7 @@
      (fill-ajax-form {:username-text username
                       :password-text password}
                      :log-in)
-     (let [retVal true] ;Disable until login notification retrieval fix is implemented
-                        ;(check-for-success {:timeout-ms 20000})]
+     (let [retVal (check-for-success {:timeout-ms 20000})]
        (when (or org
                  (not (logged-in?)))
          (Thread/sleep 3000)

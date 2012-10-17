@@ -75,6 +75,14 @@
   (fn [notif]
     (and notif (-> notif :type (= :error)))))
 
+(defn request-type? [req-type]
+  "Returns true if the given notification contains the specified request type."
+  (fn [notif]
+    (= req-type (:requestType notif))))
+
+(defn flush []
+  (browser runScript "window.notices.noticeArray = []"))
+
 (defn wait-for-notification-gone
   "Waits for a notification to disappear within the timeout period. If no
    notification is present, the function returns immediately. The default
@@ -93,16 +101,13 @@
    first notification is detected. Default timeout is 15 seconds."
   [ & [{:keys [timeout-ms] :or {timeout-ms 2000}}]]
   (try
-    (loop-with-timeout timeout-ms []
-      (let [noticeArray (->> notice-array-js-var
-                             (format "JSON.stringify(%s)") 
-                             (browser getEval)
-                             json/read-json)]
-        (if (empty? noticeArray) 
-          (do (Thread/sleep 500) (recur)) 
-          (for [notice noticeArray] 
-            (assoc notice :type (keyword (:level notice)) 
-                          :msg (str (:validationErrors notice) (:notices notice)))))))
+    (let [noticeArray (->> notice-array-js-var
+                           (format "JSON.stringify(%s)") 
+                           (browser getEval)
+                           json/read-json)]
+      (for [notice noticeArray] 
+        (assoc notice :type (keyword (:level notice)) 
+                      :msg (str (:validationErrors notice) (:notices notice)))))
     (catch SeleniumException e '())))
 
 (defn check-for-success
@@ -115,18 +120,22 @@
    Otherwise return the type and text of the message. Takes an
    optional max amount of time to wait, in ms, and whether to refresh
    the page periodically while waiting for a notification."
-  [ & [{:keys [timeout-ms refresh?] :or {timeout-ms 2000}}]]
+  [ & [{:keys [timeout-ms refresh? match-pred] 
+        :or {timeout-ms 2000 match-pred (constantly true)}}]]
   (loop-with-timeout timeout-ms []
-    (let [new-notifs (set (notifications
-                           {:timeout-ms (if refresh? 15000 timeout-ms)}))]
-      (cond (not-any? success? new-notifs) (do (when refresh? (browser refresh)) (recur))
-            (some error? new-notifs) (throw+ {:types (matching-errors new-notifs) :notifications new-notifs})
-            :else new-notifs))))
+    (let [notifs (->> (notifications {:timeout-ms (if refresh? 15000 timeout-ms)})
+                      set
+                      (filter match-pred))]
+      (cond (some error? notifs) (throw+ {:types (matching-errors notifs) :notifications notifs})
+            (some success? notifs) notifs
+            :else (recur)))))
 
 (defn check-for-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
-  [ & [{:keys [timeout-ms] :as m}]]
+  [ & [{:keys [timeout-ms match-pred] 
+        :or {match-pred (constantly true)}
+        :as m}]]
   (try+ (check-for-success m)
         (catch [:type ::no-success-message-error] _)))
 
