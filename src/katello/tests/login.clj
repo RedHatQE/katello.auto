@@ -19,8 +19,10 @@
   message appears in the UI."
   [username password]
   (try+
-    (expecting-error (errtype :katello.notifications/invalid-credentials) 
+    (expecting-error (errtype :katello.notifications/invalid-credentials)
                      (user/login username password))
+    ; Notifications must be flushed so user/login can succeed in 'finally'
+    (katello.notifications/flush)
    (finally
     (user/login *session-user* *session-password*))))
 
