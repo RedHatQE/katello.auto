@@ -310,5 +310,6 @@
          :force true})
       (verify-that (= (client/get-distro)
                       (system/get-os (client/hostname)))))
+
   system-group-tests)
 

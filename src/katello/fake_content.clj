@@ -7,6 +7,7 @@
                      [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
+
 (def some-product-repos [{:name       "Nature Enterprise"
                           :repos      ["Nature Enterprise x86_64 1.0"
                                        "Nature Enterprise x86_64 1.1"]}

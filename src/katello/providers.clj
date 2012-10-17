@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
             (katello [locators :as locators] 
                      [notifications :refer [check-for-success notifications]] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit validify-for-label]])))
+                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
 
 ;;
 ;; Providers

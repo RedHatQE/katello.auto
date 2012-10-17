@@ -20,9 +20,6 @@
 (declare search)
 
 ;;UI tasks
-(defn validify-for-label [label]
-  (str (string/join "_" (string/split label #"\W+")) "_label"))
-
 
 (defn errtype
   "Creates a predicate that matches a caught UI error of the given

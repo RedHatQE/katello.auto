@@ -4,7 +4,7 @@
             (katello [locators :as locators] 
                      [tasks :refer [library]] 
                      [notifications :refer [check-for-success]] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit validify-for-label]])))
+                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
 
 ;;
 ;; Environments
@@ -17,7 +17,6 @@
   [name {:keys [org-name description prior-env]}]
   (navigate :new-environment-page {:org-name org-name})
   (fill-ajax-form {:env-name-text name
-                   :env-label-text (validify-for-label name)
                    :env-description-text description
                    :prior-environment prior-env}
                   :create-environment)

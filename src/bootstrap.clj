@@ -11,6 +11,7 @@
 (require 'katello.setup)
 (require 'test.tree.debug)
 
+
 (defn new-browser []
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
   (katello.setup/start-selenium))
@@ -39,4 +40,5 @@
                            (@katello.conf/config :client-ssh-key-passphrase)))) ;;<-here for api only
 (selenium-server/start)
 (new-browser)
+
 
