@@ -141,25 +141,24 @@
                 (str "Child ID not found: " child-id)))))
     results)
 
+(defn attr-loc [locator attribute]
+  (str (.getLocator locator) "@" attribute))
+
 (defn get-repo-compare-package-names [] 
-  (for [locator (get-all-of-locator locators/content-search-package-name)]
-    (browser getText locator)))
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-package-name)]
+    (browser getText locator))))
 
 (defn get-repo-compare-packages [] 
-  (for [locator (get-all-of-locator locators/content-search-result-item-n)]
-    (browser getText locator)))
-
-(defn get-repo-packages [repo] 
-  (compare-repositories [repo])
-  (get-repo-compare-packages))
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-result-item-n)]
+    (browser getText locator))))
 
 (defn get-repo-compare-repositories [] 
-  (for [locator (get-all-of-locator locators/content-search-repo-header-name)]
-    (browser getText locator)))
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-header-name)]
+    (browser getText locator))))
 
 (defn get-search-result-repositories [] 
-  (for [locator (get-all-of-locator locators/content-search-repo-column-name)]
-    (browser getText locator)))
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
+    (browser getText locator))))
  
 
 (defn package-in-repository? [package repository]
@@ -181,9 +180,6 @@
                (mouseOver elem)
                (click elem)))
     (browser click add-button))
-
-(defn attr-loc [locator attribute]
-  (str (.getLocator locator) "@" attribute))
 
 (defn load-all-results []
   (while (browser isElementPresent :content-search-load-more)
@@ -212,7 +208,7 @@
                          []
                          repositories))]
     (doseq [repository repositories]
-      (browser check (locators/repo-compare-checkbox (repo-id-map repository))))
+      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))
     (browser click :repo-compare-button)))
 
 (defn compare-repositories [repositories]
@@ -224,6 +220,10 @@
   (browser click :browse-button)
   (compare-repositories-in-search-result repositories)
   (get-repo-compare-repositories))
+
+(defn get-repo-packages [repo] 
+  (compare-repositories [repo])
+  (get-repo-compare-packages))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,

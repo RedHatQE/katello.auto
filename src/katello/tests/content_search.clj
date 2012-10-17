@@ -93,7 +93,7 @@
               result   (set (get-search-result-repositories))]
           (verify-that (= expected result))))
             
-        [["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]])
+        [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]]])
   
   
     (deftest "Repo compare: Add many repos to compare"
@@ -102,9 +102,9 @@
                         (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
-      (let [repos (fake/get-i18n-repos)]
-        (verify-that (= repos
-                        (set (compare-repositories (into [] repos))))))))
+      (let [expected (fake/get-i18n-repos)
+            result (set (compare-repositories (into [] expected)))]
+        (verify-that (= expected result)))))
 
 (defgroup content-search-tests
   :group-setup (fn []

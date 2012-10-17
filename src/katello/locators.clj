@@ -32,6 +32,7 @@
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
    content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
    content-search-compare-checkbox "//input[@type='checkbox' and @name='$1']"
+   content-search-compare-checkbox-all "//div[@id='grid_content']//input[$1]"
    content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='$1']/i[contains(@class,'remove')]"
    content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
    content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][$1]"

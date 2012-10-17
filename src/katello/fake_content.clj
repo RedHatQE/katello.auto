@@ -45,11 +45,11 @@
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product?] :or {filter-product? (fn [product] true)}}]
   (set (remove nil? (flatten 
-    (for [provider custom-providers-v]
+    (doall (for [provider custom-providers-v]
      (for [product (:products provider)]
        (when (filter-product? product)
         (for [ repo (:repos product)]
-          (:name repo)))))))))
+          (:name repo))))))))))
 
 
 (defn get-all-custom-repos []
@@ -95,5 +95,5 @@
             (providers/add-repo {:provider-name (provider :name)  
                                  :product-name (product :name)
                                  :name (repo :name) 
-                                 :url (repo :url)}) 
-            (sync/perform-sync [(repo :name)]))))))
+                                 :url (repo :url)})))) 
+            (sync/perform-sync (get-custom-repos custom-providers ))))
