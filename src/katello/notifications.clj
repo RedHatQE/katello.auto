@@ -60,27 +60,29 @@
      set))
 
 (def success?
-  "Returns true if the given notification is a 'success' type
-  notification (aka green notification in the UI)."
+  "Returns a function that returns true if the given notification is a 'success'
+   type notification (aka green notification in the UI)."
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'success?}
   (fn [notif]
     (and notif (-> notif :type (= :success)))))
 
 (def error?
-  "Returns true if the given notification is an 'error' type notification (aka
-   gray notification in the UI)."
+  "Returns a function that returns true if the given notification is an 'error'
+   type notification (aka gray notification in the UI)."
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'error?}
   (fn [notif]
     (and notif (-> notif :type (= :error)))))
 
 (defn request-type? [req-type]
-  "Returns true if the given notification contains the specified request type."
+  "Returns a function that returns true if the given notification contains the
+   specified request type."
   (fn [notif]
     (= req-type (:requestType notif))))
 
 (defn flush []
+  "Clears the javascript notice array."
   (browser runScript "window.notices.noticeArray = []"))
 
 (defn wait-for-notification-gone
