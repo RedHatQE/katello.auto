@@ -48,38 +48,63 @@
   (deftest "Repo compare: Differences between repos can be qualified"
     :data-driven true
     
-    (fn [first second]
-      (let [first-repo-list (set (get-repo-packages first))
-            second-repo-list (set (get-repo-packages second))]
-        (let [union (union first-repo-list second-repo-list)
-              inter (intersection first-repo-list second-repo-list)
-              diffs (difference first-repo-list second-repo-list)
-              difsf difference second-repo-list first-repo-list]
-        (compare-repositories first second)
-        (doseq [package inter]
-          (verify-that (package-in-repository? package first))
-          (verify-that (package-in-repository? package second)))
-        (doseq [package diffs]
-          (verify-that (package-in-repository? package first))
-          (verify-that (not (package-in-repository? package second))))
-         (doseq [package difsf]
-          (verify-that (not(package-in-repository? package first)))
-          (verify-that (package-in-repository? package second))))))
+    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
+      (compare-repositories [first second])
+      (doseq [package packages-in-both]
+        (verify-that (package-in-repository? package first))
+        (verify-that (package-in-repository? package second)))
+      (doseq [package packages-only-in-first]
+        (verify-that (package-in-repository? package first))
+        (verify-that (not (package-in-repository? package second))))
+      (doseq [package packages-only-in-second]
+        (verify-that (not(package-in-repository? package first)))
+        (verify-that (package-in-repository? package second))))
    
-    [["CompareZoo1" "CompareZoo2"]])
-
+    [["CompareZoo1" "CompareZoo2" [] 
+                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
+                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
+  
+  (deftest "Repo compare: Differences between repos can be qualified"
+    :data-driven true
+    
+    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
+      (compare-repositories [first second])
+      (doseq [package packages-in-both]
+        (verify-that (package-in-repository? package first))
+        (verify-that (package-in-repository? package second)))
+      (doseq [package packages-only-in-first]
+        (verify-that (package-in-repository? package first))
+        (verify-that (not (package-in-repository? package second))))
+      (doseq [package packages-only-in-second]
+        (verify-that (not(package-in-repository? package first)))
+        (verify-that (package-in-repository? package second))))
+   
+    [["CompareZoo1" "CompareZoo2" [] 
+                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
+                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
+  
+  
+    (deftest "Repo compare: Add and remove repos to compare"
+      :data-driven true
+      (fn [to-add to-remove]
+        (compare-repositories to-add)
+        (remove-repositories to-remove)
+        (let [expected (difference (set to-add) (set to-remove))
+              result   (set (get-search-result-repositories))]
+          (verify-that (= expected result))))
+            
+        [["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]])
+  
+  
     (deftest "Repo compare: Add many repos to compare"
-      (let [repos (difference (fake/get-all-custom-repos) (fake/get-i18n-repos) ) ]
-        (compare-repositories repos)
+      (let [repos (difference (fake/get-all-custom-repos) (fake/get-i18n-repos))]
         (verify-that (= repos
-                        (get-repo-compare-repositories)))))
+                        (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
-      (let [repos (fake/get-all-repos fake/custom-providers)]
-        (compare-repositories repos)
+      (let [repos (fake/get-i18n-repos)]
         (verify-that (= repos
-                        (get-repo-compare-repositories))))))
-
+                        (set (compare-repositories (into [] repos))))))))
 
 (defgroup content-search-tests
   :group-setup (fn []

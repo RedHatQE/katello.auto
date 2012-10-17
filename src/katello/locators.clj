@@ -31,7 +31,10 @@
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
    content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
+   content-search-compare-checkbox "//input[@type='checkbox' and @name='$1']"
+   content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='$1']/i[contains(@class,'remove')]"
    content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
+   content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][$1]"
    content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
    default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
@@ -52,7 +55,6 @@
    promotion-remove-content-item   "//a[@data-display_name='$1' and contains(.,'Remove')]"
    provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
-   repo-compare-checkbox           "//input[@type='checkbox' and @name='$1']"
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='$1']" 
    role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
@@ -74,6 +76,17 @@
    textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"
    user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"
    username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"})
+
+
+(defn get-all-of-locator [locatorfn] 
+  "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
+  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
+     (reduce (fn [acumulator number]
+               (conj 
+                 acumulator 
+                  (locatorfn (str number))))
+             []
+             (range 1 (inc count)))))
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"

@@ -25,7 +25,7 @@
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
                                    {:name "WeirdLocalsUsing 標準語 Enterprise"
                                     :i18n true
-                                    :repos [{:name "洪صالح" 
+                                    :repos [{:name "洪" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "Гесер" 
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
@@ -40,14 +40,7 @@
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "ManyRepositoryE" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryF" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryG" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryH" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryI" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
+                                           ]}]}])
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product?] :or {filter-product? (fn [product] true)}}]
   (set (remove nil? (flatten 
@@ -93,14 +86,11 @@
     (with-org org-name
       (org/switch)
       (doseq [provider providers]
-        (print (provider :name))
         (providers/create {:name (provider :name)})
         (doseq [product (provider :products)]  
-          (print (product :name))
           (providers/add-product {:provider-name (provider :name) 
                                   :name (product :name)})
           (doseq [repo (product :repos)]
-            (print  (repo :name))
             (providers/add-repo {:provider-name (provider :name)  
                                  :product-name (product :name)
                                  :name (repo :name) 
