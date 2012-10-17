@@ -17,6 +17,7 @@
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  [clj-http "0.5.5"]
+                 [seesaw "1.4.2"]
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
