@@ -3,7 +3,7 @@
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [ui-tasks :refer :all] 
                      [notifications :refer :all]
-                     [conf :refer [*session-org*]]))
+                     [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;

@@ -11,14 +11,13 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify        :refer [verify-that]]
             [inflections.core    :refer [pluralize]] 
-            (clojure [string     :refer [capitalize]] 
+            (clojure [string     :refer [capitalize replace-first]] 
                      [set        :refer [union]]
                      [string     :as string]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
 (declare search)
-
 
 ;;UI tasks
 
@@ -142,6 +141,89 @@
                 (str "Child ID not found: " child-id)))))
     results)
 
+(defn get-repo-compare-package-names [] 
+  (for [locator (get-all-of-locator locators/content-search-package-name)]
+    (browser getText locator)))
+
+(defn get-repo-compare-packages [] 
+  (for [locator (get-all-of-locator locators/content-search-result-item-n)]
+    (browser getText locator)))
+
+(defn get-repo-packages [repo] 
+  (compare-repositories [repo])
+  (get-repo-compare-packages))
+
+(defn get-repo-compare-repositories [] 
+  (for [locator (get-all-of-locator locators/content-search-repo-header-name)]
+    (browser getText locator)))
+
+(defn get-search-result-repositories [] 
+  (for [locator (get-all-of-locator locators/content-search-repo-column-name)]
+    (browser getText locator)))
+ 
+
+(defn package-in-repository? [package repository]
+  (let [row-id (browser getAttribute (attr-loc 
+                                       (locators/search-result-row-id package)
+                                       "data-id"))
+       col-id (browser getAttribute (attr-loc 
+                                       (locators/search-result-col-id repository)
+                                       "data-id"))]
+      (not (= "--" 
+              (browser getText (locators/search-result-cell row-id col-id))))))
+
+(defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
+  (browser setText auto-comp-box cont-item)
+  ;; typeKeys is necessary to trigger drop-down list
+  (browser typeKeys auto-comp-box " ")
+  (let [elem (locators/auto-complete-item cont-item)] 
+    (->browser (waitForElement elem "2000")
+               (mouseOver elem)
+               (click elem)))
+    (browser click add-button))
+
+(defn attr-loc [locator attribute]
+  (str (.getLocator locator) "@" attribute))
+
+(defn load-all-results []
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more)))
+
+(defn add-to-repository-browser [repository]
+  (autocomplete-adder-for-content-search :repo-auto-complete :add-repo repository))
+
+(defn remove-one-repository-from-browser [repository]
+  (browser click (locators/content-search-repo-remove repository)))
+
+(defn remove-repositories [repositories]
+  (do
+    (doseq [removing repositories]
+      (remove-one-repository-from-browser removing))
+    (browser click :browse-button)))
+
+(defn compare-repositories-in-search-result [repositories]
+  (let [repo-id-map (apply hash-map 
+                      (reduce 
+                        (fn [result name] 
+                          (conj result  name
+                            (browser getAttribute (attr-loc 
+                                                    (locators/search-result-repo-id name)
+                                                    "data-id")))) 
+                         []
+                         repositories))]
+    (doseq [repository repositories]
+      (browser check (locators/repo-compare-checkbox (repo-id-map repository))))
+    (browser click :repo-compare-button)))
+
+(defn compare-repositories [repositories]
+  (navigate :content-search-page)
+  (browser select :content-search-type "Repositories")
+  (browser check :repo-auto-complete-radio)
+  (doseq [repository repositories]
+    (add-to-repository-browser repository))
+  (browser click :browse-button)
+  (compare-repositories-in-search-result repositories)
+  (get-repo-compare-repositories))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -184,14 +266,7 @@
           [[:prod-auto-complete :add-prod prods] 
            [:repo-auto-complete :add-repo repos]]]
     (doseq [cont-item cont-items]
-      (browser setText auto-comp-box cont-item)
-      ;; typeKeys is necessary to trigger drop-down list
-      (browser typeKeys auto-comp-box cont-item)
-      (let [elem (locators/auto-complete-item cont-item)] 
-        (->browser (waitForElement elem "2000")
-                   (mouseOver elem)
-                   (click elem)))
-      (browser click add-button)))
+      (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
 
   ;; Add package
   (when-not (empty? pkg) (browser setText :pkg-search pkg))
@@ -201,9 +276,8 @@
   
   (browser click :browse-button)
 
-  ;; load all results
-  (while (browser isElementPresent :content-search-load-more)
-    (browser click :content-search-load-more))
+  (load-all-results)
+
   
   ;;extract and return content
   (->> "JSON.stringify(window.comparison_grid.export_data());"
