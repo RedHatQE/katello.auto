@@ -150,10 +150,10 @@
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
   (def ^:dynamic *session-org* (@config :admin-org))
-  (def ^:dynamic *cloud-conn* (cloud/connection
-                               (@config :deltacloud-url)
-                               (@config :deltacloud-user)
-                               (@config :deltacloud-password)))
+  (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
+                                (cloud/connection dc-url           
+                                                  (@config :deltacloud-user)
+                                                  (@config :deltacloud-password))))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (@config :environments))) 
 
