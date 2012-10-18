@@ -2,7 +2,7 @@
   (:require [katello.locators :as locators]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [ui-tasks :refer :all] 
-                     [notifications :refer :all]
+                     [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
 
@@ -19,7 +19,7 @@
                    :org-initial-env-name-text initial-env-name
                    :org-initial-env-desc-text initial-env-description}
                   :create-organization)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn delete
   "Deletes the named organization."
@@ -27,9 +27,9 @@
   (navigate :named-organization-page {:org-name org-name})
   (browser click :remove-organization)
   (browser click :confirmation-yes)
-  (check-for-success) ;queueing success
-  (wait-for-notification-gone)
-  (check-for-success {:timeout-ms 180000 :refresh? true})) ;for actual delete
+  (notification/check-for-success) ;queueing success
+  (notification/wait-for-notification-gone)
+  (notification/check-for-success {:timeout-ms 180000 :refresh? true})) ;for actual delete
 
 (defn edit
   "Edits an organization. Currently the only property of an org that
@@ -60,7 +60,7 @@
                                      (catch SeleniumException _ nil))]
             (when (not= current-default default-org)
               (browser click (locators/default-org-star default-org))
-              (check-for-success))))
+              (notification/check-for-success))))
         (browser clickAndWait (locators/org-switcher org-name)))))
 
 
