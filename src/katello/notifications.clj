@@ -6,6 +6,7 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify :refer [verify-that]]
             [clojure.set :refer [union]])
+  (:refer-clojure :exclude [flush])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;
@@ -167,9 +168,11 @@
                       (filter match-pred))]
       (cond (some error? notifs) (throw+ {:types (matching-errors notifs) :notifications notifs})
             (some success? notifs) notifs
-            :else (recur)))))
+            :else (recur)))
+    (throw+ {:type ::no-success-message-error} 
+            "Expected a success notification, but none appeared within the timeout period.")))
 
-(defn check-for-error
+(defn verify-no-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
   [ & [{:keys [timeout-ms match-pred] 

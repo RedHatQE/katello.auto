@@ -5,7 +5,7 @@
              :refer [browser ->browser fill-form fill-item]]
             (katello [locators      :as locators]
                      [tasks         :refer :all] 
-                     [notifications :refer :all] 
+                     [notifications :as notification] 
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
@@ -70,7 +70,7 @@
              (do (activate-in-place loc)
                  (fill-item loc val)
                  (browser click :save-inplace-edit)
-                 (check-for-success))))))
+                 (notification/check-for-success))))))
 
 (defn extract-list [f]
   "Extract a list of items from the UI, accepts locator function as
@@ -126,8 +126,7 @@
           (->browser (click :search-menu)
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
-  (check-for-error {:timeout-ms 2000}))
-
+  (notification/verify-no-error {:timeout-ms 2000}))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
@@ -295,7 +294,7 @@
                    :activation-key-description-text description
                    :activation-key-template-select system-template}
                   :save-activation-key)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn delete-activation-key
   "Deletes the given activation key."
@@ -303,7 +302,7 @@
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn create-template
   "Creates a system template with the given name and optional
@@ -313,7 +312,7 @@
   (fill-ajax-form {:template-name-text name
                    :template-description-text description}
                   :save-new-template)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn add-to-template
   "Adds content to a given template.  Example:
@@ -339,7 +338,7 @@
         (doall (map add-item (group category-keyword)))
         (browser click :template-eligible-home)))
     (browser click :save-template)
-    (check-for-success)))
+    (notification/check-for-success)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
@@ -360,7 +359,7 @@
     (fill-ajax-form {:gpg-key-name-text name
                      :gpg-key-content-text contents}
                     :gpg-keys-save))
-  (check-for-success))
+  (notification/check-for-success))
  
 
 (defn remove-gpg-key 
@@ -369,7 +368,7 @@
   (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
   (browser click :remove-gpg-key )
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
@@ -378,7 +377,7 @@
     (fill-ajax-form {:new-package-filter-name  name
                      :new-package-filter-description description}
                      :save-new-package-filter)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn remove-package-filter 
   "Deletes existing Package Filter"
@@ -386,5 +385,5 @@
   (navigate :named-package-filter-page {:package-filter-name package-filter-name})
   (browser click :remove-package-filter-key )
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 
