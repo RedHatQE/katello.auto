@@ -126,8 +126,7 @@
           (->browser (click :search-menu)
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
-  (notification/check-for-error {:timeout-ms 2000}))
-
+  (notification/verify-no-error {:timeout-ms 2000}))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
