@@ -6,6 +6,7 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify :refer [verify-that]]
             [clojure.set :refer [union]])
+  (:refer-clojure :exclude [flush])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;

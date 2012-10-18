@@ -6,12 +6,12 @@
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
             (katello [api-tasks :as api]
-                     [client :as client]) 
-                     [katello.conf :refer :all]
-                     [katello.tasks :refer :all]
-            [katello.users :refer [login logout]]
-            [katello.roles :as role]
-            [fn.trace :refer :all]
+                     [client :as client]
+                     [conf :refer :all]
+                     [tasks :refer :all] 
+                     [users :refer [login logout]]
+                     [roles :as role])
+            [fn.trace :as trace]
             [com.redhat.qe.auto.selenium.selenium :refer :all]))
 
 (defn new-selenium
@@ -55,16 +55,9 @@
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)
           user (uniqueify (str (@config :admin-user) thread-number))]
-      (binding [tracer (per-thread-tracer)
+      (binding [trace/tracer (trace/per-thread-tracer)
                 sel (new-selenium (nth (cycle *browsers*)
-                                       thread-number))
-                
-                client/*runner* (when *clients*
-                                  (try (client/new-runner (nth *clients* thread-number)
-                                                          "root" nil
-                                                          (@config :client-ssh-key)
-                                                          (@config :client-ssh-key-passphrase))
-                                       (catch Exception e (do (.printStackTrace e) e))))]
+                                       thread-number))]
         (try 
           (start-selenium)
           (switch-new-admin-user user *session-password*)

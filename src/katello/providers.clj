@@ -1,7 +1,7 @@
 (ns katello.providers
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
             (katello [locators :as locators] 
-                     [notifications :refer [check-for-success]] 
+                     [notifications :refer [check-for-success notifications]] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
 
 ;;
@@ -23,7 +23,7 @@
   (navigate :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
-                   :product-description-text description}
+                  :product-description-text description}
                   :create-product)
   (check-for-success))
 
