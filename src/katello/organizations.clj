@@ -19,7 +19,7 @@
                    :org-initial-env-name-text initial-env-name
                    :org-initial-env-desc-text initial-env-description}
                   :create-organization)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :org-create)}))
 
 (defn delete
   "Deletes the named organization."
@@ -29,8 +29,8 @@
   (browser click :confirmation-yes)
   (check-for-success) ;queueing success
   (wait-for-notification-gone)
-  (check-for-success {:timeout-ms 180000 :refresh? true})) ;for actual delete
-
+  (check-for-success {:timeout-ms 180000 :refresh? true :match-pred (request-type? :org-create)}) ;for actual delete
+                      
 (defn edit
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."

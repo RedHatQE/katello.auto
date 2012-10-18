@@ -39,6 +39,43 @@
                                       ; mean "any" validation error.
     errors))
 
+(def reqtypes
+  {:prov-create                        "providers___create"
+   :prov-destory                       "providers___destroy"
+   
+   :prod-create                        "products___create"
+   :prod-destroy                       "products___destroy"
+   
+   :repo-create                        "repositories___create"
+   :repo-destroy                       "repositories___destroy"
+   
+   :sys-create                         "systems___create"
+   :sys-destroy                        "systems___destroy"
+   :sys-update                         "systems___update"
+   
+   :sysgrps-create                     "system_groups___create"
+   :sysgrps-add-sys                    "system_groups___add_systems"
+   :sysgrps-destroy-sys                "system_groups___destroy_systems"
+   :sysgrps-copy                       "system_groups___copy"
+   :sysgrps-update                     "system_groups___update"
+   :sysgrps-rm-sys                     "system_groups___remove_systems"
+   
+   :env-create                         "environments___create"
+   :env-destroy                        "environments___destroy"
+   
+   :org-create                         "organizations___create"
+   :org-destroy                        "organizations___destroy"
+   
+   :roles-create                       "roles___create"
+   :roles-destroy                      "roles___destroy"
+   
+   :users-create                       "users___create"
+   :users-destroy                      "users___destroy"
+   
+   :sync-create                        "sync_plans___create"
+   :sync-destroy                       "sync_plans___destroy"})
+
+
 (def ^{:doc "A mapping of known errors in Katello. This helps
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
@@ -79,7 +116,7 @@
   "Returns a function that returns true if the given notification contains the
    specified request type."
   (fn [notif]
-    (= req-type (:requestType notif))))
+    (= (req-type reqtypes) (:requestType notif))))
 
 (defn flush []
   "Clears the javascript notice array."
