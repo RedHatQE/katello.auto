@@ -102,38 +102,38 @@
    representing the notifications. Waits for timeout-ms for at least
    one notification to appear. Does not do any extra waiting after the
    first notification is detected. Default timeout is 15 seconds."
-  [ & [{:keys [timeout-ms] :or {timeout-ms 2000}}]]
-  (try
-    (let [noticeArray (->> notice-array-js-var
-                           (format "JSON.stringify(%s)") 
-                           (browser getEval)
-                           json/read-json)]
-      (for [notice noticeArray] 
-        (assoc notice :type (keyword (:level notice)) 
-                      :msg (str (:validationErrors notice) (:notices notice)))))
-    (catch SeleniumException e '())))
+  []
+  (try (let [noticeArray (->> notice-array-js-var
+                            (format "JSON.stringify(%s)") 
+                            (browser getEval)
+                            json/read-json)]
+         (for [notice noticeArray] 
+           (assoc notice :type (keyword (:level notice)) 
+                  :msg (str (:validationErrors notice) (:notices notice)))))
+       (catch SeleniumException e '())))
 
 (defn check-for-success
-  "Returns information about a success notification from the UI. Will
-   wait for a success notification until timeout occurs, collecting
-   any failure notifications captured in that time. If there are no
-   notifications or any failure notifications are captured, an
-   exception is thrown containing information about all captured
-   notifications (including a success notification if present).
-   Otherwise return the type and text of the message. Takes an
-   optional max amount of time to wait, in ms, and whether to refresh
-   the page periodically while waiting for a notification."
-  [ & [{:keys [timeout-ms refresh? match-pred] 
+  "Returns notification information from the UI. Will wait up to
+   timeout-ms (defaults to 2000) for any notificaiton to appear. Takes
+   an optional predicate to filter notifications (any filtered
+   notifications are ignored as if they didn't exist). If no
+   notifications are collected, an exception is thrown. If
+   notifications are collected and none are errors, they are returned.
+   If any are errors, an exception is thrown containing all
+   notifications."
+  [ & [{:keys [timeout-ms match-pred]
         :or {timeout-ms 2000 match-pred (constantly true)}}]]
   (loop-with-timeout timeout-ms []
-    (let [notifs (->> (notifications {:timeout-ms (if refresh? 15000 timeout-ms)})
-                      set
-                      (filter match-pred))]
+    (let [notifs (->> (notifications)
+                    set
+                    (filter match-pred))]
       (cond (some error? notifs) (throw+ {:types (matching-errors notifs) :notifications notifs})
             (some success? notifs) notifs
-            :else (recur)))
+            :else (do (Thread/sleep 2000)
+                      (recur))))
     (throw+ {:type ::no-success-message-error} 
             "Expected a success notification, but none appeared within the timeout period.")))
+
 
 (defn verify-no-error
   "Waits for a notification up to the optional timeout (in ms), throws
