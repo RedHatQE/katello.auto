@@ -68,14 +68,14 @@
                      :user-default-org default-org
                      env-chooser [default-env]]
                     :save-user))
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :users-create)}))
 
 (defn delete "Deletes the given user."
   [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
   (browser click :confirmation-yes)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :users-destroy)}))
   
 (defn edit
   "Edits the given user, changing any of the given properties (can

@@ -17,7 +17,7 @@
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
                   :save-role)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :roles-create)}))
 
 (defn assign
   "Assigns the given user to the given roles. Roles should be a list
@@ -81,7 +81,7 @@
   (navigate :named-role-page {:role-name name})
   (browser click :remove-role)
   (browser click :confirmation-yes)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :roles-destroy)}))
 
 
 

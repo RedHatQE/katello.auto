@@ -20,7 +20,7 @@
                    :env-description-text description
                    :prior-environment prior-env}
                   :create-environment)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :env-create)}))
 
 (defn delete
   "Deletes an environment from the given organization."
@@ -31,7 +31,7 @@
     (browser click :remove-environment)
     (throw+ {:type :env-cant-be-deleted :env-name env-name}))
   (browser click :confirmation-yes)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :env-destroy)}))
 
 (defn edit
   "Edits an environment with the given name. Also takes a map

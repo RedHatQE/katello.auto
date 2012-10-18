@@ -32,7 +32,7 @@
                      :sync-plan-time-text time
                      :sync-plan-date-text date}
                     :save-sync-plan)
-    (check-for-success)))
+    (check-for-success {:match-pred (request-type? :sync-create)})))
 
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also

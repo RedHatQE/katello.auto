@@ -13,7 +13,7 @@
                     :system-sockets-text sockets
                     :system-arch-select (or system-arch "x86_64")}
                     :create-system)
-   (check-for-success))
+   (check-for-success {:match-pred (request-type? :sys-create)}))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
@@ -60,7 +60,7 @@
    (fill-ajax-form {:system-group-name-text name
                     :system-group-description-text description}
                     :create-system-groups)
-   (check-for-success))
+   (check-for-success {:match-pred (request-type? :sysgrps-create)}))
 
 (defn add-to-group
   "Adds a system to a System-Group"
@@ -85,7 +85,7 @@
   (fill-ajax-form {:system-group-copy-name-text new-name
                    :system-group-copy-description-text description}
                   :system-group-copy-submit)
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :sysgrps-copy)}))
 
 (defn remove-group [system-group & [{:keys [also-remove-systems?]}]]
   (navigate :named-system-group-page {:system-group-name system-group})
@@ -94,7 +94,7 @@
   (browser click (if also-remove-systems?
                    :confirmation-yes
                    :system-group-confirm-only-system-group))
-  (check-for-success))
+  (check-for-success {:match-pred (request-type? :sysgrps-rm-sys)}))
 
 (defn edit-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
