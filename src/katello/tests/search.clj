@@ -50,6 +50,7 @@
   (deftest "Perform search operation on systems"
     :data-driven true
     :description "Search for a system based on criteria."
+    :blockers api/katello-only
     
     (fn [system searchterms & [system-group]]
       (organization/switch)
