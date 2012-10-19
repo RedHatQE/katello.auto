@@ -256,6 +256,8 @@
 
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true
+      :blockers (if (api/is-headpin?) (open-bz-bugs "868179")
+                                      (fn [_] []))
 
       verify-access
       access-test-data) ))
