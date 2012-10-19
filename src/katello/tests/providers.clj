@@ -102,6 +102,7 @@
 (defgroup gpg-key-tests
 
   (deftest "Create a new GPG key from text input"
+    :blockers api/katello-only
     (with-unique [test-key "test-key-text"]
       (create-gpg-key test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
   
