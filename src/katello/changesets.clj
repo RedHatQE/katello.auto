@@ -70,7 +70,7 @@
               (recur (browser getText
                               (locators/changeset-status changeset-name))))))
       ;;wait for async success notif
-      (check-for-success {:timeout-ms 180000 :refresh? true}))))
+      (check-for-success {:timeout-ms 180000}))))
 
 (defn promote-content
   "Promotes the given content from one environment to another 

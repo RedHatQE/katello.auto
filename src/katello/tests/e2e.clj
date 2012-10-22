@@ -47,7 +47,7 @@
                       :force true})
                       
     (doseq [product-name all-products]
-      (if-let [matching-pool (->> (api/system-available-pools (-> client/*runner* .getConnection .getHostname))
+      (if-let [matching-pool (->> (api/system-available-pools "fixme") ;;switch to provisioning - jmw
                                 (filter (partial pool-provides-product product-name))
                                 first
                                 :id)]

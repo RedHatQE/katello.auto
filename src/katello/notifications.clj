@@ -5,6 +5,7 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify :refer [verify-that]]
             [clojure.set :refer [union]])
+  (:refer-clojure :exclude [flush])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;;
@@ -63,12 +64,30 @@
     (catch SeleniumException _ nil)))
 
 (def success?
-  "Returns true if the given notification is a 'success' type
-  notification (aka green notification in the UI)."
+  "Returns a function that returns true if the given notification is a 'success'
+   type notification (aka green notification in the UI)."
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'success?}
   (fn [notif]
     (and notif (-> notif :type (= :success)))))
+
+(def error?
+  "Returns a function that returns true if the given notification is an 'error'
+   type notification (aka gray notification in the UI)."
+  ^{:type :serializable.fn/serializable-fn
+    :serializable.fn/source 'error?}
+  (fn [notif]
+    (and notif (-> notif :type (= :error)))))
+
+(defn request-type? [req-type]
+  "Returns a function that returns true if the given notification contains the
+   specified request type."
+  (fn [notif]
+    (= req-type (:requestType notif))))
+
+(defn flush []
+  "Clears the javascript notice array."
+  (browser runScript "window.notices.noticeArray = []"))
 
 (defn wait-for-notification-gone
   "Waits for a notification to disappear within the timeout period. If no
@@ -128,10 +147,13 @@
     (when-not (empty? error-notifs) 
       (throw+ {:types (matching-errors error-notifs) :notifications error-notifs}))))
 
-(defn check-for-error
+
+(defn verify-no-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
-  [ & [{:keys [timeout-ms] :as m}]]
+  [ & [{:keys [timeout-ms match-pred] 
+        :or {match-pred (constantly true)}
+        :as m}]]
   (try+ (check-for-success m)
         (catch [:type ::no-success-message-error] _)))
 

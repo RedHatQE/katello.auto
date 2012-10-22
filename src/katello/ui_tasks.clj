@@ -5,20 +5,19 @@
              :refer [browser ->browser fill-form fill-item]]
             (katello [locators      :as locators]
                      [tasks         :refer :all] 
-                     [notifications :refer :all] 
+                     [notifications :as notification] 
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [tools.verify        :refer [verify-that]]
             [inflections.core    :refer [pluralize]] 
-            (clojure [string     :refer [capitalize]] 
+            (clojure [string     :refer [capitalize replace-first]] 
                      [set        :refer [union]]
                      [string     :as string]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
 (declare search)
-
 
 ;;UI tasks
 
@@ -71,7 +70,7 @@
              (do (activate-in-place loc)
                  (fill-item loc val)
                  (browser click :save-inplace-edit)
-                 (check-for-success))))))
+                 (notification/check-for-success))))))
 
 (defn extract-list [f]
   "Extract a list of items from the UI, accepts locator function as
@@ -127,8 +126,7 @@
           (->browser (click :search-menu)
                      (click :search-save-as-favorite)))
         (browser click :search-submit)))
-  (check-for-error {:timeout-ms 2000}))
-
+  (notification/verify-no-error {:timeout-ms 2000}))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
@@ -142,6 +140,89 @@
                 (str "Child ID not found: " child-id)))))
     results)
 
+(defn attr-loc [locator attribute]
+  (str (.getLocator locator) "@" attribute))
+
+(defn get-repo-compare-package-names [] 
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-package-name)]
+    (browser getText locator))))
+
+(defn get-repo-compare-packages [] 
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-result-item-n)]
+    (browser getText locator))))
+
+(defn get-repo-compare-repositories [] 
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-header-name)]
+    (browser getText locator))))
+
+(defn get-search-result-repositories [] 
+  (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
+    (browser getText locator))))
+ 
+
+(defn package-in-repository? [package repository]
+  (let [row-id (browser getAttribute (attr-loc 
+                                       (locators/search-result-row-id package)
+                                       "data-id"))
+       col-id (browser getAttribute (attr-loc 
+                                       (locators/search-result-col-id repository)
+                                       "data-id"))]
+      (not (= "--" 
+              (browser getText (locators/search-result-cell row-id col-id))))))
+
+(defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
+  (browser setText auto-comp-box cont-item)
+  ;; typeKeys is necessary to trigger drop-down list
+  (browser typeKeys auto-comp-box " ")
+  (let [elem (locators/auto-complete-item cont-item)] 
+    (->browser (waitForElement elem "2000")
+               (mouseOver elem)
+               (click elem)))
+    (browser click add-button))
+
+(defn load-all-results []
+  (while (browser isElementPresent :content-search-load-more)
+    (browser click :content-search-load-more)))
+
+(defn add-to-repository-browser [repository]
+  (autocomplete-adder-for-content-search :repo-auto-complete :add-repo repository))
+
+(defn remove-one-repository-from-browser [repository]
+  (browser click (locators/content-search-repo-remove repository)))
+
+(defn remove-repositories [repositories]
+  (do
+    (doseq [removing repositories]
+      (remove-one-repository-from-browser removing))
+    (browser click :browse-button)))
+
+(defn compare-repositories-in-search-result [repositories]
+  (let [repo-id-map (apply hash-map 
+                      (reduce 
+                        (fn [result name] 
+                          (conj result  name
+                            (browser getAttribute (attr-loc 
+                                                    (locators/search-result-repo-id name)
+                                                    "data-id")))) 
+                         []
+                         repositories))]
+    (doseq [repository repositories]
+      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))
+    (browser click :repo-compare-button)))
+
+(defn compare-repositories [repositories]
+  (navigate :content-search-page)
+  (browser select :content-search-type "Repositories")
+  (browser check :repo-auto-complete-radio)
+  (doseq [repository repositories]
+    (add-to-repository-browser repository))
+  (browser click :browse-button)
+  (compare-repositories-in-search-result repositories)
+  (get-repo-compare-repositories))
+
+(defn get-repo-packages [repo] 
+  (compare-repositories [repo])
+  (get-repo-compare-packages))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -184,14 +265,7 @@
           [[:prod-auto-complete :add-prod prods] 
            [:repo-auto-complete :add-repo repos]]]
     (doseq [cont-item cont-items]
-      (browser setText auto-comp-box cont-item)
-      ;; typeKeys is necessary to trigger drop-down list
-      (browser typeKeys auto-comp-box cont-item)
-      (let [elem (locators/auto-complete-item cont-item)] 
-        (->browser (waitForElement elem "2000")
-                   (mouseOver elem)
-                   (click elem)))
-      (browser click add-button)))
+      (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
 
   ;; Add package
   (when-not (empty? pkg) (browser setText :pkg-search pkg))
@@ -201,9 +275,8 @@
   
   (browser click :browse-button)
 
-  ;; load all results
-  (while (browser isElementPresent :content-search-load-more)
-    (browser click :content-search-load-more))
+  (load-all-results)
+
   
   ;;extract and return content
   (->> "JSON.stringify(window.comparison_grid.export_data());"
@@ -221,7 +294,7 @@
                    :activation-key-description-text description
                    :activation-key-template-select system-template}
                   :save-activation-key)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn delete-activation-key
   "Deletes the given activation key."
@@ -229,7 +302,7 @@
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn create-template
   "Creates a system template with the given name and optional
@@ -239,7 +312,7 @@
   (fill-ajax-form {:template-name-text name
                    :template-description-text description}
                   :save-new-template)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn add-to-template
   "Adds content to a given template.  Example:
@@ -265,7 +338,7 @@
         (doall (map add-item (group category-keyword)))
         (browser click :template-eligible-home)))
     (browser click :save-template)
-    (check-for-success)))
+    (notification/check-for-success)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
@@ -286,7 +359,7 @@
     (fill-ajax-form {:gpg-key-name-text name
                      :gpg-key-content-text contents}
                     :gpg-keys-save))
-  (check-for-success))
+  (notification/check-for-success))
  
 
 (defn remove-gpg-key 
@@ -295,7 +368,7 @@
   (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
   (browser click :remove-gpg-key )
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
@@ -304,7 +377,7 @@
     (fill-ajax-form {:new-package-filter-name  name
                      :new-package-filter-description description}
                      :save-new-package-filter)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn remove-package-filter 
   "Deletes existing Package Filter"
@@ -312,5 +385,5 @@
   (navigate :named-package-filter-page {:package-filter-name package-filter-name})
   (browser click :remove-package-filter-key )
   (browser click :confirmation-yes)
-  (check-for-success))
+  (notification/check-for-success))
 

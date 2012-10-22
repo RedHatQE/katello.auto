@@ -46,8 +46,7 @@
                       :password-text password}
                      :log-in)
      (let [retVal (check-for-success {:timeout-ms 20000})]
-       (when (or org
-                 (not (logged-in?)))
+       (when (or org (not (logged-in?)))
          (Thread/sleep 3000)
          (organization/switch (or org (@config :admin-org))
                               {:default-org default-org}))

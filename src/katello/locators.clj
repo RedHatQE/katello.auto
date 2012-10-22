@@ -4,7 +4,7 @@
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
             [ui.navigate :refer [nav-tree page-zip]]
-            [clojure.string :refer [capitalize]])
+            [clojure.string :refer [capitalize ]])
   (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
            [com.thoughtworks.selenium SeleniumException]))
 
@@ -25,11 +25,17 @@
 
 (define-strategies
   {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-   auto-complete-item              "//ul[contains(@class,'ui-autocomplete')]//a[.='$1']"
+   auto-complete-item              "//ul[@role='listbox']//a[contains(.,'$1')]"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
    changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
+   content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
+   content-search-compare-checkbox "//input[@type='checkbox' and @name='$1']"
+   content-search-compare-checkbox-all "//div[@id='grid_content']//input[$1]"
+   content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='$1']/i[contains(@class,'remove')]"
+   content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
+   content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][$1]"
    content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
    default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
@@ -55,6 +61,10 @@
    role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
    schedule                        "//div[normalize-space(.)='$1']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
+   search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'$1')]"
+   search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'$1')]"
+   search-result-row-id            "//ul[@id='grid_row_headers']/li[contains(.,'$1')]"
+   search-result-cell              "//div[@id='grid_row_$1']/div[contains(@class,'cell_$2')]/i"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
@@ -67,6 +77,17 @@
    textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"
    user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"
    username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"})
+
+
+(defn get-all-of-locator [locatorfn] 
+  "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
+  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
+     (reduce (fn [acumulator number]
+               (conj 
+                 acumulator 
+                  (locatorfn (str number))))
+             []
+             (range 1 (inc count)))))
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -84,6 +105,7 @@
 
 (def common
   {:notification            "//div[contains(@class,'jnotify-notification')]"
+   :notification-container  "//div[contains(@class,'jnotify-container')]"
    :error-message           "//div[contains(@class,'jnotify-notification-error')]"
    :success-message         "//div[contains(@class,'jnotify-notification-message')]"
    :spinner                 "//img[contains(@src,'spinner.gif')]"
@@ -191,11 +213,13 @@
    :add-product                         (button-div "Add Product")
    :create-product                      "//input[@value='Create']"
    :product-name-text                   "//*[@name='product[name]']"
+   :product-label-text                  "//*[@name='product[label]']"
    :product-description-text            "//*[@name='product[description]']"
    :remove-product                      (link "Remove Product")
    ;;add repo
    :add-repository                      "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
    :repo-name-text                      "repo[name]"
+   :repo-label-text                     "repo[label]"
    :repo-url-text                       "repo[feed]" 
    :save-repository                     "//input[@value='Create']"
    :remove-repository                   (link "Remove Repository")
@@ -273,12 +297,15 @@
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
    :add-repo                   "add_repo"
+   :row-headers                "//ul[@id='grid_row_headers']/li"
+   :col-headers                "//ul[@id='column_headers']/li"
    :repo-auto-complete-radio   "repos_auto_complete_radio"
    :prod-auto-complete         "product_auto_complete"
    :repo-auto-complete         "repo_auto_complete"
    :pkg-search                 "//div[@id='package_search']/input[@id='search']"
    :errata-search              "//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
+   :repo-compare-button        "//a[@id='compare_repos_btn']"
    :content-search-load-more   "//a[contains(@class,'load_row_link')]"
    :column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
   })
