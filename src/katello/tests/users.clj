@@ -26,6 +26,7 @@
     
     (deftest "Admin creates a user with i18n characters"
       :data-driven true
+      :blockers (open-bz-bugs "868906")
       
       (fn [username]
         (user/create   (uniqueify username)   generic-user-details))
@@ -54,6 +55,8 @@
         (user/delete    username))
 
       (deftest "Admin who deletes the original admin account can still do admin things"
+        :blockers (open-bz-bugs "868910")
+        
         (let [admin (@config :admin-user)
               pw    (@config :admin-password)]
           (try
