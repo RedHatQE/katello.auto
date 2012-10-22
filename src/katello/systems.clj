@@ -66,18 +66,19 @@
   "Adds a system to a System-Group"
   [system-group system-name]
   (navigate :named-system-group-page {:system-group-name system-group})
-  (browser setText :system-groups-hostname-toadd system-name)
-  (browser typeKeys :system-groups-hostname-toadd " ")
-  (Thread/sleep 5000)
-  (browser click :system-groups-add-system)
-  (check-for-success)
-  #_(fill-ajax-form [:system-groups-hostname-toadd system-name
-                                        ; #(browser getEval %)
-                                        ; ["$(\"#input_id\").search()"]
-                                        ; ;try to trigger autocomplete
-                                        ; via javascript
-                     #(Thread/sleep %) [2000]]
-                    :system-groups-add-system))
+  (comment (browser setText :system-groups-hostname-toadd system-name)
+           (browser typeKeys :system-groups-hostname-toadd " ")
+           (Thread/sleep 5000)
+           (browser click :system-groups-add-system)
+           (check-for-success))
+  (fill-ajax-form [:system-groups-hostname-toadd system-name
+                   ;;try to trigger autocomplete via javascript -
+                   ;;hackalert - see
+                   ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
+                   #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
+                   #(Thread/sleep 5000) []]
+                  :system-groups-add-system)
+  (check-for-success))
 
 (defn remove-from-group
   "Remove a system from a System-Group"
