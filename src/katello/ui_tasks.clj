@@ -279,7 +279,7 @@
 
   
   ;;extract and return content
-  (->> "JSON.stringify(window.comparison_grid.export_data());"
+  (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
        (browser getEval)
        (json/read-json)
        validate-content-search-results))
