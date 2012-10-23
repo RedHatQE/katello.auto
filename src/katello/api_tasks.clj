@@ -293,13 +293,12 @@
         (recur (rest/get url))))))
 
 (def get-version
-  (memoize
-   (fn []
-     (try
-       (rest/get (api-url "/api/version"))
-       (catch Exception e {:name "unknown"
-                           :version "unknown"
-                           :exception e})))))
+  (fn []
+    (try
+      (rest/get (api-url "/api/version"))
+      (catch Exception e {:name "unknown"
+                          :version "unknown"
+                          :exception e}))))
 
 (defn is-headpin? []
   (-> (get-version) :name (= "Headpin")))
