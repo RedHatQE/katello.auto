@@ -40,6 +40,7 @@
                                       ; mean "any" validation error.
     errors))
 
+
 (def reqtypes
   {:prov-create                        "providers___create"
    :prov-destory                       "providers___destroy"
@@ -52,15 +53,15 @@
    
    :sys-create                         "systems___create"
    :sys-destroy                        "systems___destroy"
-   :sys-update                         "systems___update"
-   
+ ;; :sys-update                         "systems___update"
+ 
    :sysgrps-create                     "system_groups___create"
-   :sysgrps-add-sys                    "system_groups___add_systems"
-   :sysgrps-destroy-sys                "system_groups___destroy_systems"
    :sysgrps-copy                       "system_groups___copy"
-   :sysgrps-update                     "system_groups___update"
    :sysgrps-rm-sys                     "system_groups___remove_systems"
-   
+ ;; :sysgrps-add-sys                    "system_groups___add_systems"
+ ;; :sysgrps-destroy-sys                "system_groups___destroy_systems" 
+ ;; :sysgrps-update                     "system_groups___update"
+ 
    :env-create                         "environments___create"
    :env-destroy                        "environments___destroy"
    
@@ -149,6 +150,7 @@
         (assoc notice :type (keyword (:level notice)) 
                       :msg (str (:validationErrors notice) (:notices notice)))))
     (catch SeleniumException e '())))
+
 
 (defn check-for-success
   "Returns information about a success notification from the UI. Will

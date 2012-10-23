@@ -5,7 +5,7 @@
                      [conf :refer [config *session-user*
                                    *session-password* *session-org*]] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
-                     [notifications :refer [check-for-success]] 
+                     [notifications :as notification] 
                      [organizations :as organization])))
 
 ;;
@@ -46,7 +46,7 @@
                       :password-text password}
                      :log-in)
      (let [retVal true] ;Disable until login notification retrieval fix is implemented
-                        ;(check-for-success {:timeout-ms 20000})]
+                        ;(notification/check-for-success {:timeout-ms 20000})]
        (when (or org
                  (not (logged-in?)))
          (Thread/sleep 3000)
@@ -68,14 +68,14 @@
                      :user-default-org default-org
                      env-chooser [default-env]]
                     :save-user))
-  (check-for-success {:match-pred (request-type? :users-create)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
 
 (defn delete "Deletes the given user."
   [username]
   (navigate :named-user-page {:username username})
   (browser click :remove-user)
   (browser click :confirmation-yes)
-  (check-for-success {:match-pred (request-type? :users-destroy)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
   
 (defn edit
   "Edits the given user, changing any of the given properties (can
@@ -94,7 +94,7 @@
     (when (browser isElementPresent :password-conflict)
       (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
     (browser click :save-user-edit) 
-    (check-for-success))
+    (notification/check-for-success))
   (when new-email
     (in-place-edit {:user-email-text new-email})))
 
@@ -111,5 +111,5 @@
   (browser select :user-default-org-select org-name)
   (browser click (locators/environment-link env-name))
   (browser click :save-user-environment)
-  (check-for-success))
+  (notification/check-for-success))
 

@@ -1,7 +1,7 @@
 (ns katello.roles
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
             (katello [locators :as locators] 
-                     [notifications :refer [check-for-success]] 
+                     [notifications :as notification] 
                      [ui-tasks :refer [fill-ajax-form navigate]]))
     )
 
@@ -17,7 +17,7 @@
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
                   :save-role)
-  (check-for-success {:match-pred (request-type? :roles-create)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-create)}))
 
 (defn assign
   "Assigns the given user to the given roles. Roles should be a list
@@ -27,7 +27,7 @@
   (doseq [role roles]
     (browser click (locators/plus-icon role)))
   (browser click :save-roles)
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn edit
   "Edits a role to add new permissions, remove existing permissions,
@@ -57,7 +57,7 @@
               (fn [permissions]
                 (doseq [permission permissions]
                   (browser click (locators/user-role-toggler permission false))
-                  (check-for-success)
+                  (notification/check-for-success)
                   (browser sleep 5000))))
     (each-org add-permissions
               (fn [permissions]
@@ -73,7 +73,7 @@
                   (fill-ajax-form {:permission-name-text name
                                    :permission-description-text description}
                                   :save-permission))
-                (check-for-success)))))
+                (notification/check-for-success)))))
 
 (defn delete
   "Deletes the given role."
@@ -81,7 +81,7 @@
   (navigate :named-role-page {:role-name name})
   (browser click :remove-role)
   (browser click :confirmation-yes)
-  (check-for-success {:match-pred (request-type? :roles-destroy)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 
 

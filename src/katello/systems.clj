@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [clojure.string :refer [blank?]]
             (katello [locators :as locators] 
-                     [notifications :refer [check-for-success]] 
+                     [notifications :as notification] 
                      [ui-tasks :refer :all])))
 
 (defn create
@@ -13,7 +13,7 @@
                     :system-sockets-text sockets
                     :system-arch-select (or system-arch "x86_64")}
                     :create-system)
-   (check-for-success {:match-pred (request-type? :sys-create)}))
+   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
@@ -51,7 +51,7 @@
                          (browser click submit)) )]
     (sub-unsub-fn add-products locators/subscription-available-checkbox :subscribe)
     (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
-  (check-for-success))
+  (notification/check-for-success))
 
 (defn create-group
   "Creates a system-group"
@@ -60,7 +60,7 @@
    (fill-ajax-form {:system-group-name-text name
                     :system-group-description-text description}
                     :create-system-groups)
-   (check-for-success {:match-pred (request-type? :sysgrps-create)}))
+   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-create)}))
 
 (defn add-to-group
   "Adds a system to a System-Group"
@@ -85,7 +85,7 @@
   (fill-ajax-form {:system-group-copy-name-text new-name
                    :system-group-copy-description-text description}
                   :system-group-copy-submit)
-  (check-for-success {:match-pred (request-type? :sysgrps-copy)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
 
 (defn remove-group [system-group & [{:keys [also-remove-systems?]}]]
   (navigate :named-system-group-page {:system-group-name system-group})
@@ -94,7 +94,7 @@
   (browser click (if also-remove-systems?
                    :confirmation-yes
                    :system-group-confirm-only-system-group))
-  (check-for-success {:match-pred (request-type? :sysgrps-rm-sys)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-rm-sys)}))
 
 (defn edit-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
@@ -107,7 +107,7 @@
           (fill-ajax-form {:system-group-limit-value (str new-limit)}
                           :save-new-limit ))
       (browser check :system-group-unlimited))
-    (when needed-flipping (check-for-success)))
+    (when needed-flipping (notification/check-for-success)))
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
