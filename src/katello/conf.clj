@@ -169,7 +169,7 @@
   (for [instname (unique-names basename)]
     (merge cloud/small-instance-properties
            {:name instname
-            :image-id (@config :deltacloud-image-id)})))
+            :image_id (@config :deltacloud-image-id)})))
 
 (defmacro with-creds
   "Execute body and with the given user and password, all api calls
