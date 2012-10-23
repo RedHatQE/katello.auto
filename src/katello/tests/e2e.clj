@@ -9,7 +9,8 @@
                      [ui-tasks :refer :all]
                      [conf :refer [*session-user* *session-password*
                                    *environments* config no-clients-defined
-                                   with-org]]) 
+                                   with-org]])
+            [katello.client.provision :as provision]
             (test.tree [script :refer :all]
                        [builder :refer :all])
             [serializable.fn :refer [fn]]
@@ -29,8 +30,9 @@
   (let [all-products (map #(or (:productName %1) (:name %1)) products)
         all-packages (apply str (interpose " " packages-to-install))
         pool-provides-product (fn [prod pool]
-                                (some #(= (:productName %) prod)
-                                      (:providedProducts pool)))]
+                                (or (= (:productName pool) prod)
+                                    (some #(= (:productName %) prod)
+                                          (:providedProducts pool))))]
     
     (when (api/is-katello?)
       (with-org org-name
@@ -38,25 +40,26 @@
         (sync-and-promote products library target-env)))
 
     ;;client side
-    (client/setup-client)
-    (client/run-cmd (format "rpm -e %s" all-packages))
-    (client/register {:username *session-user*
-                      :password *session-password*
-                      :org org-name
-                      :env target-env
-                      :force true})
-                      
-    (doseq [product-name all-products]
-      (if-let [matching-pool (->> (api/system-available-pools "fixme") ;;switch to provisioning - jmw
-                                (filter (partial pool-provides-product product-name))
-                                first
-                                :id)]
-        (client/subscribe matching-pool)
-        (throw+ {:type :no-matching-pool :product-name product-name})))
-    (let [cmd-results [(client/run-cmd "yum repolist")
-                       (client/run-cmd (format "yum install -y --nogpg %s" all-packages))
-                       (client/run-cmd (format "rpm -q %s" all-packages))]]
-      (->> cmd-results (map :exit-code) (every? zero?) verify-that))))
+    (provision/with-client "e2e-custom" ssh-conn
+      (client/setup-client ssh-conn)
+      (client/run-cmd ssh-conn (format "rpm -e %s" all-packages))
+      (client/register ssh-conn {:username *session-user*
+                                 :password *session-password*
+                                 :org org-name
+                                 :env target-env
+                                 :force true})
+     
+      (doseq [product-name all-products]
+        (if-let [matching-pool (->> (api/system-available-pools (client/my-hostname ssh-conn))
+                                  (filter (partial pool-provides-product product-name))
+                                  first
+                                  :id)]
+          (client/subscribe ssh-conn  matching-pool)
+          (throw+ {:type :no-matching-pool :product-name product-name})))
+      (let [cmd-results [(client/run-cmd ssh-conn "yum repolist")
+                         (client/run-cmd ssh-conn (format "yum install -y --nogpg %s" all-packages))
+                         (client/run-cmd ssh-conn (format "rpm -q %s" all-packages))]]
+        (->> cmd-results (map :exit-code) (every? zero?) verify-that)))))
 
 ;; Tests
 
