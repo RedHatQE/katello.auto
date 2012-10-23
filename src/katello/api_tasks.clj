@@ -297,7 +297,9 @@
    (fn []
      (try
        (rest/get (api-url "/api/version"))
-       (catch Exception _ {:name "unknown" :version "unknown"})))))
+       (catch Exception e {:name "unknown"
+                           :version "unknown"
+                           :exception e})))))
 
 (defn is-headpin? []
   (-> (get-version) :name (= "Headpin")))
