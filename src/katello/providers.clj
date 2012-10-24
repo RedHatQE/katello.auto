@@ -34,7 +34,7 @@
                                  :product-name name})
   (browser click :remove-product)
   (browser click :confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :prod-destory)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
 
 (defn add-repo
   "Adds a repository under the given provider and product. Requires a

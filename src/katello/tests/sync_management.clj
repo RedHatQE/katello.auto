@@ -12,8 +12,7 @@
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
-            [tools.verify :refer [verify-that]])
-  (:refer-clojure :exclude [fn]))
+            [tools.verify :refer [verify-that]]))
 
 ;; Variables
 
@@ -76,6 +75,7 @@
 
 (defgroup sync-tests
   :group-setup create-sync-test-repo
+  :test-setup (fn [& _] (organization/switch))
   
   (deftest "Sync a small repo"
     (->>

@@ -43,7 +43,8 @@
 
 (def reqtypes
   {:prov-create              "providers___create"
-   :prov-destory             "providers___destroy"
+   :prov-destroy             "providers___destroy"
+   :prov-update              "providers___update"
    
    :prod-create              "products___create"
    :prod-destroy             "products___destroy"
@@ -61,7 +62,8 @@
    :sysgrps-add-sys          "system_groups___add_systems"
    :sysgrps-destroy-sys      "system_groups___destroy_systems" 
    :sysgrps-update           "system_groups___update"
- 
+   :sysgrps-destroy          "system_groups___destroy"
+   
    :env-create               "environments___create"
    :env-destroy              "environments___destroy"
    
@@ -90,6 +92,7 @@
   (let [errors {::invalid-credentials                   #"incorrect username"
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-older-than-existing-data       #"Import is older than existing data"
+                ::import-same-as-existing-data          #"Import is same as existing data"
                 ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
@@ -122,6 +125,7 @@
 (defn request-type? [req-type]
   "Returns a function that returns true if the given notification contains the
    specified request type."
+  {:pre (some #{req-type} (keys reqtypes))}
   (fn [notif]
     (= (req-type reqtypes) (:requestType notif))))
 

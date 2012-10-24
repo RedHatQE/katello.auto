@@ -105,7 +105,7 @@
   (browser click (if also-remove-systems?
                    :confirmation-yes
                    :system-group-confirm-only-system-group))
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-rm-sys)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-destroy)}))
 
 (defn edit-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
@@ -119,7 +119,7 @@
                           :save-new-limit ))
       (browser check :system-group-unlimited))
     (when needed-flipping (notification/check-for-success
-                           {:match-pred (notification/request-type? :sysgrps-add-sys)})))
+                           {:match-pred (notification/request-type? :sysgrps-update)})))
   (in-place-edit {:system-group-name-text new-sg-name
                   :system-group-description-text description}))
 
