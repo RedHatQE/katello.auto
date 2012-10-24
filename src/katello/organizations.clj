@@ -19,7 +19,7 @@
                    :org-initial-env-name-text initial-env-name
                    :org-initial-env-desc-text initial-env-description}
                   :create-organization)
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 
 (defn delete
   "Deletes the named organization."
@@ -28,8 +28,10 @@
   (browser click :remove-organization)
   (browser click :confirmation-yes)
   (notification/check-for-success) ;queueing success
-  (notification/wait-for-notification-gone)
-  (notification/check-for-success {:timeout-ms 180000})) ;for actual delete
+  (browser refresh)
+  (notification/check-for-success {:timeout-ms 180000
+                                   :match-pred (notification/request-type? :org-destroy)})) ;for actual delete
+
 
 (defn edit
   "Edits an organization. Currently the only property of an org that
