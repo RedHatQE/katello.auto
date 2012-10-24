@@ -292,14 +292,17 @@
         sync-info
         (recur (rest/get url))))))
 
-(def get-version
+(def get-version-from-server
   (memoize
-   (fn []
-     (try
-       (rest/get (api-url "/api/version"))
-       (catch Exception e {:name "unknown"
-                           :version "unknown"
-                           :exception e})))))
+    (fn [url]
+      (try
+        (rest/get url)
+        (catch Exception e {:name "unknown"
+                            :version "unknown"
+                            :exception e})))))
+
+(def get-version
+  (fn [] (get-version-from-server (api-url "/api/version"))))
 
 (defn is-headpin? []
   (-> (get-version) :name (= "Headpin")))
