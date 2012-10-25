@@ -105,7 +105,10 @@
   (browser click (if also-remove-systems?
                    :confirmation-yes
                    :system-group-confirm-only-system-group))
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-destroy)}))
+  (notification/check-for-success
+   {:match-pred  (notification/request-type? (if also-remove-systems?
+                                               :sysgrps-destroy-sys
+                                               :sysgrps-destroy))}))
 
 (defn edit-group "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
