@@ -207,21 +207,43 @@
                          []
                          repositories))]
     (doseq [repository repositories]
-      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))
-    (browser click :repo-compare-button)))
+      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))))
 
-(defn compare-repositories [repositories]
+(defn add-repositories-to-search-page [repositories]
   (navigate :content-search-page)
   (browser select :content-search-type "Repositories")
   (browser check :repo-auto-complete-radio)
   (doseq [repository repositories]
     (add-to-repository-browser repository))
-  (browser click :browse-button)
+  (browser click :browse-button))
+
+(defn click-if-compare-button-is-disabled? []
+  (browser click :repo-compare-button)
+  (not (=  "" (browser getText :repo-compare-button))))
+  
+
+(defn compare-repositories [repositories]
+  (add-repositories-to-search-page repositories)
   (compare-repositories-in-search-result repositories)
+  (browser click :repo-compare-button)
   (get-repo-compare-repositories))
 
-(defn get-repo-packages [repo] 
+(defn show-select [type]
+  (case type 
+        :packages  (browser select :repo-result-type-select "Packages")
+        :errata    (browser select :repo-result-type-select "Errata")))
+
+
+(defn view-select [set-type]
+  (case set-type 
+        :all (browser select :repo-result-filter-select   "All")
+        :shared (browser select :repo-result-filter-select   "Union")
+        :unique (browser select :repo-result-filter-select   "Difference")))
+
+(defn get-repo-packages [repo & {:keys [view] :or {view :packages} }] 
   (compare-repositories [repo])
+  (show-select view)
+  (load-all-results)
   (get-repo-compare-packages))
 
 (defn search-for-content

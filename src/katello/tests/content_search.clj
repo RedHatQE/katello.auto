@@ -37,6 +37,58 @@
 
 (defn envs [results]
   (->> results :columns (map (comp :content :to_display))))
+  
+  (defn repo-compare-test [type first first-packages second  second-packages]
+        (let [only-in-first  (difference first-packages second-packages)
+              only-in-second (difference second-packages first-packages)
+              union-pkg      (union first-packages second-packages)
+              intersect-pkg  (intersection first-packages second-packages)]
+          (compare-repositories [first second])
+          (show-select type)
+          (view-select :all)
+          (load-all-results)
+          (doseq [package intersect-pkg]
+             (verify-that (package-in-repository? package first))
+             (verify-that (package-in-repository? package second)))
+          (doseq [package only-in-first]
+             (verify-that (package-in-repository? package first))
+             (verify-that (not (package-in-repository? package second))))
+          (doseq [package only-in-second]
+             (verify-that (not(package-in-repository? package first)))
+             (verify-that (package-in-repository? package second)))
+          (view-select :shared)
+          (load-all-results)
+          (doseq [package intersect-pkg]
+             (verify-that (package-in-repository? package first))
+             (verify-that (package-in-repository? package second)))
+          (view-select :unique)
+          (load-all-results)
+          (doseq [package only-in-second]
+             (verify-that (not(package-in-repository? package first)))
+             (verify-that (package-in-repository? package second)))
+          (doseq [package only-in-first]
+             (verify-that (package-in-repository? package first))
+             (verify-that (not (package-in-repository? package second))))))
+  
+   (defn repo-all-shared-different-test [type first first-packages second  second-packages]
+        (let [only-in-first  (difference first-packages second-packages)
+              only-in-second (difference second-packages first-packages)
+              union-pkg      (union first-packages second-packages)
+              intersect-pkg  (intersection first-packages second-packages)]
+          (compare-repositories [first second])
+          (show-select type)
+          (view-select :all)
+          (load-all-results)
+          (verify-that (= union-pkg
+                        (into #{} (get-repo-compare-packages))))
+          (view-select :shared)
+          (load-all-results)
+          (verify-that (= intersect-pkg
+                        (into #{} (get-repo-compare-packages))))
+          (view-select :unique)
+          (load-all-results)
+          (verify-that (= (difference union-pkg intersect-pkg)
+                        (into #{} (get-repo-compare-packages))))))
 
 (defgroup content-search-repo-compare
   :group-setup (fn []
@@ -46,44 +98,38 @@
                  (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
   
   (deftest "Repo compare: Differences between repos can be qualified"
-    :data-driven true
-    
-    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
-      (compare-repositories [first second])
-      (doseq [package packages-in-both]
-        (verify-that (package-in-repository? package first))
-        (verify-that (package-in-repository? package second)))
-      (doseq [package packages-only-in-first]
-        (verify-that (package-in-repository? package first))
-        (verify-that (not (package-in-repository? package second))))
-      (doseq [package packages-only-in-second]
-        (verify-that (not(package-in-repository? package first)))
-        (verify-that (package-in-repository? package second))))
+      :data-driven true
+      
+      (fn [type repo1 repo2]
+        (repo-compare-test  type repo1 (into #{} (get-repo-packages repo1 :view type))
+                                      repo2 (into #{} (get-repo-packages repo2 :view type))))
+      
+      [[:packages "CompareZoo1" "CompareZoo2"]
+       [:errata "CompareZoo1" "CompareZoo2"]])
+  
+  (deftest "\"Compare\" UI - (SMOKE) Compare works for packages and errata"
+      :data-driven true
+      
+      (fn [type repo1 repo2]
+        (repo-all-shared-different-test  type repo1 (into #{} (get-repo-packages repo1 :view type))
+                                              repo2 (into #{} (get-repo-packages repo2 :view type))))
+      
+      [[:packages "CompareZoo1" "CompareZoo2"]
+       [:errata "CompareZoo1" "CompareZoo2"]])
+  
+   (deftest "Repo compare: Comparison against empty repository"
+      :data-driven true
+      
+      (fn [type repo1]
+        (repo-compare-test  type repo1 (into #{} (get-repo-packages repo1 :view type))
+                                 "CompareZooNosync" #{})
+        (repo-all-shared-different-test type repo1 (into #{} (get-repo-packages repo1 :view type))
+                                 "CompareZooNosync" #{}))
+      
+      [[:packages "CompareZoo1"]
+       [:errata "CompareZoo1"]])
+      
    
-    [["CompareZoo1" "CompareZoo2" [] 
-                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
-                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
-  
-  (deftest "Repo compare: Differences between repos can be qualified"
-    :data-driven true
-    
-    (fn [first second packages-in-both packages-only-in-first packages-only-in-second]
-      (compare-repositories [first second])
-      (doseq [package packages-in-both]
-        (verify-that (package-in-repository? package first))
-        (verify-that (package-in-repository? package second)))
-      (doseq [package packages-only-in-first]
-        (verify-that (package-in-repository? package first))
-        (verify-that (not (package-in-repository? package second))))
-      (doseq [package packages-only-in-second]
-        (verify-that (not(package-in-repository? package first)))
-        (verify-that (package-in-repository? package second))))
-   
-    [["CompareZoo1" "CompareZoo2" [] 
-                                  ["cheetah0.3-0.8.noarch" "elephant0.3-0.8.noarch"] 
-                                  ["bear4.1-1.noarch" "camel0.1-1.noarch" "cat1.0-1.noarch"]]])
-  
-  
     (deftest "Repo compare: Add and remove repos to compare"
       :data-driven true
       (fn [to-add to-remove]
@@ -94,17 +140,23 @@
           (verify-that (= expected result))))
             
         [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]]])
-  
+    
+    (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
+      (let [repositories ["CompareZoo1" "CompareZoo2"]]
+        (add-repositories-to-search-page repositories)
+        (verify-that (click-if-compare-button-is-disabled?))
+        (compare-repositories-in-search-result repositories)
+        (verify-that (not (click-if-compare-button-is-disabled?)))))
   
     (deftest "Repo compare: Add many repos to compare"
-      (let [repos (difference (fake/get-all-custom-repos) (fake/get-i18n-repos))]
+      (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
         (verify-that (= repos
                         (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
       (let [expected (fake/get-i18n-repos)
-            result (set (compare-repositories (into [] expected)))]
-        (verify-that (= expected result)))))
+               result (compare-repositories expected)]
+           (verify-that (= expected result)))))
 
 (defgroup content-search-tests
   :group-setup (fn []
