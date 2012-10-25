@@ -134,6 +134,7 @@
 
 
 (defgroup provider-tests
+  :test-setup organization/before-test-switch
   
   (deftest "Create a custom provider" 
     (provider/create {:name (uniqueify "auto-cp")

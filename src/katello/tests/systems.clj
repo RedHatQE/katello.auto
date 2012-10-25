@@ -98,7 +98,7 @@
 (defgroup system-group-tests
   :blockers api/katello-only
   :group-setup #(api/ensure-env-exist "dev" {:prior "Library"})
-  :test-setup (fn [& _] (org/switch))
+  :test-setup org/before-test-switch
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
@@ -239,7 +239,7 @@
 (defgroup system-tests
   :group-setup create-test-environment
   :blockers (open-bz-bugs "717408" "728357")
-  :test-setup (fn [& _] (org/switch))
+  :test-setup org/before-test-switch
   
   (deftest "Rename an existing system"
     :blockers (open-bz-bugs "729364") 

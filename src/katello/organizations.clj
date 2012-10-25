@@ -63,4 +63,9 @@
               (notification/check-for-success))))
         (browser clickAndWait (locators/org-switcher org-name)))))
 
+(defn before-test-switch
+  "A pre-made fn to switch to the session org, meant to be used in
+   test groups as a :test-setup."
+  [& _]
+  (switch))
 
