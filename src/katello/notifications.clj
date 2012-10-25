@@ -40,6 +40,51 @@
                                       ; mean "any" validation error.
     errors))
 
+
+(def reqtypes
+  {:prov-create              "providers___create"
+   :prov-destroy             "providers___destroy"
+   :prov-update              "providers___update"
+   
+   :prod-create              "products___create"
+   :prod-destroy             "products___destroy"
+   
+   :repo-create              "repositories___create"
+   :repo-destroy             "repositories___destroy"
+   
+   :sys-create               "systems___create"
+   :sys-destroy              "systems___destroy"
+   :sys-update               "systems___update"
+ 
+   :sysgrps-create           "system_groups___create"
+   :sysgrps-copy             "system_groups___copy"
+   :sysgrps-rm-sys           "system_groups___remove_systems"
+   :sysgrps-add-sys          "system_groups___add_systems"
+   :sysgrps-destroy-sys      "system_groups___destroy_systems" 
+   :sysgrps-update           "system_groups___update"
+   :sysgrps-destroy          "system_groups___destroy"
+   
+   :env-create               "environments___create"
+   :env-destroy              "environments___destroy"
+   
+   :org-create               "organizations___create"
+   :org-destroy              "organizations___destroy"
+   
+   :roles-create             "roles___create"
+   :roles-destroy            "roles___destroy"
+   :roles-update             "roles___update"
+   :roles-create-permission  "roles___create_permission"
+   :roles-destroy-permission "roles___destroy_permission"
+   
+   :users-create             "users___create"
+   :users-destroy            "users___destroy"
+   :users-update-roles       "users___update_roles"
+
+   :sync-create              "sync_plans___create"
+   :sync-destroy             "sync_plans___destroy"
+   :sync-update              "sync_plans___update"})
+
+
 (def ^{:doc "A mapping of known errors in Katello. This helps
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
@@ -47,6 +92,7 @@
   (let [errors {::invalid-credentials                   #"incorrect username"
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-older-than-existing-data       #"Import is older than existing data"
+                ::import-same-as-existing-data          #"Import is same as existing data"
                 ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
@@ -79,8 +125,9 @@
 (defn request-type? [req-type]
   "Returns a function that returns true if the given notification contains the
    specified request type."
+  {:pre (some #{req-type} (keys reqtypes))}
   (fn [notif]
-    (= req-type (:requestType notif))))
+    (= (req-type reqtypes) (:requestType notif))))
 
 (defn flush []
   "Clears the javascript notice array."
@@ -111,6 +158,7 @@
            (assoc notice :type (keyword (:level notice)) 
                   :msg (str (:validationErrors notice) (:notices notice)))))
        (catch SeleniumException e '())))
+
 
 (defn check-for-success
   "Returns notification information from the UI. Will wait up to

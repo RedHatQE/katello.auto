@@ -19,14 +19,15 @@
 (defn create-test-provider
   "Sets up a test custom provider to be used by other tests."
   []
+  (organization/switch)
   (provider/create {:name (reset! test-provider-name (uniqueify "cust"))
-           :description "my description"}))
+                    :description "my description"}))
 
 (defn create-same-product-in-multiple-providers
   [product-name providers]
   (doseq [provider providers]
     (provider/add-product {:provider-name provider
-                  :name product-name})))
+                           :name product-name})))
 
 (defn create-same-product-name-in-multiple-orgs
   [product-name orgs]
@@ -43,7 +44,8 @@
 (defgroup custom-product-tests
   :group-setup create-test-provider
   :blockers (open-bz-bugs "751910")
-
+  :test-setup (fn [& _] (organization/switch))
+  
   (deftest "Create a custom product"
     (provider/add-product {:provider-name @test-provider-name
                             :name (reset! test-product-name (uniqueify "prod"))

@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium 
               :refer [browser loop-with-timeout]]
             (katello [locators :as locators] 
-                     [notifications :refer [check-for-success]] 
+                     [notifications :as notification] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
@@ -32,7 +32,7 @@
                      :sync-plan-time-text time
                      :sync-plan-date-text date}
                     :save-sync-plan)
-    (check-for-success)))
+    (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
 
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also
@@ -46,7 +46,8 @@
                     :sync-plan-description-text description
                     :sync-plan-interval-select interval
                     :sync-plan-time-text time
-                    :sync-plan-date-text date})))
+                    :sync-plan-date-text date}))
+  (notification/check-for-success {:match-pred (notification/request-type? :sync-update)}))
 
 (defn schedule
   "Schedules the given list of products to be synced using the given
@@ -57,7 +58,8 @@
     (browser click (locators/schedule product)))
   (browser click (locators/sync-plan plan-name))
   (browser clickAndWait :apply-sync-schedule )
-  (check-for-success))
+  (notification/check-for-success))  ;notif class is 'undefined' so
+                                     ;don't match 
 
 (defn current-plan
   "Returns a map of what sync plan a product is currently scheduled

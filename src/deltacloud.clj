@@ -59,21 +59,9 @@
 (defn instance-by-name [conn inst-name]
   (->> conn instances (filter (by-name inst-name)) first))
 
-(defn name-indexed
-  "Takes a map of instance creation parameters (such at image_id,
-etc), returns an infinite sequence of maps, each one add
-'-n' appended to the name, where n is the index."
-  [m]
-  (for [i (iterate inc 1)]
-    (update-in m [:name] #(format "%s-%d" % i))))
-
-(defn small-instance-properties
-  "A set of properties for a small instance, requires a name and image_id."
-  [{:keys [name image-id]}]
-  {:pre [(and name image-id)]}
-  {:name name
-   :image_id image-id
-   :hwp_cpus "2"
+(def ^{:doc "A set of properties for a small instance."}
+  small-instance-properties
+  {:hwp_cpus "2"
    :hwp_memory "256"})
 
 (defn get-actions [conn i]
@@ -154,9 +142,9 @@ etc), returns an infinite sequence of maps, each one add
                                         (some-fn stopped? running?))))))
 
 (defn provision-all
-  "Provision instances with given properties (a list of maps), in parallel.
-   See name-indexed to easily generate such a list. Returns the
-   instances data from deltacloud, and the deltacloud connection."
+  "Provision instances with given properties (a list of maps), in
+   parallel. Returns the instances data from deltacloud, and the
+   deltacloud connection."
   [conn instance-props]
   {:instances (->> (for [inst-prop instance-props]
                    (future (provision conn inst-prop)))

@@ -4,7 +4,8 @@
             clojure.tools.cli
             selenium-server
             [fn.trace :refer [all-fns]]
-            [deltacloud :as cloud])
+            [deltacloud :as cloud]
+            [katello.tasks :refer [unique-names]])
   
   (:import [java.io PushbackReader FileNotFoundException]
            [java.util.logging Level Logger]))
@@ -102,8 +103,7 @@
                'katello.tasks/timestamps
                'katello.tasks/date-string
                'katello.tasks/timestamped-seq
-               'katello.conf/client-defs
-               'deltacloud/name-indexed})))
+               'katello.conf/client-defs})))
 
 
 (declare ^:dynamic *session-user*
@@ -166,9 +166,10 @@
 
 (defn client-defs "Return an infinite seq of client instance property definitions."
   [basename]
-  (cloud/name-indexed
-   (cloud/small-instance-properties {:name basename
-                                     :image-id (@config :deltacloud-image-id)})))
+  (for [instname (unique-names basename)]
+    (merge cloud/small-instance-properties
+           {:name instname
+            :image_id (@config :deltacloud-image-id)})))
 
 (defmacro with-creds
   "Execute body and with the given user and password, all api calls

@@ -5,7 +5,7 @@
             (katello [conf :refer [config]]
                      [tasks :refer [tmpfile unique-format]]
                      [ui-tasks :refer [navigate in-place-edit fill-ajax-form]]
-                     [notifications :refer [check-for-success]]))
+                     [notifications :as notification]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
@@ -66,14 +66,16 @@
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url}))
+    (in-place-edit {:redhat-provider-repository-url-text repository-url})
+    (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (check-for-success {:timeout-ms 480000}))
+  (notification/check-for-success)
+  (browser refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  ;(check-for-success))
+  (notification/check-for-success {:timeout-ms 480000}))
 
 (defn already-uploaded?
   "Returns true if the current organization already has Red Hat
