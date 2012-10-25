@@ -51,7 +51,9 @@
                          (browser click submit)) )]
     (sub-unsub-fn add-products locators/subscription-available-checkbox :subscribe)
     (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-update)}))
+  (notification/check-for-success {:match-pred (notification/request-type? (if (or add-products remove-products)
+                                                                             :sys-update-subscriptions
+                                                                             :sys-update))}))
 
 (defn create-group
   "Creates a system-group"
