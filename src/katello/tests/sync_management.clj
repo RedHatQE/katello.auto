@@ -84,13 +84,6 @@
      (every? is-complete?)
      verify-that))
 
-  (deftest "Sync a repository where username has non-ascii characters"
-    :data-driven true
-    :blockers (open-bz-bugs "835586")
-    sync-with-user
-    [["Mané"]
-     ["水煮鱼"]])
-
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")
 
