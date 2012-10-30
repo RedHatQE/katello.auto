@@ -154,8 +154,8 @@
                         (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
-      (let [expected (fake/get-i18n-repos)
-               result (compare-repositories expected)]
+      (let [expected (set (fake/get-i18n-repos))
+            result (set (compare-repositories expected))]
            (verify-that (= expected result)))))
 
 (defgroup content-search-tests

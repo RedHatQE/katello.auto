@@ -170,6 +170,10 @@
       (not (= "--" 
               (browser getText (locators/search-result-cell row-id col-id))))))
 
+(defn adder-for-content-search [auto-comp-box add-button cont-item]
+  (browser setText auto-comp-box cont-item)
+  (browser click add-button))
+
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (browser setText auto-comp-box cont-item)
   ;; typeKeys is necessary to trigger drop-down list
@@ -185,7 +189,7 @@
     (browser click :content-search-load-more)))
 
 (defn add-to-repository-browser [repository]
-  (autocomplete-adder-for-content-search :repo-auto-complete :add-repo repository))
+  (adder-for-content-search :repo-auto-complete :add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
   (browser click (locators/content-search-repo-remove repository)))
