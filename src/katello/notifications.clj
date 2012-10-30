@@ -55,6 +55,7 @@
    :sys-create               "systems___create"
    :sys-destroy              "systems___destroy"
    :sys-update               "systems___update"
+   :sys-update-subscriptions "systems___update_subscriptions"
  
    :sysgrps-create           "system_groups___create"
    :sysgrps-copy             "system_groups___copy"

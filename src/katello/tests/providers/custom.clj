@@ -44,7 +44,7 @@
 (defgroup custom-product-tests
   :group-setup create-test-provider
   :blockers (open-bz-bugs "751910")
-  :test-setup (fn [& _] (organization/switch))
+  :test-setup  organization/before-test-switch
   
   (deftest "Create a custom product"
     (provider/add-product {:provider-name @test-provider-name

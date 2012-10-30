@@ -75,7 +75,7 @@
 
 (defgroup sync-tests
   :group-setup create-sync-test-repo
-  :test-setup (fn [& _] (organization/switch))
+  :test-setup organization/before-test-switch
   
   (deftest "Sync a small repo"
     (->>
