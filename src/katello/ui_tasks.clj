@@ -170,6 +170,10 @@
       (not (= "--" 
               (browser getText (locators/search-result-cell row-id col-id))))))
 
+(defn adder-for-content-search [auto-comp-box add-button cont-item]
+  (browser setText auto-comp-box cont-item)
+  (browser click add-button))
+
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (browser setText auto-comp-box cont-item)
   ;; typeKeys is necessary to trigger drop-down list
@@ -185,7 +189,7 @@
     (browser click :content-search-load-more)))
 
 (defn add-to-repository-browser [repository]
-  (autocomplete-adder-for-content-search :repo-auto-complete :add-repo repository))
+  (adder-for-content-search :repo-auto-complete :add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
   (browser click (locators/content-search-repo-remove repository)))
@@ -207,21 +211,43 @@
                          []
                          repositories))]
     (doseq [repository repositories]
-      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))
-    (browser click :repo-compare-button)))
+      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))))
 
-(defn compare-repositories [repositories]
+(defn add-repositories-to-search-page [repositories]
   (navigate :content-search-page)
   (browser select :content-search-type "Repositories")
   (browser check :repo-auto-complete-radio)
   (doseq [repository repositories]
     (add-to-repository-browser repository))
-  (browser click :browse-button)
+  (browser click :browse-button))
+
+(defn click-if-compare-button-is-disabled? []
+  (browser click :repo-compare-button)
+  (not (=  "" (browser getText :repo-compare-button))))
+  
+
+(defn compare-repositories [repositories]
+  (add-repositories-to-search-page repositories)
   (compare-repositories-in-search-result repositories)
+  (browser click :repo-compare-button)
   (get-repo-compare-repositories))
 
-(defn get-repo-packages [repo] 
+(defn show-select [type]
+  (case type 
+        :packages  (browser select :repo-result-type-select "Packages")
+        :errata    (browser select :repo-result-type-select "Errata")))
+
+
+(defn view-select [set-type]
+  (case set-type 
+        :all (browser select :repo-result-filter-select   "All")
+        :shared (browser select :repo-result-filter-select   "Union")
+        :unique (browser select :repo-result-filter-select   "Difference")))
+
+(defn get-repo-packages [repo & {:keys [view] :or {view :packages} }] 
   (compare-repositories [repo])
+  (show-select view)
+  (load-all-results)
   (get-repo-compare-packages))
 
 (defn search-for-content

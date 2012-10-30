@@ -26,6 +26,11 @@
 (defmacro debug [tree]
   `(test.tree.debug/debug ~tree (katello.conf/trace-list)))
 
+(defn print-name-result [resulttree]
+  (doseq [result @(second myresult)]
+    (println (:name(first result)) 
+             (:result (:report (second result))))))
+
 (katello.conf/init {:selenium-address "localhost:4444"})
 
 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
