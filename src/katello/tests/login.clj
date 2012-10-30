@@ -28,16 +28,18 @@
 
 (defn login-admin []
   (user/logout)
-  (user/login *session-user* *session-password* {:org (@config :admin-org)})
+  (user/login)
   (verify-that (= (user/current) *session-user*)))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
-  (navigate :top-level)
-  (if (= (organization/current) "Select an Organization:") ;;see bz 857173
-    (try (organization/switch (@config :admin-org))
-         (catch Exception _
-           (login-admin))))) 
+  (if (user/logged-in?)
+    (do (navigate :top-level)
+        (if (= (organization/current) "Select an Organization:") ;;see bz 857173
+          (try (organization/switch (@config :admin-org))
+               (catch Exception _
+                 (login-admin)))))
+    (user/login))) 
 
 ;;; Tests
 
