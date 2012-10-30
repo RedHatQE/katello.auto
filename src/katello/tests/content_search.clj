@@ -148,6 +148,15 @@
         (compare-repositories-in-search-result repositories)
         (verify-that (not (click-if-compare-button-is-disabled?)))))
   
+    
+    (deftest "\"Compare\" UI - Selecting repos for compare"
+      (let [repositories ["CompareZoo1" "CompareZoo2"]]
+        (add-repositories-to-search-page (fake/get-all-custom-repos))
+        (compare-repositories-in-search-result repositories)
+        (click-if-compare-button-is-disabled?)
+        (verify-that (= (set repositories)
+                        (set (get-repo-compare-repositories))))))
+     
     (deftest "Repo compare: Add many repos to compare"
       (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
         (verify-that (= repos
