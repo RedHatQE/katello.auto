@@ -297,6 +297,9 @@
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
    :add-repo                   "add_repo"
+   :repo-result-type-select    "//article[@id='maincontent']//article[@id='comparison_grid']//header//div[@id='left_select']//select"
+   :repo-result-filter-select  "//div[@id='right_select']//select"
+
    :row-headers                "//ul[@id='grid_row_headers']/li"
    :col-headers                "//ul[@id='column_headers']/li"
    :repo-auto-complete-radio   "repos_auto_complete_radio"
