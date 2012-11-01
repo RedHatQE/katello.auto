@@ -328,6 +328,7 @@
    :system-release-version-select          "system[releaseVer]"
    :system-environment                     "//div[@id='environment_path_selector']"
    :system-operating-system                "//label[contains(.,'OS')]/../following-sibling::*[1]"
+   :system-save-environment                "//input[@value='Save']"
 
    ;;systemgroups pane
    :new-system-groups                      "//a[@id='new']"
