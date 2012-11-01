@@ -69,12 +69,6 @@
                                          :email "root@localhost"})
                      (role/assign {:user admin :roles ["Administrator"]}))))))
 
-    (deftest "User with the same username as password is disallowed"
-      :blockers (open-bz-bugs "841499")
-      (expecting-error (errtype :katello.notifications/password-same-as-username)
-                       (with-unique [username "passwduser"]
-                         (user/create    username (merge generic-user-details {:password username})))))
-
     (deftest "Two users with the same username is disallowed"
       :blockers (open-bz-bugs "738425")
 

@@ -21,11 +21,9 @@
 (def custom-providers [{:name "Custom Provider"
                         :products [{:name "Com Nature Enterprise"
                                     :repos [{:name "CompareZoo1" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"
-                                            }
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "CompareZoo2" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                                            }
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
                                             {:name "CompareZooNosync"
                                              :unsyncable true
                                              :url "http://inecas.fedorapeople.org/fakerepos/"}]}
@@ -34,8 +32,7 @@
                                     :repos [{:name "洪" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "Гесер" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                                            }]}
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
                                    {:name "ManyRepository Enterprise"
                                     :repos [{:name "ManyRepositoryA" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
