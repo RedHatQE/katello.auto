@@ -81,6 +81,20 @@
       
       validation/i8n-chars)
 
+    (deftest "Create an org with a 1 character UTF-8 name"
+      :data-driven true
+
+      (fn [org-name]
+        (organization/create org-name)
+        (verify-that (org-exists? org-name)))
+
+      ;;create 5 rows of data, 1 random utf8 char each
+      (let [lo 0x0080
+            hi 0x5363
+            rand-range (fn [] (+ (rand-int (- hi lo))
+                                lo))]
+        (->> rand-range repeatedly (map (comp vector char)) (take 5))))
+    
     (deftest "Create an organization with an initial environment"
       (with-unique [org-name "auto-org"
                     env-name "environment"]
@@ -92,7 +106,7 @@
       
       (with-unique [org-name "test-dup"]
         (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
-                                   (organization/create org-name {:description "org-description"}))))
+          (organization/create org-name {:description "org-description"}))))
 
     (deftest "Two organizations whose names only differ by upper/lower case are disallowed"
       :blockers (open-bz-bugs "847037")
@@ -100,9 +114,9 @@
 
       (fn [orig-org-name modify-case-fn]
         (expecting-error (errtype :katello.notifications/name-taken-error)
-          (with-unique [org-name orig-org-name]
-            (organization/create org-name)
-            (organization/create (modify-case-fn org-name)))))
+                         (with-unique [org-name orig-org-name]
+                           (organization/create org-name)
+                           (organization/create (modify-case-fn org-name)))))
 
       [["org"      capitalize]
        ["your org" capitalize]
@@ -138,7 +152,6 @@
         (organization/delete org-name)
         (verify-that         (org-does-not-exist? org-name)))
 
-    
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
         
