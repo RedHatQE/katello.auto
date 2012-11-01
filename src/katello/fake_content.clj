@@ -10,13 +10,15 @@
 
 (def some-product-repos [{:name       "Nature Enterprise"
                           :repos      ["Nature Enterprise x86_64 1.0"
-                                       "Nature Enterprise x86_64 1.1"]}
+                                       "Nature Enterprise x86_64 1.1"
+                                       "Nature Enterprise x86_64 6Server"]}
                          {:name     "Zoo Enterprise"
                           :repos    ["Zoo Enterprise x86_64 6.2"
                                      "Zoo Enterprise x86_64 6.3"
                                      "Zoo Enterprise x86_64 6.4"
                                      "Zoo Enterprise x86_64 5.8"
-                                     "Zoo Enterprise x86_64 5.7"]}])
+                                     "Zoo Enterprise x86_64 5.7"
+                                     "Zoo Enterprise x86_64 6Server"]}])
 
 (def custom-providers [{:name "Custom Provider"
                         :products [{:name "Com Nature Enterprise"
