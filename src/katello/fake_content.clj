@@ -46,9 +46,7 @@
                                             {:name "ManyRepositoryD" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                             {:name "ManyRepositoryE" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                           ]}]}])
-
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 

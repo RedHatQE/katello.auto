@@ -27,7 +27,7 @@
   `(test.tree.debug/debug ~tree (katello.conf/trace-list)))
 
 (defn print-name-result [resulttree]
-  (doseq [result @(second myresult)]
+  (doseq [result @(second resulttree)]
     (println (:name(first result)) 
              (:result (:report (second result))))))
 
