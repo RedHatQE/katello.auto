@@ -26,27 +26,9 @@
     (boolean (and (every? pred results)
                   (every? (into #{} results) expected-items)))))
 
-(defn verify-simple-search [entity-type create-fn query-string]
-  (let [entity-name (uniqueify (str query-string "-forsearch"))
-        valid-search-results (search-results-valid?
-                              (fn [item] (.contains item query-string)) [entity-name])]
-    (create-fn entity-name)
-    (search entity-type {:criteria (str query-string "*")})
-    (verify-that (valid-search-results (extract-left-pane-list)))))
-
 ;; Tests
 (defgroup search-tests
   
-  (deftest "Search for an organization"
-    :description "Search for organizations based on criteria." 
-    :blockers    (open-bz-bugs "750120")
-      
-    (verify-simple-search :organizations organization/create "myfoobar"))
-  
-
-  (deftest "Search for a user"
-    (verify-simple-search :users #(user/create % generic-user-details) "mybazquux"))
-
   (deftest "Perform search operation on systems"
     :data-driven true
     :description "Search for a system based on criteria."
