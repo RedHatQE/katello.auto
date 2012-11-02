@@ -85,7 +85,7 @@
   []
   (->> (loaded-libs)
      (filter (fn [sym] (-> sym str (.startsWith "katello"))))
-     (concat '(deltacloud katello.client.provision))
+     (concat '(katello.client.provision))
      all-fns
      (concat '(tools.verify/check
                com.redhat.qe.auto.selenium.selenium/call-sel
