@@ -93,7 +93,7 @@
   (let [errors {::invalid-credentials                   #"incorrect username"
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-older-than-existing-data       #"Import is older than existing data"
-                ::import-same-as-existing-data          #"Import is same as existing data"
+                ::import-same-as-existing-data          #"Import is the same as existing data"
                 ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
