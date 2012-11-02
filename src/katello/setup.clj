@@ -55,8 +55,7 @@
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)
           user (uniqueify (str (@config :admin-user) thread-number))]
-      (binding [trace/tracer (trace/per-thread-tracer)
-                sel (new-selenium (nth (cycle *browsers*)
+      (binding [sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))]
         (try 
           (start-selenium)
