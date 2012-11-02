@@ -330,6 +330,16 @@
   (browser click :confirmation-yes)
   (notification/check-for-success))
 
+(defn add-substo-activation-key
+  "Add subscriptions to activation key."
+  [name subscription]
+  (navigate :named-activation-key-page {:activation-key-name name})
+  (browser click :available-subscriptions)
+  (browser click (locators/subscription-checkbox subscription))
+  (browser click :add-substo-act-key)
+  (notification/check-for-success))
+  
+
 (defn create-template
   "Creates a system template with the given name and optional
   description."

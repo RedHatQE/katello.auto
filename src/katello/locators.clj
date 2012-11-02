@@ -69,7 +69,8 @@
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
-   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]" 
+   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
+   subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
    tab                             "link=$1"
    template-action                 "//a[@data-name='$2' and .='$1']"
    template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='$1']"
@@ -359,6 +360,9 @@
    :activation-key-description-text        "activation_key[description]"
    :activation-key-template-select         "activation_key[system_template_id]"
    :save-activation-key                    "save_key"
+   :applied-subscriptions                  "//a[.='Applied Subscriptions']"
+   :available-subscriptions                "//a[.='Available Subscriptions']"
+   :add-substo-act-key                     "//input[@id='subscription_submit_button']"
    :remove-activation-key                  (link "Remove Activation Key")
    :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
    :release-version-text                   "system[releaseVer]"})

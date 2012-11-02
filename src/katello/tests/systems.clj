@@ -7,7 +7,8 @@
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [systems :as system] 
-                     [conf :refer [*session-user* *session-password* config *environments*]]) 
+                     [conf :refer [*session-user* *session-password* config *environments*]])
+            [katello.tests.content-search :refer [setup-org]]
             [katello.client.provision :as provision]
             (test.tree [script :refer :all] 
                        [builder :refer [union]])
@@ -299,7 +300,18 @@
           (create-activation-key
            {:name ak-name
             :description "my description"
-            :environment test-environment})))))
+            :environment test-environment}))))
+    
+    (deftest "create activation keys with subscriptions"
+      (with-unique [ak-name "act-key"
+                    test-org1 "redhat-org"]
+        (setup-org test-org1 test-environment)
+        (org/switch test-org1)
+        (create-activation-key {:name ak-name
+                                :description "my act keys"
+                                :environment test-environment})
+        (add-substo-activation-key ak-name "Nature Enterprise 8/5")
+        (verify-that (= (system/get-subsin-act-key) "Nature Enterprise 8/5")))))
   
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
