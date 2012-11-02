@@ -47,11 +47,12 @@
     (manifest/upload manifest-loc (select-keys m [:repository-url]))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
-  (with-org org-name
-    (organization/switch)
-    (enable-redhat-repositories enable-repos)
-    (navigate :sync-status-page)
-    (verify-all-repos-not-synced enable-repos)))
+  (when (api/is-katello?)
+    (with-org org-name
+      (organization/switch)
+      (enable-redhat-repositories enable-repos)
+      (navigate :sync-status-page)
+      (verify-all-repos-not-synced enable-repos))))
 
 (defn step-promote-redhat-content-into-test-env [{:keys [org-name env-name products]}]
   (with-org org-name
