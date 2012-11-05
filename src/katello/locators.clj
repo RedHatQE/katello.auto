@@ -362,7 +362,8 @@
    :save-activation-key                    "save_key"
    :applied-subscriptions                  "//a[.='Applied Subscriptions']"
    :available-subscriptions                "//a[.='Available Subscriptions']"
-   :add-substo-act-key                     "//input[@id='subscription_submit_button']"
+   :add-subscriptions-to-activation-key    "//input[@id='subscription_submit_button']"
+   :fetch-applied-subscriptions            "//tr[@class='parent ' or @class='parent alt']/td/a"
    :remove-activation-key                  (link "Remove Activation Key")
    :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
    :release-version-text                   "system[releaseVer]"})

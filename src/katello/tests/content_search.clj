@@ -30,11 +30,6 @@
 
 (name-fns ["repo" "product" "errata" "package"])
 
-(defn setup-org [test-org envs]
-      (api/create-organization test-org)
-      (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
-      (if (not (nil? envs)) (env/create-path test-org envs)))
-
 (defn envs [results]
   (->> results :columns (map (comp :content :to_display))))
   
@@ -203,7 +198,7 @@
 
     (fn [envz search-params pred & [paral-env]]
       (with-unique [test-org1 "redhat-org"]
-        (setup-org test-org1 envz)
+        (fake/setup-org test-org1 envz)
         (if (not (nil? paral-env)) (env/create-path test-org1 (take 3 (unique-names "env3"))))
         (let [search-res (with-org test-org1
                            (org/switch)                       

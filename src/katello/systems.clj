@@ -143,9 +143,9 @@
   (navigate :named-systems-page {:system-name name})
   (browser getText :system-operating-system))
 
-(defn get-subsin-act-key "Get applied susbscription info from activation key"
+(defn get-subscriptions-in-activation-key "Get applied susbscription info from activation key"
   [name]
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :applied-subscriptions)
-  (browser getText :subscription-name))
+  (browser getText :fetch-applied-subscriptions))
 

@@ -3,7 +3,9 @@
             (katello [manifest :as manifest]
                      [conf :refer [config with-org]]
                      [organizations :as org]
+                     [environments :as env]
                      [providers :as providers]
+                     [api-tasks :as api]
                      [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
@@ -17,6 +19,8 @@
                                      "Zoo Enterprise x86_64 6.4"
                                      "Zoo Enterprise x86_64 5.8"
                                      "Zoo Enterprise x86_64 5.7"]}])
+
+(def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7 "))
 
 (def custom-providers [{:name "Custom Provider"
                         :products [{:name "Com Nature Enterprise"
@@ -102,3 +106,8 @@
                                  :url (repo :url)})))) 
             (sync/perform-sync (map :name (get-custom-repos custom-providers 
                     :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))
+
+(defn setup-org [test-org envs]
+      (api/create-organization test-org)
+      (prepare-org test-org (mapcat :repos some-product-repos))
+      (if (not (nil? envs)) (env/create-path test-org envs)))

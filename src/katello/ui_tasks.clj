@@ -330,13 +330,14 @@
   (browser click :confirmation-yes)
   (notification/check-for-success))
 
-(defn add-substo-activation-key
+(defn add-subscriptions-to-activation-key
   "Add subscriptions to activation key."
-  [name subscription]
+  [name subscriptions]
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :available-subscriptions)
-  (browser click (locators/subscription-checkbox subscription))
-  (browser click :add-substo-act-key)
+  (doseq [subscription subscriptions]
+    (browser click (locators/subscription-checkbox subscription)))
+  (browser click :add-subscriptions-to-activation-key)
   (notification/check-for-success))
   
 
