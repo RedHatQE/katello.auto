@@ -206,7 +206,7 @@
    :import-manifest                     "new"
    :redhat-provider-repository-url-text "provider[repository_url]"
    :choose-file                         "provider_contents"
-   :upload                              "upload_form_button"
+   :upload                              "provider_submit"
    :force-import-checkbox               "force_import"
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
