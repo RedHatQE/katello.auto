@@ -70,7 +70,6 @@
     (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
-  (notification/check-for-success)
   (browser refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
