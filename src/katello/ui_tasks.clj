@@ -158,7 +158,6 @@
 (defn get-search-result-repositories [] 
   (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
     (browser getText locator))))
- 
 
 (defn package-in-repository? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
@@ -329,6 +328,17 @@
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (notification/check-for-success))
+
+(defn add-subscriptions-to-activation-key
+  "Add subscriptions to activation key."
+  [name subscriptions]
+  (navigate :named-activation-key-page {:activation-key-name name})
+  (browser click :available-subscriptions)
+  (doseq [subscription subscriptions]
+    (browser click (locators/subscription-checkbox subscription)))
+  (browser click :add-subscriptions-to-activation-key)
+  (notification/check-for-success))
+  
 
 (defn create-template
   "Creates a system template with the given name and optional
