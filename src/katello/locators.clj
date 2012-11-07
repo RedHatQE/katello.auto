@@ -68,6 +68,7 @@
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
+   fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[$1]"
    sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
    system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
    subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
@@ -206,7 +207,7 @@
    :import-manifest                     "new"
    :redhat-provider-repository-url-text "provider[repository_url]"
    :choose-file                         "provider_contents"
-   :upload                              "provider_submit"
+   :upload                              "upload_form_button"
    :force-import-checkbox               "force_import"
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
@@ -362,8 +363,7 @@
    :save-activation-key                    "save_key"
    :applied-subscriptions                  "//a[.='Applied Subscriptions']"
    :available-subscriptions                "//a[.='Available Subscriptions']"
-   :add-subscriptions-to-activation-key    "//input[@id='subscription_submit_button']"
-   :fetch-applied-subscriptions            "//tr[@class='parent ' or @class='parent alt']/td/a"
+   :add-subscriptions-to-activation-key    "//input[@id='subscription_submit_button']"            
    :remove-activation-key                  (link "Remove Activation Key")
    :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
    :release-version-text                   "system[releaseVer]"})

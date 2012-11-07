@@ -306,15 +306,16 @@
       (with-unique [ak-name "act-key"
                     test-org1 "redhat-org"]
         (do
-          (fake/setup-org test-org1 test-environment)
-          (org/switch test-org1)
-          (create-activation-key {:name ak-name
-                                  :description "my act keys"
-                                  :environment test-environment})
-          (add-subscriptions-to-activation-key ak-name fake/subscription-names)
-          (verify-that (some #{(first fake/subscription-names)} 
-                             (system/get-subscriptions-in-activation-key ak-name)))))))
-  
+          (let [envz (take 3 (unique-names "env"))]
+            (fake/setup-org test-org1 envz)
+            (org/switch test-org1)
+            (create-activation-key {:name ak-name
+                                    :description "my act keys"
+                                    :environment (first envz)})
+            (add-subscriptions-to-activation-key ak-name fake/subscription-names)
+            (verify-that (some #{(first fake/subscription-names)} 
+                               (system/get-subscriptions-in-activation-key ak-name))))))))
+ 
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
       

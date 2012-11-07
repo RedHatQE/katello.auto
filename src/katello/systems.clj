@@ -147,5 +147,5 @@
   [name]
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :applied-subscriptions)
-  (browser getText :fetch-applied-subscriptions))
+  (extract-list locators/fetch-applied-subscriptions))
 

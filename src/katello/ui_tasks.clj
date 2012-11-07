@@ -158,7 +158,6 @@
 (defn get-search-result-repositories [] 
   (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
     (browser getText locator))))
- 
 
 (defn package-in-repository? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
