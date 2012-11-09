@@ -199,10 +199,10 @@
       (fn [type expected-errata]
           (verify-that (= expected-errata (get-errata-set type))))
       
-      [["title:Bear_Erratum" #{"RHEA-2012:0010"}]
-       ["title:Sea_Erratum" #{"RHEA-2012:0011"}]
-       ["title:Bird_Erratum" #{"RHEA-2012:0012"}]
-       ["title:Gorilla_Erratum" #{"RHEA-2012:0013"}]])
+      [["title:\"Bear_Erratum\"" #{"RHEA-2012:1010"}]
+       ["title:\"Sea_Erratum\"" #{"RHEA-2012:1011"}]
+       ["title:\"Bird_Erratum\"" #{"RHEA-2012:1012"}]
+       ["title:\"Gorilla_Erratum\"" #{"RHEA-2012:1013"}]])
    
    (deftest "UI - Search Errata in Content Search by title regexp"
       :data-driven true
@@ -210,11 +210,11 @@
       (fn [type expected-errata]
           (verify-that (= expected-errata (get-errata-set type))))
       
-      [["title:Bear_*" #{"RHEA-2012:0010"}]
-       ["title:Sea*" #{"RHEA-2012:0011"}]
-       ["title:Bir*" #{"RHEA-2012:0012"}]
-       ["title:G*" #{"RHEA-2012:0013"}]
-       ["title:*i*" #{"RHEA-2012:0012" "RHEA-2012:0013"}]])
+      [["title:Bear_*" #{"RHEA-2012:1010"}]
+       ["title:Sea*" #{"RHEA-2012:1011"}]
+       ["title:Bir*" #{"RHEA-2012:1012"}]
+       ["title:G*" #{"RHEA-2012:1013"}]
+       ["title:*i*" #{"RHEA-2012:1012" "RHEA-2012:1013"}]])
    
   (deftest "UI - Search Errata in Content Search by type regexp"
       :data-driven true
