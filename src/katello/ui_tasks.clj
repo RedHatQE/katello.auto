@@ -159,19 +159,21 @@
   (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
     (browser getText locator))))
  
-  (defn filter-tree-r [filter? data]  
-      (if (filter? data)
-        data
-        (if (map? data)
-          (for [[k v] data]
-             (filter-tree-r filter?  v))
-          (if (seq? data)
-            (for [v data]
-              (filter-tree-r filter? v))
-            nil))))
-    (defn filter-tree [filter? data]  
-          (remove nil? (flatten (filter-tree-r filter? data ))))
+(defn filter-tree-r [filter? data]  
+    (if (filter? data)
+      data
+      (if (map? data)
+        (for [[k v] data]
+           (filter-tree-r filter?  v))
+        (if (seq? data)
+          (for [v data]
+            (filter-tree-r filter? v))
+        nil))))
+
+(defn filter-tree [filter? data]  
+      (remove nil? (flatten (filter-tree-r filter? data ))))
     
+
 (defn package-in-repository? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
                                        (locators/search-result-row-id package)
@@ -327,8 +329,7 @@
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
        (browser getEval)
-       (json/read-json)
-      ))
+       (json/read-json)))
  ;(validate-content-search-results)
 
  (defn test-errata-popup-click [name]
@@ -376,6 +377,17 @@
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (notification/check-for-success))
+
+(defn add-subscriptions-to-activation-key
+  "Add subscriptions to activation key."
+  [name subscriptions]
+  (navigate :named-activation-key-page {:activation-key-name name})
+  (browser click :available-subscriptions)
+  (doseq [subscription subscriptions]
+    (browser click (locators/subscription-checkbox subscription)))
+  (browser click :add-subscriptions-to-activation-key)
+  (notification/check-for-success))
+  
 
 (defn create-template
   "Creates a system template with the given name and optional

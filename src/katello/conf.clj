@@ -29,13 +29,13 @@
     :default "ACME_Corporation"]
 
    ["-y" "--sync-repo" "The url for a test repo to sync"
-    :default "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/cds/content/nature/1.0/x86_64/rpms/"]
+    :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/content/nature/1.0/x86_64/rpms/"]
    
    ["-m" "--redhat-manifest-url" "URL that points to a Red Hat test manifest"
     :default "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
 
    ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
-    :default "http://hudson.rhq.lab.eng.bos.redhat.com:8080/shared/cds/"]
+    :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/"]
 
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]
@@ -85,7 +85,7 @@
   []
   (->> (loaded-libs)
      (filter (fn [sym] (-> sym str (.startsWith "katello"))))
-     (concat '(deltacloud katello.client.provision))
+     (concat '(katello.client.provision))
      all-fns
      (concat '(tools.verify/check
                com.redhat.qe.auto.selenium.selenium/call-sel

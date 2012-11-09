@@ -192,8 +192,9 @@
     (provision/with-client "envmovetest" ssh-conn
       (with-unique [env-dev  "dev"
                     env-test  "test"]
-        (environment/create env-dev {:org-name @test-org-name})
-        (environment/create env-test {:org-name @test-org-name})
+        (doseq [env [env-dev env-test]]
+          (environment/create env {:org-name @test-org-name}))
+        (organization/switch @test-org-name)
         (client/setup-client ssh-conn)
         (client/register ssh-conn {:username conf/*session-user*
                                    :password conf/*session-password*
@@ -202,9 +203,15 @@
                                    :force true})
         (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
           (verify-that (= env-dev (get-system-env client-hostname)))
-          (verify-that (client/does-system-belong-to-an-environment? ssh-conn client-hostname env-dev))
-          (edit-system-environment (:name client-hostname) {:environment env-test})
+          (edit-system-environment client-hostname env-test)
           (verify-that (= env-test (get-system-env client-hostname)))
-          (verify-that (client/does-system-belong-to-an-environment? ssh-conn client-hostname env-test)))))))
+          (client/sm-cmd ssh-conn :refresh)
+          (client/run-cmd ssh-conn "yum repolist")
+          ;;verify the env name is now in the urls in redhat.repo
+          ;;we haven't subscribed to anything so the below
+          ;;verification doesn't work - repo file will be empty
+          #_(let [cmd (format "grep %s /etc/yum.repos.d/redhat.repo" env-test)
+                result (client/run-cmd ssh-conn cmd)]
+            (verify-that (->> result :exit-code (= 0)))))))))
         
         

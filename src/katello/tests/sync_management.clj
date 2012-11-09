@@ -63,11 +63,11 @@
           (api/create-env-chain [library "Desenvolvemento" "ControleQualidade"])))
       (provider/create {:name provider})
       (provider/add-product {:provider-name provider 
-                              :name product})
+                             :name product})
       (provider/add-repo {:provider-name provider
-                           :product-name product
-                           :name repo
-                           :url (@config :sync-repo)})
+                          :product-name product
+                          :name repo
+                          :url (@config :sync-repo)})
       (sync/perform-sync [repo])
       (finally (login-admin)))))
 
@@ -86,7 +86,9 @@
 
   (deftest "Sync a repository where username has non-ascii characters"
     :data-driven true
-    :blockers (open-bz-bugs "835586")
+    :blockers (constantly ["There is planned support for this
+                            functionality, but it is not available in
+                            Katello yet."])
     sync-with-user
     [["Mané"]
      ["水煮鱼"]])
