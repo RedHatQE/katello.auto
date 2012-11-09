@@ -45,6 +45,15 @@
                                             {:name "ManyRepositoryE" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
+
+
+(def custom-errata-test-provider [{:name "Custom Errata Provider"
+                        :products [{:name "Com Errata Enterprise"
+                                    :repos [{:name "ErrataZoo" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
+                                            {:name "ErrataZoo2" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
+
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 
     (doall (for [provider custom-providers-v]
@@ -99,5 +108,5 @@
                                  :product-name (product :name)
                                  :name (repo :name) 
                                  :url (repo :url)})))) 
-            (sync/perform-sync (map :name (get-custom-repos custom-providers 
+            (sync/perform-sync (map :name (get-custom-repos providers 
                     :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))
