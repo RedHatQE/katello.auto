@@ -31,9 +31,7 @@
   katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
-  katello.tests.content-search/content-search-tests
-  katello.tests.content-search/content-search-repo-compare
-  katello.tests.content-search/content-search-errata)
+  katello.tests.content-search/content-search-tests)
 
 
 

@@ -319,5 +319,10 @@
      (with-meta
      [ nil :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
-     {:blockers (open-bz-bugs "855945")})]))
+     {:blockers (open-bz-bugs "855945")})])
+  
+  
+    content-search-repo-compare
+    
+    content-search-errata)
 
