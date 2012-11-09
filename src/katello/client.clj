@@ -1,4 +1,5 @@
 (ns katello.client
+  (:require (katello [api-tasks :as api]))
   (:require [katello.conf :refer [config]]
             [slingshot.slingshot :refer [try+ throw+]]
             [clojure.string :refer [split trim]])
@@ -80,3 +81,12 @@
 (defn get-distro [runner]
   ((get-client-facts runner) "distribution.name"))
 
+(defn get-pool-id "Fetch subscription pool-id"
+  [mysys product-name]
+  (let [pool-provides-product (fn [prod pool]
+                                (or (= (:productName pool) prod)
+                                    (some #(= (:productName %) prod)
+                                          (:providedProducts pool))))]
+    (->> (api/system-available-pools mysys)
+      (filter (partial pool-provides-product product-name))
+      first :id)))
