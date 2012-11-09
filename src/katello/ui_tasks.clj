@@ -158,6 +158,21 @@
 (defn get-search-result-repositories [] 
   (doall (for [locator (locators/get-all-of-locator locators/content-search-repo-column-name)]
     (browser getText locator))))
+ 
+(defn filter-tree-r [filter? data]  
+    (if (filter? data)
+      data
+      (if (map? data)
+        (for [[k v] data]
+           (filter-tree-r filter?  v))
+        (if (seq? data)
+          (for [v data]
+            (filter-tree-r filter? v))
+        nil))))
+
+(defn filter-tree [filter? data]  
+      (remove nil? (flatten (filter-tree-r filter? data ))))
+    
 
 (defn package-in-repository? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
@@ -169,12 +184,13 @@
       (not (= "--" 
               (browser getText (locators/search-result-cell row-id col-id))))))
 
-(defn adder-for-content-search [auto-comp-box add-button cont-item]
-  (browser setText auto-comp-box cont-item)
-  (browser click add-button))
+;(defn adder-for-content-search [auto-comp-box add-button cont-item]
+;  (browser setText auto-comp-box cont-item)
+;  (browser click add-button))
 
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
-  (browser setText auto-comp-box cont-item)
+  (browser type auto-comp-box cont-item)
+  ;(browser setText auto-comp-box cont-item)
   ;; typeKeys is necessary to trigger drop-down list
   (browser typeKeys auto-comp-box " ")
   (let [elem (locators/auto-complete-item cont-item)] 
@@ -188,7 +204,7 @@
     (browser click :content-search-load-more)))
 
 (defn add-to-repository-browser [repository]
-  (adder-for-content-search :repo-auto-complete :add-repo repository))
+  (autocomplete-adder-for-content-search :repo-auto-complete :add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
   (browser click (locators/content-search-repo-remove repository)))
@@ -199,18 +215,22 @@
       (remove-one-repository-from-browser removing))
     (browser click :browse-button)))
 
+(defn get-repo-search-data-id-map [repositories]
+  (apply hash-map 
+    (reduce 
+      (fn [result name] 
+        (conj result  name
+          (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
+            (browser getAttribute (attr-loc 
+                                  (locators/search-result-repo-id name)
+                                  "data-id")))))) 
+       []
+       repositories)))
+
 (defn compare-repositories-in-search-result [repositories]
-  (let [repo-id-map (apply hash-map 
-                      (reduce 
-                        (fn [result name] 
-                          (conj result  name
-                            (browser getAttribute (attr-loc 
-                                                    (locators/search-result-repo-id name)
-                                                    "data-id")))) 
-                         []
-                         repositories))]
+  (let [repo-id-map (get-repo-search-data-id-map repositories)]
     (doseq [repository repositories]
-      (browser check (locators/content-search-compare-checkbox (repo-id-map repository))))))
+      (browser check (locators/content-search-compare-checkbox (str "repo_" (repo-id-map repository)))))))
 
 (defn add-repositories-to-search-page [repositories]
   (navigate :content-search-page)
@@ -223,7 +243,10 @@
 (defn click-if-compare-button-is-disabled? []
   (browser click :repo-compare-button)
   (not (=  "" (browser getText :repo-compare-button))))
-  
+
+(defn click-repo-errata-on-repo-search-page [repo]
+  (let [repo-id ((get-repo-search-data-id-map [repo]) repo) ]
+  (browser click (locators/search-result-repo-errata-link  repo-id))))
 
 (defn compare-repositories [repositories]
   (add-repositories-to-search-page repositories)
@@ -306,9 +329,35 @@
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
        (browser getEval)
-       (json/read-json)
-       validate-content-search-results))
+       (json/read-json)))
+ ;(validate-content-search-results)
 
+ (defn test-errata-popup-click [name]
+   (browser click (locators/content-search-span-text name))
+    (browser mouseOver  :errata-search)
+   (verify-that (.contains (browser getText :details-container) name))
+   (browser click (locators/content-search-span-text name))
+   (verify-that (= 0 (browser getXpathCount :details-container))))
+
+  (defn test-errata-popup-hover [name]
+   (verify-that 
+     (.contains
+       (do
+         (browser mouseOver (locators/content-search-span-text name))
+         (browser waitForElement  :details-container "4000")          
+         (browser getText :details-container))
+       name))
+   (browser mouseOut (.getLocator (locators/content-search-span-text name)))
+   (browser sleep 1000)
+   (verify-that (= 0 (browser getXpathCount :details-container))))
+
+(defn get-errata-set  [type]
+  (->> 
+    (search-for-content :errata-type {:errata type})
+    (filter-tree (fn [node] (= (:data_type node) "errata")))
+    (map :value)
+    (into #{})))
+ 
 (defn create-activation-key
   "Creates an activation key with the given properties. Description
   and system-template are optional."
