@@ -87,8 +87,9 @@
     (with-org org-name
       (org/switch)
       (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
-      (enable-redhat-repositories repos)
-      (sync/perform-sync repos))))
+      (when (api/is-katello?)
+        (enable-redhat-repositories repos)
+        (sync/perform-sync repos)))))
 
 (defn prepare-org-custom-provider
   "Clones a manifest, uploads it to the given org, and then enables
