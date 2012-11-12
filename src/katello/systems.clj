@@ -144,53 +144,43 @@
   (navigate :named-systems-page {:system-name name})
   (browser getText :system-operating-system))
 
-(defn add-package "Add system packages"
-  [name package-name]
+(defn add-package [name {:keys [packages package-groups]}]
   (navigate :named-system-page-content {:system-name name})
   (browser click :system-content-packages)
-  (browser click :select-system-package)
-  (browser setText :system-package-name package-name)
-  (browser typeKeys :system-package-name "blur")
-  (browser click :system-add-content)
-  (Thread/sleep 20000)
-  (verify-that (= "Add Package Complete"
-                       (browser getText :pkg-install-status))))
+  (when packages
+   (->browser (click :select-system-package)
+              (setText :system-package-name packages)
+              (typeKeys :system-package-name "blur")
+              (click :system-add-content))
+   (Thread/sleep 20000)
+   (verify-that (= "Add Package Complete"
+                   (browser getText :pkg-install-status))))
+ (when package-groups
+   (->browser (click :select-package-group)
+              (setText  :system-package-name package-groups)
+              (typeKeys :system-package-name "blur")
+              (click :system-add-content))
+   (Thread/sleep 20000)
+   (verify-that (= "Add Package Group Complete"
+                   (browser getText :pkg-install-status)))))
 
 
-
-
-(defn add-package-group "Add system package-groups"
-  [name package-group]
+(defn remove-package [name {:keys [packages package-groups]}]
   (navigate :named-system-page-content {:system-name name})
   (browser click :system-content-packages)
-  (browser click :select-package-group)
-  (browser setText  :system-package-name package-group)
-  (browser typeKeys :system-package-name "blur")
-  (browser click :system-add-content)
-  (Thread/sleep 20000)
-  (verify-that (= "Add Package Group Complete"
-                        (browser getText :pkg-install-status))))
-
-(defn remove-package "Remove system packages"
-  [name package-name]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
-  (browser click :select-system-package)
-  (browser setText :system-package-name package-name)
-  (browser typeKeys :system-package-name "blur")
-  (browser click :system-remove-content)
-  (Thread/sleep 20000)
-  (verify-that (= "Remove Package Complete"
-                        (browser getText :pkg-install-status))))
-
-(defn remove-package-group "Remove system package groups"
-  [name package-group]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
-  (browser click :select-system-package)
-  (browser type  :system-package-name package-group)
-  (browser setText :system-package-name "blur")
-  (browser click :system-remove-content)
-  (Thread/sleep 20000)
-  (verify-that (= "Remove Package Group Complete"
-                        (browser getText :pkg-install-status))))
+  (when packages
+   (->browser (click :select-system-package)
+              (setText :system-package-name packages)
+              (typeKeys :system-package-name "blur")
+              (click :system-remove-content))
+   (Thread/sleep 20000)
+   (verify-that (= "Remove Package Complete"
+                   (browser getText :pkg-install-status))))
+ (when package-groups
+   (->browser (click :select-package-group)
+              (setText  :system-package-name package-groups)
+              (typeKeys :system-package-name "blur")
+              (click :system-remove-content))
+   (Thread/sleep 20000)
+   (verify-that (= "Remove Package Group Complete"
+                   (browser getText :pkg-install-status)))))

@@ -360,12 +360,12 @@
   (deftest "Add system package"
     (with-unique [product-name "fake"]
       (step-to-configure-server-for-pkg-install product-name)	
-      (system/add-package (get-system-name-after-install product-name) "cow")))
+      (system/add-package (get-system-name-after-install product-name) {:packages "cow"})))
   
   (deftest "Add package group"
     (with-unique [product-name "fake"]
       (step-to-configure-server-for-pkg-install product-name)	
-      (system/add-package-group (get-system-name-after-install product-name) "birds")))
+      (system/add-package (get-system-name-after-install product-name) {:package-groups "birds"})))
   
   system-group-tests)
 

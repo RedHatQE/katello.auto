@@ -322,11 +322,11 @@
    :system-arch-select                     "arch[arch_id]"
    :system-content-select                  "xpath=(//li[@id='content']/a)[2]"
    :system-content-packages                (link "Packages")
-   :system-add-content			               "//a[@id='add_content']"
-   :system-remove-content                  "//a[@id='remove_content']" 
-   :system-package-name                    "//input[@id='content_input']"
-   :select-package-group                   "//input[@id='perform_action_package_groups']"
-   :select-system-package                  "//input[@id='perform_action_packages']"
+   :system-add-content			               "add_content"
+   :system-remove-content                  "remove_content" 
+   :system-package-name                    "content_input"
+   :select-package-group                   "perform_action_package_groups"
+   :select-system-package                  "perform_action_packages"
    :pkg-install-status                     "//td[@class='package_action_status']/a[@class='subpanel_element']"
 
    ;;system-edit details
