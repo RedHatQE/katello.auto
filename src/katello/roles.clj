@@ -63,13 +63,15 @@
               (fn [permissions]
                 (doseq [{:keys [name description resource-type verbs tags]} permissions]
                   (browser click :add-permission)
-                  (browser select :permission-resource-type-select resource-type)
-                  (browser click :next)
-                  (doseq [verb verbs]
-                    (browser addSelection :permission-verb-select verb))
-                  (browser click :next)
-                  (doseq [tag tags]
-                    (browser addSelection :permission-tag-select tag))
+                  (if (= resource-type :all)
+                    (browser click :all-types)
+                    (do (browser select :permission-resource-type-select resource-type)
+                        (browser click :next)
+                        (doseq [verb verbs]
+                          (browser addSelection :permission-verb-select verb))
+                        (browser click :next)
+                        (doseq [tag tags]
+                          (browser addSelection :permission-tag-select tag))))
                   (fill-ajax-form {:permission-name-text name
                                    :permission-description-text description}
                                   :save-permission))

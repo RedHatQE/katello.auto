@@ -286,6 +286,7 @@
    :clear-disabled-helptips     "clear_helptips"
    :save-roles                  "save_roles"
    :add-all                     (link "Add all")
+   :all-types                   "all_types"
    :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
 (def sync-plans
