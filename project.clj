@@ -5,7 +5,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [swank-clojure "1.4.2"]
                  [test.tree.jenkins "0.2.0-SNAPSHOT"]
-                 [test.tree "0.7.5-SNAPSHOT"]
+                 [test.tree "0.8.0-SNAPSHOT"]
                  [test.tree.runner "0.7.5-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
@@ -27,23 +27,3 @@
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
   :plugins [[codox "0.6.1"]])
-
-;; if you're looking for that comment block to start selenium, that's
-;; been replaced by something easier. You no longer need to start
-;; selenium server yourself, it's now embedded (so if you started one
-;; on port 4444, kill it). Just type (load "bootstrap") at the repl,
-;; that will start both selenium server and the client.
-
-(comment "Execute this in the repl to create some test entities via API"
-
-         (do (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-             (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-             (require '[katello.tests.promotions]
-                      '[katello.tests.sync_management]
-                      '[katello.tests.templates]
-                      '[katello.conf])
-             (katello.conf/init)
-             (katello.tests.promotions/setup)  ;;needs updating, fn names have changed
-             (katello.tests.sync_management/setup)
-             (katello.tests.templates/setup-content))
-         )
