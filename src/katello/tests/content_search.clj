@@ -162,6 +162,20 @@
             result (set (compare-repositories expected))]
            (verify-that (= expected result)))))
 
+(defn verify-errata [type expected-errata]
+  (verify-that (= expected-errata (get-errata-set type))))
+
+(defmacro deftests-errata-search
+  "for a bunch of data driven tests that use the same function, but
+   different name and data."
+  [name-data-map]
+  `(concat ~(vec (for [[name data] name-data-map]
+                   `(deftest ~name
+                      :data-driven true
+
+                      verify-errata
+                      ~data)))))
+
 (defgroup content-search-errata
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "erratasearch"))
@@ -170,98 +184,61 @@
                  (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
   
    
-   (deftest "Content Browser: Errata information"
-     (get-errata-set "*")
-     (test-errata-popup-click "RHEA-2012:1011")
-     ;(test-errata-popup-hover "RHEA-2012:1011")
-     (add-repositories-to-search-page ["ErrataZoo"])
-     (click-repo-errata-on-repo-search-page "ErrataZoo")
-     (test-errata-popup-click "RHEA-2012:1011")
-     ;(test-errata-popup-hover "RHEA-2012:1011")
-     (compare-repositories ["ErrataZoo"])
-     (show-select :errata)
-     (test-errata-popup-click "RHEA-2012:1011"))
-     ;(test-errata-popup-hover "RHEA-2012:1011"))
+  (deftest "Content Browser: Errata information"
+    (get-errata-set "*")
+    (test-errata-popup-click "RHEA-2012:1011")
+                                        ;(test-errata-popup-hover "RHEA-2012:1011")
+    (add-repositories-to-search-page ["ErrataZoo"])
+    (click-repo-errata-on-repo-search-page "ErrataZoo")
+    (test-errata-popup-click "RHEA-2012:1011")
+                                        ;(test-errata-popup-hover "RHEA-2012:1011")
+    (compare-repositories ["ErrataZoo"])
+    (show-select :errata)
+    (test-errata-popup-click "RHEA-2012:1011"))
+                                        ;(test-errata-popup-hover "RHEA-2012:1011"))
+
+  (deftests-errata-search
+    {"UI - Search Errata in Content Search by exact Errata"
+     [["\"RHEA-2012:1011\"" #{"RHEA-2012:1011"}]
+      ["\"RHEA-2012:1012\"" #{"RHEA-2012:1012"}]
+      ["\"RHEA-2012:1013\"" #{"RHEA-2012:1013"}]]
+
+     "UI - Search Errata in Content Search by exact title"
+     [["title:\"Bear_Erratum\"" #{"RHEA-2012:1010"}]
+      ["title:\"Sea_Erratum\"" #{"RHEA-2012:1011"}]
+      ["title:\"Bird_Erratum\"" #{"RHEA-2012:1012"}]
+      ["title:\"Gorilla_Erratum\"" #{"RHEA-2012:1013"}]]
   
-  (deftest "UI - Search Errata in Content Search by exact Errata"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["\"RHEA-2012:1011\"" #{"RHEA-2012:1011"}]
-       ["\"RHEA-2012:1012\"" #{"RHEA-2012:1012"}]
-       ["\"RHEA-2012:1013\"" #{"RHEA-2012:1013"}]])
+     "UI - Search Errata in Content Search by title regexp"
+     [["title:Bear_*" #{"RHEA-2012:1010"}]
+      ["title:Sea*" #{"RHEA-2012:1011"}]
+      ["title:Bir*" #{"RHEA-2012:1012"}]
+      ["title:G*" #{"RHEA-2012:1013"}]
+      ["title:*i*" #{"RHEA-2012:1012" "RHEA-2012:1013"}]]
   
-   (deftest "UI - Search Errata in Content Search by exact title"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["title:\"Bear_Erratum\"" #{"RHEA-2012:1010"}]
-       ["title:\"Sea_Erratum\"" #{"RHEA-2012:1011"}]
-       ["title:\"Bird_Erratum\"" #{"RHEA-2012:1012"}]
-       ["title:\"Gorilla_Erratum\"" #{"RHEA-2012:1013"}]])
-   
-   (deftest "UI - Search Errata in Content Search by title regexp"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["title:Bear_*" #{"RHEA-2012:1010"}]
-       ["title:Sea*" #{"RHEA-2012:1011"}]
-       ["title:Bir*" #{"RHEA-2012:1012"}]
-       ["title:G*" #{"RHEA-2012:1013"}]
-       ["title:*i*" #{"RHEA-2012:1012" "RHEA-2012:1013"}]])
-   
-  (deftest "UI - Search Errata in Content Search by type regexp"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["type:secur*" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
-       ["type:*ug*" #{"RHEA-2012:1013"}]
-       ["type:*ement" #{"RHEA-2012:1010"}]
-       ["type:ttt" #{}]
-       ["type:" #{}]])
+     "UI - Search Errata in Content Search by type regexp"
+     [["type:secur*" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
+      ["type:*ug*" #{"RHEA-2012:1013"}]
+      ["type:*ement" #{"RHEA-2012:1010"}]
+      ["type:ttt" #{}]
+      ["type:" #{}]]
   
-   (deftest "UI - Search Errata in Content Search by type"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["type:security" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
-       ["type:bugfix" #{"RHEA-2012:1013"}]
-       ["type:enhancement" #{"RHEA-2012:1010"}]])
-   
-   (deftest "UI - Search Errata in Content Search by severity"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["severity:low" #{"RHEA-2012:1010"}]
-       ["severity:important" #{"RHEA-2012:1011"}]
-       [ "severity:critical" #{"RHEA-2012:1012"}]
-       ["severity:moderate" #{"RHEA-2012:1013"}]])
-   
-   (deftest "UI - Search Errata in Content Search by severity"
-      :data-driven true
-      
-      (fn [type expected-errata]
-          (verify-that (= expected-errata (get-errata-set type))))
-      
-      [["severity:l*" #{"RHEA-2012:1010"}]
-       ["severity:*rtant" #{"RHEA-2012:1011"}]
-       [ "severity:*cal" #{"RHEA-2012:1012"}]
-       ["severity:mod*" #{"RHEA-2012:1013"}]
-       ["severity:ttt" #{}]
-       ["severity:" #{}]])
-  )
+     "UI - Search Errata in Content Search by type"
+     [["type:security" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
+      ["type:bugfix" #{"RHEA-2012:1013"}]
+      ["type:enhancement" #{"RHEA-2012:1010"}]]
+  
+     "UI - Search Errata in Content Search by severity"
+     [["severity:low" #{"RHEA-2012:1010"}]
+      ["severity:important" #{"RHEA-2012:1011"}]
+      ["severity:critical" #{"RHEA-2012:1012"}]
+      ["severity:moderate" #{"RHEA-2012:1013"}]
+      ["severity:l*" #{"RHEA-2012:1010"}]
+      ["severity:*rtant" #{"RHEA-2012:1011"}]
+      ["severity:*cal" #{"RHEA-2012:1012"}]
+      ["severity:mod*" #{"RHEA-2012:1013"}]
+      ["severity:ttt" #{}]
+      ["severity:" #{}]]}))
 
 (defgroup content-search-tests
   :group-setup (fn []
