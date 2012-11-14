@@ -220,6 +220,19 @@
                                       (fn [] (organization/switch org))
                                       (fn [] (navigate :named-organization-page {:org-name org})))]))
    
+   (fn [] (let [org (uniqueify "org")]
+           [:permissions [{:org org
+                           :permissions [{:resource-type :all 
+                                          :name "orgadmin"}]}]
+            :setup (fn [] (api/create-organization org))
+            :allowed-actions (conj (navigate-all :systems-tab :sync-status-page
+                                                   :custom-content-repositories-page :system-templates-page
+                                                   :changesets-page )
+                                   (access-org org)
+                                   (fn [] (environment/create (uniqueify "blah") {:org-name org})))
+            :disallowed-actions [(access-org (@conf/config :admin-org))
+                                 (fn [] (organization/switch (@conf/config :admin-org)))]]))
+   
    ])
 
 ;; Tests
