@@ -107,7 +107,7 @@
         (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
           (organization/create org-name {:description "org-description"}))))
 
-    (deftest "Two organizations whose names only differ by upper/lower case are disallowed"
+    (deftest "Two organizations whose names only differ by upper or lower case are disallowed"
       :blockers (open-bz-bugs "847037")
       :data-driven true
 
