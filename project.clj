@@ -26,4 +26,4 @@
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
                                :snapshots false}}
-  :plugins [[codox "0.6.1"]])
+  :plugins [[codox "0.6.3"]])
