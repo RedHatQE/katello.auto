@@ -9,7 +9,7 @@
                  [test.tree.runner "0.7.5-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
-                 [com.redhat.qe/tools.verify "1.0.0"]
+                 [com.redhat.qe/test.assert "1.0.0-SNAPSHOT"]
                  [com.redhat.qe/extended-selenium "1.1.0-SNAPSHOT" :exclusions [org.seleniumhq.selenium.client-drivers/selenium-java-client-driver]]
                  [org.seleniumhq.selenium/selenium-server "2.26.0"]
                  [org.seleniumhq.selenium/selenium-java "2.26.0"]

@@ -7,7 +7,7 @@
                      [conf          :refer [config with-org]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]
             [clojure.set :refer [intersection difference union]]))
@@ -43,27 +43,27 @@
           (view-select :all)
           (load-all-results)
           (doseq [package intersect-pkg]
-             (verify-that (package-in-repository? package first))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (package-in-repository? package first))
+             (assert/is (package-in-repository? package second)))
           (doseq [package only-in-first]
-             (verify-that (package-in-repository? package first))
-             (verify-that (not (package-in-repository? package second))))
+             (assert/is (package-in-repository? package first))
+             (assert/is (not (package-in-repository? package second))))
           (doseq [package only-in-second]
-             (verify-that (not(package-in-repository? package first)))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (not(package-in-repository? package first)))
+             (assert/is (package-in-repository? package second)))
           (view-select :shared)
           (load-all-results)
           (doseq [package intersect-pkg]
-             (verify-that (package-in-repository? package first))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (package-in-repository? package first))
+             (assert/is (package-in-repository? package second)))
           (view-select :unique)
           (load-all-results)
           (doseq [package only-in-second]
-             (verify-that (not(package-in-repository? package first)))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (not(package-in-repository? package first)))
+             (assert/is (package-in-repository? package second)))
           (doseq [package only-in-first]
-             (verify-that (package-in-repository? package first))
-             (verify-that (not (package-in-repository? package second))))))
+             (assert/is (package-in-repository? package first))
+             (assert/is (not (package-in-repository? package second))))))
   
    (defn repo-all-shared-different-test [type first first-packages second  second-packages]
         (let [only-in-first  (difference first-packages second-packages)
@@ -74,15 +74,15 @@
           (show-select type)
           (view-select :all)
           (load-all-results)
-          (verify-that (= union-pkg
+          (assert/is (= union-pkg
                         (into #{} (get-repo-compare-packages))))
           (view-select :shared)
           (load-all-results)
-          (verify-that (= intersect-pkg
+          (assert/is (= intersect-pkg
                         (into #{} (get-repo-compare-packages))))
           (view-select :unique)
           (load-all-results)
-          (verify-that (= (difference union-pkg intersect-pkg)
+          (assert/is (= (difference union-pkg intersect-pkg)
                         (into #{} (get-repo-compare-packages))))))
 
 (defgroup content-search-repo-compare
@@ -132,16 +132,16 @@
         (remove-repositories to-remove)
         (let [expected (difference (set to-add) (set to-remove))
               result   (set (get-search-result-repositories))]
-          (verify-that (= expected result))))
+          (assert/is (= expected result))))
             
         [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]]])
     
     (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
       (let [repositories ["CompareZoo1" "CompareZoo2"]]
         (add-repositories-to-search-page repositories)
-        (verify-that (click-if-compare-button-is-disabled?))
+        (assert/is (click-if-compare-button-is-disabled?))
         (compare-repositories-in-search-result repositories)
-        (verify-that (not (click-if-compare-button-is-disabled?)))))
+        (assert/is (not (click-if-compare-button-is-disabled?)))))
   
     
     (deftest "\"Compare\" UI - Selecting repos for compare"
@@ -149,21 +149,21 @@
         (add-repositories-to-search-page (fake/get-all-custom-repos))
         (compare-repositories-in-search-result repositories)
         (click-if-compare-button-is-disabled?)
-        (verify-that (= (set repositories)
+        (assert/is (= (set repositories)
                         (set (get-repo-compare-repositories))))))
      
     (deftest "Repo compare: Add many repos to compare"
       (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
-        (verify-that (= repos
+        (assert/is (= repos
                         (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
       (let [expected (set (fake/get-i18n-repos))
             result (set (compare-repositories expected))]
-           (verify-that (= expected result)))))
+           (assert/is (= expected result)))))
 
 (defn verify-errata [type expected-errata]
-  (verify-that (= expected-errata (get-errata-set type))))
+  (assert/is (= expected-errata (get-errata-set type))))
 
 (defmacro deftests-errata-search
   "for a bunch of data driven tests that use the same function, but
@@ -255,7 +255,7 @@
       (let [search-res (with-org test-org
                          (org/switch)
                          (apply search-for-content search-params))]
-        (verify-that (pred search-res))))
+        (assert/is (pred search-res))))
 
 
     ;;some simple search tests for *all* the entities of a given type
@@ -282,8 +282,8 @@
                            (org/switch)                       
                            (apply (->> (search-for-content)
                                        (validate-content-search-results)) [search-params {:envs envz}]))]
-          (verify-that (pred search-res))
-          (verify-that (-> search-res envs first (= "Library"))))))
+          (assert/is (pred search-res))
+          (assert/is (-> search-res envs first (= "Library"))))))
     
               
     ;;setup different org & env scenarios to ensure that Library is the First env and always visible 

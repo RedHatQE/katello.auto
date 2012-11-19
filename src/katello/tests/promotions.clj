@@ -10,7 +10,7 @@
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [tools.verify :refer [verify-that]])
+            [test.assert :as assert])
   (:refer-clojure :exclude [fn]))
 
 ;; Variables
@@ -31,7 +31,7 @@
   (doseq [content-type (keys from)]
     (let [promoted (content-type from)
           current (content-type in)]
-      (verify-that (every? current promoted)))))
+      (assert/is (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
   (org/switch)

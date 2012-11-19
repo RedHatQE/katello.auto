@@ -4,7 +4,7 @@
             [com.redhat.qe.auto.selenium.selenium 
               :refer [browser loop-with-timeout]] 
             [slingshot.slingshot :refer [throw+ try+]]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [clojure.set :refer [union]])
   (:refer-clojure :exclude [flush])
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -198,5 +198,5 @@
    is found, or error notifications appear, throws an exception."
   [task-fn]
   (let [notifications (task-fn)]
-    (verify-that (every? success? notifications))))
+    (assert/is (every? success? notifications))))
 

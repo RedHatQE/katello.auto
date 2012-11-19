@@ -9,7 +9,7 @@
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
-            [tools.verify        :refer [verify-that]]
+            [test.assert         :as assert]
             [inflections.core    :refer [pluralize]] 
             (clojure [string     :refer [capitalize replace-first]] 
                      [set        :refer [union]]
@@ -335,12 +335,12 @@
  (defn test-errata-popup-click [name]
    (browser click (locators/content-search-span-text name))
     (browser mouseOver  :errata-search)
-   (verify-that (.contains (browser getText :details-container) name))
+   (assert/is (.contains (browser getText :details-container) name))
    (browser click (locators/content-search-span-text name))
-   (verify-that (= 0 (browser getXpathCount :details-container))))
+   (assert/is (= 0 (browser getXpathCount :details-container))))
 
   (defn test-errata-popup-hover [name]
-   (verify-that 
+   (assert/is 
      (.contains
        (do
          (browser mouseOver (locators/content-search-span-text name))
@@ -349,7 +349,7 @@
        name))
    (browser mouseOut (.getLocator (locators/content-search-span-text name)))
    (browser sleep 1000)
-   (verify-that (= 0 (browser getXpathCount :details-container))))
+   (assert/is (= 0 (browser getXpathCount :details-container))))
 
 (defn get-errata-set  [type]
   (->> 

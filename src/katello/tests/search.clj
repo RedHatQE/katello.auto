@@ -9,7 +9,7 @@
             [katello.tests.organizations :refer [create-test-org]]
             [katello.tests.users :refer [generic-user-details]]
             [test.tree.script :refer :all]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer :all]))
 
@@ -52,7 +52,7 @@
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-system)])]
-          (verify-that (valid-search-results (extract-left-pane-list))))))
+          (assert/is (valid-search-results (extract-left-pane-list))))))
     [[["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"most unique system\""} ["fed" {:description "centos system-group"}]]
      [["mysystem3" {:sockets "2" :system-arch "x86"}] {:criteria "system_group:fed1*"} ["fed1" {:description "rh system-group"}]]
      [["mysystem1" {:sockets "1" :system-arch "x86_64"}] {:criteria "name:mysystem1*"}]
@@ -72,7 +72,7 @@
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-org)])]
-          (verify-that (valid-search-results (extract-left-pane-list))))))
+          (assert/is (valid-search-results (extract-left-pane-list))))))
 
     (concat
      ;;'normal' org searches
@@ -120,7 +120,7 @@
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-user)])]
-          (verify-that (valid-search-results (extract-left-pane-list))))))
+          (assert/is (valid-search-results (extract-left-pane-list))))))
     
     [[["username1" {:password "password" :email "username1@my.org"}] {:criteria "username1*"}]
      [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:username?*"}]
@@ -139,7 +139,7 @@
       (let [valid-search-results (search-results-valid?
                                   (constantly true)
                                   [(:name key_opt)])]
-        (verify-that (valid-search-results (extract-left-pane-list)))))
+        (assert/is (valid-search-results (extract-left-pane-list)))))
     [[{:name (uniqueify "activation_key1") :description "my auto-key" :environment "dev"} {:criteria "environment:dev*"}]
      [{:name (uniqueify "activation_key2") :description "my activation-key" :environment "dev"} {:criteria "name:activation_key2*"}]
      [{:name (uniqueify "activation_key3") :description "my activation-key" :environment "dev"} {:criteria "description:\"my activation-key\""}]
@@ -157,7 +157,7 @@
       (let [valid-search-results (search-results-valid?
                                   (constantly true)
                                   [(:name key_opt)])]
-        (verify-that (valid-search-results (extract-left-pane-list)))))
+        (assert/is (valid-search-results (extract-left-pane-list)))))
     [[{:name (uniqueify "new_plan1") :description "my sync plan" :interval "daily" :start-date (java.util.Date.)}  {:criteria "new_plan*"}]
      [{:name (uniqueify "new_plan2") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "interval:hourly"}]
      [{:name (uniqueify "new_plan3") :description "my sync plan" :interval "weekly" :start-date (java.util.Date.)} {:criteria "description:\"my sync plan\""}]
@@ -183,7 +183,7 @@
                                     (constantly true)
                                     [(first unique-sg)])]
           (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))]
-            (verify-that (valid-search-results
+            (assert/is (valid-search-results
                           (doall (map strip-num (extract-left-pane-list)))
                           ))))))
     [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]

@@ -13,7 +13,7 @@
             [test.tree.builder :refer [union]]
             [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.e2e :as e2e]
-            [tools.verify :refer [verify-that]]))
+            [test.assert :as assert]))
 
 ;; Constants
 
@@ -31,7 +31,7 @@
       (api/create-environment env-name {}))))
 
 (defn verify-all-repos-not-synced [repos]
-  (verify-that (every? nil? (map sync/complete-status repos))))
+  (assert/is (every? nil? (map sync/complete-status repos))))
 
 (defn enable-redhat-repositories-in-org [org repos]
   (with-org org

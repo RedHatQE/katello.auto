@@ -12,7 +12,7 @@
                      [organizations :as organization])
         [test.tree.script :refer :all] 
         [serializable.fn :refer [fn]]
-        [tools.verify :refer [verify-that]]
+        [test.assert :as assert]
         [bugzilla.checker :refer [open-bz-bugs]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
@@ -68,7 +68,7 @@
     (try
       (let [with-perm-results (try-all-with-user allowed-actions)
             no-perm-results (try-all-with-user disallowed-actions)]
-        (verify-that (and (every? denied-access? (vals no-perm-results))
+        (assert/is (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
       (finally
         (user/login conf/*session-user* conf/*session-password*)))))

@@ -15,7 +15,7 @@
                        [builder :refer :all])
             [serializable.fn :refer [fn]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [slingshot.slingshot :refer :all]))
 
 ;; Functions
@@ -59,7 +59,7 @@
       (let [cmd-results [(client/run-cmd ssh-conn "yum repolist")
                          (client/run-cmd ssh-conn (format "yum install -y --nogpg %s" all-packages))
                          (client/run-cmd ssh-conn (format "rpm -q %s" all-packages))]]
-        (->> cmd-results (map :exit-code) (every? zero?) verify-that)))))
+        (->> cmd-results (map :exit-code) (every? zero?) assert/is)))))
 
 ;; Tests
 

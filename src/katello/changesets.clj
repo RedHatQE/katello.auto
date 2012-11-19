@@ -3,7 +3,7 @@
             [com.redhat.qe.auto.selenium.selenium
               :refer  [browser ->browser loop-with-timeout]]
             [slingshot.slingshot :refer [throw+ try+]]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [katello.tasks :refer :all] 
             [katello.ui-tasks :refer :all] 
             [katello.sync-management :as sync]
@@ -87,6 +87,6 @@
   (let [all-prods (map :name products)
         all-repos (apply concat (map :repos products))
         sync-results (sync/perform-sync all-repos {:timeout 600000})]
-        (verify-that (every? (fn [[_ res]] (sync/success? res))
+        (assert/is (every? (fn [[_ res]] (sync/success? res))
                              sync-results))
         (promote-content from-env to-env {:products all-prods})))

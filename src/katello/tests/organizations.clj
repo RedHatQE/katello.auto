@@ -7,7 +7,7 @@
                      [organizations :as organization] 
                      [ui-tasks :refer :all] 
                      [conf :refer [config]])
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all]
             [clojure.string :refer [capitalize upper-case lower-case]]
@@ -64,12 +64,12 @@
   (deftest "Create new organization via Manage Organizations link"
     (with-unique [org-name "managed-org"]
       (organization/create       org-name {:go-through-org-switcher true})
-      (verify-that         (org-exists? org-name))))
+      (assert/is         (org-exists? org-name))))
   
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
       (organization/create     org-name)
-      (verify-that         (org-exists? org-name)))
+      (assert/is         (org-exists? org-name)))
     
     (deftest "Create an organization with i18n characters"
       :data-driven true
@@ -77,7 +77,7 @@
       (fn [org]
         (with-unique [org-name org]
           (organization/create     org-name)
-          (verify-that      (org-exists? org-name))))
+          (assert/is      (org-exists? org-name))))
       
       validation/i8n-chars)
 
@@ -86,7 +86,7 @@
 
       (fn [org-name]
         (organization/create org-name)
-        (verify-that (org-exists? org-name)))
+        (assert/is (org-exists? org-name)))
 
       ;;create 5 rows of data, 1 random 1-char utf8 string in each
       (let [lo 0x0080
@@ -98,7 +98,7 @@
       (with-unique [org-name "auto-org"
                     env-name "environment"]
         (organization/create     org-name  {:initial-env-name env-name})
-        (verify-that         (org-exists? org-name))))
+        (assert/is         (org-exists? org-name))))
   
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
@@ -149,7 +149,7 @@
       (with-unique [org-name "auto-del"]
         (create-test-org     org-name)
         (organization/delete org-name)
-        (verify-that         (org-does-not-exist? org-name)))
+        (assert/is         (org-does-not-exist? org-name)))
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
