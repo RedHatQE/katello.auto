@@ -66,9 +66,9 @@
 (defgroup end-to-end-tests 
 
   (deftest "Clients can access custom content"
-    :blockers (union (blocking-tests "simple sync" "promote content")
-                     (open-bz-bugs "784853" "790246")
-                     no-clients-defined)
+   ;; :blockers (union (blocking-tests "simple sync" "promote content")
+   ;;                  (open-bz-bugs "784853" "790246")
+   ;;                  no-clients-defined)
    
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")
@@ -87,7 +87,7 @@
                           :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
       (let [products [{:name product-name :repos [repo-name]}]]
         (when (api/is-katello?)
-          (sync-and-promote products library target-env))
+          (sync-and-promote products from-env to-env))
         (test-client-access (@config :admin-org)
                             target-env
                             products
