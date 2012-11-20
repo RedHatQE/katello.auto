@@ -118,7 +118,7 @@
             (action-available-pred "start")))
 
 (defn start [conn i]
-  (perform-action-wait conn i :start ip-address))
+  (perform-action-wait conn i :start (every-pred running? ip-address)))
 
 (defn stop [conn i]
   (perform-action-wait conn i :stop stopped?))
