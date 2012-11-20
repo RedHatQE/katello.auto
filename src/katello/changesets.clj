@@ -15,9 +15,10 @@
 
 
 (defn create
-  "Creates a changeset for promotion from env-name to next-env name"
+  "Creates a changeset for promotion from env-name to next-env name."
   [env-name next-env-name changeset-name]
-  (navigate :named-environment-changesets-page {:env-name env-name :next-env-name next-env-name})
+  (navigate :named-environment-changesets-page {:env-name env-name 
+                                                :next-env-name next-env-name})
   (->browser (click :new-changeset)
              (setText :changeset-name-text changeset-name)
              (click :save-changeset))
