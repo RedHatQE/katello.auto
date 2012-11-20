@@ -5,7 +5,11 @@
 
 
 (defn add-ssh [inst]
-  (assoc inst :ssh-connection (client/new-runner (cloud/ip-address inst))))
+  (try
+    (assoc inst :ssh-connection
+           (client/new-runner (cloud/ip-address inst)))
+    (catch Exception e
+      (assoc inst :ssh-connection-error e))))
 
 (defmacro with-n-clients
   "Provisions n clients with instance name basename (plus unique

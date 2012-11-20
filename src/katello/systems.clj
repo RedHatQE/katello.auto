@@ -144,43 +144,8 @@
   (navigate :named-systems-page {:system-name name})
   (browser getText :system-operating-system))
 
-(defn add-package [name {:keys [packages package-groups]}]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
-  (when packages
-   (->browser (click :select-system-package)
-              (setText :system-package-name packages)
-              (typeKeys :system-package-name "blur")
-              (click :system-add-content))
-   (Thread/sleep 20000)
-   (verify-that (= "Add Package Complete"
-                   (browser getText :pkg-install-status))))
- (when package-groups
-   (->browser (click :select-package-group)
-              (setText  :system-package-name package-groups)
-              (typeKeys :system-package-name "blur")
-              (click :system-add-content))
-   (Thread/sleep 20000)
-   (verify-that (= "Add Package Group Complete"
-                   (browser getText :pkg-install-status)))))
-
-
-(defn remove-package [name {:keys [packages package-groups]}]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
-  (when packages
-   (->browser (click :select-system-package)
-              (setText :system-package-name packages)
-              (typeKeys :system-package-name "blur")
-              (click :system-remove-content))
-   (Thread/sleep 20000)
-   (verify-that (= "Remove Package Complete"
-                   (browser getText :pkg-install-status))))
- (when package-groups
-   (->browser (click :select-package-group)
-              (setText  :system-package-name package-groups)
-              (typeKeys :system-package-name "blur")
-              (click :system-remove-content))
-   (Thread/sleep 20000)
-   (verify-that (= "Remove Package Group Complete"
-                   (browser getText :pkg-install-status)))))
+(defn get-subscriptions-in-activation-key "Get applied susbscription info from activation key"
+  [name]
+  (navigate :named-activation-key-page {:activation-key-name name})
+  (browser click :applied-subscriptions)
+  (extract-list locators/fetch-applied-subscriptions))

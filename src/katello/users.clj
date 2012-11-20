@@ -45,12 +45,16 @@
      (fill-ajax-form {:username-text username
                       :password-text password}
                      :log-in)
-     (let [retVal (notification/check-for-success {:timeout-ms 20000})]
-       (when (or org (not (logged-in?)))
-         (Thread/sleep 3000)
-         (organization/switch (or org (@config :admin-org))
-                              {:default-org default-org}))
-       retVal)))
+     (let [retval (notification/check-for-success {:timeout-ms 20000})
+           direct-login? (some #(= "Login Successful" %)
+                               (mapcat :notices retval))]
+       ;; if user only has access to one org, he will bypass org select
+       (if direct-login? 
+         (browser waitForPageToLoad)
+         (do (Thread/sleep 3000)
+             (organization/switch (or org (@config :admin-org))
+                                  {:default-org default-org})))
+       retval)))
 
 (defn create
   "Creates a user with the given name and properties."

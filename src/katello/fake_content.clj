@@ -3,7 +3,9 @@
             (katello [manifest :as manifest]
                      [conf :refer [config with-org]]
                      [organizations :as org]
+                     [environments :as env]
                      [providers :as providers]
+                     [api-tasks :as api]
                      [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
@@ -19,6 +21,8 @@
                                      "Zoo Enterprise x86_64 5.8"
                                      "Zoo Enterprise x86_64 5.7"
                                      "Zoo Enterprise x86_64 6Server"]}])
+
+(def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7"))
 
 (def custom-providers [{:name "Custom Provider"
                         :products [{:name "Com Nature Enterprise"
@@ -47,6 +51,14 @@
                                             {:name "ManyRepositoryE" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
+
+
+(def custom-errata-test-provider [{:name "Custom Errata Provider"
+                        :products [{:name "Com Errata Enterprise"
+                                    :repos [{:name "ErrataZoo" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
+                                            {:name "ErrataZoo2" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 
@@ -83,8 +95,9 @@
     (with-org org-name
       (org/switch)
       (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
-      (enable-redhat-repositories repos)
-      (sync/perform-sync repos))))
+      (when (api/is-katello?)
+        (enable-redhat-repositories repos)
+        (sync/perform-sync repos)))))
 
 (defn prepare-org-custom-provider
   "Clones a manifest, uploads it to the given org, and then enables
@@ -102,5 +115,10 @@
                                  :product-name (product :name)
                                  :name (repo :name) 
                                  :url (repo :url)})))) 
-            (sync/perform-sync (map :name (get-custom-repos custom-providers 
+            (sync/perform-sync (map :name (get-custom-repos providers 
                     :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))
+
+(defn setup-org [test-org envs]
+      (api/create-organization test-org)
+      (prepare-org test-org (mapcat :repos some-product-repos))
+      (if (not (nil? envs)) (env/create-path test-org envs)))

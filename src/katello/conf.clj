@@ -87,8 +87,7 @@
      (filter (fn [sym] (-> sym str (.startsWith "katello"))))
      (concat '(katello.client.provision))
      all-fns
-     (concat '(tools.verify/check
-               com.redhat.qe.auto.selenium.selenium/call-sel
+     (concat '(com.redhat.qe.auto.selenium.selenium/call-sel
                clj-http.client/get
                clj-http.client/put
                clj-http.client/post

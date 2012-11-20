@@ -32,11 +32,13 @@
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
    content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
    content-search-compare-checkbox "//input[@type='checkbox' and @name='$1']"
+   search-result-repo-errata-link  "//a[@data-type='repo_errata' and @data-repo_id='$1']"
    content-search-compare-checkbox-all "//div[@id='grid_content']//input[$1]"
    content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='$1']/i[contains(@class,'remove')]"
    content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
    content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][$1]"
    content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
+   content-search-span-text        "//article[@id='comparison_grid']//span[text()='$1']"
    default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
    editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
    environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
@@ -68,8 +70,10 @@
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
+   fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[$1]"
    sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
-   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]" 
+   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
+   subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
    tab                             "link=$1"
    template-action                 "//a[@data-name='$2' and .='$1']"
    template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='$1']"
@@ -283,6 +287,7 @@
    :clear-disabled-helptips     "clear_helptips"
    :save-roles                  "save_roles"
    :add-all                     (link "Add all")
+   :all-types                   "all_types"
    :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
 (def sync-plans
@@ -307,11 +312,12 @@
    :prod-auto-complete         "product_auto_complete"
    :repo-auto-complete         "repo_auto_complete"
    :pkg-search                 "//div[@id='package_search']/input[@id='search']"
-   :errata-search              "//input[@id='search']"
+   :errata-search              "//div[@id='errata_search']//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
    :repo-compare-button        "//a[@id='compare_repos_btn']"
    :content-search-load-more   "//a[contains(@class,'load_row_link')]"
    :column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
+   :details-container          "//div[contains(@class,'details_container')]"
   })
 
 (def systems
@@ -369,6 +375,9 @@
    :activation-key-description-text        "activation_key[description]"
    :activation-key-template-select         "activation_key[system_template_id]"
    :save-activation-key                    "save_key"
+   :applied-subscriptions                  "//a[.='Applied Subscriptions']"
+   :available-subscriptions                "//a[.='Available Subscriptions']"
+   :add-subscriptions-to-activation-key    "//input[@id='subscription_submit_button']"            
    :remove-activation-key                  (link "Remove Activation Key")
    :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
    :release-version-text                   "system[releaseVer]"})

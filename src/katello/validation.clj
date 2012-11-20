@@ -5,7 +5,7 @@
             [katello.tasks :refer [expecting-error]]
             [katello.ui-tasks :refer [errtype]]
             [serializable.fn :refer [fn]] 
-            [tools.verify :refer [verify-that]]))
+            [test.assert :as assert]))
 
 
 ;; Types of bad data
