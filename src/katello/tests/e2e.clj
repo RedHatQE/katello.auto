@@ -87,7 +87,7 @@
                           :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
       (let [products [{:name product-name :repos [repo-name]}]]
         (when (api/is-katello?)
-          (sync-and-promote products from-env to-env))
+          (sync-and-promote products library target-env))
         (test-client-access (@config :admin-org)
                             target-env
                             products
