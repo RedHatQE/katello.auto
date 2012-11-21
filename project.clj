@@ -20,7 +20,8 @@
                  [clj-http "0.5.5"]
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
-                 [fn.trace "1.3.3-SNAPSHOT"]]
+                 [fn.trace "1.3.3-SNAPSHOT"]
+                 [com.redhat.qe/deltacloud.client "1.0.0-SNAPSHOT"]]
   :jvm-opts ["-Xmx384m" "-Xms48m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
