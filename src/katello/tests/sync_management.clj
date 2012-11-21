@@ -12,7 +12,7 @@
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
-            [tools.verify :refer [verify-that]]))
+            [test.assert :as assert]))
 
 ;; Variables
 
@@ -82,7 +82,7 @@
      (sync/perform-sync [@repo-name] 120000)
      vals
      (every? is-complete?)
-     verify-that))
+     assert/is))
 
   (deftest "Sync a repository where username has non-ascii characters"
     :data-driven true
@@ -152,7 +152,7 @@
                         :products product-names})
         (let [expected-plan @plan-name
               actual-plans (vals (sync/current-plan product-names))]
-          (verify-that (every? #(= % expected-plan) actual-plans))))
+          (assert/is (every? #(= % expected-plan) actual-plans))))
 
       
       (deftest "Re-assign a different sync plan to a product"
@@ -165,5 +165,5 @@
           (sync/schedule {:plan-name plan-name
                           :products [@product-name]})
           (let [product @product-name]
-            (verify-that (= ((sync/current-plan [product]) product)
+            (assert/is (= ((sync/current-plan [product]) product)
                             plan-name))))))))

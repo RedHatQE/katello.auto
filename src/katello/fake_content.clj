@@ -52,6 +52,14 @@
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
 
+
+(def custom-errata-test-provider [{:name "Custom Errata Provider"
+                        :products [{:name "Com Errata Enterprise"
+                                    :repos [{:name "ErrataZoo" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
+                                            {:name "ErrataZoo2" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
+
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 
     (doall (for [provider custom-providers-v]
@@ -87,8 +95,9 @@
     (with-org org-name
       (org/switch)
       (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
-      (enable-redhat-repositories repos)
-      (sync/perform-sync repos))))
+      (when (api/is-katello?)
+        (enable-redhat-repositories repos)
+        (sync/perform-sync repos)))))
 
 (defn prepare-org-custom-provider
   "Clones a manifest, uploads it to the given org, and then enables
@@ -106,7 +115,7 @@
                                  :product-name (product :name)
                                  :name (repo :name) 
                                  :url (repo :url)})))) 
-            (sync/perform-sync (map :name (get-custom-repos custom-providers 
+            (sync/perform-sync (map :name (get-custom-repos providers 
                     :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))
 
 (defn setup-org [test-org envs]

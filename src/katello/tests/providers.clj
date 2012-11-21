@@ -3,7 +3,7 @@
   (:require [katello.api-tasks :as api]
             [test.tree.script  :refer [deftest defgroup]]
             [serializable.fn   :refer [fn]]
-            [tools.verify      :refer [verify-that]]
+            [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
             (katello [tasks           :refer :all]
                      [notifications   :refer [success?]]
@@ -29,7 +29,7 @@
   provider named new-name does exist."
   [old-name new-name]
   (let [current-provider-names (get-all-providers)]
-    (verify-that (and (some #{new-name} current-provider-names)
+    (assert/is (and (some #{new-name} current-provider-names)
                       (not (some #{old-name} current-provider-names))))))
 
 (defn with-n-new-orgs

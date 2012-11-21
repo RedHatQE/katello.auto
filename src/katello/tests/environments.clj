@@ -14,7 +14,7 @@
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [clojure.string :refer [capitalize upper-case lower-case trim]]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -202,9 +202,9 @@
                                    :env env-dev
                                    :force true})
         (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
-          (verify-that (= env-dev (get-system-env client-hostname)))
+          (assert/is (= env-dev (get-system-env client-hostname)))
           (edit-system-environment client-hostname env-test)
-          (verify-that (= env-test (get-system-env client-hostname)))
+          (assert/is (= env-test (get-system-env client-hostname)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           ;;verify the env name is now in the urls in redhat.repo
@@ -212,6 +212,6 @@
           ;;verification doesn't work - repo file will be empty
           #_(let [cmd (format "grep %s /etc/yum.repos.d/redhat.repo" env-test)
                 result (client/run-cmd ssh-conn cmd)]
-            (verify-that (->> result :exit-code (= 0)))))))))
+            (assert/is (->> result :exit-code (= 0)))))))))
         
         

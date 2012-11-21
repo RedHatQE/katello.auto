@@ -14,7 +14,7 @@
                        [builder :refer [union]])
             
             [serializable.fn :refer [fn]]
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer [throw+]]
             [deltacloud :as cloud]))
@@ -41,7 +41,7 @@
   (navigate :named-system-environment-page
             {:env-name test-environment
              :system-name (:name system)})
-  (verify-that (= (:environment_id system)
+  (assert/is (= (:environment_id system)
                   (api/get-id-by-name :environment test-environment))))
 
 (defn step-create-system-group
@@ -81,8 +81,8 @@
   [{:keys [system-name also-remove-systems?]}]
   (let [all-system-names (map :name (api/all-entities :system))]
     (if also-remove-systems?
-      (verify-that (not (some #{system-name} all-system-names)))
-      (verify-that (some #{system-name} all-system-names)))))
+      (assert/is (not (some #{system-name} all-system-names)))
+      (assert/is (some #{system-name} all-system-names)))))
 
 (defn step-copy-system-group
   "Copies a system group with a hardcoded description."
@@ -171,7 +171,7 @@
               (system/create system-name {:sockets "1"
                                 :system-arch "x86_64"})
               (system/add-to-group group-name system-name)
-              (verify-that (= (inc syscount) (system/get-group-system-count group-name)))))))
+              (assert/is (= (inc syscount) (system/get-group-system-count group-name)))))))
        
       (deftest "Remove a system from a system group and check count is -1"
         :blockers (open-bz-bugs "857031")
@@ -184,7 +184,7 @@
             (system/add-to-group group-name system-name)
             (let [syscount  (system/get-group-system-count group-name)]
               (system/remove-from-group group-name system-name)
-              (verify-that (= (dec syscount) (system/get-group-system-count group-name)))))))
+              (assert/is (= (dec syscount) (system/get-group-system-count group-name)))))))
       
       (deftest "Delete a system group"
         :data-driven true
@@ -313,7 +313,7 @@
                                     :description "my act keys"
                                     :environment (first envz)})
             (add-subscriptions-to-activation-key ak-name fake/subscription-names)
-            (verify-that (some #{(first fake/subscription-names)} 
+            (assert/is (some #{(first fake/subscription-names)} 
                                (system/get-subscriptions-in-activation-key ak-name))))))))
  
   (deftest "Check whether the OS of the registered system is displayed in the UI"
@@ -327,7 +327,7 @@
                           :org "ACME_Corporation"
                           :env test-environment
                           :force true})
-        (verify-that (= (client/get-distro ssh-conn)
+        (assert/is (= (client/get-distro ssh-conn)
                         (system/get-os (client/my-hostname ssh-conn))))))
     
   system-group-tests)

@@ -7,7 +7,7 @@
                      [conf          :refer [config with-org]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
-            [tools.verify :refer [verify-that]]
+            [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]
             [clojure.set :refer [intersection difference union]]))
@@ -43,27 +43,27 @@
           (view-select :all)
           (load-all-results)
           (doseq [package intersect-pkg]
-             (verify-that (package-in-repository? package first))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (package-in-repository? package first))
+             (assert/is (package-in-repository? package second)))
           (doseq [package only-in-first]
-             (verify-that (package-in-repository? package first))
-             (verify-that (not (package-in-repository? package second))))
+             (assert/is (package-in-repository? package first))
+             (assert/is (not (package-in-repository? package second))))
           (doseq [package only-in-second]
-             (verify-that (not(package-in-repository? package first)))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (not(package-in-repository? package first)))
+             (assert/is (package-in-repository? package second)))
           (view-select :shared)
           (load-all-results)
           (doseq [package intersect-pkg]
-             (verify-that (package-in-repository? package first))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (package-in-repository? package first))
+             (assert/is (package-in-repository? package second)))
           (view-select :unique)
           (load-all-results)
           (doseq [package only-in-second]
-             (verify-that (not(package-in-repository? package first)))
-             (verify-that (package-in-repository? package second)))
+             (assert/is (not(package-in-repository? package first)))
+             (assert/is (package-in-repository? package second)))
           (doseq [package only-in-first]
-             (verify-that (package-in-repository? package first))
-             (verify-that (not (package-in-repository? package second))))))
+             (assert/is (package-in-repository? package first))
+             (assert/is (not (package-in-repository? package second))))))
   
    (defn repo-all-shared-different-test [type first first-packages second  second-packages]
         (let [only-in-first  (difference first-packages second-packages)
@@ -74,15 +74,15 @@
           (show-select type)
           (view-select :all)
           (load-all-results)
-          (verify-that (= union-pkg
+          (assert/is (= union-pkg
                         (into #{} (get-repo-compare-packages))))
           (view-select :shared)
           (load-all-results)
-          (verify-that (= intersect-pkg
+          (assert/is (= intersect-pkg
                         (into #{} (get-repo-compare-packages))))
           (view-select :unique)
           (load-all-results)
-          (verify-that (= (difference union-pkg intersect-pkg)
+          (assert/is (= (difference union-pkg intersect-pkg)
                         (into #{} (get-repo-compare-packages))))))
 
 (defgroup content-search-repo-compare
@@ -132,16 +132,16 @@
         (remove-repositories to-remove)
         (let [expected (difference (set to-add) (set to-remove))
               result   (set (get-search-result-repositories))]
-          (verify-that (= expected result))))
+          (assert/is (= expected result))))
             
         [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"]]])
     
     (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
       (let [repositories ["CompareZoo1" "CompareZoo2"]]
         (add-repositories-to-search-page repositories)
-        (verify-that (click-if-compare-button-is-disabled?))
+        (assert/is (click-if-compare-button-is-disabled?))
         (compare-repositories-in-search-result repositories)
-        (verify-that (not (click-if-compare-button-is-disabled?)))))
+        (assert/is (not (click-if-compare-button-is-disabled?)))))
   
     
     (deftest "\"Compare\" UI - Selecting repos for compare"
@@ -149,18 +149,96 @@
         (add-repositories-to-search-page (fake/get-all-custom-repos))
         (compare-repositories-in-search-result repositories)
         (click-if-compare-button-is-disabled?)
-        (verify-that (= (set repositories)
+        (assert/is (= (set repositories)
                         (set (get-repo-compare-repositories))))))
      
     (deftest "Repo compare: Add many repos to compare"
       (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
-        (verify-that (= repos
+        (assert/is (= repos
                         (set (compare-repositories (into [] repos)))))))
   
     (deftest "Repo compare: repos render correctly when internationalized"
       (let [expected (set (fake/get-i18n-repos))
             result (set (compare-repositories expected))]
-           (verify-that (= expected result)))))
+           (assert/is (= expected result)))))
+
+(defn verify-errata [type expected-errata]
+  (assert/is (= expected-errata (get-errata-set type))))
+
+(defmacro deftests-errata-search
+  "for a bunch of data driven tests that use the same function, but
+   different name and data."
+  [name-data-map]
+  `(concat ~(vec (for [[name data] name-data-map]
+                   `(deftest ~name
+                      :data-driven true
+
+                      verify-errata
+                      ~data)))))
+
+(defgroup content-search-errata
+  :group-setup (fn []
+                 (def ^:dynamic test-org (uniqueify "erratasearch"))
+                 (api/create-organization test-org)
+                 (fake/prepare-org-custom-provider test-org fake/custom-errata-test-provider)
+                 (env/create (uniqueify "simple-env") {:org-name test-org :prior-env "Library"}))
+  
+   
+  (deftest "Content Browser: Errata information"
+    (get-errata-set "*")
+    (test-errata-popup-click "RHEA-2012:1011")
+                                        ;(test-errata-popup-hover "RHEA-2012:1011")
+    (add-repositories-to-search-page ["ErrataZoo"])
+    (click-repo-errata-on-repo-search-page "ErrataZoo")
+    (test-errata-popup-click "RHEA-2012:1011")
+                                        ;(test-errata-popup-hover "RHEA-2012:1011")
+    (compare-repositories ["ErrataZoo"])
+    (show-select :errata)
+    (test-errata-popup-click "RHEA-2012:1011"))
+                                        ;(test-errata-popup-hover "RHEA-2012:1011"))
+
+  (deftests-errata-search
+    {"UI - Search Errata in Content Search by exact Errata"
+     [["\"RHEA-2012:1011\"" #{"RHEA-2012:1011"}]
+      ["\"RHEA-2012:1012\"" #{"RHEA-2012:1012"}]
+      ["\"RHEA-2012:1013\"" #{"RHEA-2012:1013"}]]
+
+     "UI - Search Errata in Content Search by exact title"
+     [["title:\"Bear_Erratum\"" #{"RHEA-2012:1010"}]
+      ["title:\"Sea_Erratum\"" #{"RHEA-2012:1011"}]
+      ["title:\"Bird_Erratum\"" #{"RHEA-2012:1012"}]
+      ["title:\"Gorilla_Erratum\"" #{"RHEA-2012:1013"}]]
+  
+     "UI - Search Errata in Content Search by title regexp"
+     [["title:Bear_*" #{"RHEA-2012:1010"}]
+      ["title:Sea*" #{"RHEA-2012:1011"}]
+      ["title:Bir*" #{"RHEA-2012:1012"}]
+      ["title:G*" #{"RHEA-2012:1013"}]
+      ["title:*i*" #{"RHEA-2012:1012" "RHEA-2012:1013"}]]
+  
+     "UI - Search Errata in Content Search by type regexp"
+     [["type:secur*" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
+      ["type:*ug*" #{"RHEA-2012:1013"}]
+      ["type:*ement" #{"RHEA-2012:1010"}]
+      ["type:ttt" #{}]
+      ["type:" #{}]]
+  
+     "UI - Search Errata in Content Search by type"
+     [["type:security" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
+      ["type:bugfix" #{"RHEA-2012:1013"}]
+      ["type:enhancement" #{"RHEA-2012:1010"}]]
+  
+     "UI - Search Errata in Content Search by severity"
+     [["severity:low" #{"RHEA-2012:1010"}]
+      ["severity:important" #{"RHEA-2012:1011"}]
+      ["severity:critical" #{"RHEA-2012:1012"}]
+      ["severity:moderate" #{"RHEA-2012:1013"}]
+      ["severity:l*" #{"RHEA-2012:1010"}]
+      ["severity:*rtant" #{"RHEA-2012:1011"}]
+      ["severity:*cal" #{"RHEA-2012:1012"}]
+      ["severity:mod*" #{"RHEA-2012:1013"}]
+      ["severity:ttt" #{}]
+      ["severity:" #{}]]}))
 
 (defgroup content-search-tests
   :group-setup (fn []
@@ -177,7 +255,7 @@
       (let [search-res (with-org test-org
                          (org/switch)
                          (apply search-for-content search-params))]
-        (verify-that (pred search-res))))
+        (assert/is (pred search-res))))
 
 
     ;;some simple search tests for *all* the entities of a given type
@@ -202,9 +280,10 @@
         (if (not (nil? paral-env)) (env/create-path test-org1 (take 3 (unique-names "env3"))))
         (let [search-res (with-org test-org1
                            (org/switch)                       
-                           (apply search-for-content [search-params {:envs envz}]))]
-          (verify-that (pred search-res))
-          (verify-that (-> search-res envs first (= "Library"))))))
+                           (apply (->> (search-for-content)
+                                       (validate-content-search-results)) [search-params {:envs envz}]))]
+          (assert/is (pred search-res))
+          (assert/is (-> search-res envs first (= "Library"))))))
     
               
     ;;setup different org & env scenarios to ensure that Library is the First env and always visible 
@@ -217,5 +296,10 @@
      (with-meta
      [ nil :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
-     {:blockers (open-bz-bugs "855945")})]))
+     {:blockers (open-bz-bugs "855945")})])
+  
+  
+    content-search-repo-compare
+    
+    content-search-errata)
 

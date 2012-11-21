@@ -8,7 +8,7 @@
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [tools.verify :refer [verify-that]]))
+            [test.assert :as assert]))
 
 ;;; Functions
 
@@ -29,7 +29,7 @@
 (defn login-admin []
   (user/logout)
   (user/login)
-  (verify-that (= (user/current) *session-user*)))
+  (assert/is (= (user/current) *session-user*)))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests

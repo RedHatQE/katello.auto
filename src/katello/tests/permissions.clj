@@ -12,7 +12,7 @@
                      [organizations :as organization])
         [test.tree.script :refer :all] 
         [serializable.fn :refer [fn]]
-        [tools.verify :refer [verify-that]]
+        [test.assert :as assert]
         [bugzilla.checker :refer [open-bz-bugs]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
@@ -68,7 +68,7 @@
     (try
       (let [with-perm-results (try-all-with-user allowed-actions)
             no-perm-results (try-all-with-user disallowed-actions)]
-        (verify-that (and (every? denied-access? (vals no-perm-results))
+        (assert/is (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
       (finally
         (user/login conf/*session-user* conf/*session-password*)))))
@@ -219,6 +219,19 @@
                                                     :changesets-page )
                                       (fn [] (organization/switch org))
                                       (fn [] (navigate :named-organization-page {:org-name org})))]))
+   
+   (fn [] (let [org (uniqueify "org")]
+           [:permissions [{:org org
+                           :permissions [{:resource-type :all 
+                                          :name "orgadmin"}]}]
+            :setup (fn [] (api/create-organization org))
+            :allowed-actions (conj (navigate-all :systems-tab :sync-status-page
+                                                   :custom-content-repositories-page :system-templates-page
+                                                   :changesets-page )
+                                   (access-org org)
+                                   (fn [] (environment/create (uniqueify "blah") {:org-name org})))
+            :disallowed-actions [(access-org (@conf/config :admin-org))
+                                 (fn [] (organization/switch (@conf/config :admin-org)))]]))
    
    ])
 
