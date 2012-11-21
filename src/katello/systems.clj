@@ -1,9 +1,9 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
             [clojure.string :refer [blank?]]
-            [tools.verify   :refer [verify-that]]
+            [test.assert :as assert]
             (katello [locators :as locators] 
-                     [notifications :as notification] 
+                     [notifications :as notification]
                      [ui-tasks :refer :all])))
 
 (defn create
@@ -149,3 +149,33 @@
   (navigate :named-activation-key-page {:activation-key-name name})
   (browser click :applied-subscriptions)
   (extract-list locators/fetch-applied-subscriptions))
+
+(defn add-package [name {:keys [package package-group]}]
+  (navigate :named-system-page-content {:system-name name})
+  (browser click :system-content-packages)
+  (when-not package
+    (browser click :select-package-group))
+  (doseq [[items exp-status] [[package "Add Package Complete"]
+                              [package-group "Add Package Group Complete"]]]
+      (when items
+        (->browser (setText :system-package-name items)
+                   (typeKeys :system-package-name "blur")
+                   (click :system-add-content))
+        (Thread/sleep 20000)
+        (assert/is (= exp-status
+                      (browser getText :pkg-install-status))))))
+
+(defn remove-package [name {:keys [package package-group]}]
+  (navigate :named-system-page-content {:system-name name})
+  (browser click :system-content-packages)
+  (when-not package
+    (browser click :select-package-group))
+  (doseq [[items select-to-install exp-status] [[package "Remove Package Complete"]
+                                                [package-group "Remove Package Group Complete"]]]
+    (when items
+      (->browser (setText :system-package-name items)
+                 (typeKeys :system-package-name "blur")
+                 (click :system-remove-content))
+      (Thread/sleep 20000)
+      (assert/is (= exp-status
+                    (browser getText :pkg-install-status))))))
