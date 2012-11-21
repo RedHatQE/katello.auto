@@ -7,7 +7,7 @@
 
 ;;var for synchronizing promotion calls, since only one can be done in
 ;;the system at a time.
-(def promotion-lock nil)
+(def promotion-deletion-lock nil)
 
 
 (defmacro ^{:see-also "https://github.com/scgilardi/slingshot"}
