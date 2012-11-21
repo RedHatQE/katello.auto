@@ -1,6 +1,6 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
-                     [changesets :refer [promote-content]] 
+                     [changesets :refer [promote-delete-content]] 
                      [environments :as environment]
                      [organizations :as org]
                      [tasks :refer :all] 
@@ -64,7 +64,7 @@
           (api/add-to-template template-name {:repositories [{:product product-name
                                                               :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
-    (promote-content from-env target-env content)
+    (promote-delete-content from-env target-env false content)
     (verify-all-content-present content (environment/content target-env))))
 
 (def promo-data
