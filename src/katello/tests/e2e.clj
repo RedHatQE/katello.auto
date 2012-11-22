@@ -66,9 +66,9 @@
 (defgroup end-to-end-tests 
 
   (deftest "Clients can access custom content"
-   ;; :blockers (union (blocking-tests "simple sync" "promote content")
-   ;;                  (open-bz-bugs "784853" "790246")
-   ;;                  no-clients-defined)
+    :blockers (union (blocking-tests "simple sync" "promote content")
+                     (open-bz-bugs "784853" "790246")
+                     no-clients-defined)
    
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")
