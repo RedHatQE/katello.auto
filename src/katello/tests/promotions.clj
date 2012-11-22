@@ -1,11 +1,14 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
-                     [changesets :refer [promote-delete-content]] 
+                     [changesets :refer [promote-delete-content]]
+                     [providers :as provider]
                      [environments :as environment]
                      [organizations :as org]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all] 
-                     [conf :refer [config *environments*]]) 
+                     [ui-tasks :refer :all]
+                     [fake-content :as fake]
+                     [sync-management :as sync]
+                     [conf :refer [with-org config *environments*]]) 
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -92,3 +95,19 @@
                    env."
      verify-promote-content
      promo-data)))
+
+
+(defgroup deletion-tests
+  
+  (deftest "Delete custom product contents"
+    (let [envz (take 3 (unique-names "env3"))
+          test-org (uniqueify "redhat-org")]
+      (org/create test-org)
+      (org/switch test-org)
+      (environment/create-path test-org envz)
+      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+      (let [products (-> fake/custom-provider first :products)
+            all-prods (map :name products)]
+            (promote-delete-content library (first envz) false {:products all-prods})
+            (promote-delete-content (first envz) nil true {:products all-prods})))))
+

@@ -51,6 +51,10 @@
                                             {:name "ManyRepositoryE" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
+(def custom-provider [{:name "fedorapeople"
+                       :products [{:name "safari-1_0"
+                                   :repos [{:name "safari-x86_64" 
+                                            :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"}]}]}])
 
 
 (def custom-errata-test-provider [{:name "Custom Errata Provider"

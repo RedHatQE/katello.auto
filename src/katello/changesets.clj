@@ -84,8 +84,7 @@
   "Promotes the given content from one environment to another 
    Example content: {:products ['Product1' 'Product2']} "
   [from-env to-env deletion content]
-  (let [changeset (uniqueify "changeset")
-        changeset-type "promotion"]
+  (let [changeset (uniqueify "changeset")]
     (create from-env changeset {:deletion? deletion
                                 :next-env-name to-env})
     (add-content changeset from-env content deletion {:to-env to-env})
