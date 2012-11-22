@@ -153,29 +153,28 @@
 (defn add-package [name {:keys [package package-group]}]
   (navigate :named-system-page-content {:system-name name})
   (browser click :system-content-packages)
-  (when-not package
-    (browser click :select-package-group))
-  (doseq [[items exp-status] [[package "Add Package Complete"]
-                              [package-group "Add Package Group Complete"]]]
-      (when items
-        (->browser (setText :system-package-name items)
-                   (typeKeys :system-package-name "blur")
-                   (click :system-add-content))
-        (Thread/sleep 20000)
-        (assert/is (= exp-status
-                      (browser getText :pkg-install-status))))))
+  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
+                                        [package-group "Add Package Group Complete" true]]]
+    (when items
+      (when is-group? (browser click :select-package-group))
+      (->browser (setText :system-package-name items)
+                 (typeKeys :system-package-name items)
+                 (click :system-add-content))
+      (Thread/sleep 20000)
+      (assert/is (= exp-status
+                    (browser getText :pkg-install-status))))))
 
 (defn remove-package [name {:keys [package package-group]}]
   (navigate :named-system-page-content {:system-name name})
   (browser click :system-content-packages)
-  (when-not package
-    (browser click :select-package-group))
-  (doseq [[items select-to-install exp-status] [[package "Remove Package Complete"]
-                                                [package-group "Remove Package Group Complete"]]]
+  (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
+                                        [package-group "Remove Package Group Complete" true]]]
     (when items
+      (when is-group? (browser click :select-package-group))
       (->browser (setText :system-package-name items)
-                 (typeKeys :system-package-name "blur")
+                 (typeKeys :system-package-name items)
                  (click :system-remove-content))
       (Thread/sleep 20000)
       (assert/is (= exp-status
                     (browser getText :pkg-install-status))))))
+  

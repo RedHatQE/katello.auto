@@ -101,10 +101,10 @@
         repo-name (uniqueify "zoo_repo")
         target-env (first *environments*)
         org-name "ACME_Corporation"
-        testkey(uniqueify "mykey")]
+        testkey (uniqueify "mykey")]
     (org/switch)
     (api/ensure-env-exist target-env {:prior library})
-    (let [mykey (->(slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator"))]
+    (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
       (create-gpg-key testkey {:contents mykey}))
     (provider/create {:name provider-name})
     (provider/add-product {:provider-name provider-name
@@ -124,16 +124,15 @@
         sys-name (uniqueify "pkg_install")]
     (provision/with-client sys-name
         ssh-conn
-        (client/setup-client ssh-conn)
         (client/register ssh-conn
                          {:username *session-user*
                           :password *session-password*
                           :org org-name
                           :env target-env
                           :force true})
-        (let [mysys (-> (client/my-hostname ssh-conn))] 
+        (let [mysys (client/my-hostname ssh-conn)] 
           (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
-        (-> (client/my-hostname ssh-conn))))))
+          (client/my-hostname ssh-conn)))))
 
 
 ;; Tests
