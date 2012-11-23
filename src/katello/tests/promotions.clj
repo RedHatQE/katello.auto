@@ -100,13 +100,28 @@
 (defgroup deletion-tests
   
   (deftest "Delete custom product contents"
+    
     (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "redhat-org")]
+          test-org (uniqueify "custom-org")]
       (org/create test-org)
       (org/switch test-org)
       (environment/create-path test-org envz)
       (fake/prepare-org-custom-provider  test-org fake/custom-provider)
       (let [products (-> fake/custom-provider first :products)
+            all-prods (map :name products)]
+            (promote-delete-content library (first envz) false {:products all-prods})
+            (promote-delete-content (first envz) nil true {:products all-prods}))))
+  
+  (deftest "Delete fake-RH product contents"
+    :blockers (open-bz-bugs "877419")
+    
+    (let [envz (take 3 (unique-names "env3"))
+          test-org (uniqueify "redhat-org")]
+      (org/create test-org)
+      (org/switch test-org)
+      (environment/create-path test-org envz)
+      (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos))
+      (let [products fake/some-product-repos
             all-prods (map :name products)]
             (promote-delete-content library (first envz) false {:products all-prods})
             (promote-delete-content (first envz) nil true {:products all-prods})))))
