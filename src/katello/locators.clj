@@ -71,6 +71,7 @@
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[$1]"
+   fetch-environments-in-org       "xpath=(//div[@id='path-selected']//a/div)[$1]"
    sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
    system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
    subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
@@ -263,10 +264,12 @@
    :review-for-promotion        "review_changeset"
    :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
    :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-   :new-changeset     "//a[contains(.,'New Changeset')]"
+   :new-changeset               "//a[contains(.,'New Changeset')]"
    :changeset-name-text         "changeset[name]"
    :save-changeset              "save_changeset_button"
-   :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"})
+   :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+   :changeset-type              "changeset[action_type]"
+   :select-deletion-changeset   "//div[@data-cs_type='deletion']"})
 
 (def users
   {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
@@ -562,9 +565,11 @@
       [:changeset-promotions-tab [] (browser mouseOver :changeset-management)
        [:changesets-page [] (browser clickAndWait :changesets)
         [:named-environment-changesets-page [env-name next-env-name]
-         (select-environment-widget env-name {:next-env-name next-env-name :wait true})
-         [:named-changeset-page [changeset-name]
-          (browser click (changeset changeset-name))]]]]
+           (select-environment-widget env-name {:next-env-name next-env-name :wait true})
+         [:named-changeset-page [changeset-name changeset-type]
+          (do
+            (if (= changeset-type "deletion") (browser click :select-deletion-changeset))
+            (browser click (changeset changeset-name)))]]]]
       [:content-search-page [] (browser clickAndWait :content-search)]
       [:system-templates-page [] (browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (browser click (slide-link template-name))]

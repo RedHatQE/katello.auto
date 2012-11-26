@@ -91,4 +91,4 @@
         (test-client-access (@config :admin-org)
                             target-env
                             products
-                            [package-to-install] )))))
+                            [package-to-install])))))
