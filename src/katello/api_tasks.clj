@@ -4,7 +4,7 @@
             [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
             (katello [rest :as rest] 
                      [conf :refer [config *session-user* *session-password* *session-org*]] 
-                     [tasks :refer [uniqueify library promotion-lock chain-envs]])))
+                     [tasks :refer [uniqueify library promotion-deletion-lock chain-envs]])))
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
@@ -218,7 +218,7 @@
    promotion completes, throws an exception."
   [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
-    (locking #'promotion-lock
+    (locking #'promotion-deletion-lock
       (rest/post (api-url "api/changesets/" id "/promote"))
       (loop-with-timeout 180000 [cs {}]
         (let [state (:state cs)]

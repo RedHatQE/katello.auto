@@ -1,11 +1,14 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
-                     [changesets :refer [promote-content]] 
+                     [changesets :refer [promote-delete-content]]
+                     [providers :as provider]
                      [environments :as environment]
                      [organizations :as org]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all] 
-                     [conf :refer [config *environments*]]) 
+                     [ui-tasks :refer :all]
+                     [fake-content :as fake]
+                     [sync-management :as sync]
+                     [conf :refer [with-org config *environments*]]) 
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -64,7 +67,7 @@
           (api/add-to-template template-name {:repositories [{:product product-name
                                                               :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
-    (promote-content from-env target-env content)
+    (promote-delete-content from-env target-env false content)
     (verify-all-content-present content (environment/content target-env))))
 
 (def promo-data
@@ -92,3 +95,34 @@
                    env."
      verify-promote-content
      promo-data)))
+
+
+(defgroup deletion-tests
+  
+  (deftest "Delete custom product contents"
+    
+    (let [envz (take 3 (unique-names "env3"))
+          test-org (uniqueify "custom-org")]
+      (org/create test-org)
+      (org/switch test-org)
+      (environment/create-path test-org envz)
+      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+      (let [products (-> fake/custom-provider first :products)
+            all-prods (map :name products)]
+            (promote-delete-content library (first envz) false {:products all-prods})
+            (promote-delete-content (first envz) nil true {:products all-prods}))))
+  
+  (deftest "Delete fake-RH product contents"
+    :blockers (open-bz-bugs "877419")
+    
+    (let [envz (take 3 (unique-names "env3"))
+          test-org (uniqueify "redhat-org")]
+      (org/create test-org)
+      (org/switch test-org)
+      (environment/create-path test-org envz)
+      (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos))
+      (let [products fake/some-product-repos
+            all-prods (map :name products)]
+            (promote-delete-content library (first envz) false {:products all-prods})
+            (promote-delete-content (first envz) nil true {:products all-prods})))))
+

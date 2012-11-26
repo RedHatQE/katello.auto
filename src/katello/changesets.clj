@@ -13,42 +13,50 @@
 ;; Changesets
 ;;
 
+
 (defn create
-  "Creates a changeset for promotion from env-name to next-env name."
-  [env-name next-env-name changeset-name]
-  (navigate :named-environment-changesets-page {:env-name env-name
+  "Creates a changeset for promotion from env-name to next-env name 
+  or for deletion from env-name."
+  [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
+  (navigate :named-environment-changesets-page {:env-name env-name 
                                                 :next-env-name next-env-name})
-  (->browser (click :new-changeset)
-             (setText :changeset-name-text changeset-name)
-             (click :save-changeset))
+  (if deletion? (browser click :select-deletion-changeset))
+    (->browser (click :new-changeset)
+               (setText :changeset-name-text changeset-name)
+               (click :save-changeset))
   (check-for-success))
 
 (defn add-content
   "Adds the given content to an existing changeset. The originating
    and target environments need to be specified to find to locate the
    changeset."
-  [changeset-name from-env to-env content]
+  ;; to-env is mandatory if promotion changeset
+  ;; to-env not required if deletion changeset
+  [changeset-name from-env content deletion? & [{:keys [to-env]}]]
   (navigate :named-changeset-page {:env-name from-env
-                                              :next-env-name to-env
-                                              :changeset-name changeset-name})
+                                   :next-env-name to-env
+                                   :changeset-name changeset-name
+                                   :changeset-type (if deletion? "deletion" "promotion")})
   (doseq [category (keys content)]
     (browser click (-> category name (str "-category") keyword))
     (doseq [item (content category)]
       (browser click (locators/promotion-add-content-item item)))
-    (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
+      (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
-(defn promote
-  "Promotes the given changeset to its target environment. An optional
-   timeout-ms key will specify how long to wait for the promotion to
-   complete successfully."
-  [changeset-name {:keys [from-env to-env timeout-ms]}]
+
+(defn promote-or-delete
+  "Promotes the given changeset to its target environment and could also Delete  
+   content from an environment. An optional timeout-ms key will specify how long to  
+   wait for the promotion or deletion to complete successfully."
+  [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
   (let [nav-to-cs (fn [] (navigate :named-changeset-page
                                   {:env-name from-env
                                    :next-env-name to-env
-                                   :changeset-name changeset-name}))]
+                                   :changeset-name changeset-name
+                                   :changeset-type (if deletion? "deletion" "promotion")}))]
     (nav-to-cs)
-    (locking #'promotion-lock
+    (locking #'promotion-deletion-lock
       (browser click :review-for-promotion)
       ;;for the submission
       (loop-with-timeout 600000 []
@@ -72,16 +80,18 @@
       ;;wait for async success notif
       (check-for-success {:timeout-ms 180000}))))
 
-(defn promote-content
+(defn promote-delete-content
   "Promotes the given content from one environment to another 
    Example content: {:products ['Product1' 'Product2']} "
-  [from-env to-env content]
+  [from-env to-env deletion content]
   (let [changeset (uniqueify "changeset")]
-    (create from-env to-env changeset)
-    (add-content changeset from-env to-env content)
-    (promote changeset {:from-env from-env
-                        :to-env to-env
-                        :timeout-ms 300000})))
+    (create from-env changeset {:deletion? deletion
+                                :next-env-name to-env})
+    (add-content changeset from-env content deletion {:to-env to-env})
+    (promote-or-delete changeset {:from-env from-env
+                                  :to-env to-env
+                                  :deletion? deletion
+                                  :timeout-ms 300000})))
 
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)
@@ -89,4 +99,4 @@
         sync-results (sync/perform-sync all-repos {:timeout 600000})]
         (assert/is (every? (fn [[_ res]] (sync/success? res))
                              sync-results))
-        (promote-content from-env to-env {:products all-prods})))
+        (promote-delete-content from-env to-env false {:products all-prods})))
