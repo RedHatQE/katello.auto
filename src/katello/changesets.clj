@@ -39,15 +39,15 @@
                                    :changeset-type (if deletion "deletion" "promotion")})
   (doseq [category (-> content keys first list)]
     (browser click (-> category name (str "-category") keyword))
-    (if (and (contains? content :repos) deletion)
-      (do
-        (doseq [prod-item (content category)]
-          (browser click (locators/select-product prod-item))
-          (browser click :select-repos)
-          (doseq [repo-item (map :name (content :repos))]
-            (browser click (locators/promotion-add-content-item repo-item)))))
-      (doseq [item (content category)]
-        (browser click (locators/promotion-add-content-item item))))
+    (and (contains? content (-> content keys second)) deletion
+      (doseq [prod-item (content category)]
+        (browser click (locators/select-product prod-item))
+        (browser click (keyword (str "select-" (-> content keys second name))))
+        (if (contains? content :errata) (browser click :select-errata-all))
+        (doseq [item (map :name (content (-> content keys second)))]
+          (browser click (locators/promotion-add-content-item item)))))
+    (if-not deletion (doseq [item (content category)]
+      (browser click (locators/promotion-add-content-item item))))
     (browser sleep 5000))) ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 

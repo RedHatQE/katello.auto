@@ -271,7 +271,10 @@
    :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
    :changeset-type              "changeset[action_type]"
    :select-deletion-changeset   "//div[@data-cs_type='deletion']"
-   :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"})
+   :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
+   :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
+   :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
+   :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
 (def users
   {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"

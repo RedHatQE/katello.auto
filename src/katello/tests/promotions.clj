@@ -81,6 +81,9 @@
                                          :title "Beat_Erratum"
                                          :others ["Sea" "Bird" "Gorilla"]}}])))
 
+(def custom-products
+  (-> fake/custom-provider first :products))
+
 ;; Tests
 
 (defgroup promotion-tests
@@ -99,45 +102,21 @@
 
 (defgroup deletion-tests
   
-  (deftest "Delete custom product contents"
-    
-    (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "custom-org")]
-      (org/create test-org)
-      (org/switch test-org)
-      (environment/create-path test-org envz)
-      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-      (let [products (-> fake/custom-provider first :products)
-            all-prods (map :name products)]
-            (promote-delete-content library (first envz) false {:products all-prods})
-            (promote-delete-content (first envz) nil true {:products all-prods}))))
+  (dep-chain
+    (deftest "Deletion Changeset test-cases"
+      :data-driven true
+      
+      (fn [custom content]
+        (let [envz (take 3 (unique-names "env3"))
+              test-org (uniqueify "custom-org")]
+          (org/create test-org)
+          (org/switch test-org)
+          (environment/create-path test-org envz)
+          (if custom (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+                     (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos)))
+          (promote-delete-content library (first envz) false content)
+          (promote-delete-content (first envz) nil true content)))
+      
+      [[[true] {:products (map :name custom-products)}]
+       [[true] {:products (map :name custom-products) :repos (apply concat (map :repos custom-products))}]])))
   
-  (deftest "Delete fake-RH product contents"
-    :blockers (open-bz-bugs "877419")
-    
-    (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "redhat-org")]
-      (org/create test-org)
-      (org/switch test-org)
-      (environment/create-path test-org envz)
-      (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos))
-      (let [products fake/some-product-repos
-            all-prods (map :name products)]
-            (promote-delete-content library (first envz) false {:products all-prods})
-            (promote-delete-content (first envz) nil true {:products all-prods}))))
-  
-  (deftest "Delete custom repos"
-    
-    (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "redhat-org")]
-      (org/create test-org)
-      (org/switch test-org)
-      (environment/create-path test-org envz)
-      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-      (let [products (-> fake/custom-provider first :products)
-            all-prods (map :name products)
-            all-repos (apply concat (map :repos products))]
-            (promote-delete-content library (first envz) false {:products all-prods
-                                                                :repos all-repos})
-            (promote-delete-content (first envz) nil true {:products all-prods
-                                                           :repos all-repos})))))
