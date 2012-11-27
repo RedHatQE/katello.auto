@@ -66,7 +66,9 @@
               ["yum remove -y '%s*'" rpm-name-prefix]
               ["rm -f *.rpm"]
               ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]
-              ["rpm -ivh candlepin*.noarch.rpm"]]]
+              ["rpm -ivh candlepin*.noarch.rpm"]
+              ["wget -O /etc/yum.repos.d/katello-agent.repo %s" (@config :agent-repo)]
+              ["yum install -y katello-agent"]]]
     (doall (for [cmd cmds] (run-cmd runner (apply format cmd))))))
 
 (defn subscribe [runner poolid]
