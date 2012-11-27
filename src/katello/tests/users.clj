@@ -6,18 +6,63 @@
                      [users :as user]
                      [tasks :refer :all]
                      [ui-tasks :refer [errtype]] 
-                     [conf :refer [config]]) 
-            [test.tree.script :refer :all] 
+                     [conf :refer [config]]
+                     [api-tasks :as api]) 
+            [test.tree.script :refer :all]
+            [test.assert :as assert]
             [clojure.string :refer [capitalize upper-case lower-case]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
-;;; Variables
-
+;;; Constants
 
 (def generic-user-details {:password "password", :email "blah@blah.com"})
 
+;;; Functions
+
+(defn step-create-org-and-user [{:keys [username org]}]
+  (api/create-user username generic-user-details)
+  (api/create-organization org)
+  (role/assign {:user username :roles ["Administrator"]}))
+
+(defn step-set-default-org-at-login-screen [{:keys [username org]}]
+  (user/login username (:password generic-user-details) {:default-org org
+                                                         :org org}))
+
+(defn step-logout [_]
+  (user/logout))
+
+(defn step-verify-login-direct-to-default-org [{:keys [username org]}]
+  (user/login username (:password generic-user-details))
+  (assert/is (= (organization/current)
+                org)))
+
+(defn step-verify-login-prompts-org [{:keys [username org]}]
+  (expecting-error [:type :katello.users/login-org-required]
+                   (user/login username (:password generic-user-details))))
+
+(defn step-unset-default-org [_]
+  (organization/switch nil {:default-org :none}))
 
 ;;; Tests
+
+(defgroup default-org-tests
+  :test-teardown #(user/login)
+  (deftest "Set default org for a user at login"
+    (do-steps (uniqueify-vals {:username "deforg"
+                               :org "usersorg"})
+              step-create-org-and-user
+              step-set-default-org-at-login-screen
+              step-logout
+              step-verify-login-direct-to-default-org) 
+
+    (deftest "Unset default org for a user at login"
+      (do-steps (uniqueify-vals {:username "deforg"
+                                 :org "usersorg"})
+                step-create-org-and-user
+                step-set-default-org-at-login-screen
+                step-unset-default-org
+                step-logout
+                step-verify-login-prompts-org))))
 
 (defgroup user-tests
 
