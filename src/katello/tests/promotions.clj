@@ -124,5 +124,20 @@
       (let [products fake/some-product-repos
             all-prods (map :name products)]
             (promote-delete-content library (first envz) false {:products all-prods})
-            (promote-delete-content (first envz) nil true {:products all-prods})))))
-
+            (promote-delete-content (first envz) nil true {:products all-prods}))))
+  
+  (deftest "Delete custom repos"
+    
+    (let [envz (take 3 (unique-names "env3"))
+          test-org (uniqueify "redhat-org")]
+      (org/create test-org)
+      (org/switch test-org)
+      (environment/create-path test-org envz)
+      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+      (let [products (-> fake/custom-provider first :products)
+            all-prods (map :name products)
+            all-repos (apply concat (map :repos products))]
+            (promote-delete-content library (first envz) false {:products all-prods
+                                                                :repos all-repos})
+            (promote-delete-content (first envz) nil true {:products all-prods
+                                                           :repos all-repos})))))

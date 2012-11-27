@@ -81,7 +81,8 @@
    template-product                "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"
    textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"
    user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"
-   username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"})
+   username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"
+   select-product                  "//span[contains(.,'$1')]"})
 
 
 (defn get-all-of-locator [locatorfn] 
@@ -269,7 +270,8 @@
    :save-changeset              "save_changeset_button"
    :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
    :changeset-type              "changeset[action_type]"
-   :select-deletion-changeset   "//div[@data-cs_type='deletion']"})
+   :select-deletion-changeset   "//div[@data-cs_type='deletion']"
+   :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"})
 
 (def users
   {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"

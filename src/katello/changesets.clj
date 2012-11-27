@@ -32,16 +32,23 @@
    changeset."
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
-  [changeset-name from-env content deletion? & [{:keys [to-env]}]]
+  [changeset-name from-env content deletion & [{:keys [to-env]}]]
   (navigate :named-changeset-page {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
-                                   :changeset-type (if deletion? "deletion" "promotion")})
-  (doseq [category (keys content)]
+                                   :changeset-type (if deletion "deletion" "promotion")})
+  (doseq [category (-> content keys first list)]
     (browser click (-> category name (str "-category") keyword))
-    (doseq [item (content category)]
-      (browser click (locators/promotion-add-content-item item)))
-      (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
+    (if (and (contains? content :repos) deletion)
+      (do
+        (doseq [prod-item (content category)]
+          (browser click (locators/select-product prod-item))
+          (browser click :select-repos)
+          (doseq [repo-item (map :name (content :repos))]
+            (browser click (locators/promotion-add-content-item repo-item)))))
+      (doseq [item (content category)]
+        (browser click (locators/promotion-add-content-item item))))
+    (browser sleep 5000))) ;;sleep to wait for browser->server comms to update changeset
 ;;can't navigate away until that's done
 
 
