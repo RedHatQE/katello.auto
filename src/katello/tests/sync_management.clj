@@ -8,7 +8,7 @@
                      [tasks :refer :all]
                      [sync-management :as sync]
                      [ui-tasks :refer [navigate errtype]] 
-                     [conf :refer [config *environments* with-org with-creds]]) 
+                     [conf :refer [config *environments* *session-org* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -56,7 +56,7 @@
     (user/create user {:password password :email "blah@blah.com"})
     (role/assign {:user user :roles ["Administrator"]})
     (try
-      (user/login user password)
+      (user/login user password {:org *session-org*})
       (organization/create org)
       (with-creds user password
         (with-org org

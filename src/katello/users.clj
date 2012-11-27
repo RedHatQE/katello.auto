@@ -46,13 +46,17 @@
                       :password-text password}
                      :log-in)
      (let [retval (notification/check-for-success {:timeout-ms 20000})
-           direct-login? (some #(= "Login Successful" %)
+           direct-login? (some (fn [n] (or (= "Login Successful" n)
+                                          (re-find #"logging into" n)))
                                (mapcat :notices retval))]
        ;; if user only has access to one org, he will bypass org select
        (if direct-login? 
          (browser waitForPageToLoad)
          (do (Thread/sleep 3000)
-             (organization/switch (or org (@config :admin-org))
+             (organization/switch (or org
+                                      (throw+ {:type ::login-org-required
+                                               :msg (format "User %s has no default org, cannot fully log in without specifying an org."
+                                                            username)}))
                                   {:default-org default-org})))
        retval)))
 

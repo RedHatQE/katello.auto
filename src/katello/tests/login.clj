@@ -24,7 +24,7 @@
     ; Notifications must be flushed so user/login can succeed in 'finally'
     (katello.notifications/flush)
    (finally
-    (user/login *session-user* *session-password*))))
+    (user/login))))
 
 (defn login-admin []
   (user/logout)

@@ -48,21 +48,25 @@
   "Switch to the given organization in the UI. If no args are given,
    the value of *session-org* is used. If force? is true,switch even
    if the org switcher is already on the requested org. Optionally
-   also select the default org for this user. Using force is not
+   also select the default org for this user. To remove any default
+   org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
   ([org-name & [{:keys [force? default-org]}]]
-      (when (or force?
-                default-org
-                (not= (current) org-name)) 
-        (browser click :org-switcher)
-        (when default-org
-          (let [current-default (try (browser getText :default-org)
-                                     (catch SeleniumException _ nil))]
-            (when (not= current-default default-org)
-              (browser click (locators/default-org-star default-org))
-              (notification/check-for-success))))
-        (browser clickAndWait (locators/org-switcher org-name)))))
+     (when (or force?
+               default-org
+               (not= (current) org-name)) 
+       (browser click :org-switcher)
+       (when default-org
+         (let [current-default (try (browser getText :default-org)
+                                    (catch SeleniumException _ :none))]
+           (when (not= current-default default-org)
+             (browser click (locators/default-org-star (if (= default-org :none)
+                                                         current-default
+                                                         default-org)))
+             (notification/check-for-success))))
+       (when org-name
+         (browser clickAndWait (locators/org-switcher org-name))))))
 
 (defn before-test-switch
   "A pre-made fn to switch to the session org, meant to be used in

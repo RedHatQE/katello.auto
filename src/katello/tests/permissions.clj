@@ -71,7 +71,7 @@
         (assert/is (and (every? denied-access? (vals no-perm-results))
                           (every? has-access? (vals with-perm-results)))))
       (finally
-        (user/login conf/*session-user* conf/*session-password*)))))
+        (user/login)))))
 
 (def create-an-env
   (fn [] (environment/create (uniqueify "blah") {:org-name (@conf/config :admin-org)})))

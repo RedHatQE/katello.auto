@@ -30,8 +30,8 @@
    (setAjaxFinishedCondition jquery-ajax-finished)
    (open (@config :server-url) false)
    (setTimeout "60000"))
-  
-  (login (@config :admin-user) (@config :admin-password)))
+  (login (@config :admin-user) (@config :admin-password)
+         {:org (@config :admin-org)}))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
@@ -42,7 +42,9 @@
   (role/assign {:user user
                 :roles ["Administrator"]})
   (logout)
-  (login user pw))
+  ;;login and set the default org to save time later
+  (login user pw {:default-org (@config :admin-org)
+                  :org (@config :admin-org)}))
 
 (defn stop-selenium []
    (browser stop))
