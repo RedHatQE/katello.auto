@@ -64,6 +64,7 @@
                 step-logout
                 step-verify-login-prompts-org))))
 
+
 (defgroup user-tests
 
   (deftest "Admin creates a user"
@@ -119,7 +120,7 @@
 
       (with-unique [username "dupeuser"]
         (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
-          (user/create username generic-user-details))))
+                                 (user/create username generic-user-details))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
       :blockers (open-bz-bugs "857876")
@@ -144,4 +145,6 @@
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
-        (role/assign {:user username, :roles ["Administrator"]})))))
+        (role/assign {:user username, :roles ["Administrator"]}))))
+
+  default-org-tests)
