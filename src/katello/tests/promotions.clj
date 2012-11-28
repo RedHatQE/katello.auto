@@ -118,5 +118,15 @@
           (promote-delete-content (first envz) nil true content)))
       
       [[[true] {:products (map :name custom-products)}]
-       [[true] {:products (map :name custom-products) :repos (apply concat (map :repos custom-products))}]])))
-  
+       [[true] {:products (map :name custom-products) 
+                :repos (apply concat (map :repos custom-products))}]
+       [[true] {:products (map :name custom-products) 
+                :packages (list {:name "bear-4.1-1.noarch"} 
+                                {:name "camel-0.1-1.noarch"} 
+                                {:name "cat-1.0-1.noarch"})}]
+       [[true] {:products (map :name custom-products) 
+                :errata (list {:name "Bear_Erratum"} 
+                              {:name "Sea_Erratum"})}]
+       (with-meta
+       [[false] {:products (map :name fake/some-product-repos)}]
+       {:blockers (open-bz-bugs "877419")})])))
