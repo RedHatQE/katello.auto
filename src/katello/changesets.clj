@@ -25,6 +25,7 @@
                (setText :changeset-name-text changeset-name)
                (click :save-changeset))
   (check-for-success))
+   
 
 (defn add-content
   "Adds the given content to an existing changeset. The originating
@@ -33,24 +34,51 @@
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
   [changeset-name from-env content deletion & [{:keys [to-env]}]]
+  (comment {:products ["foo" "bar"]
+            :packages [{:product-name "safari-1_0", 
+                        :name "foopackage"}]
+            :repos ({:product-name "safari-1_0", 
+                     :name "safari-x86_64"}
+                     {:product-name "zoo-1_0", 
+                     :name "zoorepo-x86_64"})})
   (navigate :named-changeset-page {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
                                    :changeset-type (if deletion "deletion" "promotion")})
-  (doseq [category (-> content keys first list)]
-    (browser click (-> category name (str "-category") keyword))
-    (and (contains? content (-> content keys second)) deletion
-      (doseq [prod-item (content category)]
-        (browser click (locators/select-product prod-item))
-        (browser click (keyword (str "select-" (-> content keys second name))))
-        (if (contains? content :errata) (browser click :select-errata-all))
-        (doseq [item (map :name (content (-> content keys second)))]
-          (browser click (locators/promotion-add-content-item item)))))
-    (if-not deletion (doseq [item (content category)]
-      (browser click (locators/promotion-add-content-item item))))
-    (browser sleep 5000))) ;;sleep to wait for browser->server comms to update changeset
-;;can't navigate away until that's done
+  (doseq [category (keys content)]
+    (let [data (content category)]
+      (cond 
+        (and (some #{(name category)} (list "repos" "packages" "errata")) deletion)
+        (do
+          (doseq [prod-item (distinct (map :product-name data))]
+            (let [add-items (remove nil? (for [single data]  
+                                           (let [new (vals single)]
+                                             (if (= (first new) prod-item) (second new)))))] 
+              (->browser 
+                (click :products-category)
+                (click (locators/select-product prod-item))
+                (click (keyword (str "select-" (name category)))))
+              (if (= category :errata) (browser click :select-errata-all))
+              (doseq [add-item add-items ] 
+                (browser click (locators/promotion-add-content-item add-item))))))
+        
+        (some #{(name category)} (list "repos" "packages" "errata"))
+        (do
+          (browser click :products-category)
+          (doseq [prod-item (distinct (map :product-name data))]
+            (browser click (locators/promotion-add-content-item prod-item))))
+            
+        :else
+        (do
+          (doseq [item data]  
+            (->browser 
+              (click :products-category)
+              (click (locators/promotion-add-content-item item))))))
+      ;; sleep to wait for browser->server comms to update changeset
+      ;; can't navigate away until that's done
 
+      (browser sleep 5000)
+      (browser click :promotion-eligible-home))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  

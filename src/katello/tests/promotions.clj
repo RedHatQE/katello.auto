@@ -82,7 +82,11 @@
                                          :others ["Sea" "Bird" "Gorilla"]}}])))
 
 (def custom-products
-  (-> fake/custom-provider first :products))
+  (for [prod (-> fake/custom-provider first :products)]
+      (assoc prod :repos
+             (for [repo (:repos prod)] 
+               (assoc repo :product-name (:name prod))))))
+
 
 ;; Tests
 
@@ -118,15 +122,12 @@
           (promote-delete-content (first envz) nil true content)))
       
       [[[true] {:products (map :name custom-products)}]
-       [[true] {:products (map :name custom-products) 
-                :repos (apply concat (map :repos custom-products))}]
-       [[true] {:products (map :name custom-products) 
-                :packages (list {:name "bear-4.1-1.noarch"} 
-                                {:name "camel-0.1-1.noarch"} 
-                                {:name "cat-1.0-1.noarch"})}]
-       [[true] {:products (map :name custom-products) 
-                :errata (list {:name "Bear_Erratum"} 
-                              {:name "Sea_Erratum"})}]
+       [[true] {:repos (mapcat :repos custom-products)}]
+       [[true] {:packages (list {:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
+                                {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
+                                {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
+       [[true] {:errata (list {:name "Bear_Erratum", :product-name "safari-1_0"} 
+                              {:name "Sea_Erratum", :product-name "safari-1_0"})}]
        (with-meta
        [[false] {:products (map :name fake/some-product-repos)}]
        {:blockers (open-bz-bugs "877419")})])))
