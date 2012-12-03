@@ -228,6 +228,7 @@
    :repo-url-text                       "repo[feed]" 
    :save-repository                     "//input[@value='Create']"
    :remove-repository                   (link "Remove Repository")
+   :repo-gpg-select                     "//select[@id='repo_gpg_key']"
 
    ;;redhat page
    :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
@@ -328,6 +329,14 @@
    :system-name-text                       "system[name]"
    :system-sockets-text                    "system[sockets]"
    :system-arch-select                     "arch[arch_id]"
+   :system-content-select                  "xpath=(//li[@id='content']/a)[2]"
+   :system-content-packages                (link "Packages")
+   :system-add-content			               "add_content"
+   :system-remove-content                  "remove_content" 
+   :system-package-name                    "content_input"
+   :select-package-group                   "perform_action_package_groups"
+   :select-system-package                  "perform_action_packages"
+   :pkg-install-status                     "//td[@class='package_action_status']/a[@class='subpanel_element']"
 
    ;;system-edit details
    :system-name-text-edit                  "system[name]"
@@ -578,8 +587,9 @@
       [:systems-all-page [] (browser clickAndWait :all)
        [:new-system-page [] (browser click :new-system)]
        [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
-        [:named-systems-page [] (browser click :details)]]]
-      [:system-groups-page [] (browser clickAndWait :system-groups)
+        [:named-systems-page [] (browser click :details)]
+        [:named-system-page-content [] (browser click :system-content-select)]]]
+     [:system-groups-page [] (browser clickAndWait :system-groups)
        [:new-system-groups-page [] (browser click :new-system-groups)]
        [:named-system-group-page [system-group-name] (choose-left-pane (left-pane-item system-group-name))
         [:system-group-systems-page [] (browser click :systems-sg)]

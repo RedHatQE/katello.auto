@@ -1,4 +1,5 @@
 (ns katello.client
+  (:require (katello [api-tasks :as api]))
   (:require [katello.conf :refer [config]]
             [slingshot.slingshot :refer [try+ throw+]]
             [clojure.string :refer [split trim]])
@@ -65,7 +66,17 @@
               ["yum remove -y '%s*'" rpm-name-prefix]
               ["rm -f *.rpm"]
               ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]
-              ["rpm -ivh candlepin*.noarch.rpm"]]]
+              ["rpm -ivh candlepin*.noarch.rpm"]
+              
+              ;; hack to install latest katello-agent. works for
+              ;; latest CI build of katello ONLY. not for SAM, CFSE
+              ;; etc (although it may work, it's just not testing it
+              ;; correctly). The real fix for this in katello is to
+              ;; make the agent available directly from katello.
+              
+              ["wget -O /etc/yum.repos.d/katello-agent.repo %s" (@config :agent-repo)]
+              ["yum localinstall -y http://fedorapeople.org/groups/katello/releases/yum/nightly/RHEL/6Server/x86_64/katello-repos-latest.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-7.noarch.rpm"]
+              ["yum install -y katello-agent"]]]
     (doall (for [cmd cmds] (run-cmd runner (apply format cmd))))))
 
 (defn subscribe [runner poolid]
@@ -80,3 +91,12 @@
 (defn get-distro [runner]
   ((get-client-facts runner) "distribution.name"))
 
+(defn get-pool-id "Fetch subscription pool-id"
+  [mysys product-name]
+  (let [pool-provides-product (fn [prod pool]
+                                (or (= (:productName pool) prod)
+                                    (some #(= (:productName %) prod)
+                                          (:providedProducts pool))))]
+    (->> (api/system-available-pools mysys)
+      (filter (partial pool-provides-product product-name))
+      first :id)))

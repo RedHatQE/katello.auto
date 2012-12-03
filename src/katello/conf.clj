@@ -72,7 +72,10 @@
     :parse-fn #(->> (string/split % #",") (map symbol) vec)]
    
    ["--trace-excludes" "Functions to exclude from tracing"
-    :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
+    :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]
+
+   ["--agent-repo" "URL of a .repo file to point to where katello-agent can be installed from."
+    :default "https://raw.github.com/gist/1978881"]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 

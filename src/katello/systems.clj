@@ -1,8 +1,9 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
             [clojure.string :refer [blank?]]
+            [test.assert :as assert]
             (katello [locators :as locators] 
-                     [notifications :as notification] 
+                     [notifications :as notification]
                      [ui-tasks :refer :all])))
 
 (defn create
@@ -149,3 +150,31 @@
   (browser click :applied-subscriptions)
   (extract-list locators/fetch-applied-subscriptions))
 
+(defn add-package [name {:keys [package package-group]}]
+  (navigate :named-system-page-content {:system-name name})
+  (browser click :system-content-packages)
+  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
+                                        [package-group "Add Package Group Complete" true]]]
+    (when items
+      (when is-group? (browser click :select-package-group))
+      (->browser (setText :system-package-name items)
+                 (typeKeys :system-package-name items)
+                 (click :system-add-content))
+      (Thread/sleep 20000)
+      (assert/is (= exp-status
+                    (browser getText :pkg-install-status))))))
+
+(defn remove-package [name {:keys [package package-group]}]
+  (navigate :named-system-page-content {:system-name name})
+  (browser click :system-content-packages)
+  (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
+                                        [package-group "Remove Package Group Complete" true]]]
+    (when items
+      (when is-group? (browser click :select-package-group))
+      (->browser (setText :system-package-name items)
+                 (typeKeys :system-package-name items)
+                 (click :system-remove-content))
+      (Thread/sleep 20000)
+      (assert/is (= exp-status
+                    (browser getText :pkg-install-status))))))
+  
