@@ -25,6 +25,7 @@
                (setText :changeset-name-text changeset-name)
                (click :save-changeset))
   (check-for-success))
+   
 
 (defn add-content
   "Adds the given content to an existing changeset. The originating
@@ -32,18 +33,44 @@
    changeset."
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
-  [changeset-name from-env content deletion? & [{:keys [to-env]}]]
+  [changeset-name from-env content deletion & [{:keys [to-env]}]]
   (navigate :named-changeset-page {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
-                                   :changeset-type (if deletion? "deletion" "promotion")})
+                                   :changeset-type (if deletion "deletion" "promotion")})
   (doseq [category (keys content)]
-    (browser click (-> category name (str "-category") keyword))
-    (doseq [item (content category)]
-      (browser click (locators/promotion-add-content-item item)))
-      (browser sleep 5000)))  ;;sleep to wait for browser->server comms to update changeset
-;;can't navigate away until that's done
+    (let [data (content category)
+          grouped-data (group-by :product-name data)]
+      (cond 
+        (some #{category} [:repos :packages])
+        (do
+          (doseq [[prod-item repos] grouped-data]
+            (let [add-items (map :name repos)] 
+              (->browser 
+                (click :products-category)  
+                (click (locators/select-product prod-item))
+                (click (keyword (str "select-" (name category)))))
+              (doseq [add-item add-items ] 
+                (browser click (locators/promotion-add-content-item add-item))))))
+        
+        (= category :errata)
+        (do
+          (browser click :errata-category)
+          (browser click :select-errata-all)
+          (doseq [add-item (map :name data )]
+            (browser click (locators/promotion-add-content-item add-item))))
+            
+        :else
+        (do
+          (doseq [item data]  
+            (->browser 
+              (click :products-category)
+              (click (locators/promotion-add-content-item item))))))
+      ;; sleep to wait for browser->server comms to update changeset
+      ;; can't navigate away until that's done
 
+      (browser sleep 5000)
+      (browser click :promotion-eligible-home))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  

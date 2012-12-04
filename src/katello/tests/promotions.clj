@@ -81,6 +81,13 @@
                                          :title "Beat_Erratum"
                                          :others ["Sea" "Bird" "Gorilla"]}}])))
 
+(def custom-products
+  (for [prod (-> fake/custom-provider first :products)]
+      (assoc prod :repos
+             (for [repo (:repos prod)] 
+               (assoc repo :product-name (:name prod))))))
+
+
 ;; Tests
 
 (defgroup promotion-tests
@@ -99,30 +106,28 @@
 
 (defgroup deletion-tests
   
-  (deftest "Delete custom product contents"
-    
-    (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "custom-org")]
-      (org/create test-org)
-      (org/switch test-org)
-      (environment/create-path test-org envz)
-      (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-      (let [products (-> fake/custom-provider first :products)
-            all-prods (map :name products)]
-            (promote-delete-content library (first envz) false {:products all-prods})
-            (promote-delete-content (first envz) nil true {:products all-prods}))))
-  
-  (deftest "Delete fake-RH product contents"
-    :blockers (open-bz-bugs "877419")
-    
-    (let [envz (take 3 (unique-names "env3"))
-          test-org (uniqueify "redhat-org")]
-      (org/create test-org)
-      (org/switch test-org)
-      (environment/create-path test-org envz)
-      (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos))
-      (let [products fake/some-product-repos
-            all-prods (map :name products)]
-            (promote-delete-content library (first envz) false {:products all-prods})
-            (promote-delete-content (first envz) nil true {:products all-prods})))))
-
+  (dep-chain
+    (deftest "Deletion Changeset test-cases for custom-providers only"
+      :data-driven true
+      
+      (fn [custom deletion-content]
+        (let [envz (take 3 (unique-names "env3"))
+              test-org (uniqueify "custom-org")
+              promotion-content {:products (map :name custom-products)}]
+ 
+          (org/create test-org)
+          (org/switch test-org)
+          (environment/create-path test-org envz)
+          (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+          (promote-delete-content library (first envz) false promotion-content)
+          (promote-delete-content (first envz) nil true deletion-content)))
+      
+      [[[true] {:products (map :name custom-products)}]
+       [[true] {:repos (mapcat :repos custom-products)}]
+       [[true] {:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
+                                {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
+                                {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
+       (with-meta 
+       [[true] {:errata '({:name "Bear_Erratum"} 
+                              {:name "Sea_Erratum"})}]
+       {:blockers (open-bz-bugs "874850")})])))
