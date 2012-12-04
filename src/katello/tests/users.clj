@@ -22,14 +22,14 @@
 (defgroup user-tests
 
   (deftest "Admin creates a user"
-    (user/create  (uniqueify "autouser")   generic-user-details)
+    (user/create (uniqueify "autouser")   generic-user-details)
     
     (deftest "Admin creates a user with i18n characters"
       :data-driven true
       :blockers (open-bz-bugs "868906")
       
       (fn [username]
-        (user/create   (uniqueify username)   generic-user-details))
+        (user/create (uniqueify username)   generic-user-details))
       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
     (deftest "Admin creates a user with a default organization"
@@ -38,27 +38,27 @@
       (with-unique [org-name "auto-org"
                     env-name "environment"
                     username "autouser"]
-        (organization/create     org-name  {:initial-env-name env-name})
-        (user/create    username (merge generic-user-details {:default-org org-name, :default-env env-name}))))
+        (organization/create org-name {:initial-env-name env-name})
+        (user/create username (merge generic-user-details {:default-org org-name, :default-env env-name}))))
 
     (deftest "Admin changes a user's password"
       :blockers (open-bz-bugs "720469")
 
       (with-unique [username "edituser"]
-        (user/create    username                generic-user-details)
-        (user/edit      username                {:new-password "changedpwd"})))
+        (user/create username generic-user-details)
+        (user/edit username {:new-password "changedpwd"})))
 
 
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
-        (user/create    username                generic-user-details)
-        (user/delete    username))
+        (user/create username generic-user-details)
+        (user/delete username))
 
       (deftest "Admin who deletes the original admin account can still do admin things"
         :blockers (open-bz-bugs "868910")
         
         (let [admin (@config :admin-user)
-              pw    (@config :admin-password)]
+              pw (@config :admin-password)]
           (try
             (user/delete admin)
             
@@ -84,9 +84,9 @@
           (user/create name generic-user-details)
           (user/create (modify-case-fn name) generic-user-details)))
 
-      [["usr"      capitalize]
+      [["usr"     capitalize]
        ["yourusr" capitalize]
-       ["usr"      upper-case]
+       ["usr"     upper-case]
        ["MyUsr"   upper-case]
        ["YOURUsr" lower-case]])
      
@@ -98,5 +98,5 @@
 
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
-        (user/create     username                generic-user-details)
-        (role/assign     {:user username, :roles ["Administrator"]})))))
+        (user/create username generic-user-details)
+        (role/assign {:user username, :roles ["Administrator"]})))))

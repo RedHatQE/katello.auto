@@ -30,7 +30,7 @@
   [old-name new-name]
   (let [current-provider-names (get-all-providers)]
     (assert/is (and (some #{new-name} current-provider-names)
-                      (not (some #{old-name} current-provider-names))))))
+                    (not (some #{old-name} current-provider-names))))))
 
 (defn with-n-new-orgs
   "Create n organizations with unique names. Then calls function f
@@ -100,9 +100,11 @@
 ;; Tests
 
 (defgroup gpg-key-tests
-
+  :group-setup #(spit tmp-gpg-keyfile "test")
+  
   (deftest "Create a new GPG key from text input"
     :blockers api/katello-only
+    
     (with-unique [test-key "test-key-text"]
       (create-gpg-key test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
   
@@ -110,13 +112,11 @@
     :blockers (open-bz-bugs "835902" "846432")
 
     (with-unique [test-key "test-key"]
-      (spit "output.txt" "test")
       (create-gpg-key test-key {:filename tmp-gpg-keyfile}))
 
     
     (deftest "Delete existing GPG key" 
       (with-unique [test-key "test-key"]
-        (spit "output.txt" "test")
         (create-gpg-key test-key {:filename tmp-gpg-keyfile})
         (remove-gpg-key test-key)))))
 

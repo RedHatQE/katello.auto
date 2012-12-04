@@ -113,27 +113,10 @@
                                  :product-name product-name
                                  :name repo-name
                                  :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                                 :gpgkey testkey} )
+                                 :gpgkey testkey})
     (let [products [{:name product-name :repos [repo-name]}]]
       (when (api/is-katello?)
         (sync-and-promote products library target-env)))))
-
-(defn get-system-name-after-install [product-name]
-  (let [target-env (first *environments*)
-        org-name "ACME_Corporation"
-        sys-name (uniqueify "pkg_install")]
-    (provision/with-client sys-name
-        ssh-conn
-        (client/register ssh-conn
-                         {:username *session-user*
-                          :password *session-password*
-                          :org org-name
-                          :env target-env
-                          :force true})
-        (let [mysys (client/my-hostname ssh-conn)] 
-          (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
-          (client/my-hostname ssh-conn)))))
-
 
 ;; Tests
 
@@ -371,15 +354,30 @@
         (assert/is (= (client/get-distro ssh-conn)
                         (system/get-os (client/my-hostname ssh-conn))))))
 
-  (deftest "Add system package"
-    (with-unique [product-name "fake"]
-      (step-to-configure-server-for-pkg-install product-name)	
-      (system/add-package (get-system-name-after-install product-name) {:package "cow"})))
-  
-  (deftest "Add package group"
-    (with-unique [product-name "fake"]
-      (step-to-configure-server-for-pkg-install product-name)	
-      (system/add-package (get-system-name-after-install product-name) {:package-group "birds"})))
+  (deftest "Install package group"
+    :data-driven true
+    :description "Add package and package group"
+    (fn [package-name]
+      (let [target-env (first *environments*)
+            org-name "ACME_Corporation"
+            sys-name (uniqueify "pkg_install")
+            product-name (uniqueify "fake")]
+        (step-to-configure-server-for-pkg-install product-name)
+        (provision/with-client sys-name
+           ssh-conn
+           (client/register ssh-conn
+                            {:username *session-user*
+                             :password *session-password*
+                             :org org-name
+                             :env target-env
+                             :force true})
+           (let [mysys (client/my-hostname ssh-conn)] 
+             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
+             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+             (system/add-package mysys package-name)))))
+            
+    [[{:package "cow"}]
+     [{:package-group "birds"}]])
   
   system-group-tests)
 

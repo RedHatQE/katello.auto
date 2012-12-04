@@ -76,7 +76,9 @@
               
               ["wget -O /etc/yum.repos.d/katello-agent.repo %s" (@config :agent-repo)]
               ["yum localinstall -y http://fedorapeople.org/groups/katello/releases/yum/nightly/RHEL/6Server/x86_64/katello-repos-latest.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-7.noarch.rpm"]
-              ["yum install -y katello-agent"]]]
+              ["yum install -y katello-agent"]
+              ["service goferd restart"]]]
+
     (doall (for [cmd cmds] (run-cmd runner (apply format cmd))))))
 
 (defn subscribe [runner poolid]
