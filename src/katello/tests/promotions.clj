@@ -124,10 +124,10 @@
       
       [[[true] {:products (map :name custom-products)}]
        [[true] {:repos (mapcat :repos custom-products)}]
-       [[true] {:packages (list {:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
+       [[true] {:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
                                 {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
                                 {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
        (with-meta 
-       [[true] {:errata (list {:name "Bear_Erratum"} 
+       [[true] {:errata '({:name "Bear_Erratum"} 
                               {:name "Sea_Erratum"})}]
        {:blockers (open-bz-bugs "874850")})])))
