@@ -49,7 +49,7 @@
     (let [data (content category)
           grouped-data (group-by :product-name data)]
       (cond 
-        (some #{(name category)} (list "repos" "packages"))
+        (some #{category} [:repos :packages])
         (do
           (doseq [[prod-item repos] grouped-data]
             (let [add-items (map :name repos)] 
@@ -60,7 +60,7 @@
               (doseq [add-item add-items ] 
                 (browser click (locators/promotion-add-content-item add-item))))))
         
-        (some #{(name category)} (list "errata"))
+        (= category :errata)
         (do
           (browser click :errata-category)
           (browser click :select-errata-all)
