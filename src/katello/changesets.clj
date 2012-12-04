@@ -34,13 +34,6 @@
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
   [changeset-name from-env content deletion & [{:keys [to-env]}]]
-  (comment {:products ["foo" "bar"]
-            :packages [{:product-name "safari-1_0", 
-                        :name "foopackage"}]
-            :repos ({:product-name "safari-1_0", 
-                     :name "safari-x86_64"}
-                     {:product-name "zoo-1_0", 
-                     :name "zoorepo-x86_64"})})
   (navigate :named-changeset-page {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
@@ -53,8 +46,8 @@
         (do
           (doseq [[prod-item repos] grouped-data]
             (let [add-items (map :name repos)] 
-              (browser click :products-category) 
-              (->browser   
+              (->browser 
+                (click :products-category)  
                 (click (locators/select-product prod-item))
                 (click (keyword (str "select-" (name category)))))
               (doseq [add-item add-items ] 
