@@ -107,27 +107,27 @@
 (defgroup deletion-tests
   
   (dep-chain
-    (deftest "Deletion Changeset test-cases"
+    (deftest "Deletion Changeset test-cases for custom-providers only"
       :data-driven true
       
-      (fn [custom content]
+      (fn [custom deletion-content]
         (let [envz (take 3 (unique-names "env3"))
-              test-org (uniqueify "custom-org")]
+              test-org (uniqueify "custom-org")
+              promotion-content {:products (map :name custom-products)}]
+ 
           (org/create test-org)
           (org/switch test-org)
           (environment/create-path test-org envz)
-          (if custom (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-                     (fake/prepare-org  test-org (mapcat :repos fake/some-product-repos)))
-          (promote-delete-content library (first envz) false content)
-          (promote-delete-content (first envz) nil true content)))
+          (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+          (promote-delete-content library (first envz) false promotion-content)
+          (promote-delete-content (first envz) nil true deletion-content)))
       
       [[[true] {:products (map :name custom-products)}]
        [[true] {:repos (mapcat :repos custom-products)}]
        [[true] {:packages (list {:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
                                 {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
                                 {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
-       [[true] {:errata (list {:name "Bear_Erratum", :product-name "safari-1_0"} 
-                              {:name "Sea_Erratum", :product-name "safari-1_0"})}]
-       (with-meta
-       [[false] {:products (map :name fake/some-product-repos)}]
-       {:blockers (open-bz-bugs "877419")})])))
+       (with-meta 
+       [[true] {:errata (list {:name "Bear_Erratum"} 
+                              {:name "Sea_Erratum"})}]
+       {:blockers (open-bz-bugs "874850")})])))

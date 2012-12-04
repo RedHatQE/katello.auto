@@ -46,27 +46,26 @@
                                    :changeset-name changeset-name
                                    :changeset-type (if deletion "deletion" "promotion")})
   (doseq [category (keys content)]
-    (let [data (content category)]
+    (let [data (content category)
+          grouped-data (group-by :product-name data)]
       (cond 
-        (and (some #{(name category)} (list "repos" "packages" "errata")) deletion)
+        (some #{(name category)} (list "repos" "packages"))
         (do
-          (doseq [prod-item (distinct (map :product-name data))]
-            (let [add-items (remove nil? (for [single data]  
-                                           (let [new (vals single)]
-                                             (if (= (first new) prod-item) (second new)))))] 
-              (->browser 
-                (click :products-category)
+          (doseq [[prod-item repos] grouped-data]
+            (let [add-items (map :name repos)] 
+              (browser click :products-category) 
+              (->browser   
                 (click (locators/select-product prod-item))
                 (click (keyword (str "select-" (name category)))))
-              (if (= category :errata) (browser click :select-errata-all))
               (doseq [add-item add-items ] 
                 (browser click (locators/promotion-add-content-item add-item))))))
         
-        (some #{(name category)} (list "repos" "packages" "errata"))
+        (some #{(name category)} (list "errata"))
         (do
-          (browser click :products-category)
-          (doseq [prod-item (distinct (map :product-name data))]
-            (browser click (locators/promotion-add-content-item prod-item))))
+          (browser click :errata-category)
+          (browser click :select-errata-all)
+          (doseq [add-item (map :name data )]
+            (browser click (locators/promotion-add-content-item add-item))))
             
         :else
         (do
