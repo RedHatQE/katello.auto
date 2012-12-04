@@ -140,7 +140,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype :katello.notifications/env-name-must-be-unique-within-org)
           (environment/create env-name
                               {:org-name @test-org-name
                                :description "dup env description"}))))
@@ -150,7 +150,7 @@
       :data-driven true
 
       (fn [orig-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
+        (expecting-error (errtype :katello.notifications/env-name-must-be-unique-within-org)
                          (with-unique [name orig-name]
                            (environment/create name {:org-name @test-org-name
                                                      :description "dup env description"})
