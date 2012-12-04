@@ -72,7 +72,7 @@
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
    fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[$1]"
    fetch-environments-in-org       "xpath=(//div[@id='path-selected']//a/div)[$1]"
-   sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1']"
+   sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1'"
    system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
    subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
    tab                             "link=$1"
@@ -133,6 +133,41 @@
    ;;inside the org switcher
    :manage-organizations-link  "manage_orgs"
    })
+
+(def all-tabs {:administer "admin"
+               :users "users"
+               :roles "roles"
+               :manage-organizations "organizations"
+               :dashboard "dashboard"
+               :content "content"
+               :subscriptions "subscriptions"
+               :red-hat-subscriptions (menu-link "subscriptions")
+               :activation-keys "activation_keys"
+               :import-history "import_history"
+               :repositories "providers"
+               :custom-content-repositories "custom_providers"
+               :red-hat-repositories "redhat_providers"
+               :package-filters "filters"
+               :sync-management "sync_mgmt"
+               :sync-status "sync_status"
+               :sync-plans "sync_plans"
+               :sync-schedule "sync_schedule"
+               :content-search "content_search"
+               :system-templates "system_templates"
+               :changeset-management "changeset_management"
+               :changesets "changesets"
+               :changeset-history "changeset"
+               :systems "systems"
+               :all "registered"
+               :by-environments "env"
+               :system-groups "system_groups"
+               :create (menu-link "")
+               :details (menu-link "")
+               :registered (menu-link "")
+               :groups (menu-link "")
+               :general (menu-link "")
+               :facts (menu-link "")
+               :packages (menu-link "")})
 
 (def all-tabs
   (tabs
