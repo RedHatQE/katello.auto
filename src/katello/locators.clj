@@ -189,16 +189,6 @@
       :facts
       :packages])))
 
-(def environments
-  {:env-name-text             "kt_environment[name]"
-   :env-label-text             "kt_environment[label]"
-   :env-description-text      "kt_environment[description]"
-   :prior-environment         "kt_environment[prior]"
-   :create-environment        "//input[@value='Create']"
-   :new-environment           "//div[normalize-space(.)='Add New Environment']"
-   :remove-environment        (link "Remove Environment")
-   :env-prior-select-edit     "kt_environment[prior]" })
-
 (def providers
   {:new-provider                        "new"
    :provider-name-text                  "provider[name]"
@@ -390,7 +380,7 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common environments systems sync-plans
+  (atom (merge all-tabs common systems sync-plans
                content-search sync-schedules promotions providers templates
                { ;; login page
                 :username-text     "username"

@@ -10,6 +10,20 @@
 ;; Environments
 ;;
 
+;; Locators
+
+(swap! locators/uimap merge
+  {:env-name-text             "kt_environment[name]"
+   :env-label-text             "kt_environment[label]"
+   :env-description-text      "kt_environment[description]"
+   :prior-environment         "kt_environment[prior]"
+   :create-environment        "//input[@value='Create']"
+   :new-environment           "//div[normalize-space(.)='Add New Environment']"
+   :remove-environment        (locators/link "Remove Environment")
+   :env-prior-select-edit     "kt_environment[prior]" })
+
+;; Tasks
+
 (defn create
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
