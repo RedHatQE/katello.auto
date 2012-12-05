@@ -12,6 +12,33 @@
 ;; Users
 ;;
 
+;; Locators
+
+(swap! locators/uimap merge
+  {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
+   :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
+   :user-default-org-select     "org_id[org_id]"
+   :save-user-environment       "update_user"
+   :new-user                    "//a[@id='new']"
+   :user-username-text          "user[username]"
+   :user-password-text          "password_field" ; use id attr 
+   :user-confirm-text           "confirm_field"  ; for these two (name
+                                                 ; is the same)
+   :user-default-org            "org_id[org_id]"
+   :user-email-text             "user[email]"
+   :save-user                   "save_user"
+   :remove-user                 (locators/link "Remove User")
+   :enable-inline-help-checkbox "user[helptips_enabled]"
+   :clear-disabled-helptips     "clear_helptips"
+   :save-roles                  "save_roles"
+   :add-all                     (locators/link "Add all")
+   :all-types                   "all_types"
+   :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
+
+
+;; Tasks
+
+
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
   user is logged in."

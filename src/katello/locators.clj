@@ -276,27 +276,6 @@
    :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
    :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
-(def users
-  {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
-   :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
-   :user-default-org-select     "org_id[org_id]"
-   :save-user-environment       "update_user"
-   :new-user                    "//a[@id='new']"
-   :user-username-text          "user[username]"
-   :user-password-text          "password_field" ; use id attr 
-   :user-confirm-text           "confirm_field"  ; for these two (name
-                                                 ; is the same)
-   :user-default-org            "org_id[org_id]"
-   :user-email-text             "user[email]"
-   :save-user                   "save_user"
-   :remove-user                 (link "Remove User")
-   :enable-inline-help-checkbox "user[helptips_enabled]"
-   :clear-disabled-helptips     "clear_helptips"
-   :save-roles                  "save_roles"
-   :add-all                     (link "Add all")
-   :all-types                   "all_types"
-   :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
-
 (def sync-plans
   {:new-sync-plan              "new"
    :sync-plan-name-text        "sync_plan[name]"
@@ -429,7 +408,7 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common environments roles users systems sync-plans
+  (atom (merge all-tabs common environments roles systems sync-plans
                content-search sync-schedules promotions providers templates
                { ;; login page
                 :username-text     "username"
