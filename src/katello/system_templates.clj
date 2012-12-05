@@ -12,10 +12,10 @@
    :template-name-text               "system_template[name]"
    :template-description-text        "system_template[description]"
    :save-new-template                "template_save" ;;when creating
-   :template-eligible-package-groups (template-eligible-category "Package Groups")
-   :template-eligible-packages       (template-eligible-category "Packages")
-   :template-eligible-repositories   (template-eligible-category "Repositories")
-   :template-package-groups          (slide-link "Package Groups")
+   :template-eligible-package-groups (locators/template-eligible-category "Package Groups")
+   :template-eligible-packages       (locators/template-eligible-category "Packages")
+   :template-eligible-repositories   (locators/template-eligible-category "Repositories")
+   :template-package-groups          (locators/slide-link "Package Groups")
    :template-eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    :save-template                    "save_template"}) ;;when editing
 
