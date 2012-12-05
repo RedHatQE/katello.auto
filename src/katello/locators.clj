@@ -33,8 +33,6 @@
    notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification')]//a[@class='jnotify-close'])[%s]"
    notification-index              "xpath=(//div[contains(@class,'jnotify-notification')])[%s]"
    org-switcher                    "//div[@id='orgbox']//a[.='%s']"
-   permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
-   plus-icon                       "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
    product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'%s')]"
    product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'%s')]/..//img[@alt='Expand']"
    product-schedule                "//div[normalize-space(.)='%s']/following-sibling::div[1]"
@@ -46,7 +44,6 @@
    provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'%s')]/following::label[normalize-space(.)='%s']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='%s']]/td[5]"
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
-   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"
    schedule                        "//div[normalize-space(.)='%s']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
@@ -239,7 +236,7 @@
 
 (def add-remove ["+ Add" "Remove"])
 
-(def user-role-toggler (toggler add-remove role-action))
+
 (def template-toggler (toggler add-remove template-action))
 
 
