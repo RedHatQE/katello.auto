@@ -12,7 +12,6 @@
 
 (sel/template-fns
  { add-repository                  "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-   auto-complete-item              "//ul[@role='listbox']//a[contains(.,'%s')]"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
    changeset-status                "//span[.='%s']/..//span[@class='changeset_status']"
@@ -51,10 +50,6 @@
    role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"
    schedule                        "//div[normalize-space(.)='%s']"
    search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
-   search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'%s')]"
-   search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'%s')]"
-   search-result-row-id            "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
-   search-result-cell              "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
    subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
@@ -71,40 +66,6 @@
    user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
    username-field                  "//div[@id='users']//div[normalize-space(.)='%s']"
    select-product                  "//span[contains(.,'%s')]"})
-
-(defn get-all-of-locator [locatorfn] 
-  "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
-  (let [count (sel/browser getXpathCount (.getLocator (locatorfn "*")))]
-     (reduce (fn [acumulator number]
-               (conj 
-                 acumulator 
-                  (locatorfn (str number))))
-             []
-             (range 1 (inc count)))))
-
-(defn get-zip-of-html-element [id]
-   (zip/xml-zip (xml/parse 
-   (new org.xml.sax.InputSource
-   (new java.io.StringReader 
-     (str "<root>" 
-      (sel/browser getEval 
-        (str "window.document.getElementById('" 
-             id "').innerHTML;")) 
-              "</root>"))))))
-
-(defn tree-edit [tree filter-fn edit-fn edit-other & returning]
-  "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
-  (if (and (not (nil? (zip/down tree)))
-           (empty? returning))          
-     (tree-edit (zip/down tree) filter-fn edit-fn edit-other)
-     (let [e-tree (if (filter-fn tree)
-                        (zip/edit tree edit-fn)
-                        (zip/edit tree edit-other))]
-       (if (not (nil? (zip/right e-tree))) 
-           (tree-edit (zip/right  e-tree) filter-fn edit-fn edit-other)
-           (if (not (nil? (zip/up  tree)))
-             (tree-edit (zip/up e-tree ) filter-fn edit-fn edit-other :returning)
-             e-tree )))))
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
