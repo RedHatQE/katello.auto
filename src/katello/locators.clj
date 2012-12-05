@@ -188,60 +188,6 @@
       :general
       :facts
       :packages])))
-
-(def providers
-  {:new-provider                        "new"
-   :provider-name-text                  "provider[name]"
-   :provider-description-text           "provider[description]"
-   :provider-repository-url-text        "provider[repository_url]"
-   :provider-cert-text                  (textbox "provider[certificate_attributes][contents]")
-   :provider-create-save                "provider_submit"
-   :remove-provider                     (link "Remove Provider")
-   :subscriptions                       (link "Subscriptions")
-   :import-manifest                     "new"
-   :redhat-provider-repository-url-text "provider[repository_url]"
-   :choose-file                         "provider_contents"
-   :upload                              "upload_form_button"
-   :force-import-checkbox               "force_import"
-   :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-                
-   ;;add product
-   :add-product                         (button-div "Add Product")
-   :create-product                      "//input[@value='Create']"
-   :product-name-text                   "//*[@name='product[name]']"
-   :product-label-text                  "//*[@name='product[label]']"
-   :product-description-text            "//*[@name='product[description]']"
-   :remove-product                      (link "Remove Product")
-   ;;add repo
-   :repo-name-text                      "repo[name]"
-   :repo-label-text                     "repo[label]"
-   :repo-url-text                       "repo[feed]" 
-   :save-repository                     "//input[@value='Create']"
-   :remove-repository                   (link "Remove Repository")
-   :repo-gpg-select                     "//select[@id='repo_gpg_key']"
-
-   ;;redhat page
-   :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
-
-   ;;gpg keys
-   :gpg-key-name-text                   "gpg_key_name"
-   :gpg-key-file-upload-text            "gpg_key_content_upload"
-   :gpg-key-upload-button               "upload_gpg_key"
-   :gpg-key-content-text                "gpg_key_content"
-   :gpg-keys                            "//a[.='GPG Keys']"
-   :gpg-keys-save                       "save_gpg_key"
-   :new-gpg-key                         "new"
-   :remove-gpg-key                      (link "Remove GPG Key")
-
-
-   ;;Package Filters
-   :create-new-package-filter                (link "+ New Filter")
-   :new-package-filter-name                  "filter[name]"
-   :new-package-filter-description           "filter[description]"
-   :save-new-package-filter                  "filter_submit"
-   :remove-package-filter-key                (link "Remove Filter")})
-   
-   
    
 (def promotions
   {:products-category           (promotion-content-category "products")
@@ -381,7 +327,7 @@
   SeleniumLocatable protocol."}
   uimap
   (atom (merge all-tabs common systems sync-plans
-               content-search sync-schedules promotions providers templates
+               content-search sync-schedules promotions templates
                { ;; login page
                 :username-text     "username"
                 :password-text     "password"
