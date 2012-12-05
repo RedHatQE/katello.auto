@@ -160,7 +160,7 @@
       (->browser (setText :system-package-name items)
                  (typeKeys :system-package-name items)
                  (click :system-add-content))
-      (Thread/sleep 20000)
+      (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText :pkg-install-status))))))
 
@@ -174,7 +174,7 @@
       (->browser (setText :system-package-name items)
                  (typeKeys :system-package-name items)
                  (click :system-remove-content))
-      (Thread/sleep 20000)
+      (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText :pkg-install-status))))))
   
