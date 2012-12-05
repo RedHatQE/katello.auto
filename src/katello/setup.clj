@@ -12,7 +12,8 @@
                      [users :refer [login logout]]
                      [roles :as role])
             [fn.trace :as trace]
-            [com.redhat.qe.auto.selenium.selenium :refer :all]))
+            [com.redhat.qe.auto.selenium.selenium :refer :all])
+  (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
 
 (defn new-selenium
   "Returns a new selenium client. If running in a REPL or other
@@ -22,9 +23,17 @@
         sel-fn (if single-thread connect new-sel)] 
     (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
 
-(defn start-selenium []  
+(def empty-browser-config (BrowserConfigurationOptions.))
+
+(defn config-with-profile
+  ([locale]
+     (config-with-profile empty-browser-config locale))
+  ([browser-config locale]
+     (.setProfile browser-config locale)))
+
+(defn start-selenium [& [{:keys [browser-config-opts]}]]  
   (->browser
-   (start)
+   (start (or browser-config-opts empty-browser-config))
    ;;workaround for http://code.google.com/p/selenium/issues/detail?id=3498
    (setTimeout "180000")
    (setAjaxFinishedCondition jquery-ajax-finished)
@@ -60,7 +69,8 @@
       (binding [sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))]
         (try 
-          (start-selenium)
+          (start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
+                                                  (config-with-profile locale))})
           (switch-new-admin-user user *session-password*)
           (binding [*session-user* user]
             (consume-fn))
