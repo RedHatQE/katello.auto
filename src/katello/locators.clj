@@ -189,17 +189,6 @@
       :facts
       :packages])))
    
-
-
-(def sync-plans
-  {:new-sync-plan              "new"
-   :sync-plan-name-text        "sync_plan[name]"
-   :sync-plan-description-text "sync_plan[description]"
-   :sync-plan-interval-select  "sync_plan[interval]"
-   :sync-plan-date-text        "sync_plan[plan_date]"
-   :sync-plan-time-text        "sync_plan[plan_time]"
-   :save-sync-plan             "plan_save"})
-
 (def content-search
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
@@ -222,8 +211,7 @@
    :details-container          "//div[contains(@class,'details_container')]"
   })
 
-(def sync-schedules
-  {:apply-sync-schedule "apply_button"})
+
 
 (def templates
   {:new-template                     "new"
@@ -243,8 +231,8 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common sync-plans
-               content-search sync-schedules templates
+  (atom (merge all-tabs common
+               content-search  templates
                { ;; login page
                 :username-text     "username"
                 :password-text     "password"

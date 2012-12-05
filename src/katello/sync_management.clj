@@ -7,6 +7,20 @@
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
+;; Locators
+
+(swap! locators/uimap merge
+  {:apply-sync-schedule        "apply_button"
+   :new-sync-plan              "new"
+   :sync-plan-name-text        "sync_plan[name]"
+   :sync-plan-description-text "sync_plan[description]"
+   :sync-plan-interval-select  "sync_plan[interval]"
+   :sync-plan-date-text        "sync_plan[plan_date]"
+   :sync-plan-time-text        "sync_plan[plan_time]"
+   :save-sync-plan             "plan_save"})
+
+;; Tasks
+
 (def plan-dateformat (SimpleDateFormat. "MM/dd/yyyy"))
 (def plan-timeformat (SimpleDateFormat. "hh:mm aa"))
 (defn- date-str [d] (.format plan-dateformat d))
