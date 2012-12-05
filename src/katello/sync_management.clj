@@ -1,6 +1,6 @@
 (ns katello.sync-management
-  (:require [com.redhat.qe.auto.selenium.selenium 
-              :refer [browser loop-with-timeout]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [locators :as locators] 
                      [notifications :as notification] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]]))
@@ -18,6 +18,15 @@
    :sync-plan-date-text        "sync_plan[plan_date]"
    :sync-plan-time-text        "sync_plan[plan_time]"
    :save-sync-plan             "plan_save"})
+
+(sel/template-fns
+ {product-schedule       "//div[normalize-space(.)='%s']/following-sibling::div[1]"
+  provider-sync-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+  provider-sync-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]"
+  repo-enable-checkbox   "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
+  sync-plan              "//div[@id='plans']//div[normalize-space(.)='%s'"
+  schedule               "//div[normalize-space(.)='%s']"
+  })
 
 ;; Tasks
 
@@ -48,6 +57,7 @@
                     :save-sync-plan)
     (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
 
+
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also
   create-sync-plan for more details."
@@ -69,8 +79,8 @@
   [{:keys [products plan-name]}]
   (navigate :sync-schedule-page)
   (doseq [product products]
-    (browser click (locators/schedule product)))
-  (browser click (locators/sync-plan plan-name))
+    (browser click (schedule product)))
+  (browser click (sync-plan plan-name))
   (browser clickAndWait :apply-sync-schedule )
   (notification/check-for-success))  ;notif class is 'undefined' so
                                      ;don't match 
@@ -83,7 +93,7 @@
   (zipmap product-names
           (replace {"None" nil}
                    (doall (for [product-name product-names]
-                            (browser getText (locators/product-schedule product-name)))))))
+                            (browser getText (product-schedule product-name)))))))
 
 (def messages {:ok "Sync complete."
                :fail "Error syncing!"})
@@ -92,7 +102,7 @@
   "Returns final status if complete. If sync is still in progress, not
   synced, or queued, returns nil."
   [product]
-  (some #{(browser getText (locators/provider-sync-progress product))}
+  (some #{(browser getText (provider-sync-progress product))}
         (vals messages)))
 
 (defn success? "Returns true if given sync result is a success."
@@ -107,11 +117,11 @@
   [repos & [{:keys [timeout]}]]
   (navigate :sync-status-page)
   (doseq [repo repos]
-    (browser check (locators/provider-sync-checkbox repo)))
+    (browser check (provider-sync-checkbox repo)))
   (browser click :synchronize-now)
   (browser sleep 10000)
   (zipmap repos (for [repo repos]
-                     (loop-with-timeout (or timeout 120000) []
+                     (sel/loop-with-timeout (or timeout 120000) []
                        (or (complete-status repo)
                            (do (Thread/sleep 10000)
                                (recur)))))))
