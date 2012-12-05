@@ -14,7 +14,7 @@
  { add-repository                  "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
    button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"
    changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
-   changeset-status                "//span[.='%s']/..//span[@class='changeset_status']"
+   
    content-search-result-item-n    "//ul[@id='grid_row_headers']/li[%s]"
    content-search-package-name     "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
    content-search-compare-checkbox "//input[@type='checkbox' and @name='%s']"
@@ -36,10 +36,6 @@
    product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'%s')]"
    product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'%s')]/..//img[@alt='Expand']"
    product-schedule                "//div[normalize-space(.)='%s']/following-sibling::div[1]"
-   promotion-add-content-item      "//a[@data-display_name='%s' and contains(.,'Add')]"
-   promotion-content-category      "//div[@id='%s']"
-   promotion-content-item-n        "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
-   promotion-remove-content-item   "//a[@data-display_name='%s' and contains(.,'Remove')]"
    provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
    provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'%s')]/following::label[normalize-space(.)='%s']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='%s']]/td[5]"
@@ -57,7 +53,7 @@
    textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
    user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
    username-field                  "//div[@id='users']//div[normalize-space(.)='%s']"
-   select-product                  "//span[contains(.,'%s')]"})
+   })
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"

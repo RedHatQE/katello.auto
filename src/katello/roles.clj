@@ -35,6 +35,7 @@
   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
 (def user-role-toggler (locators/toggler locators/add-remove role-action))
+
 ;; Tasks
 
 (defn create

@@ -1,7 +1,6 @@
 (ns katello.changesets
   (:require [katello.locators :as locators]
-            [com.redhat.qe.auto.selenium.selenium
-              :refer  [browser ->browser loop-with-timeout]]
+            [com.redhat.qe.auto.selenium.selenium :as sel]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]
             [katello.tasks :refer :all] 
@@ -15,28 +14,37 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
-  {:products-category           (locators/promotion-content-category "products")
-   :expand-path                 "path-collapsed"
-   :errata-category             (locators/promotion-content-category "errata")
-   :packages-category           (locators/promotion-content-category "packages")
-   :kickstart-trees-category    (locators/promotion-content-category "kickstart trees")
-   :templates-category          (locators/promotion-content-category "templates")
-   :promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+(sel/template-fns
+ {add-content-item    "//a[@data-display_name='%s' and contains(.,'Add')]"
+  content-category    "//div[@id='%s']"
+  content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
+  remove-content-item "//a[@data-display_name='%s' and contains(.,'Remove')]"
+  select-product      "//span[contains(.,'%s')]"
+  changeset-status    "//span[.='%s']/..//span[@class='changeset_status']"
+  })
 
-   :review-for-promotion        "review_changeset"
-   :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-   :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-   :new-changeset               "//a[contains(.,'New Changeset')]"
-   :changeset-name-text         "changeset[name]"
-   :save-changeset              "save_changeset_button"
-   :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
-   :changeset-type              "changeset[action_type]"
-   :select-deletion-changeset   "//div[@data-cs_type='deletion']"
-   :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
-   :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
-   :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
-   :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
+(swap! locators/uimap merge
+       {:products-category           (content-category "products")
+        :expand-path                 "path-collapsed"
+        :errata-category             (content-category "errata")
+        :packages-category           (content-category "packages")
+        :kickstart-trees-category    (content-category "kickstart trees")
+        :templates-category          (content-category "templates")
+        :promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+
+        :review-for-promotion        "review_changeset"
+        :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+        :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
+        :new-changeset               "//a[contains(.,'New Changeset')]"
+        :changeset-name-text         "changeset[name]"
+        :save-changeset              "save_changeset_button"
+        :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+        :changeset-type              "changeset[action_type]"
+        :select-deletion-changeset   "//div[@data-cs_type='deletion']"
+        :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
+        :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
+        :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
+        :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
 ;; Tasks
 
@@ -46,12 +54,12 @@
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
   (navigate :named-environment-changesets-page {:env-name env-name 
                                                 :next-env-name next-env-name})
-  (if deletion? (browser click :select-deletion-changeset))
-    (->browser (click :new-changeset)
-               (setText :changeset-name-text changeset-name)
-               (click :save-changeset))
+  (if deletion? (sel/browser click :select-deletion-changeset))
+  (sel/->browser (click :new-changeset)
+                 (setText :changeset-name-text changeset-name)
+                 (click :save-changeset))
   (check-for-success))
-   
+
 
 (defn add-content
   "Adds the given content to an existing changeset. The originating
@@ -68,35 +76,34 @@
     (let [data (content category)
           grouped-data (group-by :product-name data)]
       (cond 
-        (some #{category} [:repos :packages])
-        (do
-          (doseq [[prod-item repos] grouped-data]
-            (let [add-items (map :name repos)] 
-              (->browser 
-                (click :products-category)  
-                (click (locators/select-product prod-item))
-                (click (keyword (str "select-" (name category)))))
-              (doseq [add-item add-items ] 
-                (browser click (locators/promotion-add-content-item add-item))))))
-        
-        (= category :errata)
-        (do
-          (browser click :errata-category)
-          (browser click :select-errata-all)
-          (doseq [add-item (map :name data )]
-            (browser click (locators/promotion-add-content-item add-item))))
-            
-        :else
-        (do
-          (doseq [item data]  
-            (->browser 
-              (click :products-category)
-              (click (locators/promotion-add-content-item item))))))
+       (some #{category} [:repos :packages])
+       (do
+         (doseq [[prod-item repos] grouped-data]
+           (let [add-items (map :name repos)] 
+             (sel/->browser (click :products-category)  
+                            (click (select-product prod-item))
+                            (click (keyword (str "select-" (name category)))))
+             (doseq [add-item add-items ] 
+               (sel/browser click (add-content-item add-item))))))
+       
+       (= category :errata)
+       (do
+         (sel/browser click :errata-category)
+         (sel/browser click :select-errata-all)
+         (doseq [add-item (map :name data )]
+           (sel/browser click (add-content-item add-item))))
+       
+       :else
+       (do
+         (doseq [item data]  
+           (sel/->browser 
+            (click :products-category)
+            (click (add-content-item item))))))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
 
-      (browser sleep 5000)
-      (browser click :promotion-eligible-home))))
+      (sel/->browser (sleep 5000)
+                     (click :promotion-eligible-home)))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  
@@ -110,26 +117,26 @@
                                    :changeset-type (if deletion? "deletion" "promotion")}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
-      (browser click :review-for-promotion)
+      (sel/browser click :review-for-promotion)
       ;;for the submission
-      (loop-with-timeout 600000 []
-        (when-not (try+ (browser click :promote-to-next-environment)
+      (sel/loop-with-timeout 600000 []
+        (when-not (try+ (sel/browser click :promote-to-next-environment)
                         (check-for-success)
                         (catch [:type ::promotion-already-in-progress] _
                           (nav-to-cs)))
           (Thread/sleep 30000)
           (recur)))
       ;;for confirmation
-      (loop-with-timeout (or timeout-ms 120000) [status ""]
+      (sel/loop-with-timeout (or timeout-ms 120000) [status ""]
         (case status
           "Applied" status
           "Apply Failed" (throw+ {:type :promotion-failed
-                                      :changeset changeset-name
-                                      :from-env from-env
-                                      :to-env to-env})
+                                  :changeset changeset-name
+                                  :from-env from-env
+                                  :to-env to-env})
           (do (Thread/sleep 2000)
-              (recur (browser getText
-                              (locators/changeset-status changeset-name))))))
+              (recur (sel/browser getText
+                                  (changeset-status changeset-name))))))
       ;;wait for async success notif
       (check-for-success {:timeout-ms 180000}))))
 
@@ -150,6 +157,6 @@
   (let [all-prods (map :name products)
         all-repos (apply concat (map :repos products))
         sync-results (sync/perform-sync all-repos {:timeout 600000})]
-        (assert/is (every? (fn [[_ res]] (sync/success? res))
-                             sync-results))
-        (promote-delete-content from-env to-env false {:products all-prods})))
+    (assert/is (every? (fn [[_ res]] (sync/success? res))
+                       sync-results))
+    (promote-delete-content from-env to-env false {:products all-prods})))
