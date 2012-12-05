@@ -87,7 +87,7 @@
    (new org.xml.sax.InputSource
    (new java.io.StringReader 
      (str "<root>" 
-      (browser getEval 
+      (sel/browser getEval 
         (str "window.document.getElementById('" 
              id "').innerHTML;")) 
               "</root>"))))))
@@ -189,27 +189,7 @@
       :facts
       :packages])))
    
-(def content-search
-  {:content-search-type        "//select[@id='content']"
-   :add-prod                   "add_product"
-   :add-repo                   "add_repo"
-   :repo-result-type-select    "//article[@id='maincontent']//article[@id='comparison_grid']//header//div[@id='left_select']//select"
-   :repo-result-filter-select  "//div[@id='right_select']//select"
 
-   :row-headers                "//ul[@id='grid_row_headers']/li"
-   :col-headers                "//ul[@id='column_headers']/li"
-   :repo-auto-complete-radio   "repos_auto_complete_radio"
-   :prod-auto-complete         "product_auto_complete"
-   :repo-auto-complete         "repo_auto_complete"
-   :repo-search                 "//input[@id='repo_search_input']"
-   :pkg-search                 "//div[@id='package_search']/input[@id='search']"
-   :errata-search              "//div[@id='errata_search']//input[@id='search']"
-   :browse-button              "//input[@id='browse_button']"
-   :repo-compare-button        "//a[@id='compare_repos_btn']"
-   :content-search-load-more   "//a[contains(@class,'load_row_link')]"
-   :column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
-   :details-container          "//div[contains(@class,'details_container')]"
-  })
 
 
 
@@ -232,7 +212,7 @@
   SeleniumLocatable protocol."}
   uimap
   (atom (merge all-tabs common
-               content-search  templates
+                 templates
                { ;; login page
                 :username-text     "username"
                 :password-text     "password"
