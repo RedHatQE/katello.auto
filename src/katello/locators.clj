@@ -189,17 +189,6 @@
       :facts
       :packages])))
 
-(def organizations
-  {:new-organization          "//a[@id='new']"
-   :create-organization       "organization_submit"
-   :org-name-text             "organization[name]"
-   :org-description-text      "organization[description]"
-   :org-environments          (link "Environments")
-   :edit-organization         (link "Edit")
-   :remove-organization       (link "Remove Organization")
-   :org-initial-env-name-text "environment[name]"
-   :org-initial-env-desc-text "environment[description]"})
-
 (def environments
   {:env-name-text             "kt_environment[name]"
    :env-label-text             "kt_environment[label]"
@@ -435,12 +424,12 @@
    :save-template                    "save_template"}) ;;when editing
 
 ;;merge all the preceeding maps together, plus a few more items.
-(def ^{:doc "All the selenium locators for the Katello UI. Maps a
+(defonce ^{:doc "All the selenium locators for the Katello UI. Maps a
   keyword to the selenium locator. You can pass the keyword to
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common organizations environments roles users systems sync-plans
+  (atom (merge all-tabs common environments roles users systems sync-plans
                content-search sync-schedules promotions providers templates
                { ;; login page
                 :username-text     "username"

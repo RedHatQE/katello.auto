@@ -6,9 +6,20 @@
                      [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
 
-;;
-;; Organizations
-;;
+;; Locators
+
+(swap! locators/uimap merge
+  {:new-organization          "//a[@id='new']"
+   :create-organization       "organization_submit"
+   :org-name-text             "organization[name]"
+   :org-description-text      "organization[description]"
+   :org-environments          (locators/link "Environments")
+   :edit-organization         (locators/link "Edit")
+   :remove-organization       (locators/link "Remove Organization")
+   :org-initial-env-name-text "environment[name]"
+   :org-initial-env-desc-text "environment[description]"})
+
+;; Tasks
 
 (defn create
   "Creates an organization with the given name and optional description."
