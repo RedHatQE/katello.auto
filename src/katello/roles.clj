@@ -9,6 +9,28 @@
 ;; Roles
 ;;
 
+;; Locators
+
+(swap! locators/uimap merge
+  {:new-role                        "//a[@id='new']"
+   :new-role-name-text              "role[name]"
+   :new-role-description-text       "role[description]"
+   :save-role                       "role_save"
+   :save-user-edit                  "save_password"
+   :role-users                      "role_users"
+   :role-permissions                "role_permissions"
+   :next                            "next_button"
+   :permission-resource-type-select "permission[resource_type_attributes[name]]"
+   :permission-verb-select          "permission[verb_values][]"
+   :permission-tag-select           "tags"
+   :permission-name-text            "permission[name]"
+   :permission-description-text     "permission[description]"
+   :save-permission                 "save_permission_button"
+   :remove-role                     "remove_role"
+   :add-permission                  "add_permission"})
+
+;; Tasks
+
 (defn create
   "Creates a role with the given name and optional description."
   [name & [{:keys [description]}]]

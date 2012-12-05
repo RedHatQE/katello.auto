@@ -369,24 +369,6 @@
    :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
    :release-version-text                   "system[releaseVer]"})
 
-(def roles
-  {:new-role                        "//a[@id='new']"
-   :new-role-name-text              "role[name]"
-   :new-role-description-text       "role[description]"
-   :save-role                       "role_save"
-   :save-user-edit                  "save_password"
-   :role-users                      "role_users"
-   :role-permissions                "role_permissions"
-   :next                            "next_button"
-   :permission-resource-type-select "permission[resource_type_attributes[name]]"
-   :permission-verb-select          "permission[verb_values][]"
-   :permission-tag-select           "tags"
-   :permission-name-text            "permission[name]"
-   :permission-description-text     "permission[description]"
-   :save-permission                 "save_permission_button"
-   :remove-role                     "remove_role"
-   :add-permission                  "add_permission"})
-
 (def sync-schedules
   {:apply-sync-schedule "apply_button"})
 
@@ -408,7 +390,7 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common environments roles systems sync-plans
+  (atom (merge all-tabs common environments systems sync-plans
                content-search sync-schedules promotions providers templates
                { ;; login page
                 :username-text     "username"
