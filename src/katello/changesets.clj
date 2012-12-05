@@ -13,6 +13,32 @@
 ;; Changesets
 ;;
 
+;; Locators
+
+(swap! locators/uimap merge
+  {:products-category           (locators/promotion-content-category "products")
+   :expand-path                 "path-collapsed"
+   :errata-category             (locators/promotion-content-category "errata")
+   :packages-category           (locators/promotion-content-category "packages")
+   :kickstart-trees-category    (locators/promotion-content-category "kickstart trees")
+   :templates-category          (locators/promotion-content-category "templates")
+   :promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+
+   :review-for-promotion        "review_changeset"
+   :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+   :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
+   :new-changeset               "//a[contains(.,'New Changeset')]"
+   :changeset-name-text         "changeset[name]"
+   :save-changeset              "save_changeset_button"
+   :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+   :changeset-type              "changeset[action_type]"
+   :select-deletion-changeset   "//div[@data-cs_type='deletion']"
+   :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
+   :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
+   :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
+   :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
+
+;; Tasks
 
 (defn create
   "Creates a changeset for promotion from env-name to next-env name 
