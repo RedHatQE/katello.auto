@@ -6,6 +6,7 @@
                      [tasks :refer :all]
                      [providers :as providers]
                      [environments :as environment]
+                     [system-templates :as template]
                      [roles :as role]
                      [users :as user]
                      [ui-tasks :refer :all]
@@ -81,7 +82,7 @@
                                       :environment (first conf/*environments*)})))
 
 (def create-a-st
-  (fn [] (create-template {:name (uniqueify "blah")})))
+  (fn [] (template/create {:name (uniqueify "blah")})))
 
 (def create-a-user
   (fn [] (user/create (uniqueify "blah") {:password "password" :email "me@me.com"})))

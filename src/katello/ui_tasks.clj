@@ -146,43 +146,6 @@
   (browser click :add-subscriptions-to-activation-key)
   (notification/check-for-success))
   
-
-(defn create-template
-  "Creates a system template with the given name and optional
-  description."
-  [{:keys [name description]}]
-  (navigate :new-system-template-page)
-  (fill-ajax-form {:template-name-text name
-                   :template-description-text description}
-                  :save-new-template)
-  (notification/check-for-success))
-
-(defn add-to-template
-  "Adds content to a given template.  Example:
-   (add-to-template 'mytemplate' [{:product 'prod3'
-                                   :packages ['rpm1' 'rpm2']}
-                                  {:product 'prod6'
-                                   :repositories ['x86_64']}]"
-  [template content]
-  (navigate :named-system-template-page {:template-name template})
-  (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
-    (doseq [group content]
-      (let [category-keyword (-> group (dissoc :product) keys first)
-            category-name (-> category-keyword
-                             name
-                             (.replace "-" " ")
-                             capitalize-all)]
-        (->browser
-         (getEval "window.onbeforeunload = function(){};") ;circumvent popup
-         (sleep 2000)
-         (click (locators/template-product (:product group)))
-         (sleep 2000)
-         (click (locators/template-eligible-category category-name)))
-        (doall (map add-item (group category-keyword)))
-        (browser click :template-eligible-home)))
-    (browser click :save-template)
-    (notification/check-for-success)))
-
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
