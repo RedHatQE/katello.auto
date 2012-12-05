@@ -1,5 +1,6 @@
 (ns katello.organizations
   (:require [katello.locators :as locators]
+            [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [ui-tasks :refer :all] 
                      [notifications :as notification]
@@ -7,6 +8,10 @@
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;; Locators
+
+(sel/template-fns
+ {default-org-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
+  org-switcher     "//div[@id='orgbox']//a[.='%s']"})
 
 (swap! locators/uimap merge
   {:new-organization          "//a[@id='new']"
@@ -72,12 +77,12 @@
          (let [current-default (try (browser getText :default-org)
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
-             (browser click (locators/default-org-star (if (= default-org :none)
+             (browser click (default-org-star (if (= default-org :none)
                                                          current-default
                                                          default-org)))
              (notification/check-for-success))))
        (when org-name
-         (browser clickAndWait (locators/org-switcher org-name))))))
+         (browser clickAndWait (org-switcher org-name))))))
 
 (defn before-test-switch
   "A pre-made fn to switch to the session org, meant to be used in
