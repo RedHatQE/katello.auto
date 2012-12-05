@@ -189,22 +189,6 @@
       :facts
       :packages])))
    
-
-
-
-
-(def templates
-  {:new-template                     "new"
-   :template-name-text               "system_template[name]"
-   :template-description-text        "system_template[description]"
-   :save-new-template                "template_save" ;;when creating
-   :template-eligible-package-groups (template-eligible-category "Package Groups")
-   :template-eligible-packages       (template-eligible-category "Packages")
-   :template-eligible-repositories   (template-eligible-category "Repositories")
-   :template-package-groups          (slide-link "Package Groups")
-   :template-eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-   :save-template                    "save_template"}) ;;when editing
-
 ;;merge all the preceeding maps together, plus a few more items.
 (defonce ^{:doc "All the selenium locators for the Katello UI. Maps a
   keyword to the selenium locator. You can pass the keyword to
@@ -212,7 +196,6 @@
   SeleniumLocatable protocol."}
   uimap
   (atom (merge all-tabs common
-                 templates
                { ;; login page
                 :username-text     "username"
                 :password-text     "password"
