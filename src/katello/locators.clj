@@ -440,26 +440,26 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (merge all-tabs common organizations environments roles users systems sync-plans
-         content-search sync-schedules promotions providers templates
-         { ;; login page
-          :username-text     "username"
-          :password-text     "password"
-          :log-in            "//input[@value='Log In' or @value='Login']"
+  (atom (merge all-tabs common organizations environments roles users systems sync-plans
+               content-search sync-schedules promotions providers templates
+               { ;; login page
+                :username-text     "username"
+                :password-text     "password"
+                :log-in            "//input[@value='Log In' or @value='Login']"
 
               
-          ;;tabs with special chars in name
-          :sub-organizations (tab "Sub-Organizations")
+                ;;tabs with special chars in name
+                :sub-organizations (tab "Sub-Organizations")
                    
 
-          ;;Sync Management subtab
-          :synchronize-now   "sync_button"}))
+                ;;Sync Management subtab
+                :synchronize-now   "sync_button"})))
 
 ;;Tells the clojure selenium client where to look up keywords to get
 ;;real selenium locators (in uimap in this namespace).
-(extend-protocol SeleniumLocatable
+(extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword
-  (sel/sel-locator [k] (uimap k))
+  (sel/sel-locator [k] (@uimap k))
   String
   (sel/sel-locator [x] x))
 
@@ -495,7 +495,7 @@
   current row. The function returned will get any cell by index
   number."
   [current-loc n]
-  (template (format "%s/../ul[%s]/li[$1]" current-loc n)))
+  (sel/template (format "%s/../ul[%s]/li[$1]" current-loc n)))
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
