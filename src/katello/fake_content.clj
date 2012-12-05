@@ -32,7 +32,9 @@
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
                                             {:name "CompareZooNosync"
                                              :unsyncable true
-                                             :url "http://inecas.fedorapeople.org/fakerepos/"}]}
+                                             :url "http://inecas.fedorapeople.org/fakerepos/"}
+                                            {:name "ManyRepositoryA" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
                                    {:name "WeirdLocalsUsing 標準語 Enterprise"
                                     :i18n true
                                     :repos [{:name "洪" 
@@ -118,9 +120,13 @@
             (providers/add-repo {:provider-name (provider :name)  
                                  :product-name (product :name)
                                  :name (repo :name) 
-                                 :url (repo :url)})))) 
-            (sync/perform-sync (map :name (get-custom-repos providers 
-                    :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))
+                                 :url (repo :url)})) 
+           (sync/perform-sync 
+                    
+                    (map :name (get-custom-repos providers ;effing ugly filter 
+                    :filter-product? (fn [any-product]  ( = (:name any-product) (:name product)))                         
+                    :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))
+            ))))
 
 (defn setup-org [test-org envs]
       (api/create-organization test-org)

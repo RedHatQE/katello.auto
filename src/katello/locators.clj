@@ -1,6 +1,8 @@
 (ns katello.locators
   (:require [com.redhat.qe.auto.selenium.selenium :refer
               [fill-form SeleniumLocatable browser ->browser sel-locator]]
+            [clojure.xml :as xml]
+            [clojure.zip :as zip]
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
             [ui.navigate :refer [nav-tree page-zip]]
@@ -57,6 +59,7 @@
    promotion-content-item-n        "//div[@id='list']//li[$1]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
    promotion-remove-content-item   "//a[@data-display_name='$1' and contains(.,'Remove')]"
    provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
+   provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'$1')]/following::label[normalize-space(.)='$2']/..//input"
    provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
    repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
    system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='$1']" 
@@ -65,7 +68,7 @@
    search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
    search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'$1')]"
    search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'$1')]"
-   search-result-row-id            "//ul[@id='grid_row_headers']/li[contains(.,'$1')]"
+   search-result-row-id            "//ul[@id='grid_row_headers']//li[contains(.,'$1')]"
    search-result-cell              "//div[@id='grid_row_$1']/div[contains(@class,'cell_$2')]/i"
    slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
    subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
@@ -94,6 +97,30 @@
                   (locatorfn (str number))))
              []
              (range 1 (inc count)))))
+
+(defn get-zip-of-html-element [id]
+   (zip/xml-zip (xml/parse 
+   (new org.xml.sax.InputSource
+   (new java.io.StringReader 
+     (str "<root>" 
+      (browser getEval 
+        (str "window.document.getElementById('" 
+             id "').innerHTML;")) 
+              "</root>"))))))
+
+(defn tree-edit [tree filter-fn edit-fn edit-other & returning]
+  "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
+  (if (and (not (nil? (zip/down tree)))
+           (empty? returning))          
+     (tree-edit (zip/down tree) filter-fn edit-fn edit-other)
+     (let [e-tree (if (filter-fn tree)
+                        (zip/edit tree edit-fn)
+                        (zip/edit tree edit-other))]
+       (if (not (nil? (zip/right e-tree))) 
+           (tree-edit (zip/right  e-tree) filter-fn edit-fn edit-other)
+           (if (not (nil? (zip/up  tree)))
+             (tree-edit (zip/up e-tree ) filter-fn edit-fn edit-other :returning)
+             e-tree )))))
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -354,6 +381,7 @@
    :repo-auto-complete-radio   "repos_auto_complete_radio"
    :prod-auto-complete         "product_auto_complete"
    :repo-auto-complete         "repo_auto_complete"
+   :repo-search                 "//input[@id='repo_search_input']"
    :pkg-search                 "//div[@id='package_search']/input[@id='search']"
    :errata-search              "//div[@id='errata_search']//input[@id='search']"
    :browse-button              "//input[@id='browse_button']"
