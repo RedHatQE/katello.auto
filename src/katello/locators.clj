@@ -1,96 +1,80 @@
 (ns katello.locators
-  (:require [com.redhat.qe.auto.selenium.selenium :refer
-              [fill-form SeleniumLocatable browser ->browser sel-locator]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
             [ui.navigate :refer [nav-tree page-zip]]
             [clojure.string :refer [capitalize ]])
-  (:import [com.redhat.qe.auto.selenium Element LocatorTemplate]
-           [com.thoughtworks.selenium SeleniumException]))
+  (:import [com.redhat.qe.auto.selenium Element]))
 
 ;;ui layer
-(defn- template [templ]
-  (fn [& args] (Element. (LocatorTemplate. "" templ) (into-array args))))
 
-(defmacro define-strategies
-  "Expands into a function for each locator strategy in map m (which
-  maps symbol to LocatorStrategy). Each function will be named the
-  same as the symbol, take arguments and return a new element
-  constructed with the locator strategy and args. See also the
-  LocatorTemplate class."
-  [m]
-  `(do ~@(for [loc-strat (keys m)]
-           `(def ~loc-strat 
-              (template ~(m loc-strat))))))
-
-(define-strategies
-  {add-repository                  "//div[@id='products']//div[contains(.,'$1')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-   auto-complete-item              "//ul[@role='listbox']//a[contains(.,'$1')]"
-   button-div                      "//div[contains(@class,'button') and normalize-space(.)='$1']"
-   changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='$1']"
-   changeset-status                "//span[.='$1']/..//span[@class='changeset_status']"
-   content-search-result-item-n    "//ul[@id='grid_row_headers']/li[$1]"
-   content-search-package-name     "//ul[@id='grid_row_headers']/li[$1]/span/span[1]"
-   content-search-compare-checkbox "//input[@type='checkbox' and @name='$1']"
-   search-result-repo-errata-link  "//a[@data-type='repo_errata' and @data-repo_id='$1']"
-   content-search-compare-checkbox-all "//div[@id='grid_content']//input[$1]"
-   content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='$1']/i[contains(@class,'remove')]"
-   content-search-repo-header-name "//ul[@id='column_headers']/li[$1]/span[1]"
-   content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][$1]"
-   content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='$1']"
-   content-search-span-text        "//article[@id='comparison_grid']//span[text()='$1']"
-   default-org-star                "//div[@id='orgbox']//a[.='$1']/../span[starts-with(@id,'favorite')]"
-   editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='$1']]"
-   environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='$1']"
-   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[$1]"
-   link                            "link=$1"
-   notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification')]//a[@class='jnotify-close'])[$1]"
-   notification-index              "xpath=(//div[contains(@class,'jnotify-notification')])[$1]"
-   org-switcher                    "//div[@id='orgbox']//a[.='$1']"
-   permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'$1')]"
-   plus-icon                       "//li[.='$1']//span[contains(@class,'ui-icon-plus')]"
-   product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'$1')]"
-   product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'$1')]/..//img[@alt='Expand']"
-   product-schedule                "//div[normalize-space(.)='$1']/following-sibling::div[1]"
-   promotion-add-content-item      "//a[@data-display_name='$1' and contains(.,'Add')]"
-   promotion-content-category      "//div[@id='$1']"
-   promotion-content-item-n        "//div[@id='list']//li[$1]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
-   promotion-remove-content-item   "//a[@data-display_name='$1' and contains(.,'Remove')]"
-   provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
-   provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'$1')]/following::label[normalize-space(.)='$2']/..//input"
-   provider-sync-progress          "//tr[td/label[normalize-space(.)='$1']]/td[5]"
-   repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='$1']/..//input"
-   system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='$1']" 
-   role-action                     "//li[.//span[@class='sort_attr' and .='$2']]//a[.='$1']"
-   schedule                        "//div[normalize-space(.)='$1']"
-   search-favorite                 "//span[contains(@class,'favorite') and @title='$1']"
-   search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'$1')]"
-   search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'$1')]"
-   search-result-row-id            "//ul[@id='grid_row_headers']//li[contains(.,'$1')]"
-   search-result-cell              "//div[@id='grid_row_$1']/div[contains(@class,'cell_$2')]/i"
-   slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='$1']"
-   subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
-   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'$1')]//input[@type='checkbox']"
-   fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[$1]"
-   fetch-environments-in-org       "xpath=(//div[@id='path-selected']//a/div)[$1]"
-   sync-plan                       "//div[@id='plans']//div[normalize-space(.)='$1'"
-   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='$1']]"
-   subscription-checkbox           "//a[.='$1']/../span/input[@type='checkbox']"
-   tab                             "link=$1"
-   template-action                 "//a[@data-name='$2' and .='$1']"
-   template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='$1']"
-   template-product                "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'$1')]"
-   textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='$1'] or self::textarea[@name='$1']]"
-   user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='$1']"
-   username-field                  "//div[@id='users']//div[normalize-space(.)='$1']"
-   select-product                  "//span[contains(.,'$1')]"})
-
+(sel/template-fns
+ { add-repository                  "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+   auto-complete-item              "//ul[@role='listbox']//a[contains(.,'%s')]"
+   button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"
+   changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
+   changeset-status                "//span[.='%s']/..//span[@class='changeset_status']"
+   content-search-result-item-n    "//ul[@id='grid_row_headers']/li[%s]"
+   content-search-package-name     "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
+   content-search-compare-checkbox "//input[@type='checkbox' and @name='%s']"
+   search-result-repo-errata-link  "//a[@data-type='repo_errata' and @data-repo_id='%s']"
+   content-search-compare-checkbox-all "//div[@id='grid_content']//input[%s]"
+   content-search-repo-remove      "//div[@id='repo_autocomplete_list']/ul/li[@data-name='%s']/i[contains(@class,'remove')]"
+   content-search-repo-header-name "//ul[@id='column_headers']/li[%s]/span[1]"
+   content-search-repo-column-name "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][%s]"
+   content-search-column           "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='%s']"
+   content-search-span-text        "//article[@id='comparison_grid']//span[text()='%s']"
+   default-org-star                "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
+   editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
+   environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
+   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
+   link                            "link=%s"
+   notification-close-index        "xpath=(//div[contains(@class,'jnotify-notification')]//a[@class='jnotify-close'])[%s]"
+   notification-index              "xpath=(//div[contains(@class,'jnotify-notification')])[%s]"
+   org-switcher                    "//div[@id='orgbox']//a[.='%s']"
+   permission-org                  "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
+   plus-icon                       "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
+   product-edit                    "//div[@id='products']//div[contains(@data-url, 'edit') and contains(.,'%s')]"
+   product-expand                  "//div[@id='products']//div[contains(@data-url,'products') and contains(.,'%s')]/..//img[@alt='Expand']"
+   product-schedule                "//div[normalize-space(.)='%s']/following-sibling::div[1]"
+   promotion-add-content-item      "//a[@data-display_name='%s' and contains(.,'Add')]"
+   promotion-content-category      "//div[@id='%s']"
+   promotion-content-item-n        "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
+   promotion-remove-content-item   "//a[@data-display_name='%s' and contains(.,'Remove')]"
+   provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+   provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'%s')]/following::label[normalize-space(.)='%s']/..//input"
+   provider-sync-progress          "//tr[td/label[normalize-space(.)='%s']]/td[5]"
+   repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+   system-environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']" 
+   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"
+   schedule                        "//div[normalize-space(.)='%s']"
+   search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
+   search-result-repo-id           "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'%s')]"
+   search-result-col-id            "//ul[@id='column_headers']//li[contains(.,'%s')]"
+   search-result-row-id            "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
+   search-result-cell              "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
+   slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
+   subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+   fetch-applied-subscriptions     "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"
+   fetch-environments-in-org       "xpath=(//div[@id='path-selected']//a/div)[%s]"
+   sync-plan                       "//div[@id='plans']//div[normalize-space(.)='%s'"
+   system-checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
+   subscription-checkbox           "//a[.='%s']/../span/input[@type='checkbox']"
+   tab                             "link=%s"
+   template-action                 "//a[@data-name='%2$s' and .='%s']"
+   template-eligible-category      "//div[@id='content_tree']//div[normalize-space()='%s']"
+   template-product                "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'%s')]"
+   textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
+   user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
+   username-field                  "//div[@id='users']//div[normalize-space(.)='%s']"
+   select-product                  "//span[contains(.,'%s')]"})
 
 (defn get-all-of-locator [locatorfn] 
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
-  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
+  (let [count (sel/browser getXpathCount (.getLocator (locatorfn "*")))]
      (reduce (fn [acumulator number]
                (conj 
                  acumulator 
@@ -161,41 +145,6 @@
    ;;inside the org switcher
    :manage-organizations-link  "manage_orgs"
    })
-
-(def all-tabs {:administer "admin"
-               :users "users"
-               :roles "roles"
-               :manage-organizations "organizations"
-               :dashboard "dashboard"
-               :content "content"
-               :subscriptions "subscriptions"
-               :red-hat-subscriptions (menu-link "subscriptions")
-               :activation-keys "activation_keys"
-               :import-history "import_history"
-               :repositories "providers"
-               :custom-content-repositories "custom_providers"
-               :red-hat-repositories "redhat_providers"
-               :package-filters "filters"
-               :sync-management "sync_mgmt"
-               :sync-status "sync_status"
-               :sync-plans "sync_plans"
-               :sync-schedule "sync_schedule"
-               :content-search "content_search"
-               :system-templates "system_templates"
-               :changeset-management "changeset_management"
-               :changesets "changesets"
-               :changeset-history "changeset"
-               :systems "systems"
-               :all "registered"
-               :by-environments "env"
-               :system-groups "system_groups"
-               :create (menu-link "")
-               :details (menu-link "")
-               :registered (menu-link "")
-               :groups (menu-link "")
-               :general (menu-link "")
-               :facts (menu-link "")
-               :packages (menu-link "")})
 
 (def all-tabs
   (tabs
@@ -285,7 +234,6 @@
    :product-description-text            "//*[@name='product[description]']"
    :remove-product                      (link "Remove Product")
    ;;add repo
-   :add-repository                      "//ul[//div[starts-with(@id,'edit_product') and normalize-space(.)='$1']]//div[starts-with(@id,'add_repository')]"
    :repo-name-text                      "repo[name]"
    :repo-label-text                     "repo[label]"
    :repo-url-text                       "repo[feed]" 
@@ -511,9 +459,9 @@
 ;;real selenium locators (in uimap in this namespace).
 (extend-protocol SeleniumLocatable
   clojure.lang.Keyword
-  (sel-locator [k] (uimap k))
+  (sel/sel-locator [k] (uimap k))
   String
-  (sel-locator [x] x))
+  (sel/sel-locator [x] x))
 
 (defn promotion-env-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
@@ -521,26 +469,26 @@
   'next' is required."
   [name & [next]]
   (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
-    (Element. (format 
-               (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
-               name next))))
+    (format 
+     (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
+     name next)))
 
 (defn inactive-edit-field
   "Takes a locator for an active in-place edit field, returns the
   inactive version"
   [loc]
-  (format "//div[@name='%1s']" (sel-locator loc)))
+  (format "//div[@name='%1s']" (sel/sel-locator loc)))
 
 (defn left-pane-item
   "Returns a selenium locator for an item in a left
    pane list (by the name of the item)"
   [name]
-  (Element. (LocatorTemplate. "Left pane item"
-                              "//div[@id='list']//div[starts-with(normalize-space(.),'$1')]") 
-            (into-array [(let [l (.length name)]
-                           (if (> l 32)
-                             (.substring name 0 32) ;workaround for bz 737678
-                             name))])))
+  ((sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%s')]")
+   (let [l (.length name)]
+     (if (> l 32)
+       (.substring name 0 32) ;workaround for bz 737678
+       name))))
+
 
 (defn content-search-expand-strategy
   "Returns a locator strategy function for the expansion of the
@@ -551,24 +499,25 @@
 
 ;;nav tricks
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
-  (do (when (browser isElementPresent :expand-path)
-        (browser click :expand-path))
-      (browser click (promotion-env-breadcrumb env-name next-env-name))
-      (when wait (browser waitForPageToLoad))))
+  (do (when (sel/browser isElementPresent :expand-path)
+        (sel/browser click :expand-path))
+      (sel/browser click (promotion-env-breadcrumb env-name next-env-name))
+      (when wait (sel/browser waitForPageToLoad))))
 
 (defn search [search-term]
-  (fill-form {:search-bar search-term}
+  (sel/fill-form {:search-bar search-term}
              :search-submit (constantly nil)))
 
 (defn choose-left-pane
   "Selects an item in the left pane. If the item is not found, a
    search is performed and the select is attempted again. Takes an
    optional post-fn to perform afterwards."
-  [item]
-  (try (browser click item)
-       (catch SeleniumException se
-         (do (search (-> item .getArguments first))
-             (browser click item)))))
+  [templ item]
+  (let [loc (templ item)]
+    (try (sel/browser click loc)
+         (catch com.thoughtworks.selenium.SeleniumException se
+           (do (search item)
+               (sel/browser click loc))))))
 
 (defn toggler
   "Returns a function that returns a locator for the given on/off text
@@ -586,7 +535,7 @@
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
-  (browser click (a-toggler associated-text on?)))
+  (sel/browser click (a-toggler associated-text on?)))
 
 ;;
 ;;Navigation tree - shows all the navigation paths through the ui.
@@ -603,86 +552,86 @@
   page-tree
   (page-zip
    (nav-tree
-    [:top-level [] (if (or (not (browser isElementPresent :log-out))
-                           (browser isElementPresent :confirmation-dialog))
-                     (browser open (@config :server-url)))
+    [:top-level [] (if (or (not (sel/browser isElementPresent :log-out))
+                           (sel/browser isElementPresent :confirmation-dialog))
+                     (sel/browser open (@config :server-url)))
    
-     [:content-tab [] (browser mouseOver :content)
-      [:subscriptions-tab [] (browser mouseOver :subscriptions)
-       [:redhat-subscriptions-page [] (browser clickAndWait :red-hat-subscriptions)]
-       [:activation-keys-page [] (browser clickAndWait :activation-keys)
+     [:content-tab [] (sel/browser mouseOver :content)
+      [:subscriptions-tab [] (sel/browser mouseOver :subscriptions)
+       [:redhat-subscriptions-page [] (sel/browser clickAndWait :red-hat-subscriptions)]
+       [:activation-keys-page [] (sel/browser clickAndWait :activation-keys)
         [:named-activation-key-page [activation-key-name]
-         (choose-left-pane (left-pane-item activation-key-name))]
-        [:new-activation-key-page [] (browser click :new-activation-key)]]]
-      [:repositories-tab [] (browser mouseOver :repositories)
-       [:custom-content-repositories-page [] (browser clickAndWait :custom-content-repositories)
-        [:new-provider-page [] (browser click :new-provider)]
-        [:named-provider-page [provider-name] (choose-left-pane (left-pane-item provider-name))
-         [:provider-products-repos-page [] (->browser (click :products-and-repositories)
+         (choose-left-pane left-pane-item activation-key-name)]
+        [:new-activation-key-page [] (sel/browser click :new-activation-key)]]]
+      [:repositories-tab [] (sel/browser mouseOver :repositories)
+       [:custom-content-repositories-page [] (sel/browser clickAndWait :custom-content-repositories)
+        [:new-provider-page [] (sel/browser click :new-provider)]
+        [:named-provider-page [provider-name] (choose-left-pane left-pane-item provider-name)
+         [:provider-products-repos-page [] (sel/->browser (click :products-and-repositories)
                                                       (sleep 2000))
-          [:named-product-page [product-name] (browser click (editable product-name))]
-          [:named-repo-page [product-name repo-name] (browser click (editable repo-name))]]
-         [:provider-details-page [] (browser click :details)]
-         [:provider-subscriptions-page [] (browser click :subscriptions)]]]
-       [:redhat-repositories-page [] (browser clickAndWait :red-hat-repositories)]
-       [:gpg-keys-page [] (browser clickAndWait :gpg-keys)
-        [:new-gpg-key-page [] (browser click :new-gpg-key)]
-        [:named-gpgkey-page [gpg-key-name] (choose-left-pane (left-pane-item gpg-key-name))]]
-       [:package-filters-page [] (browser clickAndWait :package-filters)
-        [:new-package-filter-page [] (browser click :create-new-package-filter)]
-        [:named-package-filter-page [package-filter-name] (choose-left-pane (left-pane-item package-filter-name))]]]
-      [:sync-management-page [] (browser mouseOver :sync-management)
-       [:sync-status-page [] (browser clickAndWait :sync-status)]
-       [:sync-plans-page [] (browser clickAndWait :sync-plans)
+          [:named-product-page [product-name] (sel/browser click (editable product-name))]
+          [:named-repo-page [product-name repo-name] (sel/browser click (editable repo-name))]]
+         [:provider-details-page [] (sel/browser click :details)]
+         [:provider-subscriptions-page [] (sel/browser click :subscriptions)]]]
+       [:redhat-repositories-page [] (sel/browser clickAndWait :red-hat-repositories)]
+       [:gpg-keys-page [] (sel/browser clickAndWait :gpg-keys)
+        [:new-gpg-key-page [] (sel/browser click :new-gpg-key)]
+        [:named-gpgkey-page [gpg-key-name] (choose-left-pane left-pane-item gpg-key-name)]]
+       [:package-filters-page [] (sel/browser clickAndWait :package-filters)
+        [:new-package-filter-page [] (sel/browser click :create-new-package-filter)]
+        [:named-package-filter-page [package-filter-name] (choose-left-pane left-pane-item package-filter-name)]]]
+      [:sync-management-page [] (sel/browser mouseOver :sync-management)
+       [:sync-status-page [] (sel/browser clickAndWait :sync-status)]
+       [:sync-plans-page [] (sel/browser clickAndWait :sync-plans)
         [:named-sync-plan-page [sync-plan-name]
-         (choose-left-pane (left-pane-item sync-plan-name))]
-        [:new-sync-plan-page [] (browser click :new-sync-plan)]]
-       [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]]
-      [:changeset-promotion-history-page [] (browser clickAndWait :changeset-history)]
-      [:changeset-promotions-tab [] (browser mouseOver :changeset-management)
-       [:changesets-page [] (browser clickAndWait :changesets)
+         (choose-left-pane left-pane-item sync-plan-name)]
+        [:new-sync-plan-page [] (sel/browser click :new-sync-plan)]]
+       [:sync-schedule-page [] (sel/browser clickAndWait :sync-schedule)]]
+      [:changeset-promotion-history-page [] (sel/browser clickAndWait :changeset-history)]
+      [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
+       [:changesets-page [] (sel/browser clickAndWait :changesets)
         [:named-environment-changesets-page [env-name next-env-name]
            (select-environment-widget env-name {:next-env-name next-env-name :wait true})
          [:named-changeset-page [changeset-name changeset-type]
           (do
-            (if (= changeset-type "deletion") (browser click :select-deletion-changeset))
-            (browser click (changeset changeset-name)))]]]]
-      [:content-search-page [] (browser clickAndWait :content-search)]
-      [:system-templates-page [] (browser clickAndWait :system-templates)
-       [:named-system-template-page [template-name] (browser click (slide-link template-name))]
-       [:new-system-template-page [] (browser click :new-template)]]]
-     [:systems-tab [] (browser mouseOver :systems)
-      [:systems-all-page [] (browser clickAndWait :all)
-       [:new-system-page [] (browser click :new-system)]
-       [:system-subscriptions-page [system-name] (choose-left-pane (left-pane-item system-name))
-        [:named-systems-page [] (browser click :details)]
-        [:named-system-page-content [] (browser click :system-content-select)]]]
-     [:system-groups-page [] (browser clickAndWait :system-groups)
-       [:new-system-groups-page [] (browser click :new-system-groups)]
-       [:named-system-group-page [system-group-name] (choose-left-pane (left-pane-item system-group-name))
-        [:system-group-systems-page [] (browser click :systems-sg)]
-        [:system-group-details-page [] (browser click :details)]]]
-      [:systems-by-environment-page [] (browser clickAndWait :by-environments)
+            (if (= changeset-type "deletion") (sel/browser click :select-deletion-changeset))
+            (sel/browser click (changeset changeset-name)))]]]]
+      [:content-search-page [] (sel/browser clickAndWait :content-search)]
+      [:system-templates-page [] (sel/browser clickAndWait :system-templates)
+       [:named-system-template-page [template-name] (sel/browser click (slide-link template-name))]
+       [:new-system-template-page [] (sel/browser click :new-template)]]]
+     [:systems-tab [] (sel/browser mouseOver :systems)
+      [:systems-all-page [] (sel/browser clickAndWait :all)
+       [:new-system-page [] (sel/browser click :new-system)]
+       [:system-subscriptions-page [system-name] (choose-left-pane left-pane-item system-name)
+        [:named-systems-page [] (sel/browser click :details)]
+        [:named-system-page-content [] (sel/browser click :system-content-select)]]]
+     [:system-groups-page [] (sel/browser clickAndWait :system-groups)
+       [:new-system-groups-page [] (sel/browser click :new-system-groups)]
+      [:named-system-group-page [system-group-name] (choose-left-pane left-pane-item system-group-name)
+        [:system-group-systems-page [] (sel/browser click :systems-sg)]
+        [:system-group-details-page [] (sel/browser click :details)]]]
+      [:systems-by-environment-page [] (sel/browser clickAndWait :by-environments)
        [:systems-environment-page [env-name] (select-environment-widget env-name)
         [:named-system-environment-page [system-name]
-         (choose-left-pane (left-pane-item system-name))]]]]
-     [:organizations-page-via-org-switcher [] (browser click :org-switcher)
-      [:organizations-link-via-org-switcher [] (browser clickAndWait :manage-organizations-link)
-       [:new-organization-page-via-org-switcher [] (browser click :new-organization)]]]
-     [:administer-tab [] (browser mouseOver :administer)
-      [:users-page [] (browser clickAndWait :users)
-       [:named-user-page [username] (choose-left-pane (user username))
-        [:user-environments-page [] (browser click :environments-subsubtab)]
-        [:user-roles-permissions-page [] (browser click :roles-subsubtab)]]]
-      [:roles-page [] (browser clickAndWait :roles)
-       [:named-role-page [role-name] (choose-left-pane (left-pane-item role-name))
-        [:named-role-users-page [] (browser click :role-users)]
-        [:named-role-permissions-page [] (browser click :role-permissions)]]]
-      [:manage-organizations-page [] (browser clickAndWait :manage-organizations)
-       [:new-organization-page [] (browser click :new-organization)]
-       [:named-organization-page [org-name] (choose-left-pane (left-pane-item org-name)) 
-        [:new-environment-page [] (browser click :new-environment)]
-        [:named-environment-page [env-name] (browser click (environment-link env-name))]]]]])))
+         (choose-left-pane left-pane-item system-name)]]]]
+     [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
+      [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
+       [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]]
+     [:administer-tab [] (sel/browser mouseOver :administer)
+      [:users-page [] (sel/browser clickAndWait :users)
+       [:named-user-page [username] (choose-left-pane user username)
+        [:user-environments-page [] (sel/browser click :environments-subsubtab)]
+        [:user-roles-permissions-page [] (sel/browser click :roles-subsubtab)]]]
+      [:roles-page [] (sel/browser clickAndWait :roles)
+       [:named-role-page [role-name] (choose-left-pane left-pane-item role-name)
+        [:named-role-users-page [] (sel/browser click :role-users)]
+        [:named-role-permissions-page [] (sel/browser click :role-permissions)]]]
+      [:manage-organizations-page [] (sel/browser clickAndWait :manage-organizations)
+       [:new-organization-page [] (sel/browser click :new-organization)]
+       [:named-organization-page [org-name] (choose-left-pane left-pane-item org-name) 
+        [:new-environment-page [] (sel/browser click :new-environment)]
+        [:named-environment-page [env-name] (sel/browser click (environment-link env-name))]]]]])))
 
 
 (def tab-list '(:roles-page
