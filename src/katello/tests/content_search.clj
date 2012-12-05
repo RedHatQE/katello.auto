@@ -316,7 +316,7 @@
     (fn [search-params pred]
       (let [search-res (with-org test-org
                          (org/switch)
-                         (apply search-for-content search-params))]
+                         (apply content-search/search-for-content search-params))]
         (assert/is (pred search-res))))
 
 

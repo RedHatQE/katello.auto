@@ -62,9 +62,9 @@
 (def custom-errata-test-provider [{:name "Custom Errata Provider"
                         :products [{:name "Com Errata Enterprise"
                                     :repos [{:name "ErrataZoo" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
-                                            {:name "ErrataZoo2" 
                                              :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
+; {:name "ErrataZoo2" 
+;                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 
