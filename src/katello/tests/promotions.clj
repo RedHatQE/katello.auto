@@ -1,6 +1,6 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
-                     [changesets :refer [promote-delete-content]]
+                     [changesets :as changesets]
                      [providers :as provider]
                      [environments :as environment]
                      [organizations :as org]
@@ -67,8 +67,8 @@
           (api/add-to-template template-name {:repositories [{:product product-name
                                                               :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
-    (promote-delete-content from-env target-env false content)
-    (verify-all-content-present content (environment/content target-env))))
+    (changesets/promote-delete-content from-env target-env false content)
+    (verify-all-content-present content (changesets/environment-content target-env))))
 
 (def promo-data
   (runtime-data
@@ -119,8 +119,8 @@
           (org/switch test-org)
           (environment/create-path test-org envz)
           (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-          (promote-delete-content library (first envz) false promotion-content)
-          (promote-delete-content (first envz) nil true deletion-content)))
+          (changesets/promote-delete-content library (first envz) false promotion-content)
+          (changesets/promote-delete-content (first envz) nil true deletion-content)))
       
       [[[true] {:products (map :name custom-products)}]
        [[true] {:repos (mapcat :repos custom-products)}]

@@ -160,3 +160,43 @@
     (assert/is (every? (fn [[_ res]] (sync/success? res))
                        sync-results))
     (promote-delete-content from-env to-env false {:products all-prods})))
+
+(defn- extract-content []
+  (let [elems (for [index (iterate inc 1)]
+                (content-item-n (str index)))
+        retrieve (fn [elem]
+                   (try (sel/browser getText elem)
+                        (catch Exception e nil)))]
+    (->> (map retrieve elems) (take-while identity) set)))
+
+(defn environment-content
+  "Returns the content that is available to promote, in the given environment."
+  [env-name]
+  (navigate :named-environment-changesets-page {:env-name env-name
+                                                :next-env-name nil})
+  (let [categories [:products :templates]]
+    (zipmap categories
+            (doall (for [category categories]
+                     (do
+                       (sel/browser click (-> category name (str "-category") keyword))
+                       (sel/browser sleep 2000) 
+                       (let [result (extract-content)]
+                         (sel/browser click :promotion-eligible-home)
+                         result)))))))
+
+(defn ^{:TODO "finish me"} change-set-content [env]
+  (navigate :named-environment-changesets-page {:env-name env}))
+
+(defn enviroment-has-content?
+  "If all the content is present in the given environment, returns true."
+  [env content]
+  (navigate :named-environment-changesets-page {:env-name env :next-env-name ""})
+  (every? true?
+          (flatten
+           (for [category (keys content)]
+             (do (sel/browser click (-> category name (str "-category") keyword))
+                 (for [item (content category)]
+                   (try (do (sel/browser isVisible
+                                     (add-content-item item))
+                            true)
+                        (catch Exception e false))))))))
