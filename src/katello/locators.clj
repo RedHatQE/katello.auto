@@ -243,68 +243,6 @@
    :details-container          "//div[contains(@class,'details_container')]"
   })
 
-(def systems
-  {:new-system                             "new"
-   :create-system                          "system_submit"
-   :system-name-text                       "system[name]"
-   :system-sockets-text                    "system[sockets]"
-   :system-arch-select                     "arch[arch_id]"
-   :system-content-select                  "xpath=(//li[@id='content']/a)[2]"
-   :system-content-packages                (link "Packages")
-   :system-add-content			               "add_content"
-   :system-remove-content                  "remove_content" 
-   :system-package-name                    "content_input"
-   :select-package-group                   "perform_action_package_groups"
-   :select-system-package                  "perform_action_packages"
-   :pkg-install-status                     "//td[@class='package_action_status']/a[@class='subpanel_element']"
-
-   ;;system-edit details
-   :system-name-text-edit                  "system[name]"
-   :system-description-text-edit           "system[description]"
-   :system-location-text-edit              "system[location]"
-   :system-service-level-select            "system[serviceLevel]"
-   :system-release-version-select          "system[releaseVer]"
-   :system-environment                     "//div[@id='environment_path_selector']"
-   :system-operating-system                "//label[contains(.,'OS')]/../following-sibling::*[1]"
-   :system-save-environment                "//input[@value='Save']"
-
-   ;;systemgroups pane
-   :new-system-groups                      "//a[@id='new']"
-   :create-system-groups                   "group_save"
-   :system-group-name-text                 "system_group[name]"
-   :system-group-description-text          "system_group[description]"
-   :systems-sg                             "//div[@class='panel-content']//a[.='Systems']"
-   :system-groups-hostname-toadd           "add_system_input"
-   :system-groups-add-system               "add_system"
-   :system-groups-remove-system            "remove_systems"
-   :system-group-copy                      (link "Copy")
-   :system-group-copy-name-text            "name_input"
-   :system-group-copy-description-text     "description_input"
-   :system-group-copy-submit               "copy_button"
-   :system-group-remove                    (link "Remove")
-   :system-group-total                     "//fieldset[contains(.,'Total')]/div[2]/a"
-   :system-group-confirm-only-system-group "//span[.='No, only delete the system group.']"
-   :system-group-unlimited                 "//input[@class='unlimited_members']"
-   :save-new-limit                          "//button[.='Save']"
-   :system-group-limit-value               "system_group[max_systems]"
-   
-   ;;subscriptions pane
-   :subscribe                              "sub_submit"
-   :unsubscribe                            "unsub_submit"
-
-   ;;Activationkeys subtab
-   :new-activation-key                     "new"
-   :activation-key-name-text               "activation_key[name]"
-   :activation-key-description-text        "activation_key[description]"
-   :activation-key-template-select         "activation_key[system_template_id]"
-   :save-activation-key                    "save_key"
-   :applied-subscriptions                  "//a[.='Applied Subscriptions']"
-   :available-subscriptions                "//a[.='Available Subscriptions']"
-   :add-subscriptions-to-activation-key    "//input[@id='subscription_submit_button']"            
-   :remove-activation-key                  (link "Remove Activation Key")
-   :subscriptions-right-nav                "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
-   :release-version-text                   "system[releaseVer]"})
-
 (def sync-schedules
   {:apply-sync-schedule "apply_button"})
 
@@ -326,7 +264,7 @@
   selenium just the same as you would the locator string. See also
   SeleniumLocatable protocol."}
   uimap
-  (atom (merge all-tabs common systems sync-plans
+  (atom (merge all-tabs common sync-plans
                content-search sync-schedules promotions templates
                { ;; login page
                 :username-text     "username"
