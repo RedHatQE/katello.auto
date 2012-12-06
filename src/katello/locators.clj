@@ -162,41 +162,6 @@
    :manage-organizations-link  "manage_orgs"
    })
 
-(def all-tabs {:administer "admin"
-               :users "users"
-               :roles "roles"
-               :manage-organizations "organizations"
-               :dashboard "dashboard"
-               :content "content"
-               :subscriptions "subscriptions"
-               :red-hat-subscriptions (menu-link "subscriptions")
-               :activation-keys "activation_keys"
-               :import-history "import_history"
-               :repositories "providers"
-               :custom-content-repositories "custom_providers"
-               :red-hat-repositories "redhat_providers"
-               :package-filters "filters"
-               :sync-management "sync_mgmt"
-               :sync-status "sync_status"
-               :sync-plans "sync_plans"
-               :sync-schedule "sync_schedule"
-               :content-search "content_search"
-               :system-templates "system_templates"
-               :changeset-management "changeset_management"
-               :changesets "changesets"
-               :changeset-history "changeset"
-               :systems "systems"
-               :all "registered"
-               :by-environments "env"
-               :system-groups "system_groups"
-               :create (menu-link "")
-               :details (menu-link "")
-               :registered (menu-link "")
-               :groups (menu-link "")
-               :general (menu-link "")
-               :facts (menu-link "")
-               :packages (menu-link "")})
-
 (def all-tabs
   (tabs
    (flatten
