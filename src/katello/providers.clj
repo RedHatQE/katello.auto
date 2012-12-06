@@ -47,6 +47,18 @@
                   :save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
+(defn add-repo-with-key
+  "Adds a repository under the given provider and product. Requires a
+   name and url be given for the repo."
+  [{:keys [provider-name product-name name url gpgkey]}]
+  (navigate :provider-products-repos-page {:provider-name provider-name})
+  (browser click (locators/add-repository product-name))
+  (browser select :repo-gpg-select gpgkey)
+  (fill-ajax-form {:repo-name-text name
+                   :repo-url-text url}
+                  :save-repository)
+  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
+
 (defn delete-repo
   "Deletes a repository from the given provider and product."
   [{:keys [name provider-name product-name]}]

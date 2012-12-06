@@ -4,6 +4,8 @@
                      [validation :as val]
                      [organizations :as org]
                      [client :as client]
+                     [providers :as provider]
+                     [changesets :refer [sync-and-promote]]
                      [tasks :refer :all] 
                      [ui-tasks :refer :all] 
                      [systems :as system]
@@ -93,6 +95,28 @@
   "Remove the system from copied system group."
   [{:keys [copy-name system-name]}]
   (system/remove-from-group copy-name system-name))
+
+(defn step-to-configure-server-for-pkg-install [product-name]
+  (let [provider-name (uniqueify "custom_provider")
+        repo-name (uniqueify "zoo_repo")
+        target-env (first *environments*)
+        org-name "ACME_Corporation"
+        testkey (uniqueify "mykey")]
+    (org/switch)
+    (api/ensure-env-exist target-env {:prior library})
+    (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
+      (create-gpg-key testkey {:contents mykey}))
+    (provider/create {:name provider-name})
+    (provider/add-product {:provider-name provider-name
+                           :name product-name})
+    (provider/add-repo-with-key {:provider-name provider-name
+                                 :product-name product-name
+                                 :name repo-name
+                                 :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+                                 :gpgkey testkey})
+    (let [products [{:name product-name :repos [repo-name]}]]
+      (when (api/is-katello?)
+        (sync-and-promote products library target-env)))))
 
 ;; Tests
 
@@ -329,6 +353,31 @@
                           :force true})
         (assert/is (= (client/get-distro ssh-conn)
                         (system/get-os (client/my-hostname ssh-conn))))))
-    
+
+  (deftest "Install package group"
+    :data-driven true
+    :description "Add package and package group"
+    (fn [package-name]
+      (let [target-env (first *environments*)
+            org-name "ACME_Corporation"
+            sys-name (uniqueify "pkg_install")
+            product-name (uniqueify "fake")]
+        (step-to-configure-server-for-pkg-install product-name)
+        (provision/with-client sys-name
+           ssh-conn
+           (client/register ssh-conn
+                            {:username *session-user*
+                             :password *session-password*
+                             :org org-name
+                             :env target-env
+                             :force true})
+           (let [mysys (client/my-hostname ssh-conn)] 
+             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
+             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+             (system/add-package mysys package-name)))))
+            
+    [[{:package "cow"}]
+     [{:package-group "birds"}]])
+  
   system-group-tests)
 
