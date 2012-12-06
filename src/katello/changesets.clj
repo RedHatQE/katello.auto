@@ -1,8 +1,7 @@
 (ns katello.changesets
-  (:require (katello [locators :as locators]
-                     [navigation :as nav]
+  (:require (katello [navigation :as nav]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all] 
+                     [ui-common :as ui] 
                      [sync-management :as sync]
                      [notifications :refer [check-for-success]])
             [com.redhat.qe.auto.selenium.selenium :as sel]
@@ -24,7 +23,7 @@
   changeset-status    "//span[.='%s']/..//span[@class='changeset_status']"
   })
 
-(swap! locators/uimap merge
+(swap! ui/uimap merge
        {:products-category           (content-category "products")
         :expand-path                 "path-collapsed"
         :errata-category             (content-category "errata")
@@ -54,7 +53,7 @@
   or for deletion from env-name."
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
   (nav/go-to :named-environment-changesets-page {:env-name env-name 
-                                                :next-env-name next-env-name})
+                                                 :next-env-name next-env-name})
   (if deletion? (sel/browser click :select-deletion-changeset))
   (sel/->browser (click :new-changeset)
                  (setText :changeset-name-text changeset-name)
@@ -70,9 +69,9 @@
   ;; to-env not required if deletion changeset
   [changeset-name from-env content deletion & [{:keys [to-env]}]]
   (nav/go-to :named-changeset-page {:env-name from-env
-                                   :next-env-name to-env
-                                   :changeset-name changeset-name
-                                   :changeset-type (if deletion "deletion" "promotion")})
+                                    :next-env-name to-env
+                                    :changeset-name changeset-name
+                                    :changeset-type (if deletion "deletion" "promotion")})
   (doseq [category (keys content)]
     (let [data (content category)
           grouped-data (group-by :product-name data)]
@@ -112,10 +111,10 @@
    wait for the promotion or deletion to complete successfully."
   [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
   (let [nav-to-cs (fn [] (nav/go-to :named-changeset-page
-                                  {:env-name from-env
-                                   :next-env-name to-env
-                                   :changeset-name changeset-name
-                                   :changeset-type (if deletion? "deletion" "promotion")}))]
+                                   {:env-name from-env
+                                    :next-env-name to-env
+                                    :changeset-name changeset-name
+                                    :changeset-type (if deletion? "deletion" "promotion")}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
       (sel/browser click :review-for-promotion)
@@ -174,7 +173,7 @@
   "Returns the content that is available to promote, in the given environment."
   [env-name]
   (nav/go-to :named-environment-changesets-page {:env-name env-name
-                                                :next-env-name nil})
+                                                 :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
             (doall (for [category categories]
@@ -198,6 +197,6 @@
              (do (sel/browser click (-> category name (str "-category") keyword))
                  (for [item (content category)]
                    (try (do (sel/browser isVisible
-                                     (add-content-item item))
+                                         (add-content-item item))
                             true)
                         (catch Exception e false))))))))

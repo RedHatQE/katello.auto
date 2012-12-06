@@ -2,10 +2,9 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [navigation :as nav]
-                     [locators :as locators] 
                      [tasks :refer [library]] 
                      [notifications :as notification] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
+                     [ui-common :as ui])))
 
 ;;
 ;; Environments
@@ -13,15 +12,15 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
-  {:env-name-text             "kt_environment[name]"
-   :env-label-text             "kt_environment[label]"
-   :env-description-text      "kt_environment[description]"
-   :prior-environment         "kt_environment[prior]"
-   :create-environment        "//input[@value='Create']"
-   :new-environment           "//div[normalize-space(.)='Add New Environment']"
-   :remove-environment        (locators/link "Remove Environment")
-   :env-prior-select-edit     "kt_environment[prior]" })
+(swap! ui/uimap merge
+       {:env-name-text             "kt_environment[name]"
+        :env-label-text             "kt_environment[label]"
+        :env-description-text      "kt_environment[description]"
+        :prior-environment         "kt_environment[prior]"
+        :create-environment        "//input[@value='Create']"
+        :new-environment           "//div[normalize-space(.)='Add New Environment']"
+        :remove-environment        (ui/link "Remove Environment")
+        :env-prior-select-edit     "kt_environment[prior]" })
 
 ;; Tasks
 
@@ -41,7 +40,7 @@
   "Deletes an environment from the given organization."
   [env-name {:keys [org-name]}]
   (nav/go-to :named-environment-page {:org-name org-name
-                                     :env-name env-name})
+                                      :env-name env-name})
   (if (browser isElementPresent :remove-environment)
     (browser click :remove-environment)
     (throw+ {:type :env-cant-be-deleted :env-name env-name}))
@@ -54,7 +53,7 @@
    fields: a new description."
   [env-name {:keys [org-name description]}]
   (nav/go-to :named-environment-page {:org-name org-name
-                                     :env-name env-name})
+                                      :env-name env-name})
   (in-place-edit {:env-description-text description}))
 
 (defn create-path
@@ -65,7 +64,7 @@
   (let [env-chain  (partition 2 1 (concat [library] environments))]
     (doseq [[prior curr] env-chain]
       (create curr {:prior-env prior
-                                :org-name org-name}))))
+                    :org-name org-name}))))
 
 
 

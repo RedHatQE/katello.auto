@@ -1,10 +1,8 @@
 (ns katello.roles
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             (katello [navigation :as nav]
-                     [locators :as locators] 
                      [notifications :as notification] 
-                     [ui-tasks :refer [fill-ajax-form navigate]]))
-  )
+                     [ui-common :as ui])))
 
 ;;
 ;; Roles
@@ -12,7 +10,7 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
+(swap! ui/uimap merge
        {:new-role                        "//a[@id='new']"
         :new-role-name-text              "role[name]"
         :new-role-description-text       "role[description]"
@@ -35,7 +33,7 @@
   plus-icon                       "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
-(def user-role-toggler (locators/toggler locators/add-remove role-action))
+(def user-role-toggler (ui/toggler ui/add-remove role-action))
 
 ;; Tasks
 
@@ -82,7 +80,7 @@
     (when users
       (nav :named-role-users-page)
       (doseq [user users]
-        (locators/toggle user-role-toggler user true)))
+        (ui/toggle user-role-toggler user true)))
     (each-org remove-permissions
               (fn [permissions]
                 (doseq [permission permissions]

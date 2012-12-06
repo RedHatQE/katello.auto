@@ -2,8 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [navigation :as nav]
-                     [locators :as locators]
-                     [ui-tasks :refer :all] 
+                     [ui-common :as ui] 
                      [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -14,16 +13,16 @@
  {default-org-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
   org-switcher     "//div[@id='orgbox']//a[.='%s']"})
 
-(swap! locators/uimap merge
-  {:new-organization          "//a[@id='new']"
-   :create-organization       "organization_submit"
-   :org-name-text             "organization[name]"
-   :org-description-text      "organization[description]"
-   :org-environments          (locators/link "Environments")
-   :edit-organization         (locators/link "Edit")
-   :remove-organization       (locators/link "Remove Organization")
-   :org-initial-env-name-text "environment[name]"
-   :org-initial-env-desc-text "environment[description]"})
+(swap! ui/uimap merge
+       {:new-organization          "//a[@id='new']"
+        :create-organization       "organization_submit"
+        :org-name-text             "organization[name]"
+        :org-description-text      "organization[description]"
+        :org-environments          (ui/link "Environments")
+        :edit-organization         (ui/link "Edit")
+        :remove-organization       (ui/link "Remove Organization")
+        :org-initial-env-name-text "environment[name]"
+        :org-initial-env-desc-text "environment[description]"})
 
 ;; Tasks
 
@@ -48,7 +47,7 @@
    {:match-pred (notification/request-type? :org-destroy)})   ;queueing success
   (browser refresh)
   (notification/check-for-success {:timeout-ms 180000})) ;for actual delete
-                                        
+
 (defn edit
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
@@ -79,8 +78,8 @@
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
              (browser click (default-org-star (if (= default-org :none)
-                                                         current-default
-                                                         default-org)))
+                                                current-default
+                                                default-org)))
              (notification/check-for-success))))
        (when org-name
          (browser clickAndWait (org-switcher org-name))))))

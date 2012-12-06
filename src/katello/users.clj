@@ -2,10 +2,10 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [navigation :as nav]
-                     [locators :as locators] 
+                     
                      [conf :refer [config *session-user*
                                    *session-password* *session-org*]] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
+                     [ui-common :as ui] 
                      [notifications :as notification] 
                      [organizations :as organization])))
 
@@ -15,26 +15,26 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
-  {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
-   :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
-   :user-default-org-select     "org_id[org_id]"
-   :save-user-environment       "update_user"
-   :new-user                    "//a[@id='new']"
-   :user-username-text          "user[username]"
-   :user-password-text          "password_field" ; use id attr 
-   :user-confirm-text           "confirm_field"  ; for these two (name
-                                                 ; is the same)
-   :user-default-org            "org_id[org_id]"
-   :user-email-text             "user[email]"
-   :save-user                   "save_user"
-   :remove-user                 (locators/link "Remove User")
-   :enable-inline-help-checkbox "user[helptips_enabled]"
-   :clear-disabled-helptips     "clear_helptips"
-   :save-roles                  "save_roles"
-   :add-all                     (locators/link "Add all")
-   :all-types                   "all_types"
-   :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
+(swap! ui/uimap merge
+       {:roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
+        :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
+        :user-default-org-select     "org_id[org_id]"
+        :save-user-environment       "update_user"
+        :new-user                    "//a[@id='new']"
+        :user-username-text          "user[username]"
+        :user-password-text          "password_field" ; use id attr 
+        :user-confirm-text           "confirm_field"  ; for these two (name
+                                        ; is the same)
+        :user-default-org            "org_id[org_id]"
+        :user-email-text             "user[email]"
+        :save-user                   "save_user"
+        :remove-user                 (ui/link "Remove User")
+        :enable-inline-help-checkbox "user[helptips_enabled]"
+        :clear-disabled-helptips     "clear_helptips"
+        :save-roles                  "save_roles"
+        :add-all                     (ui/link "Add all")
+        :all-types                   "all_types"
+        :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
 
 ;; Tasks
@@ -94,7 +94,7 @@
   (nav/go-to :users-page)
   (browser click :new-user)
   (let [env-chooser (fn [env] (when env
-                               (locators/select-environment-widget env)))]
+                               (nav/select-environment-widget env)))]
     (fill-ajax-form [:user-username-text username
                      :user-password-text password
                      :user-confirm-text (or password-confirm password)
@@ -110,7 +110,7 @@
   (browser click :remove-user)
   (browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
-  
+
 (defn edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once)."
@@ -143,7 +143,7 @@
   [username org-name env-name]
   (nav/go-to :user-environments-page {:username username})
   (browser select :user-default-org-select org-name)
-  (browser click (locators/environment-link env-name))
+  (browser click (ui/environment-link env-name))
   (browser click :save-user-environment)
   (notification/check-for-success))
 

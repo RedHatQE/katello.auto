@@ -1,26 +1,34 @@
 (ns katello.system-templates
   (:require (katello [navigation :as nav]
-                     [ui-tasks :refer [navigate]]
-                     [notifications :as notification]
-                     [locators :as locators]
+                     [ui-common :as ui]
+                     [notifications :as notification] 
                      [tasks :refer [capitalize-all]])
             [com.redhat.qe.auto.selenium.selenium :as sel]))
 
 ;; Locators
 
-(swap! locators/uimap merge
+(sel/template-fns
+ {template-action            "//a[@data-name='%2$s' and .='%s']"
+  template-eligible-category "//div[@id='content_tree']//div[normalize-space()='%s']"
+  template-product           "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'%s')]"})
+
+(swap! ui/uimap merge
   {:new-template                     "new"
    :template-name-text               "system_template[name]"
    :template-description-text        "system_template[description]"
    :save-new-template                "template_save" ;;when creating
-   :template-eligible-package-groups (locators/template-eligible-category "Package Groups")
-   :template-eligible-packages       (locators/template-eligible-category "Packages")
-   :template-eligible-repositories   (locators/template-eligible-category "Repositories")
-   :template-package-groups          (locators/slide-link "Package Groups")
+   :template-eligible-package-groups (template-eligible-category "Package Groups")
+   :template-eligible-packages       (template-eligible-category "Packages")
+   :template-eligible-repositories   (template-eligible-category "Repositories")
+   :template-package-groups          (ui/slide-link "Package Groups")
    :template-eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    :save-template                    "save_template"}) ;;when editing
 
+
+
 ;; Tasks
+
+(def template-toggler (ui/toggler ui/add-remove template-action))
 
 (defn create
   "Creates a system template with the given name and optional
@@ -40,7 +48,7 @@
                            :repositories ['x86_64']}]"
   [template content]
   (nav/go-to :named-system-template-page {:template-name template})
-  (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
+  (let [add-item (fn [item] (ui/toggle template-toggler item true))]
     (doseq [group content]
       (let [category-keyword (-> group (dissoc :product) keys first)
             category-name (-> category-keyword
@@ -50,9 +58,9 @@
         (sel/->browser
          (getEval "window.onbeforeunload = function(){};") ;circumvent popup
          (sleep 2000)
-         (click (locators/template-product (:product group)))
+         (click (template-product (:product group)))
          (sleep 2000)
-         (click (locators/template-eligible-category category-name)))
+         (click (template-eligible-category category-name)))
         (doall (map add-item (group category-keyword)))
         (sel/browser click :template-eligible-home)))
     (sel/browser click :save-template)

@@ -6,9 +6,8 @@
             [clojure.data.zip.xml :as zfx]
             [com.redhat.qe.auto.selenium.selenium :as sel]
             (katello [navigation :as nav]
-                     [locators      :as locators]
                      [tasks         :refer :all]
-                     [ui-tasks      :refer :all]
+                     [ui-common     :as ui]
                      [notifications :as notification] 
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
@@ -21,7 +20,7 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
+(swap! ui/uimap merge
   {:content-search-type        "//select[@id='content']"
    :add-prod                   "add_product"
    :add-repo                   "add_repo"

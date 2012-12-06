@@ -1,9 +1,9 @@
 (ns katello.providers
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
             (katello [navigation :as nav]
-                     [locators :as locators] 
                      [notifications :as notification] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
+                     [ui-common :as ui])))
 
 ;;
 ;; Providers
@@ -11,15 +11,15 @@
 
 ;; Locators
 
-(swap! locators/uimap merge
+(swap! ui/uimap merge
   {:new-provider                        "new"
    :provider-name-text                  "provider[name]"
    :provider-description-text           "provider[description]"
    :provider-repository-url-text        "provider[repository_url]"
-   :provider-cert-text                  (locators/textbox "provider[certificate_attributes][contents]")
+   :provider-cert-text                  (ui/textbox "provider[certificate_attributes][contents]")
    :provider-create-save                "provider_submit"
-   :remove-provider                     (locators/link "Remove Provider")
-   :subscriptions                       (locators/link "Subscriptions")
+   :remove-provider                     (ui/link "Remove Provider")
+   :subscriptions                       (ui/link "Subscriptions")
    :import-manifest                     "new"
    :redhat-provider-repository-url-text "provider[repository_url]"
    :choose-file                         "provider_contents"
@@ -28,18 +28,18 @@
    :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
                 
    ;;add product
-   :add-product                         (locators/button-div "Add Product")
+   :add-product                         (ui/button-div "Add Product")
    :create-product                      "//input[@value='Create']"
    :product-name-text                   "//*[@name='product[name]']"
    :product-label-text                  "//*[@name='product[label]']"
    :product-description-text            "//*[@name='product[description]']"
-   :remove-product                      (locators/link "Remove Product")
+   :remove-product                      (ui/link "Remove Product")
    ;;add repo
    :repo-name-text                      "repo[name]"
    :repo-label-text                     "repo[label]"
    :repo-url-text                       "repo[feed]" 
    :save-repository                     "//input[@value='Create']"
-   :remove-repository                   (locators/link "Remove Repository")
+   :remove-repository                   (ui/link "Remove Repository")
    :repo-gpg-select                     "//select[@id='repo_gpg_key']"
 
    ;;redhat page
@@ -53,15 +53,18 @@
    :gpg-keys                            "//a[.='GPG Keys']"
    :gpg-keys-save                       "save_gpg_key"
    :new-gpg-key                         "new"
-   :remove-gpg-key                      (locators/link "Remove GPG Key")
+   :remove-gpg-key                      (ui/link "Remove GPG Key")
 
 
    ;;Package Filters
-   :create-new-package-filter                (locators/link "+ New Filter")
+   :create-new-package-filter                (ui/link "+ New Filter")
    :new-package-filter-name                  "filter[name]"
    :new-package-filter-description           "filter[description]"
    :save-new-package-filter                  "filter_submit"
-   :remove-package-filter-key                (locators/link "Remove Filter")})
+   :remove-package-filter-key                (ui/link "Remove Filter")})
+
+(sel/template-fns
+ {add-repository "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
 (defn create
   "Creates a custom provider with the given name and description."
@@ -96,7 +99,7 @@
    name and url be given for the repo."
   [{:keys [provider-name product-name name url]}]
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
-  (browser click (locators/add-repository product-name))
+  (browser click (add-repository product-name))
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
@@ -107,7 +110,7 @@
    name and url be given for the repo."
   [{:keys [provider-name product-name name url gpgkey]}]
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
-  (browser click (locators/add-repository product-name))
+  (browser click (add-repository product-name))
   (browser select :repo-gpg-select gpgkey)
   (fill-ajax-form {:repo-name-text name
                    :repo-url-text url}

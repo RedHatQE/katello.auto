@@ -1,8 +1,19 @@
 (ns katello.navigation
-  (:require [katello.locators :as locators]
-            [katello.conf :as conf]
+  (:require [katello.conf :as conf]
+            [katello.ui-common :as ui]
             [ui.navigate :as nav]
             [com.redhat.qe.auto.selenium.selenium :as sel]))
+
+
+(defn environment-breadcrumb
+  "Locates a link in the environment breadcrumb UI widget. If there
+  are multiple environment paths, and you wish to select Library,
+  'next' is required."
+  [name & [next]]
+  (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
+    (format 
+     (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
+     name next)))
 
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
   (do (when (sel/browser isElementPresent :expand-path)
@@ -37,15 +48,7 @@
               (do (search item)
                   (sel/browser click loc)))))))
 
-(defn environment-breadcrumb
-  "Locates a link in the environment breadcrumb UI widget. If there
-  are multiple environment paths, and you wish to select Library,
-  'next' is required."
-  [name & [next]]
-  (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
-    (format 
-     (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
-     name next)))
+
 
 ;;
 ;;Navigation tree - shows all the navigation paths through the ui.
@@ -79,8 +82,8 @@
         [:named-provider-page [provider-name] (choose-left-pane  provider-name)
          [:provider-products-repos-page [] (sel/->browser (click :products-and-repositories)
                                                           (sleep 2000))
-          [:named-product-page [product-name] (sel/browser click (locators/editable product-name))]
-          [:named-repo-page [product-name repo-name] (sel/browser click (locators/editable repo-name))]]
+          [:named-product-page [product-name] (sel/browser click (ui/editable product-name))]
+          [:named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]]
          [:provider-details-page [] (sel/browser click :details)]
          [:provider-subscriptions-page [] (sel/browser click :subscriptions)]]]
        [:redhat-repositories-page [] (sel/browser clickAndWait :red-hat-repositories)]
@@ -105,10 +108,10 @@
          [:named-changeset-page [changeset-name changeset-type]
           (do
             (if (= changeset-type "deletion") (sel/browser click :select-deletion-changeset))
-            (sel/browser click (locators/changeset changeset-name)))]]]]
+            (sel/browser click (ui/changeset changeset-name)))]]]]
       [:content-search-page [] (sel/browser clickAndWait :content-search)]
       [:system-templates-page [] (sel/browser clickAndWait :system-templates)
-       [:named-system-template-page [template-name] (sel/browser click (locators/slide-link template-name))]
+       [:named-system-template-page [template-name] (sel/browser click (ui/slide-link template-name))]
        [:new-system-template-page [] (sel/browser click :new-template)]]]
      
      [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
@@ -116,7 +119,7 @@
        [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]]
      [:administer-tab [] (sel/browser mouseOver :administer)
       [:users-page [] (sel/browser clickAndWait :users)
-       [:named-user-page [username] (choose-left-pane locators/user username)
+       [:named-user-page [username] (choose-left-pane ui/user username)
         [:user-environments-page [] (sel/browser click :environments-subsubtab)]
         [:user-roles-permissions-page [] (sel/browser click :roles-subsubtab)]]]
       [:roles-page [] (sel/browser clickAndWait :roles)
@@ -127,7 +130,7 @@
        [:new-organization-page [] (sel/browser click :new-organization)]
        [:named-organization-page [org-name] (choose-left-pane  org-name) 
         [:new-environment-page [] (sel/browser click :new-environment)]
-        [:named-environment-page [env-name] (sel/browser click (locators/environment-link env-name))]]]]])))
+        [:named-environment-page [env-name] (sel/browser click (ui/environment-link env-name))]]]]])))
 
 (def ^{:doc "Navigates to a named location in the UI. The first
              argument should be a keyword for the place in the page
@@ -135,67 +138,7 @@
              mapping of keywords to strings, if any arguments are
              needed to navigate there.
              Example: (nav/go-to :named-organization-page {:org-name
-             'My org'}) See also katello.locators/page-tree for all
-             the places that can be navigated to."
+             'My org'}) See also page-tree for all the places that can
+             be navigated to."
        :arglists '([location-kw & [argmap]])}
   go-to (nav/nav-fn page-tree))
-
-
-(comment (defn search [search-term]
-   (sel/fill-ajax-form {:search-bar search-term}
-                       :search-submit))
-
- (defn choose-left-pane
-   "Selects an item in the left pane. If the item is not found, a
-   search is performed and the select is attempted again. Takes an
-   optional post-fn to perform afterwards."
-   [templ item]
-   (let [loc (templ item)]
-     (try (sel/browser click loc)
-          (catch com.thoughtworks.selenium.SeleniumException se
-            (do (search item)
-                (sel/browser click loc))))))
-
-
- (defn left-pane-item
-   "Returns a selenium locator for an item in a left
-   pane list (by the name of the item)"
-   [name]
-   ((sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%s')]")
-    (let [l (.length name)]
-      (if (> l 32)
-        (.substring name 0 32) ;workaround for bz 737678
-        name))))
-
- (defn environment-breadcrumb
-   "Locates a link in the environment breadcrumb UI widget. If there
-  are multiple environment paths, and you wish to select Library,
-  'next' is required."
-   [name & [next]]
-   (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
-     (format 
-      (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
-      name next)))
-
- (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
-   (do (when (sel/browser isElementPresent :expand-path)
-         (sel/browser click :expand-path))
-       (sel/browser click (environment-breadcrumb env-name next-env-name))
-       (when wait (sel/browser waitForPageToLoad))))
-
- (sel/template-fns
-  {editable "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
-   changeset "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
-
-
- (def ^{:doc "Navigates to a named location in the UI. The first
-             argument should be a keyword for the place in the page
-             tree to navigate to. The 2nd optional argument is a
-             mapping of keywords to strings, if any arguments are
-             needed to navigate there.
-             Example: (nav/go-to :named-organization-page {:org-name
-             'My org'}) See also katello.locators/page-tree for all
-             the places that can be navigated to."
-        :arglists '([location-kw & [argmap]])}
-   go-to (nav/nav-fn #'page-tree))
- )

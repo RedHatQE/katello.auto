@@ -1,16 +1,15 @@
 (ns katello.sync-management
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            (katello [navigation :as nav]
-                     [locators :as locators] 
+            (katello [navigation :as nav] 
                      [notifications :as notification] 
-                     [ui-tasks :refer [navigate fill-ajax-form in-place-edit]]))
+                     [ui-common :as ui]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
 ;; Locators
 
-(swap! locators/uimap merge
+(swap! ui/uimap merge
   {:apply-sync-schedule        "apply_button"
    :new-sync-plan              "new"
    :sync-plan-name-text        "sync_plan[name]"
