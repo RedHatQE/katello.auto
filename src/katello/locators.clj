@@ -143,16 +143,6 @@
   String
   (sel/sel-locator [x] x))
 
-(defn promotion-env-breadcrumb
-  "Locates a link in the environment breadcrumb UI widget. If there
-  are multiple environment paths, and you wish to select Library,
-  'next' is required."
-  [name & [next]]
-  (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
-    (format 
-     (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
-     name next)))
-
 (defn inactive-edit-field
   "Takes a locator for an active in-place edit field, returns the
   inactive version"
