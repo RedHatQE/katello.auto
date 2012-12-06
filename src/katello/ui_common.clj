@@ -270,35 +270,7 @@
         (browser click :search-submit)))
   (notification/verify-no-error {:timeout-ms 2000}))
 
-(defn create-activation-key
-  "Creates an activation key with the given properties. Description
-  and system-template are optional."
-  [{:keys [name description environment system-template] :as m}]
-  (nav/go-to :new-activation-key-page)
-  (browser click (environment-link environment))
-  (sel/fill-ajax-form {:activation-key-name-text name
-                       :activation-key-description-text description
-                       :activation-key-template-select system-template}
-                      :save-activation-key)
-  (notification/check-for-success))
 
-(defn delete-activation-key
-  "Deletes the given activation key."
-  [name]
-  (nav/go-to :named-activation-key-page {:activation-key-name name})
-  (browser click :remove-activation-key)
-  (browser click :confirmation-yes)
-  (notification/check-for-success))
-
-(defn add-subscriptions-to-activation-key
-  "Add subscriptions to activation key."
-  [name subscriptions]
-  (nav/go-to :named-activation-key-page {:activation-key-name name})
-  (browser click :available-subscriptions)
-  (doseq [subscription subscriptions]
-    (browser click (subscription-checkbox subscription)))
-  (browser click :add-subscriptions-to-activation-key)
-  (notification/check-for-success))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
@@ -307,28 +279,6 @@
   (doseq [repo repos]
     (browser check (repo-enable-checkbox repo))))
 
-(defn create-gpg-key [name & [{:keys [filename contents]}]]
-  (assert (not (and filename contents))
-          "Must specify one one of :filename or :contents.")
-  (assert (string? name))
-  (nav/go-to :new-gpg-key-page)
-  (if filename
-    (sel/fill-ajax-form {:gpg-key-name-text name
-                         :gpg-key-file-upload-text filename}
-                        :gpg-key-upload-button)
-    (sel/fill-ajax-form {:gpg-key-name-text name
-                         :gpg-key-content-text contents}
-                        :gpg-keys-save))
-  (notification/check-for-success))
-
-
-(defn remove-gpg-key 
-  "Deletes existing GPG keys"
-  [gpg-key-name]
-  (nav/go-to :named-gpgkey-page {:gpg-key-name gpg-key-name})
-  (browser click :remove-gpg-key )
-  (browser click :confirmation-yes)
-  (notification/check-for-success))
 
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"

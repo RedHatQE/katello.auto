@@ -24,7 +24,11 @@
    :template-eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    :save-template                    "save_template"}) ;;when editing
 
-
+(nav/graft-page-tree
+ :content-tab
+ [:system-templates-page [] (sel/browser clickAndWait :system-templates)
+  [:named-system-template-page [template-name] (sel/browser click (ui/slide-link template-name))]
+  [:new-system-template-page [] (sel/browser click :new-template)]])
 
 ;; Tasks
 

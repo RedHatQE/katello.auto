@@ -5,7 +5,6 @@
             (katello [navigation :as nav]
                      [conf :refer [config]]
                      [tasks :refer [tmpfile unique-format]]
-                     [ui-tasks :refer [navigate in-place-edit fill-ajax-form]]
                      [notifications :as notification]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))

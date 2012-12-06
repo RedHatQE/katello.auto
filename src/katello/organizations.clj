@@ -24,6 +24,18 @@
         :org-initial-env-name-text "environment[name]"
         :org-initial-env-desc-text "environment[description]"})
 
+(nav/graft-page-tree
+ :administer-tab
+ [:manage-organizations-page [] (sel/browser clickAndWait :manage-organizations)
+  [:new-organization-page [] (sel/browser click :new-organization)]
+  [:named-organization-page [org-name] (nav/choose-left-pane  org-name)]])
+
+(nav/graft-page-tree
+ :top-level
+ [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
+  [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
+   [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]])
+
 ;; Tasks
 
 (defn create

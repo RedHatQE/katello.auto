@@ -28,6 +28,18 @@
   schedule               "//div[normalize-space(.)='%s']"
   })
 
+;; Nav
+
+(nav/graft-page-tree
+ :content-tab
+ [:sync-management-page [] (browser mouseOver :sync-management)
+  [:sync-status-page [] (browser clickAndWait :sync-status)]
+  [:sync-plans-page [] (browser clickAndWait :sync-plans)
+   [:named-sync-plan-page [sync-plan-name]
+    (nav/choose-left-pane sync-plan-name)]
+   [:new-sync-plan-page [] (browser click :new-sync-plan)]]
+  [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]])
+
 ;; Tasks
 
 (def plan-dateformat (SimpleDateFormat. "MM/dd/yyyy"))

@@ -51,9 +51,10 @@
 
 
 ;;
-;;Navigation tree - shows all the navigation paths through the ui.
-;;this data is used by the katello.tasks/navigate function to get to
-;;the given page.
+;; Navigation tree - shows all the navigation paths through the ui.
+;; this data is used by the katello.tasks/navigate function to get to
+;; the given page.
+
 (defonce
   ^{:doc "The navigation layout of the UI. Each item in the tree is
   a new page or tab, that you can drill down into from its parent
@@ -68,69 +69,10 @@
     [:top-level [] (if (or (not (sel/browser isElementPresent :log-out))
                            (sel/browser isElementPresent :confirmation-dialog))
                      (sel/browser open (@conf/config :server-url)))
-   
      [:content-tab [] (sel/browser mouseOver :content)
       [:subscriptions-tab [] (sel/browser mouseOver :subscriptions)
-       [:redhat-subscriptions-page [] (sel/browser clickAndWait :red-hat-subscriptions)]
-       [:activation-keys-page [] (sel/browser clickAndWait :activation-keys)
-        [:named-activation-key-page [activation-key-name]
-         (choose-left-pane  activation-key-name)]
-        [:new-activation-key-page [] (sel/browser click :new-activation-key)]]]
-      [:repositories-tab [] (sel/browser mouseOver :repositories)
-       [:custom-content-repositories-page [] (sel/browser clickAndWait :custom-content-repositories)
-        [:new-provider-page [] (sel/browser click :new-provider)]
-        [:named-provider-page [provider-name] (choose-left-pane  provider-name)
-         [:provider-products-repos-page [] (sel/->browser (click :products-and-repositories)
-                                                          (sleep 2000))
-          [:named-product-page [product-name] (sel/browser click (ui/editable product-name))]
-          [:named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]]
-         [:provider-details-page [] (sel/browser click :details)]
-         [:provider-subscriptions-page [] (sel/browser click :subscriptions)]]]
-       [:redhat-repositories-page [] (sel/browser clickAndWait :red-hat-repositories)]
-       [:gpg-keys-page [] (sel/browser clickAndWait :gpg-keys)
-        [:new-gpg-key-page [] (sel/browser click :new-gpg-key)]
-        [:named-gpgkey-page [gpg-key-name] (choose-left-pane  gpg-key-name)]]
-       [:package-filters-page [] (sel/browser clickAndWait :package-filters)
-        [:new-package-filter-page [] (sel/browser click :create-new-package-filter)]
-        [:named-package-filter-page [package-filter-name] (choose-left-pane  package-filter-name)]]]
-      [:sync-management-page [] (sel/browser mouseOver :sync-management)
-       [:sync-status-page [] (sel/browser clickAndWait :sync-status)]
-       [:sync-plans-page [] (sel/browser clickAndWait :sync-plans)
-        [:named-sync-plan-page [sync-plan-name]
-         (choose-left-pane  sync-plan-name)]
-        [:new-sync-plan-page [] (sel/browser click :new-sync-plan)]]
-       [:sync-schedule-page [] (sel/browser clickAndWait :sync-schedule)]]
-      [:changeset-promotion-history-page [] (sel/browser clickAndWait :changeset-history)]
-      [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
-       [:changesets-page [] (sel/browser clickAndWait :changesets)
-        [:named-environment-changesets-page [env-name next-env-name]
-         (select-environment-widget env-name {:next-env-name next-env-name :wait true})
-         [:named-changeset-page [changeset-name changeset-type]
-          (do
-            (if (= changeset-type "deletion") (sel/browser click :select-deletion-changeset))
-            (sel/browser click (ui/changeset changeset-name)))]]]]
-      [:content-search-page [] (sel/browser clickAndWait :content-search)]
-      [:system-templates-page [] (sel/browser clickAndWait :system-templates)
-       [:named-system-template-page [template-name] (sel/browser click (ui/slide-link template-name))]
-       [:new-system-template-page [] (sel/browser click :new-template)]]]
-     
-     [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
-      [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
-       [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]]
-     [:administer-tab [] (sel/browser mouseOver :administer)
-      [:users-page [] (sel/browser clickAndWait :users)
-       [:named-user-page [username] (choose-left-pane ui/user username)
-        [:user-environments-page [] (sel/browser click :environments-subsubtab)]
-        [:user-roles-permissions-page [] (sel/browser click :roles-subsubtab)]]]
-      [:roles-page [] (sel/browser clickAndWait :roles)
-       [:named-role-page [role-name] (choose-left-pane  role-name)
-        [:named-role-users-page [] (sel/browser click :role-users)]
-        [:named-role-permissions-page [] (sel/browser click :role-permissions)]]]
-      [:manage-organizations-page [] (sel/browser clickAndWait :manage-organizations)
-       [:new-organization-page [] (sel/browser click :new-organization)]
-       [:named-organization-page [org-name] (choose-left-pane  org-name) 
-        [:new-environment-page [] (sel/browser click :new-environment)]
-        [:named-environment-page [env-name] (sel/browser click (ui/environment-link env-name))]]]]])))
+       [:redhat-subscriptions-page [] (sel/browser clickAndWait :red-hat-subscriptions)]]]
+     [:administer-tab [] (sel/browser mouseOver :administer)]])))
 
 (def ^{:doc "Navigates to a named location in the UI. The first
              argument should be a keyword for the place in the page
@@ -142,3 +84,8 @@
              be navigated to."
        :arglists '([location-kw & [argmap]])}
   go-to (nav/nav-fn page-tree))
+
+(defmacro graft-page-tree
+  "Convenience for other namespaces to graft their subnavigation onto the main nav tree."
+  [parent-graft-point branch]
+  `(swap! page-tree nav/graft ~parent-graft-point (nav/nav-tree ~branch)))

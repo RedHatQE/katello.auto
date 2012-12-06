@@ -33,6 +33,14 @@
   plus-icon                       "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
+(nav/graft-page-tree
+ :administer-tab
+ [:roles-page [] (sel/browser clickAndWait :roles)
+  [:named-role-page [role-name] (nav/choose-left-pane  role-name)
+   [:named-role-users-page [] (sel/browser click :role-users)]
+   [:named-role-permissions-page [] (sel/browser click :role-permissions)]]])
+
+
 (def user-role-toggler (ui/toggler ui/add-remove role-action))
 
 ;; Tasks

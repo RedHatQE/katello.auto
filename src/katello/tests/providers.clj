@@ -10,7 +10,8 @@
                      [organizations   :as organization]
                      [sync-management :as sync] 
                      [providers       :as provider]
-                     [ui-tasks        :refer :all]
+                     [gpg-keys        :as gpg-key]
+                     [ui-common       :as ui]
                      [validation      :refer :all]
                      [conf            :refer [config]])))
 
@@ -76,7 +77,7 @@
   (concat
    [[{:name nil
       :description "blah"
-      :url "http://sdf.com"} (errtype :katello.notifications/name-cant-be-blank)]
+      :url "http://sdf.com"} (ui/errtype :katello.notifications/name-cant-be-blank)]
 
     [{:name (uniqueify "mytestcp4")
       :description nil
@@ -90,12 +91,12 @@
    (for [trailing-ws-str trailing-whitespace-strings]
      [{:name trailing-ws-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.notifications/name-no-leading-trailing-whitespace)])
+       :url "http://sdf.com"} (ui/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.notifications/name-must-not-contain-characters)])))
+       :url "http://sdf.com"} (ui/errtype :katello.notifications/name-must-not-contain-characters)])))
 
 ;; Tests
 
@@ -106,19 +107,19 @@
     :blockers api/katello-only
     
     (with-unique [test-key "test-key-text"]
-      (create-gpg-key test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
+      (gpg-key/create test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
     (with-unique [test-key "test-key"]
-      (create-gpg-key test-key {:filename tmp-gpg-keyfile}))
+      (gpg-key/create test-key {:filename tmp-gpg-keyfile}))
 
     
     (deftest "Delete existing GPG key" 
       (with-unique [test-key "test-key"]
-        (create-gpg-key test-key {:filename tmp-gpg-keyfile})
-        (remove-gpg-key test-key)))))
+        (gpg-key/create test-key {:filename tmp-gpg-keyfile})
+        (gpg-key/remove test-key)))))
 
 
 (defgroup package-filter-tests

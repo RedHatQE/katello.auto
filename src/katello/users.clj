@@ -36,6 +36,12 @@
         :all-types                   "all_types"
         :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
+(nav/graft-page-tree
+ :administer-tab
+ [:users-page [] (browser clickAndWait :users)
+  [:named-user-page [username] (nav/choose-left-pane ui/user username)
+   [:user-environments-page [] (browser click :environments-subsubtab)]
+   [:user-roles-permissions-page [] (browser click :roles-subsubtab)]]])
 
 ;; Tasks
 

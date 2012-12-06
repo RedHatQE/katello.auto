@@ -60,6 +60,12 @@
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
   })
 
+;; Nav
+
+(nav/graft-page-tree
+ :content-tab
+ [:content-search-page [] (sel/browser clickAndWait :content-search)])
+
 ;; Tasks
 
 (defn get-all-of-locator [locatorfn] 

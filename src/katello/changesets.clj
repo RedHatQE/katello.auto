@@ -8,10 +8,6 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]))
 
-;;
-;; Changesets
-;;
-
 ;; Locators
 
 (sel/template-fns
@@ -45,6 +41,19 @@
         :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
         :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
         :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
+
+(nav/graft-page-tree
+ :content-tab
+ [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
+  [:changesets-page [] (sel/browser clickAndWait :changesets)
+   [:named-environment-changesets-page [env-name next-env-name]
+    (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
+    [:named-changeset-page [changeset-name changeset-type]
+     (do
+       (when (= changeset-type "deletion")
+         (sel/browser click :select-deletion-changeset))
+       (sel/browser click (ui/changeset changeset-name)))]]]
+  [:changeset-promotion-history-page [] (sel/browser clickAndWait :changeset-history)]])
 
 ;; Tasks
 

@@ -5,66 +5,70 @@
                      [notifications :as notification] 
                      [ui-common :as ui])))
 
-;;
-;; Providers
-;;
-
 ;; Locators
 
 (swap! ui/uimap merge
-  {:new-provider                        "new"
-   :provider-name-text                  "provider[name]"
-   :provider-description-text           "provider[description]"
-   :provider-repository-url-text        "provider[repository_url]"
-   :provider-cert-text                  (ui/textbox "provider[certificate_attributes][contents]")
-   :provider-create-save                "provider_submit"
-   :remove-provider                     (ui/link "Remove Provider")
-   :subscriptions                       (ui/link "Subscriptions")
-   :import-manifest                     "new"
-   :redhat-provider-repository-url-text "provider[repository_url]"
-   :choose-file                         "provider_contents"
-   :upload                              "upload_form_button"
-   :force-import-checkbox               "force_import"
-   :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-                
-   ;;add product
-   :add-product                         (ui/button-div "Add Product")
-   :create-product                      "//input[@value='Create']"
-   :product-name-text                   "//*[@name='product[name]']"
-   :product-label-text                  "//*[@name='product[label]']"
-   :product-description-text            "//*[@name='product[description]']"
-   :remove-product                      (ui/link "Remove Product")
-   ;;add repo
-   :repo-name-text                      "repo[name]"
-   :repo-label-text                     "repo[label]"
-   :repo-url-text                       "repo[feed]" 
-   :save-repository                     "//input[@value='Create']"
-   :remove-repository                   (ui/link "Remove Repository")
-   :repo-gpg-select                     "//select[@id='repo_gpg_key']"
+       {:new-provider                        "new"
+        :provider-name-text                  "provider[name]"
+        :provider-description-text           "provider[description]"
+        :provider-repository-url-text        "provider[repository_url]"
+        :provider-cert-text                  (ui/textbox "provider[certificate_attributes][contents]")
+        :provider-create-save                "provider_submit"
+        :remove-provider                     (ui/link "Remove Provider")
+        :subscriptions                       (ui/link "Subscriptions")
+        :import-manifest                     "new"
+        :redhat-provider-repository-url-text "provider[repository_url]"
+        :choose-file                         "provider_contents"
+        :upload                              "upload_form_button"
+        :force-import-checkbox               "force_import"
+        :products-and-repositories           "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
+        
+        ;;add product
+        :add-product                         (ui/button-div "Add Product")
+        :create-product                      "//input[@value='Create']"
+        :product-name-text                   "//*[@name='product[name]']"
+        :product-label-text                  "//*[@name='product[label]']"
+        :product-description-text            "//*[@name='product[description]']"
+        :remove-product                      (ui/link "Remove Product")
+        ;;add repo
+        :repo-name-text                      "repo[name]"
+        :repo-label-text                     "repo[label]"
+        :repo-url-text                       "repo[feed]" 
+        :save-repository                     "//input[@value='Create']"
+        :remove-repository                   (ui/link "Remove Repository")
+        :repo-gpg-select                     "//select[@id='repo_gpg_key']"
 
-   ;;redhat page
-   :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
+        ;;redhat page
+        :subscriptions-items                 "//table[@id='redhatSubscriptionTable']/tbody/tr"
 
-   ;;gpg keys
-   :gpg-key-name-text                   "gpg_key_name"
-   :gpg-key-file-upload-text            "gpg_key_content_upload"
-   :gpg-key-upload-button               "upload_gpg_key"
-   :gpg-key-content-text                "gpg_key_content"
-   :gpg-keys                            "//a[.='GPG Keys']"
-   :gpg-keys-save                       "save_gpg_key"
-   :new-gpg-key                         "new"
-   :remove-gpg-key                      (ui/link "Remove GPG Key")
-
-
-   ;;Package Filters
-   :create-new-package-filter                (ui/link "+ New Filter")
-   :new-package-filter-name                  "filter[name]"
-   :new-package-filter-description           "filter[description]"
-   :save-new-package-filter                  "filter_submit"
-   :remove-package-filter-key                (ui/link "Remove Filter")})
+        ;;Package Filters
+        :create-new-package-filter                (ui/link "+ New Filter")
+        :new-package-filter-name                  "filter[name]"
+        :new-package-filter-description           "filter[description]"
+        :save-new-package-filter                  "filter_submit"
+        :remove-package-filter-key                (ui/link "Remove Filter")})
 
 (sel/template-fns
  {add-repository "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
+
+(nav/graft-page-tree
+ :content-tab
+ [:repositories-tab [] (sel/browser mouseOver :repositories)
+  [:custom-content-repositories-page [] (sel/browser clickAndWait :custom-content-repositories)
+   [:new-provider-page [] (sel/browser click :new-provider)]
+   [:named-provider-page [provider-name] (nav/choose-left-pane  provider-name)
+    [:provider-products-repos-page [] (sel/->browser (click :products-and-repositories)
+                                                     (sleep 2000))
+     [:named-product-page [product-name] (sel/browser click (ui/editable product-name))]
+     [:named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]]
+    [:provider-details-page [] (sel/browser click :details)]
+    [:provider-subscriptions-page [] (sel/browser click :subscriptions)]]]
+  [:redhat-repositories-page [] (sel/browser clickAndWait :red-hat-repositories)]  
+  [:package-filters-page [] (sel/browser clickAndWait :package-filters)
+   [:new-package-filter-page [] (sel/browser click :create-new-package-filter)]
+   [:named-package-filter-page [package-filter-name] (nav/choose-left-pane  package-filter-name)]]])
+
+;; Tasks
 
 (defn create
   "Creates a custom provider with the given name and description."
@@ -81,7 +85,7 @@
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
   (fill-ajax-form {:product-name-text name
-                  :product-description-text description}
+                   :product-description-text description}
                   :create-product)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-create)}))
 
@@ -89,7 +93,7 @@
   "Deletes a product from the given provider."
   [{:keys [name provider-name]}]
   (nav/go-to :named-product-page {:provider-name provider-name
-                                 :product-name name})
+                                  :product-name name})
   (browser click :remove-product)
   (browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
@@ -121,8 +125,8 @@
   "Deletes a repository from the given provider and product."
   [{:keys [name provider-name product-name]}]
   (nav/go-to :named-repo-page {:provider-name provider-name
-                              :product-name product-name
-                              :repo-name name})
+                               :product-name product-name
+                               :repo-name name})
   (browser click :remove-repository)
   (browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-destroy)}))

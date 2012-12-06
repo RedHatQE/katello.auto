@@ -80,22 +80,23 @@
 
 ;; Nav
 
-(swap! nav/page-tree ui.navigate/graft :top-level
-       (ui.navigate/nav-tree [:systems-tab [] (sel/browser mouseOver :systems)
-                              [:systems-all-page [] (sel/browser clickAndWait :all)
-                               [:new-system-page [] (sel/browser click :new-system)]
-                               [:system-subscriptions-page [system-name] (nav/choose-left-pane system-name)
-                                [:named-systems-page [] (sel/browser click :details)]
-                                [:named-system-page-content [] (sel/browser click :system-content-select)]]]
-                              [:system-groups-page [] (sel/browser clickAndWait :system-groups)
-                               [:new-system-groups-page [] (sel/browser click :new-system-groups)]
-                               [:named-system-group-page [system-group-name] (nav/choose-left-pane system-group-name)
-                                [:system-group-systems-page [] (sel/browser click :systems-sg)]
-                                [:system-group-details-page [] (sel/browser click :details)]]]
-                              [:systems-by-environment-page [] (sel/browser clickAndWait :by-environments)
-                               [:systems-environment-page [env-name] (nav/select-environment-widget env-name)
-                                [:named-system-environment-page [system-name]
-                                 (nav/choose-left-pane system-name)]]]]))
+(nav/graft-page-tree
+ :top-level
+ [:systems-tab [] (sel/browser mouseOver :systems)
+  [:systems-all-page [] (sel/browser clickAndWait :all)
+   [:new-system-page [] (sel/browser click :new-system)]
+   [:system-subscriptions-page [system-name] (nav/choose-left-pane system-name)
+    [:named-systems-page [] (sel/browser click :details)]
+    [:named-system-page-content [] (sel/browser click :system-content-select)]]]
+  [:system-groups-page [] (sel/browser clickAndWait :system-groups)
+   [:new-system-groups-page [] (sel/browser click :new-system-groups)]
+   [:named-system-group-page [system-group-name] (nav/choose-left-pane system-group-name)
+    [:system-group-systems-page [] (sel/browser click :systems-sg)]
+    [:system-group-details-page [] (sel/browser click :details)]]]
+  [:systems-by-environment-page [] (sel/browser clickAndWait :by-environments)
+   [:systems-environment-page [env-name] (nav/select-environment-widget env-name)
+    [:named-system-environment-page [system-name]
+     (nav/choose-left-pane system-name)]]]])
 
 ;; Tasks
 

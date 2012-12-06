@@ -22,6 +22,9 @@
         :remove-environment        (ui/link "Remove Environment")
         :env-prior-select-edit     "kt_environment[prior]" })
 
+(nav/graft :named-organization-page [:new-environment-page [] (browser click :new-environment)])
+(nav/graft :named-organization-page [:named-environment-page [env-name] (browser click (ui/environment-link env-name))])
+
 ;; Tasks
 
 (defn create

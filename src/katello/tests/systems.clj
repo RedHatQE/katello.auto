@@ -8,9 +8,11 @@
                      [providers :as provider]
                      [changesets :refer [sync-and-promote]]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all] 
+                     [ui-common :as ui]
+                     [activation-keys :as ak]
                      [systems :as system]
                      [fake-content  :as fake]
+                     [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-password* config *environments*]])
             [katello.client.provision :as provision]
             (test.tree [script :refer :all] 
@@ -106,7 +108,7 @@
     (org/switch)
     (api/ensure-env-exist target-env {:prior library})
     (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
-      (create-gpg-key testkey {:contents mykey}))
+      (gpg-key/create testkey {:contents mykey}))
     (provider/create {:name provider-name})
     (provider/add-product {:provider-name provider-name
                            :name product-name})
@@ -133,7 +135,7 @@
     (deftest "Copying with similar sg-name not allowed"
       (with-unique [group-name "fed1"]
         (system/create-group group-name {:description "rh system-group"})
-        (expecting-error (errtype :katello.notifications/sg-name-taken-error)
+        (expecting-error (ui/errtype :katello.notifications/sg-name-taken-error)
           (system/copy-group group-name group-name {:description "copied system group"}))))
 
     (deftest "Edit a system group"
@@ -174,11 +176,11 @@
                                      group-name {:new-limit limit}))))
           
           [(with-meta
-             ["-1"   (errtype :katello.notifications/max-systems-must-be-positive)]
+             ["-1"   (ui/errtype :katello.notifications/max-systems-must-be-positive)]
              {:blockers (open-bz-bugs "848564")})
-           ["-100" (errtype :katello.notifications/max-systems-must-be-positive)]
-           [""     (errtype :katello.notifications/max-systems-must-be-positive)]
-           ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
+           ["-100" (ui/errtype :katello.notifications/max-systems-must-be-positive)]
+           [""     (ui/errtype :katello.notifications/max-systems-must-be-positive)]
+           ["0"    (ui/errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
@@ -298,7 +300,7 @@
   (deftest "Create an activation key" 
     :blockers (open-bz-bugs "750354")
 
-    (create-activation-key {:name (uniqueify "auto-key")
+    (ak/create {:name (uniqueify "auto-key")
                             :description "my description"
                             :environment test-environment})
 
@@ -306,23 +308,23 @@
       :data-driven true
       (fn [name]
         (with-unique [ak-name name]
-          (create-activation-key {:name ak-name
+          (ak/create {:name ak-name
                                   :description "my description"
                                   :environment test-environment} )))
       val/i8n-chars)
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]
-        (create-activation-key {:name ak-name
+        (ak/create {:name ak-name
                                 :description "my description"
                                 :environment test-environment} )
-        (delete-activation-key ak-name)))
+        (ak/delete ak-name)))
 
     
     (deftest "activation-key-dupe-disallowed"
       (with-unique [ak-name "auto-key"]
         (val/expecting-error-2nd-try val/duplicate-disallowed
-          (create-activation-key
+          (ak/create
            {:name ak-name
             :description "my description"
             :environment test-environment}))))
@@ -334,10 +336,10 @@
           (let [envz (take 3 (unique-names "env"))]
             (fake/setup-org test-org1 envz)
             (org/switch test-org1)
-            (create-activation-key {:name ak-name
+            (ak/create {:name ak-name
                                     :description "my act keys"
                                     :environment (first envz)})
-            (add-subscriptions-to-activation-key ak-name fake/subscription-names)
+            (ak/add-subscriptions ak-name fake/subscription-names)
             (assert/is (some #{(first fake/subscription-names)} 
                                (system/get-subscriptions-in-activation-key ak-name))))))))
  
