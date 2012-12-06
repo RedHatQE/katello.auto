@@ -42,15 +42,7 @@
   See also katello.locators/page-tree for all the places that can be
   navigated to."
        :arglists '([location-kw & [argmap]])}
-  navigate (nav/nav-fn #'locators/page-tree))
-
-(defn fill-ajax-form
-  "Fills in a web form and clicks the submit button. Only waits for
-   ajax calls to complete. Items should be a map, where the keys are
-   locators for form elements, and values are the values to fill in.
-   Submit should be a locator for the form submit button."
-  [items submit]
-  (fill-form items submit (constantly nil)))
+  navigate (nav/nav-fn locators/page-tree))
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing

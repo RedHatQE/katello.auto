@@ -4,7 +4,7 @@
             [clojure.zip :as zip]
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
-            [ui.navigate :refer [nav-tree page-zip]]
+            [ui.navigate :as nav]
             [clojure.string :refer [capitalize ]])
   (:import [com.redhat.qe.auto.selenium Element]))
 
@@ -51,11 +51,7 @@
 ;;
 
 (def common
-  {:notification            "//div[contains(@class,'jnotify-notification')]"
-   :notification-container  "//div[contains(@class,'jnotify-container')]"
-   :error-message           "//div[contains(@class,'jnotify-notification-error')]"
-   :success-message         "//div[contains(@class,'jnotify-notification-message')]"
-   :spinner                 "//img[contains(@src,'spinner.gif')]"
+  {:spinner                 "//img[contains(@src,'spinner.gif')]"
    :save-inplace-edit       "//button[.='Save']"
    :save-inplace-edit-inputbutton       "//input[@value='Save']"
    :confirmation-dialog     "//div[contains(@class, 'confirmation')]"
@@ -234,8 +230,8 @@
   provider). Finally some code to navigate to the location from its
   parent location. See also katello.tasks/navigate."}
   page-tree
-  (page-zip
-   (nav-tree
+  (atom
+   (nav/nav-tree
     [:top-level [] (if (or (not (sel/browser isElementPresent :log-out))
                            (sel/browser isElementPresent :confirmation-dialog))
                      (sel/browser open (@config :server-url)))
@@ -252,7 +248,7 @@
         [:new-provider-page [] (sel/browser click :new-provider)]
         [:named-provider-page [provider-name] (choose-left-pane left-pane-item provider-name)
          [:provider-products-repos-page [] (sel/->browser (click :products-and-repositories)
-                                                      (sleep 2000))
+                                                          (sleep 2000))
           [:named-product-page [product-name] (sel/browser click (editable product-name))]
           [:named-repo-page [product-name repo-name] (sel/browser click (editable repo-name))]]
          [:provider-details-page [] (sel/browser click :details)]
@@ -275,7 +271,7 @@
       [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
        [:changesets-page [] (sel/browser clickAndWait :changesets)
         [:named-environment-changesets-page [env-name next-env-name]
-           (select-environment-widget env-name {:next-env-name next-env-name :wait true})
+         (select-environment-widget env-name {:next-env-name next-env-name :wait true})
          [:named-changeset-page [changeset-name changeset-type]
           (do
             (if (= changeset-type "deletion") (sel/browser click :select-deletion-changeset))
@@ -284,21 +280,7 @@
       [:system-templates-page [] (sel/browser clickAndWait :system-templates)
        [:named-system-template-page [template-name] (sel/browser click (slide-link template-name))]
        [:new-system-template-page [] (sel/browser click :new-template)]]]
-     [:systems-tab [] (sel/browser mouseOver :systems)
-      [:systems-all-page [] (sel/browser clickAndWait :all)
-       [:new-system-page [] (sel/browser click :new-system)]
-       [:system-subscriptions-page [system-name] (choose-left-pane left-pane-item system-name)
-        [:named-systems-page [] (sel/browser click :details)]
-        [:named-system-page-content [] (sel/browser click :system-content-select)]]]
-     [:system-groups-page [] (sel/browser clickAndWait :system-groups)
-       [:new-system-groups-page [] (sel/browser click :new-system-groups)]
-      [:named-system-group-page [system-group-name] (choose-left-pane left-pane-item system-group-name)
-        [:system-group-systems-page [] (sel/browser click :systems-sg)]
-        [:system-group-details-page [] (sel/browser click :details)]]]
-      [:systems-by-environment-page [] (sel/browser clickAndWait :by-environments)
-       [:systems-environment-page [env-name] (select-environment-widget env-name)
-        [:named-system-environment-page [system-name]
-         (choose-left-pane left-pane-item system-name)]]]]
+     
      [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
       [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
        [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]]
@@ -327,3 +309,4 @@
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs
   '(:redhat-repositories-page))
+
