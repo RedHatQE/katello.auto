@@ -1,8 +1,9 @@
 (ns katello.organizations
-  (:require [katello.locators :as locators]
-            [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            (katello [ui-tasks :refer :all] 
+            (katello [navigation :as nav]
+                     [locators :as locators]
+                     [ui-tasks :refer :all] 
                      [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -29,7 +30,7 @@
 (defn create
   "Creates an organization with the given name and optional description."
   [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
-  (navigate (if go-through-org-switcher :new-organization-page-via-org-switcher :new-organization-page))
+  (nav/go-to (if go-through-org-switcher :new-organization-page-via-org-switcher :new-organization-page))
   (fill-ajax-form {:org-name-text name
                    :org-description-text description
                    :org-initial-env-name-text initial-env-name
@@ -40,7 +41,7 @@
 (defn delete
   "Deletes the named organization."
   [org-name]
-  (navigate :named-organization-page {:org-name org-name})
+  (nav/go-to :named-organization-page {:org-name org-name})
   (browser click :remove-organization)
   (browser click :confirmation-yes)
   (notification/check-for-success
@@ -52,7 +53,7 @@
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
   [org-name & {:keys [description]}]
-  (navigate :named-organization-page {:org-name org-name})
+  (nav/go-to :named-organization-page {:org-name org-name})
   (in-place-edit {:org-description-text description}))
 
 (defn current

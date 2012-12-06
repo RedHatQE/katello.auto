@@ -1,5 +1,6 @@
 (ns katello.system-templates
-  (:require (katello [ui-tasks :refer [navigate]]
+  (:require (katello [navigation :as nav]
+                     [ui-tasks :refer [navigate]]
                      [notifications :as notification]
                      [locators :as locators]
                      [tasks :refer [capitalize-all]])
@@ -25,7 +26,7 @@
   "Creates a system template with the given name and optional
   description."
   [{:keys [name description]}]
-  (navigate :new-system-template-page)
+  (nav/go-to :new-system-template-page)
   (sel/fill-ajax-form {:template-name-text name
                    :template-description-text description}
                   :save-new-template)
@@ -38,7 +39,7 @@
                           {:product 'prod6'
                            :repositories ['x86_64']}]"
   [template content]
-  (navigate :named-system-template-page {:template-name template})
+  (nav/go-to :named-system-template-page {:template-name template})
   (let [add-item (fn [item] (locators/toggle locators/template-toggler item true))]
     (doseq [group content]
       (let [category-keyword (-> group (dissoc :product) keys first)

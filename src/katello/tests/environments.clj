@@ -1,15 +1,16 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require (katello  [api-tasks :as api] 
-                      [organizations :as organization] 
-                      [ui-tasks :refer [navigate errtype]] 
-                      [sync-management :as sync] 
-                      [tasks :refer :all] 
-                      [environments :as environment] 
-                      [validation :refer :all] 
-                      [client :as client]
-                      [systems :refer :all]
-                      [conf :as conf]) 
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api] 
+                     [organizations :as organization] 
+                     [ui-tasks :refer [navigate errtype]] 
+                     [sync-management :as sync] 
+                     [tasks :refer :all] 
+                     [environments :as environment] 
+                     [validation :refer :all] 
+                     [client :as client]
+                     [systems :refer :all]
+                     [conf :as conf]) 
             [katello.tests.providers :refer [with-n-new-orgs]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
@@ -42,7 +43,7 @@
     (environment/create env-name {:org-name org}))
   (environment/delete env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
-    (navigate :named-environment-page {:env-name env-name
+    (nav/go-to :named-environment-page {:env-name env-name
                                        :org-name org})))
 
 (defn verify-create-same-env-in-multiple-orgs
@@ -172,7 +173,7 @@
                                       :description "try to rename me!"})
         (environment/edit env-name {:org-name @test-org-name
                                     :new-name new-name})
-        (navigate :named-environment-page
+        (nav/go-to :named-environment-page
                   {:org-name @test-org-name
                    :env-name new-name})))
 

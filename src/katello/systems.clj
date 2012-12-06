@@ -3,7 +3,8 @@
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
             ui.navigate
-            (katello [locators :as locators] 
+            (katello [navigation :as nav]
+                     [locators :as locators] 
                      [notifications :as notification]
                      [ui-tasks :as ui])))
 
@@ -84,18 +85,18 @@
        (ui.navigate/nav-tree [:systems-tab [] (sel/browser mouseOver :systems)
                               [:systems-all-page [] (sel/browser clickAndWait :all)
                                [:new-system-page [] (sel/browser click :new-system)]
-                               [:system-subscriptions-page [system-name] (locators/choose-left-pane locators/left-pane-item system-name)
+                               [:system-subscriptions-page [system-name] (nav/choose-left-pane system-name)
                                 [:named-systems-page [] (sel/browser click :details)]
                                 [:named-system-page-content [] (sel/browser click :system-content-select)]]]
                               [:system-groups-page [] (sel/browser clickAndWait :system-groups)
                                [:new-system-groups-page [] (sel/browser click :new-system-groups)]
-                               [:named-system-group-page [system-group-name] (locators/choose-left-pane locators/left-pane-item system-group-name)
+                               [:named-system-group-page [system-group-name] (nav/choose-left-pane system-group-name)
                                 [:system-group-systems-page [] (sel/browser click :systems-sg)]
                                 [:system-group-details-page [] (sel/browser click :details)]]]
                               [:systems-by-environment-page [] (sel/browser clickAndWait :by-environments)
                                [:systems-environment-page [env-name] (locators/select-environment-widget env-name)
                                 [:named-system-environment-page [system-name]
-                                 (locators/choose-left-pane locators/left-pane-item system-name)]]]]))
+                                 (nav/choose-left-pane locators/left-pane-item system-name)]]]]))
 
 ;; Tasks
 

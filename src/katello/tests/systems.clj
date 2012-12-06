@@ -1,6 +1,7 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:require (katello [api-tasks :as api]
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api]
                      [validation :as val]
                      [organizations :as org]
                      [client :as client]
@@ -36,11 +37,11 @@
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
     (system/edit (:name system) {:new-name new-name})
-    (navigate :named-systems-page {:system-name new-name})))
+    (nav/go-to :named-systems-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
    [system]
-  (navigate :named-system-environment-page
+  (nav/go-to :named-system-environment-page
             {:env-name test-environment
              :system-name (:name system)})
   (assert/is (= (:environment_id system)

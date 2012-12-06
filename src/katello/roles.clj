@@ -1,6 +1,7 @@
 (ns katello.roles
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            (katello [locators :as locators] 
+            (katello [navigation :as nav]
+                     [locators :as locators] 
                      [notifications :as notification] 
                      [ui-tasks :refer [fill-ajax-form navigate]]))
   )
@@ -41,7 +42,7 @@
 (defn create
   "Creates a role with the given name and optional description."
   [name & [{:keys [description]}]]
-  (navigate :roles-page)
+  (nav/go-to :roles-page)
   (sel/browser click :new-role)
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
@@ -52,7 +53,7 @@
   "Assigns the given user to the given roles. Roles should be a list
   of roles to assign."
   [{:keys [user roles]}]
-  (navigate :user-roles-permissions-page {:username user})
+  (nav/go-to :user-roles-permissions-page {:username user})
   (doseq [role roles]
     (sel/browser click (plus-icon role)))
   (sel/browser click :save-roles)
@@ -69,7 +70,7 @@
               :remove-permissions ['existingPerm1' 'existingPerm2']
               :users ['joe' 'bob']})"
   [name {:keys [add-permissions remove-permissions users]}]
-  (let [nav (fn [page] (navigate page {:role-name name}))
+  (let [nav (fn [page] (nav/go-to page {:role-name name}))
         each-org (fn [all-perms perms-fn]
                    (when all-perms
                      (nav :named-role-permissions-page)
@@ -109,7 +110,7 @@
 (defn delete
   "Deletes the given role."
   [name]
-  (navigate :named-role-page {:role-name name})
+  (nav/go-to :named-role-page {:role-name name})
   (sel/browser click :remove-role)
   (sel/browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))

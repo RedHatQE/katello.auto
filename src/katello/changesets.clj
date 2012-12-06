@@ -1,12 +1,13 @@
 (ns katello.changesets
-  (:require [katello.locators :as locators]
+  (:require (katello [locators :as locators]
+                     [navigation :as nav]
+                     [tasks :refer :all] 
+                     [ui-tasks :refer :all] 
+                     [sync-management :as sync]
+                     [notifications :refer [check-for-success]])
             [com.redhat.qe.auto.selenium.selenium :as sel]
             [slingshot.slingshot :refer [throw+ try+]]
-            [test.assert :as assert]
-            [katello.tasks :refer :all] 
-            [katello.ui-tasks :refer :all] 
-            [katello.sync-management :as sync]
-            [katello.notifications :refer [check-for-success]]))
+            [test.assert :as assert]))
 
 ;;
 ;; Changesets
@@ -52,7 +53,7 @@
   "Creates a changeset for promotion from env-name to next-env name 
   or for deletion from env-name."
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
-  (navigate :named-environment-changesets-page {:env-name env-name 
+  (nav/go-to :named-environment-changesets-page {:env-name env-name 
                                                 :next-env-name next-env-name})
   (if deletion? (sel/browser click :select-deletion-changeset))
   (sel/->browser (click :new-changeset)
@@ -68,7 +69,7 @@
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
   [changeset-name from-env content deletion & [{:keys [to-env]}]]
-  (navigate :named-changeset-page {:env-name from-env
+  (nav/go-to :named-changeset-page {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
                                    :changeset-type (if deletion "deletion" "promotion")})
@@ -110,7 +111,7 @@
    content from an environment. An optional timeout-ms key will specify how long to  
    wait for the promotion or deletion to complete successfully."
   [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
-  (let [nav-to-cs (fn [] (navigate :named-changeset-page
+  (let [nav-to-cs (fn [] (nav/go-to :named-changeset-page
                                   {:env-name from-env
                                    :next-env-name to-env
                                    :changeset-name changeset-name
@@ -172,7 +173,7 @@
 (defn environment-content
   "Returns the content that is available to promote, in the given environment."
   [env-name]
-  (navigate :named-environment-changesets-page {:env-name env-name
+  (nav/go-to :named-environment-changesets-page {:env-name env-name
                                                 :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
@@ -185,12 +186,12 @@
                          result)))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
-  (navigate :named-environment-changesets-page {:env-name env}))
+  (nav/go-to :named-environment-changesets-page {:env-name env}))
 
 (defn enviroment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (navigate :named-environment-changesets-page {:env-name env :next-env-name ""})
+  (nav/go-to :named-environment-changesets-page {:env-name env :next-env-name ""})
   (every? true?
           (flatten
            (for [category (keys content)]

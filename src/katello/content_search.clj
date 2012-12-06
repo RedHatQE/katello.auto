@@ -5,7 +5,8 @@
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
             [com.redhat.qe.auto.selenium.selenium :as sel]
-            (katello [locators      :as locators]
+            (katello [navigation :as nav]
+                     [locators      :as locators]
                      [tasks         :refer :all]
                      [ui-tasks      :refer :all]
                      [notifications :as notification] 
@@ -222,7 +223,7 @@
 
 
 (defn add-repositories [repositories]
-  (navigate :content-search-page)
+  (nav/go-to :content-search-page)
   (sel/browser select :content-search-type "Repositories")
   (sel/browser check :repo-auto-complete-radio)
   (doseq [repository repositories]
@@ -261,7 +262,7 @@
   (get-result-packages))
 
 (defn search-for-repositories [repo]
-  (navigate :content-search-page)
+  (nav/go-to :content-search-page)
   (sel/browser select :content-search-type "Repositories")
   (sel/browser setText :repo-search repo)
   (sel/browser click :browse-button)
@@ -270,7 +271,7 @@
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
 
 (defn search-for-packages [package]
-  (navigate :content-search-page)
+  (nav/go-to :content-search-page)
   (sel/browser select :content-search-type "Packages")
   (sel/browser setText :pkg-search package)
   (sel/browser click :browse-button)
@@ -302,7 +303,7 @@
                    :pkg-type    "Packages"
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
-    (navigate :content-search-page)
+    (nav/go-to :content-search-page)
     (sel/browser select :content-search-type ctype-str))
   
   ;; Select environments (columns)

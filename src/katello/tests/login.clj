@@ -1,6 +1,7 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:require (katello [conf :refer :all] 
+  (:require (katello [navigation :as nav]
+                     [conf :refer :all] 
                      [ui-tasks :refer [navigate errtype]]
                      [tasks :refer :all]
                      [users :as user]
@@ -34,7 +35,7 @@
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
   (if (user/logged-in?)
-    (do (navigate :top-level)
+    (do (nav/go-to :top-level)
         (if (= (organization/current) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
                (catch Exception _

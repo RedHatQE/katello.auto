@@ -1,6 +1,7 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
-  (:require (katello [validation :as v]
+  (:require (katello [navigation :as nav]
+                     [validation :as v]
                      [api-tasks :as api]
                      [conf :as conf]
                      [tasks :refer :all]
@@ -34,13 +35,13 @@
                            (catch Exception e e))))))
 
 (defn- navigate-fn [page]
-  (fn [] (navigate page))) 
+  (fn [] (nav/go-to page))) 
 
 (defn- navigate-all [& pages]
   (map navigate-fn pages))
 
 (defn- access-org [org]
-  (fn [] (navigate :named-organization-page {:org-name org})))
+  (fn [] (nav/go-to :named-organization-page {:org-name org})))
 
 (defn verify-access
   "Assigns a new user to a new role with the given permissions. That
@@ -219,7 +220,7 @@
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
                                       (fn [] (organization/switch org))
-                                      (fn [] (navigate :named-organization-page {:org-name org})))]))
+                                      (fn [] (nav/go-to :named-organization-page {:org-name org})))]))
    
    (fn [] (let [org (uniqueify "org")]
            [:permissions [{:org org

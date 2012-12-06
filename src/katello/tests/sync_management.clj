@@ -1,5 +1,6 @@
 (ns katello.tests.sync_management
-  (:require (katello [api-tasks :as api] 
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api] 
                      [validation :as validate] 
                      [providers :as provider] 
                      [users :as user] 
@@ -113,7 +114,7 @@
                            :interval "hourly"
                            :start-date (java.util.Date.)})
         (sync/edit-plan myplan-name {:new-name new-name })
-        (navigate :named-sync-plan-page {:sync-plan-name new-name})))
+        (nav/go-to :named-sync-plan-page {:sync-plan-name new-name})))
 
     
     (deftest "Sync plan validation"

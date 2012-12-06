@@ -1,7 +1,8 @@
 (ns katello.users
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
-            (katello [locators :as locators] 
+            (katello [navigation :as nav]
+                     [locators :as locators] 
                      [conf :refer [config *session-user*
                                    *session-password* *session-org*]] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]] 
@@ -90,7 +91,7 @@
 (defn create
   "Creates a user with the given name and properties."
   [username {:keys [password password-confirm email default-org default-env]}]
-  (navigate :users-page)
+  (nav/go-to :users-page)
   (browser click :new-user)
   (let [env-chooser (fn [env] (when env
                                (locators/select-environment-widget env)))]
@@ -105,7 +106,7 @@
 
 (defn delete "Deletes the given user."
   [username]
-  (navigate :named-user-page {:username username})
+  (nav/go-to :named-user-page {:username username})
   (browser click :remove-user)
   (browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
@@ -115,7 +116,7 @@
   change more than one at once)."
   [username {:keys [inline-help clear-disabled-helptips
                     new-password new-password-confirm new-email]}]
-  (navigate :named-user-page {:username username})
+  (nav/go-to :named-user-page {:username username})
   (when new-password
     (browser setText :user-password-text new-password)
     (browser setText :user-confirm-text (or new-password-confirm new-password))
@@ -140,7 +141,7 @@
 (defn assign-default-org-and-env 
   "Assigns a default organization and environment to a user"
   [username org-name env-name]
-  (navigate :user-environments-page {:username username})
+  (nav/go-to :user-environments-page {:username username})
   (browser select :user-default-org-select org-name)
   (browser click (locators/environment-link env-name))
   (browser click :save-user-environment)

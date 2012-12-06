@@ -1,6 +1,7 @@
 (ns katello.tests.navigation
   (:require [test.tree.script :refer :all] 
-            (katello [notifications :refer [verify-no-error]]
+            (katello [navigation :as nav]
+                     [notifications :refer [verify-no-error]]
                      [ui-tasks :refer :all]
                      [api-tasks :refer [katello-only]]
                      [locators :refer [tab-list katello-only-tabs]])))
@@ -10,7 +11,7 @@
 (defn verify-navigation
   "Navigates to a tab"
   [tab]
-  (navigate tab)
+  (nav/go-to tab)
   (verify-no-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs

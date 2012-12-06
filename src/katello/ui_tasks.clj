@@ -1,9 +1,10 @@
 (ns katello.ui-tasks
   (:require [clojure.data.json  :as json]
-            [ui.navigate      :as nav]
+            
             [com.redhat.qe.auto.selenium.selenium
              :refer [browser ->browser fill-form fill-item]]
-            (katello [locators      :as locators]
+            (katello [navigation :as nav]
+                     [locators      :as locators]
                      [tasks         :refer :all] 
                      [notifications :as notification] 
                      [conf          :refer [config]] 
@@ -33,16 +34,6 @@
     (fn [e] (some #(isa? % t) (:types e)))
     {:type :serializable.fn/serializable-fn
      :serializable.fn/source `(errtype ~t)}))
-
-(def ^{:doc "Navigates to a named location in the UI. The first
-  argument should be a keyword for the place in the page tree to
-  navigate to. The 2nd optional argument is a mapping of keywords to
-  strings, if any arguments are needed to navigate there.
-  Example: (navigate :named-organization-page {:org-name 'My org'})
-  See also katello.locators/page-tree for all the places that can be
-  navigated to."
-       :arglists '([location-kw & [argmap]])}
-  navigate (nav/nav-fn locators/page-tree))
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing
@@ -88,16 +79,16 @@
   is true, use criteria and save it as a favorite, and also execute
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
-  (navigate (entity-type {:users :users-page 
-                          :organizations :manage-organizations-page
-                          :roles :roles-page
-                          :subscriptions :redhat-subscriptions-page
-                          :gpg-keys :gpg-keys-page
-                          :sync-plans :sync-plans-page
-                          :systems  :systems-all-page
-                          :system-groups :system-groups-page
-                          :activation-keys :activation-keys-page
-                          :changeset-promotion-history :changeset-promotion-history-page}))
+  (nav/go-to (entity-type {:users :users-page 
+                           :organizations :manage-organizations-page
+                           :roles :roles-page
+                           :subscriptions :redhat-subscriptions-page
+                           :gpg-keys :gpg-keys-page
+                           :sync-plans :sync-plans-page
+                           :systems  :systems-all-page
+                           :system-groups :system-groups-page
+                           :activation-keys :activation-keys-page
+                           :changeset-promotion-history :changeset-promotion-history-page}))
   (if with-favorite
     (->browser (click :search-menu)
                (click (locators/search-favorite with-favorite)))
@@ -112,7 +103,7 @@
   "Creates an activation key with the given properties. Description
   and system-template are optional."
   [{:keys [name description environment system-template] :as m}]
-  (navigate :new-activation-key-page)
+  (nav/go-to :new-activation-key-page)
   (browser click (locators/environment-link environment))
   (fill-ajax-form {:activation-key-name-text name
                    :activation-key-description-text description
@@ -123,7 +114,7 @@
 (defn delete-activation-key
   "Deletes the given activation key."
   [name]
-  (navigate :named-activation-key-page {:activation-key-name name})
+  (nav/go-to :named-activation-key-page {:activation-key-name name})
   (browser click :remove-activation-key)
   (browser click :confirmation-yes)
   (notification/check-for-success))
@@ -131,7 +122,7 @@
 (defn add-subscriptions-to-activation-key
   "Add subscriptions to activation key."
   [name subscriptions]
-  (navigate :named-activation-key-page {:activation-key-name name})
+  (nav/go-to :named-activation-key-page {:activation-key-name name})
   (browser click :available-subscriptions)
   (doseq [subscription subscriptions]
     (browser click (locators/subscription-checkbox subscription)))
@@ -141,7 +132,7 @@
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
   [repos]
-  (navigate :redhat-repositories-page)
+  (nav/go-to :redhat-repositories-page)
   (doseq [repo repos]
     (browser check (locators/repo-enable-checkbox repo))))
 
@@ -149,7 +140,7 @@
   (assert (not (and filename contents))
           "Must specify one one of :filename or :contents.")
   (assert (string? name))
-  (navigate :new-gpg-key-page)
+  (nav/go-to :new-gpg-key-page)
   (if filename
     (fill-ajax-form {:gpg-key-name-text name
                      :gpg-key-file-upload-text filename}
@@ -163,7 +154,7 @@
 (defn remove-gpg-key 
   "Deletes existing GPG keys"
   [gpg-key-name]
-  (navigate :named-gpgkey-page {:gpg-key-name gpg-key-name})
+  (nav/go-to :named-gpgkey-page {:gpg-key-name gpg-key-name})
   (browser click :remove-gpg-key )
   (browser click :confirmation-yes)
   (notification/check-for-success))
@@ -171,7 +162,7 @@
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
   (assert (string? name))
-  (navigate :new-package-filter-page)
+  (nav/go-to :new-package-filter-page)
     (fill-ajax-form {:new-package-filter-name  name
                      :new-package-filter-description description}
                      :save-new-package-filter)
@@ -180,7 +171,7 @@
 (defn remove-package-filter 
   "Deletes existing Package Filter"
   [package-filter-name]
-  (navigate :named-package-filter-page {:package-filter-name package-filter-name})
+  (nav/go-to :named-package-filter-page {:package-filter-name package-filter-name})
   (browser click :remove-package-filter-key )
   (browser click :confirmation-yes)
   (notification/check-for-success))

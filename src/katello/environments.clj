@@ -1,7 +1,8 @@
 (ns katello.environments
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
-            (katello [locators :as locators] 
+            (katello [navigation :as nav]
+                     [locators :as locators] 
                      [tasks :refer [library]] 
                      [notifications :as notification] 
                      [ui-tasks :refer [navigate fill-ajax-form in-place-edit]])))
@@ -29,7 +30,7 @@
    the organization name to create the environment in, the prior
    environment, and an optional description."
   [name {:keys [org-name description prior-env]}]
-  (navigate :new-environment-page {:org-name org-name})
+  (nav/go-to :new-environment-page {:org-name org-name})
   (fill-ajax-form {:env-name-text name
                    :env-description-text description
                    :prior-environment prior-env}
@@ -39,7 +40,7 @@
 (defn delete
   "Deletes an environment from the given organization."
   [env-name {:keys [org-name]}]
-  (navigate :named-environment-page {:org-name org-name
+  (nav/go-to :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (if (browser isElementPresent :remove-environment)
     (browser click :remove-environment)
@@ -52,7 +53,7 @@
    containing the name of the environment's organization, and optional
    fields: a new description."
   [env-name {:keys [org-name description]}]
-  (navigate :named-environment-page {:org-name org-name
+  (nav/go-to :named-environment-page {:org-name org-name
                                      :env-name env-name})
   (in-place-edit {:env-description-text description}))
 
