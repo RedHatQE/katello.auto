@@ -249,7 +249,7 @@
                            :systems  :katello.systems/page
                            :system-groups :system-groups-page
                            :activation-keys :katello.activation-keys/page
-                           :changeset-promotion-history :changeset-promotion-history-page}))
+                           :changeset-promotion-history :katello.changesets/history-page}))
   (if with-favorite
     (sel/->browser (click :search-menu)
                    (click (search-favorite with-favorite)))

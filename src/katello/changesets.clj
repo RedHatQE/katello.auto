@@ -16,44 +16,44 @@
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   remove-content-item "//a[@data-display_name='%s' and contains(.,'Remove')]"
   select-product      "//span[contains(.,'%s')]"
-  changeset-status    "//span[.='%s']/..//span[@class='changeset_status']"
+  status              "//span[.='%s']/..//span[@class='changeset_status']"
   })
 
 (swap! ui/uimap merge
-       {:products-category           (content-category "products")
-        :expand-path                 "path-collapsed"
-        :errata-category             (content-category "errata")
-        :packages-category           (content-category "packages")
-        :kickstart-trees-category    (content-category "kickstart trees")
-        :templates-category          (content-category "templates")
-        :promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+       {::products-category           (content-category "products")
+        ::expand-path                 "path-collapsed"
+        ::errata-category             (content-category "errata")
+        ::packages-category           (content-category "packages")
+        ::kickstart-trees-category    (content-category "kickstart trees")
+        ::templates-category          (content-category "templates")
+        ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
 
-        :review-for-promotion        "review_changeset"
-        :promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-        :promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-        :new-changeset               "//a[contains(.,'New Changeset')]"
-        :changeset-name-text         "changeset[name]"
-        :save-changeset              "save_changeset_button"
-        :changeset-content           "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
-        :changeset-type              "changeset[action_type]"
-        :select-deletion-changeset   "//div[@data-cs_type='deletion']"
-        :select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
-        :select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
-        :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
-        :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
+        ::review-for-promotion        "review_changeset"
+        ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+        ::promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
+        ::new                         "//a[contains(.,'New Changeset')]"
+        ::name-text                   "changeset[name]"
+        ::save                        "save_changeset_button"
+        ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+        ::type                        "changeset[action_type]"
+        ::deletion                    "//div[@data-cs_type='deletion']"
+        ::select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
+        ::select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
+        ::select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
+        ::select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
 (nav/add-subnavigation
  :content-tab
  [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
-  [:changesets-page [] (sel/browser clickAndWait :changesets)
-   [:named-environment-changesets-page [env-name next-env-name]
+  [::page [] (sel/browser clickAndWait :changesets)
+   [::named-environment-page [env-name next-env-name]
     (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-    [:named-changeset-page [changeset-name changeset-type]
+    [::named-page [changeset-name changeset-type]
      (do
        (when (= changeset-type "deletion")
-         (sel/browser click :select-deletion-changeset))
+         (sel/browser click ::deletion))
        (sel/browser click (ui/changeset changeset-name)))]]]
-  [:changeset-promotion-history-page [] (sel/browser clickAndWait :changeset-history)]])
+  [::history-page [] (sel/browser clickAndWait :changeset-history)]])
 
 ;; Tasks
 
@@ -61,12 +61,12 @@
   "Creates a changeset for promotion from env-name to next-env name 
   or for deletion from env-name."
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
-  (nav/go-to :named-environment-changesets-page {:env-name env-name 
-                                                 :next-env-name next-env-name})
-  (if deletion? (sel/browser click :select-deletion-changeset))
-  (sel/->browser (click :new-changeset)
-                 (setText :changeset-name-text changeset-name)
-                 (click :save-changeset))
+  (nav/go-to ::named-environment-page {:env-name env-name 
+                                       :next-env-name next-env-name})
+  (if deletion? (sel/browser click ::deletion))
+  (sel/->browser (click ::new)
+                 (setText ::name-text changeset-name)
+                 (click ::save))
   (check-for-success))
 
 
@@ -77,10 +77,10 @@
   ;; to-env is mandatory if promotion changeset
   ;; to-env not required if deletion changeset
   [changeset-name from-env content deletion & [{:keys [to-env]}]]
-  (nav/go-to :named-changeset-page {:env-name from-env
-                                    :next-env-name to-env
-                                    :changeset-name changeset-name
-                                    :changeset-type (if deletion "deletion" "promotion")})
+  (nav/go-to ::named-page {:env-name from-env
+                           :next-env-name to-env
+                           :changeset-name changeset-name
+                           :changeset-type (if deletion "deletion" "promotion")})
   (doseq [category (keys content)]
     (let [data (content category)
           grouped-data (group-by :product-name data)]
@@ -89,7 +89,7 @@
        (do
          (doseq [[prod-item repos] grouped-data]
            (let [add-items (map :name repos)] 
-             (sel/->browser (click :products-category)  
+             (sel/->browser (click ::products-category)  
                             (click (select-product prod-item))
                             (click (keyword (str "select-" (name category)))))
              (doseq [add-item add-items ] 
@@ -97,8 +97,8 @@
        
        (= category :errata)
        (do
-         (sel/browser click :errata-category)
-         (sel/browser click :select-errata-all)
+         (sel/browser click ::errata-category)
+         (sel/browser click ::select-errata-all)
          (doseq [add-item (map :name data )]
            (sel/browser click (add-content-item add-item))))
        
@@ -106,30 +106,30 @@
        (do
          (doseq [item data]  
            (sel/->browser 
-            (click :products-category)
+            (click ::products-category)
             (click (add-content-item item))))))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
 
       (sel/->browser (sleep 5000)
-                     (click :promotion-eligible-home)))))
+                     (click ::promotion-eligible-home)))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  
    content from an environment. An optional timeout-ms key will specify how long to  
    wait for the promotion or deletion to complete successfully."
   [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
-  (let [nav-to-cs (fn [] (nav/go-to :named-changeset-page
+  (let [nav-to-cs (fn [] (nav/go-to ::named-page
                                    {:env-name from-env
                                     :next-env-name to-env
                                     :changeset-name changeset-name
                                     :changeset-type (if deletion? "deletion" "promotion")}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
-      (sel/browser click :review-for-promotion)
+      (sel/browser click ::review-for-promotion)
       ;;for the submission
       (sel/loop-with-timeout 600000 []
-        (when-not (try+ (sel/browser click :promote-to-next-environment)
+        (when-not (try+ (sel/browser click ::promote-to-next-environment)
                         (check-for-success)
                         (catch [:type ::promotion-already-in-progress] _
                           (nav-to-cs)))
@@ -145,7 +145,7 @@
                                   :to-env to-env})
           (do (Thread/sleep 2000)
               (recur (sel/browser getText
-                                  (changeset-status changeset-name))))))
+                                  (status changeset-name))))))
       ;;wait for async success notif
       (check-for-success {:timeout-ms 180000}))))
 
@@ -181,8 +181,8 @@
 (defn environment-content
   "Returns the content that is available to promote, in the given environment."
   [env-name]
-  (nav/go-to :named-environment-changesets-page {:env-name env-name
-                                                 :next-env-name nil})
+  (nav/go-to ::named-environment-page {:env-name env-name
+                                       :next-env-name nil})
   (let [categories [:products :templates]]
     (zipmap categories
             (doall (for [category categories]
@@ -190,16 +190,16 @@
                        (sel/browser click (-> category name (str "-category") keyword))
                        (sel/browser sleep 2000) 
                        (let [result (extract-content)]
-                         (sel/browser click :promotion-eligible-home)
+                         (sel/browser click ::promotion-eligible-home)
                          result)))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
-  (nav/go-to :named-environment-changesets-page {:env-name env}))
+  (nav/go-to ::named-environment-page {:env-name env}))
 
 (defn enviroment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (nav/go-to :named-environment-changesets-page {:env-name env :next-env-name ""})
+  (nav/go-to ::named-environment-page {:env-name env :next-env-name ""})
   (every? true?
           (flatten
            (for [category (keys content)]

@@ -95,7 +95,7 @@
           :allowed-actions [(access-org (@conf/config :admin-org))]
           :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                   :custom-content-providers-tab :system-templates-page
-                                                  :changesets-page )
+                                                  :katello.changesets/page )
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
 
@@ -111,7 +111,7 @@
                               create-an-env]
             :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
-                                                    :changesets-page )
+                                                    :katello.changesets/page )
                                       (fn [] (providers/create {:name "myprov"}))
                                       (fn [] (api/create-provider "myprov")))]))
    
@@ -158,7 +158,7 @@
                                         :name "stread"}]}]
           :allowed-actions [(navigate-fn :system-templates-page)]
           :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page
-                                                  :custom-content-providers-tab :sync-status-page :changesets-page)
+                                                  :custom-content-providers-tab :sync-status-page :katello.changesets/page)
                                     create-a-st
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
@@ -169,7 +169,7 @@
                                         :name "stmang"}]}]
           :allowed-actions [create-a-st]
           :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page
-                                                  :custom-content-providers-tab :sync-status-page :changesets-page)
+                                                  :custom-content-providers-tab :sync-status-page :katello.changesets/page)
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
    
@@ -217,7 +217,7 @@
             :allowed-actions [(access-org (@conf/config :admin-org))]
             :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
-                                                    :changesets-page )
+                                                    :katello.changesets/page )
                                       (fn [] (organization/switch org))
                                       (fn [] (nav/go-to :named-organization-page {:org-name org})))]))
    
@@ -228,7 +228,7 @@
             :setup (fn [] (api/create-organization org))
             :allowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                    :custom-content-repositories-page :system-templates-page
-                                                   :changesets-page )
+                                                   :katello.changesets/page )
                                    (access-org org)
                                    (fn [] (environment/create (uniqueify "blah") {:org-name org})))
             :disallowed-actions [(access-org (@conf/config :admin-org))
