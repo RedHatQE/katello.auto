@@ -21,10 +21,6 @@
 
 ;; Locators
 
-;;
-;;UI locators - mapping of names to selenium locator strings.
-;;
-
 (sel/template-fns
  {button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"  
   editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
@@ -79,26 +75,18 @@
   (sel/browser click (a-toggler associated-text on?)))
 
 (def common
-  {:spinner                 "//img[contains(@src,'spinner.gif')]"
-   :save-inplace-edit       "//button[.='Save']"
-   :save-inplace-edit-inputbutton       "//input[@value='Save']"
-   :confirmation-dialog     "//div[contains(@class, 'confirmation')]"
-   :confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-   :confirmation-no         "//div[contains(@class, 'confirmation')]//span[.='No']"
-   :search-bar              "search"
-   :search-menu             "//form[@id='search_form']//span[@class='arrow']"
-   :search-save-as-favorite "search_favorite_save"
-   :search-clear-the-search "search_clear"
-   :search-submit           "//button[@form='search_form']"
+  {:save-inplace-edit             "//button[.='Save']"
+   :confirmation-dialog           "//div[contains(@class, 'confirmation')]"
+   :confirmation-yes              "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+   :confirmation-no               "//div[contains(@class, 'confirmation')]//span[.='No']"
+   :search-bar                    "search"
+   :search-menu                   "//form[@id='search_form']//span[@class='arrow']"
+   :search-save-as-favorite       "search_favorite_save"
+   :search-clear-the-search       "search_clear"
+   :search-submit                 "//button[@form='search_form']"
    ;;main banner
-   :account             "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out             "//a[normalize-space(.)='Log Out']"
-   :org-switcher        "switcherButton"
-   :active-org          "//*[@id='switcherButton']"
-   :default-org         "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
-   ;;inside the org switcher
-   :manage-organizations-link  "manage_orgs"
-   })
+   :account                       "//a[@class='header-widget' and contains(@href,'users')]"
+   :log-out                       "//a[normalize-space(.)='Log Out']"})
 
 (def all-tabs
   (tabs

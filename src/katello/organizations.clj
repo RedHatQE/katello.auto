@@ -22,7 +22,11 @@
         ::edit                  (ui/link "Edit")
         ::remove                (ui/link "Remove Organization")
         ::initial-env-name-text "environment[name]"
-        ::initial-env-desc-text "environment[description]"})
+        ::initial-env-desc-text "environment[description]"
+        ::switcher              "switcherButton"
+        ::manage-switcher-link  "manage_orgs"
+        ::active                "//*[@id='switcherButton']"
+        ::default               "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
 ;; Nav
 
@@ -34,8 +38,8 @@
 
 (nav/add-subnavigation
  :top-level
- [::page-via-org-switcher [] (sel/browser click :org-switcher)
-  [::link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
+ [::page-via-org-switcher [] (sel/browser click ::switcher)
+  [::link-via-org-switcher [] (sel/browser clickAndWait ::manage-switcher-link)
    [::new-page-via-org-switcher [] (sel/browser click ::new)]]])
 
 ;; Tasks
@@ -72,7 +76,7 @@
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
   []
-  ((->> :active-org (browser getAttributes) (into {})) "title"))
+  ((->> ::active (browser getAttributes) (into {})) "title"))
 
 (defn switch
   "Switch to the given organization in the UI. If no args are given,
@@ -86,9 +90,9 @@
      (when (or force?
                default-org
                (not= (current) org-name)) 
-       (browser click :org-switcher)
+       (browser click ::switcher)
        (when default-org
-         (let [current-default (try (browser getText :default-org)
+         (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
              (browser click (default-star (if (= default-org :none)
