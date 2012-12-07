@@ -17,15 +17,16 @@
         ::permission-resource-type-select "permission[resource_type_attributes[name]]"
         ::permission-verb-select          "permission[verb_values][]"
         ::permission-tag-select           "tags"
+        
         ::permission-name-text            "permission[name]"
         ::permission-description-text     "permission[description]"
         ::save-permission                 "save_permission_button"
         ::remove                          "remove_role"
-        ::add-permission                  "add_permission"})
+        ::add-permission                  "add_permission"
+        ::all-types                       "all_types"})
 
 (sel/template-fns
  {permission-org "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
-  plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   role-action    "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
 ;; Nav
@@ -53,16 +54,6 @@
   (notification/check-for-success {:match-pred
                                    (notification/request-type? :roles-create)}))
 
-(defn assign
-  "Assigns the given user to the given roles. Roles should be a list
-  of roles to assign."
-  [{:keys [user roles]}]
-  (nav/go-to :user-roles-permissions-page {:username user})
-  (doseq [role roles]
-    (sel/browser click (plus-icon role)))
-  (sel/browser click :save-roles)
-  (notification/check-for-success {:match-pred
-                                   (notification/request-type? :users-update-roles)}))
 
 (defn edit
   "Edits a role to add new permissions, remove existing permissions,
@@ -100,7 +91,7 @@
                 (doseq [{:keys [name description resource-type verbs tags]} permissions]
                   (sel/browser click ::add-permission)
                   (if (= resource-type :all)
-                    (sel/browser click :all-types)
+                    (sel/browser click ::all-types)
                     (do (sel/browser select ::permission-resource-type-select resource-type)
                         (sel/browser click ::next)
                         (doseq [verb verbs]

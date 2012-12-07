@@ -158,12 +158,7 @@
   SeleniumLocatable protocol."}
   uimap
   (atom (merge all-tabs common
-               { ;; login page
-                :username-text     "username"
-                :password-text     "password"
-                :log-in            "//input[@value='Log In' or @value='Login']"
-
-                
+               {
                 ;;tabs with special chars in name
                 :sub-organizations (tab "Sub-Organizations")})))
 
@@ -236,7 +231,7 @@
   is true, use criteria and save it as a favorite, and also execute
   the search."
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
-  (nav/go-to (entity-type {:users :users-page 
+  (nav/go-to (entity-type {:users :katello.users/page 
                            :organizations :katello.organizations/page
                            :roles :katello.roles/page
                            :subscriptions :redhat-subscriptions-page
@@ -256,7 +251,22 @@
         (browser click :search-submit)))
   (notification/verify-no-error {:timeout-ms 2000}))
 
+(defn logged-in?
+  "Returns true if the browser is currently showing a page where a
+  user is logged in."
+  []
+  (browser isElementPresent :log-out))
 
+(defn logged-out?
+  "Returns true if the login page is displayed."
+  []
+  (browser isElementPresent :log-in))
+
+(defn logout
+  "Logs out the current user from the UI."
+  []
+  (when-not (logged-out?)
+    (browser clickAndWait :log-out)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."

@@ -7,7 +7,7 @@
 ;; Constants
 
 (def common-tabs '(:katello.roles/page
-                     :users-page 
+                     :katello.users/page 
                      :katello.systems/page
                      :katello.activation-keys/page
                      :katello.systems/by-environment-page))

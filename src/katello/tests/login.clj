@@ -2,8 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [navigation :as nav]
                      [conf :refer :all] 
-                     [ui-tasks :refer [navigate errtype]]
                      [tasks :refer :all]
+                     [login :refer [login]]
                      [users :as user]
                      [organizations :as organization])
             [test.tree.script :refer :all]
@@ -21,15 +21,15 @@
   [username password]
   (try+
     (expecting-error (errtype :katello.notifications/invalid-credentials)
-                     (user/login username password))
-    ; Notifications must be flushed so user/login can succeed in 'finally'
+                     (login username password))
+    ; Notifications must be flushed so login can succeed in 'finally'
     (katello.notifications/flush)
    (finally
-    (user/login))))
+    (login))))
 
 (defn login-admin []
   (user/logout)
-  (user/login)
+  (login)
   (assert/is (= (user/current) *session-user*)))
 
 (defn navigate-toplevel [& _]
@@ -40,7 +40,7 @@
           (try (organization/switch (@config :admin-org))
                (catch Exception _
                  (login-admin)))))
-    (user/login))) 
+    (login))) 
 
 ;;; Tests
 

@@ -177,7 +177,7 @@
                          :permissions [{:resource-type "Users"
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
-          :allowed-actions [(navigate-fn :users-page)]
+          :allowed-actions [(navigate-fn :katello.users/page)]
           :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :katello.roles/page
                                                   :content-management-tab)
                                     (fn [] (organization/create (uniqueify "cantdothis")))

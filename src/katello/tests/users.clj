@@ -1,11 +1,10 @@
 (ns katello.tests.users
-
   (:require (katello [validation :refer :all] 
-                     [organizations :as organization] 
+                     [organizations :as organization]
+                     [ui-common :as ui]
                      [roles :as role] 
                      [users :as user]
-                     [tasks :refer :all]
-                     [ui-tasks :refer [errtype]] 
+                     [tasks :refer :all] 
                      [conf :refer [config]]
                      [api-tasks :as api]) 
             [test.tree.script :refer :all]
@@ -22,7 +21,7 @@
 (defn step-create-org-and-user [{:keys [username org]}]
   (api/create-user username generic-user-details)
   (api/create-organization org)
-  (role/assign {:user username :roles ["Administrator"]}))
+  (user/assign {:user username :roles ["Administrator"]}))
 
 (defn step-set-default-org-at-login-screen [{:keys [username org]}]
   (user/login username (:password generic-user-details) {:default-org org
@@ -113,13 +112,13 @@
               (organization/delete org))
             (finally (user/create admin {:password pw
                                          :email "root@localhost"})
-                     (role/assign {:user admin :roles ["Administrator"]}))))))
+                     (user/assign {:user admin :roles ["Administrator"]}))))))
 
     (deftest "Two users with the same username is disallowed"
       :blockers (open-bz-bugs "738425")
 
       (with-unique [username "dupeuser"]
-        (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
+        (expecting-error-2nd-try (ui/errtype :katello.notifications/name-taken-error)
                                  (user/create username generic-user-details))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
@@ -135,16 +134,16 @@
        ["usr"     upper-case]
        ["MyUsr"   upper-case]
        ["YOURUsr" lower-case]])
-     
+    
 
     (deftest "User's minimum password length is enforced"
-      (expecting-error (errtype :katello.notifications/password-too-short)
+      (expecting-error (ui/errtype :katello.notifications/password-too-short)
                        (user/create (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"})))
 
 
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
-        (role/assign {:user username, :roles ["Administrator"]}))))
+        (user/assign {:user username, :roles ["Administrator"]}))))
 
   default-org-tests)
