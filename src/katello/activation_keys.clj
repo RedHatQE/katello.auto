@@ -21,7 +21,8 @@
         ::release-version-text                "system[releaseVer]"})
 
 (sel/template-fns
- {fetch-applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
+ {subscription-checkbox           "//a[.='%s']/../span/input[@type='checkbox']"
+  fetch-applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 
 ;; Nav
@@ -61,7 +62,7 @@
   (nav/go-to ::named-page {:activation-key-name name})
   (browser click ::available-subscriptions)
   (doseq [subscription subscriptions]
-    (browser click (ui/subscription-checkbox subscription)))
+    (browser click (subscription-checkbox subscription)))
   (browser click ::add-subscriptions)
   (notification/check-for-success))
 

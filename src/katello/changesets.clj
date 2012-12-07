@@ -17,6 +17,7 @@
   remove-content-item "//a[@data-display_name='%s' and contains(.,'Remove')]"
   select-product      "//span[contains(.,'%s')]"
   status              "//span[.='%s']/..//span[@class='changeset_status']"
+  list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
   })
 
 (swap! ui/uimap merge
@@ -52,7 +53,7 @@
      (do
        (when (= changeset-type "deletion")
          (sel/browser click ::deletion))
-       (sel/browser click (ui/changeset changeset-name)))]]]
+       (sel/browser click (list-item changeset-name)))]]]
   [::history-page [] (sel/browser clickAndWait :changeset-history)]])
 
 ;; Tasks

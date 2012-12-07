@@ -35,14 +35,15 @@
         ::password-conflict       "//div[@id='password_conflict' and string-length(.)>0]"})
 
 
-(sel/template-fns {plus-icon "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"})
+(sel/template-fns {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
+                   plus-icon "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"})
 
 ;; Nav
 
 (nav/add-subnavigation
  :administer-tab
  [::page [] (browser clickAndWait :users)
-  [::named-page [username] (nav/choose-left-pane ui/user username)
+  [::named-page [username] (nav/choose-left-pane user-list-item username)
    [::environments-page [] (browser click ::environments-subsubtab)]
    [::roles-permissions-page [] (browser click ::roles-subsubtab)]]])
 

@@ -26,26 +26,17 @@
 ;;
 
 (sel/template-fns
- {button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"
-  changeset                       "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"  
+ {button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"  
   editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
   environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
   left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
   link                            "link=%s"
-  product-schedule                "//div[normalize-space(.)='%s']/following-sibling::div[1]"
-  provider-sync-checkbox          "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  provider-sync-checkbox2         "//table[@id='products_table']//tr[contains(.,'%s')]/following::label[normalize-space(.)='%s']/..//input"
-  provider-sync-progress          "//tr[td/label[normalize-space(.)='%s']]/td[5]"
-  repo-enable-checkbox            "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
-  schedule                        "//div[normalize-space(.)='%s']"
   search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
   slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
-  fetch-environments-in-org       "xpath=(//div[@id='path-selected']//a/div)[%s]"
-  subscription-checkbox           "//a[.='%s']/../span/input[@type='checkbox']"
   tab                             "link=%s"
-  textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
-  user                            "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
-  })
+  textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
+
+
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
