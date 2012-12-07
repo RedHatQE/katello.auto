@@ -5,7 +5,8 @@
             [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
 
-;; Nav
+;; Locators
+
 (swap! ui/uimap merge
        {:new-activation-key                  "new"
         :activation-key-name-text            "activation_key[name]"
@@ -19,6 +20,7 @@
         :subscriptions-right-nav             "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
         :release-version-text                "system[releaseVer]"})
 
+;; Nav
 
 (nav/graft-page-tree
  :subscriptions-tab
