@@ -6,6 +6,19 @@
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
 
 ;; Nav
+(swap! ui/uimap merge
+       {:new-activation-key                  "new"
+        :activation-key-name-text            "activation_key[name]"
+        :activation-key-description-text     "activation_key[description]"
+        :activation-key-template-select      "activation_key[system_template_id]"
+        :save-activation-key                 "save_key"
+        :applied-subscriptions               "//a[.='Applied Subscriptions']"
+        :available-subscriptions             "//a[.='Available Subscriptions']"
+        :add-subscriptions-to-activation-key "//input[@id='subscription_submit_button']"            
+        :remove-activation-key               (ui/link "Remove Activation Key")
+        :subscriptions-right-nav             "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+        :release-version-text                "system[releaseVer]"})
+
 
 (nav/graft-page-tree
  :subscriptions-tab
