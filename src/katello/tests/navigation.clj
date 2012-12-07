@@ -9,7 +9,7 @@
 (def common-tabs '(:roles-page
                      :users-page 
                      :katello.systems/page
-                     :activation-keys-page
+                     :katello.activation-keys/page
                      :katello.systems/by-environment-page))
 
 (def ^{:doc "Tabs that don't exist in headpin"}

@@ -244,11 +244,11 @@
                            :organizations :manage-organizations-page
                            :roles :roles-page
                            :subscriptions :redhat-subscriptions-page
-                           :gpg-keys :gpg-keys-page
+                           :gpg-keys :katello.gpg-keys/page
                            :sync-plans :sync-plans-page
                            :systems  :katello.systems/page
                            :system-groups :system-groups-page
-                           :activation-keys :activation-keys-page
+                           :activation-keys :katello.activation-keys/page
                            :changeset-promotion-history :changeset-promotion-history-page}))
   (if with-favorite
     (sel/->browser (click :search-menu)

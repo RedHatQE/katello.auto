@@ -133,7 +133,7 @@
                           :permissions [{:resource-type "Activation Keys"
                                          :verbs ["Read Activation Keys"]
                                          :name "akaccess"}]}]
-           :allowed-actions [(navigate-fn :activation-keys-page)]
+           :allowed-actions [(navigate-fn :katello.activation-keys/page)]
            :disallowed-actions (conj (navigate-all :manage-organizations-page
                                                    :katello.systems/page :katello.systems/by-environment-page
                                                    :redhat-repositories-page)

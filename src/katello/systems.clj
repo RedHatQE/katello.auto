@@ -21,7 +21,7 @@
         ::package-name                "content_input"
         ::select-package-group        "perform_action_package_groups"
         ::select-package              "perform_action_packages"
-        :pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+        ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
 
         ;;system-edit details
         ::name-text-edit              "system[name]"
@@ -132,7 +132,7 @@
                      (click ::add-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (sel/browser getText :pkg-install-status))))))
+                    (sel/browser getText ::pkg-install-status))))))
 
 (defn remove-package [system-name {:keys [package package-group]}]
   (nav/go-to ::named-page-content {:system-name system-name})
@@ -146,4 +146,4 @@
                      (click ::remove-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (sel/browser getText :pkg-install-status))))))
+                    (sel/browser getText ::pkg-install-status))))))

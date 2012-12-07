@@ -7,46 +7,45 @@
 ;; Locators
 
 (swap! ui/uimap merge
-       {:gpg-key-name-text        "gpg_key_name"
-        :gpg-key-file-upload-text "gpg_key_content_upload"
-        :gpg-key-upload-button    "upload_gpg_key"
-        :gpg-key-content-text     "gpg_key_content"
-        :gpg-keys                 "//a[.='GPG Keys']"
-        :gpg-keys-save            "save_gpg_key"
-        :new-gpg-key              "new"
-        :remove-gpg-key           (ui/link "Remove GPG Key")})
+       {::name-text        "gpg_key_name"
+        ::file-upload-text "gpg_key_content_upload"
+        ::upload-button    "upload_gpg_key"
+        ::content-text     "gpg_key_content"
+        ::link             "//a[.='GPG Keys']"
+        ::save             "save_gpg_key"
+        ::new              "new"
+        ::remove           (ui/link "Remove GPG Key")})
 
 ;; Nav
 
 (nav/add-subnavigation
  :repositories-tab
- [:gpg-keys-page [] (sel/browser clickAndWait :gpg-keys)
-  [:new-gpg-key-page [] (sel/browser click :new-gpg-key)]
-  [:named-gpgkey-page [gpg-key-name] (nav/choose-left-pane  gpg-key-name)]])
+ [::page [] (sel/browser clickAndWait ::link)
+  [::new-page [] (sel/browser click ::new)]
+  [::named-page [gpg-key-name] (nav/choose-left-pane  gpg-key-name)]])
 
 
 ;;Tasks
-
 
 (defn create [name & [{:keys [filename contents]}]]
   (assert (not (and filename contents))
           "Must specify one one of :filename or :contents.")
   (assert (string? name))
-  (nav/go-to :new-gpg-key-page)
+  (nav/go-to ::new-page)
   (if filename
-    (sel/fill-ajax-form {:gpg-key-name-text name
-                         :gpg-key-file-upload-text filename}
-                        :gpg-key-upload-button)
-    (sel/fill-ajax-form {:gpg-key-name-text name
-                         :gpg-key-content-text contents}
-                        :gpg-keys-save))
+    (sel/fill-ajax-form {::name-text name
+                         ::file-upload-text filename}
+                        ::upload-button)
+    (sel/fill-ajax-form {::name-text name
+                         ::content-text contents}
+                        ::save))
   (notification/check-for-success))
 
 
 (defn remove 
   "Deletes existing GPG keys"
   [gpg-key-name]
-  (nav/go-to :named-gpgkey-page {:gpg-key-name gpg-key-name})
-  (sel/browser click :remove-gpg-key )
+  (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
+  (sel/browser click ::remove )
   (sel/browser click :confirmation-yes)
   (notification/check-for-success))
