@@ -87,16 +87,6 @@
   [a-toggler associated-text on?]
   (sel/browser click (a-toggler associated-text on?)))
 
-(def tab-list '(:roles-page
-                :users-page 
-                :systems-all-page
-                :activation-keys-page
-                :systems-by-environment-page))
-
-(def ^{:doc "Tabs that don't exist in headpin"}
-  katello-only-tabs
-  '(:redhat-repositories-page))
-
 (def common
   {:spinner                 "//img[contains(@src,'spinner.gif')]"
    :save-inplace-edit       "//button[.='Save']"
@@ -256,7 +246,7 @@
                            :subscriptions :redhat-subscriptions-page
                            :gpg-keys :gpg-keys-page
                            :sync-plans :sync-plans-page
-                           :systems  :systems-all-page
+                           :systems  :katello.systems/page
                            :system-groups :system-groups-page
                            :activation-keys :activation-keys-page
                            :changeset-promotion-history :changeset-promotion-history-page}))

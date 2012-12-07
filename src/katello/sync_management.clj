@@ -30,7 +30,7 @@
 
 ;; Nav
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :content-tab
  [:sync-management-page [] (browser mouseOver :sync-management)
   [:sync-status-page [] (browser clickAndWait :sync-status)]

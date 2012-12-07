@@ -24,13 +24,13 @@
         :org-initial-env-name-text "environment[name]"
         :org-initial-env-desc-text "environment[description]"})
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :administer-tab
  [:manage-organizations-page [] (sel/browser clickAndWait :manage-organizations)
   [:new-organization-page [] (sel/browser click :new-organization)]
   [:named-organization-page [org-name] (nav/choose-left-pane  org-name)]])
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :top-level
  [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
   [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
@@ -42,7 +42,7 @@
   "Creates an organization with the given name and optional description."
   [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
   (nav/go-to (if go-through-org-switcher :new-organization-page-via-org-switcher :new-organization-page))
-  (fill-ajax-form {:org-name-text name
+  (sel/fill-ajax-form {:org-name-text name
                    :org-description-text description
                    :org-initial-env-name-text initial-env-name
                    :org-initial-env-desc-text initial-env-description}

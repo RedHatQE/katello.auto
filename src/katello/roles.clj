@@ -33,7 +33,7 @@
   plus-icon                       "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   role-action                     "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :administer-tab
  [:roles-page [] (sel/browser clickAndWait :roles)
   [:named-role-page [role-name] (nav/choose-left-pane  role-name)
@@ -50,7 +50,7 @@
   [name & [{:keys [description]}]]
   (nav/go-to :roles-page)
   (sel/browser click :new-role)
-  (fill-ajax-form {:new-role-name-text name
+  (sel/fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
                   :save-role)
   (notification/check-for-success {:match-pred (notification/request-type? :roles-create)}))
@@ -108,7 +108,7 @@
                         (sel/browser click :next)
                         (doseq [tag tags]
                           (sel/browser addSelection :permission-tag-select tag))))
-                  (fill-ajax-form {:permission-name-text name
+                  (sel/fill-ajax-form {:permission-name-text name
                                    :permission-description-text description}
                                   :save-permission))
                 (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)})))))

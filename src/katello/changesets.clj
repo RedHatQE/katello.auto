@@ -42,7 +42,7 @@
         :select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
         :select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :content-tab
  [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
   [:changesets-page [] (sel/browser clickAndWait :changesets)

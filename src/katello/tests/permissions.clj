@@ -10,7 +10,6 @@
                      [system-templates :as template]
                      [roles :as role]
                      [users :as user]
-                     [ui-tasks :refer :all]
                      [organizations :as organization])
         [test.tree.script :refer :all] 
         [serializable.fn :refer [fn]]
@@ -94,7 +93,7 @@
                                         :verbs ["Read Organization"]
                                         :name "orgaccess"}]}]
           :allowed-actions [(access-org (@conf/config :admin-org))]
-          :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
+          :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                   :custom-content-providers-tab :system-templates-page
                                                   :changesets-page )
                                     (fn [] (organization/create (uniqueify "cantdothis")))
@@ -110,7 +109,7 @@
             :allowed-actions [(fn [] (organization/create org-name {:description "mydescription"}))
                               (fn [] (organization/delete org-name))
                               create-an-env]
-            :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
                                       (fn [] (providers/create {:name "myprov"}))
@@ -124,7 +123,7 @@
                                          :name "systemreg"}]}]
            :allowed-actions [(fn [] (api/with-env (first conf/*environments*)
                                      (api/create-system (uniqueify "system") {:facts (api/random-facts)})))
-                             (navigate-fn :systems-all-page)]
+                             (navigate-fn :katello.systems/page)]
            :disallowed-actions (conj (navigate-all :providers-tab :manage-organizations-page)
                                      (fn [] (organization/create (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757775"))
@@ -136,7 +135,7 @@
                                          :name "akaccess"}]}]
            :allowed-actions [(navigate-fn :activation-keys-page)]
            :disallowed-actions (conj (navigate-all :manage-organizations-page
-                                                   :systems-all-page :systems-by-environment-page
+                                                   :katello.systems/page :katello.systems/by-environment-page
                                                    :redhat-repositories-page)
                                      create-an-ak)])
     assoc :blockers (open-bz-bugs "757817"))
@@ -148,7 +147,7 @@
                                          :name "akmang"}]}]
            :allowed-actions [create-an-ak]
            :disallowed-actions (conj (navigate-all :manage-organizations-page
-                                                   :systems-all-page :systems-by-environment-page
+                                                   :katello.systems/page :katello.systems/by-environment-page
                                                    :redhat-repositories-page)
                                      (fn [] (organization/create (uniqueify "cantdothis"))))])
     assoc :blockers (open-bz-bugs "757817"))
@@ -158,7 +157,7 @@
                                         :verbs ["Read System Templates"]
                                         :name "stread"}]}]
           :allowed-actions [(navigate-fn :system-templates-page)]
-          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page
+          :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
                                     create-a-st
                                     (fn [] (organization/create (uniqueify "cantdothis")))
@@ -169,7 +168,7 @@
                                         :verbs ["Administer System Templates"]
                                         :name "stmang"}]}]
           :allowed-actions [create-a-st]
-          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page
+          :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page
                                                   :custom-content-providers-tab :sync-status-page :changesets-page)
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env)])
@@ -179,7 +178,7 @@
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
           :allowed-actions [(navigate-fn :users-page)]
-          :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
+          :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page :roles-page
                                                   :content-management-tab)
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env
@@ -192,7 +191,7 @@
                                           :verbs ["Modify Users"]
                                           :name "usermod"}]}]
             :allowed-actions [(fn [] (user/edit user {:new-email "blah@me.com"}))]
-            :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page :roles-page
                                                     :content-management-tab)
                                       (fn [] (let [username (uniqueify "deleteme")]
                                               (user/create username {:password "password" :email "mee@mee.com"})
@@ -205,7 +204,7 @@
                                           :name "userdel"}]}]
             :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
             :allowed-actions [(fn [] (user/delete user))]
-            :disallowed-actions (conj (navigate-all :systems-tab :manage-organizations-page :roles-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :manage-organizations-page :roles-page
                                                     :content-management-tab)
                                       create-a-user)]))
 
@@ -216,7 +215,7 @@
                                            :name "orgaccess"}]}]
             :setup (fn [] (api/create-organization org))
             :allowed-actions [(access-org (@conf/config :admin-org))]
-            :disallowed-actions (conj (navigate-all :systems-tab :sync-status-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                     :custom-content-providers-tab :system-templates-page
                                                     :changesets-page )
                                       (fn [] (organization/switch org))
@@ -227,7 +226,7 @@
                            :permissions [{:resource-type :all 
                                           :name "orgadmin"}]}]
             :setup (fn [] (api/create-organization org))
-            :allowed-actions (conj (navigate-all :systems-tab :sync-status-page
+            :allowed-actions (conj (navigate-all :katello.systems/tab :sync-status-page
                                                    :custom-content-repositories-page :system-templates-page
                                                    :changesets-page )
                                    (access-org org)

@@ -51,7 +51,7 @@
 (sel/template-fns
  {add-repository "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :content-tab
  [:repositories-tab [] (sel/browser mouseOver :repositories)
   [:custom-content-repositories-page [] (sel/browser clickAndWait :custom-content-repositories)
@@ -84,7 +84,7 @@
   [{:keys [provider-name name description]}]
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
   (browser click :add-product)
-  (fill-ajax-form {:product-name-text name
+  (sel/fill-ajax-form {:product-name-text name
                    :product-description-text description}
                   :create-product)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-create)}))
@@ -104,7 +104,7 @@
   [{:keys [provider-name product-name name url]}]
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
   (browser click (add-repository product-name))
-  (fill-ajax-form {:repo-name-text name
+  (sel/fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
@@ -116,7 +116,7 @@
   (nav/go-to :provider-products-repos-page {:provider-name provider-name})
   (browser click (add-repository product-name))
   (browser select :repo-gpg-select gpgkey)
-  (fill-ajax-form {:repo-name-text name
+  (sel/fill-ajax-form {:repo-name-text name
                    :repo-url-text url}
                   :save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))

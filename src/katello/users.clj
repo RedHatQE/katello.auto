@@ -1,5 +1,6 @@
 (ns katello.users
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [navigation :as nav]
                      
@@ -36,7 +37,7 @@
         :all-types                   "all_types"
         :password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"})
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :administer-tab
  [:users-page [] (browser clickAndWait :users)
   [:named-user-page [username] (nav/choose-left-pane ui/user username)
@@ -76,7 +77,7 @@
   ([] (login *session-user* *session-password* {:org *session-org*}))
   ([username password & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
-     (fill-ajax-form {:username-text username
+     (sel/fill-ajax-form {:username-text username
                       :password-text password}
                      :log-in)
      (let [retval (notification/check-for-success {:timeout-ms 20000})
@@ -101,7 +102,7 @@
   (browser click :new-user)
   (let [env-chooser (fn [env] (when env
                                (nav/select-environment-widget env)))]
-    (fill-ajax-form [:user-username-text username
+    (sel/fill-ajax-form [:user-username-text username
                      :user-password-text password
                      :user-confirm-text (or password-confirm password)
                      :user-email-text email

@@ -20,9 +20,13 @@
         :subscriptions-right-nav             "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
         :release-version-text                "system[releaseVer]"})
 
+(sel/template-fns
+ {fetch-applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
+
+
 ;; Nav
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :subscriptions-tab
  [:activation-keys-page [] (browser clickAndWait :activation-keys)
   [:named-activation-key-page [activation-key-name]
@@ -60,3 +64,9 @@
     (browser click (ui/subscription-checkbox subscription)))
   (browser click :add-subscriptions-to-activation-key)
   (notification/check-for-success))
+
+(defn get-subscriptions "Get applied susbscription info from activation key"
+  [name]
+  (nav/go-to :named-activation-key-page {:activation-key-name name})
+  (sel/browser click :applied-subscriptions)
+  (ui/extract-list fetch-applied-subscriptions))

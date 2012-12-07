@@ -62,7 +62,7 @@
 
 ;; Nav
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :content-tab
  [:content-search-page [] (sel/browser clickAndWait :content-search)])
 

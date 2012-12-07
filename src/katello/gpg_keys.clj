@@ -18,7 +18,7 @@
 
 ;; Nav
 
-(nav/graft-page-tree
+(nav/add-subnavigation
  :repositories-tab
  [:gpg-keys-page [] (sel/browser clickAndWait :gpg-keys)
   [:new-gpg-key-page [] (sel/browser click :new-gpg-key)]

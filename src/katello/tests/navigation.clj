@@ -2,20 +2,30 @@
   (:require [test.tree.script :refer :all] 
             (katello [navigation :as nav]
                      [notifications :refer [verify-no-error]]
-                     [ui-tasks :refer :all]
-                     [api-tasks :refer [katello-only]]
-                     [locators :refer [tab-list katello-only-tabs]])))
+                     [api-tasks :refer [katello-only]])))
+
+;; Constants
+
+(def common-tabs '(:roles-page
+                     :users-page 
+                     :katello.systems/page
+                     :activation-keys-page
+                     :katello.systems/by-environment-page))
+
+(def ^{:doc "Tabs that don't exist in headpin"}
+  katello-only-tabs
+  '(:redhat-repositories-page))
 
 ;;; Functions
 
 (defn verify-navigation
-  "Navigates to a tab"
-  [tab]
-  (nav/go-to tab)
+  "Navigates to a page"
+  [page]
+  (nav/go-to page)
   (verify-no-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs
-  (concat (map vector tab-list)
+  (concat (map vector common-tabs)
           (for [t katello-only-tabs]
             (with-meta (vector t) {:blockers katello-only}))))
 

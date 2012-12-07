@@ -85,7 +85,7 @@
        :arglists '([location-kw & [argmap]])}
   go-to (nav/nav-fn page-tree))
 
-(defmacro graft-page-tree
+(defmacro add-subnavigation
   "Convenience for other namespaces to graft their subnavigation onto the main nav tree."
   [parent-graft-point branch]
-  `(swap! page-tree nav/graft ~parent-graft-point (nav/nav-tree ~branch)))
+  `(swap! page-tree nav/add-subnav ~parent-graft-point (nav/nav-tree ~branch)))
