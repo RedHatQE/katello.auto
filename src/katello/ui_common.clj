@@ -242,7 +242,7 @@
   [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
   (nav/go-to (entity-type {:users :users-page 
                            :organizations :katello.organizations/page
-                           :roles :roles-page
+                           :roles :katello.roles/page
                            :subscriptions :redhat-subscriptions-page
                            :gpg-keys :katello.gpg-keys/page
                            :sync-plans :sync-plans-page

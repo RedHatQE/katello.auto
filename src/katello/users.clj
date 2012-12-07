@@ -21,6 +21,7 @@
         :environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
         :user-default-org-select     "org_id[org_id]"
         :save-user-environment       "update_user"
+        :save-user-edit                  "save_password"
         :new-user                    "//a[@id='new']"
         :user-username-text          "user[username]"
         :user-password-text          "password_field" ; use id attr 

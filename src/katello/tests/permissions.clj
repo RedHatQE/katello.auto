@@ -178,7 +178,7 @@
                                         :verbs ["Read Users"]
                                         :name "userread"}]}]
           :allowed-actions [(navigate-fn :users-page)]
-          :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :roles-page
+          :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :katello.roles/page
                                                   :content-management-tab)
                                     (fn [] (organization/create (uniqueify "cantdothis")))
                                     create-an-env
@@ -191,7 +191,7 @@
                                           :verbs ["Modify Users"]
                                           :name "usermod"}]}]
             :allowed-actions [(fn [] (user/edit user {:new-email "blah@me.com"}))]
-            :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :roles-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :katello.roles/page
                                                     :content-management-tab)
                                       (fn [] (let [username (uniqueify "deleteme")]
                                               (user/create username {:password "password" :email "mee@mee.com"})
@@ -204,7 +204,7 @@
                                           :name "userdel"}]}]
             :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
             :allowed-actions [(fn [] (user/delete user))]
-            :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :roles-page
+            :disallowed-actions (conj (navigate-all :katello.systems/tab :katello.organizations/page :katello.roles/page
                                                     :content-management-tab)
                                       create-a-user)]))
 
