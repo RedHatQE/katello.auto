@@ -8,20 +8,20 @@
 ;; Locators
 
 (swap! ui/uimap merge
-       {::new                  "new"
-        ::name-text            "activation_key[name]"
-        ::description-text     "activation_key[description]"
-        ::template-select      "activation_key[system_template_id]"
-        ::save                 "save_key"
-        ::applied-subscriptions               "//a[.='Applied Subscriptions']"
-        ::available-subscriptions             "//a[.='Available Subscriptions']"
-        ::add-subscriptions "//input[@id='subscription_submit_button']"            
-        ::remove               (ui/link "Remove Activation Key")
-        ::subscriptions             "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
-        ::release-version-text                "system[releaseVer]"})
+       {::new                     "new"
+        ::name-text               "activation_key[name]"
+        ::description-text        "activation_key[description]"
+        ::template-select         "activation_key[system_template_id]"
+        ::save                    "save_key"
+        ::applied-subscriptions   "//a[.='Applied Subscriptions']"
+        ::available-subscriptions "//a[.='Available Subscriptions']"
+        ::add-subscriptions       "//input[@id='subscription_submit_button']"            
+        ::remove                  (ui/link "Remove Activation Key")
+        ::subscriptions           "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+        ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
- {subscription-checkbox           "//a[.='%s']/../span/input[@type='checkbox']"
+ {subscription-checkbox       "//a[.='%s']/../span/input[@type='checkbox']"
   fetch-applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 
@@ -53,7 +53,7 @@
   [name]
   (nav/go-to ::named-page {:activation-key-name name})
   (browser click ::remove)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 
 (defn add-subscriptions

@@ -32,7 +32,8 @@
         ::remove                      (ui/link "Remove User")
         ::enable-inline-help-checkbox "user[helptips_enabled]"
         ::clear-disabled-helptips     "clear_helptips"
-        ::password-conflict       "//div[@id='password_conflict' and string-length(.)>0]"})
+        ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
+        ::account                     "//a[@class='header-widget' and contains(@href,'users')]"})
 
 
 (sel/template-fns {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
@@ -69,7 +70,7 @@
   [username]
   (nav/go-to ::named-page {:username username})
   (browser click ::remove)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
 
 (defn assign
@@ -108,7 +109,7 @@
   "Returns the name of the currently logged in user, or nil if logged out."
   []
   (when (logged-in?)
-    (browser getText :account)))
+    (browser getText ::account)))
 
 (defn assign-default-org-and-env 
   "Assigns a default organization and environment to a user"

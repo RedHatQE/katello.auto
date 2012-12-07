@@ -2,8 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
-            ui.navigate
-            (katello [systems :as system] ;; for navigation
+            (katello [systems :as system] ;; must load first for navigation
                      [navigation :as nav]
                      [notifications :as notification]
                      [ui-common :as ui])))
@@ -91,9 +90,9 @@
 (defn remove [group & [{:keys [also-remove-systems?]}]]
   (nav/go-to ::named-page {:system-group-name group})
   (sel/browser click ::remove)
-  (sel/browser click :confirmation-yes)
+  (sel/browser click ::ui/confirmation-yes)
   (sel/browser click (if also-remove-systems?
-                       :confirmation-yes
+                       ::ui/confirmation-yes
                        ::confirm-only-group))
   (notification/check-for-success
    {:match-pred  (notification/request-type? (if also-remove-systems?

@@ -44,7 +44,7 @@
         ::select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
 (nav/add-subnavigation
- :content-tab
+ ::menu/content-tab
  [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
   [::page [] (sel/browser clickAndWait :changesets)
    [::named-environment-page [env-name next-env-name]

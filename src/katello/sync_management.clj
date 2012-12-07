@@ -31,7 +31,7 @@
 ;; Nav
 
 (nav/add-subnavigation
- :content-tab
+ ::menu/content-tab
  [::page [] (browser mouseOver :sync-management)
   [::status-page [] (browser clickAndWait :sync-status)]
   [::plans-page [] (browser clickAndWait :sync-plans)

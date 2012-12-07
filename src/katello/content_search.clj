@@ -62,7 +62,7 @@
 ;; Nav
 
 (nav/add-subnavigation
- :content-tab
+ ::menu/content-tab
  [::page [] (sel/browser clickAndWait :content-search)])
 
 ;; Tasks

@@ -110,7 +110,7 @@
   [name]
   (nav/go-to ::named-page {:role-name name})
   (sel/browser click ::remove)
-  (sel/browser click :confirmation-yes)
+  (sel/browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 

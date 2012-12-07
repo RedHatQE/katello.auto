@@ -43,7 +43,7 @@
   (if (browser isElementPresent ::remove)
     (browser click ::remove)
     (throw+ {:type :env-cant-be-deleted :env-name env-name}))
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
 (defn edit

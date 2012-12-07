@@ -47,5 +47,5 @@
   [gpg-key-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
   (sel/browser click ::remove )
-  (sel/browser click :confirmation-yes)
+  (sel/browser click ::ui/confirmation-yes)
   (notification/check-for-success))

@@ -60,7 +60,7 @@
   [org-name]
   (nav/go-to ::named-page {:org-name org-name})
   (browser click ::remove)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success
    {:match-pred (notification/request-type? :org-destroy)})   ;queueing success
   (browser refresh)

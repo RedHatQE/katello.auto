@@ -45,18 +45,15 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- :top-level
- [::tab [] (sel/browser mouseOver :systems)
-  [::page [] (sel/browser clickAndWait :all)
-   [::new-page [] (sel/browser click ::new)]
-   [::subscriptions-page [system-name] (nav/choose-left-pane system-name)
-    [::named-page [] (sel/browser click :details)]
-    [::named-page-content [] (sel/browser click ::content-select)]]]
+(nav/add-subnav-multiple
+ ::page
+ [[::new-page [] (sel/browser click ::new)]
+  [::subscriptions-page [system-name] (nav/choose-left-pane system-name)
+   [::named-page [] (sel/browser click :details)]
+   [::named-page-content [] (sel/browser click ::content-select)]]
   [::by-environment-page [] (sel/browser clickAndWait :by-environments)
    [::environment-page [env-name] (nav/select-environment-widget env-name)
-    [::named-by-environment-page [system-name]
-     (nav/choose-left-pane system-name)]]]])
+    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]]])
 
 ;; Tasks
 

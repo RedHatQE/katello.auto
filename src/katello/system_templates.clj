@@ -27,7 +27,7 @@
 ;; Nav
 
 (nav/add-subnavigation
- :content-tab
+ ::menu/content-tab
  [::page [] (sel/browser clickAndWait :system-templates)
   [::named-page [template-name] (sel/browser click (ui/slide-link template-name))]
   [::new-page [] (sel/browser click ::new)]])

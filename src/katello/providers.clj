@@ -50,7 +50,7 @@
  {add-repository "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
 (nav/add-subnavigation
- :content-tab
+ ::menu/content-tab
  [:repositories-tab [] (sel/browser mouseOver :repositories)
   [:custom-content-repositories-page [] (sel/browser clickAndWait :custom-content-repositories)
    [::new-page [] (sel/browser click ::new)]
@@ -93,7 +93,7 @@
   (nav/go-to ::named-product-page {:provider-name provider-name
                                    :product-name name})
   (browser click ::remove-product)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
 
 (defn add-repo
@@ -126,7 +126,7 @@
                                 :product-name product-name
                                 :repo-name name})
   (browser click ::remove-repository)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-destroy)}))
 
 (defn delete
@@ -134,7 +134,7 @@
   [name]
   (nav/go-to ::named-page {:provider-name name})
   (browser click ::provider)
-  (browser click :confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-destroy)}))
 
 (defn edit

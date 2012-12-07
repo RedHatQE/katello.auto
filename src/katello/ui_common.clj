@@ -17,8 +17,6 @@
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
-(declare search)
-
 ;; Locators
 
 (sel/template-fns
@@ -32,7 +30,7 @@
   tab                             "link=%s"
   textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
 
-
+;; Tasks
 
 (defn- tabs
   "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
@@ -75,18 +73,18 @@
   (sel/browser click (a-toggler associated-text on?)))
 
 (def common
-  {:save-inplace-edit             "//button[.='Save']"
-   :confirmation-dialog           "//div[contains(@class, 'confirmation')]"
-   :confirmation-yes              "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+  {::save-inplace-edit             "//button[.='Save']"
+   ::confirmation-dialog           "//div[contains(@class, 'confirmation')]"
+   ::confirmation-yes              "//div[contains(@class, 'confirmation')]//span[.='Yes']"
    :confirmation-no               "//div[contains(@class, 'confirmation')]//span[.='No']"
-   :search-bar                    "search"
-   :search-menu                   "//form[@id='search_form']//span[@class='arrow']"
-   :search-save-as-favorite       "search_favorite_save"
-   :search-clear-the-search       "search_clear"
-   :search-submit                 "//button[@form='search_form']"
+   ::search-bar                    "search"
+   ::search-menu                   "//form[@id='search_form']//span[@class='arrow']"
+   ::search-save-as-favorite       "search_favorite_save"
+   ::search-clear-the-search       "search_clear"
+   ::search-submit                 "//button[@form='search_form']"
    ;;main banner
-   :account                       "//a[@class='header-widget' and contains(@href,'users')]"
-   :log-out                       "//a[normalize-space(.)='Log Out']"})
+   
+   ::log-out                       "//a[normalize-space(.)='Log Out']"})
 
 (def all-tabs
   (tabs
@@ -183,7 +181,7 @@
            (if-not (nil? val)
              (do (activate-in-place loc)
                  (sel/fill-item loc val)
-                 (browser click :save-inplace-edit)
+                 (browser click ::save-inplace-edit)
                  (notification/check-for-success))))))
 
 (defn extract-list [f]
@@ -200,8 +198,8 @@
   (extract-list left-pane-field-list))
 
 (defn clear-search []
-  (sel/->browser (click :search-menu)
-                 (click :search-clear-the-search)))
+  (sel/->browser (click ::search-menu)
+                 (click ::search-clear-the-search)))
 
 (defn search
   "Search for criteria in entity-type, scope not yet implemented.
@@ -217,24 +215,24 @@
                            :gpg-keys :katello.gpg-keys/page
                            :sync-plans :katello.sync-management/plans-page
                            :systems  :katello.systems/page
-                           :system-groups :system-groups-page
+                           :system-groups :katello.system-groups/page
                            :activation-keys :katello.activation-keys/page
                            :changeset-promotion-history :katello.changesets/history-page}))
   (if with-favorite
-    (sel/->browser (click :search-menu)
+    (sel/->browser (click ::search-menu)
                    (click (search-favorite with-favorite)))
-    (do (browser type :search-bar criteria)
+    (do (browser type ::search-bar criteria)
         (when add-as-favorite
-          (sel/->browser (click :search-menu)
-                         (click :search-save-as-favorite)))
-        (browser click :search-submit)))
+          (sel/->browser (click ::search-menu)
+                         (click ::search-save-as-favorite)))
+        (browser click ::search-submit)))
   (notification/verify-no-error {:timeout-ms 2000}))
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
   user is logged in."
   []
-  (browser isElementPresent :log-out))
+  (browser isElementPresent ::log-out))
 
 (defn logged-out?
   "Returns true if the login page is displayed."
@@ -245,7 +243,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (browser clickAndWait :log-out)))
+    (browser clickAndWait ::log-out)))
 
 (defn enable-redhat-repositories
   "Enable the given list of repos in the current org."
@@ -269,6 +267,6 @@
   [package-filter-name]
   (nav/go-to :named-package-filter-page {:package-filter-name package-filter-name})
   (browser click :remove-package-filter-key )
-  (browser click :confirmation-yes)
+  (browser click ::confirmation-yes)
   (notification/check-for-success))
 
