@@ -10,50 +10,52 @@
 ;; Locators
 
 (sel/template-fns
- {default-org-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
-  org-switcher     "//div[@id='orgbox']//a[.='%s']"})
+ {default-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
+  switcher-link     "//div[@id='orgbox']//a[.='%s']"})
 
 (swap! ui/uimap merge
-       {:new-organization          "//a[@id='new']"
-        :create-organization       "organization_submit"
-        :org-name-text             "organization[name]"
-        :org-description-text      "organization[description]"
-        :org-environments          (ui/link "Environments")
-        :edit-organization         (ui/link "Edit")
-        :remove-organization       (ui/link "Remove Organization")
-        :org-initial-env-name-text "environment[name]"
-        :org-initial-env-desc-text "environment[description]"})
+       {::new                   "//a[@id='new']"
+        ::create                "organization_submit"
+        ::name-text             "organization[name]"
+        ::description-text      "organization[description]"
+        ::environments          (ui/link "Environments")
+        ::edit                  (ui/link "Edit")
+        ::remove                (ui/link "Remove Organization")
+        ::initial-env-name-text "environment[name]"
+        ::initial-env-desc-text "environment[description]"})
+
+;; Nav
 
 (nav/add-subnavigation
  :administer-tab
- [:manage-organizations-page [] (sel/browser clickAndWait :manage-organizations)
-  [:new-organization-page [] (sel/browser click :new-organization)]
-  [:named-organization-page [org-name] (nav/choose-left-pane  org-name)]])
+ [::page [] (sel/browser clickAndWait :manage-organizations)
+  [::new-page [] (sel/browser click ::new)]
+  [::named-page [org-name] (nav/choose-left-pane  org-name)]])
 
 (nav/add-subnavigation
  :top-level
- [:organizations-page-via-org-switcher [] (sel/browser click :org-switcher)
-  [:organizations-link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
-   [:new-organization-page-via-org-switcher [] (sel/browser click :new-organization)]]])
+ [::page-via-org-switcher [] (sel/browser click :org-switcher)
+  [::link-via-org-switcher [] (sel/browser clickAndWait :manage-organizations-link)
+   [::new-page-via-org-switcher [] (sel/browser click ::new)]]])
 
 ;; Tasks
 
 (defn create
   "Creates an organization with the given name and optional description."
   [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
-  (nav/go-to (if go-through-org-switcher :new-organization-page-via-org-switcher :new-organization-page))
-  (sel/fill-ajax-form {:org-name-text name
-                   :org-description-text description
-                   :org-initial-env-name-text initial-env-name
-                   :org-initial-env-desc-text initial-env-description}
-                  :create-organization)
+  (nav/go-to (if go-through-org-switcher ::new-page-via-org-switcher ::new-page))
+  (sel/fill-ajax-form {::name-text name
+                       ::description-text description
+                       ::initial-env-name-text initial-env-name
+                       ::initial-env-desc-text initial-env-description}
+                      ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 
 (defn delete
   "Deletes the named organization."
   [org-name]
-  (nav/go-to :named-organization-page {:org-name org-name})
-  (browser click :remove-organization)
+  (nav/go-to ::named-page {:org-name org-name})
+  (browser click ::remove)
   (browser click :confirmation-yes)
   (notification/check-for-success
    {:match-pred (notification/request-type? :org-destroy)})   ;queueing success
@@ -64,8 +66,8 @@
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
   [org-name & {:keys [description]}]
-  (nav/go-to :named-organization-page {:org-name org-name})
-  (in-place-edit {:org-description-text description}))
+  (nav/go-to ::named-page {:org-name org-name})
+  (in-place-edit {::description-text description}))
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
@@ -89,12 +91,12 @@
          (let [current-default (try (browser getText :default-org)
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
-             (browser click (default-org-star (if (= default-org :none)
-                                                current-default
-                                                default-org)))
+             (browser click (default-star (if (= default-org :none)
+                                            current-default
+                                            default-org)))
              (notification/check-for-success))))
        (when org-name
-         (browser clickAndWait (org-switcher org-name))))))
+         (browser clickAndWait (switcher-link org-name))))))
 
 (defn before-test-switch
   "A pre-made fn to switch to the session org, meant to be used in

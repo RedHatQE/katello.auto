@@ -79,7 +79,7 @@
              tree to navigate to. The 2nd optional argument is a
              mapping of keywords to strings, if any arguments are
              needed to navigate there.
-             Example: (nav/go-to :named-organization-page {:org-name
+             Example: (nav/go-to :katello.organizations/named-page {:org-name
              'My org'}) See also page-tree for all the places that can
              be navigated to."
        :arglists '([location-kw & [argmap]])}

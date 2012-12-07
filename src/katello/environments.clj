@@ -18,8 +18,8 @@
         ::remove            (ui/link "Remove Environment")
         ::prior-select-edit "kt_environment[prior]" })
 
-(nav/graft :named-organization-page [::new-page [] (browser click ::new)])
-(nav/graft :named-organization-page [::named-page [env-name] (browser click (ui/environment-link env-name))])
+(nav/graft :katello.organizations/named-page [::new-page [] (browser click ::new)])
+(nav/graft :katello.organizations/named-page [::named-page [env-name] (browser click (ui/environment-link env-name))])
 
 ;; Tasks
 
