@@ -4,10 +4,6 @@
                      [notifications :as notification] 
                      [ui-common :as ui])))
 
-;;
-;; Roles
-;;
-
 ;; Locators
 
 (swap! ui/uimap merge

@@ -114,7 +114,7 @@
                            :interval "hourly"
                            :start-date (java.util.Date.)})
         (sync/edit-plan myplan-name {:new-name new-name })
-        (nav/go-to :named-sync-plan-page {:sync-plan-name new-name})))
+        (nav/go-to :katello.sync-management/named-plan-page {:sync-plan-name new-name})))
 
     
     (deftest "Sync plan validation"

@@ -52,7 +52,7 @@
     (with-org org-name
       (organization/switch)
       (enable-redhat-repositories enable-repos)
-      (nav/go-to :sync-status-page)
+      (nav/go-to :katello.sync-management/status-page)
       (verify-all-repos-not-synced enable-repos))))
 
 (defn step-promote-redhat-content-into-test-env [{:keys [org-name env-name products]}]

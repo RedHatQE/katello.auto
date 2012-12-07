@@ -10,35 +10,35 @@
 ;; Locators
 
 (swap! ui/uimap merge
-  {:apply-sync-schedule        "apply_button"
-   :new-sync-plan              "new"
-   :sync-plan-name-text        "sync_plan[name]"
-   :sync-plan-description-text "sync_plan[description]"
-   :sync-plan-interval-select  "sync_plan[interval]"
-   :sync-plan-date-text        "sync_plan[plan_date]"
-   :sync-plan-time-text        "sync_plan[plan_time]"
-   :save-sync-plan             "plan_save"})
+       {::apply-schedule        "apply_button"
+        ::new-plan              "new"
+        ::plan-name-text        "sync_plan[name]"
+        ::plan-description-text "sync_plan[description]"
+        ::plan-interval-select  "sync_plan[interval]"
+        ::plan-date-text        "sync_plan[plan_date]"
+        ::plan-time-text        "sync_plan[plan_time]"
+        ::save-plan             "plan_save"
+        ::synchronize-now       "sync_button"})
 
 (sel/template-fns
- {product-schedule       "//div[normalize-space(.)='%s']/following-sibling::div[1]"
-  provider-sync-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  provider-sync-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]"
-  repo-enable-checkbox   "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
-  sync-plan              "//div[@id='plans']//div[normalize-space(.)='%s'"
-  schedule               "//div[normalize-space(.)='%s']"
-  })
+ {product-schedule     "//div[normalize-space(.)='%s']/following-sibling::div[1]"
+  provider-checkbox    "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+  provider-progress    "//tr[td/label[normalize-space(.)='%s']]/td[5]"
+  repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
+  plan                 "//div[@id='plans']//div[normalize-space(.)='%s'"
+  schedule             "//div[normalize-space(.)='%s']"})
 
 ;; Nav
 
 (nav/add-subnavigation
  :content-tab
- [:sync-management-page [] (browser mouseOver :sync-management)
-  [:sync-status-page [] (browser clickAndWait :sync-status)]
-  [:sync-plans-page [] (browser clickAndWait :sync-plans)
-   [:named-sync-plan-page [sync-plan-name]
+ [::page [] (browser mouseOver :sync-management)
+  [::status-page [] (browser clickAndWait :sync-status)]
+  [::plans-page [] (browser clickAndWait :sync-plans)
+   [::named-plan-page [sync-plan-name]
     (nav/choose-left-pane sync-plan-name)]
-   [:new-sync-plan-page [] (browser click :new-sync-plan)]]
-  [:sync-schedule-page [] (browser clickAndWait :sync-schedule)]])
+   [::new-plan-page [] (browser click ::new-plan)]]
+  [::schedule-page [] (browser clickAndWait :sync-schedule)]])
 
 ;; Tasks
 
@@ -59,16 +59,15 @@
   tests."
   [{:keys [name description interval start-date
            start-date-literal start-time-literal] :as m}]
-  (nav/go-to :new-sync-plan-page)
+  (nav/go-to ::new-plan-page)
   (let [[date time] (split-date m)]
-    (fill-ajax-form {:sync-plan-name-text name
-                     :sync-plan-description-text description
-                     :sync-plan-interval-select interval
-                     :sync-plan-time-text time
-                     :sync-plan-date-text date}
-                    :save-sync-plan)
+    (fill-ajax-form {::plan-name-text name
+                     ::plan-description-text description
+                     ::plan-interval-select interval
+                     ::plan-time-text time
+                     ::plan-date-text date}
+                    ::save-plan)
     (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
-
 
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also
@@ -76,32 +75,32 @@
   [name {:keys [new-name
                 description interval start-date start-date-literal
                 start-time-literal] :as m}]
-  (nav/go-to :named-sync-plan-page {:sync-plan-name name})
+  (nav/go-to ::named-plan-page {:sync-plan-name name})
   (let [[date time] (split-date m)]
-    (in-place-edit {:sync-plan-name-text new-name
-                    :sync-plan-description-text description
-                    :sync-plan-interval-select interval
-                    :sync-plan-time-text time
-                    :sync-plan-date-text date}))
+    (in-place-edit {::plan-name-text new-name
+                    ::plan-description-text description
+                    ::plan-interval-select interval
+                    ::plan-time-text time
+                    ::plan-date-text date}))
   (notification/check-for-success {:match-pred (notification/request-type? :sync-update)}))
 
 (defn schedule
   "Schedules the given list of products to be synced using the given
   sync plan name."
   [{:keys [products plan-name]}]
-  (nav/go-to :sync-schedule-page)
+  (nav/go-to ::schedule-page)
   (doseq [product products]
     (browser click (schedule product)))
-  (browser click (sync-plan plan-name))
-  (browser clickAndWait :apply-sync-schedule )
+  (browser click (plan plan-name))
+  (browser clickAndWait ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
-                                     ;don't match 
+                                        ;don't match 
 
 (defn current-plan
   "Returns a map of what sync plan a product is currently scheduled
   for. nil if UI says 'None'"
   [product-names]
-  (nav/go-to :sync-schedule-page)
+  (nav/go-to ::schedule-page)
   (zipmap product-names
           (replace {"None" nil}
                    (doall (for [product-name product-names]
@@ -114,26 +113,25 @@
   "Returns final status if complete. If sync is still in progress, not
   synced, or queued, returns nil."
   [product]
-  (some #{(browser getText (provider-sync-progress product))}
+  (some #{(browser getText (provider-progress product))}
         (vals messages)))
 
 (defn success? "Returns true if given sync result is a success."
   [res]
   (= res (:ok messages)))
 
-
 (defn perform-sync
   "Syncs the given list of repositories. Also takes an optional
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
-  (nav/go-to :sync-status-page)
+  (nav/go-to ::status-page)
   (doseq [repo repos]
-    (browser check (provider-sync-checkbox repo)))
-  (browser click :synchronize-now)
+    (browser check (provider-checkbox repo)))
+  (browser click ::synchronize-now)
   (browser sleep 10000)
   (zipmap repos (for [repo repos]
-                     (sel/loop-with-timeout (or timeout 120000) []
-                       (or (complete-status repo)
-                           (do (Thread/sleep 10000)
-                               (recur)))))))
+                  (sel/loop-with-timeout (or timeout 120000) []
+                    (or (complete-status repo)
+                        (do (Thread/sleep 10000)
+                            (recur)))))))

@@ -165,11 +165,7 @@
 
                 
                 ;;tabs with special chars in name
-                :sub-organizations (tab "Sub-Organizations")
-                
-
-                ;;Sync Management subtab
-                :synchronize-now   "sync_button"})))
+                :sub-organizations (tab "Sub-Organizations")})))
 
 
 ;; Tells the clojure selenium client where to look up keywords to get
@@ -245,7 +241,7 @@
                            :roles :katello.roles/page
                            :subscriptions :redhat-subscriptions-page
                            :gpg-keys :katello.gpg-keys/page
-                           :sync-plans :sync-plans-page
+                           :sync-plans :katello.sync-management/plans-page
                            :systems  :katello.systems/page
                            :system-groups :system-groups-page
                            :activation-keys :katello.activation-keys/page
