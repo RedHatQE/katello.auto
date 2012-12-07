@@ -6,24 +6,20 @@
                      [notifications :as notification] 
                      [ui-common :as ui])))
 
-;;
-;; Environments
-;;
-
 ;; Locators
 
 (swap! ui/uimap merge
-       {:env-name-text             "kt_environment[name]"
-        :env-label-text             "kt_environment[label]"
-        :env-description-text      "kt_environment[description]"
-        :prior-environment         "kt_environment[prior]"
-        :create-environment        "//input[@value='Create']"
-        :new-environment           "//div[normalize-space(.)='Add New Environment']"
-        :remove-environment        (ui/link "Remove Environment")
-        :env-prior-select-edit     "kt_environment[prior]" })
+       {::name-text         "kt_environment[name]"
+        ::label-text        "kt_environment[label]"
+        ::description-text  "kt_environment[description]"
+        ::prior             "kt_environment[prior]"
+        ::create            "//input[@value='Create']"
+        ::new               "//div[normalize-space(.)='Add New Environment']"
+        ::remove            (ui/link "Remove Environment")
+        ::prior-select-edit "kt_environment[prior]" })
 
-(nav/graft :named-organization-page [:new-environment-page [] (browser click :new-environment)])
-(nav/graft :named-organization-page [:named-environment-page [env-name] (browser click (ui/environment-link env-name))])
+(nav/graft :named-organization-page [::new-page [] (browser click ::new)])
+(nav/graft :named-organization-page [::named-page [env-name] (browser click (ui/environment-link env-name))])
 
 ;; Tasks
 
@@ -32,20 +28,20 @@
    the organization name to create the environment in, the prior
    environment, and an optional description."
   [name {:keys [org-name description prior-env]}]
-  (nav/go-to :new-environment-page {:org-name org-name})
-  (fill-ajax-form {:env-name-text name
-                   :env-description-text description
-                   :prior-environment prior-env}
-                  :create-environment)
+  (nav/go-to ::new-page {:org-name org-name})
+  (fill-ajax-form {::name-text name
+                   ::description-text description
+                   ::prior prior-env}
+                  ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
 
 (defn delete
   "Deletes an environment from the given organization."
   [env-name {:keys [org-name]}]
-  (nav/go-to :named-environment-page {:org-name org-name
-                                      :env-name env-name})
-  (if (browser isElementPresent :remove-environment)
-    (browser click :remove-environment)
+  (nav/go-to ::named-page {:org-name org-name
+                           :env-name env-name})
+  (if (browser isElementPresent ::remove)
+    (browser click ::remove)
     (throw+ {:type :env-cant-be-deleted :env-name env-name}))
   (browser click :confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
@@ -55,9 +51,9 @@
    containing the name of the environment's organization, and optional
    fields: a new description."
   [env-name {:keys [org-name description]}]
-  (nav/go-to :named-environment-page {:org-name org-name
-                                      :env-name env-name})
-  (in-place-edit {:env-description-text description}))
+  (nav/go-to ::named-page {:org-name org-name
+                           :env-name env-name})
+  (in-place-edit {::description-text description}))
 
 (defn create-path
   "Creates a path of environments in the given org. All the names in
