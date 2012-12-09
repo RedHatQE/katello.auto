@@ -4,11 +4,12 @@
             [test.assert :as assert]
             (katello [navigation :as nav]
                      [notifications :as notification]
-                     [ui-common :as ui])))
+                     [ui-common :as ui]
+                     [menu :as menu])))
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                         "new"
         ::create                      "system_submit"
         ::name-text                   "system[name]"
@@ -47,13 +48,13 @@
 
 (nav/add-subnav-multiple
  ::page
- [[::new-page [] (sel/browser click ::new)]
-  [::subscriptions-page [system-name] (nav/choose-left-pane system-name)
-   [::named-page [] (sel/browser click :details)]
-   [::named-page-content [] (sel/browser click ::content-select)]]
-  [::by-environment-page [] (sel/browser clickAndWait :by-environments)
-   [::environment-page [env-name] (nav/select-environment-widget env-name)
-    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]]])
+ [::new-page [] (sel/browser click ::new)]
+ [::subscriptions-page [system-name] (nav/choose-left-pane system-name)
+  [::named-page [] (sel/browser click :details)]
+  [::named-page-content [] (sel/browser click ::content-select)]]
+ [::by-environment-page [] (sel/browser clickAndWait :by-environments)
+  [::environment-page [env-name] (nav/select-environment-widget env-name)
+   [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
 
 ;; Tasks
 

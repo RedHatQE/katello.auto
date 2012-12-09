@@ -9,7 +9,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::apply-schedule        "apply_button"
         ::new-plan              "new"
         ::plan-name-text        "sync_plan[name]"
@@ -23,8 +23,7 @@
 (sel/template-fns
  {product-schedule     "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox    "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  provider-progress    "//tr[td/label[normalize-space(.)='%s']]/td[5]"
-  repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input" 
+  provider-progress    "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
   plan                 "//div[@id='plans']//div[normalize-space(.)='%s'"
   schedule             "//div[normalize-space(.)='%s']"})
 

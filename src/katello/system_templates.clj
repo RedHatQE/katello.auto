@@ -12,7 +12,7 @@
   eligible-category "//div[@id='content_tree']//div[normalize-space()='%s']"
   product           "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'%s')]"})
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                     "new"
         ::name-text               "system_template[name]"
         ::description-text        "system_template[description]"

@@ -20,9 +20,8 @@
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
   })
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::products-category           (content-category "products")
-        ::expand-path                 "path-collapsed"
         ::errata-category             (content-category "errata")
         ::packages-category           (content-category "packages")
         ::kickstart-trees-category    (content-category "kickstart trees")

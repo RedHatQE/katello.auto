@@ -20,7 +20,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::type-select                "//select[@id='content']"
         ::add-prod                   "add_product"
         ::add-repo                   "add_repo"

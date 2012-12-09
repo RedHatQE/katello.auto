@@ -1,13 +1,14 @@
 (ns katello.activation-keys
   (:require (katello [navigation :as nav]
                      [notifications :as notification]
-                     [ui-common :as ui])
+                     [ui-common :as common]
+                     [ui :as ui])
             [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                     "new"
         ::name-text               "activation_key[name]"
         ::description-text        "activation_key[description]"
@@ -22,7 +23,7 @@
 
 (sel/template-fns
  {subscription-checkbox       "//a[.='%s']/../span/input[@type='checkbox']"
-  fetch-applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
+  applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 
 ;; Nav
@@ -70,4 +71,4 @@
   [name]
   (nav/go-to ::named-page {:activation-key-name name})
   (sel/browser click ::applied-subscriptions)
-  (ui/extract-list fetch-applied-subscriptions))
+  (common/extract-list applied-subscriptions))

@@ -8,7 +8,7 @@
                      [ui-common :as ui])))
 
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                   "//a[@id='new']"
         ::create                "group_save"
         ::name-text             "system_group[name]"

@@ -6,7 +6,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::name-text        "gpg_key_name"
         ::file-upload-text "gpg_key_content_upload"
         ::upload-button    "upload_gpg_key"

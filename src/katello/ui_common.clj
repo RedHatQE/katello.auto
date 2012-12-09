@@ -4,43 +4,18 @@
             [com.redhat.qe.auto.selenium.selenium
              :refer [browser]]
             (katello [navigation :as nav]
+                     [ui :as ui]
                      [tasks         :refer :all] 
                      [notifications :as notification] 
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
-            [inflections.core    :refer [pluralize]] 
-            (clojure [string     :refer [capitalize replace-first]] 
-                     [set        :refer [union]]
-                     [string     :as string]))
+            [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
-;; Locators
-
-(sel/template-fns
- {button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"  
-  editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
-  environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
-  left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
-  link                            "link=%s"
-  search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
-  slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
-  tab                             "link=%s"
-  textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
-
-;; Tasks
-
-(defn- tabs
-  "Takes a list of keywords, and creates mapping eg: {:my-tab 'link=My Tab'}"
-  [kws]
-  (->> kws
-     (map (comp tab
-                capitalize-all
-                #(.replace % "-" " ")
-                name))
-     (zipmap kws)))
+;; Nav fns
 
 (defn inactive-edit-field
   "Takes a locator for an active in-place edit field, returns the
@@ -48,106 +23,9 @@
   [loc]
   (format "//div[@name='%1s']" (sel/sel-locator loc)))
 
-(defn content-search-expand-strategy
-  "Returns a locator strategy function for the expansion of the
-  current row. The function returned will get any cell by index
-  number."
-  [current-loc n]
-  (sel/template (format "%s/../ul[%s]/li[$1]" current-loc n)))
-
-;;nav tricks
-
-
-(defn toggler
-  "Returns a function that returns a locator for the given on/off text
-   and locator strategy. Used for clicking things like +Add/Remove for
-   items in changesets or permission lists."
-  [[on-text off-text] loc-strategy]
-  (fn [associated-text on?]
-    (loc-strategy (if on? on-text off-text) associated-text)))
-
-(def add-remove ["+ Add" "Remove"])
-
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
   (sel/browser click (a-toggler associated-text on?)))
-
-(def common
-  {::save-inplace-edit             "//button[.='Save']"
-   ::confirmation-dialog           "//div[contains(@class, 'confirmation')]"
-   ::confirmation-yes              "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-   :confirmation-no               "//div[contains(@class, 'confirmation')]//span[.='No']"
-   ::search-bar                    "search"
-   ::search-menu                   "//form[@id='search_form']//span[@class='arrow']"
-   ::search-save-as-favorite       "search_favorite_save"
-   ::search-clear-the-search       "search_clear"
-   ::search-submit                 "//button[@form='search_form']"
-   ;;main banner
-   
-   ::log-out                       "//a[normalize-space(.)='Log Out']"})
-
-(def all-tabs
-  (tabs
-   (flatten
-    '[:administer
-      [:users
-       :roles
-       :manage-organizations]
-      :dashboard
-      :content
-      [:subscriptions
-       [:red-hat-subscriptions
-        :activation-keys
-        :import-history]
-       :repositories
-       [:custom-content-repositories
-        :red-hat-repositories
-        :package-filters
-        ;; GPG Keys is defined below, because it's all caps
-        ]
-       :sync-management
-       [:sync-status
-        :sync-plans
-        :sync-schedule]
-       :content-search
-       :system-templates
-       :changeset-management
-       [:changesets
-        :changeset-history]]
-      :systems
-      [:all
-       :by-environments
-       :system-groups]
-      
-
-      ;;3rd level subtabs
-      :create
-      :details
-      :registered
-      :groups
-      :general
-      :facts
-      :packages])))
-
-(defonce ^{:doc "All the selenium locators for the Katello UI. Maps a
-  keyword to the selenium locator. You can pass the keyword to
-  selenium just the same as you would the locator string. See also
-  SeleniumLocatable protocol."}
-  uimap
-  (atom (merge all-tabs common
-               {
-                ;;tabs with special chars in name
-                :sub-organizations (tab "Sub-Organizations")})))
-
-
-;; Tells the clojure selenium client where to look up keywords to get
-;; real selenium locators (in uimap in this namespace).
-
-(extend-protocol sel/SeleniumLocatable
-  clojure.lang.Keyword
-  (sel/sel-locator [k] (@uimap k))
-  String
-  (sel/sel-locator [x] x))
 
 ;;UI tasks
 
@@ -181,7 +59,7 @@
            (if-not (nil? val)
              (do (activate-in-place loc)
                  (sel/fill-item loc val)
-                 (browser click ::save-inplace-edit)
+                 (browser click ::ui/save-inplace-edit)
                  (notification/check-for-success))))))
 
 (defn extract-list [f]
@@ -195,11 +73,11 @@
                                        (catch SeleniumException e nil)))))))
 
 (defn extract-left-pane-list []
-  (extract-list left-pane-field-list))
+  (extract-list ui/left-pane-field-list))
 
 (defn clear-search []
-  (sel/->browser (click ::search-menu)
-                 (click ::search-clear-the-search)))
+  (sel/->browser (click ::ui/search-menu)
+                 (click ::ui/search-clear-the-search)))
 
 (defn search
   "Search for criteria in entity-type, scope not yet implemented.
@@ -219,20 +97,20 @@
                            :activation-keys :katello.activation-keys/page
                            :changeset-promotion-history :katello.changesets/history-page}))
   (if with-favorite
-    (sel/->browser (click ::search-menu)
-                   (click (search-favorite with-favorite)))
-    (do (browser type ::search-bar criteria)
+    (sel/->browser (click ::ui/search-menu)
+                   (click (ui/search-favorite with-favorite)))
+    (do (browser type ::ui/search-bar criteria)
         (when add-as-favorite
-          (sel/->browser (click ::search-menu)
-                         (click ::search-save-as-favorite)))
-        (browser click ::search-submit)))
+          (sel/->browser (click ::ui/search-menu)
+                         (click ::ui/search-save-as-favorite)))
+        (browser click ::ui/search-submit)))
   (notification/verify-no-error {:timeout-ms 2000}))
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
   user is logged in."
   []
-  (browser isElementPresent ::log-out))
+  (browser isElementPresent ::ui/log-out))
 
 (defn logged-out?
   "Returns true if the login page is displayed."
@@ -243,15 +121,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (browser clickAndWait ::log-out)))
-
-(defn enable-redhat-repositories
-  "Enable the given list of repos in the current org."
-  [repos]
-  (nav/go-to :redhat-repositories-page)
-  (doseq [repo repos]
-    (browser check (repo-enable-checkbox repo))))
-
+    (browser clickAndWait ::ui/log-out)))
 
 (defn create-package-filter [name & [{:keys [description]}]]
   "Creates new Package Filter"
@@ -267,6 +137,6 @@
   [package-filter-name]
   (nav/go-to :named-package-filter-page {:package-filter-name package-filter-name})
   (browser click :remove-package-filter-key )
-  (browser click ::confirmation-yes)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 

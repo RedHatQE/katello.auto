@@ -1,6 +1,6 @@
 (ns katello.navigation
-  (:require [katello.conf :as conf]
-            [katello.ui-common :as ui]
+  (:require (katello [conf :as conf]
+                     [ui :as ui])
             [ui.navigate :as nav]
             [com.redhat.qe.auto.selenium.selenium :as sel]))
 
@@ -21,7 +21,7 @@
       (sel/browser click (environment-breadcrumb env-name next-env-name))
       (when wait (sel/browser waitForPageToLoad))))
 
-(defn search [search-term]
+(defn search-here [search-term]
   (sel/fill-form {:search-bar search-term}
              :search-submit (constantly nil)))
 
@@ -45,7 +45,7 @@
      (let [loc (templ item)]
        (try (sel/browser click loc)
             (catch com.thoughtworks.selenium.SeleniumException se
-              (do (search item)
+              (do (search-here item)
                   (sel/browser click loc)))))))
 
 (defonce
@@ -59,7 +59,7 @@
   page-tree
   (atom
    (nav/nav-tree
-    [:top-level [] (if (or (not (sel/browser isElementPresent ::ui/log-out))
+    [::top-level [] (if (or (not (sel/browser isElementPresent ::ui/log-out))
                            (sel/browser isElementPresent ::ui/confirmation-dialog))
                      (sel/browser open (@conf/config :server-url)))])))
 
@@ -81,5 +81,11 @@
   `(swap! page-tree nav/add-subnav ~parent-graft-point (nav/nav-tree ~branch)))
 
 (defmacro add-subnav-multiple
-  [parent-graft-point branches]
-  `(swap! page-tree nav/add-subnav-multiple ~parent-graft-point (nav/nav-tree ~branches)))
+  [parent-graft-point & branches]
+  `(swap! page-tree nav/add-subnav-multiple ~parent-graft-point
+          (list ~@(for [branch branches]
+                    `(nav/nav-tree ~branch)))))
+
+;; add the menu
+(comment (apply swap! page-tree nav/add-subnav-multiple
+        menu/tree))

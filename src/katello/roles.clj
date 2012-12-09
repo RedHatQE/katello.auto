@@ -6,7 +6,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                             "//a[@id='new']"
         ::name-text                       "role[name]"
         ::description-text                "role[description]"

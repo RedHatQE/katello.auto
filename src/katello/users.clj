@@ -15,7 +15,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
         ::environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
         ::default-org-select          "org_id[org_id]"
@@ -41,12 +41,12 @@
 
 ;; Nav
 
-(nav/add-subnavigation
+(nav/add-subnav-multiple
  :administer-tab
- [::page [] (browser clickAndWait :users)
-  [::named-page [username] (nav/choose-left-pane user-list-item username)
-   [::environments-page [] (browser click ::environments-subsubtab)]
-   [::roles-permissions-page [] (browser click ::roles-subsubtab)]]])
+ ::page [] 
+ [::named-page [username] (nav/choose-left-pane user-list-item username)
+  [::environments-page [] (browser click ::environments-subsubtab)]
+  [::roles-permissions-page [] (browser click ::roles-subsubtab)]])
 
 ;; Tasks
 

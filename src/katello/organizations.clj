@@ -13,7 +13,7 @@
  {default-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
   switcher-link     "//div[@id='orgbox']//a[.='%s']"})
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::new                   "//a[@id='new']"
         ::create                "organization_submit"
         ::name-text             "organization[name]"

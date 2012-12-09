@@ -8,7 +8,7 @@
 
 ;; Locators
 
-(swap! ui/uimap merge
+(swap! ui/locators merge
        {::name-text         "kt_environment[name]"
         ::label-text        "kt_environment[label]"
         ::description-text  "kt_environment[description]"
