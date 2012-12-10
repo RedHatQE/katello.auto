@@ -1,5 +1,5 @@
 (ns katello.system-groups
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
             (katello [navigation :as nav]
@@ -25,7 +25,7 @@
         ::remove                (ui/link "Remove")
         ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
         ::confirm-only-group    "//span[.='No, only delete the system group.']"
-        ::unlimited             "//input[@class='unlimited_members']"
+        ::unlimited-checkbox             "//input[@class='unlimited_members']"
         ::save-new-limit        "//button[.='Save']"
         ::limit-value           "system_group[max_systems]"})
 
@@ -33,10 +33,10 @@
 
 (nav/add-subnavigation
  ::page
- [::new-page [] (sel/browser click ::new)]
+ [::new-page [] (browser click ::new)]
  [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
-  [::systems-page [] (sel/browser click ::link)]
-  [::details-page [] (sel/browser click :details)]])
+  [::systems-page [] (browser click ::link)]
+  [::details-page [] (browser click :details)]])
 
 
 ;; Tasks
@@ -55,45 +55,48 @@
   "Adds a system to a system group"
   [group system]
   (nav/go-to ::named-page {:system-group-name group})
-  (comment (sel/browser setText ::hostname-toadd system)
-           (sel/browser typeKeys ::hostname-toadd " ")
+  (comment (browser setText ::hostname-toadd system)
+           (browser typeKeys ::hostname-toadd " ")
            (Thread/sleep 5000)
-           (sel/browser click ::add-system)
+           (browser click ::add-system)
            (check-for-success))
   (sel/fill-ajax-form [::hostname-toadd system
                        ;;try to trigger autocomplete via javascript -
                        ;;hackalert - see
                        ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
-                       #(sel/browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
+                       #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
                        #(Thread/sleep 5000) []]
                       ::add-system)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-add-sys)}))
 
 (defn remove-from
-  "Remove a system from a System-Group"
+  "Remove a system from a system group"
   [group system]
   (nav/go-to ::named-page {:system-group-name group})
-  (sel/browser click (system/checkbox system))
-  (sel/browser click ::remove-system))
+  (browser click (system/checkbox system))
+  (browser click ::remove-system))
 
 (defn copy
   "Clones a system group, given the name of the original system group
    to clone, and the new name and description."
   [orig-name new-name & [{:keys [description]}]]
   (nav/go-to ::named-page {:system-group-name orig-name})
-  (sel/browser click ::copy)
+  (browser click ::copy)
   (sel/fill-ajax-form {::copy-name-text new-name
                        ::copy-description-text description}
                       ::copy-submit)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
 
-(defn remove [group & [{:keys [also-remove-systems?]}]]
+(defn remove
+  "Removes a system group. Optionally, remove all the systems in the
+   group as well."
+  [group & [{:keys [also-remove-systems?]}]]
   (nav/go-to ::named-page {:system-group-name group})
-  (sel/browser click ::remove)
-  (sel/browser click ::ui/confirmation-yes)
-  (sel/browser click (if also-remove-systems?
-                       ::ui/confirmation-yes
-                       ::confirm-only-group))
+  (browser click ::remove)
+  (browser click ::ui/confirmation-yes)
+  (browser click (if also-remove-systems?
+                   ::ui/confirmation-yes
+                   ::confirm-only-group))
   (notification/check-for-success
    {:match-pred  (notification/request-type? (if also-remove-systems?
                                                :sysgrps-destroy-sys
@@ -104,18 +107,19 @@
   (nav/go-to ::details-page {:system-group-name sg-name})
   (let [needed-flipping (and new-limit
                              (not= (= new-limit :unlimited)
-                                   (sel/browser isChecked ::unlimited)))]
+                                   (browser isChecked ::unlimited-checkbox)))]
     (if (and new-limit (not= new-limit :unlimited))
-      (do (sel/browser uncheck ::unlimited)
+      (do (browser uncheck ::unlimited-checkbox)
           (sel/fill-ajax-form {::limit-value (str new-limit)}
                               ::save-new-limit ))
-      (sel/browser check ::unlimited))
+      (browser check ::unlimited-checkbox))
     (when needed-flipping (notification/check-for-success
                            {:match-pred (notification/request-type? :sysgrps-update)})))
   (common/in-place-edit {::name-text new-sg-name
-                     ::description-text description}))
+                         ::description-text description}))
 
-(defn system-count "Get number of systems in system group"
+(defn system-count
+  "Get number of systems in system group according to the UI"
   [sg-name]
   (nav/go-to ::details-page {:system-group-name sg-name})
-  (Integer/parseInt (sel/browser getText ::total)))
+  (Integer/parseInt (browser getText ::total)))
