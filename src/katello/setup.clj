@@ -1,8 +1,6 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
-  (:require [clojure.data :as data]
-            [test.tree.watcher :as watch]
-            [test.tree.jenkins :as jenkins]
+  (:require [test.tree.watcher :as watch]
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
             (katello [login :refer [login]]
@@ -11,7 +9,6 @@
                      [client :as client]
                      [conf :refer :all]
                      [tasks :refer :all] 
-                     
                      [users :as user])
             [fn.trace :as trace]
             [com.redhat.qe.auto.selenium.selenium :refer :all])

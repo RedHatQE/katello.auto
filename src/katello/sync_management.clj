@@ -1,12 +1,10 @@
 (ns katello.sync-management
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav] 
                      [notifications :as notification] 
                      [ui-common :as common]
                      [ui :as ui]))
-  (:import [com.thoughtworks.selenium SeleniumException]
-           [java.text SimpleDateFormat]))
+  (:import [java.text SimpleDateFormat]))
 
 ;; Locators
 
@@ -22,11 +20,11 @@
         ::synchronize-now       "sync_button"})
 
 (sel/template-fns
- {product-schedule     "//div[normalize-space(.)='%s']/following-sibling::div[1]"
-  provider-checkbox    "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  provider-progress    "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
-  plan                 "//div[@id='plans']//div[normalize-space(.)='%s'"
-  schedule             "//div[normalize-space(.)='%s']"})
+ {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
+  provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+  provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
+  plan              "//div[@id='plans']//div[normalize-space(.)='%s'"
+  schedule          "//div[normalize-space(.)='%s']"})
 
 ;; Nav
 
@@ -68,9 +66,8 @@
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also
   create-sync-plan for more details."
-  [name {:keys [new-name
-                description interval start-date start-date-literal
-                start-time-literal] :as m}]
+  [name {:keys [new-name description interval start-date start-date-literal start-time-literal]
+         :as m}]
   (nav/go-to ::named-plan-page {:sync-plan-name name})
   (let [[date time] (split-date m)]
     (common/in-place-edit {::plan-name-text new-name
@@ -97,10 +94,11 @@
   for. nil if UI says 'None'"
   [product-names]
   (nav/go-to ::schedule-page)
-  (zipmap product-names
-          (replace {"None" nil}
-                   (doall (for [product-name product-names]
-                            (browser getText (product-schedule product-name)))))))
+  (->> (for [product-name product-names]
+       (browser getText (product-schedule product-name)))
+     doall
+     (replace {"None" nil})
+     (zipmap product-names)))
 
 (def messages {:ok "Sync complete."
                :fail "Error syncing!"})
