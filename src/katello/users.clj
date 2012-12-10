@@ -1,18 +1,10 @@
 (ns katello.users
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            [slingshot.slingshot :refer [throw+ try+]]
-            (katello [navigation :as nav]                    
-                     [conf :refer [config *session-user*
-                                   *session-password* *session-org*]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [slingshot.slingshot :refer [throw+]]
+            (katello [navigation :as nav] 
                      [ui :as ui]
                      [ui-common :as common]
-                     [notifications :as notification] 
-                     [organizations :as organization])))
-
-;;
-;; Users
-;;
+                     [notifications :as notification])))
 
 ;; Locators
 
@@ -36,9 +28,9 @@
         ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
         ::account                     "//a[@class='header-widget' and contains(@href,'users')]"})
 
-
-(sel/template-fns {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
-                   plus-icon "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"})
+(sel/template-fns
+ {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
+  plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"})
 
 ;; Nav
 
@@ -58,12 +50,12 @@
   (let [env-chooser (fn [env] (when env
                                (nav/select-environment-widget env)))]
     (sel/fill-ajax-form [::username-text username
-                     ::password-text password
-                     ::confirm-text (or password-confirm password)
-                     ::email-text email
-                     ::default-org default-org
-                     env-chooser [default-env]]
-                    ::save))
+                         ::password-text password
+                         ::confirm-text (or password-confirm password)
+                         ::email-text email
+                         ::default-org default-org
+                         env-chooser [default-env]]
+                        ::save))
   (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
 
 (defn delete "Deletes the given user."
@@ -90,6 +82,8 @@
   [username {:keys [inline-help clear-disabled-helptips
                     new-password new-password-confirm new-email]}]
   (nav/go-to ::named-page {:username username})
+  (when-not (nil? inline-help)
+    (browser checkUncheck ::enable-inline-help-checkbox inline-help))
   (when new-password
     (browser setText ::password-text new-password)
     (browser setText ::confirm-text (or new-password-confirm new-password))
@@ -119,4 +113,3 @@
   (browser click (ui/environment-link env-name))
   (browser click ::save-environment)
   (notification/check-for-success))
-
