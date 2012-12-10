@@ -1,9 +1,10 @@
 (ns katello.manifest
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser fill-ajax-form]]
             (katello [navigation :as nav]
                      [conf :refer [config]]
+                     [ui-common :as common]
                      [tasks :refer [tmpfile unique-format]]
                      [notifications :as notification]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
@@ -66,7 +67,7 @@
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url})
+    (common/in-place-edit {:redhat-provider-repository-url-text repository-url})
     (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)

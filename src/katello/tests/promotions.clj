@@ -5,7 +5,6 @@
                      [environments :as environment]
                      [organizations :as org]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all]
                      [fake-content :as fake]
                      [sync-management :as sync]
                      [conf :refer [with-org config *environments*]]) 

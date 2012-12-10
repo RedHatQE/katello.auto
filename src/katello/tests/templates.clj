@@ -7,7 +7,6 @@
             [bugzilla.checker :refer [open-bz-bugs]]
             (katello [api-tasks :as api] 
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all]
                      [system-templates :as template]
                      [conf :refer [*environments*]])))
 

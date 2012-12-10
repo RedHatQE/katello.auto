@@ -5,7 +5,6 @@
                      [providers :as provider] 
                      [tasks :refer :all] 
                      [organizations :as organization] 
-                     [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
@@ -43,7 +42,7 @@
                      :description "provider to del and recreate"})
   (provider/add-product {:provider-name provider-name
                           :name product-name})
-  (provider/add-repo {:name repo-name
+  (repo/add {:name repo-name
                        :provider-name provider-name
                        :product-name product-name
                        :url repo-url}))

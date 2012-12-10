@@ -4,6 +4,7 @@
             [com.redhat.qe.auto.selenium.selenium
              :refer [browser]]
             (katello [navigation :as nav]
+                     menu
                      [ui :as ui]
                      [tasks         :refer :all] 
                      [notifications :as notification] 
@@ -123,20 +124,4 @@
   (when-not (logged-out?)
     (browser clickAndWait ::ui/log-out)))
 
-(defn create-package-filter [name & [{:keys [description]}]]
-  "Creates new Package Filter"
-  (assert (string? name))
-  (nav/go-to :new-package-filter-page)
-  (sel/fill-ajax-form {:new-package-filter-name  name
-                       :new-package-filter-description description}
-                      :save-new-package-filter)
-  (notification/check-for-success))
-
-(defn remove-package-filter 
-  "Deletes existing Package Filter"
-  [package-filter-name]
-  (nav/go-to :named-package-filter-page {:package-filter-name package-filter-name})
-  (browser click :remove-package-filter-key )
-  (browser click ::ui/confirmation-yes)
-  (notification/check-for-success))
 

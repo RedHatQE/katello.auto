@@ -4,7 +4,8 @@
             [test.assert :as assert]
             (katello [navigation :as nav]
                      [notifications :as notification]
-                     [ui-common :as ui]
+                     [ui :as ui]
+                     [ui-common :as common]
                      [menu :as menu])))
 
 ;; Locators
@@ -73,7 +74,7 @@
   name, a new description, and a new location."
   [name {:keys [new-name description location release-version]}]
   (nav/go-to ::named-page {:system-name name})
-  (ui/in-place-edit {::name-text-edit new-name
+  (common/in-place-edit {::name-text-edit new-name
                      ::description-text-edit description
                      ::location-text-edit location
                      ::release-version-select release-version}))
@@ -94,7 +95,7 @@
   [{:keys [system-name add-products remove-products auto-subscribe sla]}]
   (nav/go-to ::subscriptions-page {:system-name system-name})
   (when-not (nil? auto-subscribe)
-    (ui/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
+    (common/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
                                                             (if auto-subscribe "On" "Off")
                                                             sla)}))
   (let [sub-unsub-fn (fn [content checkbox-fn submit]

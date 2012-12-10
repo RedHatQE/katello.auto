@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-password* *session-org*]]
-                     [ui-common :as ui]
+                     [ui :as ui]
+                     [ui-common :as common]
                      [organizations :as organization]
                      [notifications :as notification])))
 
@@ -25,7 +26,7 @@
    will be set after logging in on the dashboard page."
   ([] (login *session-user* *session-password* {:org *session-org*}))
   ([username password & [{:keys [org default-org]}]]
-     (when (ui/logged-in?) (ui/logout))
+     (when (common/logged-in?) (common/logout))
      (sel/fill-ajax-form {::username-text username
                           ::password-text password}
                          ::log-in)

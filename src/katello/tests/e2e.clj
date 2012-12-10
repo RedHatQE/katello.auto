@@ -6,7 +6,6 @@
                      [changesets :refer [sync-and-promote]]
                      [organizations :as organization]
                      [tasks :refer :all]
-                     [ui-tasks :refer :all]
                      [conf :refer [*session-user* *session-password*
                                    *environments* config no-clients-defined
                                    with-org]])
@@ -81,7 +80,7 @@
       (provider/create {:name provider-name})
       (provider/add-product {:provider-name provider-name
                              :name product-name})
-      (provider/add-repo {:provider-name provider-name
+      (repo/add {:provider-name provider-name
                           :product-name product-name
                           :name repo-name
                           :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )

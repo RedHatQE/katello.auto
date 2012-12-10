@@ -8,7 +8,7 @@
                      [providers :as provider]
                      [changesets :as changeset]
                      [tasks :refer :all] 
-                     [ui-common :as ui]
+                     [ui :as ui]
                      [activation-keys :as ak]
                      [systems :as system]
                      [system-groups :as group]
@@ -113,11 +113,11 @@
     (provider/create {:name provider-name})
     (provider/add-product {:provider-name provider-name
                            :name product-name})
-    (provider/add-repo-with-key {:provider-name provider-name
-                                 :product-name product-name
-                                 :name repo-name
-                                 :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                                 :gpgkey testkey})
+    (repo/add-with-key {:provider-name provider-name
+                        :product-name product-name
+                        :name repo-name
+                        :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+                        :gpgkey testkey})
     (let [products [{:name product-name :repos [repo-name]}]]
       (when (api/is-katello?)
         (changeset/sync-and-promote products library target-env)))))

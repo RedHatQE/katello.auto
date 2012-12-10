@@ -3,7 +3,7 @@
   (:require (katello [navigation :as nav]
                      [api-tasks :as api] 
                      [organizations :as organization] 
-                     [ui-tasks :refer [navigate errtype]] 
+                     [ui-common :refer [errtype]] 
                      [sync-management :as sync] 
                      [tasks :refer :all] 
                      [environments :as environment] 
@@ -43,7 +43,7 @@
     (environment/create env-name {:org-name org}))
   (environment/delete env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
-    (nav/go-to :named-environment-page {:env-name env-name
+    (nav/go-to ::environment/named-page {:env-name env-name
                                        :org-name org})))
 
 (defn verify-create-same-env-in-multiple-orgs

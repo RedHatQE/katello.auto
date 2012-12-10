@@ -4,9 +4,8 @@
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
-                     [providers :as providers]
+                     [repositories :as repo]
                      [api-tasks :as api]
-                     [ui-tasks :refer :all]
                      [sync-management :as sync])))
 
 
@@ -102,7 +101,7 @@
       (org/switch)
       (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
       (when (api/is-katello?)
-        (enable-redhat-repositories repos)
+        (repo/enable-redhat repos)
         (sync/perform-sync repos)))))
 
 (defn prepare-org-custom-provider

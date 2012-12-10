@@ -2,10 +2,10 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
-            (katello [systems :as system] ;; must load first for navigation
-                     [navigation :as nav]
+            (katello [navigation :as nav]
                      [notifications :as notification]
-                     [ui-common :as ui])))
+                     [ui :as ui]
+                     [ui-common :as common])))
 
 
 (swap! ui/locators merge
@@ -31,12 +31,11 @@
 ;; Nav
 
 (nav/add-subnavigation
- :katello.systems/tab
- [::page [] (sel/browser clickAndWait :system-groups)
-  [::new-page [] (sel/browser click ::new)]
-  [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
-   [::systems-page [] (sel/browser click ::link)]
-   [::details-page [] (sel/browser click :details)]]])
+ ::page
+ [::new-page [] (sel/browser click ::new)]
+ [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
+  [::systems-page [] (sel/browser click ::link)]
+  [::details-page [] (sel/browser click :details)]])
 
 
 ;; Tasks
@@ -112,7 +111,7 @@
       (sel/browser check ::unlimited))
     (when needed-flipping (notification/check-for-success
                            {:match-pred (notification/request-type? :sysgrps-update)})))
-  (ui/in-place-edit {::name-text new-sg-name
+  (common/in-place-edit {::name-text new-sg-name
                      ::description-text description}))
 
 (defn system-count "Get number of systems in system group"

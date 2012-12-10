@@ -1,6 +1,7 @@
 (ns katello.system-templates
   (:require (katello [navigation :as nav]
-                     [ui-common :as ui]
+                     [ui :as ui]
+                     [ui-common :as common]
                      [notifications :as notification] 
                      [tasks :refer [capitalize-all]])
             [com.redhat.qe.auto.selenium.selenium :as sel]))
@@ -27,10 +28,9 @@
 ;; Nav
 
 (nav/add-subnavigation
- ::menu/content-tab
- [::page [] (sel/browser clickAndWait :system-templates)
-  [::named-page [template-name] (sel/browser click (ui/slide-link template-name))]
-  [::new-page [] (sel/browser click ::new)]])
+ ::page
+ [::named-page [template-name] (sel/browser click (ui/slide-link template-name))]
+ [::new-page [] (sel/browser click ::new)])
 
 ;; Tasks
 
@@ -54,7 +54,7 @@
                            :repositories ['x86_64']}]"
   [template content]
   (nav/go-to ::named-page {:template-name template})
-  (let [add-item (fn [item] (ui/toggle template-toggler item true))]
+  (let [add-item (fn [item] (common/toggle template-toggler item true))]
     (doseq [group content]
       (let [category-keyword (-> group (dissoc :product) keys first)
             category-name (-> category-keyword

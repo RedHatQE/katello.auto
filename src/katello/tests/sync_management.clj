@@ -8,7 +8,6 @@
                      [organizations :as organization] 
                      [tasks :refer :all]
                      [sync-management :as sync]
-                     [ui-tasks :refer [navigate errtype]] 
                      [conf :refer [config *environments* *session-org* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
@@ -65,7 +64,7 @@
       (provider/create {:name provider})
       (provider/add-product {:provider-name provider 
                              :name product})
-      (provider/add-repo {:provider-name provider
+      (repo/add {:provider-name provider
                           :product-name product
                           :name repo
                           :url (@config :sync-repo)})

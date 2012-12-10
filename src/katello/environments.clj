@@ -1,10 +1,12 @@
 (ns katello.environments
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [navigation :as nav]
                      [tasks :refer [library]] 
                      [notifications :as notification] 
-                     [ui-common :as ui])))
+                     [ui :as ui]
+                     [ui-common :as common])))
 
 ;; Locators
 
@@ -18,8 +20,10 @@
         ::remove            (ui/link "Remove Environment")
         ::prior-select-edit "kt_environment[prior]" })
 
-(nav/graft :katello.organizations/named-page [::new-page [] (browser click ::new)])
-(nav/graft :katello.organizations/named-page [::named-page [env-name] (browser click (ui/environment-link env-name))])
+(nav/add-subnavigation
+ :katello.organizations/named-page
+ [::new-page [] (browser click ::new)]
+ [::named-page [env-name] (browser click (ui/environment-link env-name))])
 
 ;; Tasks
 
@@ -29,10 +33,10 @@
    environment, and an optional description."
   [name {:keys [org-name description prior-env]}]
   (nav/go-to ::new-page {:org-name org-name})
-  (fill-ajax-form {::name-text name
-                   ::description-text description
-                   ::prior prior-env}
-                  ::create)
+  (sel/fill-ajax-form {::name-text name
+                       ::description-text description
+                       ::prior prior-env}
+                      ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
 
 (defn delete
@@ -53,7 +57,7 @@
   [env-name {:keys [org-name description]}]
   (nav/go-to ::named-page {:org-name org-name
                            :env-name env-name})
-  (in-place-edit {::description-text description}))
+  (common/in-place-edit {::description-text description}))
 
 (defn create-path
   "Creates a path of environments in the given org. All the names in

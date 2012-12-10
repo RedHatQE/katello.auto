@@ -1,7 +1,8 @@
 (ns katello.tests.users
   (:require (katello [validation :refer :all] 
                      [organizations :as organization]
-                     [ui-common :as ui]
+                     [ui :as ui]
+                     [ui-common :as common]
                      [roles :as role] 
                      [users :as user]
                      [tasks :refer :all] 

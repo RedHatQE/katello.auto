@@ -1,6 +1,7 @@
 (ns katello.gpg-keys
   (:require (katello [navigation :as nav]
-                     [ui-common :as ui]
+                     [ui :as ui]
+                     [ui-common :as common]
                      [notifications :as notification])
             [com.redhat.qe.auto.selenium.selenium :as sel]))
 
@@ -19,10 +20,9 @@
 ;; Nav
 
 (nav/add-subnavigation
- :repositories-tab
- [::page [] (sel/browser clickAndWait ::link)
-  [::new-page [] (sel/browser click ::new)]
-  [::named-page [gpg-key-name] (nav/choose-left-pane  gpg-key-name)]])
+ ::page
+ [::new-page [] (sel/browser click ::new)]
+ [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)])
 
 
 ;;Tasks

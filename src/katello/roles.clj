@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             (katello [navigation :as nav]
                      [notifications :as notification] 
-                     [ui-common :as ui])))
+                     [ui :as ui]
+                     [ui-common :as common])))
 
 ;; Locators
 
@@ -16,8 +17,7 @@
         ::next                            "next_button"
         ::permission-resource-type-select "permission[resource_type_attributes[name]]"
         ::permission-verb-select          "permission[verb_values][]"
-        ::permission-tag-select           "tags"
-        
+        ::permission-tag-select           "tags"        
         ::permission-name-text            "permission[name]"
         ::permission-description-text     "permission[description]"
         ::save-permission                 "save_permission_button"
@@ -32,11 +32,10 @@
 ;; Nav
 
 (nav/add-subnavigation
- :administer-tab
- [::page [] (sel/browser clickAndWait :roles)
-  [::named-page [role-name] (nav/choose-left-pane  role-name)
-   [::named-users-page [] (sel/browser click ::users)]
-   [::named-permissions-page [] (sel/browser click ::permissions)]]])
+ ::page
+ [::named-page [role-name] (nav/choose-left-pane  role-name)
+  [::named-users-page [] (sel/browser click ::users)]
+  [::named-permissions-page [] (sel/browser click ::permissions)]])
 
 
 ;; Tasks
@@ -78,7 +77,7 @@
     (when users
       (nav ::named-users-page)
       (doseq [user users]
-        (ui/toggle user-role-toggler user true)))
+        (common/toggle user-role-toggler user true)))
     (each-org remove-permissions
               (fn [permissions]
                 (doseq [permission permissions]

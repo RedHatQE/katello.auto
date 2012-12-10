@@ -80,6 +80,3 @@
           (list ~@(for [branch branches]
                     `(nav/nav-tree ~branch)))))
 
-;; add the menu
-(comment (apply swap! page-tree nav/add-subnavigation
-        menu/tree))

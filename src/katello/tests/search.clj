@@ -4,7 +4,6 @@
                      [users :as user]
                      [sync-management :as sync]
                      [tasks :refer :all]
-                     [ui-tasks :refer :all]
                      [systems :refer :all :as system])
             [katello.tests.organizations :refer [create-test-org]]
             [katello.tests.users :refer [generic-user-details]]
