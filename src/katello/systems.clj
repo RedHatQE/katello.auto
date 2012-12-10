@@ -1,5 +1,5 @@
 (ns katello.systems
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
             (katello [navigation :as nav]
@@ -26,6 +26,7 @@
         ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
 
         ;;system-edit details
+        ::details                     (ui/menu-link "general")
         ::name-text-edit              "system[name]"
         ::description-text-edit       "system[description]"
         ::location-text-edit          "system[location]"
@@ -36,6 +37,7 @@
         ::save-environment            "//input[@value='Save']"
 
         ;;subscriptions pane
+        ::subscriptions               (ui/menu-link "systems_subscriptions")
         ::subscribe                   "sub_submit"
         ::unsubscribe                 "unsub_submit"})
 
@@ -49,11 +51,12 @@
 
 (nav/add-subnavigation
  ::page
- [::new-page [] (sel/browser click ::new)]
- [::subscriptions-page [system-name] (nav/choose-left-pane system-name)
-  [::named-page [] (sel/browser click :details)]
-  [::named-page-content [] (sel/browser click ::content-select)]]
- [::by-environment-page [] (sel/browser clickAndWait :by-environments)
+ [::new-page [] (browser click ::new)]
+ [::named-page [system-name] (nav/choose-left-pane system-name)
+  [::details-page [] (browser click ::details)]
+  [::subscriptions-page [] (browser click ::subscriptions)]]
+ [::named-page-content [] (browser click ::content-select)]
+ [::by-environment-page [] (browser clickAndWait :by-environments)
   [::environment-page [env-name] (nav/select-environment-widget env-name)
    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
 
@@ -79,12 +82,12 @@
                      ::location-text-edit location
                      ::release-version-select release-version}))
 
-(defn edit-system-environment [system-name new-environment]
+(defn set-environment [system-name new-environment]
   (assert (not (blank? new-environment))) 
   (nav/go-to ::named-page {:system-name system-name})
-  (sel/browser click ::environment)
-  (sel/browser check (environment-checkbox new-environment))
-  (sel/browser click ::save-environment))
+  (browser click ::environment)
+  (browser check (environment-checkbox new-environment))
+  (browser click ::save-environment))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -101,48 +104,48 @@
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
-                           (sel/browser check (checkbox-fn item)))
-                         (sel/browser click submit)) )]
+                           (browser check (checkbox-fn item)))
+                         (browser click submit)) )]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe))
   (notification/check-for-success {:match-pred (notification/request-type? (if (or add-products remove-products)
                                                                              :sys-update-subscriptions
                                                                              :sys-update))}))
 
-(defn get-system-env "Get current environment of the system"
+(defn environment "Get current environment of the system"
   [system-name]
   (nav/go-to ::named-page {:system-name system-name})
-  (sel/browser getText ::environment))
+  (browser getText ::environment))
 
 (defn get-os "Get operating system of the system"
   [system-name]
   (nav/go-to ::named-page {:system-name system-name})
-  (sel/browser getText ::operating-system))
+  (browser getText ::operating-system))
 
 (defn add-package [system-name {:keys [package package-group]}]
   (nav/go-to ::named-page-content {:system-name system-name})
-  (sel/browser click ::content-packages)
+  (browser click ::content-packages)
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
-      (when is-group? (sel/browser click ::select-package-group))
+      (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
                      (typeKeys ::package-name items)
                      (click ::add-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (sel/browser getText ::pkg-install-status))))))
+                    (browser getText ::pkg-install-status))))))
 
 (defn remove-package [system-name {:keys [package package-group]}]
   (nav/go-to ::named-page-content {:system-name system-name})
-  (sel/browser click ::content-packages)
+  (browser click ::content-packages)
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items
-      (when is-group? (sel/browser click ::select-package-group))
+      (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
                      (typeKeys ::package-name items)
                      (click ::remove-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (sel/browser getText ::pkg-install-status))))))
+                    (browser getText ::pkg-install-status))))))

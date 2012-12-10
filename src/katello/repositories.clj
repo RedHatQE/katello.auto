@@ -53,8 +53,7 @@
                       ::save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
-(defn delete-repo
-  "Deletes a repository from the given provider and product."
+(defn delete "Deletes a repository from the given provider and product."
   [{:keys [name provider-name product-name]}]
   (nav/go-to ::named-repo-page {:provider-name provider-name
                                 :product-name product-name

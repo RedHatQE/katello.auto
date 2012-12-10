@@ -6,7 +6,8 @@
                      [ui-common :refer [errtype]] 
                      [sync-management :as sync] 
                      [tasks :refer :all] 
-                     [environments :as environment] 
+                     [environments :as environment]
+                     [systems :as system]
                      [validation :refer :all] 
                      [client :as client] 
                      [conf :as conf]) 
@@ -200,9 +201,9 @@
                                    :env env-dev
                                    :force true})
         (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
-          (assert/is (= env-dev (get-system-env client-hostname)))
-          (edit-system-environment client-hostname env-test)
-          (assert/is (= env-test (get-system-env client-hostname)))
+          (assert/is (= env-dev (system/environment client-hostname)))
+          (system/set-environment client-hostname env-test)
+          (assert/is (= env-test (system/environment client-hostname)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           ;;verify the env name is now in the urls in redhat.repo
