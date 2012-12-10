@@ -1,10 +1,12 @@
 (ns katello.tests.providers.redhat
   (:require (katello [navigation :as nav]
                      [tasks           :refer :all]
+                     [ui-common       :as common]
                      [api-tasks       :as api]
                      [sync-management :as sync]
                      [organizations   :as organization]
                      [manifest        :as manifest]
+                     [repositories    :as repo]
                      [changesets      :as changesets]
                      [systems         :as system]
                      [fake-content    :as fake-content]
@@ -36,7 +38,7 @@
 (defn enable-redhat-in-org [org repos]
   (with-org org
     (organization/switch)
-    (enable-redhat repos)))
+    (repo/enable-redhat repos)))
 
 (defn step-clone-manifest [{:keys [manifest-loc]}]
   (manifest/clone manifest-tmp-loc manifest-loc))
@@ -50,7 +52,7 @@
   (when (api/is-katello?)
     (with-org org-name
       (organization/switch)
-      (enable-redhat enable-repos)
+      (repo/enable-redhat enable-repos)
       (nav/go-to :katello.sync-management/status-page)
       (verify-all-repos-not-synced enable-repos))))
 
@@ -59,7 +61,7 @@
     (organization/switch)
     (api/ensure-env-exist env-name {:prior library})
     (when (api/is-katello?)
-      (enable-redhat (mapcat :repos products))
+      (repo/enable-redhat (mapcat :repos products))
       (changesets/sync-and-promote products library env-name))))
 
 (defn step-create-system [{:keys [system-name org-name env-name]}]
@@ -158,7 +160,7 @@
         (organization/switch)
         (manifest/clone manifest-tmp-loc test-manifest)
         (upload test-manifest)
-        (expecting-error (errtype :katello.notifications/import-same-as-existing-data)
+        (expecting-error (common/errtype :katello.notifications/import-same-as-existing-data)
                          (upload test-manifest)))))
 
   (deftest "Upload a previously used manifest into another org"
@@ -175,7 +177,7 @@
         (upload test-manifest))
       (with-org (second two-orgs)
         (organization/switch)
-        (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
+        (expecting-error (common/errtype :katello.notifications/distributor-has-already-been-imported)
                          (upload test-manifest)))))
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"

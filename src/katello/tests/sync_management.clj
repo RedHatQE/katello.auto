@@ -4,9 +4,12 @@
                      [validation :as validate] 
                      [providers :as provider] 
                      [users :as user] 
-                     [roles :as role] 
-                     [organizations :as organization] 
+                     [roles :as role]
+                     [login :refer [login]]
+                     [organizations :as organization]
+                     [repositories :as repo]
                      [tasks :refer :all]
+                     [ui-common :as common]
                      [sync-management :as sync]
                      [conf :refer [config *environments* *session-org* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
@@ -38,7 +41,7 @@
   (= "Sync complete." sync-result))
 
 (defn plan-validate [arg expected]
-  (expecting-error (errtype expected)
+  (expecting-error (common/errtype expected)
                    (sync/create-plan arg)))
 
 (defn plan-validation-data []
@@ -54,9 +57,9 @@
                 product "prod"
                 repo "repo"]
     (user/create user {:password password :email "blah@blah.com"})
-    (role/assign {:user user :roles ["Administrator"]})
+    (user/assign {:user user :roles ["Administrator"]})
     (try
-      (user/login user password {:org *session-org*})
+      (login user password {:org *session-org*})
       (organization/create org)
       (with-creds user password
         (with-org org
