@@ -6,6 +6,8 @@
                      [organizations :as org]
                      [client :as client]
                      [providers :as provider]
+                     [repositories :as repo]
+                     [ui-common :as common]
                      [changesets :as changeset]
                      [tasks :refer :all] 
                      [ui :as ui]
@@ -136,7 +138,7 @@
     (deftest "Copying with similar sg-name not allowed"
       (with-unique [group-name "fed1"]
         (group/create group-name {:description "rh system-group"})
-        (expecting-error (ui/errtype :katello.notifications/sg-name-taken-error)
+        (expecting-error (common/errtype :katello.notifications/sg-name-taken-error)
                          (group/copy group-name group-name {:description "copied system group"}))))
 
     (deftest "Edit a system group"
@@ -177,11 +179,11 @@
                                      group-name {:new-limit limit}))))
           
           [(with-meta
-             ["-1"   (ui/errtype :katello.notifications/max-systems-must-be-positive)]
+             ["-1"   (common/errtype :katello.notifications/max-systems-must-be-positive)]
              {:blockers (open-bz-bugs "848564")})
-           ["-100" (ui/errtype :katello.notifications/max-systems-must-be-positive)]
-           [""     (ui/errtype :katello.notifications/max-systems-must-be-positive)]
-           ["0"    (ui/errtype :katello.notifications/max-systems-may-not-be-zero)]])))
+           ["-100" (common/errtype :katello.notifications/max-systems-must-be-positive)]
+           [""     (common/errtype :katello.notifications/max-systems-must-be-positive)]
+           ["0"    (common/errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")

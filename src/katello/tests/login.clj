@@ -5,6 +5,7 @@
                      [tasks :refer :all]
                      [login :refer [login]]
                      [users :as user]
+                     [ui-common :as common]
                      [organizations :as organization])
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
@@ -20,21 +21,21 @@
   message appears in the UI."
   [username password]
   (try+
-    (expecting-error (errtype :katello.notifications/invalid-credentials)
-                     (login username password))
-    ; Notifications must be flushed so login can succeed in 'finally'
-    (katello.notifications/flush)
+   (expecting-error (common/errtype :katello.notifications/invalid-credentials)
+                    (login username password))
+                                        ; Notifications must be flushed so login can succeed in 'finally'
+   (katello.notifications/flush)
    (finally
-    (login))))
+     (login))))
 
 (defn login-admin []
-  (user/logout)
+  (common/logout)
   (login)
   (assert/is (= (user/current) *session-user*)))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
-  (if (user/logged-in?)
+  (if (common/logged-in?)
     (do (nav/go-to :top-level)
         (if (= (organization/current) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))

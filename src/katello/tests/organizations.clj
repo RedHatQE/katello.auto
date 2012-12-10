@@ -1,8 +1,10 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require (katello [api-tasks :as api]
+  (:require (katello [ui-common :as common]
+                     [api-tasks :as api]
                      [validation :as validation] 
-                     [providers :as provider] 
+                     [providers :as provider]
+                     [repositories :as repo]
                      [tasks :refer :all] 
                      [organizations :as organization] 
                      [conf :refer [config]])
@@ -33,7 +35,7 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (expecting-error (errtype expected-error) (organization/create name)))
+  (expecting-error (common/errtype expected-error) (organization/create name)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (organization/create org-name {:description "org to delete and recreate"})
@@ -103,7 +105,7 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
+        (validation/expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
           (organization/create org-name {:description "org-description"}))))
 
     (deftest "Two organizations whose names only differ by upper or lower case are disallowed"
@@ -111,7 +113,7 @@
       :data-driven true
 
       (fn [orig-org-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/name-taken-error)
+        (expecting-error (common/errtype :katello.notifications/name-taken-error)
                          (with-unique [org-name orig-org-name]
                            (organization/create org-name)
                            (organization/create (modify-case-fn org-name)))))

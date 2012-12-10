@@ -29,11 +29,9 @@
 ;; Nav
 
 (nav/add-subnavigation
- :subscriptions-tab
- [::page [] (browser clickAndWait :activation-keys)
-  [::named-page [activation-key-name]
-   (nav/choose-left-pane activation-key-name)]
-  [::new-page [] (browser click ::new)]]                    )
+ ::page
+ [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)]
+ [::new-page [] (browser click ::new)])
 
 ;; Tasks
 

@@ -3,6 +3,7 @@
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
             (katello [navigation :as nav]
+                     [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
                      [ui-common :as common])))
