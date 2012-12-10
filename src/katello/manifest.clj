@@ -1,10 +1,11 @@
 (ns katello.manifest
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            (katello [conf :refer [config]]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser fill-ajax-form]]
+            (katello [navigation :as nav]
+                     [conf :refer [config]]
+                     [ui-common :as common]
                      [tasks :refer [tmpfile unique-format]]
-                     [ui-tasks :refer [navigate in-place-edit fill-ajax-form]]
                      [notifications :as notification]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))
@@ -62,11 +63,11 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [file-path & [{:keys [repository-url]}]]
-  (navigate :redhat-subscriptions-page)
+  (nav/go-to :redhat-subscriptions-page)
   (when-not (browser isElementPresent :choose-file)
     (browser click :import-manifest))
   (when repository-url
-    (in-place-edit {:redhat-provider-repository-url-text repository-url})
+    (common/in-place-edit {:redhat-provider-repository-url-text repository-url})
     (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
   (fill-ajax-form {:choose-file file-path}
                   :upload)
@@ -80,7 +81,7 @@
   "Returns true if the current organization already has Red Hat
   content uploaded."
   []
-  (navigate :redhat-repositories-page)
+  (nav/go-to :redhat-repositories-page)
   (browser isElementPresent :subscriptions-items))
 
 (defn upload-new-cloned

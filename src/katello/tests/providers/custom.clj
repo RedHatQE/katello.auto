@@ -1,6 +1,7 @@
 (ns katello.tests.providers.custom
   (:require (katello [api-tasks :as api]
                      [providers :as provider]
+                     [repositories :as repo]
                      [tasks :refer :all]
                      [organizations :as organization]
                      [conf :refer [with-org]])
@@ -64,7 +65,7 @@
     (deftest "Create a repository"
       :blockers (open-bz-bugs "729364")
 
-      (provider/add-repo {:provider-name @test-provider-name
+      (repo/add {:provider-name @test-provider-name
                            :product-name @test-product-name
                            :name (uniqueify "repo")
                            :url "http://test.com/myurl"})
@@ -77,8 +78,8 @@
                     :product-name @test-product-name
                     :name (uniqueify "deleteme")
                     :url "http://my.fake/url"}]
-          (provider/add-repo repo)
-          (provider/delete-repo repo))))
+          (repo/add repo)
+          (repo/delete repo))))
 
     
     (deftest "Create two products with the same name, in different orgs"

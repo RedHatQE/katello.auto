@@ -6,11 +6,14 @@
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
             (katello [tasks           :refer :all]
+                     [ui-common       :as common]
                      [notifications   :refer [success?]]
                      [organizations   :as organization]
                      [sync-management :as sync] 
+                     [repositories    :as repo]
                      [providers       :as provider]
-                     [ui-tasks        :refer :all]
+                     [gpg-keys        :as gpg-key]
+                     [package-filters :as filter]
                      [validation      :refer :all]
                      [conf            :refer [config]])))
 
@@ -76,7 +79,7 @@
   (concat
    [[{:name nil
       :description "blah"
-      :url "http://sdf.com"} (errtype :katello.notifications/name-cant-be-blank)]
+      :url "http://sdf.com"} (common/errtype :katello.notifications/name-cant-be-blank)]
 
     [{:name (uniqueify "mytestcp4")
       :description nil
@@ -90,12 +93,12 @@
    (for [trailing-ws-str trailing-whitespace-strings]
      [{:name trailing-ws-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.notifications/name-no-leading-trailing-whitespace)])
+       :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (errtype :katello.notifications/name-must-not-contain-characters)])))
+       :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)])))
 
 ;; Tests
 
@@ -106,31 +109,31 @@
     :blockers api/katello-only
     
     (with-unique [test-key "test-key-text"]
-      (create-gpg-key test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
+      (gpg-key/create test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
     (with-unique [test-key "test-key"]
-      (create-gpg-key test-key {:filename tmp-gpg-keyfile}))
+      (gpg-key/create test-key {:filename tmp-gpg-keyfile}))
 
     
     (deftest "Delete existing GPG key" 
       (with-unique [test-key "test-key"]
-        (create-gpg-key test-key {:filename tmp-gpg-keyfile})
-        (remove-gpg-key test-key)))))
+        (gpg-key/create test-key {:filename tmp-gpg-keyfile})
+        (gpg-key/remove test-key)))))
 
 
 (defgroup package-filter-tests
 
   (deftest "Create new Package Filter test"
     (with-unique [test-package-filter "test-package-filter"]
-      (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"}))
+      (filter/create test-package-filter {:description "Test filter"}))
     
     (deftest "Delete existing Package Filter test" 
       (with-unique [test-package-filter "test-package-filter"]
-        (katello.ui-tasks/create-package-filter test-package-filter {:description "Test filter"})
-        (katello.ui-tasks/remove-package-filter test-package-filter)))))
+        (filter/create test-package-filter {:description "Test filter"})
+        (filter/remove test-package-filter)))))
 
 
 (defgroup provider-tests

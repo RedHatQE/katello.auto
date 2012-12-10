@@ -1,18 +1,24 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:require (katello [api-tasks :as api]
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api]
                      [validation :as val]
                      [organizations :as org]
                      [client :as client]
                      [providers :as provider]
-                     [changesets :refer [sync-and-promote]]
+                     [repositories :as repo]
+                     [ui-common :as common]
+                     [changesets :as changeset]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all] 
+                     [ui :as ui]
+                     [activation-keys :as ak]
                      [systems :as system]
+                     [system-groups :as group]
                      [fake-content  :as fake]
+                     [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-password* config *environments*]])
             [katello.client.provision :as provision]
-            (test.tree [script :refer :all] 
+            (test.tree [script :refer [defgroup deftest]] 
                        [builder :refer [union]])
             
             [serializable.fn :refer [fn]]
@@ -36,32 +42,32 @@
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
     (system/edit (:name system) {:new-name new-name})
-    (navigate :named-systems-page {:system-name new-name})))
+    (nav/go-to :named-systems-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
-   [system]
-  (navigate :named-system-environment-page
-            {:env-name test-environment
-             :system-name (:name system)})
+  [system]
+  (nav/go-to :named-system-environment-page
+             {:env-name test-environment
+              :system-name (:name system)})
   (assert/is (= (:environment_id system)
-                  (api/get-id-by-name :environment test-environment))))
+                (api/get-id-by-name :environment test-environment))))
 
 (defn step-create-system-group
   [{:keys [group-name]}]
-  (system/create-group group-name {:description "rh system group"}))
+  (group/create group-name {:description "rh system group"}))
 
 (defn step-edit-system-group
   [{:keys [group-name group-new-limit group-new-description]}]
-  (system/edit-group group-name {:new-limit group-new-limit
-                                 :description group-new-description}))
+  (group/edit group-name {:new-limit group-new-limit
+                          :description group-new-description}))
 
 (defn step-add-new-system-to-new-group
   "Creates a system and system group, adds the system to the system group."
   [{:keys [group-name system-name] :as m}]
   (do (system/create system-name {:sockets "1"
-                              :system-arch "x86_64"})
+                                  :system-arch "x86_64"})
       (step-create-system-group m)
-      (system/add-to-group group-name system-name)))
+      (group/add-to group-name system-name)))
 
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
@@ -69,8 +75,8 @@
    Defaults to :system-group."
   [which-group]
   (fn [{:keys [group-name also-remove-systems?] :as req}]
-    (system/remove-group (req which-group)
-                         {:also-remove-systems? also-remove-systems?})))
+    (group/remove (req which-group)
+                  {:also-remove-systems? also-remove-systems?})))
 
 (def step-remove-system-group (mkstep-remove-system-group :group-name))
 (def step-remove-system-group-copy (mkstep-remove-system-group :copy-name))
@@ -89,12 +95,12 @@
 (defn step-copy-system-group
   "Copies a system group with a hardcoded description."
   [{:keys [group-name copy-name]}]
-  (system/copy-group group-name copy-name {:description "copied system group"}))
+  (group/copy group-name copy-name {:description "copied system group"}))
 
 (defn step-remove-sys-from-copied-system-group
   "Remove the system from copied system group."
   [{:keys [copy-name system-name]}]
-  (system/remove-from-group copy-name system-name))
+  (group/remove-from copy-name system-name))
 
 (defn step-to-configure-server-for-pkg-install [product-name]
   (let [provider-name (uniqueify "custom_provider")
@@ -105,18 +111,18 @@
     (org/switch)
     (api/ensure-env-exist target-env {:prior library})
     (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
-      (create-gpg-key testkey {:contents mykey}))
+      (gpg-key/create testkey {:contents mykey}))
     (provider/create {:name provider-name})
     (provider/add-product {:provider-name provider-name
                            :name product-name})
-    (provider/add-repo-with-key {:provider-name provider-name
-                                 :product-name product-name
-                                 :name repo-name
-                                 :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                                 :gpgkey testkey})
+    (repo/add-with-key {:provider-name provider-name
+                        :product-name product-name
+                        :name repo-name
+                        :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+                        :gpgkey testkey})
     (let [products [{:name product-name :repos [repo-name]}]]
       (when (api/is-katello?)
-        (sync-and-promote products library target-env)))))
+        (changeset/sync-and-promote products library target-env)))))
 
 ;; Tests
 
@@ -127,13 +133,13 @@
   
   (deftest "Create a system group"
     (with-unique [group-name "fed"]
-      (system/create-group group-name {:description "rh system-group"}))
+      (group/create group-name {:description "rh system-group"}))
     
     (deftest "Copying with similar sg-name not allowed"
       (with-unique [group-name "fed1"]
-        (system/create-group group-name {:description "rh system-group"})
-        (expecting-error (errtype :katello.notifications/sg-name-taken-error)
-          (system/copy-group group-name group-name {:description "copied system group"}))))
+        (group/create group-name {:description "rh system-group"})
+        (expecting-error (common/errtype :katello.notifications/sg-name-taken-error)
+                         (group/copy group-name group-name {:description "copied system group"}))))
 
     (deftest "Edit a system group"
       :data-driven true
@@ -152,15 +158,15 @@
 
     (deftest "Edit system limit of a system group"
       (with-unique [group-name "sg"]
-        (system/create-group group-name)
-        (system/edit-group group-name {:new-limit 4}))
+        (group/create group-name)
+        (group/edit group-name {:new-limit 4}))
 
       
       (deftest "Edit system limit of a system group, then set back to unlimited"
         (with-unique [group-name "sg"]
-          (system/create-group group-name)
-          (system/edit-group group-name {:new-limit 4})
-          (system/edit-group group-name {:new-limit :unlimited}))
+          (group/create group-name)
+          (group/edit group-name {:new-limit 4})
+          (group/edit group-name {:new-limit :unlimited}))
         
 
         (deftest "System group system limit validation"
@@ -168,16 +174,16 @@
 
           (fn [limit pred]
             (with-unique [group-name "sg-val"]
-              (system/create-group group-name)
-              (expecting-error pred (system/edit-group
+              (group/create group-name)
+              (expecting-error pred (group/edit
                                      group-name {:new-limit limit}))))
           
           [(with-meta
-             ["-1"   (errtype :katello.notifications/max-systems-must-be-positive)]
+             ["-1"   (common/errtype :katello.notifications/max-systems-must-be-positive)]
              {:blockers (open-bz-bugs "848564")})
-           ["-100" (errtype :katello.notifications/max-systems-must-be-positive)]
-           [""     (errtype :katello.notifications/max-systems-must-be-positive)]
-           ["0"    (errtype :katello.notifications/max-systems-may-not-be-zero)]])))
+           ["-100" (common/errtype :katello.notifications/max-systems-must-be-positive)]
+           [""     (common/errtype :katello.notifications/max-systems-must-be-positive)]
+           ["0"    (common/errtype :katello.notifications/max-systems-may-not-be-zero)]])))
     
     (deftest "Add a system to a system group"
       :blockers (open-bz-bugs "845668")
@@ -190,25 +196,25 @@
         (with-unique [system-name "mysystem"
                       group-name "my-group"]
           (do
-            (system/create-group group-name)
-            (let [syscount  (system/get-group-system-count group-name)]
+            (group/create group-name)
+            (let [syscount  (group/system-count group-name)]
               (system/create system-name {:sockets "1"
-                                :system-arch "x86_64"})
-              (system/add-to-group group-name system-name)
-              (assert/is (= (inc syscount) (system/get-group-system-count group-name)))))))
-       
+                                          :system-arch "x86_64"})
+              (group/add-to group-name system-name)
+              (assert/is (= (inc syscount) (group/system-count group-name)))))))
+      
       (deftest "Remove a system from a system group and check count is -1"
         :blockers (open-bz-bugs "857031")
         (with-unique [system-name "mysystem"
                       group-name "my-group"]
           (do
-            (system/create-group group-name)
+            (group/create group-name)
             (system/create system-name {:sockets "1"
-                           :system-arch "x86_64"})
-            (system/add-to-group group-name system-name)
-            (let [syscount  (system/get-group-system-count group-name)]
-              (system/remove-from-group group-name system-name)
-              (assert/is (= (dec syscount) (system/get-group-system-count group-name)))))))
+                                        :system-arch "x86_64"})
+            (group/add-to group-name system-name)
+            (let [syscount  (group/system-count group-name)]
+              (group/remove-from group-name system-name)
+              (assert/is (= (dec syscount) (group/system-count group-name)))))))
       
       (deftest "Delete a system group"
         :data-driven true
@@ -297,34 +303,34 @@
   (deftest "Create an activation key" 
     :blockers (open-bz-bugs "750354")
 
-    (create-activation-key {:name (uniqueify "auto-key")
-                            :description "my description"
-                            :environment test-environment})
+    (ak/create {:name (uniqueify "auto-key")
+                :description "my description"
+                :environment test-environment})
 
     (deftest "Create an activation key with i18n characters"
       :data-driven true
       (fn [name]
         (with-unique [ak-name name]
-          (create-activation-key {:name ak-name
-                                  :description "my description"
-                                  :environment test-environment} )))
+          (ak/create {:name ak-name
+                      :description "my description"
+                      :environment test-environment} )))
       val/i8n-chars)
     
     (deftest "Remove an activation key"
       (with-unique [ak-name "auto-key-deleteme"]
-        (create-activation-key {:name ak-name
-                                :description "my description"
-                                :environment test-environment} )
-        (delete-activation-key ak-name)))
+        (ak/create {:name ak-name
+                    :description "my description"
+                    :environment test-environment} )
+        (ak/delete ak-name)))
 
     
     (deftest "activation-key-dupe-disallowed"
       (with-unique [ak-name "auto-key"]
         (val/expecting-error-2nd-try val/duplicate-disallowed
-          (create-activation-key
-           {:name ak-name
-            :description "my description"
-            :environment test-environment}))))
+                                     (ak/create
+                                      {:name ak-name
+                                       :description "my description"
+                                       :environment test-environment}))))
     
     (deftest "create activation keys with subscriptions"
       (with-unique [ak-name "act-key"
@@ -333,26 +339,26 @@
           (let [envz (take 3 (unique-names "env"))]
             (fake/setup-org test-org1 envz)
             (org/switch test-org1)
-            (create-activation-key {:name ak-name
-                                    :description "my act keys"
-                                    :environment (first envz)})
-            (add-subscriptions-to-activation-key ak-name fake/subscription-names)
+            (ak/create {:name ak-name
+                        :description "my act keys"
+                        :environment (first envz)})
+            (ak/add-subscriptions ak-name fake/subscription-names)
             (assert/is (some #{(first fake/subscription-names)} 
-                               (system/get-subscriptions-in-activation-key ak-name))))))))
- 
+                             (ak/get-subscriptions ak-name))))))))
+  
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
-      
+    
     (provision/with-client "check-distro"
-         ssh-conn
-        (client/register ssh-conn
-                         {:username *session-user*
-                          :password *session-password*
-                          :org "ACME_Corporation"
-                          :env test-environment
-                          :force true})
-        (assert/is (= (client/get-distro ssh-conn)
-                        (system/get-os (client/my-hostname ssh-conn))))))
+      ssh-conn
+      (client/register ssh-conn
+                       {:username *session-user*
+                        :password *session-password*
+                        :org "ACME_Corporation"
+                        :env test-environment
+                        :force true})
+      (assert/is (= (client/get-distro ssh-conn)
+                    (system/get-os (client/my-hostname ssh-conn))))))
 
   (deftest "Install package group"
     :data-driven true
@@ -364,18 +370,18 @@
             product-name (uniqueify "fake")]
         (step-to-configure-server-for-pkg-install product-name)
         (provision/with-client sys-name
-           ssh-conn
-           (client/register ssh-conn
-                            {:username *session-user*
-                             :password *session-password*
-                             :org org-name
-                             :env target-env
-                             :force true})
-           (let [mysys (client/my-hostname ssh-conn)] 
-             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
-             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-             (system/add-package mysys package-name)))))
-            
+          ssh-conn
+          (client/register ssh-conn
+                           {:username *session-user*
+                            :password *session-password*
+                            :org org-name
+                            :env target-env
+                            :force true})
+          (let [mysys (client/my-hostname ssh-conn)] 
+            (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (system/add-package mysys package-name)))))
+    
     [[{:package "cow"}]
      [{:package-group "birds"}]])
   

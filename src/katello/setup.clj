@@ -5,12 +5,14 @@
             [test.tree.jenkins :as jenkins]
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
-            (katello [api-tasks :as api]
+            (katello [login :refer [login]]
+                     [ui-common :as common]
+                     [api-tasks :as api]
                      [client :as client]
                      [conf :refer :all]
                      [tasks :refer :all] 
-                     [users :refer [login logout]]
-                     [roles :as role])
+                     
+                     [users :as user])
             [fn.trace :as trace]
             [com.redhat.qe.auto.selenium.selenium :refer :all])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
@@ -48,9 +50,9 @@
   [user pw]
   (api/create-user user {:password pw
                          :email (str user "@myorg.org")})
-  (role/assign {:user user
+  (user/assign {:user user
                 :roles ["Administrator"]})
-  (logout)
+  (common/logout)
   ;;login and set the default org to save time later
   (login user pw {:default-org (@config :admin-org)
                   :org (@config :admin-org)}))

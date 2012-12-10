@@ -1,11 +1,9 @@
 (ns katello.notifications
   (:require [clojure.data.json :as json]
-            [katello.locators :as locators]
             [com.redhat.qe.auto.selenium.selenium 
               :refer [browser loop-with-timeout]] 
             [slingshot.slingshot :refer [throw+ try+]]
-            [test.assert :as assert]
-            [clojure.set :refer [union]])
+            [test.assert :as assert])
   (:refer-clojure :exclude [flush])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
