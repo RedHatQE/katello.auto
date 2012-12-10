@@ -76,7 +76,7 @@
 
 (defmacro add-subnavigation
   [parent-graft-point & branches]
-  `(swap! page-tree nav/add-subnavigation ~parent-graft-point
+  `(swap! page-tree nav/add-subnav-multiple ~parent-graft-point
           (list ~@(for [branch branches]
                     `(nav/nav-tree ~branch)))))
 

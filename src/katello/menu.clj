@@ -43,17 +43,20 @@
 ;; Nav
 
 (nav/add-subnavigation 
-  ::nav/top-level
-  [::systems-menu [] (browser mouseOver ::systems-link)
-   [:katello.systems/page [] (browser click ::systems-all-link)]]
+ ::nav/top-level
+ 
+ [::systems-menu [] (browser mouseOver ::systems-link)
+  [:katello.systems/page [] (browser click ::systems-all-link)]]
 
-  [::content-menu [] (browser mouseOver ::content-link)
-   [::repositories-menu [] (browser mouseOver ::repositories-link)
-    [::katello.repositories/custom-providers-page [] (browser clickAndWait ::custom-content-repositories-link)]
-    [::katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
-    [::katello.repositories/package-filters-page [] (browser clickAndWait ::package-filters-link)]]
-   [:subscriptions [] (browser mouseOver ::subscriptions-link)
-    [:redhat-subscriptions-page [] (browser clickAndWait ::red-hat-subscriptions-link)]]]
+ [::content-menu [] (browser mouseOver ::content-link)
+  [::repositories-menu [] (browser mouseOver ::repositories-link)
+   [::katello.repositories/custom-providers-page [] (browser clickAndWait ::custom-content-repositories-link)]
+   [::katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
+   [::katello.repositories/package-filters-page [] (browser clickAndWait ::package-filters-link)]]
 
-  [::administer-menu [] (browser mouseOver ::administer-link)
-   [:katello.users/page [] (browser clickAndWait ::users-link)]])
+  [:subscriptions [] (browser mouseOver ::subscriptions-link)
+   [:redhat-subscriptions-page [] (browser clickAndWait ::red-hat-subscriptions-link)]]]
+
+ [::administer-menu [] (browser mouseOver ::administer-link)
+  [:katello.users/page [] (browser clickAndWait ::users-link)]
+  [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]])

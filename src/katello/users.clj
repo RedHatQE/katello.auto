@@ -5,7 +5,8 @@
             (katello [navigation :as nav]                    
                      [conf :refer [config *session-user*
                                    *session-password* *session-org*]] 
-                     [ui-common :as ui] 
+                     [ui :as ui]
+                     [ui-common :as common]
                      [notifications :as notification] 
                      [organizations :as organization])))
 
@@ -102,12 +103,12 @@
     (browser click ::save-edit) 
     (notification/check-for-success))
   (when new-email
-    (in-place-edit {::email-text new-email})))
+    (common/in-place-edit {::email-text new-email})))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
   []
-  (when (logged-in?)
+  (when (common/logged-in?)
     (browser getText ::account)))
 
 (defn assign-default-org-and-env 

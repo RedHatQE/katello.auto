@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [navigation :as nav]
-                     [ui-common :as ui] 
+                     [ui :as ui]
+                     [ui-common :as common]
                      [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
@@ -31,13 +32,12 @@
 ;; Nav
 
 (nav/add-subnavigation
- :administer-tab
- [::page [] (sel/browser clickAndWait :manage-organizations)
-  [::new-page [] (sel/browser click ::new)]
-  [::named-page [org-name] (nav/choose-left-pane  org-name)]])
+ ::page 
+ [::new-page [] (sel/browser click ::new)]
+ [::named-page [org-name] (nav/choose-left-pane  org-name)])
 
 (nav/add-subnavigation
- :top-level
+ ::nav/top-level
  [::page-via-org-switcher [] (sel/browser click ::switcher)
   [::link-via-org-switcher [] (sel/browser clickAndWait ::manage-switcher-link)
    [::new-page-via-org-switcher [] (sel/browser click ::new)]]])
@@ -71,7 +71,7 @@
    can be edited is the org's description."
   [org-name & {:keys [description]}]
   (nav/go-to ::named-page {:org-name org-name})
-  (in-place-edit {::description-text description}))
+  (common/in-place-edit {::description-text description}))
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
