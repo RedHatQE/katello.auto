@@ -1,47 +1,59 @@
 (ns katello.menu
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser] :as sel] 
             (katello [ui :as ui]
                      [navigation :as nav])))
 
+(sel/template-fns
+ {menu-link "//*[@id='%s']/a"})
+
 ;; Locators
 (swap! ui/locators merge
-       {::administer-link "admin"
-        ::users-link "users"
-        ::roles-link "roles"
-        ::manage-organizations-link "organizations"
-        ::dashboard-link "dashboard"
-        ::content-link "content"
-        ::subscriptions-link "subscriptions"
-        ::red-hat-subscriptions-link "red_hat_subscriptions"
-        ::activation-keys-link "activation_keys"
-        ::import-history-link "import_history"
-        ::repositories-link "providers"
-        ::custom-content-repositories-link "custom_providers"
-        ::red-hat-repositories-link "redhat_providers"
-        ::package-filters-link "filters"
-        ::sync-management-link "sync_mgmt"
-        ::sync-status-link "sync_status"
-        ::sync-plans-link "sync_plans"
-        ::sync-schedule-link "sync_schedule"
-        ::content-search-link "content_search"
-        ::system-templates-link "system_templates"
-        ::changeset-management-link "changeset_management"
-        ::changesets-link "changesets"
-        ::changeset-history-link "changeset"
-        ::systems-link "systems"
-        ::systems-all-link "registered"
-        ::by-environments-link "env"
-        ::system-groups-link "system_groups"
-        ::create-link ""
-        ::details-link ""
-        ::registered-link ""
-        ::groups-link ""
-        ::general-link ""
-        ::facts-link ""
-        ::packages-link ""
-        ::gpg-keys-link ""})
+       {::administer-link (menu-link "admin")
+        ::users-link (menu-link "users")
+        ::roles-link (menu-link "roles")
+        ::manage-organizations-link (menu-link "orgs")
+        ::dashboard-link (menu-link "dashboard")
+        ::content-link (menu-link "content")
+        ::subscriptions-link (menu-link "subscriptions")
+        ::red-hat-subscriptions-link (menu-link "red_hat_subscriptions")
+        ::activation-keys-link (menu-link "activation_keys")
+        ::import-history-link (menu-link "import_history")
+        ::repositories-link (menu-link "providers")
+        ::custom-content-repositories-link (menu-link "custom_providers")
+        ::red-hat-repositories-link (menu-link "redhat_providers")
+        ::package-filters-link (menu-link "filters")
+        ::sync-management-link (menu-link "sync_mgmt")
+        ::sync-status-link (menu-link "sync_status")
+        ::sync-plans-link (menu-link "sync_plans")
+        ::sync-schedule-link (menu-link "sync_schedule")
+        ::content-search-link (menu-link "content_search")
+        ::system-templates-link (menu-link "system_templates")
+        ::changeset-management-link (menu-link "changeset_management")
+        ::changesets-link (menu-link "changesets")
+        ::changeset-history-link (menu-link "changeset")
+        ::systems-link (menu-link "systems")
+        ::systems-all-link (menu-link "registered")
+        ::by-environments-link (menu-link "env")
+        ::system-groups-link (menu-link "system_groups")
+        ::create-link (menu-link "")
+        ::details-link (menu-link "")
+        ::registered-link (menu-link "")
+        ::groups-link (menu-link "")
+        ::general-link (menu-link "")
+        ::facts-link (menu-link "")
+        ::packages-link (menu-link "")
+        ::gpg-keys-link (menu-link "")})
 
 ;; Nav
+
+;;
+;; Note - when you compile this namespace, any navigation items that
+;; were hanging off any of the nodes in the menu will be destroyed,
+;; and you will need to re-execute whatever code adds them back
+;; (usually by compiling another ns like katello.organizations.
+;; This can be fixed by doing a smarter add-subnavigation to not blow
+;; away existing child nodes.
+;;
 
 (nav/add-subnavigation 
  ::nav/top-level

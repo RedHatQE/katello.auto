@@ -22,7 +22,7 @@
         ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
- {subscription-checkbox       "//a[.='%s']/../span/input[@type='checkbox']"
+ {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 

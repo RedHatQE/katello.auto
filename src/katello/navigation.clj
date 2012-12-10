@@ -16,14 +16,14 @@
      name next)))
 
 (defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
-  (do (when (sel/browser isElementPresent :expand-path)
-        (sel/browser click :expand-path))
+  (do (when (sel/browser isElementPresent ::ui/expand-path)
+        (sel/browser click ::ui/expand-path))
       (sel/browser click (environment-breadcrumb env-name next-env-name))
       (when wait (sel/browser waitForPageToLoad))))
 
 (defn search-here [search-term]
-  (sel/fill-form {:search-bar search-term}
-             :search-submit (constantly nil)))
+  (sel/fill-form {::ui/search-bar search-term}
+             ::ui/search-submit (constantly nil)))
 
 (defn left-pane-item
   "Returns a selenium locator for an item in a left
