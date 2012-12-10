@@ -5,8 +5,7 @@
             (katello [navigation :as nav]
                      [notifications :as notification]
                      [ui :as ui]
-                     [ui-common :as common]
-                     [menu :as menu])))
+                     [ui-common :as common])))
 
 ;; Locators
 
@@ -16,8 +15,12 @@
         ::name-text                   "system[name]"
         ::sockets-text                "system[sockets]"
         ::arch-select                 "arch[arch_id]"
-        ::content-select              "xpath=(//li[@id='content']/a)[2]"
-        ::content-packages            (ui/link "Packages")
+
+        ;;content
+        ::content-link                (ui/menu-link "system_content")
+        ::packages-link               (ui/menu-link "system_packages")
+        ::software-link               (ui/menu-link "system_products")
+        ::errata-link                 (ui/menu-link "errata")
         ::add-content		      "add_content"
         ::remove-content              "remove_content" 
         ::package-name                "content_input"
@@ -44,8 +47,8 @@
 (sel/template-fns
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
-  checkbox                 "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
-  environment-checkbox     "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"})
+  checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
+  environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"})
 
 ;; Nav
 
@@ -54,8 +57,11 @@
  [::new-page [] (browser click ::new)]
  [::named-page [system-name] (nav/choose-left-pane system-name)
   [::details-page [] (browser click ::details)]
-  [::subscriptions-page [] (browser click ::subscriptions)]]
- [::named-page-content [] (browser click ::content-select)]
+  [::subscriptions-page [] (browser click ::subscriptions)]
+  [::content-menu [] (browser mouseOver ::content-link)
+   [::content-software-page [] (browser click ::software-link)]
+   [::content-packages-page [] (browser click ::packages-link)]
+   [::content-errata-page [] (browser click ::errata-link)]]]
  [::by-environment-page [] (browser clickAndWait :by-environments)
   [::environment-page [env-name] (nav/select-environment-widget env-name)
    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
@@ -78,16 +84,17 @@
   [name {:keys [new-name description location release-version]}]
   (nav/go-to ::named-page {:system-name name})
   (common/in-place-edit {::name-text-edit new-name
-                     ::description-text-edit description
-                     ::location-text-edit location
-                     ::release-version-select release-version}))
+                         ::description-text-edit description
+                         ::location-text-edit location
+                         ::release-version-select release-version}))
 
-(defn set-environment [system-name new-environment]
+(defn set-environment "Move a system to a new environment."
+  [system-name new-environment]
   (assert (not (blank? new-environment))) 
   (nav/go-to ::named-page {:system-name system-name})
-  (browser click ::environment)
-  (browser check (environment-checkbox new-environment))
-  (browser click ::save-environment))
+  (sel/->browser (click ::environment)
+                 (check (environment-checkbox new-environment))
+                 (click ::save-environment)))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -99,8 +106,8 @@
   (nav/go-to ::subscriptions-page {:system-name system-name})
   (when-not (nil? auto-subscribe)
     (common/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
-                                                            (if auto-subscribe "On" "Off")
-                                                            sla)}))
+                                                          (if auto-subscribe "On" "Off")
+                                                          sla)}))
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
@@ -122,9 +129,9 @@
   (nav/go-to ::named-page {:system-name system-name})
   (browser getText ::operating-system))
 
-(defn add-package [system-name {:keys [package package-group]}]
-  (nav/go-to ::named-page-content {:system-name system-name})
-  (browser click ::content-packages)
+(defn add-package "Add a package or package group to a system."
+  [system-name {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system-name})
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
@@ -136,9 +143,9 @@
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
 
-(defn remove-package [system-name {:keys [package package-group]}]
-  (nav/go-to ::named-page-content {:system-name system-name})
-  (browser click ::content-packages)
+(defn remove-package "Remove a package or package group from a system."
+  [system-name {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system-name})
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items
