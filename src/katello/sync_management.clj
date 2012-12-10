@@ -3,7 +3,8 @@
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             (katello [navigation :as nav] 
                      [notifications :as notification] 
-                     [ui-common :as ui]))
+                     [ui-common :as common]
+                     [ui :as ui]))
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
@@ -30,14 +31,10 @@
 ;; Nav
 
 (nav/add-subnavigation
- ::menu/content-tab
- [::page [] (browser mouseOver :sync-management)
-  [::status-page [] (browser clickAndWait :sync-status)]
-  [::plans-page [] (browser clickAndWait :sync-plans)
-   [::named-plan-page [sync-plan-name]
-    (nav/choose-left-pane sync-plan-name)]
-   [::new-plan-page [] (browser click ::new-plan)]]
-  [::schedule-page [] (browser clickAndWait :sync-schedule)]])
+ ::plans-page
+ [::named-plan-page [sync-plan-name]
+  (nav/choose-left-pane sync-plan-name)]
+ [::new-plan-page [] (browser click ::new-plan)])
 
 ;; Tasks
 
@@ -60,12 +57,12 @@
            start-date-literal start-time-literal] :as m}]
   (nav/go-to ::new-plan-page)
   (let [[date time] (split-date m)]
-    (fill-ajax-form {::plan-name-text name
-                     ::plan-description-text description
-                     ::plan-interval-select interval
-                     ::plan-time-text time
-                     ::plan-date-text date}
-                    ::save-plan)
+    (sel/fill-ajax-form {::plan-name-text name
+                         ::plan-description-text description
+                         ::plan-interval-select interval
+                         ::plan-time-text time
+                         ::plan-date-text date}
+                        ::save-plan)
     (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
 
 (defn edit-plan
@@ -76,11 +73,11 @@
                 start-time-literal] :as m}]
   (nav/go-to ::named-plan-page {:sync-plan-name name})
   (let [[date time] (split-date m)]
-    (in-place-edit {::plan-name-text new-name
-                    ::plan-description-text description
-                    ::plan-interval-select interval
-                    ::plan-time-text time
-                    ::plan-date-text date}))
+    (common/in-place-edit {::plan-name-text new-name
+                           ::plan-description-text description
+                           ::plan-interval-select interval
+                           ::plan-time-text time
+                           ::plan-date-text date}))
   (notification/check-for-success {:match-pred (notification/request-type? :sync-update)}))
 
 (defn schedule

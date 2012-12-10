@@ -49,13 +49,22 @@
   [:katello.systems/page [] (browser click ::systems-all-link)]]
 
  [::content-menu [] (browser mouseOver ::content-link)
+  [:subscriptions [] (browser mouseOver ::subscriptions-link)
+   [:redhat-subscriptions-page [] (browser clickAndWait ::red-hat-subscriptions-link)]]
+
   [::repositories-menu [] (browser mouseOver ::repositories-link)
    [::katello.repositories/custom-providers-page [] (browser clickAndWait ::custom-content-repositories-link)]
    [::katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
    [::katello.repositories/package-filters-page [] (browser clickAndWait ::package-filters-link)]]
 
-  [:subscriptions [] (browser mouseOver ::subscriptions-link)
-   [:redhat-subscriptions-page [] (browser clickAndWait ::red-hat-subscriptions-link)]]]
+  [::sync-management-menu [] (browser mouseOver ::sync-management-link)
+   [:katello.sync-management/status-page [] (browser click ::sync-status-link)]
+   [:katello.sync-management/plans-page [] (browser click ::sync-plans-link)]
+   [:katello.sync-management/schedule-page [] (browser click ::sync-schedule-link)]]
+  
+  [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
+   [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
+   [:katello.changesets/history-page [] (browser clickAndWait ::changeset-history-link)]]]
 
  [::administer-menu [] (browser mouseOver ::administer-link)
   [:katello.users/page [] (browser clickAndWait ::users-link)]

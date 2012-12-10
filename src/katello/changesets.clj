@@ -1,7 +1,8 @@
 (ns katello.changesets
   (:require (katello [navigation :as nav]
                      [tasks :refer :all] 
-                     [ui-common :as ui] 
+                     [ui-common :as common]
+                     [ui :as ui]
                      [sync-management :as sync]
                      [notifications :refer [check-for-success]])
             [com.redhat.qe.auto.selenium.selenium :as sel]
@@ -43,17 +44,14 @@
         ::select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
 
 (nav/add-subnavigation
- ::menu/content-tab
- [:changeset-promotions-tab [] (sel/browser mouseOver :changeset-management)
-  [::page [] (sel/browser clickAndWait :changesets)
-   [::named-environment-page [env-name next-env-name]
-    (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-    [::named-page [changeset-name changeset-type]
-     (do
-       (when (= changeset-type "deletion")
-         (sel/browser click ::deletion))
-       (sel/browser click (list-item changeset-name)))]]]
-  [::history-page [] (sel/browser clickAndWait :changeset-history)]])
+ ::page 
+ [::named-environment-page [env-name next-env-name]
+  (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
+  [::named-page [changeset-name changeset-type]
+   (do
+     (when (= changeset-type "deletion")
+       (sel/browser click ::deletion))
+     (sel/browser click (list-item changeset-name)))]])
 
 ;; Tasks
 
