@@ -3,6 +3,7 @@
   (:require (katello [client :as client]
                      [api-tasks :as api]
                      [providers :as provider]
+                     [repositories :as repo]
                      [changesets :refer [sync-and-promote]]
                      [organizations :as organization]
                      [tasks :refer :all]
@@ -47,7 +48,7 @@
                                  :org org-name
                                  :env target-env
                                  :force true})
-     
+      
       (doseq [product-name all-products]
         (if-let [matching-pool (->> (api/system-available-pools (client/my-hostname ssh-conn))
                                   (filter (partial pool-provides-product product-name))
@@ -68,7 +69,7 @@
     :blockers (union (blocking-tests "simple sync" "promote content")
                      (open-bz-bugs "784853" "790246")
                      no-clients-defined)
-   
+    
     (let [provider-name (uniqueify "fedorapeople")
           product-name (uniqueify "safari-1_0")
           repo-name (uniqueify "safari-x86_64")
@@ -81,9 +82,9 @@
       (provider/add-product {:provider-name provider-name
                              :name product-name})
       (repo/add {:provider-name provider-name
-                          :product-name product-name
-                          :name repo-name
-                          :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
+                 :product-name product-name
+                 :name repo-name
+                 :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"} )
       (let [products [{:name product-name :repos [repo-name]}]]
         (when (api/is-katello?)
           (sync-and-promote products library target-env))

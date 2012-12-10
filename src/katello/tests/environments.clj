@@ -8,18 +8,15 @@
                      [tasks :refer :all] 
                      [environments :as environment] 
                      [validation :refer :all] 
-                     [client :as client]
-                     [systems :refer :all]
+                     [client :as client] 
                      [conf :as conf]) 
             [katello.tests.providers :refer [with-n-new-orgs]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
-            [slingshot.slingshot :refer :all]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [clojure.string :refer [capitalize upper-case lower-case trim]]
-            [bugzilla.checker :refer [open-bz-bugs]]
-            [deltacloud :as cloud]))
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Variables
 

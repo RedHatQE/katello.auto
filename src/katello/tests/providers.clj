@@ -6,12 +6,14 @@
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
             (katello [tasks           :refer :all]
+                     [ui-common       :as common]
                      [notifications   :refer [success?]]
                      [organizations   :as organization]
                      [sync-management :as sync] 
                      [repositories    :as repo]
+                     [providers       :as provider]
                      [gpg-keys        :as gpg-key]
-                     [ui-common       :as common]
+                     [package-filters :as filter]
                      [validation      :refer :all]
                      [conf            :refer [config]])))
 
@@ -77,7 +79,7 @@
   (concat
    [[{:name nil
       :description "blah"
-      :url "http://sdf.com"} (ui/errtype :katello.notifications/name-cant-be-blank)]
+      :url "http://sdf.com"} (common/errtype :katello.notifications/name-cant-be-blank)]
 
     [{:name (uniqueify "mytestcp4")
       :description nil
@@ -91,12 +93,12 @@
    (for [trailing-ws-str trailing-whitespace-strings]
      [{:name trailing-ws-str
        :description nil
-       :url "http://sdf.com"} (ui/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
+       :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
     
    (for [inv-char-str invalid-character-strings]
      [{:name inv-char-str
        :description nil
-       :url "http://sdf.com"} (ui/errtype :katello.notifications/name-must-not-contain-characters)])))
+       :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)])))
 
 ;; Tests
 

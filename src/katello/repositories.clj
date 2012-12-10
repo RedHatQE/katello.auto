@@ -20,16 +20,11 @@
   add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
 (nav/add-subnavigation
- ::named-custom-provider-page
+ :katello.providers/named-page
  [::products-repos-page [] (sel/->browser (click ::products-and-repositories)
                                           (sleep 2000))
   [::named-product-page [product-name] (sel/browser click (ui/editable product-name))]
   [::named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]])
-
-(nav/add-subnavigation
- ::package-filters-page
- [::new-package-filter-page [] (sel/browser click ::create-new-package-filter)]
- [::named-package-filter-page [package-filter-name] (nav/choose-left-pane  package-filter-name)])
 
 ;; Tasks
 

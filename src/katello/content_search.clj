@@ -7,7 +7,8 @@
             [com.redhat.qe.auto.selenium.selenium :as sel]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
-                     [ui-common     :as ui]
+                     [ui            :as ui]
+                     [ui-common     :as common]
                      [notifications :as notification] 
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
@@ -58,12 +59,6 @@
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
   })
-
-;; Nav
-
-(nav/add-subnavigation
- ::menu/content-tab
- [::page [] (sel/browser clickAndWait :content-search)])
 
 ;; Tasks
 

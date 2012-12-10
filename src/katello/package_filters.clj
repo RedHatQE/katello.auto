@@ -18,8 +18,8 @@
   [::named-page [package-filter-name] (nav/choose-left-pane  package-filter-name)])
 
 
-(defn create-package-filter [name & [{:keys [description]}]]
-  "Creates new Package Filter"
+(defn create "Creates new Package Filter"
+  [name & [{:keys [description]}]]
   (assert (string? name))
   (nav/go-to ::new-page)
   (sel/fill-ajax-form {::name-text  name
@@ -27,8 +27,7 @@
                       ::save)
   (notification/check-for-success))
 
-(defn remove-package-filter 
-  "Deletes existing Package Filter"
+(defn remove "Deletes existing Package Filter"
   [package-filter-name]
   (nav/go-to ::named-page {:package-filter-name package-filter-name})
   (browser click ::remove )

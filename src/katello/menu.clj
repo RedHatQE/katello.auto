@@ -64,6 +64,8 @@
    [:katello.sync-management/status-page [] (browser click ::sync-status-link)]
    [:katello.sync-management/plans-page [] (browser click ::sync-plans-link)]
    [:katello.sync-management/schedule-page [] (browser click ::sync-schedule-link)]]
+
+  [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
   
   [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
 

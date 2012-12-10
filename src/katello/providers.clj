@@ -39,18 +39,12 @@
         ::save-new-package-filter        "filter_submit"
         ::remove-package-filter-key      (ui/link "Remove Filter")})
 
+
 (nav/add-subnavigation
  ::custom-page
- [::new-custom-provider-page [] (sel/browser click ::provider-new)]
- [::named-custom-provider-page [provider-name] (nav/choose-left-pane  provider-name)
-  [::provider-details-page [] (sel/browser click :details)]])
-
-(comment (nav/add-subnavigation
-  ::package-filters-page
-  [::new-package-filter-page [] (sel/browser click ::create-new-package-filter)]
-  [::named-package-filter-page [package-filter-name] (nav/choose-left-pane  package-filter-name)]))
-
-
+ [::new-page [] (sel/browser click ::provider-new)]
+ [::named-page [provider-name] (nav/choose-left-pane  provider-name)
+  [::details-page [] (sel/browser click :details)]])
 
 ;; Tasks
 
