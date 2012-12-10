@@ -41,9 +41,8 @@
 
 ;; Nav
 
-(nav/add-subnav-multiple
- :administer-tab
- ::page [] 
+(nav/add-subnavigation
+ ::page 
  [::named-page [username] (nav/choose-left-pane user-list-item username)
   [::environments-page [] (browser click ::environments-subsubtab)]
   [::roles-permissions-page [] (browser click ::roles-subsubtab)]])

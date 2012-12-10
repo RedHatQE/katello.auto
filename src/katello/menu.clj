@@ -42,7 +42,7 @@
 
 ;; Nav
 
-(nav/add-subnav-multiple 
+(nav/add-subnavigation 
   ::nav/top-level
   [::systems-menu [] (browser mouseOver ::systems-link)
    [:katello.systems/page [] (browser click ::systems-all-link)]]

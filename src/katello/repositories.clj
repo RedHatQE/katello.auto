@@ -52,7 +52,7 @@
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   add-repo "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
-(nav/add-subnav-multiple
+(nav/add-subnavigation
  ::custom-providers-page
  [::new-custom-provider-page [] (sel/browser click ::provider-new)]
  [::named-custom-provider-page [provider-name] (nav/choose-left-pane  provider-name)
@@ -62,7 +62,7 @@
    [::named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]]
   [::provider-details-page [] (sel/browser click :details)]])
 
-(nav/add-subnav-multiple
+(nav/add-subnavigation
  ::package-filters-page
  [::new-package-filter-page [] (sel/browser click ::create-new-package-filter)]
  [::named-package-filter-page [package-filter-name] (nav/choose-left-pane  package-filter-name)])

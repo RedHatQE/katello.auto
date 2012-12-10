@@ -46,7 +46,7 @@
 
 ;; Nav
 
-(nav/add-subnav-multiple
+(nav/add-subnavigation
  ::page
  [::new-page [] (sel/browser click ::new)]
  [::subscriptions-page [system-name] (nav/choose-left-pane system-name)

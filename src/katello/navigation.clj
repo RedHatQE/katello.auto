@@ -75,17 +75,11 @@
   go-to (nav/nav-fn page-tree))
 
 (defmacro add-subnavigation
-  "Convenience for other namespaces to graft their subnavigation onto
-   the main nav tree."
-  [parent-graft-point branch]
-  `(swap! page-tree nav/add-subnav ~parent-graft-point (nav/nav-tree ~branch)))
-
-(defmacro add-subnav-multiple
   [parent-graft-point & branches]
-  `(swap! page-tree nav/add-subnav-multiple ~parent-graft-point
+  `(swap! page-tree nav/add-subnavigation ~parent-graft-point
           (list ~@(for [branch branches]
                     `(nav/nav-tree ~branch)))))
 
 ;; add the menu
-(comment (apply swap! page-tree nav/add-subnav-multiple
+(comment (apply swap! page-tree nav/add-subnavigation
         menu/tree))

@@ -4,31 +4,28 @@
 ;; Locators
 
 (sel/template-fns
- {button-div                      "//div[contains(@class,'button') and normalize-space(.)='%s']"  
-  editable                        "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
-  environment-link                "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
-  left-pane-field-list            "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
-  link                            "link=%s"
-  search-favorite                 "//span[contains(@class,'favorite') and @title='%s']"
-  slide-link                      "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
-  tab                             "link=%s"
-  textbox                         "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
+ {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
+  editable             "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
+  environment-link     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
+  left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
+  link                 "link=%s"
+  search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
+  slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
+  tab                  "link=%s"
+  textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
 
 
 (def common
-  {::save-inplace-edit             "//button[.='Save']"
-   ::confirmation-dialog           "//div[contains(@class, 'confirmation')]"
-   ::confirmation-yes              "//div[contains(@class, 'confirmation')]//span[.='Yes']"
-   :confirmation-no               "//div[contains(@class, 'confirmation')]//span[.='No']"
-   ::search-bar                    "search"
-   ::search-menu                   "//form[@id='search_form']//span[@class='arrow']"
-   ::search-save-as-favorite       "search_favorite_save"
-   ::search-clear-the-search       "search_clear"
-   ::search-submit                 "//button[@form='search_form']"
-   ::expand-path                 "path-collapsed"
-   ;;main banner
-   
-   ::log-out                       "//a[normalize-space(.)='Log Out']"})
+  {::save-inplace-edit       "//button[.='Save']"
+   ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
+   ::confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+   ::search-bar              "search"
+   ::search-menu             "//form[@id='search_form']//span[@class='arrow']"
+   ::search-save-as-favorite "search_favorite_save"
+   ::search-clear-the-search "search_clear"
+   ::search-submit           "//button[@form='search_form']"
+   ::expand-path             "path-collapsed"
+   ::log-out                 "//a[normalize-space(.)='Log Out']"})
 
 
 (defonce ^{:doc "All the selenium locators for the Katello UI. Maps a
@@ -37,9 +34,12 @@
                  locator string. See also SeleniumLocatable
                  protocol."}
   locators
-  (atom {}))
+  (atom common))
+
+;;
 ;; Tells the clojure selenium client where to look up keywords to get
-;; real selenium locators (in uimap in this namespace).
+;; real selenium locators.
+;;
 
 (extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword
