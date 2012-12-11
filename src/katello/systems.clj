@@ -61,10 +61,12 @@
   [::content-menu [] (browser mouseOver ::content-link)
    [::content-software-page [] (browser click ::software-link)]
    [::content-packages-page [] (browser click ::packages-link)]
-   [::content-errata-page [] (browser click ::errata-link)]]]
- [::by-environment-page [] (browser clickAndWait :by-environments)
-  [::environment-page [env-name] (nav/select-environment-widget env-name)
-   [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
+   [::content-errata-page [] (browser click ::errata-link)]]])
+
+(nav/add-subnavigation
+ ::by-environments-page
+ [::environment-page [env-name] (nav/select-environment-widget env-name)
+  [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]])
 
 ;; Tasks
 
@@ -82,7 +84,7 @@
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [name {:keys [new-name description location release-version]}]
-  (nav/go-to ::named-page {:system-name name})
+  (nav/go-to ::details-page {:system-name name})
   (common/in-place-edit {::name-text-edit new-name
                          ::description-text-edit description
                          ::location-text-edit location

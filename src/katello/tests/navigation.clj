@@ -10,11 +10,11 @@
                      :katello.users/page 
                      :katello.systems/page
                      :katello.activation-keys/page
-                     :katello.systems/by-environment-page))
+                     :katello.systems/by-environments-page))
 
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs
-  '(:redhat-repositories-page))
+  '(:katello.repositories/redhat-page))
 
 ;;; Functions
 
