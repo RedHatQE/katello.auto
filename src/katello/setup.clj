@@ -3,7 +3,7 @@
   (:require [test.tree.watcher :as watch]
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
-            (katello [login :refer [login]]
+            (katello [login :refer [login logout]]
                      [ui-common :as common]
                      [api-tasks :as api]
                      [client :as client]
@@ -49,7 +49,7 @@
                          :email (str user "@myorg.org")})
   (user/assign {:user user
                 :roles ["Administrator"]})
-  (common/logout)
+  (logout)
   ;;login and set the default org to save time later
   (login user pw {:default-org (@config :admin-org)
                   :org (@config :admin-org)}))

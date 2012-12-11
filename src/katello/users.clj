@@ -3,6 +3,7 @@
             [slingshot.slingshot :refer [throw+]]
             (katello [navigation :as nav] 
                      [ui :as ui]
+                     [login :refer [logged-in?]]
                      [ui-common :as common]
                      [notifications :as notification])))
 
@@ -102,7 +103,7 @@
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
   []
-  (when (common/logged-in?)
+  (when (logged-in?)
     (browser getText ::account)))
 
 (defn assign-default-org-and-env 
