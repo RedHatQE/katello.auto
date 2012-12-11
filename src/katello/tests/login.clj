@@ -36,7 +36,7 @@
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
   (if (logged-in?)
-    (do (nav/go-to :top-level)
+    (do (nav/go-to ::nav/top-level)
         (if (= (organization/current) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
                (catch Exception _
