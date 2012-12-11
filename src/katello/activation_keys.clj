@@ -14,11 +14,10 @@
         ::description-text        "activation_key[description]"
         ::template-select         "activation_key[system_template_id]"
         ::save                    "save_key"
-        ::applied-subscriptions   "//a[.='Applied Subscriptions']"
-        ::available-subscriptions "//a[.='Available Subscriptions']"
+        ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
+        ::available-subscriptions (ui/menu-link "available_subscriptions")
         ::add-subscriptions       "//input[@id='subscription_submit_button']"            
-        ::remove                  (ui/link "Remove Activation Key")
-        ::subscriptions           "//div[contains(@class, 'panel-content')]//a[.='Subscriptions']"
+        ::remove                  "//a[contains(@class, 'remove-item') and contains(@href, '/activation_keys/']"
         ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
