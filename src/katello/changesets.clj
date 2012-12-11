@@ -15,11 +15,9 @@
  {add-content-item    "//a[@data-display_name='%s' and contains(.,'Add')]"
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
-  remove-content-item "//a[@data-display_name='%s' and contains(.,'Remove')]"
   select-product      "//span[contains(.,'%s')]"
   status              "//span[.='%s']/..//span[@class='changeset_status']"
-  list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"
-  })
+  list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
 (swap! ui/locators merge
        {::products-category           (content-category "products")
@@ -32,16 +30,12 @@
         ::review-for-promotion        "review_changeset"
         ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
         ::promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-        ::new                         "//a[@id='new']"
-        ::name-text                   "changeset[name]"
+        ::new                         "new"
+        ::name-text                   "changeset_name"
         ::save                        "save_changeset_button"
         ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
         ::type                        "changeset[action_type]"
-        ::deletion                    "//div[@data-cs_type='deletion']"
-        ::select-repos                "//div[contains(@class,'simple_link') and contains(.,'Repositories')]"
-        ::select-packages             "//div[contains(@class,'simple_link') and contains(.,'Packages')]"
-        ::select-errata               "//div[contains(@class,'simple_link') and contains(.,'Errata')]"
-        ::select-errata-all           "//div[contains(@class,'simple_link') and contains(.,'All')]"})
+        ::deletion                    "//div[@data-cs_type='deletion']"})
 
 (nav/add-subnavigation
  ::page 
