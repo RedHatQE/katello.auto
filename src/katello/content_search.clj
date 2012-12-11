@@ -4,7 +4,7 @@
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
-            [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
                      [ui            :as ui]
@@ -64,7 +64,7 @@
 
 (defn get-all-of-locator [locatorfn] 
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
-  (let [count (sel/browser getXpathCount (.getLocator (locatorfn "*")))]
+  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
     (reduce (fn [acumulator number]
               (conj 
                acumulator 
@@ -77,9 +77,9 @@
                 (new org.xml.sax.InputSource
                      (new java.io.StringReader 
                           (str "<root>" 
-                               (sel/browser getEval 
-                                            (str "window.document.getElementById('" 
-                                                 id "').innerHTML;")) 
+                               (browser getEval 
+                                        (str "window.document.getElementById('" 
+                                             id "').innerHTML;")) 
                                "</root>"))))))
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
@@ -117,18 +117,18 @@
 
 (defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
   (-> (get-search-page-result-list-of-lists)
-     (zip/vector-zip)
-     (tree-edit 
-      (fn [tree] (>= depth (subtree-to-top tree)))      
-      (fn [node] 
-        (if (coll? node)
-          (apply hash-map node)
-          node))
-      (fn [node]
-        (if (coll? node)
-          (into #{} node)
-          node)))
-     (zip/node)))
+      (zip/vector-zip)
+      (tree-edit 
+       (fn [tree] (>= depth (subtree-to-top tree)))      
+       (fn [node] 
+         (if (coll? node)
+           (apply hash-map node)
+           node))
+       (fn [node]
+         (if (coll? node)
+           (into #{} node)
+           node)))
+      (zip/node)))
 
 
 (defn attr-loc [locator attribute]
@@ -136,15 +136,15 @@
 
 (defn get-repo-compare-package-names [] 
   (doall (for [locator (get-all-of-locator package-name)]
-           (sel/browser getText locator))))
+           (browser getText locator))))
 
 (defn get-result-packages [] 
   (doall (for [locator (get-all-of-locator result-item-n)]
-           (sel/browser getText locator))))
+           (browser getText locator))))
 
 (defn get-repo-content-search [] 
   (doall (for [locator (get-all-of-locator repo-header-name)]
-           (sel/browser getText locator))))
+           (browser getText locator))))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
@@ -162,7 +162,7 @@
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (let [elem (auto-complete-item cont-item)] 
     (sel/->browser (type auto-comp-box cont-item)
-                   ;; (sel/browser setText auto-comp-box cont-item)
+                   ;; (browser setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
                    (typeKeys auto-comp-box " ")
                    (waitForElement elem "2000")
@@ -172,36 +172,36 @@
 
 (defn get-search-result-repositories [] 
   (doall (for [locator (get-all-of-locator repo-column-name)]
-           (sel/browser getText locator))))
+           (browser getText locator))))
 
 (defn row-in-column? [package repository]
-  (let [row-id (sel/browser getAttribute (attr-loc 
-                                          (result-row-id package)
-                                          "data-id"))
-        col-id (sel/browser getAttribute (attr-loc 
-                                          (result-col-id repository)
-                                          "data-id"))]
+  (let [row-id (browser getAttribute (attr-loc 
+                                      (result-row-id package)
+                                      "data-id"))
+        col-id (browser getAttribute (attr-loc 
+                                      (result-col-id repository)
+                                      "data-id"))]
     (not (= "--" 
-            (sel/browser getText (result-cell row-id col-id))))))
+            (browser getText (result-cell row-id col-id))))))
 
 (defn package-in-repository? [package repository]
   (row-in-column? package repository))
 
 (defn load-all-results []
-  (while (sel/browser isElementPresent ::load-more)
-    (sel/browser click ::load-more)))
+  (while (browser isElementPresent ::load-more)
+    (browser click ::load-more)))
 
 (defn add-to-repository-browser [repository]
   (autocomplete-adder-for-content-search ::repo-auto-complete ::add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
-  (sel/browser click (repo-remove repository)))
+  (browser click (repo-remove repository)))
 
 (defn remove-repositories [repositories]
   (do
     (doseq [removing repositories]
       (remove-one-repository-from-browser removing))
-    (sel/browser click ::browse-button)))
+    (browser click ::browse-button)))
 
 (defn get-repo-search-data-id-map [repositories]
   (apply hash-map 
@@ -209,50 +209,50 @@
           (fn [result name] 
             (conj result  name
                   (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
-                                     (sel/browser getAttribute (attr-loc 
-                                                                (result-repo-id name)
-                                                                "data-id")))))) 
+                                     (browser getAttribute (attr-loc 
+                                                            (result-repo-id name)
+                                                            "data-id")))))) 
           []
           repositories)))
 
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-id-map repositories)]
     (doseq [repository repositories]
-      (sel/browser check (compare-checkbox (str "repo_" (repo-id-map repository)))))))
+      (browser check (compare-checkbox (str "repo_" (repo-id-map repository)))))))
 
 
 (defn add-repositories [repositories]
   (nav/go-to ::page)
-  (sel/browser select ::type-select "Repositories")
-  (sel/browser check ::repo-auto-complete-radio)
+  (browser select ::type-select "Repositories")
+  (browser check ::repo-auto-complete-radio)
   (doseq [repository repositories]
     (add-to-repository-browser repository))
-  (sel/browser click ::browse-button))
+  (browser click ::browse-button))
 
 (defn click-if-compare-button-is-disabled? []
-  (sel/browser click ::repo-compare-button)
-  (not (=  "" (sel/browser getText ::repo-compare-button))))
+  (browser click ::repo-compare-button)
+  (not (=  "" (browser getText ::repo-compare-button))))
 
 (defn click-repo-errata [repo]
   (let [repo-id ((get-repo-search-data-id-map [repo]) repo) ]
-    (sel/browser click (result-repo-errata-link  repo-id))))
+    (browser click (result-repo-errata-link  repo-id))))
 
 (defn compare-repositories [repositories]
   (add-repositories repositories)
   (check-repositories repositories)
-  (sel/browser click ::repo-compare-button)
+  (browser click ::repo-compare-button)
   (get-repo-content-search))
 
 (defn select-type [type]
   (case type 
-    :packages  (sel/browser select ::repo-result-type-select "Packages")
-    :errata    (sel/browser select ::repo-result-type-select "Errata")))
+    :packages  (browser select ::repo-result-type-select "Packages")
+    :errata    (browser select ::repo-result-type-select "Errata")))
 
 (defn select-view [set-type]
   (case set-type 
-    :all (sel/browser select ::repo-result-filter-select   "All")
-    :shared (sel/browser select ::repo-result-filter-select   "Union")
-    :unique (sel/browser select ::repo-result-filter-select   "Difference")))
+    :all (browser select ::repo-result-filter-select   "All")
+    :shared (browser select ::repo-result-filter-select   "Union")
+    :unique (browser select ::repo-result-filter-select   "Difference")))
 
 (defn get-repo-packages [repo & {:keys [view] :or {view :packages} }] 
   (compare-repositories [repo])
@@ -262,18 +262,18 @@
 
 (defn search-for-repositories [repo]
   (nav/go-to ::page)
-  (sel/browser select ::type-select "Repositories")
-  (sel/browser setText ::repo-search repo)
-  (sel/browser click ::browse-button)
+  (browser select ::type-select "Repositories")
+  (browser setText ::repo-search repo)
+  (browser click ::browse-button)
 
   (load-all-results)
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
 
 (defn search-for-packages [package]
   (nav/go-to ::page)
-  (sel/browser select ::type-select "Packages")
-  (sel/browser setText ::pkg-search package)
-  (sel/browser click ::browse-button)
+  (browser select ::type-select "Packages")
+  (browser setText ::pkg-search package)
+  (browser click ::browse-button)
   (load-all-results)
   (get-search-page-result-map-of-maps-of-sets-of-sets 1))
 
@@ -303,7 +303,7 @@
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
     (nav/go-to ::page)
-    (sel/browser select ::type-select ctype-str))
+    (browser select ::type-select ctype-str))
   
   ;; Select environments (columns)
   (doseq [env envs]
@@ -321,26 +321,26 @@
       (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
 
   ;; Add package
-  (when-not (empty? pkg) (sel/browser setText ::pkg-search pkg))
+  (when-not (empty? pkg) (browser setText ::pkg-search pkg))
 
   ;; Add errata
-  (when-not (empty? errata) (sel/browser setText ::errata-search errata))
+  (when-not (empty? errata) (browser setText ::errata-search errata))
   
-  (sel/browser click ::browse-button)
+  (browser click ::browse-button)
 
   (load-all-results)
   
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
-     (sel/browser getEval)
+     (browser getEval)
      (json/read-json)))
 
 (defn test-errata-popup-click [name]
-  (sel/browser click (span-text name))
-  (sel/browser mouseOver  ::errata-search)
-  (assert/is (.contains (sel/browser getText ::details-container) name))
-  (sel/browser click (span-text name))
-  (assert/is (= 0 (sel/browser getXpathCount ::details-container))))
+  (browser click (span-text name))
+  (browser mouseOver  ::errata-search)
+  (assert/is (.contains (browser getText ::details-container) name))
+  (browser click (span-text name))
+  (assert/is (= 0 (browser getXpathCount ::details-container))))
 
 (defn test-errata-popup-hover [name]
   (assert/is 
@@ -349,9 +349,9 @@
                    (waitForElement  ::details-container) "4000"          
                    (getText ::details-container))
     name))
-  (sel/browser mouseOut (.getLocator (span-text name)))
-  (sel/browser sleep 1000)
-  (assert/is (= 0 (sel/browser getXpathCount ::details-container))))
+  (browser mouseOut (.getLocator (span-text name)))
+  (browser sleep 1000)
+  (assert/is (= 0 (browser getXpathCount ::details-container))))
 
 (defn get-errata-set  [type]
   (search-for-content :errata-type {:errata type})

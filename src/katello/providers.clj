@@ -42,9 +42,9 @@
 
 (nav/add-subnavigation
  ::custom-page
- [::new-page [] (sel/browser click ::new)]
+ [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
-  [::details-page [] (sel/browser click :details)]])
+  [::details-page [] (browser click :details)]])
 
 ;; Tasks
 
@@ -53,8 +53,8 @@
   [{:keys [name description]}]
   (nav/go-to ::new-page)
   (sel/fill-ajax-form {::name-text name
-                   ::description-text description}
-                  ::create-save)
+                       ::description-text description}
+                      ::create-save)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-create)}))
 
 (defn add-product

@@ -3,7 +3,7 @@
                      [ui :as ui]
                      [ui-common :as common]
                      [notifications :as notification])
-            [com.redhat.qe.auto.selenium.selenium :as sel])
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
   (:refer-clojure :exclude [remove]))
 
 ;; Locators
@@ -22,7 +22,7 @@
 
 (nav/add-subnavigation
  ::page
- [::new-page [] (sel/browser click ::new)]
+ [::new-page [] (browser click ::new)]
  [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)])
 
 
@@ -47,6 +47,6 @@
   "Deletes existing GPG keys"
   [gpg-key-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
-  (sel/browser click ::remove )
-  (sel/browser click ::ui/confirmation-yes)
+  (browser click ::remove )
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success))

@@ -1,8 +1,6 @@
 (ns katello.ui-common
   (:require [clojure.data.json  :as json]
-            [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium
-             :refer [browser]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
                      menu
                      [ui :as ui]
@@ -26,7 +24,7 @@
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
-  (sel/browser click (a-toggler associated-text on?)))
+  (browser click (a-toggler associated-text on?)))
 
 ;;UI tasks
 
