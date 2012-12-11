@@ -3,7 +3,8 @@
                      [ui :as ui]
                      [ui-common :as common]
                      [notifications :as notification])
-            [com.redhat.qe.auto.selenium.selenium :as sel]))
+            [com.redhat.qe.auto.selenium.selenium :as sel])
+  (:refer-clojure :exclude [remove]))
 
 ;; Locators
 
