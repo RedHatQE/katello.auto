@@ -4,7 +4,6 @@
             [ui.navigate :as nav]
             [com.redhat.qe.auto.selenium.selenium :as sel]))
 
-
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
   are multiple environment paths, and you wish to select Library,
@@ -25,15 +24,11 @@
   (sel/fill-form {::ui/search-bar search-term}
              ::ui/search-submit (constantly nil)))
 
-(defn left-pane-item
-  "Returns a selenium locator for an item in a left
-   pane list (by the name of the item)"
-  [name]
-  ((sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%s')]")
-   (let [l (.length name)]
-     (if (> l 32)
-       (.substring name 0 32) ;workaround for bz 737678
-       name))))
+(def ^{:doc "Returns a selenium locator for an item in a left pane
+             list (by the name of the item) - truncate to 32 chars to
+             match ellipsis behavior."}
+  left-pane-item
+  (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
 (defn choose-left-pane
   "Selects an item in the left pane. If the item is not found, a
