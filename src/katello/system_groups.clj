@@ -6,7 +6,8 @@
                      [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
-                     [ui-common :as common])))
+                     [ui-common :as common]))
+  (:refer-clojure :exclude [remove]))
 
 
 (swap! ui/locators merge
