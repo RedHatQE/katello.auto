@@ -10,8 +10,8 @@
 ;; Locators
 
 (swap! ui/locators merge
-       {::roles-subsubtab             "//div[@class='panel-content']//a[.='Roles']"
-        ::environments-subsubtab      "//div[@class='panel-content']//a[.='Environments']"
+       {::roles-link                  (ui/menu-link "user_roles")
+        ::environments-link           (ui/menu-link "environment")
         ::default-org-select          "org_id[org_id]"
         ::save-environment            "update_user"
         ::save-edit                   "save_password"
@@ -38,8 +38,8 @@
 (nav/add-subnavigation
  ::page 
  [::named-page [username] (nav/choose-left-pane user-list-item username)
-  [::environments-page [] (browser click ::environments-subsubtab)]
-  [::roles-permissions-page [] (browser click ::roles-subsubtab)]])
+  [::environments-page [] (browser click ::environments-link)]
+  [::roles-permissions-page [] (browser click ::roles-link)]])
 
 ;; Tasks
 

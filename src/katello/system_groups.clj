@@ -14,7 +14,8 @@
         ::create                "group_save"
         ::name-text             "system_group[name]"
         ::description-text      "system_group[description]"
-        ::link                  "//div[@class='panel-content']//a[.='Systems']"
+        ::systems-link          (ui/menu-link "system_groups_systems")
+        ::details-link          (ui/menu-link "system_group_details")
         ::hostname-toadd        "add_system_input"
         ::add-system            "add_system"
         ::remove-system         "remove_systems"
@@ -25,7 +26,7 @@
         ::remove                (ui/link "Remove")
         ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
         ::confirm-only-group    "//span[.='No, only delete the system group.']"
-        ::unlimited-checkbox             "//input[@class='unlimited_members']"
+        ::unlimited-checkbox    "//input[@class='unlimited_members']"
         ::save-new-limit        "//button[.='Save']"
         ::limit-value           "system_group[max_systems]"})
 
@@ -35,8 +36,8 @@
  ::page
  [::new-page [] (browser click ::new)]
  [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
-  [::systems-page [] (browser click ::link)]
-  [::details-page [] (browser click :details)]])
+  [::systems-page [] (browser click ::systems-link)]
+  [::details-page [] (browser click ::details-link)]])
 
 
 ;; Tasks

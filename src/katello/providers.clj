@@ -42,7 +42,7 @@
 
 (nav/add-subnavigation
  ::custom-page
- [::new-page [] (sel/browser click ::provider-new)]
+ [::new-page [] (sel/browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
   [::details-page [] (sel/browser click :details)]])
 
