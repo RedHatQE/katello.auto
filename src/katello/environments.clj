@@ -11,14 +11,14 @@
 ;; Locators
 
 (swap! ui/locators merge
-       {::name-text         "kt_environment[name]"
-        ::label-text        "kt_environment[label]"
-        ::description-text  "kt_environment[description]"
-        ::prior             "kt_environment[prior]"
-        ::create            "//input[@value='Create']"
-        ::new               "//div[normalize-space(.)='Add New Environment']"
-        ::remove            (ui/link "Remove Environment")
-        ::prior-select-edit "kt_environment[prior]" })
+       {::name-text         "kt_environment_name"
+        ::label-text        "kt_environment_label"
+        ::description-text  "kt_environment_description"
+        ::prior             "kt_environment_prior"
+        ::create            "kt_environment_submit"
+        ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new'"
+        ::remove            "//div[@id='subpanel']//a[contains(@class, 'remove-item')"
+        ::prior-select-edit "kt_environment_prior" })
 
 (nav/add-subnavigation
  :katello.organizations/named-page
