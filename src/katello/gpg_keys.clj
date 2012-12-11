@@ -3,7 +3,8 @@
                      [ui :as ui]
                      [ui-common :as common]
                      [notifications :as notification])
-            [com.redhat.qe.auto.selenium.selenium :as sel]))
+            [com.redhat.qe.auto.selenium.selenium :as sel])
+  (:refer-clojure :exclude [remove]))
 
 ;; Locators
 
@@ -15,7 +16,7 @@
         ::link             "//a[.='GPG Keys']"
         ::save             "save_gpg_key"
         ::new              "new"
-        ::remove           (ui/link "Remove GPG Key")})
+        ::remove           "//a[contains(@class, 'remove-item') and contains(@href, '/gpg_keys/']"})
 
 ;; Nav
 

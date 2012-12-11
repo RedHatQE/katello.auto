@@ -3,7 +3,8 @@
             [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
             (katello [navigation :as nav]
                      [notifications :as notification] 
-                     [ui :as ui])))
+                     [ui :as ui]))
+  (:refer-clojure :exclude [remove]))
 
 (swap! ui/locators merge
        {::create           (ui/link "+ New Filter")

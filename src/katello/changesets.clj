@@ -32,7 +32,7 @@
         ::review-for-promotion        "review_changeset"
         ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
         ::promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
-        ::new                         "//a[contains(.,'New Changeset')]"
+        ::new                         "//a[@id='new']"
         ::name-text                   "changeset[name]"
         ::save                        "save_changeset_button"
         ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
