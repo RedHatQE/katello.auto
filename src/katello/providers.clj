@@ -22,7 +22,8 @@
         ::upload                    "upload_form_button"
         ::force-import-checkbox     "force_import"
         ::products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-        ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"}
+        ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"
+        ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
        {::add-product              (ui/button-div "Add Product")
@@ -44,7 +45,7 @@
  ::custom-page
  [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
-  [::details-page [] (browser click :details)]])
+  [::details-page [] (browser click ::details-link)]])
 
 ;; Tasks
 
