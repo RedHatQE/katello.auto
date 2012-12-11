@@ -2,7 +2,7 @@
   (:require (katello [validation :refer :all] 
                      [organizations :as organization]
                      [ui :as ui]
-                     [login :refer [login]]
+                     [login :refer [login logout]]
                      [ui-common :as common]
                      [roles :as role] 
                      [users :as user]
@@ -30,7 +30,7 @@
                                                          :org org}))
 
 (defn step-logout [_]
-  (common/logout))
+  (logout))
 
 (defn step-verify-login-direct-to-default-org [{:keys [username org]}]
   (login username (:password generic-user-details))

@@ -17,16 +17,19 @@
 
 
 (def common
-  {::save-inplace-edit       "//button[.='Save']"
+  {::save-inplace-edit       "//div[contains(@class, 'editable')]//button[@type='submit']"
    ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
-   ::confirmation-yes        "//div[contains(@class, 'confirmation')]//span[.='Yes']"
+
+   ;; use index, no other identifiable info in the DOM
+   ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
+
    ::search-bar              "search"
    ::search-menu             "//form[@id='search_form']//span[@class='arrow']"
    ::search-save-as-favorite "search_favorite_save"
    ::search-clear-the-search "search_clear"
    ::search-submit           "//button[@form='search_form']"
    ::expand-path             "path-collapsed"
-   ::log-out                 "//a[normalize-space(.)='Log Out']"})
+   ::log-out                 "//div[@id='widget-container']//a[contains(@href,'logout')]"})
 
 
 (defonce ^{:doc "All the selenium locators for the Katello UI. Maps a

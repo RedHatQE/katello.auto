@@ -1,5 +1,5 @@
 (ns katello.roles
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -34,8 +34,8 @@
 (nav/add-subnavigation
  ::page
  [::named-page [role-name] (nav/choose-left-pane  role-name)
-  [::named-users-page [] (sel/browser click ::users)]
-  [::named-permissions-page [] (sel/browser click ::permissions)]])
+  [::named-users-page [] (browser click ::users)]
+  [::named-permissions-page [] (browser click ::permissions)]])
 
 
 ;; Tasks
@@ -46,7 +46,7 @@
   "Creates a role with the given name and optional description."
   [name & [{:keys [description]}]]
   (nav/go-to ::page)
-  (sel/browser click ::new)
+  (browser click ::new)
   (sel/fill-ajax-form {::name-text name
                        ::description-text description}
                       ::save)
@@ -73,7 +73,7 @@
                        (sel/->browser (click (permission-org org))
                                       (sleep 1000))
                        (perms-fn permissions)
-                       (sel/browser click ::permissions))))] ;;go back up to choose next org
+                       (browser click ::permissions))))] ;;go back up to choose next org
     (when users
       (nav ::named-users-page)
       (doseq [user users]
@@ -81,23 +81,23 @@
     (each-org remove-permissions
               (fn [permissions]
                 (doseq [permission permissions]
-                  (sel/browser click (user-role-toggler permission false))
+                  (browser click (user-role-toggler permission false))
                   (notification/check-for-success {:match-pred
                                                    (notification/request-type? :roles-destroy-permission)})
-                  (sel/browser sleep 5000))))
+                  (browser sleep 5000))))
     (each-org add-permissions
               (fn [permissions]
                 (doseq [{:keys [name description resource-type verbs tags]} permissions]
-                  (sel/browser click ::add-permission)
+                  (browser click ::add-permission)
                   (if (= resource-type :all)
-                    (sel/browser click ::all-types)
-                    (do (sel/browser select ::permission-resource-type-select resource-type)
-                        (sel/browser click ::next)
+                    (browser click ::all-types)
+                    (do (browser select ::permission-resource-type-select resource-type)
+                        (browser click ::next)
                         (doseq [verb verbs]
-                          (sel/browser addSelection ::permission-verb-select verb))
-                        (sel/browser click ::next)
+                          (browser addSelection ::permission-verb-select verb))
+                        (browser click ::next)
                         (doseq [tag tags]
-                          (sel/browser addSelection ::permission-tag-select tag))))
+                          (browser addSelection ::permission-tag-select tag))))
                   (sel/fill-ajax-form {::permission-name-text name
                                        ::permission-description-text description}
                                       ::save-permission))
@@ -108,8 +108,8 @@
   "Deletes the given role."
   [name]
   (nav/go-to ::named-page {:role-name name})
-  (sel/browser click ::remove)
-  (sel/browser click ::ui/confirmation-yes)
+  (browser click ::remove)
+  (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 

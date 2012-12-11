@@ -1,8 +1,8 @@
 (ns katello.login
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-password* *session-org*]]
-                     [ui :as ui]
+                     [ui :as ui] 
                      [ui-common :as common]
                      [organizations :as organization]
                      [notifications :as notification])))
@@ -13,6 +13,23 @@
        {::username-text     "username"
         ::password-text     "password"
         ::log-in            "//input[@value='Log In' or @value='Login']"})
+
+(defn logged-in?
+  "Returns true if the browser is currently showing a page where a
+  user is logged in."
+  []
+  (browser isElementPresent ::ui/log-out))
+
+(defn logged-out?
+  "Returns true if the login page is displayed."
+  []
+  (browser isElementPresent ::log-in))
+
+(defn logout
+  "Logs out the current user from the UI."
+  []
+  (when-not (logged-out?)
+    (browser clickAndWait ::ui/log-out)))
 
 (defn login
   "Logs in a user to the UI with the given username and password. If
@@ -26,7 +43,7 @@
    will be set after logging in on the dashboard page."
   ([] (login *session-user* *session-password* {:org *session-org*}))
   ([username password & [{:keys [org default-org]}]]
-     (when (common/logged-in?) (common/logout))
+     (when (logged-in?) (logout))
      (sel/fill-ajax-form {::username-text username
                           ::password-text password}
                          ::log-in)
@@ -36,7 +53,7 @@
                                (mapcat :notices retval))]
        ;; if user only has access to one org, he will bypass org select
        (if direct-login? 
-         (sel/browser waitForPageToLoad)
+         (browser waitForPageToLoad)
          (do (Thread/sleep 3000)
              (organization/switch (or org
                                       (throw+ {:type ::login-org-required

@@ -3,7 +3,7 @@
   (:require (katello [navigation :as nav]
                      [conf :refer :all] 
                      [tasks :refer :all]
-                     [login :refer [login]]
+                     [login :refer [login logout logged-in?]]
                      [users :as user]
                      [ui-common :as common]
                      [organizations :as organization])
@@ -29,14 +29,14 @@
      (login))))
 
 (defn login-admin []
-  (common/logout)
+  (logout)
   (login)
   (assert/is (= (user/current) *session-user*)))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
-  (if (common/logged-in?)
-    (do (nav/go-to :top-level)
+  (if (logged-in?)
+    (do (nav/go-to ::nav/top-level)
         (if (= (organization/current) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
                (catch Exception _

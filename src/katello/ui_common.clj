@@ -107,21 +107,6 @@
         (browser click ::ui/search-submit)))
   (notification/verify-no-error {:timeout-ms 2000}))
 
-(defn logged-in?
-  "Returns true if the browser is currently showing a page where a
-  user is logged in."
-  []
-  (browser isElementPresent ::ui/log-out))
 
-(defn logged-out?
-  "Returns true if the login page is displayed."
-  []
-  (browser isElementPresent :log-in))
-
-(defn logout
-  "Logs out the current user from the UI."
-  []
-  (when-not (logged-out?)
-    (browser clickAndWait ::ui/log-out)))
 
 

@@ -31,15 +31,7 @@
         ::systems-link (ui/menu-link "systems")
         ::systems-all-link (ui/menu-link "registered")
         ::by-environments-link (ui/menu-link "env")
-        ::system-groups-link (ui/menu-link "system_groups")
-        ::create-link (ui/menu-link "")
-        
-        ::registered-link (ui/menu-link "")
-        ::groups-link (ui/menu-link "")
-        ::general-link (ui/menu-link "")
-        ::facts-link (ui/menu-link "")
-        ::packages-link (ui/menu-link "")
-        ::gpg-keys-link (ui/menu-link "")})
+        ::system-groups-link (ui/menu-link "system_groups")})
 
 ;; Nav
 
@@ -56,8 +48,9 @@
  ::nav/top-level
  
  [::systems-menu [] (browser mouseOver ::systems-link)
-  [:katello.systems/page [] (browser click ::systems-all-link)]
-  [:katello.system-groups/page [] (browser click ::system-groups-link)]]
+  [:katello.systems/page [] (browser clickAndWait ::systems-all-link)]
+  [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]
+  [:katello.system-groups/page [] (browser clickAndWait ::system-groups-link)]]
 
  [::content-menu [] (browser mouseOver ::content-link)
   [:subscriptions [] (browser mouseOver ::subscriptions-link)
@@ -71,9 +64,9 @@
    [:katello.gpg-keys/page [] (browser clickAndWait ::gpg-keys-link)]]
 
   [::sync-management-menu [] (browser mouseOver ::sync-management-link)
-   [:katello.sync-management/status-page [] (browser click ::sync-status-link)]
-   [:katello.sync-management/plans-page [] (browser click ::sync-plans-link)]
-   [:katello.sync-management/schedule-page [] (browser click ::sync-schedule-link)]]
+   [:katello.sync-management/status-page [] (browser clickAndWait ::sync-status-link)]
+   [:katello.sync-management/plans-page [] (browser clickAndWait ::sync-plans-link)]
+   [:katello.sync-management/schedule-page [] (browser clickAndWait ::sync-schedule-link)]]
 
   [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
   

@@ -1,10 +1,10 @@
 (ns katello.system-templates
-  (:require (katello [navigation :as nav]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            (katello [navigation :as nav]
                      [ui :as ui]
                      [ui-common :as common]
                      [notifications :as notification] 
-                     [tasks :refer [capitalize-all]])
-            [com.redhat.qe.auto.selenium.selenium :as sel]))
+                     [tasks :refer [capitalize-all]])))
 
 ;; Locators
 
@@ -29,8 +29,8 @@
 
 (nav/add-subnavigation
  ::page
- [::named-page [template-name] (sel/browser click (ui/slide-link template-name))]
- [::new-page [] (sel/browser click ::new)])
+ [::named-page [template-name] (browser click (ui/slide-link template-name))]
+ [::new-page [] (browser click ::new)])
 
 ;; Tasks
 
@@ -68,6 +68,6 @@
          (sleep 2000)
          (click (eligible-category category-name)))
         (doall (map add-item (group category-keyword)))
-        (sel/browser click ::eligible-home)))
-    (sel/browser click ::save)
+        (browser click ::eligible-home)))
+    (browser click ::save)
     (notification/check-for-success)))
