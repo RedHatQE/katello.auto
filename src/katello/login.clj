@@ -1,5 +1,5 @@
 (ns katello.login
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-password* *session-org*]]
                      [ui :as ui] 
@@ -53,7 +53,7 @@
                                (mapcat :notices retval))]
        ;; if user only has access to one org, he will bypass org select
        (if direct-login? 
-         (sel/browser waitForPageToLoad)
+         (browser waitForPageToLoad)
          (do (Thread/sleep 3000)
              (organization/switch (or org
                                       (throw+ {:type ::login-org-required
