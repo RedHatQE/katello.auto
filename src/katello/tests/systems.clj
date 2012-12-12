@@ -10,7 +10,6 @@
                      [ui-common :as common]
                      [changesets :as changeset]
                      [tasks :refer :all] 
-                     [ui :as ui]
                      [activation-keys :as ak]
                      [systems :as system]
                      [system-groups :as group]
@@ -23,9 +22,7 @@
             
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]
-            [slingshot.slingshot :refer [throw+]]
-            [deltacloud :as cloud]))
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 
 ;; Functions
@@ -42,11 +39,11 @@
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"] 
     (system/edit (:name system) {:new-name new-name})
-    (nav/go-to :named-systems-page {:system-name new-name})))
+    (nav/go-to ::system/named-page {:system-name new-name})))
 
 (defn verify-system-appears-on-env-page
   [system]
-  (nav/go-to :named-system-environment-page
+  (nav/go-to ::system/named-by-environment-page
              {:env-name test-environment
               :system-name (:name system)})
   (assert/is (= (:environment_id system)
