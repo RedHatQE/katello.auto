@@ -55,7 +55,6 @@
        (if direct-login? 
          (browser waitForPageToLoad)
          (do (Thread/sleep 3000)
-             (browser refresh)
              (organization/switch (or org
                                       (throw+ {:type ::login-org-required
                                                :msg (format "User %s has no default org, cannot fully log in without specifying an org."
