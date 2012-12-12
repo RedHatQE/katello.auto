@@ -16,7 +16,7 @@
         ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
         ::available-subscriptions (ui/menu-link "available_subscriptions")
         ::add-subscriptions       "//input[@id='subscription_submit_button']"            
-        ::remove                  "//a[contains(@class, 'remove-item') and contains(@href, '/activation_keys/']"
+        ::remove-link             (ui/remove-link "activation_keys")
         ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
@@ -48,7 +48,7 @@
   "Deletes the given activation key."
   [name]
   (nav/go-to ::named-page {:activation-key-name name})
-  (browser click ::remove)
+  (browser click ::remove-link)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 

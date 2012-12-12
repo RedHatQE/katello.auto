@@ -12,15 +12,9 @@
         ::name-text                 "provider[name]"
         ::description-text          "provider[description]"
         ::repository-url-text       "provider[repository_url]"
-        ::cert-text                 (ui/textbox "provider[certificate_attributes][contents]")
         ::create-save               "provider_submit"
-        ::provider                  (ui/link "Remove Provider")
-        ::subscriptions             (ui/link "Subscriptions")
-        ::import-manifest           "new"
-        ::choose-file               "provider_contents"
-        ::force-import-checkbox     "force_import"
-        ::products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-        ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"
+        ::remove-provider-link      (ui/remove-link "providers")
+        ::products-and-repositories (ui/menu-link "products_repos")
         ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
@@ -29,7 +23,7 @@
         ::product-name-text        "//*[@name='product[name]']"
         ::product-label-text       "//*[@name='product[label]']"
         ::product-description-text "//*[@name='product[description]']"
-        ::remove-product           (ui/link "Remove Product")})
+        ::remove-product           (ui/remove-link "products")})
 
 (nav/add-subnavigation
  ::custom-page
@@ -73,7 +67,7 @@
   "Deletes the named custom provider."
   [name]
   (nav/go-to ::named-page {:provider-name name})
-  (browser click ::provider)
+  (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-destroy)}))
 

@@ -15,7 +15,7 @@
         ::content-text     "gpg_key_content"
         ::save             "save_gpg_key"
         ::new              "new"
-        ::remove           "//a[contains(@class, 'remove-item') and contains(@href, '/gpg_keys/']"})
+        ::remove-link      (ui/remove-link "gpg_keys")})
 
 ;; Nav
 
@@ -46,6 +46,6 @@
   "Deletes existing GPG keys"
   [gpg-key-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
-  (browser click ::remove )
+  (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
