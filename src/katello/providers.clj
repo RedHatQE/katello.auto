@@ -36,6 +36,8 @@
  ::custom-page
  [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
+  [:katello.repositories/products-page [] (sel/->browser (click ::products-and-repositories)
+                                                         (sleep 2000))]
   [::details-page [] (browser click ::details-link)]])
 
 ;; Tasks

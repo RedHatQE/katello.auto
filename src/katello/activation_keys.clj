@@ -3,8 +3,7 @@
                      [notifications :as notification]
                      [ui-common :as common]
                      [ui :as ui])
-            [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
 
 ;; Locators
 
@@ -23,7 +22,6 @@
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
-
 
 ;; Nav
 
