@@ -1,12 +1,7 @@
 (ns katello.manifest
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser fill-ajax-form]]
-            (katello [navigation :as nav]
-                     [conf :refer [config]]
-                     [ui-common :as common]
-                     [tasks :refer [tmpfile unique-format]]
-                     [notifications :as notification]))
+            [katello.tasks :refer [unique-format tmpfile]])
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
@@ -57,36 +52,3 @@
     (->> (java.util.UUID/randomUUID) .toString (hash-map :uuid) json/json-str))
    (java.io.File. dest-path)))
 
-(defn upload
-  "Uploads a subscription manifest from the filesystem local to the
-   selenium browser. Optionally specify a new repository url for Red
-   Hat content- if not specified, the default url is kept. Optionally
-   specify whether to force the upload."
-  [file-path & [{:keys [repository-url]}]]
-  (nav/go-to :redhat-subscriptions-page)
-  (when-not (browser isElementPresent :choose-file)
-    (browser click :import-manifest))
-  (when repository-url
-    (common/in-place-edit {:redhat-provider-repository-url-text repository-url})
-    (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
-  (fill-ajax-form {:choose-file file-path}
-                  :upload)
-  (browser refresh)
-  ;;now the page seems to refresh on its own, but sometimes the ajax count
-  ;; does not update. 
-  ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  (notification/check-for-success {:timeout-ms 480000}))
-
-(defn already-uploaded?
-  "Returns true if the current organization already has Red Hat
-  content uploaded."
-  []
-  (nav/go-to :redhat-repositories-page)
-  (browser isElementPresent :subscriptions-items))
-
-(defn upload-new-cloned
-  "Clones the manifest at orig-file-path and uploads it to the current org."
-  [orig-file-path & [{:keys [repository-url] :as m}]]
-  (let [clone-loc (new-tmp-loc)]
-    (clone orig-file-path clone-loc)
-    (upload clone-loc m)))

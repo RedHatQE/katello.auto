@@ -6,6 +6,7 @@
                      [sync-management :as sync]
                      [organizations   :as organization]
                      [manifest        :as manifest]
+                     [subscriptions   :as subscriptions]
                      [repositories    :as repo]
                      [changesets      :as changesets]
                      [systems         :as system]
@@ -46,7 +47,7 @@
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
   (with-org org-name
     (organization/switch)
-    (manifest/upload manifest-loc (select-keys m [:repository-url]))))
+    (subscriptions/upload-manifest manifest-loc (select-keys m [:repository-url]))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
   (when (api/is-katello?)
@@ -153,7 +154,7 @@
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
     (let [org-name (uniqueify "dup-manifest")
           test-manifest (manifest/new-tmp-loc)
-          upload #(manifest/upload % {:repository-url
+          upload #(subscriptions/upload-manifest % {:repository-url
                                       (@config :redhat-repo-url)})]
       (api/create-organization org-name)
       (with-org org-name
@@ -167,7 +168,7 @@
     (let [two-orgs (take 2 (unique-names "man-reuse"))
           test-manifest (manifest/new-tmp-loc)
           upload (fn [loc]
-                   (manifest/upload loc {:repository-url
+                   (subscriptions/upload-manifest loc {:repository-url
                                          (@config :redhat-repo-url)}))]
       (doseq [org two-orgs]
         (api/create-organization org))

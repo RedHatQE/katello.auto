@@ -1,6 +1,7 @@
 (ns katello.fake-content
   (:require [clojure.java.io :as io]
             (katello [manifest :as manifest]
+                     [subscriptions :as subscriptions]
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
@@ -100,7 +101,7 @@
     (download-original dl-loc)
     (with-org org-name
       (org/switch)
-      (manifest/upload-new-cloned dl-loc {:repository-url (@config :redhat-repo-url)})
+      (subscriptions/upload-new-cloned-manifest dl-loc {:repository-url (@config :redhat-repo-url)})
       (when (api/is-katello?)
         (repo/enable-redhat repos)
         (sync/perform-sync repos)))))

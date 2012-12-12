@@ -1,6 +1,7 @@
 (ns katello.repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
+                     providers ;to load navigation
                      [notifications :as notification] 
                      [ui :as ui])))
 

@@ -55,7 +55,7 @@
 
  [::content-menu [] (browser mouseOver ::content-link)
   [:subscriptions [] (browser mouseOver ::subscriptions-link)
-   [:redhat-subscriptions-page [] (browser clickAndWait ::red-hat-subscriptions-link)]
+   [:katello.subscriptions/page [] (browser clickAndWait ::red-hat-subscriptions-link)]
    [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]]
 
   [::repositories-menu [] (browser mouseOver ::repositories-link)

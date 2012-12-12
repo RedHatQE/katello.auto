@@ -19,7 +19,6 @@
         ::subscriptions             (ui/link "Subscriptions")
         ::import-manifest           "new"
         ::choose-file               "provider_contents"
-        ::upload                    "upload_form_button"
         ::force-import-checkbox     "force_import"
         ::products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
         ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"
@@ -31,15 +30,7 @@
         ::product-name-text        "//*[@name='product[name]']"
         ::product-label-text       "//*[@name='product[label]']"
         ::product-description-text "//*[@name='product[description]']"
-        ::remove-product           (ui/link "Remove Product")}
-       
-       ;;Package Filters
-       {::create-new-package-filter      (ui/link "+ New Filter")
-        ::new-package-filter-name        "filter[name]"
-        ::new-package-filter-description "filter[description]"
-        ::save-new-package-filter        "filter_submit"
-        ::remove-package-filter-key      (ui/link "Remove Filter")})
-
+        ::remove-product           (ui/link "Remove Product")})
 
 (nav/add-subnavigation
  ::custom-page
