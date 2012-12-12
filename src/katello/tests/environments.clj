@@ -130,7 +130,7 @@
         (let [envs (take 3 (unique-names "env"))
               org (@conf/config :admin-org)]
           (environment/create-path org envs)
-          (expecting-error [:type :env-cant-be-deleted]
+          (expecting-error [:type ::environment/cant-be-deleted]
                            (environment/delete (second envs) {:org-name org}))
           (environment/delete (last envs) {:org-name org}))))
 

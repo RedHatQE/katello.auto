@@ -44,9 +44,9 @@
   [env-name {:keys [org-name]}]
   (nav/go-to ::named-page {:org-name org-name
                            :env-name env-name})
-  (if (browser isElementPresent ::remove)
-    (browser click ::remove)
-    (throw+ {:type :env-cant-be-deleted :env-name env-name}))
+  (if (browser isElementPresent ::remove-link)
+    (browser click ::remove-link)
+    (throw+ {:type ::cant-be-deleted :env-name env-name}))
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
