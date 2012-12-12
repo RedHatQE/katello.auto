@@ -12,7 +12,7 @@
 ;; Locators
 
 (sel/template-fns
- {add-content-item    "//a[@data-display_name='%s' and contains(.,'Add')]"
+ {add-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_')]"
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product      "//span[contains(.,'%s')]"
@@ -29,7 +29,6 @@
 
         ::review-for-promotion        "review_changeset"
         ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-        ::promotion-empty-list        "//div[@id='left_accordion']//ul[contains(.,'available for promotion')]"
         ::new                         "new"
         ::name-text                   "changeset_name"
         ::save                        "save_changeset_button"
