@@ -94,10 +94,9 @@
        
        :else
        (do
+         (browser click ::products-category)
          (doseq [item data]  
-           (sel/->browser 
-            (click ::products-category)
-            (click (add-content-item item))))))
+           (browser click (add-content-item item)))))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
       (sel/->browser (sleep 5000)
