@@ -63,7 +63,7 @@
   (notification/check-for-success
    {:match-pred (notification/request-type? :org-destroy)})   ;queueing success
   (browser refresh)
-  (notification/check-for-success {:timeout-ms 180000})) ;for actual delete
+  (notification/check-for-success {:timeout-ms (* 20 60 1000)})) ;for actual delete
 
 (defn edit
   "Edits an organization. Currently the only property of an org that

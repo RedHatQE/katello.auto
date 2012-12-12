@@ -34,7 +34,7 @@
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  (notification/check-for-success {:timeout-ms 480000}))
+  (notification/check-for-success {:timeout-ms (* 30 60 1000)}))
 
 (defn upload-new-cloned-manifest
   "Clones the manifest at orig-file-path and uploads it to the current org."

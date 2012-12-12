@@ -116,7 +116,7 @@
     (locking #'promotion-deletion-lock
       (browser click ::review-for-promotion)
       ;;for the submission
-      (sel/loop-with-timeout 600000 []
+      (sel/loop-with-timeout (* 10 60 1000) []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
                         (catch [:type ::notification/promotion-already-in-progress] _
@@ -124,7 +124,7 @@
           (Thread/sleep 30000)
           (recur)))
       ;;for confirmation
-      (sel/loop-with-timeout (or timeout-ms 120000) [current-status ""]
+      (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
         (case current-status
           "Applied" current-status
           "Apply Failed" (throw+ {:type :promotion-failed
@@ -134,7 +134,7 @@
           (do (Thread/sleep 2000)
               (recur (browser getText (status changeset-name))))))
       ;;wait for async success notif
-      (check-for-success {:timeout-ms 180000}))))
+      (check-for-success {:timeout-ms (* 20 60 1000)}))))
 
 (defn promote-delete-content
   "Promotes the given content from one environment to another 
@@ -146,8 +146,7 @@
     (add-content changeset from-env content deletion {:to-env to-env})
     (promote-or-delete changeset {:from-env from-env
                                   :to-env to-env
-                                  :deletion? deletion
-                                  :timeout-ms 300000})))
+                                  :deletion? deletion})))
 
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)

@@ -220,7 +220,7 @@
   (let [id (get-id-by-name :changeset changeset-name)]
     (locking #'promotion-deletion-lock
       (rest/post (api-url "api/changesets/" id "/promote"))
-      (loop-with-timeout 180000 [cs {}]
+      (loop-with-timeout (* 20 60 1000) [cs {}]
         (let [state (:state cs)]
           (case state
             "promoted" cs
