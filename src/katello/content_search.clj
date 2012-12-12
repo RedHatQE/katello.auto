@@ -131,8 +131,8 @@
       (zip/node)))
 
 
-(defn attr-loc [locator attribute]
-  (str (.getLocator locator) "@" attribute))
+(def ^{:arglists '([locator attribute])}
+  attr-loc (partial format  "%s@%s"))
 
 (defn get-repo-compare-package-names [] 
   (doall (for [locator (get-all-of-locator package-name)]
