@@ -1,7 +1,7 @@
 (ns katello.repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
-                     providers ;to load navigation
+                     [providers :as provider]        ;to load navigation
                      [notifications :as notification] 
                      [ui :as ui])))
 
@@ -20,19 +20,17 @@
   add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
 (nav/add-subnavigation
- ::products-page 
+ ::provider/products-page 
  [::named-product-page [product-name] (browser click (ui/editable product-name))]
  [::named-repo-page [product-name repo-name] (browser click (ui/editable repo-name))])
 
 ;; Tasks
 
-
-
 (defn add
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
   [{:keys [provider-name product-name name url]}]
-  (nav/go-to ::products-page {:provider-name provider-name})
+  (nav/go-to ::provider/products-page {:provider-name provider-name})
   (browser click (add-repo-link product-name))
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
@@ -43,7 +41,7 @@
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
   [{:keys [provider-name product-name name url gpgkey]}]
-  (nav/go-to ::products-page {:provider-name provider-name})
+  (nav/go-to ::provider/products-page {:provider-name provider-name})
   (browser click (add-repo-link product-name))
   (browser select ::repo-gpg-select gpgkey)
   (sel/fill-ajax-form {::repo-name-text name

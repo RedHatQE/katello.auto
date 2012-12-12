@@ -1,6 +1,5 @@
 (ns katello.providers
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -36,7 +35,7 @@
  ::custom-page
  [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
-  [:katello.repositories/products-page [] (sel/->browser (click ::products-and-repositories)
+  [::products-page [] (sel/->browser (click ::products-and-repositories)
                                                          (sleep 2000))]
   [::details-page [] (browser click ::details-link)]])
 
@@ -54,7 +53,7 @@
 (defn add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider-name name description]}]
-  (nav/go-to ::products-repos-page {:provider-name provider-name})
+  (nav/go-to ::products-page {:provider-name provider-name})
   (browser click ::add-product)
   (sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}
