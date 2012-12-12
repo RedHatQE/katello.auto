@@ -124,16 +124,15 @@
           (Thread/sleep 30000)
           (recur)))
       ;;for confirmation
-      (sel/loop-with-timeout (or timeout-ms 120000) [status ""]
-        (case status
-          "Applied" status
+      (sel/loop-with-timeout (or timeout-ms 120000) [current-status ""]
+        (case current-status
+          "Applied" current-status
           "Apply Failed" (throw+ {:type :promotion-failed
                                   :changeset changeset-name
                                   :from-env from-env
                                   :to-env to-env})
           (do (Thread/sleep 2000)
-              (recur (browser getText
-                              (status changeset-name))))))
+              (recur (browser getText (status changeset-name))))))
       ;;wait for async success notif
       (check-for-success {:timeout-ms 180000}))))
 
