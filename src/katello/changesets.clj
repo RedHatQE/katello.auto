@@ -4,7 +4,7 @@
                      [ui-common :as common]
                      [ui :as ui]
                      [sync-management :as sync]
-                     [notifications :refer [check-for-success]])
+                     [notifications :as notification :refer [check-for-success]])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]))
@@ -19,6 +19,8 @@
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
+;; Nav
+
 (swap! ui/locators merge
        {::products-category           (content-category "products")
         ::errata-category             (content-category "errata")
@@ -26,7 +28,6 @@
         ::kickstart-trees-category    (content-category "kickstart trees")
         ::templates-category          (content-category "templates")
         ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-
         ::review-for-promotion        "review_changeset"
         ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
         ::new                         "new"
@@ -40,11 +41,9 @@
  ::page 
  [::named-environment-page [env-name next-env-name]
   (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-  [::named-page [changeset-name changeset-type]
-   (do
-     (when (= changeset-type "deletion")
-       (browser click ::deletion))
-     (browser click (list-item changeset-name)))]])
+  [::named-page [changeset-name deletion?] (do (when deletion?
+                                                 (browser click ::deletion))
+                                               (browser click (list-item changeset-name)))]])
 
 ;; Tasks
 
@@ -71,7 +70,7 @@
   (nav/go-to ::named-page {:env-name from-env
                            :next-env-name to-env
                            :changeset-name changeset-name
-                           :changeset-type (if deletion "deletion" "promotion")})
+                           :deletion? deletion})
   (doseq [category (keys content)]
     (let [data (content category)
           grouped-data (group-by :product-name data)]
@@ -101,7 +100,6 @@
             (click (add-content-item item))))))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
-
       (sel/->browser (sleep 5000)
                      (click ::promotion-eligible-home)))))
 
@@ -114,7 +112,7 @@
                                    {:env-name from-env
                                     :next-env-name to-env
                                     :changeset-name changeset-name
-                                    :changeset-type (if deletion? "deletion" "promotion")}))]
+                                    :deletion? deletion?}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
       (browser click ::review-for-promotion)
@@ -122,7 +120,7 @@
       (sel/loop-with-timeout 600000 []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
-                        (catch [:type ::promotion-already-in-progress] _
+                        (catch [:type ::notification/promotion-already-in-progress] _
                           (nav-to-cs)))
           (Thread/sleep 30000)
           (recur)))
