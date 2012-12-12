@@ -14,9 +14,9 @@
         ::remove           (ui/link "Remove Filter")})
 
 (nav/add-subnavigation
-  ::page
-  [::new-page [] (sel/browser click ::create)]
-  [::named-page [package-filter-name] (nav/choose-left-pane  package-filter-name)])
+ ::page
+ [::new-page [] (browser click ::create)]
+ [::named-page [package-filter-name] (nav/choose-left-pane  package-filter-name)])
 
 
 (defn create "Creates new Package Filter"

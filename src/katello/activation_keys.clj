@@ -67,5 +67,5 @@
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [name]
   (nav/go-to ::named-page {:activation-key-name name})
-  (sel/browser click ::applied-subscriptions)
+  (browser click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))

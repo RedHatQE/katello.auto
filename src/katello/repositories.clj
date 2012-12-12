@@ -22,8 +22,8 @@
  :katello.providers/named-page
  [::products-repos-page [] (sel/->browser (click ::products-and-repositories)
                                           (sleep 2000))
-  [::named-product-page [product-name] (sel/browser click (ui/editable product-name))]
-  [::named-repo-page [product-name repo-name] (sel/browser click (ui/editable repo-name))]])
+  [::named-product-page [product-name] (browser click (ui/editable product-name))]
+  [::named-repo-page [product-name repo-name] (browser click (ui/editable repo-name))]])
 
 ;; Tasks
 

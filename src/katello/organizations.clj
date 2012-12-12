@@ -1,6 +1,5 @@
 (ns katello.organizations
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
                      [ui :as ui]
                      [ui-common :as common]
@@ -33,14 +32,14 @@
 
 (nav/add-subnavigation
  ::page 
- [::new-page [] (sel/browser click ::new)]
+ [::new-page [] (browser click ::new)]
  [::named-page [org-name] (nav/choose-left-pane  org-name)])
 
 (nav/add-subnavigation
  ::nav/top-level
- [::page-via-org-switcher [] (sel/browser click ::switcher)
-  [::link-via-org-switcher [] (sel/browser clickAndWait ::manage-switcher-link)
-   [::new-page-via-org-switcher [] (sel/browser click ::new)]]])
+ [::page-via-org-switcher [] (browser click ::switcher)
+  [::link-via-org-switcher [] (browser clickAndWait ::manage-switcher-link)
+   [::new-page-via-org-switcher [] (browser click ::new)]]])
 
 ;; Tasks
 

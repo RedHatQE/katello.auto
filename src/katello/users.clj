@@ -72,8 +72,8 @@
   [{:keys [user roles]}]
   (nav/go-to ::roles-permissions-page {:username user})
   (doseq [role roles]
-    (sel/browser click (plus-icon role)))
-  (sel/browser click ::save-roles)
+    (browser click (plus-icon role)))
+  (browser click ::save-roles)
   (notification/check-for-success {:match-pred
                                    (notification/request-type? :users-update-roles)}))
 

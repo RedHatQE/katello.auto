@@ -22,7 +22,8 @@
         ::upload                    "upload_form_button"
         ::force-import-checkbox     "force_import"
         ::products-and-repositories "//nav[contains(@class,'subnav')]//a[contains(.,'Products')]"
-        ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"}
+        ::subscriptions-items       "//table[@id='redhatSubscriptionTable']/tbody/tr"
+        ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
        {::add-product              (ui/button-div "Add Product")
@@ -42,9 +43,9 @@
 
 (nav/add-subnavigation
  ::custom-page
- [::new-page [] (sel/browser click ::new)]
+ [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
-  [::details-page [] (sel/browser click :details)]])
+  [::details-page [] (browser click ::details-link)]])
 
 ;; Tasks
 
@@ -53,8 +54,8 @@
   [{:keys [name description]}]
   (nav/go-to ::new-page)
   (sel/fill-ajax-form {::name-text name
-                   ::description-text description}
-                  ::create-save)
+                       ::description-text description}
+                      ::create-save)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-create)}))
 
 (defn add-product

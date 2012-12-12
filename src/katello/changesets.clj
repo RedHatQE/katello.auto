@@ -5,7 +5,7 @@
                      [ui :as ui]
                      [sync-management :as sync]
                      [notifications :refer [check-for-success]])
-            [com.redhat.qe.auto.selenium.selenium :as sel]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]))
 
@@ -43,8 +43,8 @@
   [::named-page [changeset-name changeset-type]
    (do
      (when (= changeset-type "deletion")
-       (sel/browser click ::deletion))
-     (sel/browser click (list-item changeset-name)))]])
+       (browser click ::deletion))
+     (browser click (list-item changeset-name)))]])
 
 ;; Tasks
 
@@ -54,7 +54,7 @@
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
   (nav/go-to ::named-environment-page {:env-name env-name 
                                        :next-env-name next-env-name})
-  (if deletion? (sel/browser click ::deletion))
+  (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
                  (setText ::name-text changeset-name)
                  (click ::save))
@@ -84,14 +84,14 @@
                             (click (select-product prod-item))
                             (click (keyword (str "select-" (name category)))))
              (doseq [add-item add-items ] 
-               (sel/browser click (add-content-item add-item))))))
+               (browser click (add-content-item add-item))))))
        
        (= category :errata)
        (do
-         (sel/browser click ::errata-category)
-         (sel/browser click ::select-errata-all)
+         (browser click ::errata-category)
+         (browser click ::select-errata-all)
          (doseq [add-item (map :name data )]
-           (sel/browser click (add-content-item add-item))))
+           (browser click (add-content-item add-item))))
        
        :else
        (do
@@ -117,10 +117,10 @@
                                     :changeset-type (if deletion? "deletion" "promotion")}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
-      (sel/browser click ::review-for-promotion)
+      (browser click ::review-for-promotion)
       ;;for the submission
       (sel/loop-with-timeout 600000 []
-        (when-not (try+ (sel/browser click ::promote-to-next-environment)
+        (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
                         (catch [:type ::promotion-already-in-progress] _
                           (nav-to-cs)))
@@ -135,8 +135,8 @@
                                   :from-env from-env
                                   :to-env to-env})
           (do (Thread/sleep 2000)
-              (recur (sel/browser getText
-                                  (status changeset-name))))))
+              (recur (browser getText
+                              (status changeset-name))))))
       ;;wait for async success notif
       (check-for-success {:timeout-ms 180000}))))
 
@@ -165,7 +165,7 @@
   (let [elems (for [index (iterate inc 1)]
                 (content-item-n (str index)))
         retrieve (fn [elem]
-                   (try (sel/browser getText elem)
+                   (try (browser getText elem)
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set)))
 
@@ -178,10 +178,10 @@
     (zipmap categories
             (doall (for [category categories]
                      (do
-                       (sel/browser click (-> category name (str "-category") keyword))
-                       (sel/browser sleep 2000) 
+                       (browser click (-> category name (str "-category") keyword))
+                       (browser sleep 2000) 
                        (let [result (extract-content)]
-                         (sel/browser click ::promotion-eligible-home)
+                         (browser click ::promotion-eligible-home)
                          result)))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
@@ -194,9 +194,9 @@
   (every? true?
           (flatten
            (for [category (keys content)]
-             (do (sel/browser click (-> category name (str "-category") keyword))
+             (do (browser click (-> category name (str "-category") keyword))
                  (for [item (content category)]
-                   (try (do (sel/browser isVisible
-                                         (add-content-item item))
+                   (try (do (browser isVisible
+                                     (add-content-item item))
                             true)
                         (catch Exception e false))))))))
