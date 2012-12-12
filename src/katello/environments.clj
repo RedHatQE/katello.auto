@@ -16,8 +16,8 @@
         ::description-text  "kt_environment_description"
         ::prior             "kt_environment_prior"
         ::create            "kt_environment_submit"
-        ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new'"
-        ::remove            "//div[@id='subpanel']//a[contains(@class, 'remove-item')"
+        ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new']"
+        ::remove            "//div[@id='subpanel']//a[contains(@class, 'remove-item')]"
         ::prior-select-edit "kt_environment_prior" })
 
 (nav/add-subnavigation

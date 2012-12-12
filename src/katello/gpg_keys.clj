@@ -13,7 +13,6 @@
         ::file-upload-text "gpg_key_content_upload"
         ::upload-button    "upload_gpg_key"
         ::content-text     "gpg_key_content"
-        ::link             "//a[.='GPG Keys']"
         ::save             "save_gpg_key"
         ::new              "new"
         ::remove           "//a[contains(@class, 'remove-item') and contains(@href, '/gpg_keys/']"})
