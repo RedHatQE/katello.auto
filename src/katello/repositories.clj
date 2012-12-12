@@ -21,8 +21,7 @@
 
 (nav/add-subnavigation
  ::provider/products-page 
- [::named-product-page [product-name] (browser click (ui/editable product-name))]
- [::named-repo-page [product-name repo-name] (browser click (ui/editable repo-name))])
+ [::named-page [product-name repo-name] (browser click (ui/editable repo-name))])
 
 ;; Tasks
 
@@ -51,7 +50,7 @@
 
 (defn delete "Deletes a repository from the given provider and product."
   [{:keys [name provider-name product-name]}]
-  (nav/go-to ::named-repo-page {:provider-name provider-name
+  (nav/go-to ::named-page {:provider-name provider-name
                                 :product-name product-name
                                 :repo-name name})
   (browser click ::remove-repository)

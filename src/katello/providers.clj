@@ -30,7 +30,8 @@
  [::new-page [] (browser click ::new)]
  [::named-page [provider-name] (nav/choose-left-pane  provider-name)
   [::products-page [] (sel/->browser (click ::products-and-repositories)
-                                                         (sleep 2000))]
+                                     (sleep 2000))
+   [::named-product-page [product-name] (browser click (ui/editable product-name))]]
   [::details-page [] (browser click ::details-link)]])
 
 ;; Tasks
