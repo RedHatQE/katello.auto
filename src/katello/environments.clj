@@ -6,7 +6,8 @@
                      [tasks :refer [library]] 
                      [notifications :as notification] 
                      [ui :as ui]
-                     [ui-common :as common])))
+                     [ui-common :as common]
+                     organizations))) ;;for nav
 
 ;; Locators
 
