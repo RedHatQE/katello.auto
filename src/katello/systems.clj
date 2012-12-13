@@ -93,7 +93,7 @@
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
   (assert (not (blank? new-environment))) 
-  (nav/go-to ::named-page {:system-name system-name})
+  (nav/go-to ::details-page {:system-name system-name})
   (sel/->browser (click ::environment)
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
