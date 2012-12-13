@@ -1,16 +1,15 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
-  (:require [clojure.data :as data]
-            [test.tree.watcher :as watch]
-            [test.tree.jenkins :as jenkins]
+  (:require [test.tree.watcher :as watch]
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
-            (katello [api-tasks :as api]
+            (katello [login :refer [login logout]]
+                     [ui-common :as common]
+                     [api-tasks :as api]
                      [client :as client]
                      [conf :refer :all]
                      [tasks :refer :all] 
-                     [users :refer [login logout]]
-                     [roles :as role])
+                     [users :as user])
             [fn.trace :as trace]
             [com.redhat.qe.auto.selenium.selenium :refer :all])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
@@ -48,7 +47,7 @@
   [user pw]
   (api/create-user user {:password pw
                          :email (str user "@myorg.org")})
-  (role/assign {:user user
+  (user/assign {:user user
                 :roles ["Administrator"]})
   (logout)
   ;;login and set the default org to save time later

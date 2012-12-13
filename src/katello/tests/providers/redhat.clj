@@ -1,10 +1,13 @@
 (ns katello.tests.providers.redhat
-  (:require (katello [tasks           :refer :all]
+  (:require (katello [navigation :as nav]
+                     [tasks           :refer :all]
+                     [ui-common       :as common]
                      [api-tasks       :as api]
                      [sync-management :as sync]
                      [organizations   :as organization]
-                     [ui-tasks        :refer [navigate enable-redhat-repositories errtype]]
                      [manifest        :as manifest]
+                     [subscriptions   :as subscriptions]
+                     [repositories    :as repo]
                      [changesets      :as changesets]
                      [systems         :as system]
                      [fake-content    :as fake-content]
@@ -33,10 +36,10 @@
 (defn verify-all-repos-not-synced [repos]
   (assert/is (every? nil? (map sync/complete-status repos))))
 
-(defn enable-redhat-repositories-in-org [org repos]
+(defn enable-redhat-in-org [org repos]
   (with-org org
     (organization/switch)
-    (enable-redhat-repositories repos)))
+    (repo/enable-redhat repos)))
 
 (defn step-clone-manifest [{:keys [manifest-loc]}]
   (manifest/clone manifest-tmp-loc manifest-loc))
@@ -44,14 +47,14 @@
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
   (with-org org-name
     (organization/switch)
-    (manifest/upload manifest-loc (select-keys m [:repository-url]))))
+    (subscriptions/upload-manifest manifest-loc (select-keys m [:repository-url]))))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
   (when (api/is-katello?)
     (with-org org-name
       (organization/switch)
-      (enable-redhat-repositories enable-repos)
-      (navigate :sync-status-page)
+      (repo/enable-redhat enable-repos)
+      (nav/go-to :katello.sync-management/status-page)
       (verify-all-repos-not-synced enable-repos))))
 
 (defn step-promote-redhat-content-into-test-env [{:keys [org-name env-name products]}]
@@ -59,7 +62,7 @@
     (organization/switch)
     (api/ensure-env-exist env-name {:prior library})
     (when (api/is-katello?)
-      (enable-redhat-repositories (mapcat :repos products))
+      (repo/enable-redhat (mapcat :repos products))
       (changesets/sync-and-promote products library env-name))))
 
 (defn step-create-system [{:keys [system-name org-name env-name]}]
@@ -151,21 +154,21 @@
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
     (let [org-name (uniqueify "dup-manifest")
           test-manifest (manifest/new-tmp-loc)
-          upload #(manifest/upload % {:repository-url
+          upload #(subscriptions/upload-manifest % {:repository-url
                                       (@config :redhat-repo-url)})]
       (api/create-organization org-name)
       (with-org org-name
         (organization/switch)
         (manifest/clone manifest-tmp-loc test-manifest)
         (upload test-manifest)
-        (expecting-error (errtype :katello.notifications/import-same-as-existing-data)
+        (expecting-error (common/errtype :katello.notifications/import-same-as-existing-data)
                          (upload test-manifest)))))
 
   (deftest "Upload a previously used manifest into another org"
     (let [two-orgs (take 2 (unique-names "man-reuse"))
           test-manifest (manifest/new-tmp-loc)
           upload (fn [loc]
-                   (manifest/upload loc {:repository-url
+                   (subscriptions/upload-manifest loc {:repository-url
                                          (@config :redhat-repo-url)}))]
       (doseq [org two-orgs]
         (api/create-organization org))
@@ -175,7 +178,7 @@
         (upload test-manifest))
       (with-org (second two-orgs)
         (organization/switch)
-        (expecting-error (errtype :katello.notifications/distributor-has-already-been-imported)
+        (expecting-error (common/errtype :katello.notifications/distributor-has-already-been-imported)
                          (upload test-manifest)))))
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"

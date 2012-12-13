@@ -1,11 +1,12 @@
 (ns katello.tests.users
-
   (:require (katello [validation :refer :all] 
-                     [organizations :as organization] 
+                     [organizations :as organization]
+                     [ui :as ui]
+                     [login :refer [login logout]]
+                     [ui-common :as common]
                      [roles :as role] 
                      [users :as user]
-                     [tasks :refer :all]
-                     [ui-tasks :refer [errtype]] 
+                     [tasks :refer :all] 
                      [conf :refer [config]]
                      [api-tasks :as api]) 
             [test.tree.script :refer :all]
@@ -22,23 +23,23 @@
 (defn step-create-org-and-user [{:keys [username org]}]
   (api/create-user username generic-user-details)
   (api/create-organization org)
-  (role/assign {:user username :roles ["Administrator"]}))
+  (user/assign {:user username :roles ["Administrator"]}))
 
 (defn step-set-default-org-at-login-screen [{:keys [username org]}]
-  (user/login username (:password generic-user-details) {:default-org org
+  (login username (:password generic-user-details) {:default-org org
                                                          :org org}))
 
 (defn step-logout [_]
-  (user/logout))
+  (logout))
 
 (defn step-verify-login-direct-to-default-org [{:keys [username org]}]
-  (user/login username (:password generic-user-details))
+  (login username (:password generic-user-details))
   (assert/is (= (organization/current)
                 org)))
 
 (defn step-verify-login-prompts-org [{:keys [username org]}]
   (expecting-error [:type :katello.users/login-org-required]
-                   (user/login username (:password generic-user-details))))
+                   (login username (:password generic-user-details))))
 
 (defn step-unset-default-org [_]
   (organization/switch nil {:default-org :none}))
@@ -46,7 +47,7 @@
 ;;; Tests
 
 (defgroup default-org-tests
-  :test-teardown #(user/login)
+  :test-teardown #(login)
   (deftest "Set default org for a user at login"
     (do-steps (uniqueify-vals {:username "deforg"
                                :org "usersorg"})
@@ -113,13 +114,13 @@
               (organization/delete org))
             (finally (user/create admin {:password pw
                                          :email "root@localhost"})
-                     (role/assign {:user admin :roles ["Administrator"]}))))))
+                     (user/assign {:user admin :roles ["Administrator"]}))))))
 
     (deftest "Two users with the same username is disallowed"
       :blockers (open-bz-bugs "738425")
 
       (with-unique [username "dupeuser"]
-        (expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
+        (expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
                                  (user/create username generic-user-details))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
@@ -135,16 +136,16 @@
        ["usr"     upper-case]
        ["MyUsr"   upper-case]
        ["YOURUsr" lower-case]])
-     
+    
 
     (deftest "User's minimum password length is enforced"
-      (expecting-error (errtype :katello.notifications/password-too-short)
+      (expecting-error (common/errtype :katello.notifications/password-too-short)
                        (user/create (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"})))
 
 
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
-        (role/assign {:user username, :roles ["Administrator"]}))))
+        (user/assign {:user username, :roles ["Administrator"]}))))
 
   default-org-tests)

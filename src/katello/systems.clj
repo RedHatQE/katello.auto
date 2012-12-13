@@ -1,37 +1,102 @@
 (ns katello.systems
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
             [test.assert :as assert]
-            (katello [locators :as locators] 
+            (katello [navigation :as nav]
                      [notifications :as notification]
-                     [ui-tasks :refer :all])))
+                     [ui :as ui]
+                     [ui-common :as common])))
+
+;; Locators
+
+(swap! ui/locators merge
+       {::new                         "new"
+        ::create                      "system_submit"
+        ::name-text                   "system[name]"
+        ::sockets-text                "system[sockets]"
+        ::arch-select                 "arch[arch_id]"
+
+        ;;content
+        ::content-link                (ui/menu-link "system_content")
+        ::packages-link               (ui/menu-link "systems_packages")
+        ::software-link               (ui/menu-link "system_products")
+        ::errata-link                 (ui/menu-link "errata")
+        ::add-content		      "add_content"
+        ::remove-content              "remove_content" 
+        ::package-name                "content_input"
+        ::select-package-group        "perform_action_package_groups"
+        ::select-package              "perform_action_packages"
+        ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+
+        ;;system-edit details
+        ::details                     (ui/menu-link "general")
+        ::name-text-edit              "system[name]"
+        ::description-text-edit       "system[description]"
+        ::location-text-edit          "system[location]"
+        ::service-level-select        "system[serviceLevel]"
+        ::release-version-select      "system[releaseVer]"
+        ::environment                 "//div[@id='environment_path_selector']"
+        ::operating-system            "//label[contains(.,'OS')]/../following-sibling::*[1]"
+        ::save-environment            "//input[@value='Save']"
+
+        ;;subscriptions pane
+        ::subscriptions               (ui/menu-link "systems_subscriptions")
+        ::subscribe                   "sub_submit"
+        ::unsubscribe                 "unsub_submit"})
+
+(sel/template-fns
+ {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+  subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+  checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
+  environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"})
+
+;; Nav
+
+(nav/add-subnavigation
+ ::page
+ [::new-page [] (browser click ::new)]
+ [::named-page [system-name] (nav/choose-left-pane system-name)
+  [::details-page [] (browser click ::details)]
+  [::subscriptions-page [] (browser click ::subscriptions)]
+  [::content-menu [] (browser mouseOver ::content-link)
+   [::content-software-page [] (browser click ::software-link)]
+   [::content-packages-page [] (browser click ::packages-link)]
+   [::content-errata-page [] (browser click ::errata-link)]]])
+
+(nav/add-subnavigation
+ ::by-environments-page
+ [::environment-page [env-name] (nav/select-environment-widget env-name)
+  [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]])
+
+;; Tasks
 
 (defn create
   "Creates a system"
-   [name & [{:keys [sockets system-arch]}]]
-   (navigate :new-system-page)
-   (fill-ajax-form {:system-name-text name
-                    :system-sockets-text sockets
-                    :system-arch-select (or system-arch "x86_64")}
-                    :create-system)
-   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+  [name & [{:keys [sockets system-arch]}]]
+  (nav/go-to ::new-page)
+  (sel/fill-ajax-form {::name-text name
+                       ::sockets-text sockets
+                       ::arch-select (or system-arch "x86_64")}
+                      ::create)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [name {:keys [new-name description location release-version]}]
-  (navigate :named-systems-page {:system-name name})
-  (in-place-edit {:system-name-text-edit new-name
-                  :system-description-text-edit description
-                  :system-location-text-edit location
-                  :system-release-version-select release-version}))
+  (nav/go-to ::details-page {:system-name name})
+  (common/in-place-edit {::name-text-edit new-name
+                         ::description-text-edit description
+                         ::location-text-edit location
+                         ::release-version-select release-version}))
 
-(defn edit-system-environment [system-name new-environment]
+(defn set-environment "Move a system to a new environment."
+  [system-name new-environment]
   (assert (not (blank? new-environment))) 
-  (navigate :named-systems-page {:system-name system-name})
-  (browser click :system-environment)
-  (browser check (locators/system-environment-checkbox new-environment))
-  (browser click :system-save-environment))
+  (nav/go-to ::details-page {:system-name system-name})
+  (sel/->browser (click ::environment)
+                 (check (environment-checkbox new-environment))
+                 (click ::save-environment)))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -40,141 +105,56 @@
   for auto-subscribe and SLA. If auto-subscribe is nil, no changes
   will be made."
   [{:keys [system-name add-products remove-products auto-subscribe sla]}]
-  (navigate :system-subscriptions-page {:system-name system-name})
+  (nav/go-to ::subscriptions-page {:system-name system-name})
   (when-not (nil? auto-subscribe)
-    (in-place-edit {:system-service-level-select (format "Auto-subscribe %s, %s"
-                                                         (if auto-subscribe "On" "Off")
-                                                         sla)}))
+    (common/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
+                                                          (if auto-subscribe "On" "Off")
+                                                          sla)}))
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
                            (browser check (checkbox-fn item)))
                          (browser click submit)) )]
-    (sub-unsub-fn add-products locators/subscription-available-checkbox :subscribe)
-    (sub-unsub-fn remove-products locators/subscription-current-checkbox :unsubscribe))
+    (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
+    (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe))
   (notification/check-for-success {:match-pred (notification/request-type? (if (or add-products remove-products)
                                                                              :sys-update-subscriptions
                                                                              :sys-update))}))
 
-(defn create-group
-  "Creates a system-group"
-   [name & [{:keys [description]}]]
-   (navigate :new-system-groups-page)
-   (fill-ajax-form {:system-group-name-text name
-                    :system-group-description-text description}
-                    :create-system-groups)
-   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-create)}))
-
-(defn add-to-group
-  "Adds a system to a System-Group"
-  [system-group system-name]
-  (navigate :named-system-group-page {:system-group-name system-group})
-  (comment (browser setText :system-groups-hostname-toadd system-name)
-           (browser typeKeys :system-groups-hostname-toadd " ")
-           (Thread/sleep 5000)
-           (browser click :system-groups-add-system)
-           (check-for-success))
-  (fill-ajax-form [:system-groups-hostname-toadd system-name
-                   ;;try to trigger autocomplete via javascript -
-                   ;;hackalert - see
-                   ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
-                   #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
-                   #(Thread/sleep 5000) []]
-                  :system-groups-add-system)
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-add-sys)}))
-
-(defn remove-from-group
-  "Remove a system from a System-Group"
-   [system-group system-name]
-   (navigate :named-system-group-page {:system-group-name system-group})
-   (browser click (locators/system-checkbox system-name))
-   (browser click :system-groups-remove-system))
-
-(defn copy-group
-  "Clones a system group, given the name of the original system group
-   to clone, and the new name and description."
-  [orig-name new-name & [{:keys [description]}]]
-  (navigate :named-system-group-page {:system-group-name orig-name})
-  (browser click :system-group-copy)
-  (fill-ajax-form {:system-group-copy-name-text new-name
-                   :system-group-copy-description-text description}
-                  :system-group-copy-submit)
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
-
-(defn remove-group [system-group & [{:keys [also-remove-systems?]}]]
-  (navigate :named-system-group-page {:system-group-name system-group})
-  (browser click :system-group-remove)
-  (browser click :confirmation-yes)
-  (browser click (if also-remove-systems?
-                   :confirmation-yes
-                   :system-group-confirm-only-system-group))
-  (notification/check-for-success
-   {:match-pred  (notification/request-type? (if also-remove-systems?
-                                               :sysgrps-destroy-sys
-                                               :sysgrps-destroy))}))
-
-(defn edit-group "Change the value of limit field in system group"
-  [sg-name {:keys [new-limit new-sg-name description]}]
-  (navigate :system-group-details-page {:system-group-name sg-name})
-  (let [needed-flipping (and new-limit
-                            (not= (= new-limit :unlimited)
-                                  (browser isChecked :system-group-unlimited)))]
-    (if (and new-limit (not= new-limit :unlimited))
-      (do (browser uncheck :system-group-unlimited)
-          (fill-ajax-form {:system-group-limit-value (str new-limit)}
-                          :save-new-limit ))
-      (browser check :system-group-unlimited))
-    (when needed-flipping (notification/check-for-success
-                           {:match-pred (notification/request-type? :sysgrps-update)})))
-  (in-place-edit {:system-group-name-text new-sg-name
-                  :system-group-description-text description}))
-
-(defn get-group-system-count "Get number of systems in system group"
-  [sg-name]
-  (navigate :system-group-details-page {:system-group-name sg-name})
-  (Integer/parseInt (browser getText :system-group-total)))
-
-(defn get-system-env "Get current environment of the system"
+(defn environment "Get current environment of the system"
   [system-name]
-  (navigate :named-systems-page {:system-name system-name})
-  (browser getText :system-environment))
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser getText ::environment))
 
 (defn get-os "Get operating system of the system"
-  [name]
-  (navigate :named-systems-page {:system-name name})
-  (browser getText :system-operating-system))
+  [system-name]
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser getText ::operating-system))
 
-(defn get-subscriptions-in-activation-key "Get applied susbscription info from activation key"
-  [name]
-  (navigate :named-activation-key-page {:activation-key-name name})
-  (browser click :applied-subscriptions)
-  (extract-list locators/fetch-applied-subscriptions))
-
-(defn add-package [name {:keys [package package-group]}]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
+(defn add-package "Add a package or package group to a system."
+  [system-name {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system-name})
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
-      (when is-group? (browser click :select-package-group))
-      (->browser (setText :system-package-name items)
-                 (typeKeys :system-package-name items)
-                 (click :system-add-content))
+      (when is-group? (browser click ::select-package-group))
+      (sel/->browser (setText ::package-name items)
+                     (typeKeys ::package-name items)
+                     (click ::add-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (browser getText :pkg-install-status))))))
+                    (browser getText ::pkg-install-status))))))
 
-(defn remove-package [name {:keys [package package-group]}]
-  (navigate :named-system-page-content {:system-name name})
-  (browser click :system-content-packages)
+(defn remove-package "Remove a package or package group from a system."
+  [system-name {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system-name})
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items
-      (when is-group? (browser click :select-package-group))
-      (->browser (setText :system-package-name items)
-                 (typeKeys :system-package-name items)
-                 (click :system-remove-content))
+      (when is-group? (browser click ::select-package-group))
+      (sel/->browser (setText ::package-name items)
+                     (typeKeys ::package-name items)
+                     (click ::remove-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (browser getText :pkg-install-status))))))
-  
+                    (browser getText ::pkg-install-status))))))

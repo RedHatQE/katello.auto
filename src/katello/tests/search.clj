@@ -2,10 +2,12 @@
   (:require (katello [api-tasks :as api]
                      [organizations :as organization]
                      [users :as user]
+                     [ui-common :refer [search extract-left-pane-list]]
                      [sync-management :as sync]
                      [tasks :refer :all]
-                     [ui-tasks :refer :all]
-                     [systems :refer :all :as system])
+                     [system-groups :as sg]
+                     [activation-keys :as ak]
+                     [systems :as system])
             [katello.tests.organizations :refer [create-test-org]]
             [katello.tests.users :refer [generic-user-details]]
             [test.tree.script :refer :all]
@@ -46,8 +48,8 @@
         (if (not (nil? system-group))
           (do
             (system/edit (first unique-system) {:description "most unique system"})
-            (apply system/create-group unique-sg)
-            (system/add-to-group (first unique-sg) (first unique-system))))
+            (apply sg/create unique-sg)
+            (sg/add-to (first unique-sg) (first unique-system))))
         (search :systems searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
@@ -63,7 +65,7 @@
   (deftest "Search organizations"
     :data-driven true
     :description "Search for organizations based on criteria." 
- 
+    
     (fn [org searchterms]
       (let [[name opts] org
             unique-org [(uniqueify name) opts]]
@@ -101,13 +103,13 @@
 
        ;;modify each above row with metadata specific to multibyte
        ;;testing
-           
+       
        (with-meta row
          {:blockers (open-bz-bugs "832978")
           :description "Search for organizations names including
                         latin-1/multi-byte characters in search
                         string."}))))
-     
+  
   
   (deftest "search users"
     :data-driven true
@@ -134,7 +136,7 @@
     (fn [key_opt searchterms]
       (organization/switch)
       (api/ensure-env-exist "dev" {:prior "Library"})
-      (create-activation-key key_opt)
+      (ak/create key_opt)
       (search :activation-keys searchterms)
       (let [valid-search-results (search-results-valid?
                                   (constantly true)
@@ -144,8 +146,8 @@
      [{:name (uniqueify "activation_key2") :description "my activation-key" :environment "dev"} {:criteria "name:activation_key2*"}]
      [{:name (uniqueify "activation_key3") :description "my activation-key" :environment "dev"} {:criteria "description:\"my activation-key\""}]
      [{:name (uniqueify "activation_key4") :description "my activation-key" :environment "dev"} {:criteria "name:activation*"}]])
-          
-     
+  
+  
   (deftest "search sync plans"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
@@ -176,16 +178,16 @@
             [sgname opt] system-group
             unique-sg [(uniqueify sgname) opt]]
         (apply system/create unique-system)
-        (apply system/create-group unique-sg)
-        (system/add-to-group (first unique-sg) (first unique-system))
+        (apply sg/create unique-sg)
+        (sg/add-to (first unique-sg) (first unique-system))
         (search :system-groups searchterms)
         (let [valid-search-results (search-results-valid?
                                     (constantly true)
                                     [(first unique-sg)])]
           (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))]
             (assert/is (valid-search-results
-                          (doall (map strip-num (extract-left-pane-list)))
-                          ))))))
+                        (doall (map strip-num (extract-left-pane-list)))
+                        ))))))
     [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]
      [["sg-fed1" {:description "the rh system-group"}] ["mysystem1" {:sockets "2" :system-arch "x86"}] {:criteria "name:sg-fed1*"}]
      [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]]))
