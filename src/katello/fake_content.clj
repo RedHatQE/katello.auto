@@ -57,14 +57,22 @@
                        :products [{:name "safari-1_0"
                                    :repos [{:name "safari-x86_64" 
                                             :url "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/"}]}]}])
-
-
 (def custom-errata-test-provider [{:name "Custom Errata Provider"
                         :products [{:name "Com Errata Enterprise"
                                     :repos [{:name "ErrataZoo" 
                                              :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
-; {:name "ErrataZoo2" 
-;                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}
+
+
+(def custom-env-test-provider [{:name "Custom Errata Provider"
+                    :products [{:name "Com Errata Enterprise"
+                                    :repos [{:name "ErrataZoo" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}
+                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                    :i18n true
+                                    :repos [{:name "洪" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "Гесер" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
   (set (remove nil? (flatten 

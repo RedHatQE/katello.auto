@@ -3,6 +3,7 @@
               [fill-form SeleniumLocatable browser ->browser sel-locator]]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
+            [test.tree.builder :refer [tmap]]
             (katello [conf :refer [config]] 
                      [tasks :refer [capitalize-all]]) 
             [ui.navigate :refer [nav-tree page-zip]]
@@ -107,6 +108,7 @@
         (str "window.document.getElementById('" 
              id "').innerHTML;")) 
               "</root>"))))))
+
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
   "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"

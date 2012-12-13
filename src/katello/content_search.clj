@@ -5,6 +5,7 @@
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
+            [test.tree.builder :refer [tmap]]
             [com.redhat.qe.auto.selenium.selenium
              :refer [browser ->browser fill-form fill-item]]
             (katello [locators      :as locators]

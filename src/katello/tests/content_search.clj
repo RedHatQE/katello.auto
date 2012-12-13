@@ -3,6 +3,7 @@
                      [content-search :as content-search]
                      [organizations :as org]
                      [environments  :as env]
+                     [changesets :refer [promote-delete-content]]
                      [manifest      :as manifest]
                      [conf          :refer [config with-org]]
                      [api-tasks     :as api]
@@ -359,8 +360,34 @@
      [ nil :prod-type (fn [results] (= (set (product-names results))
                                    (set (map :name fake/some-product-repos))))]
      {:blockers (open-bz-bugs "855945")})]))
-   
-    
+
+(declare test-org-env)
+(declare env-dev)
+(declare env-qa)
+(declare env-release)
+
+(defgroup content-search-env-compare
+  :group-setup (fn []
+                 (def ^:dynamic test-org-env      (uniqueify "env-org"))
+                 (def ^:dynamic env-dev      (uniqueify "Development"))
+                 (def ^:dynamic env-qa       (uniqueify "QA"))
+                 (def ^:dynamic env-release  (uniqueify "Release"))
+                 
+                 (api/create-organization test-org-env)
+                 (org/switch test-org-env)
+                 (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
+                 (env/create env-dev {:org-name test-org-env :prior-env "Library"})
+                 (env/create env-qa {:org-name test-org-env :prior-env env-dev})
+                 (env/create env-release {:org-name test-org-env :prior-env env-qa})
+                 (promote-delete-content "Library" env-dev false 
+                                         {:products ["Com Errata Enterprise" "WeirdLocalsUsing 標準語 Enterprise"]})
+                 (promote-delete-content env-dev env-qa false 
+                                         {:products ["WeirdLocalsUsing 標準語 Enterprise"]}))
+  
+  
+
+ )
+
   (defgroup content-search-tests
     content-search-repo-compare
     content-search-errata)
