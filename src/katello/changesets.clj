@@ -7,7 +7,7 @@
             [katello.tasks :refer :all] 
             [katello.ui-tasks :refer :all] 
             [katello.sync-management :as sync]
-            [katello.notifications :refer [check-for-success]]))
+            [katello.notifications :refer [check-for-success request-type?]]))
 
 ;;
 ;; Changesets
@@ -51,7 +51,9 @@
                 (click (locators/select-product prod-item))
                 (click (keyword (str "select-" (name category)))))
               (doseq [add-item add-items ] 
-                (browser click (locators/promotion-add-content-item add-item))))))
+                (browser click (locators/promotion-add-content-item add-item)))
+              (browser sleep 5000)
+              (browser click :promotion-eligible-home))))
         
         (= category :errata)
         (do
@@ -65,12 +67,9 @@
           (doseq [item data]  
             (->browser 
               (click :products-category)
-              (click (locators/promotion-add-content-item item))))))
-      ;; sleep to wait for browser->server comms to update changeset
-      ;; can't navigate away until that's done
-
-      (browser sleep 5000)
-      (browser click :promotion-eligible-home))))
+              (click (locators/promotion-add-content-item item))
+              (click :promotion-eligible-home))
+          (browser sleep 5000)))))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  
@@ -88,7 +87,7 @@
       ;;for the submission
       (loop-with-timeout 600000 []
         (when-not (try+ (browser click :promote-to-next-environment)
-                        (check-for-success)
+                        (check-for-success {:match-pred (request-type? :changesets-apply)})
                         (catch [:type ::promotion-already-in-progress] _
                           (nav-to-cs)))
           (Thread/sleep 30000)
