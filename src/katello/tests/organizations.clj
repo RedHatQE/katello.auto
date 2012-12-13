@@ -1,11 +1,12 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require (katello [api-tasks :as api]
+  (:require (katello [ui-common :as common]
+                     [api-tasks :as api]
                      [validation :as validation] 
-                     [providers :as provider] 
+                     [providers :as provider]
+                     [repositories :as repo]
                      [tasks :refer :all] 
                      [organizations :as organization] 
-                     [ui-tasks :refer :all] 
                      [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
@@ -34,7 +35,7 @@
 
 (defn verify-bad-org-name-gives-expected-error
   [name expected-error]
-  (expecting-error (errtype expected-error) (organization/create name)))
+  (expecting-error (common/errtype expected-error) (organization/create name)))
 
 (defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
   (organization/create org-name {:description "org to delete and recreate"})
@@ -43,7 +44,7 @@
                      :description "provider to del and recreate"})
   (provider/add-product {:provider-name provider-name
                           :name product-name})
-  (provider/add-repo {:name repo-name
+  (repo/add {:name repo-name
                        :provider-name provider-name
                        :product-name product-name
                        :url repo-url}))
@@ -59,25 +60,25 @@
 
 ;; Tests
 
-(defgroup org-tests
+ (defgroup org-tests
 
   (deftest "Create new organization via Manage Organizations link"
     (with-unique [org-name "managed-org"]
-      (organization/create       org-name {:go-through-org-switcher true})
-      (assert/is         (org-exists? org-name))))
+      (organization/create org-name {:go-through-org-switcher true})
+      (assert/is (org-exists? org-name))))
   
   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
-      (organization/create     org-name)
-      (assert/is         (org-exists? org-name)))
+      (organization/create org-name)
+      (assert/is (org-exists? org-name)))
     
     (deftest "Create an organization with i18n characters"
       :data-driven true
       
       (fn [org]
         (with-unique [org-name org]
-          (organization/create     org-name)
-          (assert/is      (org-exists? org-name))))
+          (organization/create org-name)
+          (assert/is (org-exists? org-name))))
       
       validation/i8n-chars)
 
@@ -97,14 +98,14 @@
     (deftest "Create an organization with an initial environment"
       (with-unique [org-name "auto-org"
                     env-name "environment"]
-        (organization/create     org-name  {:initial-env-name env-name})
-        (assert/is         (org-exists? org-name))))
+        (organization/create org-name {:initial-env-name env-name})
+        (assert/is (org-exists? org-name))))
   
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
+        (validation/expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
           (organization/create org-name {:description "org-description"}))))
 
     (deftest "Two organizations whose names only differ by upper or lower case are disallowed"
@@ -112,7 +113,7 @@
       :data-driven true
 
       (fn [orig-org-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/name-taken-error)
+        (expecting-error (common/errtype :katello.notifications/name-taken-error)
                          (with-unique [org-name orig-org-name]
                            (organization/create org-name)
                            (organization/create (modify-case-fn org-name)))))
@@ -140,32 +141,32 @@
   
     (deftest "Edit an organization"
       (with-unique [org-name "auto-edit"]
-        (create-test-org     org-name)
-        (organization/edit   org-name     :description     "edited description")))
+        (create-test-org org-name)
+        (organization/edit org-name :description "edited description")))
 
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
       (with-unique [org-name "auto-del"]
-        (create-test-org     org-name)
+        (create-test-org org-name)
         (organization/delete org-name)
-        (assert/is         (org-does-not-exist? org-name)))
+        (assert/is (org-does-not-exist? org-name)))
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
         
-        (with-unique [org-name       "delorg"
-                      provider-name  "delprov"
-                      product-name   "delprod"
-                      repo-name      "delrepo"
-                      repo-url       "http://blah.com/blah"]
+        (with-unique [org-name "delorg"
+                      provider-name "delprov"
+                      product-name "delprod"
+                      repo-name "delrepo"
+                      repo-url "http://blah.com/blah"]
           (try
-            (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
-            (organization/switch                          (@config :admin-org))
-            (organization/delete                 org-name)
+            (create-org-with-provider-and-repo org-name provider-name product-name repo-name repo-url)
+            (organization/switch (@config :admin-org))
+            (organization/delete org-name)
             ;;wait for delayed job to delete org
-            (Thread/sleep                        30000)
-            (create-org-with-provider-and-repo   org-name provider-name product-name repo-name repo-url)
+            (Thread/sleep 30000)
+            (create-org-with-provider-and-repo org-name provider-name product-name repo-name repo-url)
             (finally
-              (organization/switch                        (@config :admin-org)))))))))
+              (organization/switch (@config :admin-org)))))))))
 

@@ -3,7 +3,7 @@
   (:require [clojure.string :as string]
             [slingshot.slingshot :refer :all]
             [katello.tasks :refer [expecting-error]]
-            [katello.ui-tasks :refer [errtype]]
+            [katello.ui-common :refer [errtype]]
             [serializable.fn :refer [fn]] 
             [test.assert :as assert]))
 

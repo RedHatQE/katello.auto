@@ -1,11 +1,10 @@
 (ns katello.tests.promotions
   (:require (katello [api-tasks :as api] 
-                     [changesets :refer [promote-delete-content]]
+                     [changesets :as changesets]
                      [providers :as provider]
                      [environments :as environment]
                      [organizations :as org]
                      [tasks :refer :all] 
-                     [ui-tasks :refer :all]
                      [fake-content :as fake]
                      [sync-management :as sync]
                      [conf :refer [with-org config *environments*]]) 
@@ -67,8 +66,8 @@
           (api/add-to-template template-name {:repositories [{:product product-name
                                                               :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
-    (promote-delete-content from-env target-env false content)
-    (verify-all-content-present content (environment/content target-env))))
+    (changesets/promote-delete-content from-env target-env false content)
+    (verify-all-content-present content (changesets/environment-content target-env))))
 
 (def promo-data
   (runtime-data
@@ -126,14 +125,13 @@
           (if provider-type 
             (do
               (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-              (promote-delete-content library (first envz) false promotion-custom-content)))
+              (changesets/promote-delete-content library (first envz) false promotion-custom-content)))
           (if (nil? provider-type) 
             (do
               (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
-              (promote-delete-content library (first envz) false promotion-rh-content)))
+              (changesets/promote-delete-content library (first envz) false promotion-rh-content)))
           (Thread/sleep 30000)
-          (promote-delete-content (first envz) nil true deletion-content)))
-      
+          (changesets/promote-delete-content (first envz) nil true deletion-content)))
       
       [[{:products (map :name custom-products)} ["custom"]]
        [{:repos (mapcat :repos custom-products)} ["custom"]]

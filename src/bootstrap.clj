@@ -1,10 +1,8 @@
 (ns user)
 
-(use 'katello.ui-tasks)
 (use '[com.redhat.qe.auto.selenium.selenium :only [browser]])
 (use '[clojure.pprint :only (pp pprint)])
 
-(require '[katello.locators :as locators])
 (require 'fn.trace)
 (require 'selenium-server)
 (require 'katello.conf)
@@ -12,9 +10,9 @@
 (require 'test.tree.debug)
 
 
-(defn new-browser []
+(defn new-browser [& [optmap]]
   (katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
-  (katello.setup/start-selenium))
+  (katello.setup/start-selenium optmap))
 
 
 ;;-------------
@@ -38,6 +36,12 @@
 (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
 
 (selenium-server/start)
-(new-browser)
+(if-let [locale (@katello.conf/config :locale)]
+  (do (selenium-server/create-locale-profile locale)
+      (new-browser {:browser-config-opts (katello.setup/config-with-profile
+                                           locale)}))
+  (new-browser))
+
+
 
 

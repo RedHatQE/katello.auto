@@ -1,24 +1,23 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require (katello  [api-tasks :as api] 
-                      [organizations :as organization] 
-                      [ui-tasks :refer [navigate errtype]] 
-                      [sync-management :as sync] 
-                      [tasks :refer :all] 
-                      [environments :as environment] 
-                      [validation :refer :all] 
-                      [client :as client]
-                      [systems :refer :all]
-                      [conf :as conf]) 
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api] 
+                     [organizations :as organization] 
+                     [ui-common :refer [errtype]] 
+                     [sync-management :as sync] 
+                     [tasks :refer :all] 
+                     [environments :as environment]
+                     [systems :as system]
+                     [validation :refer :all] 
+                     [client :as client] 
+                     [conf :as conf]) 
             [katello.tests.providers :refer [with-n-new-orgs]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
-            [slingshot.slingshot :refer :all]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [clojure.string :refer [capitalize upper-case lower-case trim]]
-            [bugzilla.checker :refer [open-bz-bugs]]
-            [deltacloud :as cloud]))
+            [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Variables
 
@@ -42,7 +41,7 @@
     (environment/create env-name {:org-name org}))
   (environment/delete env-name {:org-name (first orgs)})
   (doseq [org (rest orgs)]
-    (navigate :named-environment-page {:env-name env-name
+    (nav/go-to ::environment/named-page {:env-name env-name
                                        :org-name org})))
 
 (defn verify-create-same-env-in-multiple-orgs
@@ -131,7 +130,7 @@
         (let [envs (take 3 (unique-names "env"))
               org (@conf/config :admin-org)]
           (environment/create-path org envs)
-          (expecting-error [:type :env-cant-be-deleted]
+          (expecting-error [:type ::environment/cant-be-deleted]
                            (environment/delete (second envs) {:org-name org}))
           (environment/delete (last envs) {:org-name org}))))
 
@@ -140,7 +139,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.notifications/name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype :katello.notifications/env-name-must-be-unique-within-org)
           (environment/create env-name
                               {:org-name @test-org-name
                                :description "dup env description"}))))
@@ -150,7 +149,7 @@
       :data-driven true
 
       (fn [orig-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/name-must-be-unique-within-org)
+        (expecting-error (errtype :katello.notifications/env-name-must-be-unique-within-org)
                          (with-unique [name orig-name]
                            (environment/create name {:org-name @test-org-name
                                                      :description "dup env description"})
@@ -172,7 +171,7 @@
                                       :description "try to rename me!"})
         (environment/edit env-name {:org-name @test-org-name
                                     :new-name new-name})
-        (navigate :named-environment-page
+        (nav/go-to :named-environment-page
                   {:org-name @test-org-name
                    :env-name new-name})))
 
@@ -202,9 +201,9 @@
                                    :env env-dev
                                    :force true})
         (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
-          (assert/is (= env-dev (get-system-env client-hostname)))
-          (edit-system-environment client-hostname env-test)
-          (assert/is (= env-test (get-system-env client-hostname)))
+          (assert/is (= env-dev (system/environment client-hostname)))
+          (system/set-environment client-hostname env-test)
+          (assert/is (= env-test (system/environment client-hostname)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           ;;verify the env name is now in the urls in redhat.repo

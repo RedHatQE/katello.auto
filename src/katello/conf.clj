@@ -59,6 +59,8 @@
    ["-b" "--browser-types" "Selenium browser types, eg '*firefox' or '*firefox,*googlechrome' (multiple values only used when threads > 1"
     :default ["*firefox"] :parse-fn #(string/split % #",")]
 
+   ["--locale" "A locale to set the browser to for all the tests (if not set, will default to browser's default.  Firefox only. eg 'fr' for french. Note, if using a remote selenium server, that server must already have a profile set up where the profile name equals the locale name."]
+   
    ["-c" "--config" "Config files (containing a clojure map of config options) to read and overlay  other command line options on top of - a list of comma separated places to look - first existing file is used and rest are ignored."
     :default ["automation-properties.clj" (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
     :parse-fn #(string/split % #",")]
@@ -72,7 +74,10 @@
     :parse-fn #(->> (string/split % #",") (map symbol) vec)]
    
    ["--trace-excludes" "Functions to exclude from tracing"
-    :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]])
+    :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]
+
+   ["--agent-repo" "URL of a .repo file to point to where katello-agent can be installed from."
+    :default "https://raw.github.com/gist/1978881"]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 

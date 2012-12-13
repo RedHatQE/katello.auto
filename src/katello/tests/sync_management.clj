@@ -1,14 +1,17 @@
 (ns katello.tests.sync_management
-  (:require (katello [api-tasks :as api] 
+  (:require (katello [navigation :as nav]
+                     [api-tasks :as api] 
                      [validation :as validate] 
                      [providers :as provider] 
                      [users :as user] 
-                     [roles :as role] 
-                     [organizations :as organization] 
+                     [roles :as role]
+                     [login :refer [login]]
+                     [organizations :as organization]
+                     [repositories :as repo]
                      [tasks :refer :all]
+                     [ui-common :as common]
                      [sync-management :as sync]
-                     [ui-tasks :refer [navigate errtype]] 
-                     [conf :refer [config *environments* with-org with-creds]]) 
+                     [conf :refer [config *environments* *session-org* with-org with-creds]]) 
             [katello.tests.login :refer [login-admin]] 
             [test.tree.script :refer :all] 
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -38,7 +41,7 @@
   (= "Sync complete." sync-result))
 
 (defn plan-validate [arg expected]
-  (expecting-error (errtype expected)
+  (expecting-error (common/errtype expected)
                    (sync/create-plan arg)))
 
 (defn plan-validation-data []
@@ -54,9 +57,9 @@
                 product "prod"
                 repo "repo"]
     (user/create user {:password password :email "blah@blah.com"})
-    (role/assign {:user user :roles ["Administrator"]})
+    (user/assign {:user user :roles ["Administrator"]})
     (try
-      (user/login user password)
+      (login user password {:org *session-org*})
       (organization/create org)
       (with-creds user password
         (with-org org
@@ -64,7 +67,7 @@
       (provider/create {:name provider})
       (provider/add-product {:provider-name provider 
                              :name product})
-      (provider/add-repo {:provider-name provider
+      (repo/add {:provider-name provider
                           :product-name product
                           :name repo
                           :url (@config :sync-repo)})
@@ -113,7 +116,7 @@
                            :interval "hourly"
                            :start-date (java.util.Date.)})
         (sync/edit-plan myplan-name {:new-name new-name })
-        (navigate :named-sync-plan-page {:sync-plan-name new-name})))
+        (nav/go-to :katello.sync-management/named-plan-page {:sync-plan-name new-name})))
 
     
     (deftest "Sync plan validation"
