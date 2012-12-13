@@ -18,7 +18,7 @@
 
         ;;content
         ::content-link                (ui/menu-link "system_content")
-        ::packages-link               (ui/menu-link "system_packages")
+        ::packages-link               (ui/menu-link "systems_packages")
         ::software-link               (ui/menu-link "system_products")
         ::errata-link                 (ui/menu-link "errata")
         ::add-content		      "add_content"
