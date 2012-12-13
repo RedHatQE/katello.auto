@@ -119,9 +119,9 @@
     
     (fn [type repo1]
       (org/switch test-org-compare)
-      (assert/is (repo-compare-test  type repo1 (into #{} (content-search/get-result-packages repo1 :view type))
+      (assert/is (repo-compare-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                                      "CompareZooNosync" #{}))
-      (assert/is (repo-all-shared-different-test type repo1 (into #{} (content-search/get-result-packages repo1 :view type))
+      (assert/is (repo-all-shared-different-test type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                                                  "CompareZooNosync" #{})))
     
     [[:packages "CompareZoo1"]
