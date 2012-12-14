@@ -18,7 +18,7 @@
                          (format "--%s='%s'" (name opt) v)))))))
 
 (defn run-cmd [runner cmd]
-  (let [result (.runCommandAndWait runner cmd)]
+  (let [result (.runCommandAndWait runner cmd ^long (* 20 60 1000))]
     {:stdout (.getStdout result)
      :stderr (.getStderr result)
      :exit-code (.getExitCode result)}))
