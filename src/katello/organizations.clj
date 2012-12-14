@@ -14,19 +14,20 @@
   switcher-link     "//div[@id='orgbox']//a[.='%s']"})
 
 (swap! ui/locators merge
-       {::new                   "//a[@id='new']"
-        ::create                "organization_submit"
-        ::name-text             "organization[name]"
-        ::description-text      "organization[description]"
-        ::environments          (ui/link "Environments")
-        ::edit                  (ui/link "Edit")
-        ::remove                (ui/link "Remove Organization")
-        ::initial-env-name-text "environment[name]"
-        ::initial-env-desc-text "environment[description]"
-        ::switcher              "switcherButton"
-        ::manage-switcher-link  "manage_orgs"
-        ::active                "//*[@id='switcherButton']"
-        ::default               "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
+       {::new                    "//a[@id='new']"
+        ::create                 "organization_submit"
+        ::name-text              "organization[name]"
+        ::description-text       "organization[description]"
+        ::environments           (ui/link "Environments")
+        ::edit                   (ui/link "Edit")
+        ::remove                 (ui/link "Remove Organization")
+        ::initial-env-name-text  "environment_name"
+        ::initial-env-label-text "environment_label"
+        ::initial-env-desc-text  "environment_description"
+        ::switcher               "switcherButton"
+        ::manage-switcher-link   "manage_orgs"
+        ::active                 "//*[@id='switcherButton']"
+        ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
 ;; Nav
 
@@ -45,11 +46,12 @@
 
 (defn create
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [description initial-env-name initial-env-description go-through-org-switcher]}]]
+  [name & [{:keys [description initial-env-name initial-env-label initial-env-description go-through-org-switcher]}]]
   (nav/go-to (if go-through-org-switcher ::new-page-via-org-switcher ::new-page))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
                        ::initial-env-name-text initial-env-name
+                       (fn [env-label] (when env-label (browser fireEvent ::initial-env-name-text "blur") (browser ajaxWait) (browser setText ::initial-env-label-text env-label))) [initial-env-label]
                        ::initial-env-desc-text initial-env-description}
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
