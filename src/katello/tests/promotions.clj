@@ -130,14 +130,14 @@
             (do
               (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
               (changesets/promote-delete-content library (first envz) false promotion-rh-content)))
-          (Thread/sleep 30000)
+          (Thread/sleep 45000) ; for asynchronous promotion
           (changesets/promote-delete-content (first envz) nil true deletion-content)))
       
       [[{:products (map :name custom-products)} ["custom"]]
        [{:repos (mapcat :repos custom-products)} ["custom"]]
        [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
-                                {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
-                                {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
+                     {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
+                     {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
        [{:products (map :name fake/some-product-repos)}]
        [{:repos (mapcat :repos rh-products)}]
        [{:packages '({:name "bear-4.1-1.noarch", :product-name "Nature Enterprise"} 

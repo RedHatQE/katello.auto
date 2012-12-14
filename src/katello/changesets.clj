@@ -16,6 +16,7 @@
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product      "//span[contains(.,'%s')]"
+  select-types        "//div[contains(@class,'simple_link') and contains(.,'%s')]"
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
@@ -24,9 +25,11 @@
 (swap! ui/locators merge
        {::products-category           (content-category "products")
         ::errata-category             (content-category "errata")
-        ::packages-category           (content-category "packages")
         ::kickstart-trees-category    (content-category "kickstart trees")
         ::templates-category          (content-category "templates")
+        ::select-repos                (select-types "Repositories")
+        ::select-packages             (select-types "Packages")   
+        ::select-errata-all           (select-types "All")
         ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
         ::review-for-promotion        "review_changeset"
         ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
@@ -81,13 +84,13 @@
             (let [add-items (map :name repos)] 
               (sel/->browser (click ::products-category)  
                              (click (select-product prod-item))
-                             (click (keyword (str "select-" (name category)))))
-             (doseq [add-item add-items] 
-               (browser click (add-content-item add-item)))
+                             (click (keyword (str "katello.changesets/select-" (name category)))))
+              (doseq [add-item add-items] 
+                (browser click (add-content-item add-item)))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
-             (browser sleep 5000)
-             (browser click :promotion-eligible-home))))
+              (browser sleep 5000)
+              (browser click ::promotion-eligible-home))))
        
        (= category :errata)
        (do
