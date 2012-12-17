@@ -360,6 +360,8 @@
   (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"
+    :blockers api/katello-only
+
     (fn [package-name]
       (let [target-env (first *environments*)
             org-name "ACME_Corporation"
