@@ -83,8 +83,9 @@
           (doseq [[prod-item repos] grouped-data]
             (let [add-items (map :name repos)] 
               (sel/->browser (click ::products-category)  
-                             (click (select-product prod-item))
-                             (click (keyword (str "katello.changesets/select-" (name category)))))
+                             (click (select-product prod-item)))
+              (browser refresh)               
+              (browser click (keyword (str "katello.changesets/select-" (name category))))
               (doseq [add-item add-items] 
                 (browser click (add-content-item add-item)))
       ;; sleep to wait for browser->server comms to update changeset
@@ -97,7 +98,8 @@
          (browser click ::errata-category)
          (browser click ::select-errata-all)
          (doseq [add-item (map :name data )]
-           (browser click (add-content-item add-item))))
+           (browser click (add-content-item add-item)))
+         (browser sleep 5000))
        
        :else
        (do
