@@ -8,16 +8,16 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::apply-schedule        "apply_button"
-        ::new-plan              "new"
-        ::plan-name-text        "sync_plan[name]"
-        ::plan-description-text "sync_plan[description]"
-        ::plan-interval-select  "sync_plan[interval]"
-        ::plan-date-text        "sync_plan[plan_date]"
-        ::plan-time-text        "sync_plan[plan_time]"
-        ::save-plan             "plan_save"
-        ::synchronize-now       "sync_button"})
+(ui/deflocators
+  {::apply-schedule        "apply_button"
+   ::new-plan              "new"
+   ::plan-name-text        "sync_plan[name]"
+   ::plan-description-text "sync_plan[description]"
+   ::plan-interval-select  "sync_plan[interval]"
+   ::plan-date-text        "sync_plan[plan_date]"
+   ::plan-time-text        "sync_plan[plan_time]"
+   ::save-plan             "plan_save"
+   ::synchronize-now       "sync_button"})
 
 (sel/template-fns
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
@@ -28,11 +28,11 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- ::plans-page
- [::named-plan-page [sync-plan-name]
-  (nav/choose-left-pane sync-plan-name)]
- [::new-plan-page [] (browser click ::new-plan)])
+(nav/defpages (common/pages)
+  [::plans-page
+   [::named-plan-page [sync-plan-name]
+    (nav/choose-left-pane sync-plan-name)]
+   [::new-plan-page [] (browser click ::new-plan)]])
 
 ;; Tasks
 

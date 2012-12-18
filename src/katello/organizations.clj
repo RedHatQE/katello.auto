@@ -1,5 +1,6 @@
 (ns katello.organizations
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [ui.navigate :as navlib :refer [nav-tree]]
             (katello [navigation :as nav]
                      [ui :as ui]
                      [ui-common :as common]
@@ -10,36 +11,34 @@
 ;; Locators
 
 (sel/template-fns
- {default-star "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
-  switcher-link     "//div[@id='orgbox']//a[.='%s']"})
+ {default-star  "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
+  switcher-link "//div[@id='orgbox']//a[.='%s']"})
 
-(swap! ui/locators merge
-       {::new                   "//a[@id='new']"
-        ::create                "organization_submit"
-        ::name-text             "organization[name]"
-        ::description-text      "organization[description]"
-        ::environments          (ui/link "Environments")
-        ::edit                  (ui/link "Edit")
-        ::remove                (ui/link "Remove Organization")
-        ::initial-env-name-text "environment[name]"
-        ::initial-env-desc-text "environment[description]"
-        ::switcher              "switcherButton"
-        ::manage-switcher-link  "manage_orgs"
-        ::active                "//*[@id='switcherButton']"
-        ::default               "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
+(ui/deflocators {::new                   "//a[@id='new']"
+                 ::create                "organization_submit"
+                 ::name-text             "organization[name]"
+                 ::description-text      "organization[description]"
+                 ::environments          (ui/link "Environments")
+                 ::edit                  (ui/link "Edit")
+                 ::remove                (ui/link "Remove Organization")
+                 ::initial-env-name-text "environment[name]"
+                 ::initial-env-desc-text "environment[description]"
+                 ::switcher              "switcherButton"
+                 ::manage-switcher-link  "manage_orgs"
+                 ::active                "//*[@id='switcherButton']"
+                 ::default               "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page 
- [::new-page [] (browser click ::new)]
- [::named-page [org-name] (nav/choose-left-pane  org-name)])
+(nav/defpages (common/pages)
+  [::page 
+   [::new-page [] (browser click ::new)]
+   [::named-page [org-name] (nav/choose-left-pane  org-name)]]
+  [::nav/top-level
+   [::page-via-org-switcher [] (browser click ::switcher)
+    [::link-via-org-switcher [] (browser clickAndWait ::manage-switcher-link)
+     [::new-page-via-org-switcher [] (browser click ::new)]]]])
 
-(nav/add-subnavigation
- ::nav/top-level
- [::page-via-org-switcher [] (browser click ::switcher)
-  [::link-via-org-switcher [] (browser clickAndWait ::manage-switcher-link)
-   [::new-page-via-org-switcher [] (browser click ::new)]]])
 
 ;; Tasks
 

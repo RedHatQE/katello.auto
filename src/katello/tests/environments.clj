@@ -171,7 +171,7 @@
                                       :description "try to rename me!"})
         (environment/edit env-name {:org-name @test-org-name
                                     :new-name new-name})
-        (nav/go-to :named-environment-page
+        (nav/go-to ::environment/named-page
                   {:org-name @test-org-name
                    :env-name new-name})))
 

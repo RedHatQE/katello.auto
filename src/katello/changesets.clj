@@ -21,29 +21,29 @@
 
 ;; Nav
 
-(swap! ui/locators merge
-       {::products-category           (content-category "products")
-        ::errata-category             (content-category "errata")
-        ::packages-category           (content-category "packages")
-        ::kickstart-trees-category    (content-category "kickstart trees")
-        ::templates-category          (content-category "templates")
-        ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-        ::review-for-promotion        "review_changeset"
-        ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-        ::new                         "new"
-        ::name-text                   "changeset_name"
-        ::save                        "save_changeset_button"
-        ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
-        ::type                        "changeset[action_type]"
-        ::deletion                    "//div[@data-cs_type='deletion']"})
+(ui/deflocators
+  {::products-category           (content-category "products")
+   ::errata-category             (content-category "errata")
+   ::packages-category           (content-category "packages")
+   ::kickstart-trees-category    (content-category "kickstart trees")
+   ::templates-category          (content-category "templates")
+   ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+   ::review-for-promotion        "review_changeset"
+   ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+   ::new                         "new"
+   ::name-text                   "changeset_name"
+   ::save                        "save_changeset_button"
+   ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+   ::type                        "changeset[action_type]"
+   ::deletion                    "//div[@data-cs_type='deletion']"})
 
-(nav/add-subnavigation
- ::page 
- [::named-environment-page [env-name next-env-name]
-  (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-  [::named-page [changeset-name deletion?] (do (when deletion?
-                                                 (browser click ::deletion))
-                                               (browser click (list-item changeset-name)))]])
+(nav/defpages (common/pages)
+  [::page 
+   [::named-environment-page [env-name next-env-name]
+    (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
+    [::named-page [changeset-name deletion?] (do (when deletion?
+                                                   (browser click ::deletion))
+                                                 (browser click (list-item changeset-name)))]]])
 
 ;; Tasks
 

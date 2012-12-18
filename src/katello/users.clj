@@ -9,25 +9,26 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::roles-link                  (ui/menu-link "user_roles")
-        ::environments-link           (ui/menu-link "environment")
-        ::default-org-select          "org_id[org_id]"
-        ::save-environment            "update_user"
-        ::save-edit                   "save_password"
-        ::new                         "//a[@id='new']"
-        ::username-text               "user[username]"
-        ::password-text               "password_field" ; use id attr 
-        ::confirm-text                "confirm_field"  ; for these two (name is the same)
-        ::default-org                 "org_id[org_id]"
-        ::email-text                  "user[email]"
-        ::save                        "save_user"
-        ::save-roles                  "save_roles"
-        ::remove                      (ui/link "Remove User")
-        ::enable-inline-help-checkbox "user[helptips_enabled]"
-        ::clear-disabled-helptips     "clear_helptips"
-        ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
-        ::account                     "//a[@class='header-widget' and contains(@href,'users')]"})
+(ui/deflocators
+  {::roles-link                  (ui/menu-link "user_roles")
+   ::environments-link           (ui/menu-link "environment")
+   ::default-org-select          "org_id[org_id]"
+   ::save-environment            "update_user"
+   ::save-edit                   "save_password"
+   ::new                         "//a[@id='new']"
+   ::username-text               "user[username]"
+   ::password-text               "password_field" ; use id attr 
+   ::confirm-text                "confirm_field" ; for these two (name is the same)
+   ::default-org                 "org_id[org_id]"
+   ::email-text                  "user[email]"
+   ::save                        "save_user"
+   ::save-roles                  "save_roles"
+   ::remove                      (ui/link "Remove User")
+   ::enable-inline-help-checkbox "user[helptips_enabled]"
+   ::clear-disabled-helptips     "clear_helptips"
+   ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
+   ::account                     "//a[@class='header-widget' and contains(@href,'users')]"}
+  ui/locators)
 
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
@@ -35,11 +36,13 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page 
- [::named-page [username] (nav/choose-left-pane user-list-item username)
-  [::environments-page [] (browser click ::environments-link)]
-  [::roles-permissions-page [] (browser click ::roles-link)]])
+(nav/defpages
+  (common/pages)
+  [::page 
+   [::named-page [username] (nav/choose-left-pane user-list-item username)
+    [::environments-page [] (browser click ::environments-link)]
+    [::roles-permissions-page [] (browser click ::roles-link)]]])
+
 
 ;; Tasks
 

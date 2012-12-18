@@ -43,35 +43,43 @@
               (do (search-here item)
                   (browser click loc)))))))
 
-(defonce
-  ^{:doc "The navigation layout of the UI. Each item in the tree is
+(defn pages []
+  "The navigation layout of the UI. Each item in the tree is
   a new page or tab, that you can drill down into from its parent
   item. Each item contains a keyword to refer to the location in the
   UI, a list of any arguments needed to navigate there (for example,
   to navigate to a provider details page, you need the name of the
   provider). Finally some code to navigate to the location from its
-  parent location. Other namespaces can add their structure here."}
-  page-tree
-  (atom
-   (nav/nav-tree
-    [::top-level [] (if (or (not (browser isElementPresent ::ui/log-out))
-                            (browser isElementPresent ::ui/confirmation-dialog))
-                      (browser open (@conf/config :server-url)))])))
+  parent location. Other namespaces can add their structure here."
+  (nav/nav-tree
+   [::top-level [] (if (or (not (browser isElementPresent ::ui/log-out))
+                           (browser isElementPresent ::ui/confirmation-dialog))
+                     (browser open (@conf/config :server-url)))]))
 
-(def ^{:doc "Navigates to a named location in the UI. The first
-             argument should be a keyword for the place in the page
-             tree to navigate to. The 2nd optional argument is a
-             mapping of keywords to strings, if any arguments are
-             needed to navigate there.
-             Example: (nav/go-to :katello.organizations/named-page
-             {:org-name 'My org'}) See also page-tree for all the
-             places that can be navigated to."
-       :arglists '([location-kw & [argmap]])}
-  go-to (nav/nav-fn page-tree))
+(defmulti page-tree (comp find-ns symbol namespace))
+
+(defmethod page-tree *ns* [page] (pages))
 
 (defmacro add-subnavigation
-  [parent-graft-point & branches]
-  `(swap! page-tree nav/add-subnav-multiple ~parent-graft-point
-          (list ~@(for [branch branches]
-                    `(nav/nav-tree ~branch)))))
+  [tree parent-graft-point & branches]
+  `(nav/add-subnav-multiple ~tree (list ~parent-graft-point
+                                        (list ~@(for [branch branches]
+                                                  `(nav/nav-tree ~branch))))))
 
+(defmacro defpages
+  "Define the pages needed to navigate to in this namespace, and
+   dependent namespaces.  basenav is the page tree you want to graft
+   onto, branches is a list of branches you want to graft.  branch
+   should be formatted as [parent-graft-point child1 child2 ...]"
+   [basenav & branches]
+  `(do (defn ~'pages []
+         (reduce nav/add-subnav-multiple
+                 ~basenav
+                 (list ~@(for [[parent-graft-point# & children#] branches]
+                           `(list ~parent-graft-point#
+                                  (list ~@(for [child# children#]
+                                            `(nav/nav-tree ~child#))))))))
+       (defmethod page-tree *ns* [k#] (~'pages))))
+
+(defn go-to [location-kw & [argmap]]
+  (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap )) 

@@ -7,24 +7,12 @@
                      [notifications :as notification] 
                      [ui :as ui]
                      [ui-common :as common]
-                     organizations))) ;;for nav
+                     [organizations :as org]))) 
 
-;; Locators
-
-(swap! ui/locators merge
-       {::name-text         "kt_environment_name"
-        ::label-text        "kt_environment_label"
-        ::description-text  "kt_environment_description"
-        ::prior             "kt_environment_prior"
-        ::create            "kt_environment_submit"
-        ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
-        ::remove-link       (ui/remove-link "environments")
-        ::prior-select-edit "kt_environment_prior" })
-
-(nav/add-subnavigation
- :katello.organizations/named-page
- [::new-page [] (browser click ::new)]
- [::named-page [env-name] (browser click (ui/environment-link env-name))])
+(nav/defpages (org/pages)
+  [:katello.organizations/named-page
+   [::new-page [] (browser click ::new)]
+   [::named-page [env-name] (browser click (ui/environment-link env-name))]])
 
 ;; Tasks
 

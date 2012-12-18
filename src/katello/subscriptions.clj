@@ -8,13 +8,17 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::import-manifest     "new"
-        ::upload              "upload_form_button"
-        ::repository-url-text "provider[repository_url]"
-        ::choose-file         "provider_contents"})
+(ui/deflocators
+  {::import-manifest     "new"
+   ::upload              "upload_form_button"
+   ::repository-url-text "provider[repository_url]"
+   ::choose-file         "provider_contents"})
 
 ;; Nav
+
+(nav/defpages (common/pages))
+
+;; Tasks
 
 (defn upload-manifest
   "Uploads a subscription manifest from the filesystem local to the
