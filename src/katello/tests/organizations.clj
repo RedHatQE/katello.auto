@@ -93,22 +93,6 @@
       (with-unique [org-name "test-dup"]
         (validation/expecting-error-2nd-try (errtype :katello.notifications/name-taken-error)
                                    (organization/create org-name {:description "org-description"}))))
-
-    (deftest "Two organizations whose names only differ by upper/lower case are disallowed"
-      :blockers (open-bz-bugs "847037")
-      :data-driven true
-
-      (fn [orig-org-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/name-taken-error)
-          (with-unique [org-name orig-org-name]
-            (organization/create org-name)
-            (organization/create (modify-case-fn org-name)))))
-
-      [["org"      capitalize]
-       ["your org" capitalize]
-       ["org"      upper-case]
-       ["My Org"   upper-case]
-       ["YOUR Org" lower-case]])
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
