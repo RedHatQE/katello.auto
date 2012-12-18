@@ -297,7 +297,7 @@
    (fn []
      (try
        (rest/get (api-url "/api/version"))
-       (catch Exception _ {:name "unknown" :version "unknown"})))))
+       (catch Exception e {:name "unknown" :version "unknown" :exception e})))))
 
 (defn is-headpin? []
   (-> (get-version) :name (= "Headpin")))
@@ -312,7 +312,7 @@
 
 (defn katello-only
   "A function you can call from :blockers of any test so it will skip
-   if run against a non-katello (eg SAM or headpin) deployment"
+   if run against a non-katello (eg SAM or headpin or unknown) deployment"
   [_]
-  (if (->> (get-version) :name (= "Headpin"))
+  (if (->> (get-version) :name (not= "Katello"))
     ["This test is for Katello based deployments only and this is a headpin-based server."] []))
