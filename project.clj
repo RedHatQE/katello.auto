@@ -5,7 +5,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [swank-clojure "1.4.2"]
                  [test.tree.jenkins "0.2.0-SNAPSHOT"]
-                 [test.tree "0.7.5-SNAPSHOT"]
+                 [test.tree "0.8.0-SNAPSHOT"]
                  [test.tree.runner "0.7.5-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [ui.navigate "0.1.0"]
@@ -21,7 +21,7 @@
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.2.0-SNAPSHOT"]]
-  :jvm-opts ["-Xmx768m" "-Xms48m"]
+  :jvm-opts ["-Xmx384m" "-Xms48m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
