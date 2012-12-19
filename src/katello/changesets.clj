@@ -27,6 +27,7 @@
         ::errata-category             (content-category "errata")
         ::kickstart-trees-category    (content-category "kickstart trees")
         ::templates-category          (content-category "templates")
+        ::select-errata               (select-types "Errata")
         ::select-repos                (select-types "Repositories")
         ::select-packages             (select-types "Packages")   
         ::select-errata-all           (select-types "All")
@@ -78,7 +79,7 @@
     (let [data (content category)
           grouped-data (group-by :product-name data)]
       (cond 
-        (some #{category} [:repos :packages])
+        (some #{category} [:repos :packages :errata])
         (do
           (doseq [[prod-item repos] grouped-data]
             (let [add-items (map :name repos)] 
@@ -86,29 +87,30 @@
                              (click (select-product prod-item))
                              (refresh)               
                              (click (->> category name (format "katello.changesets/select-%s") keyword)))
+              (if (= category :errata) (browser click ::select-errata-all))
               (doseq [add-item add-items] 
                 (browser click (add-content-item add-item))))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
-              (browser sleep 5000)
-              (browser click ::promotion-eligible-home)))
+            (browser sleep 5000)
+            (browser click ::promotion-eligible-home)))
        
-       (= category :errata)
-       (do
-         (browser click ::errata-category)
-         (browser click ::select-errata-all)
-         (doseq [add-item (map :name data )]
-           (browser click (add-content-item add-item)))
-         (browser sleep 5000))
+        (= category :errata-top-level)
+        (do
+          (browser click ::errata-category)
+          (browser click ::select-errata-all)
+          (doseq [add-item (map :name data )]
+            (browser click (add-content-item add-item)))
+          (browser sleep 5000))
        
-       :else
-       (do
-         (browser click ::products-category)
-         (doseq [item data]  
-           (browser click (add-content-item item)))
+        :else
+        (do
+          (browser click ::products-category)
+          (doseq [item data]  
+            (browser click (add-content-item item)))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
-         (browser sleep 5000))))))
+          (browser sleep 5000))))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  
@@ -127,6 +129,8 @@
       (sel/loop-with-timeout (* 10 60 1000) []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
+                        (catch [:type ::notification/deletion-already-in-progress] _ 
+                          (nav-to-cs))
                         (catch [:type ::notification/promotion-already-in-progress] _
                           (nav-to-cs)))
           (Thread/sleep 30000)
