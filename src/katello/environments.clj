@@ -35,9 +35,10 @@
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
-  [name {:keys [org-name description prior-env]}]
+  [name {:keys [label org-name description prior-env]}]
   (nav/go-to ::new-page {:org-name org-name})
   (sel/fill-ajax-form {::name-text name
+                       (fn [label] (when label (browser fireEvent ::name-text "blur") (browser ajaxWait) (browser setText ::label-text label))) [label]
                        ::description-text description
                        ::prior prior-env}
                       ::create)

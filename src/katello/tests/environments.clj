@@ -7,6 +7,7 @@
                      [sync-management :as sync] 
                      [tasks :refer :all] 
                      [environments :as environment]
+                     [notifications :as notification]
                      [systems :as system]
                      [validation :refer :all] 
                      [client :as client] 
@@ -139,7 +140,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.notifications/env-name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype ::notification/env-name-must-be-unique-within-org)
           (environment/create env-name
                               {:org-name @test-org-name
                                :description "dup env description"}))))
@@ -159,7 +160,21 @@
 
 
     (deftest "Create environments with the same name but in different orgs"
-      (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs)))
+      (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs))
+    
+    (deftest "Adding environment named or labeled 'Library' is disallowed"
+      :data-driven true
+
+      (fn [env-name env-label notif] 
+        (organization/switch @test-org-name)
+        (expecting-error 
+          (errtype notif)
+          (environment/create env-name {:org-name @test-org-name
+                                        :label env-label})))
+
+      [["Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["Library" (with-unique [env-label "env-lbl"] env-label) ::notification/env-name-lib-is-builtin]]))
 
 
   (deftest "Enviroment name is required"
