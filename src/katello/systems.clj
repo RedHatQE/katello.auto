@@ -9,40 +9,40 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::new                         "new"
-        ::create                      "system_submit"
-        ::name-text                   "system[name]"
-        ::sockets-text                "system[sockets]"
-        ::arch-select                 "arch[arch_id]"
+(ui/deflocators
+  {::new                         "new"
+   ::create                      "system_submit"
+   ::name-text                   "system[name]"
+   ::sockets-text                "system[sockets]"
+   ::arch-select                 "arch[arch_id]"
 
-        ;;content
-        ::content-link                (ui/menu-link "system_content")
-        ::packages-link               (ui/menu-link "systems_packages")
-        ::software-link               (ui/menu-link "system_products")
-        ::errata-link                 (ui/menu-link "errata")
-        ::add-content		      "add_content"
-        ::remove-content              "remove_content" 
-        ::package-name                "content_input"
-        ::select-package-group        "perform_action_package_groups"
-        ::select-package              "perform_action_packages"
-        ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ;;content
+   ::content-link                (ui/menu-link "system_content")
+   ::packages-link               (ui/menu-link "systems_packages")
+   ::software-link               (ui/menu-link "system_products")
+   ::errata-link                 (ui/menu-link "errata")
+   ::add-content		      "add_content"
+   ::remove-content              "remove_content" 
+   ::package-name                "content_input"
+   ::select-package-group        "perform_action_package_groups"
+   ::select-package              "perform_action_packages"
+   ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
 
-        ;;system-edit details
-        ::details                     (ui/menu-link "general")
-        ::name-text-edit              "system[name]"
-        ::description-text-edit       "system[description]"
-        ::location-text-edit          "system[location]"
-        ::service-level-select        "system[serviceLevel]"
-        ::release-version-select      "system[releaseVer]"
-        ::environment                 "//div[@id='environment_path_selector']"
-        ::operating-system            "//label[contains(.,'OS')]/../following-sibling::*[1]"
-        ::save-environment            "//input[@value='Save']"
+   ;;system-edit details
+   ::details                     (ui/menu-link "general")
+   ::name-text-edit              "system[name]"
+   ::description-text-edit       "system[description]"
+   ::location-text-edit          "system[location]"
+   ::service-level-select        "system[serviceLevel]"
+   ::release-version-select      "system[releaseVer]"
+   ::environment                 "//div[@id='environment_path_selector']"
+   ::operating-system            "//label[contains(.,'OS')]/../following-sibling::*[1]"
+   ::save-environment            "//input[@value='Save']"
 
-        ;;subscriptions pane
-        ::subscriptions               (ui/menu-link "systems_subscriptions")
-        ::subscribe                   "sub_submit"
-        ::unsubscribe                 "unsub_submit"})
+   ;;subscriptions pane
+   ::subscriptions               (ui/menu-link "systems_subscriptions")
+   ::subscribe                   "sub_submit"
+   ::unsubscribe                 "unsub_submit"})
 
 (sel/template-fns
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
@@ -52,21 +52,19 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::new-page [] (browser click ::new)]
- [::named-page [system-name] (nav/choose-left-pane system-name)
-  [::details-page [] (browser click ::details)]
-  [::subscriptions-page [] (browser click ::subscriptions)]
-  [::content-menu [] (browser mouseOver ::content-link)
-   [::content-software-page [] (browser click ::software-link)]
-   [::content-packages-page [] (browser click ::packages-link)]
-   [::content-errata-page [] (browser click ::errata-link)]]])
-
-(nav/add-subnavigation
- ::by-environments-page
- [::environment-page [env-name] (nav/select-environment-widget env-name)
-  [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]])
+(nav/defpages (common/pages)
+  [::page
+   [::new-page [] (browser click ::new)]
+   [::named-page [system-name] (nav/choose-left-pane system-name)
+    [::details-page [] (browser click ::details)]
+    [::subscriptions-page [] (browser click ::subscriptions)]
+    [::content-menu [] (browser mouseOver ::content-link)
+     [::content-software-page [] (browser click ::software-link)]
+     [::content-packages-page [] (browser click ::packages-link)]
+     [::content-errata-page [] (browser click ::errata-link)]]]]
+  [::by-environments-page
+   [::environment-page [env-name] (nav/select-environment-widget env-name)
+    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
 
 ;; Tasks
 

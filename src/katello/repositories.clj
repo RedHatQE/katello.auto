@@ -7,21 +7,22 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::repo-name-text    "repo[name]"
-        ::repo-label-text   "repo[label]"
-        ::repo-url-text     "repo[feed]" 
-        ::save-repository   "//input[@value='Create']"
-        ::remove-repository (ui/link "Remove Repository")
-        ::repo-gpg-select   "//select[@id='repo_gpg_key']"})
+(ui/deflocators
+  {::repo-name-text    "repo[name]"
+   ::repo-label-text   "repo[label]"
+   ::repo-url-text     "repo[feed]" 
+   ::save-repository   "//input[@value='Create']"
+   ::remove-repository (ui/link "Remove Repository")
+   ::repo-gpg-select   "//select[@id='repo_gpg_key']"}
+  ui/locators)
 
 (sel/template-fns
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
-(nav/add-subnavigation
- ::provider/products-page 
- [::named-page [product-name repo-name] (browser click (ui/editable repo-name))])
+(nav/defpages (provider/pages)
+  [::provider/products-page 
+   [::named-page [product-name repo-name] (browser click (ui/editable repo-name))]])
 
 ;; Tasks
 

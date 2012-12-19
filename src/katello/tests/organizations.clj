@@ -6,6 +6,7 @@
                      [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all] 
+                     [notifications :as notification]
                      [organizations :as organization] 
                      [conf :refer [config]])
             [test.assert :as assert]
@@ -54,9 +55,9 @@
 (def bad-org-names
   (concat
    (for [inv-char-str validation/invalid-character-strings]
-     [inv-char-str :katello.notifications/name-must-not-contain-characters])
+     [inv-char-str ::notification/name-must-not-contain-characters])
    (for [trailing-ws-str validation/trailing-whitespace-strings]
-     [trailing-ws-str :katello.notifications/name-no-leading-trailing-whitespace])))
+     [trailing-ws-str ::notification/name-no-leading-trailing-whitespace])))
 
 ;; Tests
 
@@ -105,24 +106,8 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (validation/expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
+        (validation/expecting-error-2nd-try (common/errtype ::notification/name-taken-error)
           (organization/create org-name {:description "org-description"}))))
-
-    (deftest "Two organizations whose names only differ by upper or lower case are disallowed"
-      :blockers (open-bz-bugs "847037")
-      :data-driven true
-
-      (fn [orig-org-name modify-case-fn]
-        (expecting-error (common/errtype :katello.notifications/name-taken-error)
-                         (with-unique [org-name orig-org-name]
-                           (organization/create org-name)
-                           (organization/create (modify-case-fn org-name)))))
-
-      [["org"      capitalize]
-       ["your org" capitalize]
-       ["org"      upper-case]
-       ["My Org"   upper-case]
-       ["YOUR Org" lower-case]])
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
@@ -168,5 +153,19 @@
             (Thread/sleep 30000)
             (create-org-with-provider-and-repo org-name provider-name product-name repo-name repo-url)
             (finally
-              (organization/switch (@config :admin-org)))))))))
+              (organization/switch (@config :admin-org)))))))
+    
+    (deftest "Creating org with default env named or labeled 'Library' is disallowed"
+      :data-driven true
 
+      (fn [org-name-prefix env-name env-lbl notif]
+        (with-unique [org-name org-name-prefix]
+          (expecting-error 
+            (common/errtype notif)
+            (organization/create org-name {:initial-env-name env-name
+                                           :initial-env-label env-lbl}))))
+
+      [["lib-org" "Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
+       ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))

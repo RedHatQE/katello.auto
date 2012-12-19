@@ -7,23 +7,24 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::new                             "//a[@id='new']"
-        ::name-text                       "role[name]"
-        ::description-text                "role[description]"
-        ::save                            "role_save"
-        ::users                           "role_users"
-        ::permissions                     "role_permissions"
-        ::next                            "next_button"
-        ::permission-resource-type-select "permission[resource_type_attributes[name]]"
-        ::permission-verb-select          "permission[verb_values][]"
-        ::permission-tag-select           "tags"        
-        ::permission-name-text            "permission[name]"
-        ::permission-description-text     "permission[description]"
-        ::save-permission                 "save_permission_button"
-        ::remove                          "remove_role"
-        ::add-permission                  "add_permission"
-        ::all-types                       "all_types"})
+(ui/deflocators
+  {::new                             "//a[@id='new']"
+   ::name-text                       "role[name]"
+   ::description-text                "role[description]"
+   ::save                            "role_save"
+   ::users                           "role_users"
+   ::permissions                     "role_permissions"
+   ::next                            "next_button"
+   ::permission-resource-type-select "permission[resource_type_attributes[name]]"
+   ::permission-verb-select          "permission[verb_values][]"
+   ::permission-tag-select           "tags"        
+   ::permission-name-text            "permission[name]"
+   ::permission-description-text     "permission[description]"
+   ::save-permission                 "save_permission_button"
+   ::remove                          "remove_role"
+   ::add-permission                  "add_permission"
+   ::all-types                       "all_types"}
+  ui/locators)
 
 (sel/template-fns
  {permission-org "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
@@ -31,11 +32,11 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::named-page [role-name] (nav/choose-left-pane  role-name)
-  [::named-users-page [] (browser click ::users)]
-  [::named-permissions-page [] (browser click ::permissions)]])
+(nav/defpages (common/pages)
+  [::page
+   [::named-page [role-name] (nav/choose-left-pane  role-name)
+    [::named-users-page [] (browser click ::users)]
+    [::named-permissions-page [] (browser click ::permissions)]]])
 
 
 ;; Tasks

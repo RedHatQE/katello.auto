@@ -10,7 +10,7 @@
   (:refer-clojure :exclude [remove]))
 
 
-(swap! ui/locators merge
+(ui/deflocators
        {::new                   "//a[@id='new']"
         ::create                "group_save"
         ::name-text             "system_group[name]"
@@ -29,16 +29,17 @@
         ::confirm-only-group    "//span[.='No, only delete the system group.']"
         ::unlimited-checkbox    "//input[@class='unlimited_members']"
         ::save-new-limit        "//button[.='Save']"
-        ::limit-value           "system_group[max_systems]"})
+        ::limit-value           "system_group[max_systems]"}
+       ui/locators)
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::new-page [] (browser click ::new)]
- [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
-  [::systems-page [] (browser click ::systems-link)]
-  [::details-page [] (browser click ::details-link)]])
+(nav/defpages (common/pages)
+  [::page
+   [::new-page [] (browser click ::new)]
+   [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
+    [::systems-page [] (browser click ::systems-link)]
+    [::details-page [] (browser click ::details-link)]]])
 
 
 ;; Tasks

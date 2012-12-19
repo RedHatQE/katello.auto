@@ -2,7 +2,7 @@
   (:require [clojure.data.json  :as json]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             (katello [navigation :as nav]
-                     menu
+                     [menu :as menu]
                      [ui :as ui]
                      [tasks         :refer :all] 
                      [notifications :as notification] 
@@ -13,6 +13,10 @@
             [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
+
+;; Nav
+
+(def pages #'menu/pages) ; alias 
 
 ;; Nav fns
 

@@ -7,7 +7,7 @@
 
 ;; Locators
 
-(swap! ui/locators merge
+(ui/deflocators
        {::new                       "new"
         ::name-text                 "provider[name]"
         ::description-text          "provider[description]"
@@ -23,16 +23,19 @@
         ::product-name-text        "//*[@name='product[name]']"
         ::product-label-text       "//*[@name='product[label]']"
         ::product-description-text "//*[@name='product[description]']"
-        ::remove-product           (ui/remove-link "products")})
+        ::remove-product           (ui/remove-link "products")}
+       ui/locators)
 
-(nav/add-subnavigation
- ::custom-page
- [::new-page [] (browser click ::new)]
- [::named-page [provider-name] (nav/choose-left-pane  provider-name)
-  [::products-page [] (sel/->browser (click ::products-and-repositories)
-                                     (sleep 2000))
-   [::named-product-page [product-name] (browser click (ui/editable product-name))]]
-  [::details-page [] (browser click ::details-link)]])
+;; Nav
+
+(nav/defpages (common/pages)
+  [::custom-page
+   [::new-page [] (browser click ::new)]
+   [::named-page [provider-name] (nav/choose-left-pane  provider-name)
+    [::products-page [] (sel/->browser (click ::products-and-repositories)
+                                       (sleep 2000))
+     [::named-product-page [product-name] (browser click (ui/editable product-name))]]
+    [::details-page [] (browser click ::details-link)]]])
 
 ;; Tasks
 
