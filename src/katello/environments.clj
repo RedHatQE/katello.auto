@@ -9,6 +9,21 @@
                      [ui-common :as common]
                      [organizations :as org]))) 
 
+;; Locators
+
+(ui/deflocators
+  {::name-text         "kt_environment_name"
+   ::label-text        "kt_environment_label"
+   ::description-text  "kt_environment_description"
+   ::prior             "kt_environment_prior"
+   ::create            "kt_environment_submit"
+   ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
+   ::remove-link       (ui/remove-link "environments")
+   ::prior-select-edit "kt_environment_prior" }
+  ui/locators)
+
+;; Nav
+
 (nav/defpages (org/pages)
   [:katello.organizations/named-page
    [::new-page [] (browser click ::new)]
