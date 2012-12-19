@@ -23,7 +23,7 @@
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
-  plan              "//div[@id='plans']//div[normalize-space(.)='%s'"
+  plan              "//div[@id='plans']//div[normalize-space(.)='%s']"
   schedule          "//div[normalize-space(.)='%s']"})
 
 ;; Nav
