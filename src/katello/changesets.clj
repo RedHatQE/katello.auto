@@ -127,7 +127,7 @@
       (sel/loop-with-timeout (* 10 60 1000) []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
-                        (catch [:type ::notification/promotion-already-in-progress] _
+                        (catch (common/errtype ::notification/promotion-already-in-progress) _
                           (nav-to-cs)))
           (Thread/sleep 30000)
           (recur)))
