@@ -169,11 +169,12 @@
   [env-name]
   (nav/go-to ::named-environment-page {:env-name env-name
                                        :next-env-name nil})
-  (let [categories [:products :templates]]
+  (let [categories [:products :templates]
+        loc #(->> % name (format "%s-category") (keyword (-> *ns* ns-name name)))]
     (zipmap categories
             (doall (for [category categories]
                      (do
-                       (browser click (-> category name (str "-category") keyword))
+                       (browser click (loc category))
                        (browser sleep 2000) 
                        (let [result (extract-content)]
                          (browser click ::promotion-eligible-home)
