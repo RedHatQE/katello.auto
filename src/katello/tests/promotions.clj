@@ -86,6 +86,10 @@
              (for [repo (:repos prod)] 
                (assoc repo :product-name (:name prod))))))
 
+(def rh-products 
+  (for [prod fake/some-product-repos]
+    (assoc prod :repos (vec (for [repo-name (:repos prod)]
+                              {:name repo-name :product-name (:name prod)})))))
 
 ;; Tests
 
@@ -106,27 +110,40 @@
 (defgroup deletion-tests
   
   (dep-chain
-    (deftest "Deletion Changeset test-cases for custom-providers only"
+    (deftest "Deletion Changeset test-cases for custom-providers and RH-providers"
       :data-driven true
       
-      (fn [custom deletion-content]
+      (fn [deletion-content & [provider-type]]
         (let [envz (take 3 (unique-names "env3"))
               test-org (uniqueify "custom-org")
-              promotion-content {:products (map :name custom-products)}]
+              promotion-custom-content {:products (map :name custom-products)}
+              promotion-rh-content {:products (map :name fake/some-product-repos)}]
  
           (org/create test-org)
           (org/switch test-org)
           (environment/create-path test-org envz)
-          (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-          (changesets/promote-delete-content library (first envz) false promotion-content)
+          (if provider-type 
+            (do
+              (fake/prepare-org-custom-provider  test-org fake/custom-provider)
+              (changesets/promote-delete-content library (first envz) false promotion-custom-content)))
+          (if (nil? provider-type) 
+            (do
+              (fake/prepare-org test-org (mapcat :repos fake/some-product-repos))
+              (changesets/promote-delete-content library (first envz) false promotion-rh-content)))
+          (Thread/sleep 45000) ; for asynchronous promotion
           (changesets/promote-delete-content (first envz) nil true deletion-content)))
       
-      [[[true] {:products (map :name custom-products)}]
-       [[true] {:repos (mapcat :repos custom-products)}]
-       [[true] {:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
-                                {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
-                                {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
+      [[{:products (map :name custom-products)} ["custom"]]
+       [{:repos (mapcat :repos custom-products)} ["custom"]]
+       [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
+                     {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
+                     {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
+       [{:products (map :name fake/some-product-repos)}]
+       [{:repos (mapcat :repos rh-products)}]
+       [{:packages '({:name "bear-4.1-1.noarch", :product-name "Nature Enterprise"} 
+                            {:name "camel-0.1-1.noarch", :product-name "Zoo Enterprise"} 
+                           {:name "cat-1.0-1.noarch", :product-name "Nature Enterprise"})}]
        (with-meta 
-       [[true] {:errata '({:name "Bear_Erratum"} 
-                              {:name "Sea_Erratum"})}]
-       {:blockers (open-bz-bugs "874850")})])))
+         [{:errata '({:name "Bear_Erratum"} 
+                     {:name "Sea_Erratum"})} ["custom"]]
+         {:blockers (open-bz-bugs "874850")})])))
