@@ -24,7 +24,7 @@
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
   plan              "//div[@id='plans']//div[normalize-space(.)='%s']"
-  schedule          "//div[normalize-space(.)='%s']"})
+  schedule-item     "//div[normalize-space(.)='%s']"})
 
 ;; Nav
 
@@ -83,7 +83,7 @@
   [{:keys [products plan-name]}]
   (nav/go-to ::schedule-page)
   (doseq [product products]
-    (browser click (schedule product)))
+    (browser click (schedule-item product)))
   (browser click (plan plan-name))
   (browser clickAndWait ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so

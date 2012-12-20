@@ -32,8 +32,8 @@
                 ::password-same-as-username           #"(Password|Username)" ;TODO after bug (open-bz-bugs "841499") is fixed add real notification
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
-                ::max-systems-must-be-positive        #"Max systems must be a positive"
-                ::max-systems-may-not-be-zero         #"Max systems may not be set to 0"}]
+                ::max-systems-must-be-positive        #"System limit must be a positive"
+                ::max-systems-may-not-be-zero         #"System limit may not be set to 0"}]
     
     (doseq [e (keys errors)]
       (derive e ::validation-error))  ; validation-error is a parent type
