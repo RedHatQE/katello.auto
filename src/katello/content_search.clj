@@ -14,6 +14,7 @@
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
+            [test.tree.builder :refer [tmap]]
             [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]
@@ -51,6 +52,7 @@
   compare-checkbox-all    "//div[@id='grid_content']//input[%s]"
   repo-remove             "//div[@id='repo_autocomplete_list']/ul/li[@data-name='%s']/i[contains(@class,'remove')]"
   repo-header-name        "//ul[@id='column_headers']/li[%s]/span[1]"
+  col-header-name         "//ul[@id='column_headers']/li[%s]"
   repo-column-name        "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][%s]"
   column                  "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='%s']"
   span-text               "//article[@id='comparison_grid']//span[text()='%s']"
@@ -64,13 +66,16 @@
 
 (defn get-all-of-locator [locatorfn] 
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
-  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
+  (let [count (browser getXpathCount (locatorfn "'*'"))]
     (reduce (fn [acumulator number]
               (conj 
                acumulator 
                (locatorfn (str number))))
             []
             (range 1 (inc count)))))
+
+(defn numeric-str? [num] (if (string? num) (= num (re-matches #"[0-9]+" num))
+                           false))
 
 (defn get-zip-of-html-element [id]
   (zip/xml-zip (xml/parse 
@@ -81,6 +86,7 @@
                                         (str "window.document.getElementById('" 
                                              id "').innerHTML;")) 
                                "</root>"))))))
+
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
   "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
@@ -96,27 +102,62 @@
           (tree-edit (zip/up e-tree ) filter-fn edit-fn edit-other :returning)
           e-tree )))))
 
+(defn tree-map [tree edit-fn]
+  (tree-edit tree
+             (fn [tree] true)
+             edit-fn
+             identity))
+
 (defn subtree-to-top  [ziptree]
   (if (nil? (zip/up ziptree))
     0
     (inc (subtree-to-top (zip/up ziptree))))) 
 
-(defn get-search-page-result-list-of-lists []
-  (let [normalize (fn [list]
-                    (if (= 1 (count list))
-                      (first list)
-                      list))]
-    (-> (get-zip-of-html-element "grid_row_headers")
+(defn normalize [tree]
+  (tree-map
+    tree
+    (fn [list]
+       (if (= 1 (count list))
+             (first list)
+              list))))
+
+(defn normalize2 [tree]
+   (tree-map tree 
+       (fn [n] 
+          (let [node (if (char? n) (str n) n)]
+            (cond 
+            (= "--" node) false
+            (= "**" node) true
+            (numeric-str? node) (read-string node)
+            :else node)))))
+
+(defn get-search-page-result-list-of-lists [element-id]
+   (-> (get-zip-of-html-element element-id)
        (tree-edit 
-        (fn [tree] (contains? (zip/node tree) :content))      
+        (fn [tree] (or 
+                     (contains? (zip/node tree) :content)
+                     (= (:class (:attrs (zip/node tree))) 
+                        "dot_icon-black")))      
         (fn [node]
-          (normalize (into [] (remove empty? (remove nil? (:content node))))))
-        (fn [node]
-          node))
-       (zip/node))))
+          (into [] 
+            (remove empty?
+              (remove nil?
+                  ;converting non-displayable parts to nil
+                  
+                     ; converting the black dot to ** to signify a presence of something
+                     (if (= (:class (:attrs node)) "dot_icon-black") 
+                       ["**"]
+                       (:content node))))))
+        identity)
+       (zip/node)
+       (zip/vector-zip)
+       (normalize)
+       (normalize2)
+       (zip/node)
+       ))
 
 (defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
-  (-> (get-search-page-result-list-of-lists)
+  (-> (get-search-page-result-list-of-lists "grid_row_headers")
       (zip/vector-zip)
       (tree-edit 
        (fn [tree] (>= depth (subtree-to-top tree)))      
@@ -142,6 +183,11 @@
   (doall (for [locator (get-all-of-locator result-item-n)]
            (browser getText locator))))
 
+(defn get-table-headers [] 
+  (doall (remove empty?
+           (for [locator (get-all-of-locator col-header-name)]
+             (browser getText locator)))))
+
 (defn get-repo-content-search [] 
   (doall (for [locator (get-all-of-locator repo-header-name)]
            (browser getText locator))))
@@ -165,9 +211,9 @@
                    ;; (browser setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
                    (typeKeys auto-comp-box " ")
-                   (waitForElement elem "2000")
-                   (mouseOver elem)
-                   (click elem)
+                   ;;(waitForElement elem "2000")
+                   ;;(mouseOver elem)
+                   ;;(click elem)
                    (click add-button))))
 
 (defn get-search-result-repositories [] 
@@ -190,6 +236,10 @@
 (defn load-all-results []
   (while (browser isElementPresent ::load-more)
     (browser click ::load-more)))
+
+(defn submit-browse-button []
+  (browser click ::browse-button)
+  (load-all-results))
 
 (defn add-to-repository-browser [repository]
   (autocomplete-adder-for-content-search ::repo-auto-complete ::add-repo repository))
@@ -264,18 +314,34 @@
   (nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser setText ::repo-search repo)
-  (browser click ::browse-button)
-
-  (load-all-results)
+  (submit-browse-button)
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
 
 (defn search-for-packages [package]
   (nav/go-to ::page)
   (browser select ::type-select "Packages")
   (browser setText ::pkg-search package)
-  (browser click ::browse-button)
-  (load-all-results)
+  (submit-browse-button)
   (get-search-page-result-map-of-maps-of-sets-of-sets 1))
+
+(defn select-content-type [content-type]
+;; Navigate to content search page and select content type
+  (let [ctype-map {:prod-type   "Products"
+                   :repo-type   "Repositories"
+                   :pkg-type    "Packages"
+                   :errata-type "Errata"}
+        ctype-str (ctype-map content-type)]
+    (nav/go-to ::page)
+    (browser select ::type-select ctype-str)))  
+
+(defn select-environments [envs]
+  ;; Select environments (columns)
+  (doseq [env envs]
+    (let [col-locator (column env)]
+      (sel/->browser (mouseOver ::column-selector) 
+                     (mouseOver col-locator) 
+                     (click col-locator)
+                     (mouseOut ::column-selector)))))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -296,22 +362,9 @@
     :pkg-type    (assert (empty? errata))
     :errata-type (assert (empty? pkg)))
 
-  ;; Navigate to content search page and select content type
-  (let [ctype-map {:prod-type   "Products"
-                   :repo-type   "Repositories"
-                   :pkg-type    "Packages"
-                   :errata-type "Errata"}
-        ctype-str (ctype-map content-type)]
-    (nav/go-to ::page)
-    (browser select ::type-select ctype-str))
+ (select-content-type content-type)
   
-  ;; Select environments (columns)
-  (doseq [env envs]
-    (let [col-locator (column env)]
-      (sel/->browser (mouseOver ::column-selector) 
-                     (mouseOver col-locator) 
-                     (click col-locator)
-                     (mouseOut ::column-selector))))
+ (select-environments envs)
 
   ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items] 
@@ -326,9 +379,7 @@
   ;; Add errata
   (when-not (empty? errata) (browser setText ::errata-search errata))
   
-  (browser click ::browse-button)
-
-  (load-all-results)
+  (submit-browse-button)
   
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
