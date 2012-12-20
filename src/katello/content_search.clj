@@ -22,7 +22,7 @@
 
 ;; Locators
 
-(swap! ui/locators merge
+(ui/deflocators
        {::type-select                "//select[@id='content']"
         ::add-prod                   "add_product"
         ::add-repo                   "add_repo"
@@ -61,6 +61,10 @@
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
   })
+
+;; Nav
+
+(nav/defpages (common/pages))
 
 ;; Tasks
 

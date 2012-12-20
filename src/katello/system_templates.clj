@@ -13,24 +13,24 @@
   eligible-category "//div[@id='content_tree']//div[normalize-space()='%s']"
   product           "//span[contains(@class, 'custom-product-sprite')]/following-sibling::span/text()[contains(.,'%s')]"})
 
-(swap! ui/locators merge
-       {::new                     "new"
-        ::name-text               "system_template[name]"
-        ::description-text        "system_template[description]"
-        ::save-new                "template_save" ;;when creating
-        ::eligible-package-groups (eligible-category "Package Groups")
-        ::eligible-packages       (eligible-category "Packages")
-        ::eligible-repositories   (eligible-category "Repositories")
-        ::package-groups          (ui/slide-link "Package Groups")
-        ::eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-        ::save                    "save_template"}) ;;when editing
+(ui/deflocators
+  {::new                     "new"
+   ::name-text               "system_template[name]"
+   ::description-text        "system_template[description]"
+   ::save-new                "template_save" ;;when creating
+   ::eligible-package-groups (eligible-category "Package Groups")
+   ::eligible-packages       (eligible-category "Packages")
+   ::eligible-repositories   (eligible-category "Repositories")
+   ::package-groups          (ui/slide-link "Package Groups")
+   ::eligible-home           "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+   ::save                    "save_template"}) ;;when editing
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::named-page [template-name] (browser click (ui/slide-link template-name))]
- [::new-page [] (browser click ::new)])
+(nav/defpages (common/pages)
+  [::page
+   [::named-page [template-name] (browser click (ui/slide-link template-name))]
+   [::new-page [] (browser click ::new)]])
 
 ;; Tasks
 

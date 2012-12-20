@@ -38,7 +38,7 @@
                 org)))
 
 (defn step-verify-login-prompts-org [{:keys [username org]}]
-  (expecting-error [:type :katello.users/login-org-required]
+  (expecting-error [:type :katello.login/login-org-required]
                    (login username (:password generic-user-details))))
 
 (defn step-unset-default-org [_]

@@ -4,7 +4,7 @@
                      [ui-common :as common]
                      [ui :as ui]
                      [sync-management :as sync]
-                     [notifications :as notification :refer [check-for-success]])
+                     [notifications :as notification :refer [check-for-success request-type?]])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]))
@@ -16,34 +16,37 @@
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product      "//span[contains(.,'%s')]"
+  select-types        "//div[contains(@class,'simple_link') and contains(.,'%s')]"
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
 ;; Nav
 
-(swap! ui/locators merge
-       {::products-category           (content-category "products")
-        ::errata-category             (content-category "errata")
-        ::packages-category           (content-category "packages")
-        ::kickstart-trees-category    (content-category "kickstart trees")
-        ::templates-category          (content-category "templates")
-        ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
-        ::review-for-promotion        "review_changeset"
-        ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
-        ::new                         "new"
-        ::name-text                   "changeset_name"
-        ::save                        "save_changeset_button"
-        ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
-        ::type                        "changeset[action_type]"
-        ::deletion                    "//div[@data-cs_type='deletion']"})
+(ui/deflocators
+  {::products-category           (content-category "products")
+   ::errata-category             (content-category "errata")
+   ::kickstart-trees-category    (content-category "kickstart trees")
+   ::templates-category          (content-category "templates")
+   ::select-repos                (select-types "Repositories")
+   ::select-packages             (select-types "Packages")   
+   ::select-errata-all           (select-types "All")
+   ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+   ::review-for-promotion        "review_changeset"
+   ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+   ::new                         "new"
+   ::name-text                   "changeset_name"
+   ::save                        "save_changeset_button"
+   ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
+   ::type                        "changeset[action_type]"
+   ::deletion                    "//div[@data-cs_type='deletion']"})
 
-(nav/add-subnavigation
- ::page 
- [::named-environment-page [env-name next-env-name]
-  (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-  [::named-page [changeset-name deletion?] (do (when deletion?
-                                                 (browser click ::deletion))
-                                               (browser click (list-item changeset-name)))]])
+(nav/defpages (common/pages)
+  [::page 
+   [::named-environment-page [env-name next-env-name]
+    (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
+    [::named-page [changeset-name deletion?] (do (when deletion?
+                                                   (browser click ::deletion))
+                                                 (browser click (list-item changeset-name)))]]])
 
 ;; Tasks
 
@@ -75,32 +78,37 @@
     (let [data (content category)
           grouped-data (group-by :product-name data)]
       (cond 
-       (some #{category} [:repos :packages])
-       (do
-         (doseq [[prod-item repos] grouped-data]
-           (let [add-items (map :name repos)] 
-             (sel/->browser (click ::products-category)  
-                            (click (select-product prod-item))
-                            (click (keyword (str "select-" (name category)))))
-             (doseq [add-item add-items ] 
-               (browser click (add-content-item add-item))))))
+        (some #{category} [:repos :packages])
+        (do
+          (doseq [[prod-item repos] grouped-data]
+            (let [add-items (map :name repos)] 
+              (sel/->browser (click ::products-category)  
+                             (click (select-product prod-item))
+                             (refresh)               
+                             (click (->> category name (format "katello.changesets/select-%s") keyword)))
+              (doseq [add-item add-items] 
+                (browser click (add-content-item add-item))))
+      ;; sleep to wait for browser->server comms to update changeset
+      ;; can't navigate away until that's done
+              (browser sleep 5000)
+              (browser click ::promotion-eligible-home)))
        
        (= category :errata)
        (do
          (browser click ::errata-category)
          (browser click ::select-errata-all)
          (doseq [add-item (map :name data )]
-           (browser click (add-content-item add-item))))
+           (browser click (add-content-item add-item)))
+         (browser sleep 5000))
        
        :else
        (do
          (browser click ::products-category)
          (doseq [item data]  
-           (browser click (add-content-item item)))))
+           (browser click (add-content-item item)))
       ;; sleep to wait for browser->server comms to update changeset
       ;; can't navigate away until that's done
-      (sel/->browser (sleep 5000)
-                     (click ::promotion-eligible-home)))))
+         (browser sleep 5000))))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete  
@@ -119,7 +127,7 @@
       (sel/loop-with-timeout (* 10 60 1000) []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
-                        (catch [:type ::notification/promotion-already-in-progress] _
+                        (catch (common/errtype ::notification/promotion-already-in-progress) _
                           (nav-to-cs)))
           (Thread/sleep 30000)
           (recur)))
@@ -169,11 +177,12 @@
   [env-name]
   (nav/go-to ::named-environment-page {:env-name env-name
                                        :next-env-name nil})
-  (let [categories [:products :templates]]
+  (let [categories [:products :templates]
+        loc #(->> % name (format "%s-category") (keyword (-> *ns* ns-name name)))]
     (zipmap categories
             (doall (for [category categories]
                      (do
-                       (browser click (-> category name (str "-category") keyword))
+                       (browser click (loc category))
                        (browser sleep 2000) 
                        (let [result (extract-content)]
                          (browser click ::promotion-eligible-home)

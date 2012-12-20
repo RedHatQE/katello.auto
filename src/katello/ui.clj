@@ -17,7 +17,26 @@
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
 
 
-(def common
+
+
+;;
+;; Tells the clojure selenium client where to look up keywords to get
+;; real selenium locators.
+;;
+
+(defmulti locator (comp find-ns symbol namespace))
+
+(defmacro deflocators
+  "Define locators needed in this namespace and its dependent namespaces.
+   m is a map of locators.  Optionally, provide other maps containing
+   locators needed in this namespace, for m to be merged with.
+     Example, (deflocators {:foo 'bar'} other.ns/locators)"
+  [m & others]
+  `(do (def ~'locators ~m)
+       (defmethod locator *ns* [k#]
+         (k# (merge ~@others ~'locators)))))
+
+(deflocators
   {::save-inplace-edit       "//div[contains(@class, 'editable')]//button[@type='submit']"
    ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
 
@@ -32,23 +51,9 @@
    ::expand-path             "path-collapsed"
    ::log-out                 "//div[@id='widget-container']//a[contains(@href,'logout')]"})
 
-
-(defonce ^{:doc "All the selenium locators for the Katello UI. Maps a
-                 keyword to the selenium locator. You can pass the
-                 keyword to selenium just the same as you would the
-                 locator string. See also SeleniumLocatable
-                 protocol."}
-  locators
-  (atom common))
-
-;;
-;; Tells the clojure selenium client where to look up keywords to get
-;; real selenium locators.
-;;
-
 (extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword
-  (sel/sel-locator [k] (@locators k))
+  (sel/sel-locator [k] (locator k))
   String
   (sel/sel-locator [x] x))
 

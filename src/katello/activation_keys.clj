@@ -7,17 +7,16 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::new                     "new"
-        ::name-text               "activation_key[name]"
-        ::description-text        "activation_key[description]"
-        ::template-select         "activation_key[system_template_id]"
-        ::save                    "save_key"
-        ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
-        ::available-subscriptions (ui/menu-link "available_subscriptions")
-        ::add-subscriptions       "//input[@id='subscription_submit_button']"            
-        ::remove-link             (ui/remove-link "activation_keys")
-        ::release-version-text    "system[releaseVer]"})
+(ui/deflocators {::new                     "new"
+                 ::name-text               "activation_key[name]"
+                 ::description-text        "activation_key[description]"
+                 ::template-select         "activation_key[system_template_id]"
+                 ::save                    "save_key"
+                 ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
+                 ::available-subscriptions (ui/menu-link "available_subscriptions")
+                 ::add-subscriptions       "//input[@id='subscription_submit_button']"            
+                 ::remove-link             (ui/remove-link "activation_keys")
+                 ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
@@ -25,10 +24,10 @@
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)]
- [::new-page [] (browser click ::new)])
+(nav/defpages (common/pages)
+  [::page
+   [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)]
+   [::new-page [] (browser click ::new)]])
 
 ;; Tasks
 

@@ -8,31 +8,31 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::apply-schedule        "apply_button"
-        ::new-plan              "new"
-        ::plan-name-text        "sync_plan[name]"
-        ::plan-description-text "sync_plan[description]"
-        ::plan-interval-select  "sync_plan[interval]"
-        ::plan-date-text        "sync_plan[plan_date]"
-        ::plan-time-text        "sync_plan[plan_time]"
-        ::save-plan             "plan_save"
-        ::synchronize-now       "sync_button"})
+(ui/deflocators
+  {::apply-schedule        "apply_button"
+   ::new-plan              "new"
+   ::plan-name-text        "sync_plan[name]"
+   ::plan-description-text "sync_plan[description]"
+   ::plan-interval-select  "sync_plan[interval]"
+   ::plan-date-text        "sync_plan[plan_date]"
+   ::plan-time-text        "sync_plan[plan_time]"
+   ::save-plan             "plan_save"
+   ::synchronize-now       "sync_button"})
 
 (sel/template-fns
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
-  plan              "//div[@id='plans']//div[normalize-space(.)='%s'"
-  schedule          "//div[normalize-space(.)='%s']"})
+  plan              "//div[@id='plans']//div[normalize-space(.)='%s']"
+  schedule-item     "//div[normalize-space(.)='%s']"})
 
 ;; Nav
 
-(nav/add-subnavigation
- ::plans-page
- [::named-plan-page [sync-plan-name]
-  (nav/choose-left-pane sync-plan-name)]
- [::new-plan-page [] (browser click ::new-plan)])
+(nav/defpages (common/pages)
+  [::plans-page
+   [::named-plan-page [sync-plan-name]
+    (nav/choose-left-pane sync-plan-name)]
+   [::new-plan-page [] (browser click ::new-plan)]])
 
 ;; Tasks
 
@@ -83,7 +83,7 @@
   [{:keys [products plan-name]}]
   (nav/go-to ::schedule-page)
   (doseq [product products]
-    (browser click (schedule product)))
+    (browser click (schedule-item product)))
   (browser click (plan plan-name))
   (browser clickAndWait ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so

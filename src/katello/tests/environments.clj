@@ -7,6 +7,7 @@
                      [sync-management :as sync] 
                      [tasks :refer :all] 
                      [environments :as environment]
+                     [notifications :as notification]
                      [systems :as system]
                      [validation :refer :all] 
                      [client :as client] 
@@ -139,28 +140,10 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env-name "test-dup"]
-        (expecting-error-2nd-try (errtype :katello.notifications/env-name-must-be-unique-within-org)
+        (expecting-error-2nd-try (errtype ::notification/env-name-must-be-unique-within-org)
           (environment/create env-name
                               {:org-name @test-org-name
                                :description "dup env description"}))))
-
-    (deftest "Two environments with name that differs only in case are disalowed"
-      :blockers (open-bz-bugs "847037")
-      :data-driven true
-
-      (fn [orig-name modify-case-fn]
-        (expecting-error (errtype :katello.notifications/env-name-must-be-unique-within-org)
-                         (with-unique [name orig-name]
-                           (environment/create name {:org-name @test-org-name
-                                                     :description "dup env description"})
-                           (environment/create (modify-case-fn name) {:org-name @test-org-name
-                                                                      :description "dup env description"}))))
-
-      [["env"      capitalize]
-       ["yourenv" capitalize]
-       ["env"      upper-case]
-       ["MyEnv"   upper-case]
-       ["YOUREnv" lower-case]])
       
     (deftest "Rename an environment"
       :blockers (constantly ["Renaming is not supported for v1"])
@@ -171,13 +154,27 @@
                                       :description "try to rename me!"})
         (environment/edit env-name {:org-name @test-org-name
                                     :new-name new-name})
-        (nav/go-to :named-environment-page
+        (nav/go-to ::environment/named-page
                   {:org-name @test-org-name
                    :env-name new-name})))
 
 
     (deftest "Create environments with the same name but in different orgs"
-      (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs)))
+      (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs))
+    
+    (deftest "Adding environment named or labeled 'Library' is disallowed"
+      :data-driven true
+
+      (fn [env-name env-label notif] 
+        (organization/switch @test-org-name)
+        (expecting-error 
+          (errtype notif)
+          (environment/create env-name {:org-name @test-org-name
+                                        :label env-label})))
+
+      [["Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["Library" (with-unique [env-label "env-lbl"] env-label) ::notification/env-name-lib-is-builtin]]))
 
 
   (deftest "Enviroment name is required"

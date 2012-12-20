@@ -8,22 +8,21 @@
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::name-text        "gpg_key_name"
-        ::file-upload-text "gpg_key_content_upload"
-        ::upload-button    "upload_gpg_key"
-        ::content-text     "gpg_key_content"
-        ::save             "save_gpg_key"
-        ::new              "new"
-        ::remove-link      (ui/remove-link "gpg_keys")})
+(ui/deflocators
+  {::name-text        "gpg_key_name"
+   ::file-upload-text "gpg_key_content_upload"
+   ::upload-button    "upload_gpg_key"
+   ::content-text     "gpg_key_content"
+   ::save             "save_gpg_key"
+   ::new              "new"
+   ::remove-link      (ui/remove-link "gpg_keys")})
 
 ;; Nav
 
-(nav/add-subnavigation
- ::page
- [::new-page [] (browser click ::new)]
- [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)])
-
+(nav/defpages (common/pages)
+  [::page
+   [::new-page [] (browser click ::new)]
+   [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)]])
 
 ;;Tasks
 

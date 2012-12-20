@@ -22,15 +22,18 @@
                 ::sg-name-taken-error                 #"Name must be unique within one organization"
                 ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
                 ::name-must-not-contain-characters    #"Name cannot contain characters other than"
+                ::env-name-lib-is-builtin             #"Name : 'Library' is a built-in environment"
                 ::env-name-must-be-unique-within-org  #"Name of environment must be unique within one organization" 
+                ::env-label-lib-is-builtin            #"Label : 'Library' is a built-in environment"
+                ::env-label-must-be-unique-within-org #"Label of environment must be unique within one organization" 
                 ::repository-url-invalid              #"Repository url is invalid"
                 ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
                 ::password-too-short                  #"Password must be at least"
                 ::password-same-as-username           #"(Password|Username)" ;TODO after bug (open-bz-bugs "841499") is fixed add real notification
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
-                ::max-systems-must-be-positive        #"Max systems must be a positive"
-                ::max-systems-may-not-be-zero         #"Max systems may not be set to 0"}]
+                ::max-systems-must-be-positive        #"System limit must be a positive"
+                ::max-systems-may-not-be-zero         #"System limit may not be set to 0"}]
     
     (doseq [e (keys errors)]
       (derive e ::validation-error))  ; validation-error is a parent type

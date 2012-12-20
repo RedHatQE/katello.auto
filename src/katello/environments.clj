@@ -7,24 +7,27 @@
                      [notifications :as notification] 
                      [ui :as ui]
                      [ui-common :as common]
-                     organizations))) ;;for nav
+                     [organizations :as org]))) 
 
 ;; Locators
 
-(swap! ui/locators merge
-       {::name-text         "kt_environment_name"
-        ::label-text        "kt_environment_label"
-        ::description-text  "kt_environment_description"
-        ::prior             "kt_environment_prior"
-        ::create            "kt_environment_submit"
-        ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
-        ::remove-link       (ui/remove-link "environments")
-        ::prior-select-edit "kt_environment_prior" })
+(ui/deflocators
+  {::name-text         "kt_environment_name"
+   ::label-text        "kt_environment_label"
+   ::description-text  "kt_environment_description"
+   ::prior             "kt_environment_prior"
+   ::create            "kt_environment_submit"
+   ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
+   ::remove-link       (ui/remove-link "environments")
+   ::prior-select-edit "kt_environment_prior" }
+  ui/locators)
 
-(nav/add-subnavigation
- :katello.organizations/named-page
- [::new-page [] (browser click ::new)]
- [::named-page [env-name] (browser click (ui/environment-link env-name))])
+;; Nav
+
+(nav/defpages (org/pages)
+  [:katello.organizations/named-page
+   [::new-page [] (browser click ::new)]
+   [::named-page [env-name] (browser click (ui/environment-link env-name))]])
 
 ;; Tasks
 
@@ -32,9 +35,10 @@
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
-  [name {:keys [org-name description prior-env]}]
+  [name {:keys [label org-name description prior-env]}]
   (nav/go-to ::new-page {:org-name org-name})
   (sel/fill-ajax-form {::name-text name
+                       (fn [label] (when label (browser fireEvent ::name-text "blur") (browser ajaxWait) (browser setText ::label-text label))) [label]
                        ::description-text description
                        ::prior prior-env}
                       ::create)
