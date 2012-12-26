@@ -213,6 +213,30 @@
               (group/remove-from group-name system-name)
               (assert/is (= (dec syscount) (group/system-count group-name)))))))
       
+      (deftest "Unregister a system & check count under sys-group details is -1"
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (let [target-env (first *environments*)]
+            (api/ensure-env-exist target-env {:prior library})
+            (do
+              (group/create group-name)
+              (system/create system-name {:sockets "1"
+                                          :system-arch "x86_64"})
+              (group/add-to group-name system-name)
+              (provision/with-client "check-sys-count"
+                 ssh-conn
+                 (client/register ssh-conn
+                                  {:username *session-user*
+                                   :password *session-password*
+                                   :org "ACME_Corporation"
+                                   :env target-env
+                                   :force true})
+                 (let [mysys (client/my-hostname ssh-conn)]
+                   (group/add-to group-name mysys)
+                   (let [syscount (group/system-count group-name)]
+                     (client/run-cmd ssh-conn "subscription-manager unregister")
+                     (assert/is (= (dec syscount) (group/system-count group-name))))))))))
+      
       (deftest "Delete a system group"
         :data-driven true
 
