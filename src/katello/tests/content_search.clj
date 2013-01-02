@@ -362,12 +362,9 @@
        {:blockers (open-bz-bugs "855945")})]))
 
 (declare test-org-env)
-(declare env-dev)
-;(def env-dev "Development")
-(declare env-qa)
-;(def env-qa "Development")
-(declare env-release)
-;(def env-dev "Development")
+(def env-dev "Development")
+(def env-qa "QA")
+(def env-release "Release")
 
 (defn test-env-shared-unique [environments result view]
       (org/switch test-org-env)  
@@ -381,9 +378,6 @@
 (defgroup content-search-env-compare
   :group-setup (fn []
                  (def ^:dynamic test-org-env      (uniqueify "env-org"))
-                 (def ^:dynamic env-dev      (uniqueify "Development"))
-                 (def ^:dynamic env-qa       (uniqueify "QA"))
-                 (def ^:dynamic env-release  (uniqueify "Release"))
                  (api/create-organization test-org-env)
                  (org/switch test-org-env)
                  (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
@@ -414,6 +408,20 @@
     [[[env-dev] {"Com Errata Inc" "ErrataZoo"}]
      [[env-dev env-qa] {"Com Errata Inc" "ErrataZoo", "Com Errata Enterprise" "ErrataZoo"}]
      [[env-dev env-qa env-release] {"Com Errata Inc" "ErrataZoo", "WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}, "Com Errata Enterprise" "ErrataZoo"}]])
+ 
+  (deftest "Content Browser: Environment selector for content browser"
+        :data-driven true
+    (fn [environments]
+      (org/switch test-org-env)  
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      ;(assert/is  (= (content-search/get-table-headers) ["Library"]))
+      (content-search/select-environments environments)
+      (assert/is  (= (content-search/get-table-headers) (into [] (cons "Library" environments)))))
+  
+     [[[env-dev env-qa env-release]]
+      [[env-dev env-qa]]
+      [[env-qa]]])
   
   (deftest "Content Browser: Repositories grouped by product"
     (org/switch test-org-env)  
