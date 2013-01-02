@@ -363,8 +363,11 @@
 
 (declare test-org-env)
 (declare env-dev)
+;(def env-dev "Development")
 (declare env-qa)
+;(def env-qa "Development")
 (declare env-release)
+;(def env-dev "Development")
 
 (defn test-env-shared-unique [environments result view]
       (org/switch test-org-env)  
@@ -381,7 +384,6 @@
                  (def ^:dynamic env-dev      (uniqueify "Development"))
                  (def ^:dynamic env-qa       (uniqueify "QA"))
                  (def ^:dynamic env-release  (uniqueify "Release"))
-                 
                  (api/create-organization test-org-env)
                  (org/switch test-org-env)
                  (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
