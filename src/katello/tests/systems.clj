@@ -66,6 +66,12 @@
       (step-create-system-group m)
       (group/add-to group-name system-name)))
 
+(defn step-add-exiting-system-to-new-group
+  "Create a system group and add existing system (which was earlier member of some other group)"
+  [{:keys [new-group system-name] :as m}]
+  (do (group/create new-group {:description "rh system group"})
+      (group/add-to new-group system-name)))
+
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
    arg which-group determines which key contains the group to remove.
@@ -260,6 +266,19 @@
                   step-add-new-system-to-new-group
                   step-copy-system-group
                   step-remove-sys-from-copied-system-group))
+      
+      (deftest "Systems removed from System Group can be re-added to a new group"
+        :data-driven true
+          (fn [data]
+            (do-steps (merge data (uniqueify-vals
+                                    {:system-name  "mysys"
+                                     :group-name "test-grp"
+                                     :new-group "new-grp"}))
+                             step-add-new-system-to-new-group
+                             step-remove-system-group
+                             step-add-exiting-system-to-new-group))
+           
+           [[{:also-remove-systems? false}]])
 
       (deftest "Copy a system group"
         (do-steps (uniqueify-vals
