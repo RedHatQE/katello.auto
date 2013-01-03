@@ -158,7 +158,7 @@
         (organization/switch)
         (manifest/clone manifest-tmp-loc test-manifest)
         (upload test-manifest)
-        (expecting-error (errtype :katello.notifications/import-older-than-existing-data)
+        (expecting-error (errtype :katello.notifications/import-same-as-existing-data)
                          (upload test-manifest)))))
 
   (deftest "Upload a previously used manifest into another org"
