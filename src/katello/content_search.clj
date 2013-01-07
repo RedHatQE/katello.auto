@@ -14,7 +14,6 @@
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
-            [test.tree.builder :refer [tmap]]
             [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]
@@ -78,8 +77,7 @@
             []
             (range 1 (inc count)))))
 
-(defn numeric-str? [num] (if (string? num) (= num (re-matches #"[0-9]+" num))
-                           false))
+(defn numeric-str? [num] (and (string? num) (= num (re-matches #"[0-9]+" num))))
 
 (defn get-zip-of-html-element [id]
   (zip/xml-zip (xml/parse 
