@@ -5,6 +5,7 @@
                      [environments  :as env]
                      [manifest      :as manifest]
                      [conf          :refer [config with-org]]
+                     [changesets :refer [promote-delete-content]]
                      [api-tasks     :as api]
                      [fake-content  :as fake])
             [test.assert :as assert]
@@ -360,7 +361,82 @@
                                          (set (map :name fake/some-product-repos))))]
        {:blockers (open-bz-bugs "855945")})]))
 
+(declare test-org-env)
+(def env-dev "Development")
+(def env-qa "QA")
+(def env-release "Release")
+
+(defn test-env-shared-unique [environments result view]
+      (org/switch test-org-env)  
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      (content-search/select-environments environments)
+      (content-search/select-view view)
+      (= (content-search/get-result-repos)
+         result))
+
+(defgroup content-search-env-compare
+  :group-setup (fn []
+                 (def ^:dynamic test-org-env      (uniqueify "env-org"))
+                 (api/create-organization test-org-env)
+                 (org/switch test-org-env)
+                 (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
+                 (env/create env-dev {:org-name test-org-env :prior-env "Library"})
+                 (env/create env-qa {:org-name test-org-env :prior-env env-dev})
+                 (env/create env-release {:org-name test-org-env :prior-env env-qa})
+                 (promote-delete-content "Library" env-dev false 
+                                         {:products ["Com Errata Enterprise" "WeirdLocalsUsing 標準語 Enterprise"]})
+                 (promote-delete-content env-dev env-qa false 
+                                         {:products ["WeirdLocalsUsing 標準語 Enterprise"]}))
+  
+  (deftest "Content Browser: Shared content for selected environments"
+    :data-driven true
+
+    (fn [environments result]
+      (assert/is (test-env-shared-unique environments result :shared)))
+    
+    [[[env-dev] {"WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}, "Com Errata Enterprise" "ErrataZoo"}]
+     [[env-dev env-qa] {"WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}}]
+     [[env-dev env-qa env-release] {}]])
+  
+  (deftest "Content Browser: Unique content for selected environments"
+    :data-driven true
+
+    (fn [environments result]
+      (assert/is (test-env-shared-unique environments result :unique)))
+    
+    [[[env-dev] {"Com Errata Inc" "ErrataZoo"}]
+     [[env-dev env-qa] {"Com Errata Inc" "ErrataZoo", "Com Errata Enterprise" "ErrataZoo"}]
+     [[env-dev env-qa env-release] {"Com Errata Inc" "ErrataZoo", "WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}, "Com Errata Enterprise" "ErrataZoo"}]])
+ 
+  (deftest "Content Browser: Environment selector for content browser"
+        :data-driven true
+    (fn [environments]
+      (org/switch test-org-env)  
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      ;(assert/is  (= (content-search/get-table-headers) ["Library"]))
+      (content-search/select-environments environments)
+      (assert/is  (= (content-search/get-table-headers) (into [] (cons "Library" environments)))))
+  
+     [[[env-dev env-qa env-release]]
+      [[env-dev env-qa]]
+      [[env-qa]]])
+  
+  (deftest "Content Browser: Repositories grouped by product"
+    (org/switch test-org-env)  
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (assert/is 
+        (= (content-search/get-result-repos)
+           {"Com Errata Inc" "ErrataZoo",
+            "WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"},
+            "Com Errata Enterprise" "ErrataZoo"}))
+    (assert/is  (= (content-search/get-table-headers) ["Library"]))
+    (content-search/select-environments [env-dev env-qa env-release])
+    (assert/is  (= (content-search/get-table-headers) ["Library" env-dev env-qa env-release]))))
 
 (defgroup content-search-tests
   content-search-repo-compare
-  content-search-errata)
+  content-search-errata
+  content-search-env-compare)
