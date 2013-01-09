@@ -240,7 +240,7 @@
                  (let [mysys (client/my-hostname ssh-conn)]
                    (group/add-to group-name mysys)
                    (let [syscount (group/system-count group-name)]
-                     (client/run-cmd ssh-conn "subscription-manager unregister")
+                     (client/sm-cmd ssh-conn :unregister)
                      (assert/is (= (dec syscount) (group/system-count group-name))))))))))
       
       (deftest "Delete a system group"
@@ -279,7 +279,20 @@
                              step-add-exiting-system-to-new-group))
            
            [[{:also-remove-systems? false}]])
-
+      
+      
+      (deftest "cancel OR close widget"
+        :data-driven true
+        :description "Closing the system-group widget should also close the copy widget (if its already open)
+                         and 'cancel' copy widget should also work"
+        (fn [close-widget?]
+          (with-unique [group-name "copy_to_cancel"]
+            (group/create group-name {:description "rh system-group"})
+            (group/cancel-close-widget group-name {:close-widget? close-widget?})))
+          
+        [[{:close-widget? true}]
+         [{:close-widget? false}]])
+      
       (deftest "Copy a system group"
         (do-steps (uniqueify-vals
                    {:system-name  "mysystem"
