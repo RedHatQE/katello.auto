@@ -66,6 +66,12 @@
       (step-create-system-group m)
       (group/add-to group-name system-name)))
 
+(defn step-add-exiting-system-to-new-group
+  "Create a system group and add existing system (which was earlier member of some other group)"
+  [{:keys [new-group system-name] :as m}]
+  (do (group/create new-group {:description "rh system group"})
+      (group/add-to new-group system-name)))
+
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
    arg which-group determines which key contains the group to remove.
@@ -213,6 +219,30 @@
               (group/remove-from group-name system-name)
               (assert/is (= (dec syscount) (group/system-count group-name)))))))
       
+      (deftest "Unregister a system & check count under sys-group details is -1"
+        (with-unique [system-name "mysystem"
+                      group-name "my-group"]
+          (let [target-env (first *environments*)]
+            (api/ensure-env-exist target-env {:prior library})
+            (do
+              (group/create group-name)
+              (system/create system-name {:sockets "1"
+                                          :system-arch "x86_64"})
+              (group/add-to group-name system-name)
+              (provision/with-client "check-sys-count"
+                 ssh-conn
+                 (client/register ssh-conn
+                                  {:username *session-user*
+                                   :password *session-password*
+                                   :org "ACME_Corporation"
+                                   :env target-env
+                                   :force true})
+                 (let [mysys (client/my-hostname ssh-conn)]
+                   (group/add-to group-name mysys)
+                   (let [syscount (group/system-count group-name)]
+                     (client/sm-cmd ssh-conn :unregister)
+                     (assert/is (= (dec syscount) (group/system-count group-name))))))))))
+      
       (deftest "Delete a system group"
         :data-driven true
 
@@ -236,7 +266,33 @@
                   step-add-new-system-to-new-group
                   step-copy-system-group
                   step-remove-sys-from-copied-system-group))
-
+      
+      (deftest "Systems removed from System Group can be re-added to a new group"
+        :data-driven true
+          (fn [data]
+            (do-steps (merge data (uniqueify-vals
+                                    {:system-name  "mysys"
+                                     :group-name "test-grp"
+                                     :new-group "new-grp"}))
+                             step-add-new-system-to-new-group
+                             step-remove-system-group
+                             step-add-exiting-system-to-new-group))
+           
+           [[{:also-remove-systems? false}]])
+      
+      
+      (deftest "cancel OR close widget"
+        :data-driven true
+        :description "Closing the system-group widget should also close the copy widget (if its already open)
+                         and 'cancel' copy widget should also work"
+        (fn [close-widget?]
+          (with-unique [group-name "copy_to_cancel"]
+            (group/create group-name {:description "rh system-group"})
+            (group/cancel-close-widget group-name {:close-widget? close-widget?})))
+          
+        [[{:close-widget? true}]
+         [{:close-widget? false}]])
+      
       (deftest "Copy a system group"
         (do-steps (uniqueify-vals
                    {:system-name  "mysystem"
