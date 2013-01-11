@@ -127,6 +127,17 @@
       (when (api/is-katello?)
         (changeset/sync-and-promote products library target-env)))))
 
+(defn step-to-reduce-limit-after-associating-system
+	" create a system and add it to existing system group and then change the max-limit from 'unlimited' to '1'"
+ [{:keys [group-name system-name] :as m}]
+ (with-unique [system-name "test1"]
+   (do
+     (system/create system-name {:sockets "1"
+                                 :system-arch "x86_64"})
+     (group/add-to group-name system-name)
+     (expecting-error (common/errtype :katello.notifications/systems-exceeds-group-limit)
+                      (group/edit group-name {:new-limit 1})))))
+
 ;; Tests
 
 (defgroup system-group-tests
@@ -280,6 +291,12 @@
            
            [[{:also-remove-systems? false}]])
       
+      (deftest "Reduce the max-limit after associating systems to max allowed limit"
+         (do-steps (uniqueify-vals
+                   {:system-name  "mysys"
+                    :group-name  "copygrp"})
+                 step-add-new-system-to-new-group
+                 step-to-reduce-limit-after-associating-system))
       
       (deftest "cancel OR close widget"
         :data-driven true
