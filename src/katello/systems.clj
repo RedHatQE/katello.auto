@@ -126,7 +126,7 @@
 
 (defn get-os "Get operating system of the system"
   [system-name]
-  (nav/go-to ::named-page {:system-name system-name})
+  (nav/go-to ::details-page {:system-name system-name})
   (browser getText ::operating-system))
 
 (defn add-package "Add a package or package group to a system."
