@@ -9,9 +9,9 @@
                      [tasks         :refer :all]
                      [ui            :as ui]
                      [ui-common     :as common]
-                     [notifications :as notification] 
-                     [conf          :refer [config]] 
-                     [api-tasks     :refer [when-katello when-headpin]]) 
+                     [notifications :as notification]
+                     [conf          :refer [config]]
+                     [api-tasks     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
             [inflections.core    :refer [pluralize]])
@@ -22,25 +22,25 @@
 ;; Locators
 
 (ui/deflocators
-       {::type-select                "//select[@id='content']"
-        ::add-prod                   "add_product"
-        ::add-repo                   "add_repo"
-        ::repo-result-type-select    "//article[@id='maincontent']//article[@id='comparison_grid']//header//div[@id='left_select']//select"
-        ::repo-result-filter-select  "//div[@id='right_select']//select"
-        ::row-headers                "//ul[@id='grid_row_headers']/li"
-        ::col-headers                "//ul[@id='column_headers']/li"
-        ::repo-auto-complete-radio   "repos_auto_complete_radio"
-        ::prod-auto-complete         "product_auto_complete"
-        ::repo-auto-complete         "repo_auto_complete"
-        ::repo-search                 "//input[@id='repo_search_input']"
-        ::pkg-search                 "//div[@id='package_search']/input[@id='search']"
-        ::errata-search              "//div[@id='errata_search']//input[@id='search']"
-        ::browse-button              "//input[@id='browse_button']"
-        ::repo-compare-button        "//a[@id='compare_repos_btn']"
-        ::load-more                  "//a[contains(@class,'load_row_link')]"
-        ::column-selector            "//div[@id='column_selector']/span[contains(@class,'path_button')]"
-        ::details-container          "//div[contains(@class,'details_container')]"
-        })
+  {::type-select               "//select[@id='content']"
+   ::add-prod                  "add_product"
+   ::add-repo                  "add_repo"
+   ::repo-result-type-select   "//article[@id='maincontent']//article[@id='comparison_grid']//header//div[@id='left_select']//select"
+   ::repo-result-filter-select "//div[@id='right_select']//select"
+   ::row-headers               "//ul[@id='grid_row_headers']/li"
+   ::col-headers               "//ul[@id='column_headers']/li"
+   ::repo-auto-complete-radio  "repos_auto_complete_radio"
+   ::prod-auto-complete        "product_auto_complete"
+   ::repo-auto-complete        "repo_auto_complete"
+   ::repo-search               "//input[@id='repo_search_input']"
+   ::pkg-search                "//div[@id='package_search']/input[@id='search']"
+   ::errata-search             "//div[@id='errata_search']//input[@id='search']"
+   ::browse-button             "//input[@id='browse_button']"
+   ::repo-compare-button       "//a[@id='compare_repos_btn']"
+   ::load-more                 "//a[contains(@class,'load_row_link')]"
+   ::column-selector           "//div[@id='column_selector']/span[contains(@class,'path_button')]"
+   ::details-container         "//div[contains(@class,'details_container')]"
+   })
 
 (sel/template-fns
  {auto-complete-item      "//ul[@role='listbox']//a[contains(.,'%s')]"
@@ -66,35 +66,35 @@
 
 ;; Tasks
 
-(defn get-all-of-locator [locatorfn] 
+(defn get-all-of-locator [locatorfn]
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
-  (let [count (browser getXpathCount (.getLocator (locatorfn "*")))]
-    (reduce (fn [acumulator number]
-              (conj 
-               acumulator 
+  (let [count (browser getXpathCount (locatorfn "*"))]
+    (reduce (fn [accumulator number]
+              (conj
+               accumulator
                (locatorfn (str number))))
             []
             (range 1 (inc count)))))
 
 (defn get-zip-of-html-element [id]
-  (zip/xml-zip (xml/parse 
-                (new org.xml.sax.InputSource
-                     (new java.io.StringReader 
-                          (str "<root>" 
-                               (browser getEval 
-                                        (str "window.document.getElementById('" 
-                                             id "').innerHTML;")) 
-                               "</root>"))))))
+  (->> id
+     (format "window.document.getElementById('%s').innerHTML;")
+     (browser getEval)
+     (format "<root>%s</root>")
+     java.io.StringReader.
+     org.xml.sax.InputSource.
+     xml/parse
+     zip/xml-zip))
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
   "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
   (if (and (not (nil? (zip/down tree)))
-           (empty? returning))          
+           (empty? returning))
     (tree-edit (zip/down tree) filter-fn edit-fn edit-other)
     (let [e-tree (if (filter-fn tree)
                    (zip/edit tree edit-fn)
                    (zip/edit tree edit-other))]
-      (if (not (nil? (zip/right e-tree))) 
+      (if (not (nil? (zip/right e-tree)))
         (tree-edit (zip/right  e-tree) filter-fn edit-fn edit-other)
         (if (not (nil? (zip/up  tree)))
           (tree-edit (zip/up e-tree ) filter-fn edit-fn edit-other :returning)
@@ -103,7 +103,7 @@
 (defn subtree-to-top  [ziptree]
   (if (nil? (zip/up ziptree))
     0
-    (inc (subtree-to-top (zip/up ziptree))))) 
+    (inc (subtree-to-top (zip/up ziptree)))))
 
 (defn get-search-page-result-list-of-lists []
   (let [normalize (fn [list]
@@ -111,8 +111,8 @@
                       (first list)
                       list))]
     (-> (get-zip-of-html-element "grid_row_headers")
-       (tree-edit 
-        (fn [tree] (contains? (zip/node tree) :content))      
+       (tree-edit
+        (fn [tree] (contains? (zip/node tree) :content))
         (fn [node]
           (normalize (into [] (remove empty? (remove nil? (:content node))))))
         (fn [node]
@@ -121,38 +121,38 @@
 
 (defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
   (-> (get-search-page-result-list-of-lists)
-      (zip/vector-zip)
-      (tree-edit 
-       (fn [tree] (>= depth (subtree-to-top tree)))      
-       (fn [node] 
-         (if (coll? node)
-           (apply hash-map node)
-           node))
-       (fn [node]
-         (if (coll? node)
-           (into #{} node)
-           node)))
-      (zip/node)))
+     (zip/vector-zip)
+     (tree-edit
+      (fn [tree] (>= depth (subtree-to-top tree)))
+      (fn [node]
+        (if (coll? node)
+          (apply hash-map node)
+          node))
+      (fn [node]
+        (if (coll? node)
+          (into #{} node)
+          node)))
+     (zip/node)))
 
 
 (def ^{:arglists '([locator attribute])}
   attr-loc (partial format  "%s@%s"))
 
-(defn get-repo-compare-package-names [] 
+(defn get-repo-compare-package-names []
   (doall (for [locator (get-all-of-locator package-name)]
            (browser getText locator))))
 
-(defn get-result-packages [] 
+(defn get-result-packages []
   (doall (for [locator (get-all-of-locator result-item-n)]
            (browser getText locator))))
 
-(defn get-repo-content-search [] 
+(defn get-repo-content-search []
   (doall (for [locator (get-all-of-locator repo-header-name)]
            (browser getText locator))))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
-        vis-col-count (->> cols (filter #(:shown %)) count) 
+        vis-col-count (->> cols (filter #(:shown %)) count)
         rows (vals (:rows results))]
     (doseq [row rows]
       (assert (>= (count cols) (-> (:cells row) keys count))
@@ -164,7 +164,7 @@
 
 
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
-  (let [elem (auto-complete-item cont-item)] 
+  (let [elem (auto-complete-item cont-item)]
     (sel/->browser (type auto-comp-box cont-item)
                    ;; (browser setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
@@ -174,18 +174,18 @@
                    (click elem)
                    (click add-button))))
 
-(defn get-search-result-repositories [] 
+(defn get-search-result-repositories []
   (doall (for [locator (get-all-of-locator repo-column-name)]
            (browser getText locator))))
 
 (defn row-in-column? [package repository]
-  (let [row-id (browser getAttribute (attr-loc 
+  (let [row-id (browser getAttribute (attr-loc
                                       (result-row-id package)
                                       "data-id"))
-        col-id (browser getAttribute (attr-loc 
+        col-id (browser getAttribute (attr-loc
                                       (result-col-id repository)
                                       "data-id"))]
-    (not (= "--" 
+    (not (= "--"
             (browser getText (result-cell row-id col-id))))))
 
 (defn package-in-repository? [package repository]
@@ -208,14 +208,14 @@
     (browser click ::browse-button)))
 
 (defn get-repo-search-data-id-map [repositories]
-  (apply hash-map 
-         (reduce 
-          (fn [result name] 
+  (apply hash-map
+         (reduce
+          (fn [result name]
             (conj result  name
-                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
-                                     (browser getAttribute (attr-loc 
+                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers
+                                     (browser getAttribute (attr-loc
                                                             (result-repo-id name)
-                                                            "data-id")))))) 
+                                                            "data-id"))))))
           []
           repositories)))
 
@@ -248,17 +248,17 @@
   (get-repo-content-search))
 
 (defn select-type [type]
-  (case type 
+  (case type
     :packages  (browser select ::repo-result-type-select "Packages")
     :errata    (browser select ::repo-result-type-select "Errata")))
 
 (defn select-view [set-type]
-  (case set-type 
+  (case set-type
     :all (browser select ::repo-result-filter-select   "All")
     :shared (browser select ::repo-result-filter-select   "Union")
     :unique (browser select ::repo-result-filter-select   "Difference")))
 
-(defn get-repo-packages [repo & {:keys [view] :or {view :packages} }] 
+(defn get-repo-packages [repo & {:keys [view] :or {view :packages} }]
   (compare-repositories [repo])
   (select-type view)
   (load-all-results)
@@ -287,14 +287,14 @@
    filters specified. Note that while prods and repos should be vectors, errata
    and pkgs are expected to be strings. A vector of environments corresponding
    to table columns may also be specified.  Returns the search results as raw
-   data from the browser javascript. 
+   data from the browser javascript.
    Example: search-for-content :errata-type {:prods ['myprod']
                                              :repos ['myrepo']
                                              :errata 'myerrata'}"
   [content-type & [{:keys [envs prods repos pkg errata]}]]
   (assert (some #{content-type} [:prod-type :repo-type :pkg-type :errata-type])
           "Unknown content search type.")
-  (case content-type 
+  (case content-type
     :prod-type   (assert (and (empty? repos) (empty? pkg) (empty? errata)))
     :repo-type   (assert (and (empty? pkg) (empty? errata)))
     :pkg-type    (assert (empty? errata))
@@ -308,18 +308,18 @@
         ctype-str (ctype-map content-type)]
     (nav/go-to ::page)
     (browser select ::type-select ctype-str))
-  
+
   ;; Select environments (columns)
   (doseq [env envs]
     (let [col-locator (column env)]
-      (sel/->browser (mouseOver ::column-selector) 
-                     (mouseOver col-locator) 
+      (sel/->browser (mouseOver ::column-selector)
+                     (mouseOver col-locator)
                      (click col-locator)
                      (mouseOut ::column-selector))))
 
   ;; Add content filters using auto-complete
-  (doseq [[auto-comp-box add-button cont-items] 
-          [[::prod-auto-complete ::add-prod prods] 
+  (doseq [[auto-comp-box add-button cont-items]
+          [[::prod-auto-complete ::add-prod prods]
            [::repo-auto-complete ::add-repo repos]]]
     (doseq [cont-item cont-items]
       (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
@@ -329,15 +329,15 @@
 
   ;; Add errata
   (when-not (empty? errata) (browser setText ::errata-search errata))
-  
+
   (browser click ::browse-button)
 
   (load-all-results)
-  
+
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
-     (browser getEval)
-     (json/read-json)))
+       (browser getEval)
+       (json/read-json)))
 
 (defn test-errata-popup-click [name]
   (browser click (span-text name))
@@ -347,10 +347,10 @@
   (assert/is (= 0 (browser getXpathCount ::details-container))))
 
 (defn test-errata-popup-hover [name]
-  (assert/is 
+  (assert/is
    (.contains
     (sel/->browser (mouseOver (span-text name))
-                   (waitForElement  ::details-container) "4000"          
+                   (waitForElement  ::details-container) "4000"
                    (getText ::details-container))
     name))
   (browser mouseOut (.getLocator (span-text name)))
