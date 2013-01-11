@@ -26,9 +26,17 @@
 
 (defn print-name-result [resulttree]
   (doseq [result @(second resulttree)]
-    (println (:name(first result)) 
-             (:parameters (:report (second result)))
-             (:result (:report (second result))))))
+    (println 
+      (:name(first result)) 
+      (:parameters (:report (second result)))
+      (:result (:report (second result))))))
+
+(defn name-result [resulttree]
+  (for [result @(second resulttree)]
+    [(:name(first result)) 
+     (:parameters (:report (second result)))
+     (:result (:report (second result)))]))
+
 
 (katello.conf/init {:selenium-address "localhost:4444"})
 
