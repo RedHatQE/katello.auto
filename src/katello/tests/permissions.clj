@@ -231,7 +231,7 @@
                                           :name "orgadmin"}]}]
             :setup (fn [] (api/create-organization org))
             :allowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
-                                                 :custom-content-repositories-page :katello.system-templates/page
+                                                 :katello.providers/custom-page :katello.system-templates/page
                                                  :katello.changesets/page )
                                    (access-org org)
                                    (fn [] (environment/create (uniqueify "blah") {:org-name org})))
