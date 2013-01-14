@@ -181,9 +181,10 @@
   [env-name]
   (nav/go-to ::named-environment-page {:env-name env-name
                                        :next-env-name nil})
-  (let [categories [::products-category ::templates-category]]
-    (zipmap categories
-            (doall (for [category categories]
+  (let [categories {:products ::products-category,
+                    :templates ::templates-category}]
+    (zipmap (keys categories)
+            (doall (for [category (vals categories)]
                      (do
                        (browser click category)
                        (browser sleep 2000) 
