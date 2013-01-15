@@ -4,6 +4,7 @@
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
+            [clojure.string :refer [split trim]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
@@ -13,9 +14,13 @@
                      [conf          :refer [config]] 
                      [api-tasks     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
+            [pl.danieljanus.tagsoup :refer [parse-xml]]
             [test.assert         :as assert]
             [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
+           [org.ccil.cowan.tagsoup Parser]
+           [java.io InputStream File FileInputStream ByteArrayInputStream BufferedInputStream InputStreamReader BufferedReader]
+           [org.xml.sax InputSource]
            [java.text SimpleDateFormat]
            [java.io ByteArrayInputStream]))
 
@@ -59,7 +64,7 @@
   result-col-id           "//ul[@id='column_headers']//li[contains(.,'%s')]"
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
-  })
+  repo-link               "//div[@id='grid_row_repo_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
 ;; Nav
 
@@ -80,14 +85,14 @@
 (defn numeric-str? [num] (and (string? num) (= num (re-matches #"[0-9]+" num))))
 
 (defn get-zip-of-html-element [id]
-  (zip/xml-zip (xml/parse 
-                (new org.xml.sax.InputSource
-                     (new java.io.StringReader 
-                          (str "<root>" 
+  (zip/xml-zip (parse-xml 
+                (-> (str "<root>" 
                                (browser getEval 
                                         (str "window.document.getElementById('" 
                                              id "').innerHTML;")) 
-                               "</root>"))))))
+                               "</root>") .getBytes ByteArrayInputStream.) 
+                )))
+
 
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
@@ -222,13 +227,14 @@
   (doall (for [locator (get-all-of-locator repo-column-name)]
            (browser getText locator))))
 
+(defn get-col-id [col]
+  (browser getAttribute (attr-loc (result-col-id col) "data-id")))
+
 (defn row-in-column? [package repository]
   (let [row-id (browser getAttribute (attr-loc 
                                       (result-row-id package)
                                       "data-id"))
-        col-id (browser getAttribute (attr-loc 
-                                      (result-col-id repository)
-                                      "data-id"))]
+        col-id (get-col-id repository)]
     (not (= "--" 
             (browser getText (result-cell row-id col-id))))))
 
@@ -266,6 +272,22 @@
                                                             "data-id")))))) 
           []
           repositories)))
+
+(defn get-repo-search-library-id-map [repositories]
+  (apply hash-map 
+         (reduce 
+          (fn [result name] 
+            (conj result  name
+                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
+                                     (browser getAttribute (attr-loc 
+                                                            (result-repo-id name)
+                                                            "data-id")))))) 
+          []
+          repositories)))
+
+;problem with two repos of a same name
+(defn get-repo-search-data-id [repo-name]
+  ((get-repo-search-data-id-map [repo-name]) repo-name))
 
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-id-map repositories)]
@@ -416,3 +438,13 @@
 
 (defn get-result-repos []
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
+
+(defn get-package-desc []
+  (zipmap (get-search-page-result-list-of-lists "grid_row_headers")
+          (get-search-page-result-list-of-lists "grid_content_window")))
+
+(defn get-repo-desc []
+  (get-search-page-result-list-of-lists "grid_content_window"))
+
+(defn click-repo-desc [repo-name env-name]
+  (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))

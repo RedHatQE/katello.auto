@@ -37,7 +37,7 @@
   (->> results :columns (map (comp :content :to_display))))
 
 (defn verify-compare-type  [type
-                            first first-packages second second-packages ]
+                            first first-packages second second-packages]
   (let [lazy-intersect 
         (for [package (intersection first-packages second-packages)]
           [(content-search/package-in-repository? package first)
@@ -409,20 +409,82 @@
      [[env-dev env-qa] {"Com Errata Inc" "ErrataZoo", "Com Errata Enterprise" "ErrataZoo"}]
      [[env-dev env-qa env-release] {"Com Errata Inc" "ErrataZoo", "WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}, "Com Errata Enterprise" "ErrataZoo"}]])
  
-  (deftest "Content Browser: Environment selector for content browser"
+(deftest "Content Browser: Environment selector for content browser"
         :data-driven true
+        
     (fn [environments]
       (org/switch test-org-env)  
       (content-search/select-content-type :repo-type)
       (content-search/submit-browse-button)
-      ;(assert/is  (= (content-search/get-table-headers) ["Library"]))
       (content-search/select-environments environments)
       (assert/is  (= (content-search/get-table-headers) (into [] (cons "Library" environments)))))
   
      [[[env-dev env-qa env-release]]
       [[env-dev env-qa]]
       [[env-qa]]])
-  
+
+  (deftest "Content Search: search package info"
+    :data-driven true
+    
+    (fn [repo env result]
+      (org/switch test-org-env)  
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      (content-search/select-environments [env-dev env-qa env-release])
+      (content-search/click-repo-desc repo env)
+      (assert/is (content-search/get-package-desc) result))
+    
+    [["洪" "Library" 
+               {["walrus" "0.3-0.8.noarch"] "A dummy package of walrus", 
+                ["squirrel" "0.3-0.8.noarch"] "A dummy package of squirrel", 
+                ["penguin" "0.3-0.8.noarch"] "A dummy package of penguin", 
+                ["monkey" "0.3-0.8.noarch"] "A dummy package of monkey", 
+                ["lion" "0.3-0.8.noarch"] "A dummy package of lion", 
+                ["giraffe" "0.3-0.8.noarch"] "A dummy package of giraffe", 
+                ["elephant" "0.3-0.8.noarch"] "A dummy package of elephant", 
+                ["cheetah" "0.3-0.8.noarch"] "A dummy package of cheetah"}]
+     ["Гесер" "QA" 
+               {["mouse" "0.1.12-1.noarch"] "A dummy package of mouse", 
+                ["cheetah" "1.25.3-5.noarch"] "A dummy package of cheetah", 
+                ["horse" "0.22-2.noarch"] "A dummy package of horse", 
+                ["gorilla" "0.62-1.noarch"] "A dummy package of gorilla", 
+                ["dolphin" "3.10.232-1.noarch"] "A dummy package of dolphin", 
+                ["cockateel" "3.1-1.noarch"] "A dummy package of cockateel", 
+                ["shark" "0.1-1.noarch"] "A dummy package of shark", 
+                ["frog" "0.1-1.noarch"] "A dummy package of frog", 
+                ["dog" "4.23-1.noarch"] "A dummy package of dog", 
+                ["kangaroo" "0.2-1.noarch"] "A dummy package of kangaroo", 
+                ["giraffe" "0.67-2.noarch"] "A dummy package of giraffe", 
+                ["lion" "0.4-1.noarch"] "A dummy package of lion", 
+                ["duck" "0.6-1.noarch"] "A dummy package of duck", 
+                ["crow" "0.8-1.noarch"] "A dummy package of crow", 
+                ["elephant" "8.3-1.noarch"] "A dummy package of elephant", 
+                ["squirrel" "0.1-1.noarch"] "A dummy package of squirrel", 
+                ["bear" "4.1-1.noarch"] "A dummy package of bear", 
+                ["penguin" "0.9.1-1.noarch"] "A dummy package of penguin", 
+                ["pike" "2.2-1.noarch"] "A dummy package of pike", 
+                ["camel" "0.1-1.noarch"] "A dummy package of camel", 
+                ["cat" "1.0-1.noarch"] "A dummy package of cat", 
+                ["stork" "0.12-2.noarch"] "A dummy package of stork", 
+                ["fox" "1.1-2.noarch"] "A dummy package of fox", 
+                ["cow" "2.2-3.noarch"] "A dummy package of cow", 
+                ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}]])
+
+  (deftest "Content Search: search repo info"
+    (org/switch test-org-env)  
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (content-search/select-environments [env-dev env-qa env-release])
+    (assert/is (content-search/get-repo-desc)
+              [[[true "Packages (0)\nErrata (0)\n"] false false false] 
+               [[true "Packages (0)\nErrata (0)\n"] false false false] 
+               [[true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] false] 
+                 [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false] 
+                 [[true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] false] 
+               [[true "Packages (8)\nErrata (2)\n"] [true "Packages (8)\nErrata (2)\n"] false false] 
+                 [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false]] ))
+
+
   (deftest "Content Browser: Repositories grouped by product"
     (org/switch test-org-env)  
     (content-search/select-content-type :repo-type)

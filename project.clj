@@ -16,6 +16,7 @@
                  [org.seleniumhq.selenium/selenium-java "2.26.0"]
                  [com.redhat.qe/ssh-tools "1.0.0"]
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
+                 [clj-tagsoup "0.3.0"]
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  [clj-http "0.5.5"]
