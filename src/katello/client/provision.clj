@@ -21,15 +21,15 @@
    (with-n-clients 2 \"myinstname\" [c1 c2] ...)"
   [n clientname ssh-conns-bind & body]
   `(cloud/with-instances
-       [inst# (update-in (->> (conf/client-defs ~clientname)
-                            (take ~n)
-                            (map (partial cloud/provision-all conf/*cloud-conn*))
-                            (map add-ssh))
-                         [:instances]
-                         (partial map-ssh))]
-     (let [~ssh-conns-bind (doall
-                            (for [i# inst#]
-                              (client/setup-client (:ssh-connection i#))))]
+     [inst# (->> (conf/client-defs ~clientname)
+               (take ~n)
+               (cloud/provision-all conf/*cloud-conn*)
+               :instances
+               (pmap add-ssh))]
+     (let [~ssh-conns-bind (do (doall
+                                (pmap 
+                                 (comp client/setup-client :ssh-connection) inst#))
+                               (map :ssh-connection inst#))]
        ~@body)))
 
 (defmacro with-client
