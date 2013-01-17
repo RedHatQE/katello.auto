@@ -40,7 +40,7 @@
      (let [loc (templ item)]
        (try (browser click loc)
             (catch com.thoughtworks.selenium.SeleniumException se
-              (do (search-here item)
+              (do (search-here (format "\"%s\"" item))
                   (browser click loc)))))))
 
 (defn pages []
