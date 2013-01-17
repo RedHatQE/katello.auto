@@ -84,8 +84,7 @@
 
       (fn [username expected-err]
         (expecting-error (common/errtype expected-err)
-         (user/create (uniqueify username) generic-user-details)
-         ))
+                         (user/create username generic-user-details)))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
        [(random-string (int \a) (int \z) 65) :katello.notifications/username-64-char-limit]])
 
