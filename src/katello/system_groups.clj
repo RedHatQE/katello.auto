@@ -24,6 +24,8 @@
         ::copy-name-text        "name_input"
         ::copy-description-text "description_input"
         ::copy-submit           "copy_button"
+        ::cancel-copy           "cancel_copy_button"
+        ::close                 (ui/link "Close")
         ::remove                (ui/link "Remove")
         ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
         ::confirm-only-group    "//span[.='No, only delete the system group.']"
@@ -89,6 +91,16 @@
                        ::copy-description-text description}
                       ::copy-submit)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
+
+(defn cancel-close-widget
+  "Click 'cancel' on copy widget and widget should close properly 
+   OR closing system-group widget should also close copy widget"
+  [orig-name {:keys [close-widget?]}]
+  (nav/go-to ::named-page {:system-group-name orig-name})
+  (browser click ::copy)
+  (browser click (if close-widget?
+                   ::close
+                   ::cancel-copy)))
 
 (defn remove
   "Removes a system group. Optionally, remove all the systems in the

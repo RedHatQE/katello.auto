@@ -173,6 +173,7 @@
   (for [instname (unique-names basename)]
     (merge cloud/small-instance-properties
            {:name instname
+            :hwp_memory "512" ;;override to allow RHEL6.3 stock to boot - 256 is too small?
             :image_id (@config :deltacloud-image-id)})))
 
 (defmacro with-creds

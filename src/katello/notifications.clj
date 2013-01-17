@@ -95,7 +95,9 @@
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
-                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
+                ::systems-exceeds-group-limit           #"System limit may not be less than the number of systems associated with the system group"
+                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"
+                ::deletion-already-in-progress          #"Cannot delete.*while another changeset"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))
