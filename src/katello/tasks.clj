@@ -112,3 +112,14 @@
      (str "/" filename)
      (java.io.File.)
      (.getCanonicalPath)))
+
+(defn random-string
+  "Create a random string with characters in the range lo to hi (of
+   default encoding) with given length"
+  [lo hi length]
+  (let [rand-range #(+ (rand-int (- hi lo)) lo)]
+    (->> rand-range
+       repeatedly
+       (map char)
+       (take length)
+       (apply str))))

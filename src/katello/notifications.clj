@@ -29,7 +29,8 @@
                 ::repository-url-invalid              #"Repository url is invalid"
                 ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
                 ::password-too-short                  #"Password must be at least"
-
+                ::username-must-contain-3-char        #"Username must contain at least 3 character"
+                ::username-64-char-limit              #"Username cannot contain more than 64 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"

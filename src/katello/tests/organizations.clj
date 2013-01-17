@@ -91,10 +91,8 @@
         (assert/is (org-exists? org-name)))
 
       ;;create 5 rows of data, 1 random 1-char utf8 string in each
-      (let [lo 0x0080
-            hi 0x5363
-            rand-range #(+ (rand-int (- hi lo)) lo)]
-        (->> rand-range repeatedly (map (comp vector str char)) (take 5))))
+      (take 5 (repeatedly (comp vector
+                                (partial random-string 0x0080 0x5363 1)))))
     
     (deftest "Create an organization with an initial environment"
       (with-unique [org-name "auto-org"

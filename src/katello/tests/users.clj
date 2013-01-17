@@ -79,6 +79,16 @@
         (user/create (uniqueify username)   generic-user-details))
       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
+    (deftest "User validation"
+      :data-driven true
+
+      (fn [username expected-err]
+        (expecting-error (errtype expected-err)
+         (user/create (uniqueify username) generic-user-details)
+         ))
+      [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
+       [(random-string (int \a) (int \z) 65) :katello.notifications/username-64-char-limit]])
+
     (deftest "Admin creates a user with a default organization"
       :blockers (open-bz-bugs "852119")
       
