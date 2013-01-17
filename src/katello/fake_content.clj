@@ -81,14 +81,16 @@
                                             {:name "Гесер" 
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
 
-(defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?] :or {filter-product? (fn [product] true) filter-repos? (fn [repo] true)} }]
-  (set (remove nil? (flatten 
-                     (doall (for [provider custom-providers-v]
-                              (for [product (:products provider)]
-                                (when (filter-product? product)
-                                  (for [ repo (:repos product)]
-                                    (when (filter-repos? repo)
-                                      repo))))))))))
+(defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?]
+                                              :or {filter-product? (constantly true),
+                                                   filter-repos? (constantly true)}}]
+  (->> (for [provider custom-providers-v,
+           product (:products provider), :when (filter-product? product)
+           repo (:repos product), :when (filter-repos? repo)]
+       repo)
+     doall
+     set
+     (remove nil?)))
 
 
 (defn get-all-custom-repos []
