@@ -83,7 +83,7 @@
       :data-driven true
 
       (fn [username expected-err]
-        (expecting-error (errtype expected-err)
+        (expecting-error (common/errtype expected-err)
          (user/create (uniqueify username) generic-user-details)
          ))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
