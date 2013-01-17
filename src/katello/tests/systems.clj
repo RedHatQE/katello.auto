@@ -61,16 +61,16 @@
 (defn step-add-new-system-to-new-group
   "Creates a system and system group, adds the system to the system group."
   [{:keys [group-name system-name] :as m}]
-  (do (system/create system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (step-create-system-group m)
-      (group/add-to group-name system-name)))
+  (system/create system-name {:sockets "1"
+                              :system-arch "x86_64"})
+  (step-create-system-group m)
+  (group/add-to group-name system-name))
 
 (defn step-add-exiting-system-to-new-group
   "Create a system group and add existing system (which was earlier member of some other group)"
   [{:keys [new-group system-name] :as m}]
-  (do (group/create new-group {:description "rh system group"})
-      (group/add-to new-group system-name)))
+  (group/create new-group {:description "rh system group"})
+  (group/add-to new-group system-name))
 
 (defn mkstep-remove-system-group
   "Creates a fn to remove a system group given a request map. Optional
@@ -132,12 +132,11 @@
    the max-limit from 'unlimited' to '1'"
   [{:keys [group-name system-name] :as m}]
   (with-unique [system-name "test1"]
-    (do
-      (system/create system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (group/add-to group-name system-name)
-      (expecting-error (common/errtype :katello.notifications/systems-exceeds-group-limit)
-                       (group/edit group-name {:new-limit 1})))))
+    (system/create system-name {:sockets "1"
+                                :system-arch "x86_64"})
+    (group/add-to group-name system-name)
+    (expecting-error (common/errtype :katello.notifications/systems-exceeds-group-limit)
+                     (group/edit group-name {:new-limit 1}))))
 
 ;; Tests
 
@@ -431,22 +430,21 @@
                   key-name "auto-key"]
       (let [target-env (first *environments*)]
         (api/ensure-env-exist target-env {:prior library})
-        (do
-          (group/create group-name)
-          (system/create system-name {:sockets "1"
-                                      :system-arch "x86_64"})
-          (group/add-to group-name system-name)
-          (ak/create {:name key-name
-                      :description "my description"
-                      :environment target-env})
-          (ak/associate-system-group key-name group-name)
-          (let [syscount (group/system-count group-name)]
-            (provision/with-client "sys-count"
-              ssh-conn
-              (client/register ssh-conn
-                               {:org "ACME_Corporation"
-                                :activationkey key-name})
-              (assert/is (= (inc syscount) (group/system-count group-name)))))))))
+        (group/create group-name)
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (group/add-to group-name system-name)
+        (ak/create {:name key-name
+                    :description "my description"
+                    :environment target-env})
+        (ak/associate-system-group key-name group-name)
+        (let [syscount (group/system-count group-name)]
+          (provision/with-client "sys-count"
+            ssh-conn
+            (client/register ssh-conn
+                             {:org "ACME_Corporation"
+                              :activationkey key-name})
+            (assert/is (= (inc syscount) (group/system-count group-name))))))))
 
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
