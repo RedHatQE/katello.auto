@@ -12,6 +12,10 @@
                  ::description-text        "activation_key[description]"
                  ::template-select         "activation_key[system_template_id]"
                  ::save                    "save_key"
+                 ::system-group-select     (ui/menu-link "activation_keys_menu_system_groups")
+                 ::add-sys-group-form      "//form[@id='add_group_form']/button"
+                 ::add-sys-group           "//input[@id='add_groups']"
+                 ::system-groups           (ui/menu-link "system_mgmt")
                  ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
                  ::available-subscriptions (ui/menu-link "available_subscriptions")
                  ::add-subscriptions       "//input[@id='subscription_submit_button']"            
@@ -20,13 +24,16 @@
 
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
+   sysgroup-checkbox "//input[@title='%s']"
   applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 ;; Nav
 
 (nav/defpages (common/pages)
   [::page
-   [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)]
+   [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)
+    [::system-group-menu [] (browser mouseOver ::system-groups)
+     [::system-group-page [] (browser click ::system-group-select)]]]
    [::new-page [] (browser click ::new)]])
 
 ;; Tasks
@@ -60,6 +67,14 @@
     (browser click (subscription-checkbox subscription)))
   (browser click ::add-subscriptions)
   (notification/check-for-success))
+
+(defn associate-system-group
+  "Asscociate activation key to selected sytem group"
+  [name group-name]
+  (nav/go-to ::system-group-page {:activation-key-name name})
+  (browser click ::add-sys-group-form)
+  (browser click (sysgroup-checkbox group-name))
+  (browser click ::add-sys-group))
 
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [name]

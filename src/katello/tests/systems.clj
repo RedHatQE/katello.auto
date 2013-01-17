@@ -416,6 +416,29 @@
             (assert/is (some #{(first fake/subscription-names)} 
                              (ak/get-subscriptions ak-name))))))))
   
+  (deftest "Register a system using AK & sys count should increase by 1"
+    (with-unique [system-name "mysystem"
+                  group-name "my-group"
+                  key-name "auto-key"]
+      (let [target-env (first *environments*)]
+        (api/ensure-env-exist target-env {:prior library})
+        (do
+          (group/create group-name)
+          (system/create system-name {:sockets "1"
+                                      :system-arch "x86_64"})
+          (group/add-to group-name system-name)
+          (ak/create {:name key-name
+                      :description "my description"
+                      :environment target-env})
+          (ak/associate-system-group key-name group-name)
+          (let [syscount (group/system-count group-name)]
+            (provision/with-client "sys-count"
+                 ssh-conn
+                 (client/register ssh-conn
+                                  {:org "ACME_Corporation"
+                                   :activationkey key-name})
+                 (assert/is (= (inc syscount) (group/system-count group-name)))))))))
+  
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
     
