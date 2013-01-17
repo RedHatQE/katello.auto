@@ -1,6 +1,6 @@
 (ns katello.changesets
   (:require (katello [navigation :as nav]
-                     [tasks :refer :all] 
+                     [tasks :refer :all]
                      [ui-common :as common]
                      [ui :as ui]
                      [sync-management :as sync]
@@ -29,7 +29,7 @@
    ::templates-category          (content-category "templates")
    ::select-errata               (select-types "Errata")
    ::select-repos                (select-types "Repositories")
-   ::select-packages             (select-types "Packages")   
+   ::select-packages             (select-types "Packages")
    ::select-errata-all           (select-types "All")
    ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    ::review-for-promotion        "review_changeset"
@@ -42,7 +42,7 @@
    ::deletion                    "//div[@data-cs_type='deletion']"})
 
 (nav/defpages (common/pages)
-  [::page 
+  [::page
    [::named-environment-page [env-name next-env-name]
     (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
     [::named-page [changeset-name deletion?] (do (when deletion?
@@ -52,10 +52,10 @@
 ;; Tasks
 
 (defn create
-  "Creates a changeset for promotion from env-name to next-env name 
+  "Creates a changeset for promotion from env-name to next-env name
   or for deletion from env-name."
   [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
-  (nav/go-to ::named-environment-page {:env-name env-name 
+  (nav/go-to ::named-environment-page {:env-name env-name
                                        :next-env-name next-env-name})
   (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
@@ -77,44 +77,45 @@
                            :deletion? deletion})
   (doseq [category (keys content)]
     (let [data (content category)
-          grouped-data (group-by :product-name data)]
-      (cond 
-        (some #{category} [:repos :packages :errata])
-        (do
-          (doseq [[prod-item repos] grouped-data]
-            (let [add-items (map :name repos)] 
-              (sel/->browser (click ::products-category)  
-                             (click (select-product prod-item))
-                             (refresh)               
-                             (click (->> category name (format "katello.changesets/select-%s") keyword)))
-              (if (= category :errata) (browser click ::select-errata-all))
-              (doseq [add-item add-items] 
-                (browser click (add-content-item add-item))))
-      ;; sleep to wait for browser->server comms to update changeset
-      ;; can't navigate away until that's done
-            (browser sleep 5000)
-            (browser click ::promotion-eligible-home)))
-       
-        (= category :errata-top-level)
-        (do
-          (browser click ::errata-category)
-          (browser click ::select-errata-all)
-          (doseq [add-item (map :name data )]
-            (browser click (add-content-item add-item)))
-          (browser sleep 5000))
-       
-        :else
-        (do
-          (browser click ::products-category)
-          (doseq [item data]  
-            (browser click (add-content-item item)))
-      ;; sleep to wait for browser->server comms to update changeset
-      ;; can't navigate away until that's done
-          (browser sleep 5000))))))
+          grouped-data (group-by :product-name data)
+          add-all (fn [items]
+                    (doseq [add-item items]
+                      (browser click (add-content-item add-item))))]
+      (cond
+       (some #{category} [:repos :packages :errata])
+       (do (doseq [[prod-item repos] grouped-data]
+             (let [add-items (map :name repos)]
+               (sel/->browser (click ::products-category)
+                              (click (select-product prod-item))
+                              (refresh)
+                              (click (->> category name (format "katello.changesets/select-%s") keyword)))
+               (if (= category :errata) (browser click ::select-errata-all))
+               (add-all add-items))
+             ;; sleep to wait for browser->server comms to update changeset
+             ;; can't navigate away until that's done
+             (browser sleep 5000)
+             (browser click ::promotion-eligible-home)))
+
+       (= category :errata-top-level)
+       (do (browser click ::errata-category)
+           (browser click ::select-errata-all)
+           (add-all (map :name data))
+           (browser sleep 5000))
+
+       (= category :templates)
+       (do (browser click ::templates-category)
+           (add-all data))
+
+       :else
+       (do (browser click ::products-category)
+           (add-all data)
+           ;; sleep to wait for browser->server comms to update changeset
+           ;; can't navigate away until that's done
+           (browser sleep 5000))))))
 
 (defn promote-or-delete
-  "Promotes the given changeset to its target environment and could also Delete  
-   content from an environment. An optional timeout-ms key will specify how long to  
+  "Promotes the given changeset to its target environment and could also Delete
+   content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
   [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
   (let [nav-to-cs (fn [] (nav/go-to ::named-page
@@ -129,7 +130,7 @@
       (sel/loop-with-timeout (* 10 60 1000) []
         (when-not (try+ (browser click ::promote-to-next-environment)
                         (check-for-success)
-                        (catch (common/errtype ::notification/deletion-already-in-progress) _ 
+                        (catch (common/errtype ::notification/deletion-already-in-progress) _
                           (nav-to-cs))
                         (catch (common/errtype ::notification/promotion-already-in-progress) _
                           (nav-to-cs)))
@@ -149,7 +150,7 @@
       (check-for-success {:timeout-ms (* 20 60 1000)}))))
 
 (defn promote-delete-content
-  "Promotes the given content from one environment to another 
+  "Promotes the given content from one environment to another
    Example content: {:products ['Product1' 'Product2']} "
   [from-env to-env deletion content]
   (let [changeset (uniqueify "changeset")]
@@ -187,7 +188,7 @@
             (doall (for [category (vals categories)]
                      (do
                        (browser click category)
-                       (browser sleep 2000) 
+                       (browser sleep 2000)
                        (let [result (extract-content)]
                          (browser click ::promotion-eligible-home)
                          result)))))))
