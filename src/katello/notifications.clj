@@ -29,7 +29,7 @@
                 ::repository-url-invalid              #"Repository url is invalid"
                 ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
                 ::password-too-short                  #"Password must be at least"
-                ::password-same-as-username           #"(Password|Username)" ;TODO after bug (open-bz-bugs "841499") is fixed add real notification
+
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
