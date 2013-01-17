@@ -67,19 +67,19 @@
 
 
 (def custom-env-test-provider [{:name "Custom Errata Provider"
-                    :products [{:name "Com Errata Enterprise"
-                                    :repos [{:name "ErrataZoo" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
-                               {:name "Com Errata Inc"
-                                    :repos [{:name "ErrataZoo" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
+                                :products [{:name "Com Errata Enterprise"
+                                            :repos [{:name "ErrataZoo" 
+                                                     :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
+                                           {:name "Com Errata Inc"
+                                            :repos [{:name "ErrataZoo" 
+                                                     :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
                            
-                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
-                                    :i18n true
-                                    :repos [{:name "洪" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "Гесер" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
+                                           {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                            :i18n true
+                                            :repos [{:name "洪" 
+                                                     :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                                    {:name "Гесер" 
+                                                     :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
 
 (defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?]
                                               :or {filter-product? (constantly true),
