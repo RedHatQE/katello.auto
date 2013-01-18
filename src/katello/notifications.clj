@@ -30,11 +30,14 @@
                 ::start-date-time-cant-be-blank       #"Date and Time can't be blank"
                 ::password-too-short                  #"Password must be at least"
                 ::username-must-contain-3-char        #"Username must contain at least 3 character"
+                ::username-cant-be-blank              #"Username can't be blank"
                 ::username-64-char-limit              #"Username cannot contain more than 64 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
-                ::max-systems-may-not-be-zero         #"System limit may not be set to 0"}]
+                ::max-systems-may-not-be-zero         #"System limit may not be set to 0"
+                ::name-too-long                       #"Name is too long"
+                ::login-is-invalid                    #"Login is invalid"}]
     
     (doseq [e (keys errors)]
       (derive e ::validation-error))  ; validation-error is a parent type
