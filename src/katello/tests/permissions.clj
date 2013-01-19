@@ -250,9 +250,25 @@
   (deftest "Create a role with i18n characters"
     :data-driven true
     
-    (fn [username]
-      (role/create   (uniqueify username)))
+    (fn [rolename]
+      (role/create (uniqueify rolename)))
     [["صالح"] ["Гесер"] ["洪"]["標準語"]])
+
+  (deftest "Role validation"
+    :data-driven true
+
+    (fn [rolename expected-err]
+      (expecting-error (common/errtype expected-err)
+                       (role/create rolename)))
+
+    [(random-string (int \a) (int \z) 129)  :katello.notifications/name-too-long
+     ["  foo" :katello.notification/name-no-leading-trailing-whitespace]
+     ["  foo   " :katello.notification/name-no-leading-trailing-whitespace]
+     ["foo " :katello.notification/name-no-leading-trailing-whitespace]
+     ["" :katello.notifications/name-cant-be-blank]
+     (with-meta ["<a href='http://malicious.url/'>Click Here</a>" :katello/notifications/katello-error]
+       {:blockers (open-bz-bugs "901657")})     ; TODO create more specific error after fix
+     ])
   
   (deftest "Remove a role"
     (let [role-name (uniqueify "deleteme-role")]
