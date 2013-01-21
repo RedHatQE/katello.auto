@@ -196,7 +196,7 @@
 (defn ^{:TODO "finish me"} change-set-content [env]
   (nav/go-to ::named-environment-page {:env-name env}))
 
-(defn enviroment-has-content?
+(defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
   (nav/go-to ::named-environment-page {:env-name env :next-env-name ""})
