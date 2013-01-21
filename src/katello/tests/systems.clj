@@ -445,7 +445,13 @@
                              {:org "ACME_Corporation"
                               :activationkey key-name})
             (assert/is (= (inc syscount) (group/system-count group-name))))))))
-
+  
+  (deftest "Remove System"
+    (with-unique [system-name "mysystem"]
+      (system/create system-name {:sockets "1"
+                                  :system-arch "x86_64"})
+      (system/delete system-name)))
+  
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
 
