@@ -59,6 +59,9 @@
    (for [trailing-ws-str validation/trailing-whitespace-strings]
      [trailing-ws-str ::notification/name-no-leading-trailing-whitespace])))
 
+(def name-taken-error (common/errtype ::notification/name-taken-error))
+(def label-taken-error (common/errtype ::notification/label-taken-error))
+
 ;; Tests
 
  (defgroup org-tests
@@ -104,7 +107,7 @@
       :blockers (open-bz-bugs "726724")
       
       (with-unique [org-name "test-dup"]
-        (validation/expecting-error-2nd-try (common/errtype ::notification/name-taken-error)
+        (validation/expecting-error-2nd-try name-taken-error
           (organization/create org-name {:description "org-description"}))))
   
     (deftest "Organization name is required when creating organization"
@@ -127,6 +130,17 @@
         (create-test-org org-name)
         (organization/edit org-name :description "edited description")))
 
+    (deftest "Organization names and labels are unique to all orgs"
+      (with-unique [name1 "name-1"
+                    name2 "name-2"
+                    label1 "label"
+                    label2 "label"]
+        (organization/create name1 {:label label1})
+        (expecting-error name-taken-error
+                         (organization/create name1 {:label label2}))
+        (expecting-error label-taken-error
+                         (organization/create name2 {:label label1}))))
+    
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     

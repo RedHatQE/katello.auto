@@ -1,5 +1,5 @@
 (ns katello.organizations
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
             [ui.navigate :as navlib :refer [nav-tree]]
             (katello [navigation :as nav]
                      [ui :as ui]
@@ -18,6 +18,7 @@
   {::new                    "//a[@id='new']"
    ::create                 "organization_submit"
    ::name-text              "organization[name]"
+   ::label-text             "organization[label]"
    ::description-text       "organization[description]"
    ::environments           (ui/link "Environments")
    ::edit                   (ui/link "Edit")
@@ -43,15 +44,25 @@
 
 ;; Tasks
 
+(defn label-filler
+  "Fills in the label field which has special js sauce that prevents
+   it from being writable unless the name field has been blurred."
+  [name-loc label-loc label-text]
+  (when label-text
+    (->browser (fireEvent name-loc "blur")
+               (ajaxWait)
+               (setText label-loc label-text))))
+
 (defn create
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [description initial-env-name initial-env-label initial-env-description go-through-org-switcher]}]]
+  [name & [{:keys [label description initial-env-name initial-env-label initial-env-description go-through-org-switcher]}]]
   (nav/go-to (if go-through-org-switcher ::new-page-via-org-switcher ::new-page))
-  (sel/fill-ajax-form {::name-text name
+  (sel/fill-ajax-form [::name-text name
+                       label-filler [::name-text ::label-text label]
                        ::description-text description
                        ::initial-env-name-text initial-env-name
-                       (fn [env-label] (when env-label (browser fireEvent ::initial-env-name-text "blur") (browser ajaxWait) (browser setText ::initial-env-label-text env-label))) [initial-env-label]
-                       ::initial-env-desc-text initial-env-description}
+                       label-filler [::initial-env-name-text ::initial-env-label-text initial-env-label]
+                       ::initial-env-desc-text initial-env-description]
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 
