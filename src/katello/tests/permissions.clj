@@ -261,7 +261,7 @@
       (expecting-error (common/errtype expected-err)
                        (role/create rolename)))
 
-    [(random-string (int \a) (int \z) 129)  :katello.notifications/name-too-long
+    [[(random-string (int \a) (int \z) 129)  :katello.notifications/name-too-long]
      ["  foo" :katello.notification/name-no-leading-trailing-whitespace]
      ["  foo   " :katello.notification/name-no-leading-trailing-whitespace]
      ["foo " :katello.notification/name-no-leading-trailing-whitespace]
