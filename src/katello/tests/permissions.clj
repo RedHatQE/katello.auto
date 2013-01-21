@@ -262,11 +262,11 @@
                        (role/create rolename)))
 
     [[(random-string (int \a) (int \z) 129)  :katello.notifications/name-too-long]
-     ["  foo" :katello.notification/name-no-leading-trailing-whitespace]
-     ["  foo   " :katello.notification/name-no-leading-trailing-whitespace]
-     ["foo " :katello.notification/name-no-leading-trailing-whitespace]
+     ["  foo" :katello.notifications/name-no-leading-trailing-whitespace]
+     ["  foo   " :katello.notifications/name-no-leading-trailing-whitespace]
+     ["foo " :katello.notifications/name-no-leading-trailing-whitespace]
      ["" :katello.notifications/name-cant-be-blank]
-     (with-meta ["<a href='http://malicious.url/'>Click Here</a>" :katello/notifications/katello-error]
+     (with-meta ["<a href='http://malicious.url/'>Click Here</a>" :katello.notifications/katello-error]
        {:blockers (open-bz-bugs "901657")})     ; TODO create more specific error after fix
      ])
   
