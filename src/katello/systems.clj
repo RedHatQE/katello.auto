@@ -15,7 +15,7 @@
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
-
+   ::remove                      (ui/link "Remove System")
    ;;content
    ::content-link                (ui/menu-link "system_content")
    ::packages-link               (ui/menu-link "systems_packages")
@@ -77,6 +77,13 @@
                        ::arch-select (or system-arch "x86_64")}
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+
+(defn delete "Deletes the selected system."
+  [system-name]
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser click ::remove)
+  (browser click ::ui/confirmation-yes)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
