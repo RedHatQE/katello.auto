@@ -37,7 +37,7 @@
   (->> results :columns (map (comp :content :to_display))))
 
 (defn verify-compare-type  [type
-                            first first-packages second second-packages ]
+                            first first-packages second second-packages]
   (let [lazy-intersect 
         (for [package (intersection first-packages second-packages)]
           [(content-search/package-in-repository? package first)
@@ -133,7 +133,7 @@
     :data-driven true
     (fn [to-add to-remove result]
       (org/switch test-org-compare)
-      (content-search/compare-repositories to-add)
+      (content-search/add-repositories to-add)
       (content-search/remove-repositories to-remove)
       
       (assert/is (= (content-search/get-result-repos) result)))
@@ -155,8 +155,8 @@
       (content-search/add-repositories (fake/get-all-custom-repos))
       (content-search/check-repositories repositories)
       (content-search/click-if-compare-button-is-disabled?)
-      (assert/is (= (content-search/get-result-repos) 
-                    {"Com Nature Enterprise" #{"CompareZoo1" "CompareZoo2"}}))))
+      (assert/is (= (into #{} (content-search/get-repo-content-search))
+                    (into #{} repositories)))))
   
   (deftest "Repo compare: Add many repos to compare"
     (org/switch test-org-compare)
@@ -199,22 +199,23 @@
       {:first "Library" :fpackages ["Nature" "Weird"]
        :second "simple-env" :spackages ["Nature"]}]
      
-     ["s*" {"WeirdLocalsUsing 標準語 Enterprise"
-            {"Гесер"
-             #{#{"0.1-1.noarch" "squirrel"} #{"0.12-2.noarch" "stork"}
-               #{"shark" "0.1-1.noarch"}},
-             "洪" #{"0.3-0.8.noarch" "squirrel"}},
+     ["s*" {"WeirdLocalsUsing 標準語 Enterprise" 
+              {"Гесер" #{#{"0.1-1.noarch" "squirrel"} 
+                         #{"0.12-2.noarch" "stork"} 
+                         #{"shark" "0.1-1.noarch"}},
+               "洪" #{"0.3-0.8.noarch" "squirrel"}},
             "ManyRepository Enterprise"
-            {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"},
-             "ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"},
-             "ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"},
-             "ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}
-             "ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}},
-            "Com Nature Enterprise"
-            {"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"},
-             "CompareZoo2"
-             #{#{"0.1-1.noarch" "squirrel"} #{"0.12-2.noarch" "stork"}
-               #{"shark" "0.1-1.noarch"}}}}
+              {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}, 
+               "ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}, 
+               "ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}, 
+               "ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}, 
+               "ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}}, 
+             "Com Nature Enterprise" 
+               {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}, 
+                "CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}, 
+                "CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
+                                #{"0.12-2.noarch" "stork"} 
+                                #{"shark" "0.1-1.noarch"}}}}
       
       {:first "Library" :fpackages ["Nature" "Weird" "Many"]
        :second "simple-env" :spackages ["Nature"]}]]))
@@ -249,54 +250,54 @@
   (deftest "Content Browser: Errata information"
     (org/switch test-org-errata)  
     (content-search/get-errata-set "*")
-    (content-search/test-errata-popup-click "RHEA-2012:1011")
+    (content-search/test-errata-popup-click "RHEA-2012:2011")
     (content-search/add-repositories ["ErrataZoo"])
     (content-search/click-repo-errata "ErrataZoo")
-    (content-search/test-errata-popup-click "RHEA-2012:1011")
+    (content-search/test-errata-popup-click "RHEA-2012:2011")
     (content-search/compare-repositories ["ErrataZoo"])
     (content-search/select-type :errata)
-    (content-search/test-errata-popup-click "RHEA-2012:1011"))
+    (content-search/test-errata-popup-click "RHEA-2012:2011"))
 
   (deftests-errata-search
     {"UI - Search Errata in Content Search by exact Errata"
-     [["\"RHEA-2012:1011\"" "RHEA-2012:1011"]
-      ["\"RHEA-2012:1012\"" "RHEA-2012:1012"]
-      ["\"RHEA-2012:1013\"" "RHEA-2012:1013"]]
+     [["\"RHEA-2012:2011\"" "RHEA-2012:2011"]
+      ["\"RHEA-2012:2012\"" "RHEA-2012:2012"]
+      ["\"RHEA-2012:2013\"" "RHEA-2012:2013"]]
 
      "UI - Search Errata in Content Search by exact title"
-     [["title:\"Bear_Erratum\"""RHEA-2012:1010"]
-      ["title:\"Sea_Erratum\"" "RHEA-2012:1011"]
-      ["title:\"Bird_Erratum\"" "RHEA-2012:1012"]
-      ["title:\"Gorilla_Erratum\"" "RHEA-2012:1013"]]
+     [["title:\"Squirrel_Erratum\"""RHEA-2012:2010"]
+      ["title:\"Camel_Erratum\"" "RHEA-2012:2011"]
+      ["title:\"Dog_Erratum\"" "RHEA-2012:2012"]
+      ["title:\"Cow_Erratum\"" "RHEA-2012:2013"]]
      
      "UI - Search Errata in Content Search by title regexp"
-     [["title:Bear_*" "RHEA-2012:1010"]
-      ["title:Sea*" "RHEA-2012:1011"]
-      ["title:Bir*" "RHEA-2012:1012"]
-      ["title:G*" "RHEA-2012:1013"]
-      ["title:*i*" #{"RHEA-2012:1012" "RHEA-2012:1013"}]]
+     [["title:Squirrel_*" "RHEA-2012:2010"]
+      ["title:Cam*" "RHEA-2012:2011"]
+      ["title:Dog*" "RHEA-2012:2012"]
+      ["title:Co*" "RHEA-2012:2013"]
+      ["title:*o*" #{"RHEA-2012:2012" "RHEA-2012:2013"}]]
      
      "UI - Search Errata in Content Search by type regexp"
-     [["type:secur*" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
-      ["type:*ug*" "RHEA-2012:1013"]
-      ["type:*ement" "RHEA-2012:1010"]
+     [["type:secur*" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
+      ["type:*ug*" "RHEA-2012:2013"]
+      ["type:*ement" "RHEA-2012:2010"]
       ["type:ttt" {}]
       ["type:" {}]]
      
      "UI - Search Errata in Content Search by type"
-     [["type:security" #{"RHEA-2012:1011" "RHEA-2012:1012"}]
-      ["type:bugfix" "RHEA-2012:1013"]
-      ["type:enhancement" "RHEA-2012:1010"]]
+     [["type:security" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
+      ["type:bugfix" "RHEA-2012:2013"]
+      ["type:enhancement" "RHEA-2012:2010"]]
      
      "UI - Search Errata in Content Search by severity"
-     [["severity:low" "RHEA-2012:1010"]
-      ["severity:important" "RHEA-2012:1011"]
-      ["severity:critical" "RHEA-2012:1012"]
-      ["severity:moderate" "RHEA-2012:1013"]
-      ["severity:l*" "RHEA-2012:1010"]
-      ["severity:*rtant" "RHEA-2012:1011"]
-      ["severity:*cal" "RHEA-2012:1012"]
-      ["severity:mod*" "RHEA-2012:1013"]
+     [["severity:low" "RHEA-2012:2010"]
+      ["severity:important" "RHEA-2012:2011"]
+      ["severity:critical" "RHEA-2012:2012"]
+      ["severity:moderate" "RHEA-2012:2013"]
+      ["severity:l*" "RHEA-2012:2010"]
+      ["severity:*rtant" "RHEA-2012:2011"]
+      ["severity:*cal" "RHEA-2012:2012"]
+      ["severity:mod*" "RHEA-2012:2013"]
       ["severity:ttt" {}]
       ["severity:" {}]]}))
 
@@ -409,20 +410,82 @@
      [[env-dev env-qa] {"Com Errata Inc" "ErrataZoo", "Com Errata Enterprise" "ErrataZoo"}]
      [[env-dev env-qa env-release] {"Com Errata Inc" "ErrataZoo", "WeirdLocalsUsing 標準語 Enterprise" #{"Гесер" "洪"}, "Com Errata Enterprise" "ErrataZoo"}]])
  
-  (deftest "Content Browser: Environment selector for content browser"
+(deftest "Content Browser: Environment selector for content browser"
         :data-driven true
+        
     (fn [environments]
       (org/switch test-org-env)  
       (content-search/select-content-type :repo-type)
       (content-search/submit-browse-button)
-      ;(assert/is  (= (content-search/get-table-headers) ["Library"]))
       (content-search/select-environments environments)
       (assert/is  (= (content-search/get-table-headers) (into [] (cons "Library" environments)))))
   
      [[[env-dev env-qa env-release]]
       [[env-dev env-qa]]
       [[env-qa]]])
-  
+
+  (deftest "Content Search: search package info"
+    :data-driven true
+    
+    (fn [repo env result]
+      (org/switch test-org-env)  
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      (content-search/select-environments [env-dev env-qa env-release])
+      (content-search/click-repo-desc repo env)
+      (assert/is (content-search/get-package-desc) result))
+    
+    [["洪" "Library" 
+               {["walrus" "0.3-0.8.noarch"] "A dummy package of walrus", 
+                ["squirrel" "0.3-0.8.noarch"] "A dummy package of squirrel", 
+                ["penguin" "0.3-0.8.noarch"] "A dummy package of penguin", 
+                ["monkey" "0.3-0.8.noarch"] "A dummy package of monkey", 
+                ["lion" "0.3-0.8.noarch"] "A dummy package of lion", 
+                ["giraffe" "0.3-0.8.noarch"] "A dummy package of giraffe", 
+                ["elephant" "0.3-0.8.noarch"] "A dummy package of elephant", 
+                ["cheetah" "0.3-0.8.noarch"] "A dummy package of cheetah"}]
+     ["Гесер" "QA" 
+               {["mouse" "0.1.12-1.noarch"] "A dummy package of mouse", 
+                ["cheetah" "1.25.3-5.noarch"] "A dummy package of cheetah", 
+                ["horse" "0.22-2.noarch"] "A dummy package of horse", 
+                ["gorilla" "0.62-1.noarch"] "A dummy package of gorilla", 
+                ["dolphin" "3.10.232-1.noarch"] "A dummy package of dolphin", 
+                ["cockateel" "3.1-1.noarch"] "A dummy package of cockateel", 
+                ["shark" "0.1-1.noarch"] "A dummy package of shark", 
+                ["frog" "0.1-1.noarch"] "A dummy package of frog", 
+                ["dog" "4.23-1.noarch"] "A dummy package of dog", 
+                ["kangaroo" "0.2-1.noarch"] "A dummy package of kangaroo", 
+                ["giraffe" "0.67-2.noarch"] "A dummy package of giraffe", 
+                ["lion" "0.4-1.noarch"] "A dummy package of lion", 
+                ["duck" "0.6-1.noarch"] "A dummy package of duck", 
+                ["crow" "0.8-1.noarch"] "A dummy package of crow", 
+                ["elephant" "8.3-1.noarch"] "A dummy package of elephant", 
+                ["squirrel" "0.1-1.noarch"] "A dummy package of squirrel", 
+                ["bear" "4.1-1.noarch"] "A dummy package of bear", 
+                ["penguin" "0.9.1-1.noarch"] "A dummy package of penguin", 
+                ["pike" "2.2-1.noarch"] "A dummy package of pike", 
+                ["camel" "0.1-1.noarch"] "A dummy package of camel", 
+                ["cat" "1.0-1.noarch"] "A dummy package of cat", 
+                ["stork" "0.12-2.noarch"] "A dummy package of stork", 
+                ["fox" "1.1-2.noarch"] "A dummy package of fox", 
+                ["cow" "2.2-3.noarch"] "A dummy package of cow", 
+                ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}]])
+
+  (deftest "Content Search: search repo info"
+    (org/switch test-org-env)  
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (content-search/select-environments [env-dev env-qa env-release])
+    (assert/is (content-search/get-repo-desc)
+              [[[true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] false]
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false]
+               [[true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] false] 
+               [[true "Packages (8)\nErrata (2)\n"] [true "Packages (8)\nErrata (2)\n"] false false] 
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false] 
+               [[true "Packages (8)\nErrata (2)\n"] false false false] 
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false false]] ))
+
+
   (deftest "Content Browser: Repositories grouped by product"
     (org/switch test-org-env)  
     (content-search/select-content-type :repo-type)

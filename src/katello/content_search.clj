@@ -4,6 +4,7 @@
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
+            [clojure.string :refer [split trim]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
@@ -13,9 +14,13 @@
                      [conf          :refer [config]]
                      [api-tasks     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
+            [pl.danieljanus.tagsoup :refer [parse-xml]]
             [test.assert         :as assert]
             [inflections.core    :refer [pluralize]])
   (:import [com.thoughtworks.selenium SeleniumException]
+           [org.ccil.cowan.tagsoup Parser]
+           [java.io InputStream File FileInputStream ByteArrayInputStream BufferedInputStream InputStreamReader BufferedReader]
+           [org.xml.sax InputSource]
            [java.text SimpleDateFormat]
            [java.io ByteArrayInputStream]))
 
@@ -59,7 +64,7 @@
   result-col-id           "//ul[@id='column_headers']//li[contains(.,'%s')]"
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
-  })
+  repo-link               "//div[@id='grid_row_repo_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
 ;; Nav
 
@@ -81,16 +86,25 @@
   (and (string? num)
        (= num (re-matches #"[0-9]+" num))))
 
-(defn get-zip-of-html-element [id]
+(defn get-string-of-html-element [id]
   (->> id
      (format "window.document.getElementById('%s').innerHTML;")
      (browser getEval)
-     (format "<root>%s</root>")
+     (format "<root>%s</root>")))
+
+(defn get-zip-of-xml-string [xml-string]
+  (->> xml-string
      java.io.StringReader.
      org.xml.sax.InputSource.
      xml/parse
      zip/xml-zip))
 
+(defn get-zip-of-html-string [html-string]
+  (->> html-string
+     .getBytes
+     ByteArrayInputStream.
+     parse-xml
+     zip/xml-zip))
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
   "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
@@ -135,9 +149,9 @@
                  (numeric-str? node) (read-string node)
                  :else node)))))
 
-(defn get-search-page-result-list-of-lists [element-id]
-  (-> (get-zip-of-html-element element-id)
-     (tree-edit
+(defn get-search-page-result-list-of-lists [xml-zip]
+  (->  xml-zip
+      (tree-edit
       (fn [tree] (or
                  (contains? (zip/node tree) :content)
                  (= (:class (:attrs (zip/node tree)))
@@ -159,8 +173,22 @@
      normalize2
      zip/node))
 
+(defn get-search-page-result-list-of-lists-html [id]
+     (-> id
+       get-string-of-html-element
+       get-zip-of-html-string
+       get-search-page-result-list-of-lists))
+
+(defn get-search-page-result-list-of-lists-xml [id]
+     (-> id
+       get-string-of-html-element
+       get-zip-of-xml-string
+       get-search-page-result-list-of-lists))
+
 (defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
   (-> "grid_row_headers"
+     get-string-of-html-element
+     get-zip-of-xml-string
      get-search-page-result-list-of-lists
      zip/vector-zip
      (tree-edit
@@ -212,26 +240,27 @@
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (let [elem (auto-complete-item cont-item)]
     (sel/->browser (type auto-comp-box cont-item)
-                   ;; (browser setText auto-comp-box cont-item)
+                   (setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
                    (typeKeys auto-comp-box " ")
-                   ;;(waitForElement elem "2000")
-                   ;;(mouseOver elem)
-                   ;;(click elem)
+                   (waitForElement elem "2000")
+                   (mouseOver elem)
+                   (click elem)
                    (click add-button))))
 
 (defn get-search-result-repositories []
   (doall (for [locator (get-all-of-locator repo-column-name)]
            (browser getText locator))))
 
+(defn get-col-id [col]
+  (browser getAttribute (attr-loc (result-col-id col) "data-id")))
+
 (defn row-in-column? [package repository]
   (let [row-id (browser getAttribute (attr-loc
                                       (result-row-id package)
                                       "data-id"))
-        col-id (browser getAttribute (attr-loc
-                                      (result-col-id repository)
-                                      "data-id"))]
-    (not (= "--"
+        col-id (get-col-id repository)]
+    (not (= "--" 
             (browser getText (result-cell row-id col-id))))))
 
 (defn package-in-repository? [package repository]
@@ -269,6 +298,22 @@
           []
           repositories)))
 
+(defn get-repo-search-library-id-map [repositories]
+  (apply hash-map 
+         (reduce 
+          (fn [result name] 
+            (conj result  name
+                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
+                                     (browser getAttribute (attr-loc 
+                                                            (result-repo-id name)
+                                                            "data-id")))))) 
+          []
+          repositories)))
+
+;problem with two repos of a same name
+(defn get-repo-search-data-id [repo-name]
+  ((get-repo-search-data-id-map [repo-name]) repo-name))
+
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-id-map repositories)]
     (doseq [repository repositories]
@@ -292,7 +337,11 @@
     (browser click (result-repo-errata-link  repo-id))))
 
 (defn compare-repositories [repositories]
-  (add-repositories repositories)
+  ;(add-repositories repositories)
+  (nav/go-to ::page)
+  (browser select ::type-select "Repositories")
+  (browser check ::repo-auto-complete-radio)
+  (browser click ::browse-button)
   (check-repositories repositories)
   (browser click ::repo-compare-button)
   (get-repo-content-search))
@@ -418,3 +467,13 @@
 
 (defn get-result-repos []
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
+
+(defn get-package-desc []
+  (zipmap (get-search-page-result-list-of-lists-xml "grid_row_headers")
+          (get-search-page-result-list-of-lists-html "grid_content_window")))
+
+(defn get-repo-desc []
+  (get-search-page-result-list-of-lists-html "grid_content_window"))
+
+(defn click-repo-desc [repo-name env-name]
+  (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
