@@ -63,7 +63,8 @@
 (def custom-errata-test-provider [{:name "Custom Errata Provider"
                                    :products [{:name "Com Errata Enterprise"
                                                :repos [{:name "ErrataZoo" 
-                                                        :url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
+                                                        :url "http://inecas.fedorapeople.org/fakerepos/new_cds/content/zoo/1.1/x86_64/rpms/"}]}]}])
+                                                        ;:url "http://inecas.fedorapeople.org/fakerepos/severity_zoo/"}]}]}])
 
 
 (def custom-env-test-provider [{:name "Custom Errata Provider"
