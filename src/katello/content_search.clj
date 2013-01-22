@@ -86,16 +86,25 @@
   (and (string? num)
        (= num (re-matches #"[0-9]+" num))))
 
-(defn get-zip-of-html-element [id]
+(defn get-string-of-html-element [id]
   (->> id
      (format "window.document.getElementById('%s').innerHTML;")
      (browser getEval)
-     (format "<root>%s</root>")
+     (format "<root>%s</root>")))
+
+(defn get-zip-of-xml-string [xml-string]
+  (->> xml-string
+     java.io.StringReader.
+     org.xml.sax.InputSource.
+     xml/parse
+     zip/xml-zip))
+
+(defn get-zip-of-html-string [html-string]
+  (->> html-string
      .getBytes
      ByteArrayInputStream.
      parse-xml
      zip/xml-zip))
-
 
 (defn tree-edit [tree filter-fn edit-fn edit-other & returning]
   "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
@@ -140,9 +149,9 @@
                  (numeric-str? node) (read-string node)
                  :else node)))))
 
-(defn get-search-page-result-list-of-lists [element-id]
-  (-> (get-zip-of-html-element element-id)
-     (tree-edit
+(defn get-search-page-result-list-of-lists [xml-zip]
+  (->  xml-zip
+      (tree-edit
       (fn [tree] (or
                  (contains? (zip/node tree) :content)
                  (= (:class (:attrs (zip/node tree)))
@@ -164,8 +173,22 @@
      normalize2
      zip/node))
 
+(defn get-search-page-result-list-of-lists-html [id]
+     (-> id
+       get-string-of-html-element
+       get-zip-of-html-string
+       get-search-page-result-list-of-lists))
+
+(defn get-search-page-result-list-of-lists-xml [id]
+     (-> id
+       get-string-of-html-element
+       get-zip-of-xml-string
+       get-search-page-result-list-of-lists))
+
 (defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
   (-> "grid_row_headers"
+     get-string-of-html-element
+     get-zip-of-xml-string
      get-search-page-result-list-of-lists
      zip/vector-zip
      (tree-edit
@@ -217,12 +240,12 @@
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (let [elem (auto-complete-item cont-item)]
     (sel/->browser (type auto-comp-box cont-item)
-                   ;; (browser setText auto-comp-box cont-item)
+                   (setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
                    (typeKeys auto-comp-box " ")
-                   ;;(waitForElement elem "2000")
-                   ;;(mouseOver elem)
-                   ;;(click elem)
+                   (waitForElement elem "2000")
+                   (mouseOver elem)
+                   (click elem)
                    (click add-button))))
 
 (defn get-search-result-repositories []
@@ -314,7 +337,11 @@
     (browser click (result-repo-errata-link  repo-id))))
 
 (defn compare-repositories [repositories]
-  (add-repositories repositories)
+  ;(add-repositories repositories)
+  (nav/go-to ::page)
+  (browser select ::type-select "Repositories")
+  (browser check ::repo-auto-complete-radio)
+  (browser click ::browse-button)
   (check-repositories repositories)
   (browser click ::repo-compare-button)
   (get-repo-content-search))
@@ -442,11 +469,11 @@
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
 
 (defn get-package-desc []
-  (zipmap (get-search-page-result-list-of-lists "grid_row_headers")
-          (get-search-page-result-list-of-lists "grid_content_window")))
+  (zipmap (get-search-page-result-list-of-lists-xml "grid_row_headers")
+          (get-search-page-result-list-of-lists-html "grid_content_window")))
 
 (defn get-repo-desc []
-  (get-search-page-result-list-of-lists "grid_content_window"))
+  (get-search-page-result-list-of-lists-html "grid_content_window"))
 
 (defn click-repo-desc [repo-name env-name]
   (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
