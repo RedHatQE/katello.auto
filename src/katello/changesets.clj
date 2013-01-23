@@ -209,3 +209,26 @@
                                      (add-content-item item))
                             true)
                         (catch Exception e false))))))))
+
+(defn add-link-exists?
+  "If all the content is present in the given environment, returns true."
+  [env content]
+  (nav/go-to ::named-environment-page {:env-name env :next-env-name nil})
+  (sel/->browser (click ::new)
+                 (setText ::name-text (uniqueify "changeset1"))
+                 (click ::save))
+  (every? true? 
+          (flatten
+            (for [category (keys content)]
+              (let [data (content category)
+                    prod-item (:product-name (first data))]
+                (do (sel/->browser (click ::products-category)
+                                   (click (select-product prod-item))
+                                   (refresh)
+                                   (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
+                    (for [item (map :name data)]
+                      (try (do 
+                             (browser isVisible (add-content-item item))
+                                                true)
+                         (catch Exception e false)))))))))
+

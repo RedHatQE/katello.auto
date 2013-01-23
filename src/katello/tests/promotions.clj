@@ -16,7 +16,6 @@
   (:refer-clojure :exclude [fn]))
 
 (declare test-org)
-(declare envz)
 
 ;; Variables
 
@@ -112,27 +111,40 @@
 
 (defgroup deletion-tests
   :group-setup (fn []
-                 (def ^:dynamic test-org (uniqueify "custom-org"))
-                 (def ^:dynamic envz (take 3 (unique-names "env3")))
-                 (org/create test-org)
-                 (org/switch test-org)
-                 (environment/create-path test-org envz)
-                 (fake/prepare-org-custom-provider  test-org fake/custom-provider)
-                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+                 (def ^:dynamic test-org (uniqueify "custom-org"))                 
+                 (org/create test-org)           
+                 (fake/prepare-org-custom-provider  test-org fake/custom-provider))
+                 ;;(fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
   (dep-chain
     (filter (complement :blockers)
       (concat
+        (deftest "Check for, No Add-link visible if content is not promoted to next-env"
+          :data-driven true
+                
+          (fn [content]
+            (org/switch test-org)
+            (let [promotion-custom-content {:products (map :name custom-products)}
+                  promotion-rh-content {:products (map :name fake/some-product-repos)}
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
+              (assert/is (changesets/add-link-exists? library content))))
+       
+          [[{:repos (mapcat :repos custom-products)}]
+           [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"})}]])
+        
         (deftest "Deletion Changeset test-cases for custom-providers and RH-providers"
           :data-driven true
-      
+                
           (fn [deletion-content & [provider-type]]
             (org/switch test-org)
             (let [promotion-custom-content {:products (map :name custom-products)}
-                  promotion-rh-content {:products (map :name fake/some-product-repos)}]
+                  promotion-rh-content {:products (map :name fake/some-product-repos)}
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
               (if provider-type 
                 (changesets/promote-delete-content library (first envz) false promotion-custom-content)
-                (changesets/promote-delete-content library (first envz) false promotion-rh-content)))
-            (changesets/promote-delete-content (first envz) nil true deletion-content))
+                (changesets/promote-delete-content library (first envz) false promotion-rh-content))
+              (changesets/promote-delete-content (first envz) nil true deletion-content)))
        
           [[{:products (map :name custom-products)} ["custom"]]
            [{:repos (mapcat :repos custom-products)} ["custom"]]
@@ -155,12 +167,14 @@
     
         (deftest "Re-promote the deleted content"
           :data-driven true
-      
+          
           (fn [content]
             (org/switch test-org)
             (let [promotion-custom-content {:products (map :name custom-products)}
                   deletion-content content
-                  re-promote-content content]
+                  re-promote-content content
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
               (changesets/promote-delete-content library (first envz) false promotion-custom-content)
               (changesets/promote-delete-content (first envz) nil true deletion-content)
               (changesets/promote-delete-content library (first envz) false re-promote-content)))
@@ -170,3 +184,4 @@
                          {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
            [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"} 
                        {:name "Sea_Erratum", :product-name "safari-1_0"})}]])))))
+
