@@ -39,8 +39,10 @@
    ::save                        "save_changeset_button"
    ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
    ::type                        "changeset[action_type]"
-   ::deletion                    "//div[@data-cs_type='deletion']"})
-
+   ::deletion                    "//div[@data-cs_type='deletion']"
+   ::remove-changeset            "//span[contains(.,'Remove')]"
+   ::ui-box-confirm              "//span[@class='ui-button-text' and contains(.,'Yes')]"})  
+   
 (nav/defpages (common/pages)
   [::page
    [::named-environment-page [env-name next-env-name]
@@ -222,13 +224,23 @@
             (for [category (keys content)]
               (let [data (content category)
                     prod-item (:product-name (first data))]
-                (do (sel/->browser (click ::products-category)
+                (sel/->browser (click ::products-category)
                                    (click (select-product prod-item))
                                    (refresh)
                                    (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
                     (for [item (map :name data)]
                       (try (do 
-                             (browser isVisible (add-content-item item))
-                                                true)
-                         (catch Exception e false)))))))))
+                             (sel/->browser (isVisible (add-content-item item))
+                                            (click ::remove-changeset)
+                                            (click ::ui-box-confirm)
+                                            (click ::promotion-eligible-home)
+                                            (refresh))
+                                            true)
+                         (catch Exception e 
+                           (do
+                             (sel/->browser (click ::remove-changeset)
+                                            (click ::ui-box-confirm)
+                                            (click ::promotion-eligible-home)
+                                            (refresh))
+                                            false)))))))))
 
