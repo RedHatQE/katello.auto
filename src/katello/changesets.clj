@@ -229,18 +229,16 @@
                                    (refresh)
                                    (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
                     (for [item (map :name data)]
-                      (try (do 
-                             (sel/->browser (isVisible (add-content-item item))
-                                            (click ::remove-changeset)
-                                            (click ::ui-box-confirm)
-                                            (click ::promotion-eligible-home)
-                                            (refresh))
-                                            true)
+                      (try 
+                        (sel/->browser (isVisible (add-content-item item))
+                                       (click ::remove-changeset)
+                                       (click ::ui-box-confirm)
+                                       (click ::promotion-eligible-home)
+                                       (refresh))
+                                        true
                          (catch Exception e 
-                           (do
                              (sel/->browser (click ::remove-changeset)
                                             (click ::ui-box-confirm)
                                             (click ::promotion-eligible-home)
                                             (refresh))
-                                            false)))))))))
-
+                                            false))))))))

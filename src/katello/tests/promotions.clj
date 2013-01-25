@@ -130,5 +130,58 @@
               (assert/is (changesets/add-link-exists? library content))))
        
           [[{:repos (mapcat :repos custom-products)}]
-           [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"})}]])))))
+           [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"})}]])
+        
+        (deftest "Deletion Changeset test-cases for custom-providers and RH-providers"
+          :data-driven true
+
+          (fn [deletion-content & [provider-type]]
+            (org/switch test-org)
+            (let [promotion-custom-content {:products (map :name custom-products)}
+                  promotion-rh-content {:products (map :name fake/some-product-repos)}
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
+              (if provider-type
+                (changesets/promote-delete-content library (first envz) false promotion-custom-content)
+                (changesets/promote-delete-content library (first envz) false promotion-rh-content))
+              (changesets/promote-delete-content (first envz) nil true deletion-content)))
+
+          [[{:products (map :name custom-products)} ["custom"]]
+           [{:repos (mapcat :repos custom-products)} ["custom"]]
+           [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
+                         {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
+                         {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
+           [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
+                       {:name "Sea_Erratum", :product-name "safari-1_0"})} ["custom"]]
+           [{:products (map :name fake/some-product-repos)}]
+           [{:repos (mapcat :repos rh-products)}]
+           [{:packages '({:name "bear-4.1-1.noarch", :product-name "Nature Enterprise"}
+                         {:name "camel-0.1-1.noarch", :product-name "Zoo Enterprise"}
+                         {:name "cat-1.0-1.noarch", :product-name "Nature Enterprise"})}]
+           [{:errata '({:name "Bird_Erratum", :product-name "Nature Enterprise"}
+                       {:name "Gorilla_Erratum", :product-name "Zoo Enterprise"})}]
+           (with-meta
+             [{:errata-top-level '({:name "Bear_Erratum"}
+                                   {:name "Sea_Erratum"})} ["custom"]]
+             {:blockers (open-bz-bugs "874850")})])
+
+        (deftest "Re-promote the deleted content"
+          :data-driven true
+
+          (fn [content]
+            (org/switch test-org)
+            (let [promotion-custom-content {:products (map :name custom-products)}
+                  deletion-content content
+                  re-promote-content content
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
+              (changesets/promote-delete-content library (first envz) false promotion-custom-content)
+              (changesets/promote-delete-content (first envz) nil true deletion-content)
+              (changesets/promote-delete-content library (first envz) false re-promote-content)))
+          [[{:repos (mapcat :repos custom-products)}]
+           [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
+                         {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
+                         {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
+           [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
+                       {:name "Sea_Erratum", :product-name "safari-1_0"})}]])))))
 
