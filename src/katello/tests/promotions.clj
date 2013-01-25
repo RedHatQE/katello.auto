@@ -16,7 +16,6 @@
   (:refer-clojure :exclude [fn]))
 
 (declare test-org)
-(declare envz)
 
 ;; Variables
 
@@ -114,7 +113,6 @@
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "custom-org"))
                  (org/create test-org)
-                 (environment/create-path test-org envz)
                  (fake/prepare-org-custom-provider  test-org fake/custom-provider)
                  (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
   (dep-chain
@@ -129,13 +127,21 @@
                   promotion-rh-content {:products (map :name fake/some-product-repos)}
                   [provider-type content-search] data
                   [repo result] content-search
-                   ]
+                  envz (take 3 (unique-names "env3"))]
+              (environment/create-path test-org envz)
               (if (first data) 
                 (changesets/promote-delete-content library (first envz) false promotion-custom-content)
                 (changesets/promote-delete-content library (first envz) false promotion-rh-content)))
-            (changesets/promote-delete-content (first envz) nil true deletion-content))
+            (changesets/promote-delete-content (first envz) nil true deletion-content)
+            (content-search/select-content-type :repo-type)
+            (content-search/submit-browse-button)
+            (content-search/select-environments [env-dev env-qa env-release])
+            (content-search/click-repo-desc repo env))
        
           [[{:repos (mapcat :repos custom-products)} ["custom" []]]
            [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"} 
                          {:name "camel-0.1-1.noarch", :product-name "safari-1_0"} 
-                         {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom" ["safari-x86_64"   ]]]])))))
+                         {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} 
+             ["custom" ["safari-x86_64" {["walrus" "0.3-0.8.noarch"] "A dummy package of walrus", 
+                                        ["squirrel" "0.3-0.8.noarch"] "A dummy package of squirrel", 
+                                        ["penguin" "0.3-0.8.noarch"] "A dummy package of penguin"}]]]])))))
