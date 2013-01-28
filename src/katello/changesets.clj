@@ -213,32 +213,33 @@
                         (catch Exception e false))))))))
 
 (defn add-link-exists?
-  "If all the content is present in the given environment, returns true."
+  "When the product is not promoted to next env and if there is no add-link 
+   visible for repos/packages, it returns true."
   [env content]
   (nav/go-to ::named-environment-page {:env-name env :next-env-name nil})
   (sel/->browser (click ::new)
                  (setText ::name-text (uniqueify "changeset1"))
                  (click ::save))
-  (every? true? 
+  (every? false? 
           (flatten
             (for [category (keys content)]
               (let [data (content category)
                     prod-item (:product-name (first data))]
                 (sel/->browser (click ::products-category)
-                                   (click (select-product prod-item))
-                                   (refresh)
-                                   (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
-                    (for [item (map :name data)]
-                      (try 
-                        (sel/->browser (isVisible (add-content-item item))
-                                       (click ::remove-changeset)
-                                       (click ::ui-box-confirm)
-                                       (click ::promotion-eligible-home)
-                                       (refresh))
-                                        true
-                         (catch Exception e 
-                             (sel/->browser (click ::remove-changeset)
-                                            (click ::ui-box-confirm)
-                                            (click ::promotion-eligible-home)
-                                            (refresh))
-                                            false))))))))
+                               (click (select-product prod-item))
+                               (refresh)
+                               (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
+                (for [item (map :name data)]
+                  (try
+                    (let [visible (browser isVisible (add-content-item item))]
+                      (sel/->browser (click ::remove-changeset)
+                                     (click ::ui-box-confirm)
+                                     (click ::promotion-eligible-home)
+                                     (refresh))
+                               visible)
+                    (catch Exception e
+                      (sel/->browser (click ::remove-changeset)
+                                     (click ::ui-box-confirm)
+                                     (click ::promotion-eligible-home)
+                                     (refresh))
+                               false))))))))
