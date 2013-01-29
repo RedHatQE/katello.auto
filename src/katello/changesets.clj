@@ -225,14 +225,20 @@
             (for [category (keys content)]
               (let [data (content category)
                     prod-item (:product-name (first data))]
-                (sel/->browser (click ::products-category)
-                               (click (select-product prod-item))
-                               (refresh)
-                               (click (->> category name (format "katello.changesets/select-%s") keyword)))                               
-                (for [item (map :name data)]
-                  (try (browser isVisible (add-content-item item))
-                       (catch Exception e false)
-                       (finally (sel/->browser (click ::remove-changeset)
-                                     (click ::ui-box-confirm)
-                                     (click ::promotion-eligible-home)
-                                     (refresh))))))))))
+                (if (some #{category} [:repos :packages :errata])
+                  (do
+                    (sel/->browser (click ::products-category)
+                                   (click (select-product prod-item))
+                                   (refresh)
+                                   (click (->> category name (format "katello.changesets/select-%s") keyword)))
+                  (if (= category :errata) (browser click ::select-errata-all)))
+                  (sel/->browser (click ::errata-category)
+                                 (click ::select-errata-all)))
+                (let [visible (doall
+                                (for [item (map :name data)]
+                                  (browser isVisible (add-content-item item))))]
+                  (sel/->browser (click ::remove-changeset)
+                                 (click ::ui-box-confirm)
+                                 (click ::promotion-eligible-home)
+                                 (refresh))
+                           visible))))))

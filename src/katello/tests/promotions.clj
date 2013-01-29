@@ -128,8 +128,14 @@
           (assert/is (changesets/add-link-exists? library content))))
        
       [[{:repos (mapcat :repos custom-products)}]
-       [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"})}]])
-  
+       [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
+                     {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
+                     {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
+       [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
+                   {:name "Sea_Erratum", :product-name "safari-1_0"})}]
+       [{:errata-top-level '({:name "Bear_Erratum"}
+                             {:name "Sea_Erratum"})}]])
+    
     (dep-chain
       (filter (complement :blockers)
         (concat
@@ -185,4 +191,3 @@
                            {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
              [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
                          {:name "Sea_Erratum", :product-name "safari-1_0"})}]]))))))
-
