@@ -12,6 +12,8 @@
                      [system-templates :as template]
                      [activation-keys :as ak]
                      [roles :as role]
+                     [login :as login]
+                     [systems :as system]
                      [users :as user]
                      [organizations :as organization])
             [test.tree.script :refer :all] 
@@ -274,7 +276,38 @@
     (let [role-name (uniqueify "deleteme-role")]
       (role/create role-name)
       (role/delete role-name)))
-
+  
+(deftest "Remove systems with appropriate permissions"
+    :data-driven true
+    :description "Allow user to remove system only when user has approriate permissions to remove system"
+    
+    (fn [sysverb]
+      (with-unique [user-name "role-user"
+                    role-name "myrole"
+                    system-name "sys_perm"]
+        (let [password "abcd1234"]
+          (user/create user-name {:password password :email "me@my.org"})
+          (role/create role-name)
+          (role/edit role-name
+                     {:add-permissions [{:org "Global Permissions"
+                                         :permissions [{:name "blah2"
+                                                        :resource-type "Organizations"
+                                                        :verbs [sysverb]}]}]
+                      :users [user-name]})
+          (system/create system-name {:sockets "1"
+                                      :system-arch "x86_64"})
+          (login/logout)
+          (login/login user-name password {:org "ACME_Corporation"})
+          (try
+            (system/delete system-name)
+            ;(catch Exception e)
+            (catch SeleniumException e)
+            ;(catch SeleniumException _ :none)
+            (finally
+              (login))))))
+    
+    [["Read Systems"]
+     ["Delete Systems"]])
   
   (deftest "Add a permission and user to a role"
     (with-unique [user-name "role-user"
