@@ -23,6 +23,7 @@
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
   katello.tests.promotions/promotion-tests
+  katello.tests.promotions/deletion-tests
   katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
   katello.tests.sync_management/sync-tests
