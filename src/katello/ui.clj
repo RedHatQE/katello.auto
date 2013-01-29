@@ -49,6 +49,8 @@
    ::search-clear-the-search "search_clear"
    ::search-submit           "//button[@form='search_form']"
    ::expand-path             "path-collapsed"
+   ::total-results-count     "total_results_count"
+   ::current-items-count     "current_items_count"
    ::log-out                 "//div[@id='widget-container']//a[contains(@href,'logout')]"})
 
 (extend-protocol sel/SeleniumLocatable
@@ -66,3 +68,16 @@
     (loc-strategy (if on? on-text off-text) associated-text)))
 
 (def add-remove ["+ Add" "Remove"])
+
+(defn- item-count [loc]
+  (->> loc
+     (sel/browser getText)
+     Integer/parseInt))
+
+(def current-items
+  ^{:doc "Returns the number of shown left pane items according to the katello ui."}
+  (partial item-count ::current-items-count))
+
+(def total-items
+  ^{:doc "Returns the number of total left pane items according to the katello ui."}
+  (partial item-count ::total-results-count))
