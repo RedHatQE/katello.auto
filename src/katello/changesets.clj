@@ -241,4 +241,4 @@
                                  (click ::ui-box-confirm)
                                  (click ::promotion-eligible-home)
                                  (refresh))
-                           visible))))))
+                  visible))))))
