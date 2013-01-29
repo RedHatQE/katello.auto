@@ -36,6 +36,12 @@
     (api/create-system (uniqueify "newsystem")
                        {:facts (api/random-facts)})))
 
+(defn create-multiple-system
+  [system-names]
+  (doseq [system-name system-names]
+    (system/create system-name {:sockets "1"
+                                :system-arch "x86_64"})))
+
 (defn verify-system-rename [system]
   (with-unique [new-name "yoursys"]
     (system/edit (:name system) {:new-name new-name})

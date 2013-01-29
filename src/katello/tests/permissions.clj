@@ -300,9 +300,7 @@
           (login/login user-name password {:org "ACME_Corporation"})
           (try
             (system/delete system-name)
-            ;(catch Exception e)
             (catch SeleniumException e)
-            ;(catch SeleniumException _ :none)
             (finally
               (login))))))
     
