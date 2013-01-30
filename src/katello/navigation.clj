@@ -2,7 +2,7 @@
   (:require (katello [conf :as conf]
                      [ui :as ui])
             [ui.navigate :as nav]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
@@ -31,11 +31,11 @@
   (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
 (defn scroll-to-left-pane-item [item]
-  (while (or (< (ui/current-items) (ui/total-items))
-             (not (browser isElementPresent (left-pane-item item))))
+  (while (and (< (ui/current-items) (ui/total-items))
+              (not (browser isElementPresent (left-pane-item item))))
     ;;scroll to bottom of page to load more items
-    (browser getEval
-             (str "window.scrollTo(0,1000000);"))))
+    (->browser (getEval (str "window.scrollTo(0,1000000);"))
+               (ajaxWait))))
 
 (defn choose-left-pane
   "Selects an item in the left pane. If the item is not found, a
