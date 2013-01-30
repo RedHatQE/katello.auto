@@ -94,6 +94,7 @@
   (browser clickAndWait ::sys-tab)
   (browser controlKeyDown)
   (doseq [system-name system-names]
+    (nav/scroll-to-left-pane-item system-name)
     (nav/choose-left-pane system-name))
   (browser controlKeyUp)
   (browser click ::multi-remove)
