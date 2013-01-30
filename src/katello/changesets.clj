@@ -39,8 +39,10 @@
    ::save                        "save_changeset_button"
    ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
    ::type                        "changeset[action_type]"
-   ::deletion                    "//div[@data-cs_type='deletion']"})
-
+   ::deletion                    "//div[@data-cs_type='deletion']"
+   ::remove-changeset            "//span[contains(.,'Remove')]"
+   ::ui-box-confirm              "//span[@class='ui-button-text' and contains(.,'Yes')]"})  
+   
 (nav/defpages (common/pages)
   [::page
    [::named-environment-page [env-name next-env-name]
@@ -209,3 +211,34 @@
                                      (add-content-item item))
                             true)
                         (catch Exception e false))))))))
+
+(defn add-link-exists?
+  "When the product is not promoted to next env and if there is no add-link 
+   visible for repos/packages, it returns true."
+  [env content]
+  (nav/go-to ::named-environment-page {:env-name env :next-env-name nil})
+  (sel/->browser (click ::new)
+                 (setText ::name-text (uniqueify "changeset1"))
+                 (click ::save))
+  (every? false? 
+          (flatten
+            (for [category (keys content)]
+              (let [data (content category)
+                    prod-item (:product-name (first data))]
+                (if (some #{category} [:repos :packages :errata])
+                  (do
+                    (sel/->browser (click ::products-category)
+                                   (click (select-product prod-item))
+                                   (refresh)
+                                   (click (->> category name (format "katello.changesets/select-%s") keyword)))
+                  (if (= category :errata) (browser click ::select-errata-all)))
+                  (sel/->browser (click ::errata-category)
+                                 (click ::select-errata-all)))
+                (let [visible (doall
+                                (for [item (map :name data)]
+                                  (browser isVisible (add-content-item item))))]
+                  (sel/->browser (click ::remove-changeset)
+                                 (click ::ui-box-confirm)
+                                 (click ::promotion-eligible-home)
+                                 (refresh))
+                  visible))))))
