@@ -60,6 +60,7 @@
    
    :sys-create               "systems___create"
    :sys-destroy              "systems___destroy"
+   :sys-bulk-destroy         "systems___bulk_destroy"
    :sys-update               "systems___update"
    :sys-update-subscriptions "systems___update_subscriptions"
  

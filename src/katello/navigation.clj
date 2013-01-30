@@ -30,10 +30,16 @@
   left-pane-item
   (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
+(defn scroll-to-left-pane-item [item]
+  (while (or (< (ui/current-items) (ui/total-items))
+             (not (browser isElementPresent (left-pane-item item))))
+    ;;scroll to bottom of page to load more items
+    (browser getEval
+             (str "window.scrollTo(0,1000000);"))))
+
 (defn choose-left-pane
   "Selects an item in the left pane. If the item is not found, a
-   search is performed and the select is attempted again. Takes an
-   optional post-fn to perform afterwards."
+   search is performed and the select is attempted again."
   ([item]
      (choose-left-pane left-pane-item item))
   ([templ item]
@@ -42,6 +48,8 @@
             (catch com.thoughtworks.selenium.SeleniumException se
               (do (search-here (format "\"%s\"" item))
                   (browser click loc)))))))
+
+
 
 (defn pages []
   "The navigation layout of the UI. Each item in the tree is

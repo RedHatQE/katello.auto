@@ -16,6 +16,10 @@
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
    ::remove                      (ui/link "Remove System")
+   ::multi-remove                (ui/link "Remove System(s)")
+   ::sys-tab                     (ui/link "Systems")
+   ::confirm-yes                 "//input[@value='Yes']"
+   
    ;;content
    ::content-link                (ui/menu-link "system_content")
    ::packages-link               (ui/menu-link "systems_packages")
@@ -84,6 +88,18 @@
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
+
+(defn multi-delete "Delete multiple systems."
+  [system-names]
+  (browser clickAndWait ::sys-tab)
+  (browser controlKeyDown)
+  (doseq [system-name system-names]
+    (nav/scroll-to-left-pane-item system-name)
+    (nav/choose-left-pane system-name))
+  (browser controlKeyUp)
+  (browser click ::multi-remove)
+  (browser click ::confirm-yes)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-bulk-destroy)}))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
