@@ -44,7 +44,8 @@
   (let [errors {::invalid-credentials                   #"incorrect username"
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
-                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"}]
+                ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"
+                ::couldnt-find-all-roles                #"Couldn't find all Roles with IDs"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))

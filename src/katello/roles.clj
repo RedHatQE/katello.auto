@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
             (katello [locators :as locators] 
                      [notifications :refer [check-for-success]] 
-                     [ui-tasks :refer [fill-ajax-form navigate]]))
+                     [ui-tasks :refer [fill-ajax-form navigate errtype]])
+            [slingshot.slingshot :refer [try+]])
     )
 
 ;;
@@ -17,7 +18,11 @@
   (fill-ajax-form {:new-role-name-text name
                    :new-role-description-text description}
                   :save-role)
-  (check-for-success))
+  (try+ (check-for-success)
+        ;; this is a bug that will never be fixed in this version
+        ;; and appears harmless: https://bugzilla.redhat.com/show_bug.cgi?id=862824
+        
+        (catch (errtype :katello.notifications/couldnt-find-all-roles) _)))
 
 (defn assign
   "Assigns the given user to the given roles. Roles should be a list
