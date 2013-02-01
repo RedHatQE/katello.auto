@@ -292,15 +292,22 @@
         sync-info
         (recur (rest/get url))))))
 
-(def get-version
+(def headpin "Headpin")
+
+(def get-version-from-server
   (memoize
-   (fn []
-     (try
-       (rest/get (api-url "/api/version"))
-       (catch Exception e {:name "unknown" :version "unknown" :exception e})))))
+    (fn [url]
+      (try
+        (rest/get url)
+        (catch Exception e {:name "unknown"
+                            :version "unknown"
+                            :exception e})))))
+
+(def get-version
+  (fn [] (get-version-from-server (api-url "/api/version"))))
 
 (defn is-headpin? []
-  (-> (get-version) :name (= "Headpin")))
+  (-> (get-version) :name (= headpin)))
 
 (def is-katello? (complement is-headpin?))
 
@@ -312,7 +319,7 @@
 
 (defn katello-only
   "A function you can call from :blockers of any test so it will skip
-   if run against a non-katello (eg SAM or headpin or unknown) deployment"
+   if run against a non-katello (eg SAM or headpin) deployment"
   [_]
-  (if (->> (get-version) :name (not= "Katello"))
+  (if (is-headpin?)
     ["This test is for Katello based deployments only and this is a headpin-based server."] []))
