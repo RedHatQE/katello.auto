@@ -19,6 +19,9 @@
    ::multi-remove                (ui/link "Remove System(s)")
    ::sys-tab                     (ui/link "Systems")
    ::confirm-yes                 "//input[@value='Yes']"
+   ::select-sysgrp               "//button[@type='button']"
+   ::add-sysgrp                  "//input[@value='Add']"
+   ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -52,6 +55,7 @@
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
+  sysgroup-checkbox               "//input[@title='%s']"
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"})
 
 ;; Nav
@@ -89,17 +93,31 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
 
-(defn multi-delete "Delete multiple systems."
+(defn select-multisys-with-ctrl
   [system-names]
   (browser clickAndWait ::sys-tab)
   (browser controlKeyDown)
   (doseq [system-name system-names]
     (nav/scroll-to-left-pane-item system-name)
     (nav/choose-left-pane system-name))
-  (browser controlKeyUp)
+  (browser controlKeyUp))
+
+(defn multi-delete "Delete multiple systems."
+  [system-names]
+  (select-multisys-with-ctrl system-names)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-bulk-destroy)}))
+
+(defn add-bulk-sys-to-sysgrp 
+  "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
+  [system-names group-name]
+  (select-multisys-with-ctrl system-names)
+  (browser click ::select-sysgrp)
+  (browser click (sysgroup-checkbox group-name))
+  (browser click ::add-sysgrp)
+  (browser click ::confirm-to-yes)
+  (notification/check-for-success))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
