@@ -72,6 +72,24 @@
   (step-create-system-group m)
   (group/add-to group-name system-name))
 
+(defn step-add-bulk-sys-to-sysgrp
+  [{:keys [system-names group-name]}]
+  (let [system-names (take 2 (unique-names "mysys"))]
+    (create-multiple-system system-names)
+    (expecting-error (common/errtype :katello.notifications/bulk-systems-exceeds-group-limit)
+                     (system/add-bulk-sys-to-sysgrp system-names group-name))))
+
+(defn step-add-sys-to-sysgroup-with-new-limit
+  "Creates a system, adds the system to existing system group."
+  [{:keys [group-name system-name] :as m}]
+  (with-unique [system-name "test1"]
+    (do  
+      (system/create system-name {:sockets "1"
+                                  :system-arch "x86_64"})
+      (group/edit group-name {:new-limit 1})
+      (expecting-error (common/errtype :katello.notifications/add-systems-greater-than-allowed)
+                       (group/add-to group-name system-name)))))
+
 (defn step-add-exiting-system-to-new-group
   "Create a system group and add existing system (which was earlier member of some other group)"
   [{:keys [new-group system-name] :as m}]
@@ -311,6 +329,14 @@
                     :group-name  "copygrp"})
                   step-add-new-system-to-new-group
                   step-to-reduce-limit-after-associating-system))
+      
+      (deftest "Add systems to sys group greater than the max allowed limit"
+        (do-steps (uniqueify-vals
+                    {:system-name  "mysys"
+                     :group-name  "copygrp"})
+                    step-add-new-system-to-new-group
+                    step-add-sys-to-sysgroup-with-new-limit
+                    step-add-bulk-sys-to-sysgrp))
 
       (deftest "cancel OR close widget"
         :data-driven true
