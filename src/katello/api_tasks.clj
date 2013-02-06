@@ -33,8 +33,8 @@
                                  :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
                                 :fmt "api/environments/%s/templates"}
-                   [:repository] {:reqs [#'*session-org* #'*product-id*]
-                                  :fmt "/api/organizations/%s/products/%s/repositories"}} 
+                   [:repository] {:reqs [#'*session-org* #'*env-id*]
+                                  :fmt "/api/organizations/%s/environments/%s/repositories"}} 
         {:keys [reqs fmt]} (->> url-types
                               keys
                               (drop-while (complement #(some #{entity-type} %)))
