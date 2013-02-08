@@ -27,12 +27,15 @@
    ::enable-inline-help-checkbox "user[helptips_enabled]"
    ::clear-disabled-helptips     "clear_helptips"
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
-   ::account                     "//a[@class='header-widget' and contains(@href,'users')]"}
+   ::account                     "//a[@class='header-widget' and contains(@href,'users')]"
+   ::switcher-button             "//a[@id='switcherButton']"}
+
   ui/locators)
 
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
-  plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"})
+  plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
+  default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"})
 
 ;; Nav
 
@@ -84,7 +87,7 @@
   "Edits the given user, changing any of the given properties (can
   change more than one at once)."
   [username {:keys [inline-help clear-disabled-helptips
-                    new-password new-password-confirm new-email]}]
+                    new-password new-password-confirm new-email default-org]}]
   (nav/go-to ::named-page {:username username})
   (when-not (nil? inline-help)
     (browser checkUncheck ::enable-inline-help-checkbox inline-help))
@@ -114,6 +117,8 @@
   [username org-name env-name]
   (nav/go-to ::environments-page {:username username})
   (browser select ::default-org-select org-name)
-  (browser click (ui/environment-link env-name))
+  (when env-name
+    (browser click (ui/environment-link env-name)))
   (browser click ::save-environment)
   (notification/check-for-success))
+
