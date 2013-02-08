@@ -7,6 +7,7 @@
                      [roles :as role] 
                      [users :as user]
                      [tasks :refer :all] 
+                     [content-search :refer [list-aviable-orgs]]
                      [conf :refer [config]]
                      [api-tasks :as api]) 
             [test.tree.script :refer :all]
@@ -20,10 +21,12 @@
 
 ;;; Functions
 
-(defn step-create-org-and-user [{:keys [username org]}]
+(defn step-create-org-and-user [{:keys [username org roles default-org default-env]}]
   (api/create-user username generic-user-details)
   (api/create-organization org)
-  (user/assign {:user username :roles ["Administrator"]}))
+  (user/assign {:user username :roles (or roles ["Administrator"])})
+  (when default-org 
+    (user/assign-default-org-and-env username default-org default-env)))
 
 (defn step-set-default-org-at-login-screen [{:keys [username org]}]
   (login username (:password generic-user-details) {:default-org org
@@ -37,9 +40,24 @@
   (assert/is (= (organization/current)
                 org)))
 
+(defn step-verify-login-direct-to-new-default-org [{:keys [username new-org]}]
+  (login username (:password generic-user-details))
+  (assert/is (= (organization/current)
+                new-org)))
+
 (defn step-verify-login-prompts-org [{:keys [username org]}]
   (expecting-error [:type :katello.login/login-org-required]
                    (login username (:password generic-user-details))))
+
+(defn step-verify-only-one-org [_]
+  (assert/is (= (list-aviable-orgs) 
+                (organization/current))))
+
+(defn step-verify-multiple-orgs [_]
+  (assert/is (< 1 (count (list-aviable-orgs)))))
+  
+(defn step-set-default-org [{:keys [new-org]}]
+  (organization/switch new-org {:default-org new-org}))
 
 (defn step-unset-default-org [_]
   (organization/switch nil {:default-org :none}))
@@ -63,7 +81,33 @@
                 step-set-default-org-at-login-screen
                 step-unset-default-org
                 step-logout
-                step-verify-login-prompts-org))))
+                step-verify-login-prompts-org)))
+  
+    (deftest "Default Org - user can change default org (smoke test)"
+      (do-steps(merge (uniqueify-vals 
+                        {:username "deforg"
+                         :org "usersorg"})
+                        {:new-org "ACME_Corporation"})
+                step-create-org-and-user
+                step-set-default-org-at-login-screen
+                step-logout
+                step-verify-login-direct-to-default-org
+                step-set-default-org
+                step-verify-login-direct-to-new-default-org 
+                ))
+    
+    (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
+      (let [user (uniqueify "deforg")
+               org  (uniqueify "usersorg")]
+           (do-steps {:username user
+                      :org org
+                      :roles []
+                      :default-org "ACME_Corporation"
+                     :default-env nil}
+                   step-create-org-and-user
+                   step-set-default-org-at-login-screen
+                   step-verify-only-one-org
+                   ))))
 
 
 (defgroup user-tests
