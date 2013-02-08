@@ -7,7 +7,7 @@
                      [roles :as role] 
                      [users :as user]
                      [tasks :refer :all] 
-                     [content-search :refer [list-aviable-orgs]]
+                     [content-search :refer [list-available-orgs]]
                      [conf :refer [config]]
                      [api-tasks :as api]) 
             [test.tree.script :refer :all]
@@ -50,11 +50,11 @@
                    (login username (:password generic-user-details))))
 
 (defn step-verify-only-one-org [_]
-  (assert/is (= (list-aviable-orgs) 
+  (assert/is (= (list-available-orgs) 
                 (organization/current))))
 
 (defn step-verify-multiple-orgs [_]
-  (assert/is (< 1 (count (list-aviable-orgs)))))
+  (assert/is (< 1 (count (list-available-orgs)))))
   
 (defn step-set-default-org [{:keys [new-org]}]
   (organization/switch new-org {:default-org new-org}))

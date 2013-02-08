@@ -153,26 +153,26 @@
 (defn get-search-page-result-list-of-lists [xml-zip]
   (->  xml-zip
       (tree-edit
-      (fn [tree] (or
-                 (contains? (zip/node tree) :content)
-                 (= (:class (:attrs (zip/node tree)))
-                    "dot_icon-black")))
-      (fn [node]
-        (into []
-              (remove empty?
-                      (remove nil?
+       (fn [tree] (or
+                  (contains? (zip/node tree) :content)
+                  (= (:class (:attrs (zip/node tree)))
+                     "dot_icon-black")))
+       (fn [node]
+         (into []
+               (remove empty?
+                       (remove nil?
                                         ;converting non-displayable parts to nil
 
                                         ; converting the black dot to ** to signify a presence of something
-                              (if (= (:class (:attrs node)) "dot_icon-black")
-                                ["**"]
-                                (:content node))))))
-      identity)
-     zip/node
-     zip/vector-zip
-     normalize
-     normalize2
-     zip/node))
+                               (if (= (:class (:attrs node)) "dot_icon-black")
+                                 ["**"]
+                                 (:content node))))))
+       identity)
+      zip/node
+      zip/vector-zip
+      normalize
+      normalize2
+      zip/node))
 
 (defn get-search-page-result-list-of-lists-html [id]
      (-> id
@@ -479,6 +479,6 @@
 (defn click-repo-desc [repo-name env-name]
   (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
 
-(defn list-aviable-orgs []
+(defn list-available-orgs []
   (browser click ::switcher-button)
   (get-search-page-result-list-of-lists-html "orgbox"))
