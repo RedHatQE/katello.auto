@@ -456,6 +456,21 @@
             (assert/is (some #{(first fake/subscription-names)}
                              (ak/get-subscriptions ak-name))))))))
 
+  (deftest "Delete activation key after registering a system with it"
+    (with-unique [system-name "mysystem"
+                  key-name "auto-key"]
+      (let [target-env (first *environments*)]
+        (api/ensure-env-exist target-env {:prior library})
+        (ak/create {:name key-name
+                    :description "my description"
+                    :environment target-env})
+        (provision/with-client "ak-delete" ssh-conn
+          (client/register ssh-conn
+                           {:org "ACME_Corporation"
+                            :activationkey key-name})
+          (ak/delete key-name)
+          (client/sm-cmd ssh-conn :refresh)))))
+
   (deftest "Register a system using AK & sys count should increase by 1"
     (with-unique [system-name "mysystem"
                   group-name "my-group"
@@ -485,9 +500,9 @@
       (system/delete system-name)))
   
   (deftest "Remove multiple systems"
-     (let [system-names (take 3 (unique-names "mysys"))]
-       (create-multiple-system system-names)
-       (system/multi-delete system-names)))
+    (let [system-names (take 3 (unique-names "mysys"))]
+      (create-multiple-system system-names)
+      (system/multi-delete system-names)))
   
   (deftest "Check whether the OS of the registered system is displayed in the UI"
     ;;:blockers no-clients-defined
