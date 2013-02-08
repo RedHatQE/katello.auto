@@ -45,6 +45,7 @@
    ::load-more                 "//a[contains(@class,'load_row_link')]"
    ::column-selector           "//div[@id='column_selector']/span[contains(@class,'path_button')]"
    ::details-container         "//div[contains(@class,'details_container')]"
+   ::switcher-button           "//a[@id='switcherButton']"
    })
 
 (sel/template-fns
@@ -477,3 +478,7 @@
 
 (defn click-repo-desc [repo-name env-name]
   (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
+
+(defn list-aviable-orgs []
+  (browser click ::switcher-button)
+  (get-search-page-result-list-of-lists-html "orgbox"))
