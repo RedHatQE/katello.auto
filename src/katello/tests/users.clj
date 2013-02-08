@@ -92,7 +92,6 @@
                 step-set-default-org-at-login-screen
                 step-logout
                 step-verify-login-direct-to-default-org
-                step-verify-multiple-orgs 
                 step-set-default-org
                 step-verify-login-direct-to-new-default-org 
                 ))
