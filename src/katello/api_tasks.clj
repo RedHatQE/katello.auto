@@ -8,6 +8,7 @@
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
+(def ^:dynamic *repo-id* nil)
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
@@ -27,14 +28,18 @@
   [entity-type]
   (let [url-types {[:organization :user] {:reqs []
                                           :fmt "api/%s"}
-                   [:environment :product :provider :system] {:reqs [#'*session-org*]
-                                                              :fmt "api/organizations/%s/%s"}
+                   [:environment :provider :system] {:reqs [#'*session-org*]
+                                                     :fmt "api/organizations/%s/%s"}
                    [:changeset :repository] {:reqs [#'*session-org* #'*env-id*]
-                                 :fmt "api/organizations/%s/environments/%s/%s"}
+                                             :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
                                 :fmt "api/environments/%s/%s"}
                    [:repository] {:reqs [#'*session-org* #'*product-id*]
-                                  :fmt "/api/organizations/%s/products/%s/repositories"}} 
+                                  :fmt "/api/organizations/%s/products/%s/%s"}
+                   [:product] {:reqs [#'*env-id*]
+                                  :fmt "/api/environments/%s/%s"}
+                   [:package :erratum] {:reqs [#'*repo-id*]
+                                        :fmt "/api/repositories/%s/%s"}} 
         matching-type (filter (comp (partial some (hash-set entity-type)) key) url-types)
         and-matching-reqs (filter (comp (partial every? deref) :reqs val) matching-type)]
     (if (empty? and-matching-reqs)
@@ -79,6 +84,14 @@
    body)."
   [env-name & body]
   `(binding [*env-id* (get-id-by-name :environment ~env-name)]
+     (do ~@body)))
+
+(defmacro with-repo
+  "Executes body and makes any included katello api calls using the
+   given repository name (it's id will be looked up before executing
+   body)."
+  [repo-name & body]
+  `(binding [*repo-id* (get-id-by-name :repository ~repo-name)]
      (do ~@body)))
 
 (defn create-provider [name & [{:keys [description]}]]

@@ -7,7 +7,7 @@
                      [tasks :refer :all] 
                      [fake-content :as fake]
                      [sync-management :as sync]
-                     [conf :refer [with-org config *environments*]]) 
+                     [conf :refer [with-org config *environments* *session-user* *session-password*]]) 
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -22,6 +22,14 @@
 (def provider-name (atom nil))
 (def template-name (atom nil))
 (def envs (atom nil))
+
+(def content-map
+  {:repos             :repository
+   :products          :product
+   :packages          :package
+   :errata            :erratum
+   :errata-top-level  :erratum})
+
 
 ;; Functions
 
@@ -71,6 +79,25 @@
     (changesets/promote-delete-content from-env target-env false content)
     (verify-all-content-present content (changesets/environment-content target-env))))
 
+(defn get-content
+  ([org-name env-name entity-type] 
+    (with-org org-name (api/with-env env-name (api/all-entities entity-type))))
+  ([org-name env-name repo-name entity-type] 
+    (with-org org-name (api/with-env env-name (api/with-repo repo-name (api/all-entities entity-type))))))
+
+(defn content-deleted? 
+  [deleted-items org-name env-name content-type & [repo-name]]
+  (let [all-items (if-not repo-name 
+                    (map :name (get-content org-name env-name (content-map content-type)))
+                    (try
+                      (map :name (get-content org-name env-name repo-name (content-map content-type)))
+                      (catch IllegalArgumentException e nil)))
+        test-all  (every? true? (for [item deleted-items]
+                    (if-not (some #{item} all-items) true)))]
+    test-all))
+                    
+    
+
 (def promo-data
   (runtime-data
    [(take 2 @envs) {:products (set (take 3 (unique-names "MyProduct")))}]
@@ -115,6 +142,7 @@
                  (org/create test-org)           
                  (fake/prepare-org-custom-provider  test-org fake/custom-provider)
                  (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+  
   (conj
     (deftest "Check for, No Add-link visible if content is not promoted to next-env"
       :data-driven true
@@ -138,40 +166,61 @@
     
     (dep-chain
       (filter (complement :blockers)
-        (concat
+        (concat      
           (deftest "Deletion Changeset test-cases for custom-providers and RH-providers"
             :data-driven true
                 
             (fn [deletion-content & [provider-type]]
               (org/switch test-org)
               (let [promotion-custom-content {:products (map :name custom-products)}
-                    promotion-rh-content {:products (map :name fake/some-product-repos)}
-                    envz (take 3 (unique-names "env3"))]
+                    promotion-rh-content     {:products (map :name fake/some-product-repos)}
+                    envz                     (take 3 (unique-names "env3"))
+                    repo-name                (first (map :name (mapcat :repos custom-products)))
+                    content-type             (first (keys deletion-content))
+                    del-items1               (if (= content-type :packages) 
+                                               (for [pkg (map :name (flatten (vals deletion-content)))]
+                                                 (re-find #"\p{Alpha}+" pkg))
+                                               (for [errata (map :name (flatten (vals deletion-content)))]
+                                                 (re-find #"\p{Alpha}+_\p{Alpha}+" errata)))                                            
+                    del-items2               (if (= content-type :products) (flatten (vals deletion-content))
+                                               (map :name (flatten (vals deletion-content))))]
+
                 (environment/create-path test-org envz)
                 (if provider-type
                   (changesets/promote-delete-content library (first envz) false promotion-custom-content)
                   (changesets/promote-delete-content library (first envz) false promotion-rh-content))
-                (changesets/promote-delete-content (first envz) nil true deletion-content)))
+                (changesets/promote-delete-content (first envz) nil true deletion-content)
+                (cond
+                  (some #{content-type} [:packages :errata])
+                  (assert/is (content-deleted? del-items1 test-org (first envz) content-type repo-name))
+                                   
+                  (some #{content-type} [:products :repos])
+                  (assert/is (content-deleted? del-items2 test-org (first envz) content-type)))))
        
             [[{:products (map :name custom-products)} ["custom"]]
              [{:repos (mapcat :repos custom-products)} ["custom"]]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
                            {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
                            {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
-             [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
-                         {:name "Sea_Erratum", :product-name "safari-1_0"})} ["custom"]]
+             (with-meta
+               [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
+                           {:name "Sea_Erratum", :product-name "safari-1_0"})} ["custom"]]
+               {:blockers (open-bz-bugs "909961")})
+             
              [{:products (map :name fake/some-product-repos)}]
              [{:repos (mapcat :repos rh-products)}]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "Nature Enterprise"}
                            {:name "camel-0.1-1.noarch", :product-name "Zoo Enterprise"}
                            {:name "cat-1.0-1.noarch", :product-name "Nature Enterprise"})}]
-             [{:errata '({:name "Bird_Erratum", :product-name "Nature Enterprise"}
-                         {:name "Gorilla_Erratum", :product-name "Zoo Enterprise"})}]
+             (with-meta 
+               [{:errata '({:name "Bird_Erratum", :product-name "Nature Enterprise"}
+                           {:name "Gorilla_Erratum", :product-name "Zoo Enterprise"})}]
+               {:blockers (open-bz-bugs "909961")})
              (with-meta
                [{:errata-top-level '({:name "Bear_Erratum"}
                                      {:name "Sea_Erratum"})} ["custom"]]
                {:blockers (open-bz-bugs "874850")})])
-    
+          
           (deftest "Re-promote the deleted content"
             :data-driven true
           
@@ -180,14 +229,33 @@
               (let [promotion-custom-content {:products (map :name custom-products)}
                     deletion-content content
                     re-promote-content content
-                    envz (take 3 (unique-names "env3"))]
+                    envz (take 3 (unique-names "env3"))
+                    repo-name                (first (map :name (mapcat :repos custom-products)))
+                    content-type             (first (keys content))
+                    re-promote-items1        (if (= content-type :packages) 
+                                               (for [pkg (map :name (flatten (vals re-promote-content)))]
+                                                 (re-find #"\p{Alpha}+" pkg))
+                                               (for [errata (map :name (flatten (vals re-promote-content)))]
+                                                 (re-find #"\p{Alpha}+_\p{Alpha}+" errata)))
+                    re-promote-items2        (if (= content-type :products) (flatten (vals re-promote-content))
+                                               (map :name (flatten (vals re-promote-content))))]
+                
                 (environment/create-path test-org envz)
                 (changesets/promote-delete-content library (first envz) false promotion-custom-content)
                 (changesets/promote-delete-content (first envz) nil true deletion-content)
-                (changesets/promote-delete-content library (first envz) false re-promote-content)))
+                (changesets/promote-delete-content library (first envz) false re-promote-content))
+                (cond
+                  (some #{content-type} [:packages :errata])
+                  (assert/is (not (content-deleted? re-promote-items1 test-org (first envz) content-type repo-name)))
+                  
+                  (some #{content-type} [:products :repos])
+                  (assert/is (not (content-deleted? re-promote-items2 test-org (first envz) content-type)))))
+            
             [[{:repos (mapcat :repos custom-products)}]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
                            {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
                            {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
-             [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
-                         {:name "Sea_Erratum", :product-name "safari-1_0"})}]]))))))
+             (with-meta 
+               [{:errata '({:name "Bear_Erratum", :product-name "safari-1_0"}
+                           {:name "Sea_Erratum", :product-name "safari-1_0"})}]
+               {:blockers (open-bz-bugs "909961")})]))))))
