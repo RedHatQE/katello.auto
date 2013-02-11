@@ -8,6 +8,7 @@
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
+(def ^:dynamic *repo-id* nil)
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
@@ -27,14 +28,20 @@
   [entity-type]
   (let [url-types {[:organization :user] {:reqs []
                                           :fmt "api/%s"}
-                   [:environment :product :provider :system] {:reqs [#'*session-org*]
+                   [:environment :provider :system] {:reqs [#'*session-org*]
                                                               :fmt "api/organizations/%s/%s"}
                    [:changeset] {:reqs [#'*session-org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
                                 :fmt "api/environments/%s/templates"}
                    [:repository] {:reqs [#'*session-org* #'*env-id*]
-                                  :fmt "/api/organizations/%s/environments/%s/repositories"}} 
+                                  :fmt "/api/organizations/%s/environments/%s/repositories"}
+                   [:product] {:reqs [#'*env-id*]
+                                  :fmt "/api/environments/%s/products"}
+                   [:packages] {:reqs [#'*repo-id*]
+                                  :fmt "/api/repositories/%s/packages"}
+                   [:errata] {:reqs [#'*repo-id*]
+                                  :fmt "/api/repositories/%s/errata"}} 
         {:keys [reqs fmt]} (->> url-types
                               keys
                               (drop-while (complement #(some #{entity-type} %)))
@@ -75,6 +82,14 @@
    body)."
   [env-name & body]
   `(binding [*env-id* (get-id-by-name :environment ~env-name)]
+     (do ~@body)))
+
+(defmacro with-repo
+  "Executes body and makes any included katello api calls using the
+   given repository name (it's id will be looked up before executing
+   body)."
+  [repo-name & body]
+  `(binding [*repo-id* (get-id-by-name :repository ~repo-name)]
      (do ~@body)))
 
 (defn create-provider [name & [{:keys [description]}]]
