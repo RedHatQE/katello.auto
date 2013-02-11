@@ -87,10 +87,6 @@
                          (user/create username generic-user-details)))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
        [(random-string (int \a) (int \z) 65) :katello.notifications/username-64-char-limit]
-       ["foo   " :katello.notifications/validation-error]
-       ["   foo   " :katello.notifications/validation-error]
-       ["<a href='foo'>Click Here></a>" :katello.notifications/validation-error]
-       ["#$%^" :katello.notifications/validation-error]
        ["" :katello.notifications/username-cant-be-blank]])
 
     (deftest "Admin creates a user with a default organization"
