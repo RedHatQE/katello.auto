@@ -62,7 +62,12 @@
 
 (defn setup-client [runner]
   (let [rpm-name-prefix "candlepin-cert-consumer"
-        cmds [["subscription-manager clean"] 
+        cmds [ ;; set the hostname so not all clients register with the same name
+              ["curl -kL https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
+              ["chmod 755 sethostname.sh"]
+              ["./sethostname.sh"]
+              ["subscription-manager clean"] 
+
               ["yum remove -y '%s*'" rpm-name-prefix]
               ["rm -f *.rpm"]
               ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]
