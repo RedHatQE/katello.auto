@@ -414,21 +414,7 @@
                                      (ak/create
                                       {:name ak-name
                                        :description "my description"
-                                       :environment test-environment}))))
-
-    (deftest "create activation keys with subscriptions"
-      (with-unique [ak-name "act-key"
-                    test-org1 "redhat-org"]
-        (do
-          (let [envz (take 3 (unique-names "env"))]
-            (fake/setup-org test-org1 envz)
-            (org/switch test-org1)
-            (ak/create {:name ak-name
-                        :description "my act keys"
-                        :environment (first envz)})
-            (ak/add-subscriptions ak-name fake/subscription-names)
-            (assert/is (some #{(first fake/subscription-names)}
-                             (ak/get-subscriptions ak-name))))))))
+                                       :environment test-environment})))))
 
   (deftest "Install package group"
     :data-driven true
