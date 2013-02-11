@@ -133,8 +133,8 @@
     (deftest "Organization names and labels are unique to all orgs"
       (with-unique [name1 "name-1"
                     name2 "name-2"
-                    label1 "label"
-                    label2 "label"]
+                    label1 "label-1"
+                    label2 "label-2"]
         (organization/create name1 {:label label1})
         (expecting-error name-taken-error
                          (organization/create name1 {:label label2}))
