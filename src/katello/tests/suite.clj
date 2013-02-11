@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
-                           systems users permissions templates
+                           systems system-groups activation-keys
+                           users permissions templates
                            e2e navigation search content_search)
             katello.tests.providers.redhat
             katello.tests.providers.custom
@@ -26,6 +27,8 @@
   katello.tests.promotions/deletion-tests
   katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
+  katello.tests.system-groups/sg-tests
+  katello.tests.activation-keys/ak-tests
   katello.tests.sync_management/sync-tests
   katello.tests.users/user-tests
   katello.tests.e2e/end-to-end-tests
@@ -46,6 +49,8 @@
   katello.tests.search/search-tests
   katello.tests.environments/environment-tests
   katello.tests.systems/system-tests
+  katello.tests.system-groups/sg-tests
+  katello.tests.activation-keys/ak-tests
   katello.tests.users/user-tests
   katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests)
