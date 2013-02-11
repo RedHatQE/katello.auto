@@ -430,53 +430,6 @@
             (assert/is (some #{(first fake/subscription-names)}
                              (ak/get-subscriptions ak-name))))))))
 
-  (deftest "Register a system using AK & sys count should increase by 1"
-    (with-unique [system-name "mysystem"
-                  group-name "my-group"
-                  key-name "auto-key"]
-      (let [target-env (first *environments*)]
-        (api/ensure-env-exist target-env {:prior library})
-        (group/create group-name)
-        (system/create system-name {:sockets "1"
-                                    :system-arch "x86_64"})
-        (group/add-to group-name system-name)
-        (ak/create {:name key-name
-                    :description "my description"
-                    :environment target-env})
-        (ak/associate-system-group key-name group-name)
-        (let [syscount (group/system-count group-name)]
-          (provision/with-client "sys-count"
-            ssh-conn
-            (client/register ssh-conn
-                             {:org "ACME_Corporation"
-                              :activationkey key-name})
-            (assert/is (= (inc syscount) (group/system-count group-name))))))))
-  
-  (deftest "Remove System"
-    (with-unique [system-name "mysystem"]
-      (system/create system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (system/delete system-name)))
-  
-  (deftest "Remove multiple systems"
-     (let [system-names (take 3 (unique-names "mysys"))]
-       (create-multiple-system system-names)
-       (system/multi-delete system-names)))
-  
-  (deftest "Check whether the OS of the registered system is displayed in the UI"
-    ;;:blockers no-clients-defined
-
-    (provision/with-client "check-distro"
-      ssh-conn
-      (client/register ssh-conn
-                       {:username *session-user*
-                        :password *session-password*
-                        :org "ACME_Corporation"
-                        :env test-environment
-                        :force true})
-      (assert/is (= (client/get-distro ssh-conn)
-                    (system/get-os (client/my-hostname ssh-conn))))))
-
   (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"

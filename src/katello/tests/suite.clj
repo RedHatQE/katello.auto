@@ -29,7 +29,6 @@
   katello.tests.sync_management/sync-tests
   katello.tests.users/user-tests
   katello.tests.e2e/end-to-end-tests
-  katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
   katello.tests.content-search/content-search-tests)
@@ -47,7 +46,6 @@
   katello.tests.environments/environment-tests
   katello.tests.systems/system-tests
   katello.tests.users/user-tests
-  katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests)
 
 (defn make-suite
