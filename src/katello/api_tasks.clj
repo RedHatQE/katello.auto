@@ -2,6 +2,7 @@
   (:require [slingshot.slingshot :refer [throw+]] 
             [inflections.core :refer [pluralize singularize]]
             [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
+            [clojure.set :refer [index]]
             (katello [rest :as rest] 
                      [conf :refer [config *session-user* *session-password* *session-org*]] 
                      [tasks :refer [uniqueify library promotion-deletion-lock chain-envs]])))
@@ -73,10 +74,15 @@
 (defn get-id-by-name [entity-type entity-name]
   (let [all (get-by-name entity-type entity-name)
         ct (count all)]
-    (if (not= ct 1)
+    (cond 
+      (and (not= ct 1) (not= entity-type :repository))
       (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
                                                 ct (name entity-type) entity-name)))
-      (-> all first :id))))
+      (= ct 1)
+      (-> all first :id)
+      
+      (and (> ct 1) (= entity-type :repository))
+      (first (map :id (get (index all [:name]) {:name entity-name}))))))
 
 (defmacro with-env
   "Executes body and makes any included katello api calls using the

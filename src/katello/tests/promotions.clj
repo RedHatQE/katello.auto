@@ -91,10 +91,8 @@
                     (map :name (get-content org-name env-name (content-map content-type)))
                     (try
                       (map :name (get-content org-name env-name repo-name (content-map content-type)))
-                      (catch IllegalArgumentException e nil)))
-        test-all  (every? true? (for [item deleted-items]
-                    (if-not (some #{item} all-items) true)))]
-    test-all))
+                      (catch IllegalArgumentException e nil)))]
+    (not (some (set all-items) deleted-items))))
                     
     
 
@@ -115,10 +113,14 @@
              (for [repo (:repos prod)] 
                (assoc repo :product-name (:name prod))))))
 
+(def custom-data (mapcat :repos custom-products))
+
 (def rh-products 
   (for [prod fake/some-product-repos]
     (assoc prod :repos (vec (for [repo-name (:repos prod)]
                               {:name repo-name :product-name (:name prod)})))))
+
+(def rh-data (mapcat :repos rh-products))
 
 ;; Tests
 
@@ -155,7 +157,7 @@
           (environment/create-path test-org envz)
           (assert/is (changesets/add-link-exists? library content))))
        
-      [[{:repos (mapcat :repos custom-products)}]
+      [[{:repos custom-data}]
        [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
                      {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
                      {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
@@ -175,7 +177,10 @@
               (let [promotion-custom-content {:products (map :name custom-products)}
                     promotion-rh-content     {:products (map :name fake/some-product-repos)}
                     envz                     (take 3 (unique-names "env3"))
-                    repo-name                (first (map :name (mapcat :repos custom-products)))
+                    product-names             (keys (group-by :product-name (flatten (vals deletion-content))))
+                    repo-name                (fn [prd-name] (if (= provider-type "custom") 
+                                               (first (map :name (get (index custom-data [:product-name]) {:product-name prd-name})))
+                                               (first (map :name (get (index rh-data [:product-name]) {:product-name prd-name})))))
                     content-type             (first (keys deletion-content))
                     del-items1               (if (= content-type :packages) 
                                                (for [pkg (map :name (flatten (vals deletion-content)))]
@@ -192,13 +197,14 @@
                 (changesets/promote-delete-content (first envz) nil true deletion-content)
                 (cond
                   (some #{content-type} [:packages :errata])
-                  (assert/is (content-deleted? del-items1 test-org (first envz) content-type repo-name))
+                  (assert/is (every? true? (for [prd-name product-names]
+                                             (content-deleted? del-items1 test-org (first envz) content-type (repo-name prd-name)))))
                                    
                   (some #{content-type} [:products :repos])
                   (assert/is (content-deleted? del-items2 test-org (first envz) content-type)))))
        
             [[{:products (map :name custom-products)} ["custom"]]
-             [{:repos (mapcat :repos custom-products)} ["custom"]]
+             [{:repos custom-data} ["custom"]]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
                            {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
                            {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})} ["custom"]]
@@ -208,7 +214,7 @@
                {:blockers (open-bz-bugs "909961")})
              
              [{:products (map :name fake/some-product-repos)}]
-             [{:repos (mapcat :repos rh-products)}]
+             [{:repos rh-data}]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "Nature Enterprise"}
                            {:name "camel-0.1-1.noarch", :product-name "Zoo Enterprise"}
                            {:name "cat-1.0-1.noarch", :product-name "Nature Enterprise"})}]
@@ -227,10 +233,10 @@
             (fn [content]
               (org/switch test-org)
               (let [promotion-custom-content {:products (map :name custom-products)}
-                    deletion-content content
-                    re-promote-content content
-                    envz (take 3 (unique-names "env3"))
-                    repo-name                (first (map :name (mapcat :repos custom-products)))
+                    deletion-content         content
+                    re-promote-content       content
+                    envz                     (take 3 (unique-names "env3"))
+                    repo-name                (first (map :name custom-data))
                     content-type             (first (keys content))
                     re-promote-items1        (if (= content-type :packages) 
                                                (for [pkg (map :name (flatten (vals re-promote-content)))]
@@ -243,15 +249,15 @@
                 (environment/create-path test-org envz)
                 (changesets/promote-delete-content library (first envz) false promotion-custom-content)
                 (changesets/promote-delete-content (first envz) nil true deletion-content)
-                (changesets/promote-delete-content library (first envz) false re-promote-content))
+                (changesets/promote-delete-content library (first envz) false re-promote-content)
                 (cond
                   (some #{content-type} [:packages :errata])
                   (assert/is (not (content-deleted? re-promote-items1 test-org (first envz) content-type repo-name)))
                   
                   (some #{content-type} [:products :repos])
-                  (assert/is (not (content-deleted? re-promote-items2 test-org (first envz) content-type)))))
+                  (assert/is (not (content-deleted? re-promote-items2 test-org (first envz) content-type))))))
             
-            [[{:repos (mapcat :repos custom-products)}]
+            [[{:repos custom-data}]
              [{:packages '({:name "bear-4.1-1.noarch", :product-name "safari-1_0"}
                            {:name "camel-0.1-1.noarch", :product-name "safari-1_0"}
                            {:name "cat-1.0-1.noarch", :product-name "safari-1_0"})}]
