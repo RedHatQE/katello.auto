@@ -46,7 +46,7 @@
                   {:also-remove-systems? also-remove-systems?})))
 
 (def step-remove (mkstep-remove :group-name))
-(def step-remove (mkstep-remove :copy-name))
+(def step-remove-copy (mkstep-remove :copy-name))
 
 (defn step-verify-system-presence
   "Verifies that the system is either present, or not present after
@@ -332,7 +332,7 @@
                                     :copy-name  "imthecopy"}))
                       step-add-new-system
                       step-copy
-                      step-remove
+                      step-remove-copy
                       step-verify-system-presence))
 
           [[{:also-remove-systems? true}]
