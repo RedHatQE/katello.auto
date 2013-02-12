@@ -204,6 +204,12 @@
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
-        (user/assign {:user username, :roles ["Administrator"]}))))
+        (user/assign {:user username, :roles ["Administrator"]})))
+  
+     (deftest "Roles can be removed from user"
+      (with-unique [username "autouser"]
+        (user/create username generic-user-details)
+        (user/assign {:user username, :roles ["Administrator" "Read Everything"]})
+        (user/unassign {:user username, :roles ["Read Everything"]}))))
 
   default-org-tests)
