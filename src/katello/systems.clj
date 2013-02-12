@@ -34,6 +34,8 @@
    ::select-package-group        "perform_action_package_groups"
    ::select-package              "perform_action_packages"
    ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::add-package-error            (ui/link "Add Package Error")
+   ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
 
    ;;system-edit details
    ::details                     (ui/menu-link "general")
@@ -171,10 +173,10 @@
   (browser getText ::operating-system))
 
 (defn add-package "Add a package or package group to a system."
-  [system-name {:keys [package package-group]}]
+  [system-name exp-status {:keys [package package-group]}]
   (nav/go-to ::content-packages-page {:system-name system-name})
-  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
-                                        [package-group "Add Package Group Complete" true]]]
+  (doseq [[items status is-group?] [[package exp-status false]
+                                        [package-group exp-status true]]]
     (when items
       (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
@@ -197,3 +199,9 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
+
+(defn get-install-result
+   [system-name exp-status package-name]
+   (add-package system-name exp-status {:package package-name})
+   (browser click ::add-package-error)
+   (assert/is (= "No package(s) available to install" (browser getText ::install-result))))

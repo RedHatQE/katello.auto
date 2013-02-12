@@ -63,9 +63,8 @@
 (defn setup-client [runner]
   (let [rpm-name-prefix "candlepin-cert-consumer"
         cmds [ ;; set the hostname so not all clients register with the same name
-              ["curl -kL https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
-              ["chmod 755 sethostname.sh"]
-              ["./sethostname.sh"]
+              ["wget -O /tmp/sethostname.sh --no-check-certificate %s" (@config :sethostname)]
+              ["source /tmp/sethostname.sh"]
               ["subscription-manager clean"] 
 
               ["yum remove -y '%s*'" rpm-name-prefix]

@@ -75,7 +75,10 @@
    
    ["--trace-excludes" "Functions to exclude from tracing"
     :parse-fn #(->> (string/split % #",") (map symbol) (into #{}))]
-
+ 
+   ["--sethostname" "URL of a script which can set the hostname of newly created VM"
+    :default "https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
+   
    ["--agent-repo" "URL of a .repo file to point to where katello-agent can be installed from."
     :default "https://raw.github.com/gist/1978881"]])
 

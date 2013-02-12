@@ -4,6 +4,7 @@
                      [api-tasks :as api]
                      [validation :as val]
                      [organizations :as org]
+                     [environments :as env]
                      [client :as client]
                      [providers :as provider]
                      [repositories :as repo]
@@ -52,10 +53,9 @@
   (assert/is (= (:environment_id system)
                 (api/get-id-by-name :environment test-environment))))
 
-(defn step-to-configure-server-for-pkg-install [product-name]
+(defn step-to-configure-server-for-pkg-install [product-name target-env]
   (let [provider-name (uniqueify "custom_provider")
         repo-name (uniqueify "zoo_repo")
-        target-env (first *environments*)
         org-name "ACME_Corporation"
         testkey (uniqueify "mykey")]
     (org/switch)
@@ -139,12 +139,12 @@
     :description "Add package and package group"
     :blockers api/katello-only
 
-    (fn [package-name]
+    (fn [exp-status package-name]
       (let [target-env (first *environments*)
             org-name "ACME_Corporation"
             sys-name (uniqueify "pkg_install")
             product-name (uniqueify "fake")]
-        (step-to-configure-server-for-pkg-install product-name)
+        (step-to-configure-server-for-pkg-install product-name target-env)
         (provision/with-client sys-name
           ssh-conn
           (client/register ssh-conn
@@ -156,7 +156,37 @@
           (let [mysys (client/my-hostname ssh-conn)]
             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-            (system/add-package mysys package-name)))))
+            (system/add-package mysys exp-status package-name)))))
 
-    [[{:package "cow"}]
-     [{:package-group "birds"}]]))
+    [["Add Package Complete" {:package "cow"}]
+     ["Add Package Group Complete" {:package-group "birds"}]])
+  
+  (deftest "Install package after moving a system from one env to other"
+   (with-unique [env-dev  "dev"
+                 env-test  "test"
+                 product-name "fake"]
+     (let [org-name "ACME_Corporation"
+           exp-status "Add Package Error"]
+       (doseq [env [env-dev env-test]]
+         (env/create env {:org-name org-name}))
+       (org/switch org-name)
+       (step-to-configure-server-for-pkg-install product-name env-dev)
+       (provision/with-client "env_change"
+           ssh-conn
+           (client/register ssh-conn
+                            {:username *session-user*
+                             :password *session-password*
+                             :org org-name
+                             :env env-dev
+                             :force true})
+           (let [mysys (client/my-hostname ssh-conn)]
+             (assert/is (= env-dev (system/environment mysys)))
+             (system/set-environment mysys env-test)
+             (assert/is (= env-test (system/environment mysys)))
+             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
+             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+             (client/sm-cmd ssh-conn :refresh)
+             (client/run-cmd ssh-conn "yum repolist")
+             (system/get-install-result mysys exp-status "cow")
+             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
+               (assert/is (->> cmd_result :exit-code (= 1))))))))))
