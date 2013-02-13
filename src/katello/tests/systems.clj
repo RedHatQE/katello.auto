@@ -120,10 +120,10 @@
       (create-multiple-systems system-names)
       (system/multi-delete system-names)))
 
-  (deftest "Check whether the OS of the registered system is displayed in the UI"
+  (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined
 
-    (provision/with-client "check-distro"
+    (provision/with-client "sys-detail"
       ssh-conn
       (client/register ssh-conn
                        {:username *session-user*
@@ -131,8 +131,11 @@
                         :org "ACME_Corporation"
                         :env test-environment
                         :force true})
-      (assert/is (= (client/get-distro ssh-conn)
-                    (system/get-os (client/my-hostname ssh-conn))))))
+      (let [hostname (client/my-hostname ssh-conn)
+            details (system/get-details hostname)]
+        (assert/is (= (client/get-distro ssh-conn)
+                      (details "OS")))
+        (assert/is (every? (complement empty?) (vals details))))))
 
   (deftest "Install package group"
     :data-driven true
