@@ -35,6 +35,7 @@
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
   plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
+  minus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-minus')]"
   default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"})
 
 ;; Nav
@@ -72,16 +73,29 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
 
+(defn modify-role [{:keys [user roles plus-minus]}]
+  (nav/go-to ::roles-permissions-page {:username user})
+  (doseq [role roles]
+    (browser click (plus-minus role)))
+  (browser click ::save-roles)
+  (notification/check-for-success {:match-pred
+                                   (notification/request-type? :users-update-roles)}))
+
 (defn assign
   "Assigns the given user to the given roles. Roles should be a list
   of roles to assign."
   [{:keys [user roles]}]
-  (nav/go-to ::roles-permissions-page {:username user})
-  (doseq [role roles]
-    (browser click (plus-icon role)))
-  (browser click ::save-roles)
-  (notification/check-for-success {:match-pred
-                                   (notification/request-type? :users-update-roles)}))
+  (modify-role  {:user user ,
+                        :roles roles
+                        :plus-minus plus-icon}))
+
+(defn unassign
+  "Unassigns the given user to the given roles. Roles should be a list
+  of roles to assign. Reversal of assign."
+  [{:keys [user roles]}]
+  (modify-role  {:user user,
+                        :roles roles
+                        :plus-minus minus-icon}))
 
 (defn edit
   "Edits the given user, changing any of the given properties (can
