@@ -111,14 +111,15 @@
            (java.io.File. dest)))
 
 (defn prepare-org
-  "Clones a manifest, uploads it to the given org, and then enables
-  and syncs the given repos"
+  "Clones a manifest, uploads it to the given org (via api), and then
+   enables and syncs the given repos"
   [org-name repos]
   (let [dl-loc (manifest/new-tmp-loc)]
     (download-original dl-loc)
     (with-org org-name
-      (org/switch)
-      (subscriptions/upload-new-cloned-manifest dl-loc {:repository-url (@config :redhat-repo-url)})
+      (let [clone-loc (manifest/new-tmp-loc)]
+        (manifest/clone dl-loc clone-loc)
+        (api/upload-manifest clone-loc (@config :redhat-repo-url)))
       (when (api/is-katello?)
         (repo/enable-redhat repos)
         (sync/perform-sync repos)))))

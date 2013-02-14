@@ -47,7 +47,7 @@
 (defn step-upload-manifest [{:keys [org-name manifest-loc repository-url] :as m}]
   (with-org org-name
     (organization/switch)
-    (subscriptions/upload-manifest manifest-loc (select-keys m [:repository-url]))))
+    (api/upload-manifest manifest-loc repository-url)))
 
 (defn step-verify-enabled-repositories [{:keys [org-name enable-repos]}]
   (when (api/is-katello?)
@@ -148,38 +148,36 @@
 
     redhat-promoted-content-tests))  
 
+(defn upload-with-redhat-repo [manifest-loc]
+  (api/upload-manifest manifest-loc (@config :redhat-repo-url)))
+
 (defgroup manifest-tests
   :group-setup (partial fake-content/download-original manifest-tmp-loc)
   
   (deftest "Upload the same manifest to an org, expecting an error message"	  	
     (let [org-name (uniqueify "dup-manifest")
-          test-manifest (manifest/new-tmp-loc)
-          upload #(subscriptions/upload-manifest % {:repository-url
-                                      (@config :redhat-repo-url)})]
+          test-manifest (manifest/new-tmp-loc)]
       (api/create-organization org-name)
       (with-org org-name
         (organization/switch)
         (manifest/clone manifest-tmp-loc test-manifest)
-        (upload test-manifest)
+        (upload-with-redhat-repo test-manifest)
         (expecting-error (common/errtype :katello.notifications/import-same-as-existing-data)
-                         (upload test-manifest)))))
+                         (upload-with-redhat-repo test-manifest)))))
 
   (deftest "Upload a previously used manifest into another org"
     (let [two-orgs (take 2 (unique-names "man-reuse"))
-          test-manifest (manifest/new-tmp-loc)
-          upload (fn [loc]
-                   (subscriptions/upload-manifest loc {:repository-url
-                                         (@config :redhat-repo-url)}))]
+          test-manifest (manifest/new-tmp-loc)]
       (doseq [org two-orgs]
         (api/create-organization org))
       (manifest/clone manifest-tmp-loc test-manifest)
       (with-org (first two-orgs)
         (organization/switch)
-        (upload test-manifest))
+        (upload-with-redhat-repo test-manifest))
       (with-org (second two-orgs)
         (organization/switch)
         (expecting-error (common/errtype :katello.notifications/distributor-has-already-been-imported)
-                         (upload test-manifest)))))
+                         (upload-with-redhat-repo test-manifest)))))
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
     (do-steps {:org-name (uniqueify "bz786963")
