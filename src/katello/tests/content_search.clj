@@ -3,7 +3,6 @@
                      [content-search :as content-search]
                      [organizations :as org]
                      [environments  :as env]
-                     [manifest      :as manifest]
                      [conf          :refer [config with-org]]
                      [changesets :refer [promote-delete-content]]
                      [api-tasks     :as api]
