@@ -270,15 +270,13 @@
 
 (defn upload-manifest [file-name repo-url]
   (let [prov-id (get-id-by-name :provider "Red Hat")]
-    (rest/put (api-url "/api/providers/" prov-id) {:provider {:repository_url repo-url}})  
-    (rest/post (api-url "/api/providers/" prov-id "/import_manifest")
-               {:multipart [{:name "Filename"
-                             :content file-name
-                             :encoding "UTF-8"}
-                            {:name file-name
-                             :content (clojure.java.io/file file-name)
-                             :mime-type "application/zip"
-                             :encoding "UTF-8"}]})))
+    (list
+     (rest/put (api-url "/api/providers/" prov-id) {:body {:provider {:repository_url repo-url}}})  
+     (rest/post (api-url "/api/providers/" prov-id "/import_manifest")
+                {:multipart [{:name "import"
+                              :content (clojure.java.io/file file-name)
+                              :mime-type "application/zip"
+                              :encoding "UTF-8"}]}))))
 
 (defn sync-repo [repo-name & [timeout-ms]]
   (let [url (->> repo-name
