@@ -89,6 +89,7 @@
              (let [add-items (map :name repos)]
                (sel/->browser (click ::products-category)
                               (click (select-product prod-item))
+                              (sleep 5000)
                               (refresh)
                               (click (->> category name (format "katello.changesets/select-%s") keyword)))
                (if (= category :errata) (browser click ::select-errata-all))

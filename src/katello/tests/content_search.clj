@@ -501,4 +501,5 @@
 (defgroup content-search-tests
   content-search-repo-compare
   content-search-errata
-  content-search-env-compare)
+  content-search-env-compare
+  content-search-tests-ensure-env)
