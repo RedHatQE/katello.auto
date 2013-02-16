@@ -173,10 +173,10 @@
   (browser getText ::operating-system))
 
 (defn add-package "Add a package or package group to a system."
-  [system-name exp-status {:keys [package package-group]}]
+  [system-name {:keys [package package-group]}]
   (nav/go-to ::content-packages-page {:system-name system-name})
-  (doseq [[items status is-group?] [[package exp-status false]
-                                        [package-group exp-status true]]]
+  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
+                                        [package-group "Add Package Group Complete" true]]]
     (when items
       (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
@@ -201,7 +201,9 @@
                     (browser getText ::pkg-install-status))))))
 
 (defn get-install-result
-   [system-name exp-status package-name]
-   (add-package system-name exp-status {:package package-name})
-   (browser click ::add-package-error)
-   (assert/is (= "No package(s) available to install" (browser getText ::install-result))))
+   [system-name package-name]
+   (try 
+     (add-package system-name {:package package-name})
+     (catch AssertionError e)
+     (finally (browser click ::add-package-error)
+              (assert/is (= "No package(s) available to install" (browser getText ::install-result))))))

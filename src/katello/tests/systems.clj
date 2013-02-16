@@ -139,7 +139,7 @@
     :description "Add package and package group"
     :blockers api/katello-only
 
-    (fn [exp-status package-name]
+    (fn [package-name]
       (let [target-env (first *environments*)
             org-name "ACME_Corporation"
             sys-name (uniqueify "pkg_install")
@@ -156,17 +156,16 @@
           (let [mysys (client/my-hostname ssh-conn)]
             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-            (system/add-package mysys exp-status package-name)))))
+            (system/add-package mysys package-name)))))
 
-    [["Add Package Complete" {:package "cow"}]
-     ["Add Package Group Complete" {:package-group "birds"}]])
+    [[{:package "cow"}]
+     [{:package-group "birds"}]])
   
   (deftest "Install package after moving a system from one env to other"
    (with-unique [env-dev  "dev"
                  env-test  "test"
                  product-name "fake"]
-     (let [org-name "ACME_Corporation"
-           exp-status "Add Package Error"]
+     (let [org-name "ACME_Corporation"]
        (doseq [env [env-dev env-test]]
          (env/create env {:org-name org-name}))
        (org/switch org-name)
@@ -187,6 +186,6 @@
              (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
              (client/sm-cmd ssh-conn :refresh)
              (client/run-cmd ssh-conn "yum repolist")
-             (system/get-install-result mysys exp-status "cow")
+             (system/get-install-result mysys "cow")
              (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
                (assert/is (->> cmd_result :exit-code (= 1))))))))))
