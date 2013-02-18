@@ -91,3 +91,14 @@
 
 (defn go-to [location-kw & [argmap]]
   (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap )) 
+
+(defn returns-403? [url]
+  (=
+    (clojure.string/join "\n "
+     ["403 - Permission denied You are not authorised to perform this action."
+      "Please request the required privileges from an administrator."
+      "Back"])
+  (->browser 
+    (open url)
+    (getText "//article[@id='maincontent']"))))
+
