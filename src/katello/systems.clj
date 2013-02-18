@@ -9,6 +9,14 @@
 
 ;; Locators
 
+(sel/template-fns
+ {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+  subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+  checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
+  sysgroup-checkbox               "//input[@title='%s']"
+  environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
+  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
+
 (ui/deflocators
   {::new                         "new"
    ::create                      "system_submit"
@@ -42,21 +50,13 @@
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
    ::release-version-select      "system[releaseVer]"
-   ::environment                 "//div[@id='environment_path_selector']"
-   ::operating-system            "//label[contains(.,'OS')]/../following-sibling::*[1]"
+   ::environment                 "//div[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
-
+   
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
    ::unsubscribe                 "unsub_submit"})
-
-(sel/template-fns
- {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
-  subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
-  checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
-  sysgroup-checkbox               "//input[@title='%s']"
-  environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"})
 
 ;; Nav
 
@@ -165,10 +165,15 @@
   (nav/go-to ::details-page {:system-name system-name})
   (browser getText ::environment))
 
-(defn get-os "Get operating system of the system"
-  [system-name]
+(defn get-details [system-name]
   (nav/go-to ::details-page {:system-name system-name})
-  (browser getText ::operating-system))
+  (let [details ["Name" "Description" "OS" "Release" "Release Version"
+                 "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
+                 "Checked In" "Registered" "Last Booted" "Activation Key"
+                 "System Type" "Host"]]
+    (zipmap details
+            (doall (for [detail details]
+                     (browser getText (system-detail-textbox detail)))))))
 
 (defn add-package "Add a package or package group to a system."
   [system-name {:keys [package package-group]}]

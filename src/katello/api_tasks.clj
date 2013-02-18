@@ -29,23 +29,27 @@
                                           :fmt "api/%s"}
                    [:environment :product :provider :system] {:reqs [#'*session-org*]
                                                               :fmt "api/organizations/%s/%s"}
-                   [:changeset] {:reqs [#'*session-org* #'*env-id*]
+                   [:changeset :repository] {:reqs [#'*session-org* #'*env-id*]
                                  :fmt "api/organizations/%s/environments/%s/%s"}
                    [:template] {:reqs [#'*env-id*]
-                                :fmt "api/environments/%s/templates"}
-                   [:repository] {:reqs [#'*session-org* #'*env-id*]
-                                  :fmt "/api/organizations/%s/environments/%s/repositories"}} 
-        {:keys [reqs fmt]} (->> url-types
-                              keys
-                              (drop-while (complement #(some #{entity-type} %)))
-                              first
-                              url-types)
-        unsat (filter #(-> % deref nil?) reqs)]
-    (if-not (empty? unsat)
+                                :fmt "api/environments/%s/%s"}
+                   [:repository] {:reqs [#'*session-org* #'*product-id*]
+                                  :fmt "/api/organizations/%s/products/%s/repositories"}} 
+        matching-type (filter (comp (partial some (hash-set entity-type)) key) url-types)
+        and-matching-reqs (filter (comp (partial every? deref) :reqs val) matching-type)]
+    (if (empty? and-matching-reqs)
       (throw (IllegalArgumentException.
               (format "%s are required for entity type %s."
-                      (pr-str (map #(-> % meta :name) reqs)) (name entity-type)))))
-    (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))
+                      (->> matching-type
+                           vals
+                           (map :reqs)
+                           (interpose " or ")
+                           (apply str))
+                      
+                      (name entity-type))))
+      
+      (let [{:keys [reqs fmt]} (-> and-matching-reqs first val)]
+        (apply format fmt (conj (vec (map deref reqs)) (-> entity-type name pluralize)))))))
 
 (defn all-entities
   "Returns a list of all the entities of the given entity-type. If
@@ -270,15 +274,13 @@
 
 (defn upload-manifest [file-name repo-url]
   (let [prov-id (get-id-by-name :provider "Red Hat")]
-    (rest/put (api-url "/api/providers/" prov-id) {:provider {:repository_url repo-url}})  
-    (rest/post (api-url "/api/providers/" prov-id "/import_manifest")
-               {:multipart [{:name "Filename"
-                             :content file-name
-                             :encoding "UTF-8"}
-                            {:name file-name
-                             :content (clojure.java.io/file file-name)
-                             :mime-type "application/zip"
-                             :encoding "UTF-8"}]})))
+    (list
+     (rest/put (api-url "/api/providers/" prov-id) {:body {:provider {:repository_url repo-url}}})  
+     (rest/post (api-url "/api/providers/" prov-id "/import_manifest")
+                {:multipart [{:name "import"
+                              :content (clojure.java.io/file file-name)
+                              :mime-type "application/zip"
+                              :encoding "UTF-8"}]}))))
 
 (defn sync-repo [repo-name & [timeout-ms]]
   (let [url (->> repo-name

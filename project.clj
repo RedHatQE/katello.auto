@@ -24,9 +24,8 @@
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.3-SNAPSHOT"]
                  [com.redhat.qe/deltacloud.client "1.1.0-SNAPSHOT"]]
-  :jvm-opts ["-Xmx384m" "-Xms48m"]
+  :jvm-opts ["-Xmx640m" "-Xms48m"]
   :repositories {"my-clojars" {:url "http://clojars.org/repo"
                                :snapshots {:update :always}}
                  "my-central" {:url "http://repo1.maven.org/maven2"
-                               :snapshots false}}
-  :plugins [[codox "0.6.3"]])
+                               :snapshots false}})

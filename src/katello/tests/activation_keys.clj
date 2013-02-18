@@ -22,6 +22,7 @@
 
 (defgroup ak-tests
   :group-setup #(system-tests/create-test-environment)
+  :test-setup org/before-test-switch
   
   (deftest "Create an activation key"
     :blockers (open-bz-bugs "750354")
