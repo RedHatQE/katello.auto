@@ -1,7 +1,7 @@
 (ns katello.tests.permissions
   (:refer-clojure :exclude [fn])
   (:require (katello [ui-common :as common]
-                     [login :refer [login]]
+                     [login :refer [login  logged-in?]]
                      [navigation :as nav]
                      [validation :as v]
                      [api-tasks :as api]
@@ -47,6 +47,27 @@
 (defn- access-org [org]
   (fn [] (nav/go-to :katello.organizations/named-page {:org-name org})))
 
+(defn verify-role-access 
+
+  [& {:keys [rolename allowed-actions disallowed-actions]}]
+   (let [username (uniqueify "user-perm")
+        pw "password"
+        try-all-with-user (fn [actions]
+                            (conf/with-creds username pw
+                              (login)
+                              (try-all actions)))]
+     (api/create-user username {:password pw
+                               :email (str username "@my.org")})
+     (when rolename
+       (role/edit rolename {:users [username]}))
+     (try
+      (let [with-perm-results (try-all-with-user allowed-actions)
+            no-perm-results (try-all-with-user disallowed-actions)]
+        (assert/is (and (every? denied-access? (vals no-perm-results))
+                        (every? has-access? (vals with-perm-results)))))
+      (finally
+        (login)))))
+
 (defn verify-access
   "Assigns a new user to a new role with the given permissions. That
    user is logs in, and tries the allowed-actions to ensure they all
@@ -56,28 +77,11 @@
    testing a permission to modify users, you need a test user to
    attempt to modify)."
   [& {:keys [permissions allowed-actions disallowed-actions setup]}] {:pre [permissions]}
-  (let [rolename (uniqueify "role")
-        username (uniqueify "user-perm")
-        pw "password"
-        try-all-with-user (fn [actions]
-                            (conf/with-creds username pw
-                              (login)
-                              (try-all actions)) )]
-    (api/create-user username {:password pw
-                               :email (str username "@my.org")})
+  (let [rolename (uniqueify "role")]
     (when setup (setup))
-    
     (role/create rolename)
-    (role/edit rolename {:add-permissions permissions
-                         :users [username]})
-    
-    (try
-      (let [with-perm-results (try-all-with-user allowed-actions)
-            no-perm-results (try-all-with-user disallowed-actions)]
-        (assert/is (and (every? denied-access? (vals no-perm-results))
-                        (every? has-access? (vals with-perm-results)))))
-      (finally
-        (login)))))
+    (role/edit rolename {:add-permissions permissions})
+    (apply verify-role-access [:rolename rolename :allowed-actions allowed-actions :disallowed-actions disallowed-actions])))
 
 (def create-an-env
   (fn [] (environment/create (uniqueify "blah") {:org-name (@conf/config :admin-org)})))
@@ -319,6 +323,41 @@
                                                     :verbs ["Read Organization"]}]}]
                   :users [user-name]}))
 
+    (deftest "Verify user with no role has no access"
+      :blockers (fn [t] (if (api/is-headpin?)
+                         ((open-bz-bugs "868179") t)
+                         []))
+      :data-driven true
+      
+      (fn [forbidden-url-list allowed-url-list]
+           (let [username (uniqueify "user-perm")
+                 pw "password"]
+             (api/create-user username {:password pw :email (str username "@my.org")})
+           (conf/with-creds username pw
+             (try (login) (catch Exception e)) ;ERROR, notification too soon, test things we havent logged in
+             (assert/is logged-in?) ; so I suppress errors and check manually
+             (assert/is 
+               (and
+                 (every? nav/returns-403? forbidden-url-list)
+                 (not-any? nav/returns-403? allowed-url-list)))))
+           (login))
+      
+      [[(map #(str "/katello/" %)
+           ["subscriptions"
+		       "systems"
+		       "systems/environments"
+		       "system_groups"
+		       "roles"
+		       "sync_management/index"
+		       "content_search"
+		       "system_templates"
+		       "organizations"
+		       "providers"])
+       (map #(str "/katello/" %)
+           ["users"])]])
+		          
+      
+  
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true
       :blockers (fn [t] (if (api/is-headpin?)
