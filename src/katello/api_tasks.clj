@@ -41,8 +41,10 @@
                                   :fmt "/api/environments/%s/products"}
                    [:packages] {:reqs [#'*repo-id*]
                                   :fmt "/api/repositories/%s/packages"}
-                   [:errata] {:reqs [#'*repo-id*]
-                                  :fmt "/api/repositories/%s/errata"}} 
+                  ;; [:errata] {:reqs [#'*repo-id*]
+                  ;;                :fmt "/api/repositories/%s/errata"}
+                   [:errata] {:reqs []
+                              :fmt "/api/errata"}} 
         {:keys [reqs fmt]} (->> url-types
                               keys
                               (drop-while (complement #(some #{entity-type} %)))
