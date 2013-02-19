@@ -7,6 +7,7 @@
                      [users :as user]
                      [ui-common :as common]
                      [organizations :as organization])
+            [serializable.fn :refer [fn]]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -50,6 +51,8 @@
   (deftest "login as valid user"
     (login-admin)) 
 
+  
+  
   (deftest "login as invalid user"
     :data-driven true
     :blockers    (open-bz-bugs "730738")
@@ -61,4 +64,13 @@
      ["" ""]
      ["" "mypass"]
      ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]]))
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]])
+
+  
+  (deftest "login case sensitivity"
+    :data-driven true
+    verify-invalid-login-rejected
+
+    [(fn [] [(.toUpperCase *session-user*) (.toUpperCase *session-password*)])
+     (fn [] [(.toUpperCase *session-user*) *session-password*])
+     (fn [] [*session-user* (.toUpperCase *session-password*)])]))
