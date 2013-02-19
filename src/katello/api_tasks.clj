@@ -38,7 +38,7 @@
                    [:repository] {:reqs [#'*session-org* #'*product-id*]
                                   :fmt "/api/organizations/%s/products/%s/%s"}
                    [:product] {:reqs [#'*env-id*]
-                                  :fmt "/api/environments/%s/%s"}
+                               :fmt "/api/environments/%s/%s"}
                    [:package :erratum] {:reqs [#'*repo-id*]
                                         :fmt "/api/repositories/%s/%s"}} 
         matching-type (filter (comp (partial some (hash-set entity-type)) key) url-types)
