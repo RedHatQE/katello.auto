@@ -1,6 +1,7 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
+            [slingshot.slingshot :refer [throw+]]
             [test.assert :as assert]
             (katello [navigation :as nav]
                      [notifications :as notification]
@@ -183,8 +184,10 @@
                      (typeKeys ::package-name items)
                      (click ::add-content))
       (Thread/sleep 50000)
-      (assert/is (= exp-status
-                    (browser getText ::pkg-install-status))))))
+      (when-not (= exp-status
+                   (browser getText ::pkg-install-status))
+        (throw+ {:type ::package-install-failed :msg "Add Package Error"})))))
+
 
 (defn remove-package "Remove a package or package group from a system."
   [system-name {:keys [package package-group]}]
@@ -199,11 +202,3 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
-
-(defn get-install-result
-   [system-name package-name]
-   (try 
-     (add-package system-name {:package package-name})
-     (catch AssertionError e)
-     (finally (browser click ::add-package-error)
-              (assert/is (= "No package(s) available to install" (browser getText ::install-result))))))

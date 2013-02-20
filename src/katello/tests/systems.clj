@@ -165,12 +165,13 @@
    (with-unique [env-dev  "dev"
                  env-test  "test"
                  product-name "fake"]
-     (let [org-name "ACME_Corporation"]
+     (let [org-name "ACME_Corporation"
+           inst-name (uniqueify "env_change")]
        (doseq [env [env-dev env-test]]
          (env/create env {:org-name org-name}))
        (org/switch org-name)
        (step-to-configure-server-for-pkg-install product-name env-dev)
-       (provision/with-client "env_change"
+       (provision/with-client inst-name
            ssh-conn
            (client/register ssh-conn
                             {:username *session-user*
@@ -186,6 +187,7 @@
              (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
              (client/sm-cmd ssh-conn :refresh)
              (client/run-cmd ssh-conn "yum repolist")
-             (system/get-install-result mysys "cow")
+             (expecting-error [:type :katello.systems/package-install-failed]
+                              (system/add-package mysys {:package "cow"}))
              (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
                (assert/is (->> cmd_result :exit-code (= 1))))))))))
