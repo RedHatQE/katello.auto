@@ -168,13 +168,12 @@
    (with-unique [env-dev  "dev"
                  env-test  "test"
                  product-name "fake"]
-     (let [org-name "ACME_Corporation"
-           inst-name (uniqueify "env_change")]
+     (let [org-name "ACME_Corporation"]
        (doseq [env [env-dev env-test]]
          (env/create env {:org-name org-name}))
        (org/switch org-name)
        (step-to-configure-server-for-pkg-install product-name env-dev)
-       (provision/with-client inst-name
+       (provision/with-client "env_change"
            ssh-conn
            (client/register ssh-conn
                             {:username *session-user*
