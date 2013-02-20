@@ -75,14 +75,15 @@
   (let [all (get-by-name entity-type entity-name)
         ct (count all)]
     (cond 
-      (and (not= ct 1) (not= entity-type :repository))
-      (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
-                                                ct (name entity-type) entity-name)))
-      (= ct 1)
-      (-> all first :id)
+     (< ct 1) (throw
+               (IllegalArgumentException.
+                (format "%d matches for %s named %s, expected 1."
+                        ct (name entity-type)
+                        entity-name)))
+     (= ct 1) (-> all first :id)
       
-      (and (> ct 1) (= entity-type :repository))
-      (first (map :id (get (index all [:name]) {:name entity-name}))))))
+     :else (first (map :id (get (index all [:name])
+                                {:name entity-name}))))))
 
 (defmacro with-env
   "Executes body and makes any included katello api calls using the
