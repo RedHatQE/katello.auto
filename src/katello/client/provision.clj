@@ -47,5 +47,5 @@
                  add-ssh)]
      
      (let [~ssh-conn-bind (:ssh-connection inst#)]
-       (client/setup-client ~ssh-conn-bind)
+       (client/setup-client ~ssh-conn-bind ~clientname)
        ~@body)))

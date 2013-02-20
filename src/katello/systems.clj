@@ -1,6 +1,7 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
+            [slingshot.slingshot :refer [throw+]]
             [test.assert :as assert]
             (katello [navigation :as nav]
                      [notifications :as notification]
@@ -42,6 +43,8 @@
    ::select-package-group        "perform_action_package_groups"
    ::select-package              "perform_action_packages"
    ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::add-package-error            (ui/link "Add Package Error")
+   ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
 
    ;;system-edit details
    ::details                     (ui/menu-link "general")
@@ -186,8 +189,10 @@
                      (typeKeys ::package-name items)
                      (click ::add-content))
       (Thread/sleep 50000)
-      (assert/is (= exp-status
-                    (browser getText ::pkg-install-status))))))
+      (when-not (= exp-status
+                   (browser getText ::pkg-install-status))
+        (throw+ {:type ::package-install-failed :msg "Add Package Error"})))))
+
 
 (defn remove-package "Remove a package or package group from a system."
   [system-name {:keys [package package-group]}]
