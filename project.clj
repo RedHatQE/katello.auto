@@ -18,7 +18,7 @@
                  [clj-tagsoup "0.3.0"]
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
-                 [clj-http "0.5.5"]
+                 [clj-http "0.6.4"]
                  [org.clojure/tools.cli "0.2.1"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.3-SNAPSHOT"]
