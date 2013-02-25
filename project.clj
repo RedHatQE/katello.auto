@@ -4,9 +4,8 @@
   :omit-default-repositories true
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [swank-clojure "1.4.2"]
-                 [test.tree.jenkins "0.2.0-SNAPSHOT"]
-                 [test.tree "0.8.0-SNAPSHOT"]
-                 [test.tree.runner "0.7.5-SNAPSHOT"]
+                 [test.tree.jenkins "0.9.0-SNAPSHOT"]
+                 [test.tree.runner "0.9.0-SNAPSHOT"]
                  [org.clojure/data.json "0.1.1"]
                  [org.clojure/data.zip "0.1.0"]
                  [ui.navigate "0.2.2-SNAPSHOT"]
