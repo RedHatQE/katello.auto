@@ -27,20 +27,28 @@
   example, to get an environment from the API an org must be set. See
   with-* macros in this namespace."
   [entity-type]
-  (let [url-types {[:organization :user] {:reqs []
-                                          :fmt "api/%s"}
-                   [:environment :provider :system] {:reqs [#'*session-org*]
-                                                     :fmt "api/organizations/%s/%s"}
-                   [:changeset :repository] {:reqs [#'*session-org* #'*env-id*]
-                                             :fmt "api/organizations/%s/environments/%s/%s"}
-                   [:template] {:reqs [#'*env-id*]
-                                :fmt "api/environments/%s/%s"}
-                   [:repository] {:reqs [#'*session-org* #'*product-id*]
-                                  :fmt "/api/organizations/%s/products/%s/%s"}
+
+  ;; url-types should be ordered from most stringent reqs to least -
+  ;; eg, an api call on an env is more stringent than one on an org.
+  
+  (let [url-types {[:template :system] {:reqs [#'*env-id*]
+                                        :fmt "api/environments/%s/%s"}
                    [:product] {:reqs [#'*env-id*]
                                :fmt "/api/environments/%s/%s"}
                    [:package :erratum] {:reqs [#'*repo-id*]
-                                        :fmt "/api/repositories/%s/%s"}} 
+                                        :fmt "/api/repositories/%s/%s"}
+                   
+                   
+                   [:changeset :repository] {:reqs [#'*session-org* #'*env-id*]
+                                             :fmt "api/organizations/%s/environments/%s/%s"}
+                   
+                   [:repository] {:reqs [#'*session-org* #'*product-id*]
+                                  :fmt "/api/organizations/%s/products/%s/%s"}
+                   [:environment :provider :system] {:reqs [#'*session-org*]
+                                                     :fmt "api/organizations/%s/%s"}
+                   [:organization :user] {:reqs []
+                                          :fmt "api/%s"}}
+                    
         matching-type (filter (comp (partial some (hash-set entity-type)) key) url-types)
         and-matching-reqs (filter (comp (partial every? deref) :reqs val) matching-type)]
     (if (empty? and-matching-reqs)

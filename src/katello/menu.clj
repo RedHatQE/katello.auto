@@ -73,7 +73,9 @@
      [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
      [:katello.changesets/history-page [] (browser clickAndWait ::changeset-history-link)]]]
 
-   [::administer-menu [] (browser mouseOver ::administer-link)
+   [::manage-orgs-menu [] (do (browser click ::ui/switcher)
+                              (browser clickAndWait ::ui/manage-orgs))
     [:katello.users/page [] (browser clickAndWait ::users-link)]
     [:katello.roles/page [] (browser clickAndWait ::roles-link)]
     [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]]])
+

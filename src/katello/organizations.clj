@@ -10,10 +10,6 @@
 
 ;; Locators
 
-(sel/template-fns
- {default-star  "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
-  switcher-link "//div[@id='orgbox']//a[.='%s']"})
-
 (ui/deflocators
   {::new                    "//a[@id='new']"
    ::create                 "organization_submit"
@@ -26,8 +22,7 @@
    ::initial-env-name-text  "environment_name"
    ::initial-env-label-text "environment_label"
    ::initial-env-desc-text  "environment_description"
-   ::switcher               "switcherButton"
-   ::manage-switcher-link   "manage_orgs"
+   
    ::active                 "//*[@id='switcherButton']"
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
@@ -36,11 +31,7 @@
 (nav/defpages (common/pages)
   [::page 
    [::new-page [] (browser click ::new)]
-   [::named-page [org-name] (nav/choose-left-pane  org-name)]]
-  [::nav/top-level
-   [::page-via-org-switcher [] (browser click ::switcher)
-    [::link-via-org-switcher [] (browser clickAndWait ::manage-switcher-link)
-     [::new-page-via-org-switcher [] (browser click ::new)]]]])
+   [::named-page [org-name] (nav/choose-left-pane  org-name)]])
 
 ;; Tasks
 
@@ -55,8 +46,8 @@
 
 (defn create
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [label description initial-env-name initial-env-label initial-env-description go-through-org-switcher]}]]
-  (nav/go-to (if go-through-org-switcher ::new-page-via-org-switcher ::new-page))
+  [name & [{:keys [label description initial-env-name initial-env-label initial-env-description]}]]
+  (nav/go-to ::new-page)
   (sel/fill-ajax-form [::name-text name
                        label-filler [::name-text ::label-text label]
                        ::description-text description
@@ -101,17 +92,17 @@
      (when (or force?
                default-org
                (not= (current) org-name)) 
-       (browser click ::switcher)
+       (browser click ::ui/switcher)
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
-             (browser click (default-star (if (= default-org :none)
+             (browser click (ui/default-star (if (= default-org :none)
                                             current-default
                                             default-org)))
              (notification/check-for-success))))
        (when org-name
-         (browser clickAndWait (switcher-link org-name))))))
+         (browser clickAndWait (ui/switcher-link org-name))))))
 
 (defn before-test-switch
   "A pre-made fn to switch to the session org, meant to be used in

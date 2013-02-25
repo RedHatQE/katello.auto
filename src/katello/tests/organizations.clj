@@ -69,12 +69,7 @@
 
  (defgroup org-tests
 
-  (deftest "Create new organization via Manage Organizations link"
-    (with-unique [org-name "managed-org"]
-      (organization/create org-name {:go-through-org-switcher true})
-      (assert/is (org-exists? org-name))))
-  
-  (deftest "Create an organization"
+   (deftest "Create an organization"
     (with-unique [org-name "auto-org"]
       (organization/create org-name)
       (assert/is (org-exists? org-name)))

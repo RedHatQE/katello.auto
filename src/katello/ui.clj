@@ -14,7 +14,9 @@
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
-  textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"})
+  textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
+  default-star         "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
+  switcher-link        "//div[@id='orgbox']//a[.='%s']"})
 
 
 
@@ -43,6 +45,10 @@
    ;; use index, no other identifiable info in the DOM
    ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
 
+   ::switcher                "switcherButton"
+   ::manage-orgs             "manage_orgs"
+   ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
+   
    ::search-bar              "search"
    ::search-menu             "//form[@id='search_form']//span[@class='arrow']"
    ::search-save-as-favorite "search_favorite_save"
