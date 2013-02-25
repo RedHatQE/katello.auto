@@ -65,7 +65,7 @@
 ;;; Tests
 
 (defgroup default-org-tests
-  :test-teardown #(login)
+  :test-teardown (fn [& _ ] (login))
   (deftest "Set default org for a user at login"
     (do-steps (uniqueify-vals {:username "deforg"
                                :org "usersorg"})
@@ -97,21 +97,39 @@
                 ))
     
     (deftest "User's Favorite Organization"
-      (let [user (uniqueify "deforg")
-            org-login  (uniqueify "usersorg-login")
-            org-star  (uniqueify "usersorg-star")
-            org-settings  (uniqueify "usersorg-settings")]
-       
-           (api/create-organization org-login)
-           (api/create-organization org-star)
-           (api/create-organization org-settings) 
-        (api/create-user user generic-user-details)
-        (user/assign {:user user :roles  ["Administrator"]})
-        (step-set-default-org-at-login-screen {:username user :org org-login})
-        (step-set-default-org {:new-org org-star})
-        (user/assign-default-org-and-env user org-settings nil)
-        ))
-    
+      :data-driven true
+      
+      (fn [saved-org-with expected]
+        (let [user (uniqueify "deforg")
+              org {:login  (uniqueify "usersorg-login")
+                    :star  (uniqueify "usersorg-star")
+                    :settings  (uniqueify "usersorg-settings")}]
+          (login)
+          (api/create-user user generic-user-details)
+          (user/assign {:user user :roles  ["Administrator"]})
+          
+          (api/create-organization (org :login))
+          (if (saved-org-with :login)
+              (step-set-default-org-at-login-screen {:username user :org (org :login)})
+              (login user (:password generic-user-details) {:org (org :login)}))
+          
+          (when (saved-org-with :star)
+            (api/create-organization (org :star))
+            (step-set-default-org {:new-org (org :star)}))
+          
+          (when (saved-org-with :settings)
+            (api/create-organization (org :settings)) 
+            (try 
+              (user/assign-default-org-and-env user (org :settings) nil)
+              (catch Exception e)))
+          
+          (step-verify-login-direct-to-new-default-org {:username user :new-org (org expected)})))
+      
+      [[#{:login :star :settings} :star]
+       [#{:login :settings} :login]
+       [#{:login :star} :star]
+       [#{:settings :star} :star]])
+   
     (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
       (let [user (uniqueify "deforg")
                org  (uniqueify "usersorg")]
@@ -169,7 +187,13 @@
         (user/create username generic-user-details)
         (user/edit username {:new-password "changedpwd"})))
 
+    (deftest "User changes a his password"
+      :blockers (open-bz-bugs "720469")
 
+      (with-unique [username "edituser"]
+        (user/create username generic-user-details)
+        (user/edit username {:new-password "changedpwd"})))
+    
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
         (user/create username generic-user-details)
