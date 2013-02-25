@@ -3,7 +3,7 @@
   (:require (katello [navigation :as nav]
                      [conf :refer :all] 
                      [tasks :refer :all]
-                     [login :refer [login logout logged-in?]]
+                     [login :refer [login logout logged-in? logged-out?]]
                      [users :as user]
                      [ui-common :as common]
                      [organizations :as organization])
@@ -33,6 +33,10 @@
   (login)
   (assert/is (= (user/current) *session-user*)))
 
+(defn logout-verify []
+  (logout)
+  (assert/is (logged-out?)))
+
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
   (if (logged-in?)
@@ -48,7 +52,12 @@
 (defgroup login-tests
 
   (deftest "login as valid user"
-    (login-admin)) 
+    (login-admin))
+  
+  (deftest "User - Log out"
+    (login-admin)
+    (logout-verify)
+    (login)) 
 
   (deftest "login as invalid user"
     :data-driven true

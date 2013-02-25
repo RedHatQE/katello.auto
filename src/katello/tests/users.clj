@@ -96,6 +96,22 @@
                 step-verify-login-direct-to-new-default-org 
                 ))
     
+    (deftest "User's Favorite Organization"
+      (let [user (uniqueify "deforg")
+            org-login  (uniqueify "usersorg-login")
+            org-star  (uniqueify "usersorg-star")
+            org-settings  (uniqueify "usersorg-settings")]
+       
+           (api/create-organization org-login)
+           (api/create-organization org-star)
+           (api/create-organization org-settings) 
+        (api/create-user user generic-user-details)
+        (user/assign {:user user :roles  ["Administrator"]})
+        (step-set-default-org-at-login-screen {:username user :org org-login})
+        (step-set-default-org {:new-org org-star})
+        (user/assign-default-org-and-env user org-settings nil)
+        ))
+    
     (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
       (let [user (uniqueify "deforg")
                org  (uniqueify "usersorg")]
