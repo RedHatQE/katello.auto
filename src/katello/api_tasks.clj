@@ -2,12 +2,14 @@
   (:require [slingshot.slingshot :refer [throw+]] 
             [inflections.core :refer [pluralize singularize]]
             [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
+            [clojure.set :refer [index]]
             (katello [rest :as rest] 
                      [conf :refer [config *session-user* *session-password* *session-org*]] 
                      [tasks :refer [uniqueify library promotion-deletion-lock chain-envs]])))
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
+(def ^:dynamic *repo-id* nil)
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
@@ -25,16 +27,28 @@
   example, to get an environment from the API an org must be set. See
   with-* macros in this namespace."
   [entity-type]
-  (let [url-types {[:organization :user] {:reqs []
-                                          :fmt "api/%s"}
-                   [:environment :product :provider :system] {:reqs [#'*session-org*]
-                                                              :fmt "api/organizations/%s/%s"}
+
+  ;; url-types should be ordered from most stringent reqs to least -
+  ;; eg, an api call on an env is more stringent than one on an org.
+  
+  (let [url-types {[:template :system] {:reqs [#'*env-id*]
+                                        :fmt "api/environments/%s/%s"}
+                   [:product] {:reqs [#'*env-id*]
+                               :fmt "/api/environments/%s/%s"}
+                   [:package :erratum] {:reqs [#'*repo-id*]
+                                        :fmt "/api/repositories/%s/%s"}
+                   
+                   
                    [:changeset :repository] {:reqs [#'*session-org* #'*env-id*]
-                                 :fmt "api/organizations/%s/environments/%s/%s"}
-                   [:template] {:reqs [#'*env-id*]
-                                :fmt "api/environments/%s/%s"}
+                                             :fmt "api/organizations/%s/environments/%s/%s"}
+                   
                    [:repository] {:reqs [#'*session-org* #'*product-id*]
-                                  :fmt "/api/organizations/%s/products/%s/repositories"}} 
+                                  :fmt "/api/organizations/%s/products/%s/%s"}
+                   [:environment :provider :system] {:reqs [#'*session-org*]
+                                                     :fmt "api/organizations/%s/%s"}
+                   [:organization :user] {:reqs []
+                                          :fmt "api/%s"}}
+                    
         matching-type (filter (comp (partial some (hash-set entity-type)) key) url-types)
         and-matching-reqs (filter (comp (partial every? deref) :reqs val) matching-type)]
     (if (empty? and-matching-reqs)
@@ -68,10 +82,16 @@
 (defn get-id-by-name [entity-type entity-name]
   (let [all (get-by-name entity-type entity-name)
         ct (count all)]
-    (if (not= ct 1)
-      (throw (IllegalArgumentException. (format "%d matches for %s named %s, expected 1."
-                                                ct (name entity-type) entity-name)))
-      (-> all first :id))))
+    (cond 
+     (< ct 1) (throw
+               (IllegalArgumentException.
+                (format "%d matches for %s named %s, expected 1."
+                        ct (name entity-type)
+                        entity-name)))
+     (= ct 1) (-> all first :id)
+      
+     :else (first (map :id (get (index all [:name])
+                                {:name entity-name}))))))
 
 (defmacro with-env
   "Executes body and makes any included katello api calls using the
@@ -79,6 +99,14 @@
    body)."
   [env-name & body]
   `(binding [*env-id* (get-id-by-name :environment ~env-name)]
+     (do ~@body)))
+
+(defmacro with-repo
+  "Executes body and makes any included katello api calls using the
+   given repository name (it's id will be looked up before executing
+   body)."
+  [repo-name & body]
+  `(binding [*repo-id* (get-id-by-name :repository ~repo-name)]
      (do ~@body)))
 
 (defn create-provider [name & [{:keys [description]}]]

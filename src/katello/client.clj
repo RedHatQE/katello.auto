@@ -60,14 +60,16 @@
                [k v] settings]
            (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
-(defn setup-client [runner]
+(defn setup-client [runner name]
   (let [rpm-name-prefix "candlepin-cert-consumer"
         cmds [ ;; set the hostname so not all clients register with the same name
-              ["curl -kL https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
-              ["chmod 755 sethostname.sh"]
-              ["./sethostname.sh"]
-              ["subscription-manager clean"] 
-
+              ;["wget -O /tmp/sethostname.sh --no-check-certificate %s" (@config :sethostname)]
+              ;["source /tmp/sethostname.sh"]
+              ;["subscription-manager clean"] 
+              ["echo 'HOSTNAME=%s' >> /etc/sysconfig/network" name]
+              ["hostname %s" name]
+              ["echo 'search `hostname -d`' >> /etc/resolv.conf"]
+              
               ["yum remove -y '%s*'" rpm-name-prefix]
               ["rm -f *.rpm"]
               ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]

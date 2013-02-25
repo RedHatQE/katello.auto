@@ -58,13 +58,11 @@
 (defn make-suite
   ([] (make-suite nil))
   ([group]
-     (let [suite (try (-> group (or "katello.tests.suite/katello-tests")
-                         symbol resolve deref)
-                      (catch Exception e
-                        (throw (RuntimeException.
-                                (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))]
-       (with-meta suite 
-            setup/runner-config))))
+     (try (-> group (or "katello.tests.suite/katello-tests")
+              symbol resolve deref)
+          (catch Exception e
+            (throw (RuntimeException.
+                    (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))))
 
 (defn -main [ & args]
   (let [[opts [suite] banner]
@@ -75,8 +73,9 @@
         (conf/init opts)
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-        (jenkins/run-suite
-         (vary-meta (make-suite suite) assoc :threads (:num-threads opts)) 
-         {:to-trace-fn conf/trace-list
-          :to-trace (@conf/config :trace)
-          :do-not-trace (@conf/config :trace-excludes)})))))
+        (jenkins/run-suite (make-suite suite)  
+                           (merge setup/runner-config 
+                                  {:threads (:num-threads opts)
+                                   :to-trace-fn conf/trace-list
+                                   :to-trace (@conf/config :trace)
+                                   :do-not-trace (@conf/config :trace-excludes)}))))))

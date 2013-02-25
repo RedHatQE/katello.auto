@@ -145,19 +145,14 @@
                               {:org-name @test-org-name
                                :description "dup env description"}))))
       
-    (deftest "Rename an environment"
-      :blockers (constantly ["Renaming is not supported for v1"])
-
-      (with-unique [env-name  "rename"
-                    new-name  "newname"]
-        (environment/create env-name {:org-name @test-org-name
-                                      :description "try to rename me!"})
-        (environment/edit env-name {:org-name @test-org-name
-                                    :new-name new-name})
-        (nav/go-to ::environment/named-page
-                  {:org-name @test-org-name
-                   :env-name new-name})))
-
+    (deftest "Edit an environment description"
+     
+      (with-unique [env-name  "edit"]
+        (let [new-desc "I changed it!"]
+          (environment/create env-name {:org-name @test-org-name
+                                        :description "try to change me!"})
+          (environment/edit env-name {:org-name @test-org-name
+                                      :description new-desc}))))
 
     (deftest "Create environments with the same name but in different orgs"
       (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs))
