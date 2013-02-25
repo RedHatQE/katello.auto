@@ -12,7 +12,8 @@
   {::import-manifest     "new"
    ::upload              "upload_form_button"
    ::repository-url-text "provider[repository_url]"
-   ::choose-file         "provider_contents"})
+   ::choose-file         "provider_contents"
+   ::fetch-history-info   "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
 
 ;; Nav
 
@@ -46,3 +47,10 @@
   (let [clone-loc (manifest/new-tmp-loc)]
     (manifest/clone orig-file-path clone-loc)
     (upload-manifest clone-loc m)))
+
+(defn upload-manifest-import-history?
+  "Returns true if after an manifest import the history is updated."
+  []
+  (nav/go-to ::import-history-page)
+  (browser isElementPresent ::fetch-history-info))
+  

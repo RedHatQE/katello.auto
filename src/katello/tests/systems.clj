@@ -164,6 +164,29 @@
     [[{:package "cow"}]
      [{:package-group "birds"}]])
   
+  (deftest "Re-registering a system to different environment"
+    (with-unique [env-dev  "dev"
+                  env-test  "test"
+                  product-name "fake"]
+      (let [org-name "ACME_Corporation"]
+        (doseq [env [env-dev env-test]]
+          (env/create env {:org-name org-name}))
+        (org/switch org-name)
+        (provision/with-client "reg-with-env-change"
+          ssh-conn
+          (let [mysys (client/my-hostname ssh-conn)]
+            (doseq [env [env-dev env-test]]
+              (client/register ssh-conn
+                               {:username *session-user*
+                                :password *session-password*
+                                :org org-name
+                                :env env
+                                :force true})
+              (assert/is (= env (system/environment mysys))))
+            (assert/is (not= (map :environment_id (api/get-by-name :system mysys))
+                             (map :id (api/get-by-name :environment env-dev)))))))))
+    
+  
   (deftest "Install package after moving a system from one env to other"
    (with-unique [env-dev  "dev"
                  env-test  "test"
