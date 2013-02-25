@@ -183,11 +183,11 @@
     (do-steps {:org-name (uniqueify "bz786963")
                :manifest-loc bz786963-manifest}
               step-create-org
-              step-upload-manifest)))
-
-
-
-
-
-
-
+              step-upload-manifest))
+ 
+  (deftest "Upload a manifest and check whether import manifest history gets updated"
+    (let [test-org (uniqueify "custom-org")]
+      (organization/create test-org)
+      (organization/switch test-org)
+      (fake-content/prepare-org test-org (take 1 (mapcat :repos fake-content/some-product-repos))))
+    (assert/is (subscriptions/upload-manifest-import-history?))))
