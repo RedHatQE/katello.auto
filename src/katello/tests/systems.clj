@@ -183,8 +183,8 @@
                                 :env env
                                 :force true})
               (assert/is (= env (system/environment mysys))))
-            (assert/is (not= (get :environment_id mysys)
-                             (api/get-id-by-name :environment env-dev))))))))
+            (assert/is (not= (map :environment_id (api/get-by-name :system mysys))
+                             (map :id (api/get-by-name :environment env-dev)))))))))
     
   
   (deftest "Install package after moving a system from one env to other"
