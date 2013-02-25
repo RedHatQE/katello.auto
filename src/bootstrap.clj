@@ -21,8 +21,8 @@
   `(fn.trace/dotrace (katello.conf/trace-list)
      ~@body))
 
-(defmacro debug [tree]
-  `(test.tree.debug/debug ~tree (katello.conf/trace-list)))
+(defn debug [tree]
+  (test.tree.debug/debug tree {:trace-list (katello.conf/trace-list)}))
 
 (defn print-name-result [resulttree]
   (doseq [result @(second resulttree)]
