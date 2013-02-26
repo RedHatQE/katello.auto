@@ -15,6 +15,7 @@
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
+  activation-key-link             (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
 
@@ -139,6 +140,13 @@
   (sel/->browser (click ::environment)
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
+
+(defn validate-activation-key-link
+  "Validate activation key link under system details"
+  [name keyname]
+  (nav/go-to ::details-page {:system-name name})
+  (when (browser isElementPresent (activation-key-link keyname))
+    (browser clickAndWait (activation-key-link keyname))))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
