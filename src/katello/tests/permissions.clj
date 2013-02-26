@@ -324,9 +324,7 @@
                   :users [user-name]}))
 
     (deftest "Verify user with no role has no access"
-      :blockers (fn [t] (if (api/is-headpin?)
-                         ((open-bz-bugs "868179") t)
-                         []))
+      :blockers (open-bz-bugs "915960")
       :data-driven true
       
       (fn [forbidden-url-list allowed-url-list]
@@ -334,8 +332,7 @@
                  pw "password"]
              (api/create-user username {:password pw :email (str username "@my.org")})
            (conf/with-creds username pw
-             (try (login) (catch Exception e)) ;ERROR, notification too soon, test things we havent logged in
-             (assert/is logged-in?) ; so I suppress errors and check manually
+             (login)
              (assert/is 
                (and
                  (every? nav/returns-403? forbidden-url-list)
