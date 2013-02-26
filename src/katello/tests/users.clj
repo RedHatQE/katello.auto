@@ -195,7 +195,22 @@
        ["MyUsr"   upper-case]
        ["YOURUsr" lower-case]])
     
-
+    (deftest "Delete user-notifications"
+      :data-driven true
+      
+      (fn [delete-all?]
+        (with-unique [username "autouser"]
+          (let [password "abcd1234"]
+            (user/create username {:password password :email "me@my.org"})
+            (user/assign {:user username, :roles ["Administrator"]})
+            (login/logout)
+            (login/login username password (@config :admin-org))
+            (user/delete-notifications delete-all?))))
+      
+      [[true]
+       [false]])
+    
+    
     (deftest "User's minimum password length is enforced"
       (expecting-error (common/errtype :katello.notifications/password-too-short)
                        (user/create (uniqueify "insecure-user") {:password "abcd", :email "me@my.org"})))
