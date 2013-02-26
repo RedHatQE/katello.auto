@@ -204,7 +204,7 @@
             (user/create username {:password password :email "me@my.org"})
             (user/assign {:user username, :roles ["Administrator"]})
             (login/logout)
-            (login/login username password {@config :admin-org})
+            (login/login username password (@config :admin-org))
             (user/delete-notifications delete-all?))))
       
       [[true]
