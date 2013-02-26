@@ -8,6 +8,9 @@
                      [tasks :refer :all] 
                      [notifications :as notification]
                      [organizations :as organization] 
+                     [environments :as environment]
+                     [changesets :as changesets]
+                     [fake-content :as fake]
                      [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
@@ -49,6 +52,15 @@
                        :provider-name provider-name
                        :product-name product-name
                        :url repo-url}))
+
+(defn setup-custom-org-with-content
+  [org-name envz promotion-content]
+  (organization/create org-name)           
+  (organization/switch org-name)
+  (environment/create-path org-name envz)
+  (fake/prepare-org-custom-provider org-name fake/custom-provider)
+  (changesets/promote-delete-content library (first envz) false promotion-content))
+
 
 ;; Data (Generated)
 
@@ -139,28 +151,27 @@
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
-      (with-unique [org-name "auto-del"]
-        (create-test-org org-name)
-        (organization/delete org-name)
-        (assert/is (org-does-not-exist? org-name)))
-
+      (let [org-name (uniqueify "del-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          (organization/delete org-name)
+          (assert/is (org-does-not-exist? org-name)))
+    
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
         
-        (with-unique [org-name "delorg"
-                      provider-name "delprov"
-                      product-name "delprod"
-                      repo-name "delrepo"
-                      repo-url "http://blah.com/blah"]
-          (try
-            (create-org-with-provider-and-repo org-name provider-name product-name repo-name repo-url)
-            (organization/switch (@config :admin-org))
-            (organization/delete org-name)
-            ;;wait for delayed job to delete org
-            (Thread/sleep 30000)
-            (create-org-with-provider-and-repo org-name provider-name product-name repo-name repo-url)
-            (finally
-              (organization/switch (@config :admin-org)))))))
+        (let [org-name (uniqueify "recreate-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          (organization/delete org-name)
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (assert/is (org-exists? org-name)))))
     
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
@@ -176,3 +187,4 @@
        ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
        ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
        ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+ 
