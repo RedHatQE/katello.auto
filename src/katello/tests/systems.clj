@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [navigation :as nav]
                      [api-tasks :as api]
+                     [activation-keys :as ak]
                      [validation :as val]
                      [organizations :as org]
                      [environments :as env]
@@ -136,6 +137,21 @@
         (assert/is (= (client/get-distro ssh-conn)
                       (details "OS")))
         (assert/is (every? (complement empty?) (vals details))))))
+  
+  (deftest "System-Details: Validate Activation-key link"
+    (with-unique [system-name "mysystem"
+                  key-name "auto-key"]
+      (let [target-env (first *environments*)]
+        (api/ensure-env-exist target-env {:prior library})
+        (ak/create {:name key-name
+                    :description "my description"
+                    :environment target-env})
+        (provision/with-client "ak-link" ssh-conn
+          (client/register ssh-conn
+                           {:org "ACME_Corporation"
+                            :activationkey key-name})
+          (let [mysys (client/my-hostname ssh-conn)]
+            (system/validate-activation-key-link mysys key-name))))))
 
   (deftest "Install package group"
     :data-driven true
