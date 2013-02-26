@@ -142,15 +142,18 @@
 (defn delete-notifications
   [delete-all?]
   (browser clickAndWait ::user-notifications)
-  (let [num_count (browser getText ::user-notifications)]
+  (let [num-count (browser getText ::user-notifications)]
+    (browser click ::delete-link)
     (if delete-all?
       (do
-        (browser click ::delete-link)
         (browser click ::ui/confirmation-yes)
         (browser clickAndWait ::user-notifications)
-        (assert/is (= "0" (browser getText ::user-notifications))))
+        (when (not= "0" (browser getText ::user-notifications))
+          (throw+ {:type ::not-all-notifications-deleted
+                   :msg "Still some notifications remained after trying to delete all"})))
       (do
-        (browser click ::delete-link)
         (browser click ::confirmation-no)
-        (assert/is (= num_count (browser getText ::user-notifications)))))))
+        (when (not= num-count (browser getText ::user-notifications))
+          (throw+ {:type ::notifications-deleted-anyway
+                   :msg "Notifications were deleted even after clicking 'no' on confirm."}))))))
 
