@@ -187,12 +187,14 @@
         (user/create username generic-user-details)
         (user/edit username {:new-password "changedpwd"})))
 
-    (deftest "User changes a his password"
+    (deftest "User changes his password"
       :blockers (open-bz-bugs "720469")
 
       (with-unique [username "edituser"]
         (user/create username generic-user-details)
-        (user/edit username {:new-password "changedpwd"})))
+        (login username (:password generic-user-details))
+        (user/self-edit {:new-password "changedpwd"})
+        (login username "changedpwd")))
     
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
