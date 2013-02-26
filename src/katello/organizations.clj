@@ -22,7 +22,7 @@
    ::initial-env-name-text  "environment_name"
    ::initial-env-label-text "environment_label"
    ::initial-env-desc-text  "environment_description"
-   
+   ::access-dashboard       ""
    ::active                 "//*[@id='switcherButton']"
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
@@ -92,7 +92,7 @@
   (nav/go-to ::nav/top-level) 
      (when (or force?
                default-org
-               (not= (current) org-name)) 
+               (not= (current) org-name))       
        (browser click ::ui/switcher)
        (when default-org
          (let [current-default (try (browser getText ::default)
