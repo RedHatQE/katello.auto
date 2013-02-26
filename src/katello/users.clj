@@ -143,13 +143,15 @@
   [delete-all?]
   (browser clickAndWait ::user-notifications)
   (let [num_count (browser getText ::user-notifications)]
-    (when delete-all?
-      (browser click ::delete-link)
-      (browser click ::ui/confirmation-yes)
-      (browser clickAndWait ::user-notifications)
-      (assert/is (= "0" (browser getText ::user-notifications))))
-    (when-not delete-all?
-      (browser click ::delete-link)
-      (browser click ::confirmation-no)
-      (assert/is (= num_count (browser getText ::user-notifications))))))
+    (if delete-all?
+      (do
+        (browser click ::delete-link)
+        (browser click ::ui/confirmation-yes)
+        (browser clickAndWait ::user-notifications)
+        (assert/is (= "0" (browser getText ::user-notifications))))
+      (do
+        (when-not delete-all?
+          (browser click ::delete-link)
+          (browser click ::confirmation-no)
+          (assert/is (= num_count (browser getText ::user-notifications))))))))
 
