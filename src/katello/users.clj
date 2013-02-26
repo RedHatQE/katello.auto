@@ -150,8 +150,7 @@
         (browser clickAndWait ::user-notifications)
         (assert/is (= "0" (browser getText ::user-notifications))))
       (do
-        (when-not delete-all?
-          (browser click ::delete-link)
-          (browser click ::confirmation-no)
-          (assert/is (= num_count (browser getText ::user-notifications))))))))
+        (browser click ::delete-link)
+        (browser click ::confirmation-no)
+        (assert/is (= num_count (browser getText ::user-notifications)))))))
 
