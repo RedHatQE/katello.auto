@@ -143,22 +143,16 @@
                    step-verify-only-one-org
                    ))))
 
-(defn login-no-role [username pwd]
-  (try 
-          (login username pwd)
-          (catch Exception e))
-          (assert/is logged-in?))
-
-
 (defgroup user-settings
     :test-teardown (fn [& _ ] (login))
  
     (deftest "User changes his password"
+      :blockers (open-bz-bugs "915960")
       (with-unique [username "edituser"]
         (user/create username generic-user-details)
-        (login-no-role username (:password generic-user-details))
+        (login username (:password generic-user-details))
         (user/self-edit {:new-password "changedpwd"})
-        (login-no-role username "changedpwd"))))   
+        (login username "changedpwd"))))   
 
 (defgroup user-tests
   

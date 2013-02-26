@@ -49,6 +49,7 @@
                          ::log-in)
      (let [retval (notification/check-for-success {:timeout-ms 20000})
            direct-login? (some (fn [n] (or (= "Login Successful" n)
+                                          (re-find #"please contact administrator" n) 
                                           (re-find #"logging into" n)))
                                (mapcat :notices retval))]
        ;; if user only has access to one org, he will bypass org select
