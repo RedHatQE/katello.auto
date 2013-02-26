@@ -2,7 +2,7 @@
   (:require (katello [validation :refer :all] 
                      [organizations :as organization]
                      [ui :as ui]
-                     [login :refer [login logout]]
+                     [login :refer [login logout logged-in?]]
                      [ui-common :as common]
                      [roles :as role] 
                      [users :as user]
@@ -143,9 +143,25 @@
                    step-verify-only-one-org
                    ))))
 
+(defn login-no-role [username pwd]
+  (try 
+          (login username pwd)
+          (catch Exception e))
+          (assert/is logged-in?))
+
+
+(defgroup user-settings
+    :test-teardown (fn [& _ ] (login))
+ 
+    (deftest "User changes his password"
+      (with-unique [username "edituser"]
+        (user/create username generic-user-details)
+        (login-no-role username (:password generic-user-details))
+        (user/self-edit {:new-password "changedpwd"})
+        (login-no-role username "changedpwd"))))   
 
 (defgroup user-tests
-
+  
   (deftest "Admin creates a user"
     (user/create (uniqueify "autouser")   generic-user-details)
     
@@ -187,15 +203,6 @@
         (user/create username generic-user-details)
         (user/edit username {:new-password "changedpwd"})))
 
-    (deftest "User changes his password"
-      :blockers (open-bz-bugs "720469")
-
-      (with-unique [username "edituser"]
-        (user/create username generic-user-details)
-        (login username (:password generic-user-details))
-        (user/self-edit {:new-password "changedpwd"})
-        (login username "changedpwd")))
-    
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
         (user/create username generic-user-details)
@@ -254,4 +261,5 @@
         (user/assign {:user username, :roles ["Administrator" "Read Everything"]})
         (user/unassign {:user username, :roles ["Read Everything"]}))))
 
-  default-org-tests)
+user-settings
+default-org-tests)
