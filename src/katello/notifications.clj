@@ -90,7 +90,11 @@
 
    :sync-create              "sync_plans___create"
    :sync-destroy             "sync_plans___destroy"
-   :sync-update              "sync_plans___update"})
+   :sync-update              "sync_plans___update"
+   
+   :changeset-create         "changesets___create"
+   :changeset-apply          "changesets___apply"
+   :changeset-promoted       nil})
 
 
 (def ^{:doc "A mapping of known errors in Katello. This helps

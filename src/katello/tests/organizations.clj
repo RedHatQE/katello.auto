@@ -187,3 +187,18 @@
        ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
        ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
        ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+ 
+ (defgroup del-with-content
+   
+    (deftest "Delete an organization"
+      :blockers (open-bz-bugs "716972")
+    
+      (let [org-name (uniqueify "del-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          (organization/delete org-name)
+          (assert/is (org-does-not-exist? org-name)))))
+ 
