@@ -59,7 +59,8 @@
   (organization/switch org-name)
   (environment/create-path org-name envz)
   (fake/prepare-org-custom-provider org-name fake/custom-provider)
-  (changesets/promote-delete-content library (first envz) false promotion-content))
+  (changesets/promote-delete-content library (first envz) false promotion-content)
+  (Thread/sleep 30000))
 
 
 ;; Data (Generated)
@@ -157,8 +158,6 @@
           
           (setup-custom-org-with-content org-name envz promotion-content)
           (organization/switch (@config :admin-org))
-          ;;wait for the promotion to complete
-          (Thread/sleep 30000)
           (organization/delete org-name)
           (assert/is (org-does-not-exist? org-name)))
     
@@ -171,11 +170,7 @@
           
           (setup-custom-org-with-content org-name envz promotion-content)
           (organization/switch (@config :admin-org))
-          ;;wait for the promotion to complete
-          (Thread/sleep 30000)
           (organization/delete org-name)
-          ;;wait for delayed job to delete org
-          (Thread/sleep 30000)
           (setup-custom-org-with-content org-name envz promotion-content)
           (assert/is (org-exists? org-name)))))
     
