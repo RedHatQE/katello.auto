@@ -12,6 +12,9 @@
 (ui/deflocators
   {::roles-link                  (ui/menu-link "user_roles")
    ::environments-link           (ui/menu-link "environment")
+   ::user-notifications          "unread_notices"
+   ::delete-link                 (ui/link "Delete All")
+   ::confirmation-no             "xpath=(//button[@type='button'])[2]"
    ::default-org-select          "org_id[org_id]"
    ::save-environment            "update_user"
    ::save-edit                   "save_password"
@@ -135,4 +138,19 @@
     (browser click (ui/environment-link env-name)))
   (browser click ::save-environment)
   (notification/check-for-success))
+
+(defn delete-notifications
+  [delete-all?]
+  (browser clickAndWait ::user-notifications)
+  (let [num_count (browser getText ::user-notifications)]
+    (if delete-all?
+      (do
+        (browser click ::delete-link)
+        (browser click ::ui/confirmation-yes)
+        (browser clickAndWait ::user-notifications)
+        (assert/is (= "0" (browser getText ::user-notifications))))
+      (do
+        (browser click ::delete-link)
+        (browser click ::confirmation-no)
+        (assert/is (= num_count (browser getText ::user-notifications)))))))
 
