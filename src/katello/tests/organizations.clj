@@ -53,6 +53,15 @@
                        :product-name product-name
                        :url repo-url}))
 
+(defn setup-custom-org-with-content
+  [org-name envz promotion-content]
+  (organization/create org-name)           
+  (organization/switch org-name)
+  (environment/create-path org-name envz)
+  (fake/prepare-org-custom-provider org-name fake/custom-provider)
+  (changesets/promote-delete-content library (first envz) false promotion-content))
+
+
 ;; Data (Generated)
 
 (def bad-org-names
@@ -142,33 +151,32 @@
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
-      (with-unique [org-name "auto-del"]
-        (create-test-org org-name)
-        (organization/delete org-name)
-        (assert/is (org-does-not-exist? org-name)))
-
-      (deftest "Create an org with content, delete it and recreate it"
-        :blockers api/katello-only
-        
-        (let [org-name (uniqueify "del-org")
+      (let [org-name (uniqueify "del-org")
               envz     (take 3 (unique-names "env"))
               promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
           
-          (organization/create org-name)           
-          (organization/switch org-name)
-          (environment/create-path org-name envz)
-          (changesets/promote-delete-content library (first envz) false promotion-content)
-          (fake/prepare-org-custom-provider org-name fake/custom-provider)
+          (setup-custom-org-with-content org-name envz promotion-content)
           (organization/switch (@config :admin-org))
+          ;;wait for the promotion to complete
+          (Thread/sleep 30000)
+          (organization/delete org-name)
+          (assert/is (org-does-not-exist? org-name)))
+    
+      (deftest "Create an org with content, delete it and recreate it"
+        :blockers api/katello-only
+        
+        (let [org-name (uniqueify "recreate-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          ;;wait for the promotion to complete
           (Thread/sleep 30000)
           (organization/delete org-name)
           ;;wait for delayed job to delete org
           (Thread/sleep 30000)
-          (assert/is (org-does-not-exist? org-name))
-          (organization/create org-name)           
-          (organization/switch org-name)
-          (environment/create-path org-name envz)
-          (changesets/promote-delete-content library (first envz) false promotion-content)
+          (setup-custom-org-with-content org-name envz promotion-content)
           (assert/is (org-exists? org-name)))))
     
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
@@ -185,30 +193,3 @@
        ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
        ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
        ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
- 
- (defgroup del-with-content
-   
-      (deftest "Create an org with content, delete it and recreate it"
-        :blockers api/katello-only
-        
-        (let [org-name (uniqueify "del-org")
-              envz     (take 3 (unique-names "env"))
-              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
-          
-          (organization/create org-name)           
-          (organization/switch org-name)
-          (environment/create-path org-name envz)
-          (fake/prepare-org-custom-provider org-name fake/custom-provider)
-          (changesets/promote-delete-content library (first envz) false promotion-content)
-          (organization/switch (@config :admin-org))
-          (Thread/sleep 30000)
-          (organization/delete org-name)
-          ;;wait for delayed job to delete org
-          (Thread/sleep 30000)
-          (assert/is (org-does-not-exist? org-name))
-          (organization/create org-name)           
-          (organization/switch org-name)
-          (environment/create-path org-name envz)
-          (fake/prepare-org-custom-provider org-name fake/custom-provider)
-          (changesets/promote-delete-content library (first envz) false promotion-content)
-          (assert/is (org-exists? org-name)))))
