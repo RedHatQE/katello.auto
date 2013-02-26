@@ -20,8 +20,8 @@
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
    ::username-text               "user[username]"
-   ::password-text               "password_field" ; use id attr 
-   ::confirm-text                "confirm_field" ; for these two (name is the same)
+   ::password-text               "//input[@id='password_field']" ; use id attr 
+   ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
    ::default-org                 "org_id[org_id]"
    ::email-text                  "user[email]"
    ::save                        "save_user"
@@ -100,13 +100,9 @@
                         :roles roles
                         :plus-minus minus-icon}))
 
-(defn edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [username {:keys [inline-help clear-disabled-helptips
+(defn- edit-form [{:keys [inline-help clear-disabled-helptips
                     new-password new-password-confirm new-email default-org]}]
-  (nav/go-to ::named-page {:username username})
-  (when-not (nil? inline-help)
+    (when-not (nil? inline-help)
     (browser checkUncheck ::enable-inline-help-checkbox inline-help))
   (when new-password
     (browser setText ::password-text new-password)
@@ -122,6 +118,21 @@
     (notification/check-for-success))
   (when new-email
     (common/in-place-edit {::email-text new-email})))
+
+(defn self-edit
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once)."
+  [edit-map]
+  (browser click ::account)
+  (browser waitForElement ::password-text "10000")
+  (edit-form edit-map))
+
+(defn edit
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once)."
+  [username edit-map]
+  (nav/go-to ::named-page {:username username})
+  (edit-form edit-map))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
