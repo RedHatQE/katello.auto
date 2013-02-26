@@ -59,8 +59,7 @@
   (organization/switch org-name)
   (environment/create-path org-name envz)
   (fake/prepare-org-custom-provider org-name fake/custom-provider)
-  (changesets/promote-delete-content library (first envz) false promotion-content)
-  (Thread/sleep 30000))
+  (changesets/promote-delete-content library (first envz) false promotion-content))
 
 
 ;; Data (Generated)
