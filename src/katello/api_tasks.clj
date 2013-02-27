@@ -1,4 +1,5 @@
 (ns katello.api-tasks
+  (:refer-clojure :exclude [read])
   (:require [slingshot.slingshot :refer [throw+]] 
             [inflections.core :refer [pluralize singularize]]
             [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
@@ -10,6 +11,17 @@
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
 (def ^:dynamic *repo-id* nil)
+
+(defprotocol CRUD
+  "Create/read/update/delete operations on katello entities via the api"
+  (create [x] "Create an entity in the api")
+  (read [x] "Get details on an entity from the api")
+  (update [x] "Change an existing entity via the api")
+  (delete [x] "Delete an existing entity via the api"))
+
+(defprotocol Contextable
+  "Get the attributes of an entity that are needed as context for API endpoints."
+  (context [x others]))
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
