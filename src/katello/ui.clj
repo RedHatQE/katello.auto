@@ -1,5 +1,15 @@
 (ns katello.ui
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]))
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel])
+  (:refer-clojure :exclude [read]))
+
+;; Protocols
+
+(defprotocol CRUD
+  "Create/read/update/delete operations on katello entities via the UI"
+  (create [x] "Create an entity in the UI")
+  (read [x] "Get details on an entity from the UI")
+  (update [x n] "Change an existing entity via the UI to match new one")
+  (delete [x] "Delete an existing entity in the UI"))
 
 ;; Locators
 
@@ -17,9 +27,6 @@
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
   default-star         "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
   switcher-link        "//div[@id='orgbox']//a[.='%s']"})
-
-
-
 
 ;;
 ;; Tells the clojure selenium client where to look up keywords to get

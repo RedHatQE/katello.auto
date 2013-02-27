@@ -185,10 +185,11 @@
     (deftest "Admin creates a user with a default organization"
       :blockers (open-bz-bugs "852119")
       
-      (with-unique [org-name "auto-org"
+      (with-unique [org (organization/new- {:name "auto-org"})
                     env-name "environment"
                     username "autouser"]
-        (organization/create org-name {:initial-env-name env-name})
+        (ui/create (assoc org {:initial-env-name env-name}))
+        
         (user/create username (merge generic-user-details {:default-org org-name, :default-env env-name}))))
 
     (deftest "Admin changes a user's password"
@@ -247,8 +248,8 @@
           (let [password "abcd1234"]
             (user/create username {:password password :email "me@my.org"})
             (user/assign {:user username, :roles ["Administrator"]})
-            (login/logout)
-            (login/login username password (@config :admin-org))
+            (logout)
+            (login username password (@config :admin-org))
             (user/delete-notifications delete-all?))))
       
       [[true]
@@ -265,7 +266,7 @@
         (user/create username generic-user-details)
         (user/assign {:user username, :roles ["Administrator"]})))
   
-     (deftest "Roles can be removed from user"
+    (deftest "Roles can be removed from user"
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
         (user/assign {:user username, :roles ["Administrator" "Read Everything"]})

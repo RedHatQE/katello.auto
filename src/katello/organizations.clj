@@ -1,8 +1,12 @@
 (ns katello.organizations
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
             [ui.navigate :as navlib :refer [nav-tree]]
+            katello
             (katello [navigation :as nav]
                      [ui :as ui]
+                     [tasks :as tasks]
+                     [rest :as rest]
+                     [api-tasks :as api]
                      [ui-common :as common]
                      [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
@@ -31,7 +35,7 @@
 (nav/defpages (common/pages)
   [::page 
    [::new-page [] (browser click ::new)]
-   [::named-page [org-name] (nav/choose-left-pane  org-name)]])
+   [::named-page [org-name] (nav/choose-left-pane org-name)]])
 
 ;; Tasks
 
@@ -46,7 +50,7 @@
 
 (defn create
   "Creates an organization with the given name and optional description."
-  [name & [{:keys [label description initial-env-name initial-env-label initial-env-description]}]]
+  [{:keys [name label description initial-env-name initial-env-label initial-env-description]}]
   (nav/go-to ::new-page)
   (sel/fill-ajax-form [::name-text name
                        label-filler [::name-text ::label-text label]
@@ -58,22 +62,29 @@
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 
 (defn delete
-  "Deletes the named organization."
-  [org-name]
-  (nav/go-to ::named-page {:org-name org-name})
+  "Deletes an organization."
+  [{:keys [name]}]
+  (nav/go-to ::named-page {:org-name name})
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success
-   {:match-pred (notification/request-type? :org-destroy)})   ;queueing success
+   {:match-pred (notification/request-type? :org-destroy)}) ;queueing success
   (browser refresh)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)})) ;for actual delete
 
-(defn edit
+(defn update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
-  [org-name & {:keys [description]}]
-  (nav/go-to ::named-page {:org-name org-name})
+  [{:keys [name]} {:keys [description]}]
+  (nav/go-to ::named-page {:org-name name})
   (common/in-place-edit {::description-text description}))
+
+(extend katello.Organization
+  ui/CRUD {:create create
+           :read (fn [_] (throw (Exception. "Read Not implemented on Organization")))
+           :update edit
+           :delete delete}
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
@@ -110,3 +121,5 @@
    test groups as a :test-setup."
   [& _]
   (switch))
+
+

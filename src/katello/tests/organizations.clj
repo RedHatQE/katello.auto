@@ -1,6 +1,7 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require (katello [ui-common :as common]
+  (:require katello
+            (katello [ui-common :as common]
                      [api-tasks :as api]
                      [validation :as validation] 
                      [providers :as provider]

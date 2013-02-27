@@ -61,9 +61,16 @@
   [s]
   (uniques-formatted (str s "-%s")))
 
-(def ^{:doc "Returns one unique string using s as the base string.
-             Example: (unique-name 'joe') -> 'joe-12694956934'"}
-  uniqueify (comp first unique-names))
+(defprotocol Uniqueable
+  (uniqueify [x] "Returns an object that is guaranteed not to collide with an
+                  existing one of that type."))
+
+(extend java.lang.String
+  Uniqueable
+  {:uniqueify (comp first unique-names)})
+
+(def entity-uniqueable-impl
+  {:uniqueify (fn [ent] (update-in ent [:name] uniqueify))})
 
 (def ^{:doc "Returns one unique string using s as the format string.
              Example: (unique-name 'joe-%s.zip') -> 'joe-12694956934.zip'"}
