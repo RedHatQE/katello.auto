@@ -1,7 +1,8 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require katello
+  (:require [katello :refer [newOrganization]]
             (katello [ui-common :as common]
+                     [ui :as ui]
                      [api-tasks :as api]
                      [validation :as validation] 
                      [providers :as provider]
@@ -18,47 +19,55 @@
 
 ;; Functions
 
-(defn create-test-org
-  "Creates an organization named org-name via the API"
-  [org-name]
-  (api/create-organization org-name
-                           {:description "organization used to test environments."}))
-
 (defn get-all-org-names
   "Returns a list of the names of all the organizations in the system.
    Uses the API."
   []
   (doall (map :name (api/all-entities :organization))))
 
-(defn org-exists? [org-name]
-  (some #{org-name} (get-all-org-names)))
+(defn exists? [org]
+  (some #{(:name org)} (get-all-org-names)))
 
-(def org-does-not-exist? (complement org-exists?))
+(def does-not-exist? (complement exists?))
 
-(defn verify-bad-org-name-gives-expected-error
-  [name expected-error]
-  (expecting-error (common/errtype expected-error) (organization/create name)))
+(defn verify-bad-entity-create-gives-expected-error
+  [ent expected-error]
+  (expecting-error (common/errtype expected-error) (ui/create ent)))
 
-(defn create-org-with-provider-and-repo [org-name provider-name product-name repo-name repo-url]
-  (organization/create org-name {:description "org to delete and recreate"})
-  (organization/switch org-name)
+(defn create-org-with-provider-and-repo [org provider-name product-name repo-name repo-url]
+  (ui/create org)
+  (organization/switch org)
   (provider/create {:name provider-name
-                     :description "provider to del and recreate"})
+                    :description "provider to del and recreate"})
   (provider/add-product {:provider-name provider-name
-                          :name product-name})
+                         :name product-name})
   (repo/add {:name repo-name
-                       :provider-name provider-name
-                       :product-name product-name
-                       :url repo-url}))
+             :provider-name provider-name
+             :product-name product-name
+             :url repo-url}))
+
+(defn mkorg [name]
+  (newOrganization {:name name}))
+
+(defn create-and-verify [org]
+  (ui/create org)
+  (assert/is (exists? org)))
+
+(def create-and-verify-with-name
+  (comp create-and-verify mkorg))
+
+(def create-and-verify-with-basename
+  (comp create-and-verify uniqueify mkorg))
 
 ;; Data (Generated)
 
 (def bad-org-names
-  (concat
-   (for [inv-char-str validation/invalid-character-strings]
-     [inv-char-str ::notification/name-must-not-contain-characters])
-   (for [trailing-ws-str validation/trailing-whitespace-strings]
-     [trailing-ws-str ::notification/name-no-leading-trailing-whitespace])))
+  (for [[name err] (concat
+                    (for [inv-char-str validation/invalid-character-strings]
+                      [inv-char-str ::notification/name-must-not-contain-characters])
+                    (for [trailing-ws-str validation/trailing-whitespace-strings]
+                      [trailing-ws-str ::notification/name-no-leading-trailing-whitespace]))]
+    [(mkorg name) err]))
 
 (def name-taken-error (common/errtype ::notification/name-taken-error))
 (def label-taken-error (common/errtype ::notification/label-taken-error))
@@ -68,82 +77,72 @@
  (defgroup org-tests
 
    (deftest "Create an organization"
-    (with-unique [org-name "auto-org"]
-      (organization/create org-name)
-      (assert/is (org-exists? org-name)))
-    
+     (create-and-verify-with-basename "auto-org")
+     
     (deftest "Create an organization with i18n characters"
       :data-driven true
       
-      (fn [org]
-        (with-unique [org-name org]
-          (organization/create org-name)
-          (assert/is (org-exists? org-name))))
-      
+      create-and-verify-with-basename
       validation/i8n-chars)
 
     (deftest "Create an org with a 1 character UTF-8 name"
       :data-driven true
 
-      (fn [org-name]
-        (organization/create org-name)
-        (assert/is (org-exists? org-name)))
+      create-and-verify-with-name
 
       ;;create 5 rows of data, 1 random 1-char utf8 string in each
       (take 5 (repeatedly (comp vector
                                 (partial random-string 0x0080 0x5363 1)))))
     
     (deftest "Create an organization with an initial environment"
-      (with-unique [org-name "auto-org"
-                    env-name "environment"]
-        (organization/create org-name {:initial-env-name env-name})
-        (assert/is (org-exists? org-name))))
+      (-> (newOrganization {:name "auto-org"
+                            :initial-env-name "environment"})
+          uniqueify
+          create-and-verify))
   
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
       
-      (with-unique [org-name "test-dup"]
-        (validation/expecting-error-2nd-try name-taken-error
-          (organization/create org-name {:description "org-description"}))))
+      (with-unique [org (newOrganization {:name "test-dup"
+                                          :description "org-description"})]
+       (validation/expecting-error-2nd-try name-taken-error (ui/create org))))
   
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
       
       (expecting-error validation/name-field-required
-                       (organization/create "" {:description "org with empty name"})))
+                       (ui/create (newOrganization {:name ""
+                                                    :description "org with empty name"}))))
 
-    
     (deftest "Verify proper error message when invalid org name is used"
       :data-driven true
       :blockers (open-bz-bugs "726724")
       
-      verify-bad-org-name-gives-expected-error
+      verify-bad-entity-create-gives-expected-error
       bad-org-names)
 
   
     (deftest "Edit an organization"
-      (with-unique [org-name "auto-edit"]
-        (create-test-org org-name)
-        (organization/edit org-name :description "edited description")))
+      (with-unique [org (mkorg "auto-edit")]
+        (ui/create org)
+        (ui/update org (assoc org :description "edited description"))))
 
     (deftest "Organization names and labels are unique to all orgs"
-      (with-unique [name1 "name-1"
-                    name2 "name-2"
-                    label1 "label-1"
-                    label2 "label-2"]
-        (organization/create name1 {:label label1})
+      (with-unique [org1 (newOrganization {:name "myorg" :label "mylabel"})
+                    org2 (newOrganization {:name "yourorg" :label "yourlabel"})]
+        (ui/create org1)
         (expecting-error name-taken-error
-                         (organization/create name1 {:label label2}))
+                         (ui/create (assoc org1 {:label org2})))
         (expecting-error label-taken-error
-                         (organization/create name2 {:label label1}))))
+                         (ui/create (assoc org2 {:label org1})))))
     
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
-      (with-unique [org-name "auto-del"]
-        (create-test-org org-name)
-        (organization/delete org-name)
-        (assert/is (org-does-not-exist? org-name)))
+      (with-unique [org (mkorg "auto-del")]
+        (ui/create org)
+        (ui/delete org)
+        (assert/is (does-not-exist? org)))
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
@@ -166,14 +165,15 @@
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
 
-      (fn [org-name-prefix env-name env-lbl notif]
-        (with-unique [org-name org-name-prefix]
+      (fn [env-name env-lbl notif]
+        (with-unique [org (newOrganization {:name "lib-org"
+                                            :initial-env-name env-name
+                                            :initial-env-label env-lbl})]
           (expecting-error 
             (common/errtype notif)
-            (organization/create org-name {:initial-env-name env-name
-                                           :initial-env-label env-lbl}))))
+            (ui/create org))))
 
-      [["lib-org" "Library" "Library" ::notification/env-name-lib-is-builtin]
-       ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
-       ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
-       ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+      [["Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
+       [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))

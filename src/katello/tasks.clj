@@ -69,8 +69,14 @@
   Uniqueable
   {:uniqueify (comp first unique-names)})
 
+(extend nil
+  Uniqueable {:uniqueify (constantly nil)})
+
 (def entity-uniqueable-impl
-  {:uniqueify (fn [ent] (update-in ent [:name] uniqueify))})
+  {:uniqueify (fn [ent]
+                (-> ent
+                    (update-in [:name] uniqueify)
+                    (update-in [:label] uniqueify)))})
 
 (def ^{:doc "Returns one unique string using s as the format string.
              Example: (unique-name 'joe-%s.zip') -> 'joe-12694956934.zip'"}

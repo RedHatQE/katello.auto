@@ -16,12 +16,8 @@
   "Create/read/update/delete operations on katello entities via the api"
   (create [x] "Create an entity in the api")
   (read [x] "Get details on an entity from the api")
-  (update [x] "Change an existing entity via the api")
+  (update [x y] "Change an existing entity x via the api, to match y")
   (delete [x] "Delete an existing entity via the api"))
-
-(defprotocol Contextable
-  "Get the attributes of an entity that are needed as context for API endpoints."
-  (context [x others]))
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."

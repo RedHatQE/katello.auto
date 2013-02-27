@@ -5,8 +5,6 @@
             (katello [navigation :as nav]
                      [ui :as ui]
                      [tasks :as tasks]
-                     [rest :as rest]
-                     [api-tasks :as api]
                      [ui-common :as common]
                      [notifications :as notification]
                      [conf :refer [*session-org* with-org]]))
@@ -82,9 +80,9 @@
 (extend katello.Organization
   ui/CRUD {:create create
            :read (fn [_] (throw (Exception. "Read Not implemented on Organization")))
-           :update edit
+           :update update
            :delete delete}
-  tasks/Uniqueable tasks/entity-uniqueable-impl)
+  tasks/Uniqueable  tasks/entity-uniqueable-impl)
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
