@@ -109,11 +109,8 @@
     (assoc curr :prior prior)))
 
 (defn create-all
-  "Creates a path of environments. All the names in the environment
-  list must not already exist in their respective org. Example:
-  (create-path 'ACME_Corporation' ['Dev' 'QA' 'Production'])"
+  "Creates multiple environments."
   [environments]
-  {:pre [(apply = (map :org environments))]}
   (doseq [env environments]
     (ui/create env)))
 
