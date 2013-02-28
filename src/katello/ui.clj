@@ -8,7 +8,7 @@
   "Create/read/update/delete operations on katello entities via the UI"
   (create [x] "Create an entity in the UI")
   (read [x] "Get details on an entity from the UI")
-  (update [x n] "Change an existing entity via the UI to match new one")
+  (update [x f & args] "Change an existing entity in UI, passing it thru f (and extra args)")
   (delete [x] "Delete an existing entity in the UI"))
 
 ;; Locators

@@ -125,7 +125,7 @@
     (deftest "Edit an organization"
       (with-unique [org (mkorg "auto-edit")]
         (ui/create org)
-        (ui/update org (assoc org :description "edited description"))))
+        (ui/update org assoc :description "edited description")))
 
     (deftest "Organization names and labels are unique to all orgs"
       (with-unique [org1 (newOrganization {:name "myorg" :label "mylabel"})

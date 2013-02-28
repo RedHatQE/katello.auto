@@ -17,7 +17,7 @@
   "Create/read/update/delete operations on katello entities via the api"
   (create [x] "Create an entity in the api")
   (read [x] "Get details on an entity from the api")
-  (update [x y] "Change an existing entity x via the api, to match y")
+  (update [x f & args] "Change an existing entity x via the api, passing it thru f (with extra args)")
   (delete [x] "Delete an existing entity via the api"))
 
 (defn assoc-if-set

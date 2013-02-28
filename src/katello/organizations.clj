@@ -75,9 +75,9 @@
 (defn update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
-  [{:keys [name]} {:keys [description]}]
+  [{:keys [name] :as org} f & args]
   (nav/go-to ::named-page {:org-name name})
-  (common/in-place-edit {::description-text description}))
+  (common/in-place-edit {::description-text (:description (apply f org args))}))
 
 (extend katello.Organization
   ui/CRUD {:create create
@@ -97,10 +97,10 @@
                       (merge org
                              (rest/get (api/api-url uri name))))
               
-              :update (fn [{:keys [name] :as org} neworg]
+              :update (fn [{:keys [name] :as org} f & args]
                         (rest/put (api/api-url uri name)
                                   {:body {:organization
-                                          {:description {:description neworg}}}}))
+                                          {:description (:description (apply f org args))}}}))
               :delete (fn [org]
                         (rest/delete (api/api-url uri (:name org))))}))
 

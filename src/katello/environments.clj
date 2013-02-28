@@ -62,13 +62,12 @@
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
 (defn edit
-  "Edits an environment with the given name. Also takes a map
-   containing the name of the environment's organization, and optional
-   fields: a new description."
-  [{:keys [name org description]}]
+  "Edits an environment. Passes env through f (with extra args) to get
+  the new env."
+  [{:keys [name org description] :as env} f & args]
   (nav/go-to ::named-page {:org-name (:name org)
                            :env-name name})
-  (common/in-place-edit {::description-text description}))
+  (common/in-place-edit {::description-text (:description (apply f env args))}))
 
 (extend katello.Environment
   ui/CRUD {:create create
@@ -97,7 +96,14 @@
              (merge env (if id
                           (rest/get (api/api-url (uri env) (:id env)))
                           (first (rest/get (api/api-url (uri env))
-                                           {:query-params {:name name}})))))})
+                                           {:query-params {:name name}})))))
+     
+     :update (fn [{:keys [id name] :as env} f & args]
+               (let [env (if id env (api/read env))
+                     updated (apply f env args)]
+                 (merge updated (rest/put (api/api-url (uri env) (:id env))
+                                          {:environment
+                                           {:description (:description updated)}}))))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
