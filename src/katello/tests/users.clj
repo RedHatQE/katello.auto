@@ -285,13 +285,14 @@
          (user/unassign {:user user, :roles ["Administrator"]})
          (logout)
          (login)
-         (let [menus-not-present? (menu/menu-does-not-exists? menu-links)]
-           (logout)
-           (login new-user new-pass {:org (@config :admin-org)})
-           (user/assign {:user user, :roles ["Administrator"]})
-           (logout)
-           (login)
-           (assert/is menus-not-present?)))))
+         (try
+           (assert/is (menu/menu-does-not-exists? menu-links))
+           (finally  
+             (logout)
+             (login new-user new-pass {:org (@config :admin-org)})
+             (user/assign {:user user, :roles ["Administrator"]})
+             (logout)
+             (login))))))
 
 user-settings
 default-org-tests)
