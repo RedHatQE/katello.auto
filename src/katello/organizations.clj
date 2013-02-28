@@ -78,6 +78,7 @@
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
   []
+  (nav/go-to ::nav/top-level)
   ((->> ::active (browser getAttributes) (into {})) "title"))
 
 (defn switch
