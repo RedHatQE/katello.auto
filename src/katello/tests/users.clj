@@ -4,7 +4,8 @@
                      [ui :as ui]
                      [login :refer [login logout logged-in?]]
                      [ui-common :as common]
-                     [roles :as role] 
+                     [roles :as role]
+                     [menu :as menu]
                      [users :as user]
                      [tasks :refer :all] 
                      [content-search :refer [list-available-orgs]]
@@ -246,8 +247,8 @@
           (let [password "abcd1234"]
             (user/create username {:password password :email "me@my.org"})
             (user/assign {:user username, :roles ["Administrator"]})
-            (login/logout)
-            (login/login username password (@config :admin-org))
+            (logout)
+            (login username password {:org (@config :admin-org)})
             (user/delete-notifications delete-all?))))
       
       [[true]
@@ -268,7 +269,29 @@
       (with-unique [username "autouser"]
         (user/create username generic-user-details)
         (user/assign {:user username, :roles ["Administrator" "Read Everything"]})
-        (user/unassign {:user username, :roles ["Read Everything"]}))))
+        (user/unassign {:user username, :roles ["Read Everything"]})))
+     
+     (deftest "Unassign admin rights to admin user and then login
+               to find only dashboard menu"
+       :blockers (open-bz-bugs "916156")
+       
+       (let [user (@config :admin-user)
+             pass (@config :admin-password)
+             new-user (uniqueify "autouser1")
+             new-pass "admin123"
+             menu-links [::menu/systems-link ::menu/content-link ::menu/setup-link]]
+         (user/create new-user {:password new-pass :email "me@my.org"})
+         (user/assign {:user new-user, :roles ["Administrator"]})
+         (user/unassign {:user user, :roles ["Administrator"]})
+         (logout)
+         (login)
+         (let [menus-not-present? (menu/menu-does-not-exists? menu-links)]
+           (logout)
+           (login new-user new-pass {:org (@config :admin-org)})
+           (user/assign {:user user, :roles ["Administrator"]})
+           (logout)
+           (login)
+           (assert/is menus-not-present?)))))
 
 user-settings
 default-org-tests)
