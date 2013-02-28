@@ -7,6 +7,8 @@
                      [tasks :as tasks] 
                      [notifications :as notification] 
                      [ui :as ui]
+                     [api-tasks :as api]
+                     [rest :as rest]
                      [ui-common :as common]
                      [organizations :as org]))) 
 
@@ -36,7 +38,7 @@
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
-  [{:keys [name label org description prior-env]}]
+  [{:keys [name label org description prior]}]
   (nav/go-to ::new-page {:org-name (:name org)})
   (sel/fill-ajax-form {::name-text name
                        (fn [label] (when label
@@ -44,7 +46,7 @@
                                      (browser ajaxWait)
                                      (browser setText ::label-text label))) [label]
                        ::description-text description
-                       ::prior (:name prior-env)}
+                       ::prior (:name prior)}
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
 
@@ -73,14 +75,38 @@
            :read (fn [_] (throw (Exception. "Read Not implemented on Environments")))
            :update edit
            :delete delete}
+  
+  api/CRUD
+  (let [uri (fn [env]
+              {:pre [(not-empty (-> env :org :name))]}
+              (format "api/organizations/%s/environments/"
+                      (-> env :org :name)))]
+    {:create (fn [env] 
+               (rest/post (api/api-url (uri env))
+                          {:body
+                           {:environment
+                            {:name (:name env)
+                             :description (:description env)
+                             :prior (let [p (or (:prior env)
+                                                (assoc katello/library
+                                                  :org (:org env)))]
+                                      (if-let [id (:id p)]
+                                        id
+                                        (-> p api/read :id)))}}}))
+     :read (fn [{:keys [name id] :as env}]
+             (merge env (if id
+                          (rest/get (api/api-url (uri env) (:id env)))
+                          (first (rest/get (api/api-url (uri env))
+                                           {:query-params {:name name}})))))})
+
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn chain-envs
   "Sets prior of each env to be the previous env in the list"
   [environments]
-  {:pre [(apply = (map :org environments))]}
+  {:pre [(apply = (map :org environments))]} ; all in same org
   (for [[prior curr] (partition 2 1 (concat (list katello/library) environments))]
-    (assoc curr :prior-env prior)))
+    (assoc curr :prior prior)))
 
 (defn create-all
   "Creates a path of environments. All the names in the environment

@@ -10,6 +10,6 @@
                          initial-env-label initial-env-description])
 
 
-(defrecord Environment [id name label description org prior-env])
+(defrecord Environment [id name label description org prior])
 
 (def library (newEnvironment {:name "Library"}))
