@@ -4,6 +4,8 @@
             katello
             (katello [navigation :as nav]
                      [ui :as ui]
+                     [api-tasks :as api]
+                     [rest :as rest]
                      [tasks :as tasks]
                      [ui-common :as common]
                      [notifications :as notification]
@@ -82,7 +84,25 @@
            :read (fn [_] (throw (Exception. "Read Not implemented on Organization")))
            :update update
            :delete delete}
-  tasks/Uniqueable  tasks/entity-uniqueable-impl)
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  api/CRUD (let [uri "api/organizations/"]
+             {:create (fn [org]
+                        (merge org
+                               (rest/post (api/api-url uri)
+                                          {:body (select-keys org [:name :description])})))
+
+              :read (fn [{:keys [name] :as org}]
+                      {:pre [(not (empty? name))]}
+                      (merge org
+                             (rest/get (api/api-url uri name))))
+              
+              :update (fn [{:keys [name] :as org} neworg]
+                        (rest/put (api/api-url uri name)
+                                  {:body {:organization
+                                          {:description {:description neworg}}}}))
+              :delete (fn [org]
+                        (rest/delete (api/api-url uri (:name org))))}))
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
@@ -120,4 +140,6 @@
   [& _]
   (switch))
 
+
+;; API
 
