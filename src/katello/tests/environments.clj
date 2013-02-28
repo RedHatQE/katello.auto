@@ -1,6 +1,7 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require (katello [navigation :as nav]
+  (:require katello
+   (katello [navigation :as nav]
                      [api-tasks :as api] 
                      [organizations :as organization] 
                      [ui-common :refer [errtype]] 
@@ -26,6 +27,16 @@
 (def first-env "dev")
 
 ;; Functions
+(defn create-same-env-in-multiple-orgs
+  "Verifies that the same environment name can be used independently
+   in different organizations. See also
+   verify-delete-env-restricted-to-this-org."
+  [envs]
+  {:pre [(apply = (map :name envs))  ; names all same
+         (= (count envs)
+            (count (distinct (map :org envs))))]} ; orgs all different
+  (doseq [env envs]
+    (ui/create env)))
 
 (defn verify-delete-env-restricted-to-this-org
   "Verify that when you create multiple environments with the same
@@ -36,23 +47,14 @@
    orgs must already exist. See also
    katello.tests.provider/with-n-new-orgs which will handle this
    automatically."
-  [env-name orgs]
-  (doseq [org orgs]
-    (organization/switch org)
-    (environment/create env-name {:org-name org}))
-  (environment/delete env-name {:org-name (first orgs)})
-  (doseq [org (rest orgs)]
-    (nav/go-to ::environment/named-page {:env-name env-name
-                                       :org-name org})))
+  [envs]
+  (create-same-env-in-multiple-orgs envs)
+  (ui/delete (first envs))
+  (doseq [env (rest envs)]
+    (nav/go-to ::environment/named-page {:env-name (:name env)
+                                         :org-name (-> env :org :name)})))
 
-(defn verify-create-same-env-in-multiple-orgs
-  "Verifies that the same environment name can be used independently
-   in different organizations. See also
-   verify-delete-env-restricted-to-this-org."
-  [env-name orgs]
-  (doseq [org orgs]
-    (organization/switch org)
-    (environment/create env-name {:org-name org})))
+
 
 (defn setup-environment-with-promoted-content
   "Creates a new environment in the admin org, and promotes a
@@ -155,7 +157,7 @@
                                       :description new-desc}))))
 
     (deftest "Create environments with the same name but in different orgs"
-      (with-n-new-orgs 2 verify-create-same-env-in-multiple-orgs))
+      (with-n-new-orgs 2 create-same-env-in-multiple-orgs))
     
     (deftest "Adding environment named or labeled 'Library' is disallowed"
       :data-driven true

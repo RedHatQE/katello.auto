@@ -3,8 +3,6 @@
             [clojure.string :refer [split join capitalize]])
   (:import java.util.Date))
 
-(def library "Library")
-
 ;;var for synchronizing promotion calls, since only one can be done in
 ;;the system at a time.
 (def promotion-deletion-lock nil)

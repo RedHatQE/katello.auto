@@ -4,9 +4,10 @@
             [inflections.core :refer [pluralize singularize]]
             [com.redhat.qe.auto.selenium.selenium :refer [loop-with-timeout]]
             [clojure.set :refer [index]]
+            katello
             (katello [rest :as rest] 
                      [conf :refer [config *session-user* *session-password* *session-org*]] 
-                     [tasks :refer [uniqueify library promotion-deletion-lock chain-envs]])))
+                     [tasks :refer [uniqueify promotion-deletion-lock chain-envs]])))
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
@@ -124,7 +125,7 @@
                                  :description description
                                  :provider_type "Custom"}}}))
 
-(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env library}}]
+(defn create-environment [name {:keys [description prior-env] :or {description "" prior-env katello/library}}]
   (rest/post (api-url (uri-for-entity-type :environment))
              {:body {:environment (assoc-if-set
                                    {:name name}
