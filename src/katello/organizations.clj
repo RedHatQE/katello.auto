@@ -81,28 +81,27 @@
 
 (extend katello.Organization
   ui/CRUD {:create create
-           :read (fn [_] (throw (Exception. "Read Not implemented on Organization")))
            :update update
            :delete delete}
+  
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  api/CRUD (let [uri "api/organizations/"]
-             {:create (fn [org]
-                        (merge org
-                               (rest/post (api/api-url uri)
-                                          {:body (select-keys org [:name :description])})))
+  api/CRUD (let [uri "api/organizations/"
+                 label-url (partial api/url-maker [[(str uri "%s") [identity]]])]
+             {:id api/label-impl
+              :query (fn [e] (api/query-by-name (constantly (api/api-url uri)) e))
+              :create (fn [org]
+                        (merge org (rest/post (api/api-url uri)
+                                              {:body (select-keys org [:name :description])})))
 
-              :read (fn [{:keys [name] :as org}]
-                      {:pre [(not (empty? name))]}
-                      (merge org
-                             (rest/get (api/api-url uri name))))
+              :read (partial api/read-impl label-url) 
               
               :update (fn [{:keys [name] :as org} f & args]
-                        (rest/put (api/api-url uri name)
+                        (rest/put (label-url org)
                                   {:body {:organization
                                           {:description (:description (apply f org args))}}}))
               :delete (fn [org]
-                        (rest/delete (api/api-url uri (:name org))))}))
+                        (rest/delete (label-url org)))}))
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
@@ -139,7 +138,3 @@
    test groups as a :test-setup."
   [& _]
   (switch))
-
-
-;; API
-

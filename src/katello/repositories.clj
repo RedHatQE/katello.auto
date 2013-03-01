@@ -64,3 +64,5 @@
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
     (browser check (repo-enable-checkbox repo))))
+
+

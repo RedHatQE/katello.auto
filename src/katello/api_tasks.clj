@@ -17,16 +17,61 @@
   "Create/read/update/delete operations on katello entities via the api"
   (create [x] "Create an entity in the api")
   (read [x] "Get details on an entity from the api")
-  (update [x f & args] "Change an existing entity x via the api, passing it thru f (with extra args)")
-  (delete [x] "Delete an existing entity via the api"))
+  (update [x f & args] "Change an existing entity x via the api,
+                        passing it thru f (with extra args), returns
+                        true on success")
+  (delete [x] "Delete an existing entity via the api")
+  (id [e] "Returns the id of the given entity used for API calls")
+  (query [e] "Searches the server by the entity's name, returning the full entity"))
+
+(defn api-url [uri]
+  (format "%s/%s" (@config :server-url) uri ))
+
+(defn url-maker [coll ent]
+  "Creates a fn that when given an entity will call fs on the entity
+   to get deps and look up the ids on those deps.  Then fill in the
+   format with those ids, and make a url"
+  (-> (for [[fmt fs] coll
+            :let [ids (for [f fs] (-> ent f id))]
+            :when (every? identity ids)]
+           (apply format fmt ids))
+      first
+      (or (throw+ {:type ::incomplete-context
+                   :msg (format "%s are required for entity %s"
+                                (->> coll
+                                     (map second)
+                                     (interpose " or ")
+                                     (apply str))
+                      
+                                ent)}))
+      api-url))
+
+(defn katello-id [f e]
+  "Gets the id field (not literally :id, but whatever katello
+   considers id - eg for orgs it's :label) from the entity, or if not
+   present, queries the server first to get it."
+  (or (f e)
+      (-> e query f str)))
+
+(def id-impl (partial katello-id :id))
+(def label-impl (partial katello-id :label))
+
+(defn query-by-name [url-fn e]
+  (first (rest/get (url-fn e)
+                   {:query-params {:name (:name e)}})))
+
+(defn read-impl [read-url-fn ent]
+  (merge ent (if-let [handle (id ent)]
+               (rest/get (read-url-fn ent))
+               (query ent))))
+
+(def default-id-impl {:id id-impl})
 
 (defn assoc-if-set
   "Adds to map m just the entries from newmap where the value is not nil."
   [m newmap]
   (into m (filter #((complement nil?) (second %)) newmap)))
 
-(defn api-url [& args]
-  (apply str (@config :server-url) "/" args))
 
 (declare get-id-by-name)
 

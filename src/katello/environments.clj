@@ -69,43 +69,37 @@
                            :env-name name})
   (common/in-place-edit {::description-text (:description (apply f env args))}))
 
-(extend katello.Environment
-  ui/CRUD {:create create
-           :read (fn [_] (throw (Exception. "Read Not implemented on Environments")))
-           :update edit
-           :delete delete}
+(let []
+  (extend katello.Environment
+    ui/CRUD {:create create
+             :read (fn [_] (throw (Exception. "Read Not implemented on Environments")))
+             :update edit
+             :delete delete}
   
-  api/CRUD
-  (let [uri (fn [env]
-              {:pre [(not-empty (-> env :org :name))]}
-              (format "api/organizations/%s/environments/"
-                      (-> env :org :name)))]
-    {:create (fn [env] 
-               (rest/post (api/api-url (uri env))
-                          {:body
-                           {:environment
-                            {:name (:name env)
-                             :description (:description env)
-                             :prior (let [p (or (:prior env)
-                                                (assoc katello/library
-                                                  :org (:org env)))]
-                                      (if-let [id (:id p)]
-                                        id
-                                        (-> p api/read :id)))}}}))
-     :read (fn [{:keys [name id] :as env}]
-             (merge env (if id
-                          (rest/get (api/api-url (uri env) (:id env)))
-                          (first (rest/get (api/api-url (uri env))
-                                           {:query-params {:name name}})))))
+    api/CRUD
+    (let [org-url (partial api/url-maker [["api/organizations/%s/environments/"] [:org]])
+          id-url (partial api/url-maker [["api/organizations/%s/environments/%s"] [:org identity]])]
+      {:id api/id-impl
+       :query (partial api/query-by-name org-url)
+       :create (fn [env] 
+                 (merge env
+                        (rest/post (org-url env)
+                                   {:body
+                                    {:environment
+                                     {:name (:name env)
+                                      :description (:description env)
+                                      :prior (api/id (or (:prior env)
+                                                         (assoc katello/library
+                                                           :org (:org env))))}}})))
+       :read (partial api/read-impl id-url)
      
-     :update (fn [{:keys [id name] :as env} f & args]
-               (let [env (if id env (api/read env))
-                     updated (apply f env args)]
-                 (merge updated (rest/put (api/api-url (uri env) (:id env))
-                                          {:environment
-                                           {:description (:description updated)}}))))})
+       :update (fn [env f & args]
+                 (let [updated (apply f env args)]
+                   (merge updated (rest/put (id-url env)
+                                            {:environment
+                                             {:description (:description updated)}}))))})
 
-  tasks/Uniqueable tasks/entity-uniqueable-impl)
+    tasks/Uniqueable tasks/entity-uniqueable-impl))
 
 (defn chain-envs
   "Sets prior of each env to be the previous env in the list"

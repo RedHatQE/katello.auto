@@ -13,3 +13,8 @@
 (defrecord Environment [id name label description org prior])
 
 (def library (newEnvironment {:name "Library"}))
+
+
+(defrecord Provider [id name description org])
+
+(defrecord Product [id name provider])

@@ -1,8 +1,11 @@
 (ns katello.providers
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            katello
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
+                     [api-tasks :as api]
+                     [rest :as rest]
                      [ui-common :as common])))
 
 ;; Locators
@@ -60,8 +63,9 @@
 
 (defn delete-product
   "Deletes a product from the given provider."
-  [{:keys [name provider-name]}]
-  (nav/go-to ::named-product-page {:provider-name provider-name
+  [{:keys [name provider]}]
+  {:pre [(not-empty provider)]}
+  (nav/go-to ::named-product-page {:provider-name (:name provider)
                                    :product-name name})
   (browser click ::remove-product)
   (browser click ::ui/confirmation-yes)
@@ -69,7 +73,7 @@
 
 (defn delete
   "Deletes the named custom provider."
-  [name]
+  [{:keys [name]}]
   (nav/go-to ::named-page {:provider-name name})
   (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
@@ -77,7 +81,52 @@
 
 (defn edit
   "Edits the named custom provider. Takes an optional new name, and
-  new description." [{:keys [name new-name description]}]
+  new description."
+  [{:keys [name] :as prov} f & args]
   (nav/go-to ::details-page {:provider-name name})
-  (common/in-place-edit {::name-text new-name
-                         ::description-text description}))
+  (let [updated (apply f prov args)]
+    (common/in-place-edit {::name-text (:name updated)
+                           ::description-text (:description updated)})))
+
+(extend katello.Provider
+  ui/CRUD {:create create
+           :delete delete
+           :update edit}
+
+  api/CRUD (let [org-url (partial api/url-maker [["api/organizations/%s/providers" [:org]]])
+                 id-url (partial api/url-maker [["api/providers/%s" [identity]]])]
+             {:id api/id-impl
+              :query (partial api/query-by-name org-url)
+              :create (fn [{:keys [name description org] :as prov}]
+                        (merge prov
+                               (rest/post (api/api-url "api/providers")
+                                          {:body {:organization_id (api/id org)
+                                                  :provider {:name name
+                                                             :description description
+                                                             :provider_type "Custom"}}})))
+              :read (partial api/read-impl id-url)
+              :update (fn [prov f & args]
+                        (let [updated (apply f prov args)]
+                          (merge updated (rest/put (id-url prov)
+                                                   {:body {:provider
+                                                           {:repository_url (:repository_url updated)}}}))))
+              :delete (fn [prov] (rest/delete (id-url prov)))}))
+
+(extend katello.Product
+  ui/CRUD {:create add-product
+           :delete delete-product}
+
+  api/CRUD (let [id-url (partial api/url-maker [["api/organizations/%s/products/%s" [:org identity]]])
+                 org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
+                 query-urls (partial api/url-maker [["api/organizations/%s/products" [:org]]
+                                                    ["/api/environments/%s/products" [:env]]])]
+             {:id api/id-impl
+              :query (partial api/query-by-name query-urls)
+              :create (fn [prod]
+                        (merge prod
+                               (rest/post
+                                (api/url-maker [["api/providers/%s/product_create" [:provider]]] prod)
+                                {:body {:product (select-keys prod [:name :description :gpg_key_name])}})))
+              :read (partial api/read-impl id-url)
+              }))
+
