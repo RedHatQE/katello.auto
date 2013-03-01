@@ -33,6 +33,7 @@
                 ::username-must-contain-3-char        #"Username must contain at least 3 character"
                 ::username-cant-be-blank              #"Username can't be blank"
                 ::username-64-char-limit              #"Username cannot contain more than 64 characters"
+                ::system-name-255-char-limit          #"Name cannot contain more than 255 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
