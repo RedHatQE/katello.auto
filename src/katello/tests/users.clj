@@ -283,15 +283,12 @@
          (user/create new-user {:password new-pass :email "me@my.org"})
          (user/assign {:user new-user, :roles ["Administrator"]})
          (user/unassign {:user user, :roles ["Administrator"]})
-         (logout)
-         (login)
          (try
+           (login)
            (assert/is (menu/menu-does-not-exists? menu-links))
            (finally  
-             (logout)
              (login new-user new-pass {:org (@config :admin-org)})
              (user/assign {:user user, :roles ["Administrator"]})
-             (logout)
              (login))))))
 
 user-settings
