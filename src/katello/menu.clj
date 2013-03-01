@@ -36,13 +36,14 @@
                       ::system-templates-link            "system_templates"
                       ::systems-all-link                 "registered"
                       ::systems-link                     "systems"
-                      ::users-link                       "users"}))
+                      ::users-link                       "users"
+                      ::setup-link                       "setup"}))
 
 ;; Nav
 
 (nav/defpages (nav/pages)
   [::nav/top-level
-               
+                 
    [::systems-menu [] (browser mouseOver ::systems-link)
     [:katello.systems/page [] (browser clickAndWait ::systems-all-link)]
     [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]
@@ -79,3 +80,8 @@
     [:katello.roles/page [] (browser clickAndWait ::roles-link)]
     [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]]])
 
+(defn menu-does-not-exists? 
+  [menu-links]
+  (every? false? (doall
+                   (for [menu-link menu-links]
+                     (browser isElementPresent menu-link)))))
