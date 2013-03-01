@@ -4,7 +4,6 @@
             katello
             (katello [navigation :as nav]
                      [ui :as ui]
-                     [api-tasks :as api]
                      [rest :as rest]
                      [tasks :as tasks]
                      [ui-common :as common]
@@ -86,15 +85,15 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  api/CRUD (let [uri "api/organizations/"
-                 label-url (partial api/url-maker [[(str uri "%s") [identity]]])]
-             {:id api/label-impl
-              :query (fn [e] (api/query-by-name (constantly (api/api-url uri)) e))
+  rest/CRUD (let [uri "api/organizations/"
+                 label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
+             {:id rest/label-impl
+              :query (fn [e] (rest/query-by-name (constantly (rest/api-url uri)) e))
               :create (fn [org]
-                        (merge org (rest/post (api/api-url uri)
+                        (merge org (rest/post (rest/api-url uri)
                                               {:body (select-keys org [:name :description])})))
 
-              :read (partial api/read-impl label-url) 
+              :read (partial rest/read-impl label-url) 
               
               :update (fn [{:keys [name] :as org} f & args]
                         (rest/put (label-url org)

@@ -7,7 +7,6 @@
                      [tasks :as tasks] 
                      [notifications :as notification] 
                      [ui :as ui]
-                     [api-tasks :as api]
                      [rest :as rest]
                      [ui-common :as common]
                      [organizations :as org]))) 
@@ -76,11 +75,11 @@
              :update edit
              :delete delete}
   
-    api/CRUD
-    (let [org-url (partial api/url-maker [["api/organizations/%s/environments/"] [:org]])
-          id-url (partial api/url-maker [["api/organizations/%s/environments/%s"] [:org identity]])]
-      {:id api/id-impl
-       :query (partial api/query-by-name org-url)
+    rest/CRUD
+    (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/"] [:org]])
+          id-url (partial rest/url-maker [["api/organizations/%s/environments/%s"] [:org identity]])]
+      {:id rest/id-impl
+       :query (partial rest/query-by-name org-url)
        :create (fn [env] 
                  (merge env
                         (rest/post (org-url env)
@@ -88,10 +87,10 @@
                                     {:environment
                                      {:name (:name env)
                                       :description (:description env)
-                                      :prior (api/id (or (:prior env)
+                                      :prior (rest/id (or (:prior env)
                                                          (assoc katello/library
                                                            :org (:org env))))}}})))
-       :read (partial api/read-impl id-url)
+       :read (partial rest/read-impl id-url)
      
        :update (fn [env f & args]
                  (let [updated (apply f env args)]
