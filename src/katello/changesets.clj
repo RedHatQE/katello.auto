@@ -1,4 +1,5 @@
 (ns katello.changesets
+  (:refer-clojure :exclude [remove])
   (:require (katello [navigation :as nav]
                      [tasks :refer :all]
                      [ui-common :as common]
@@ -9,7 +10,8 @@
                      [notifications :as notification :refer [check-for-success request-type?]])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
             [slingshot.slingshot :refer [throw+ try+]]
-            [test.assert :as assert]))
+            [test.assert :as assert]
+            [clojure.data :as data]))
 
 ;; Locators
 
@@ -53,80 +55,89 @@
                                                    (browser click ::deletion))
                                                  (browser click (list-item changeset-name)))]]])
 
+;; Protocol
+
+(defn add-item [category-loc item]
+  (browser click ::products-category)
+  (browser click (select-product (-> item :product :name)))
+  (browser click category-loc)
+  (browser click (add-content-item (:name item))))
+
+(defprotocol Promotable
+  "For adding/removing various things to a changeset (note these
+   operations are stateful, UI must already be on the changeset
+   content page."
+  (add [x cs] "adds x content to changeset")
+  (remove [x cs] "deletes x content from changeset"))
+
+(extend-protocol Promotable
+  katello.Product
+  (add [prod cs]
+    (browser click ::products-category)
+    (browser click (add-content-item (:name prod))))
+
+  katello.Template
+  (add [template cs]
+    (browser click ::templates-category)
+    (browser click (add-content-item (:name template))))
+  
+  katello.Repository
+  (add [repo cs] (add-item ::select-repos repo))
+
+  katello.Package
+  (add [package cs] (add-item ::select-packages package))
+
+  katello.Erratum
+  (add [erratum cs]
+    (if (:product erratum)
+      (add-item ::select-errata erratum)
+      (do (browser click ::errata-category)
+          (browser click ::select-errata-all)
+          (browser click (add-content-item (:name erratum)))))
+    ))
+
+
+
 ;; Tasks
 
 (defn create
   "Creates a changeset for promotion from env-name to next-env name
   or for deletion from env-name."
-  [env-name changeset-name & [{:keys [deletion? next-env-name]}]]
-  (nav/go-to ::named-environment-page {:env-name env-name
-                                       :next-env-name next-env-name})
+  [{:keys [name env deletion?]}]
+  (nav/go-to ::named-environment-page {:env-name (:name env)
+                                       :next-env-name (:next env)})
   (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
-                 (setText ::name-text changeset-name)
+                 (setText ::name-text name)
                  (click ::save))
   (check-for-success))
 
 
-(defn add-content
-  "Adds the given content to an existing changeset. The originating
-   and target environments need to be specified to find to locate the
-   changeset."
-  ;; to-env is mandatory if promotion changeset
-  ;; to-env not required if deletion changeset
-  [changeset-name from-env content deletion & [{:keys [to-env]}]]
-  (nav/go-to ::named-page {:env-name from-env
-                           :next-env-name to-env
-                           :changeset-name changeset-name
-                           :deletion? deletion})
-  (doseq [category (keys content)]
-    (let [data (content category)
-          grouped-data (group-by :product-name data)
-          add-all (fn [items]
-                    (doseq [add-item items]
-                      (browser click (add-content-item add-item))))]
-      (cond
-       (some #{category} [:repos :packages :errata])
-       (do (doseq [[prod-item repos] grouped-data]
-             (let [add-items (map :name repos)]
-               (sel/->browser (click ::products-category)
-                              (click (select-product prod-item))
-                              (sleep 5000)
-                              (refresh)
-                              (click (->> category name (format "katello.changesets/select-%s") keyword)))
-               (if (= category :errata) (browser click ::select-errata-all))
-               (add-all add-items))
-             ;; sleep to wait for browser->server comms to update changeset
-             ;; can't navigate away until that's done
-             (browser sleep 5000)
-             (browser click ::promotion-eligible-home)))
-
-       (= category :errata-top-level)
-       (do (browser click ::errata-category)
-           (browser click ::select-errata-all)
-           (add-all (map :name data))
-           (browser sleep 5000))
-
-       (= category :templates)
-       (do (browser click ::templates-category)
-           (add-all data))
-
-       :else
-       (do (browser click ::products-category)
-           (add-all data)
-           ;; sleep to wait for browser->server comms to update changeset
-           ;; can't navigate away until that's done
-           (browser sleep 5000))))))
+(defn update [{:keys [env name deletion?] :as changeset} new-changeset]
+  (let [[to-remove to-add _] (data/diff changeset new-changeset)
+        go-home (fn []
+                  (browser sleep 5000)
+                  (browser click ::promotion-eligible-home))]
+    (nav/go-to ::named-page {:env-name (:name env)
+                             :next-env-name (-> env :next :name)
+                             :changeset-name name
+                             :deletion? deletion?})
+    (doseq [item to-add]
+      (add item changeset)
+      (go-home))
+    (doseq [item to-remove]
+      (remove item changeset)
+      (go-home))))
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete
    content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
-  [changeset-name {:keys [deletion? from-env to-env timeout-ms]}]
+  [{:keys [name deletion? env]} & [timeout-ms]]
   (let [nav-to-cs (fn [] (nav/go-to ::named-page
-                                   {:env-name from-env
-                                    :next-env-name to-env
-                                    :changeset-name changeset-name
+                                   {:env-name (:name env)
+                                    :next-env-name (-> env :next :name)
+                                    :changeset-name name
                                     :deletion? deletion?}))]
     (nav-to-cs)
     (locking #'promotion-deletion-lock
@@ -146,25 +157,21 @@
         (case current-status
           "Applied" current-status
           "Apply Failed" (throw+ {:type :promotion-failed
-                                  :changeset changeset-name
-                                  :from-env from-env
-                                  :to-env to-env})
+                                  :changeset name
+                                  :from-env (:name env)
+                                  :to-env (-> env :next :name)})
           (do (Thread/sleep 2000)
-              (recur (browser getText (status changeset-name))))))
+              (recur (browser getText (status name))))))
       ;;wait for async success notif
       (check-for-success {:timeout-ms (* 20 60 1000)}))))
 
 (defn promote-delete-content
-  "Promotes the given content from one environment to another
-   Example content: {:products ['Product1' 'Product2']} "
-  [from-env to-env deletion content]
-  (let [changeset (uniqueify "changeset")]
-    (create from-env changeset {:deletion? deletion
-                                :next-env-name to-env})
-    (add-content changeset from-env content deletion {:to-env to-env})
-    (promote-or-delete changeset {:from-env from-env
-                                  :to-env to-env
-                                  :deletion? deletion})))
+  "Creates the given changeset, adds content to it and promotes it. "
+  [cs]
+  (doto (uniqueify cs)
+    (ui/create)
+    (ui/update identity) ; since creating doesn't allow adding content
+    (promote-or-delete)))
 
 (defn sync-and-promote [products from-env to-env]
   (let [all-prods (map :name products)
@@ -271,5 +278,5 @@
                                           :env env})]
     (rest/create cs)
     (doseq [ent content]
-      (rest/update cs update-in [:content] conj ent)  ;;TODO fix this
+      (rest/update cs update-in [:content] conj ent)  
     (api-promote-changeset cs))))

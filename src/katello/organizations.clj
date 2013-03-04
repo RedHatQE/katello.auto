@@ -95,10 +95,9 @@
 
               :read (partial rest/read-impl label-url) 
               
-              :update (fn [{:keys [name] :as org} f & args]
+              :update (fn [org new-org]
                         (rest/put (label-url org)
-                                  {:body {:organization
-                                          {:description (:description (apply f org args))}}}))
+                                  {:body {:organization (select-keys new-org [:description])}}))
               :delete (fn [org]
                         (rest/delete (label-url org)))}))
 

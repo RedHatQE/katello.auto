@@ -70,12 +70,15 @@
   "Create/read/update/delete operations on katello entities via the api"
   (create [x] "Create an entity in the api")
   (read [x] "Get details on an entity from the api")
-  (update [x f & args] "Change an existing entity x via the api,
-                        passing it thru f (with extra args), returns
-                        true on success")
+  (update* [x new-x] "Change an existing entity x via the api, to make
+                      it match new-x, returns true on success")
   (delete [x] "Delete an existing entity via the api")
   (id [e] "Returns the id of the given entity used for API calls")
   (query [e] "Searches the server by the entity's name, returning the full entity"))
+
+;; Because protocols do not support varargs
+(defn update [x f & args]
+  (update* x (apply f args)))
 
 (defn api-url [uri]
   (format "%s/%s" (@conf/config :server-url) uri ))

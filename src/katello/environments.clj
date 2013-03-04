@@ -70,7 +70,6 @@
 
 (extend katello.Environment
   ui/CRUD {:create create
-           :read (fn [_] (throw (Exception. "Read Not implemented on Environments")))
            :update edit
            :delete delete}
   
@@ -91,11 +90,9 @@
                                                           :org (:org env))))}}})))
      :read (partial rest/read-impl id-url)
      
-     :update (fn [env f & args]
-               (let [updated (apply f env args)]
-                 (merge updated (rest/put (id-url env)
-                                          {:environment
-                                           {:description (:description updated)}}))))})
+     :update (fn [env new-env]
+               (merge updated (rest/put (id-url env)
+                                        {:environment (select-keys new-env [:description])})))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 

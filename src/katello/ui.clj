@@ -8,8 +8,12 @@
   "Create/read/update/delete operations on katello entities via the UI"
   (create [x] "Create an entity in the UI")
   (read [x] "Get details on an entity from the UI")
-  (update [x f & args] "Change an existing entity in UI, passing it thru f (and extra args)")
+  (update* [x new-x] "Change an existing entity in UI, from x to new-x")
   (delete [x] "Delete an existing entity in the UI"))
+
+;; because protocols don't support varargs
+(defn update [x f & args]
+  (update* x (apply f args)))
 
 ;; Locators
 

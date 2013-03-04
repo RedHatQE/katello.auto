@@ -104,7 +104,7 @@
 
       (doseq [[basename thismany] [["envpath1" 2]
                                    ["envpath2" 5]]]
-        (->> {:name name
+        (->> {:name basename
               :org (@conf/config :admin-org)}
              katello/newEnvironment
              uniques

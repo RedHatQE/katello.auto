@@ -104,11 +104,10 @@
                                                              :description description
                                                              :provider_type "Custom"}}})))
               :read (partial rest/read-impl id-url)
-              :update (fn [prov f & args]
-                        (let [updated (apply f prov args)]
-                          (merge updated (rest/put (id-url prov)
-                                                   {:body {:provider
-                                                           {:repository_url (:repository_url updated)}}}))))
+              :update (fn [prov new-prov]
+                        (merge new-prov (rest/put (id-url prov)
+                                                 {:body {:provider
+                                                         (select-keys new-prov [:repository_url])}})))
               :delete (fn [prov] (rest/delete (id-url prov)))}))
 
 (extend katello.Product
