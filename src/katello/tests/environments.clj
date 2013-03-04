@@ -1,8 +1,9 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
   (:require katello
-   (katello [navigation :as nav]
-                     [api-tasks :as api] 
+            (katello [navigation :as nav]
+                     [rest :as rest]
+                     [ui :as ui]
                      [organizations :as organization] 
                      [ui-common :refer [errtype]] 
                      [sync-management :as sync] 
@@ -12,7 +13,8 @@
                      [systems :as system]
                      [validation :refer :all] 
                      [client :as client] 
-                     [conf :as conf]) 
+                     [conf :as conf]
+                     [changesets :as changeset]) 
             [katello.tests.providers :refer [with-n-new-orgs]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
@@ -23,7 +25,7 @@
 
 ;; Variables
 
-(def test-org-name (atom nil))
+(def test-org (atom nil))
 (def first-env "dev")
 
 ;; Functions
@@ -59,17 +61,15 @@
 (defn setup-environment-with-promoted-content
   "Creates a new environment in the admin org, and promotes a
    product with a sync'd repo into it. Uses the API."
-  [env-name]
-  (with-unique [provider-name  "prov"
-                product-name  "prod"
-                repo-name  "repo"]
-    (api/create-environment env-name {})
-    (api/create-provider provider-name)
-    (api/create-product product-name {:provider-name provider-name})
-    (api/create-repo repo-name {:product-name product-name :url (@conf/config :sync-repo)})
-    (sync/perform-sync [repo-name])
-    (api/with-env env-name
-      (api/promote {:products [{:product_id (api/get-id-by-name :product product-name)}]}))))
+  [env]
+  (with-unique [prov (katello/newProvider {:name "prov"})
+                prod (katello/newProduct {:name "prod" :provider prov})
+                repo (katello/newRepository {:name "repo" :product prod})]
+    (doseq [ent (list prov prod repo)]
+      (rest/create ent))
+    (let [content (list repo)]
+      (sync/perform-sync content)
+      (changeset/api-promote env content))))
 
 ;; Setup
 
@@ -77,9 +77,11 @@
   "Creates a new org for testing environments
    using the API."
   []
-  (api/create-organization
-   (reset! test-org-name (uniqueify "env-test"))
-   {:description "organization used to test environments."}))
+  (reset! test-org-name (-> {:name "env-test"
+                             :description "organization used to test environments."}
+                            katello/newOrganization
+                            uniqueify
+                            rest/create)))
 
 
 ;; Tests
@@ -88,17 +90,25 @@
   :group-setup create-test-org
 
   (deftest "Create an environment"
-    (environment/create (uniqueify "simple-env") {:org-name @test-org-name
-                                                  :description "simple environment description"})
+    (-> {:name "simple-env"
+         :org @test-org}
+        katello/newEnvironment
+        uniqueify
+        ui/create)
+    
 
     (deftest "Create parallel sequential environments"
       :description "Creates two parallel environment paths: one with 5 environments and the
                       other with 2 environments, both off the Library."
-      (let [envs1 (take 5 (unique-names "envpath1"))
-            envs2 (take 2 (unique-names "envpath2"))
-            org (@conf/config :admin-org)]
-        (environment/create-path org envs1)
-        (environment/create-path org envs2)))
+
+      (doseq [[basename thismany] [["envpath1" 2]
+                                   ["envpath2" 5]]]
+        (->> {:name name
+              :org (@conf/config :admin-org)}
+             katello/newEnvironment
+             uniques
+             (take thismany)
+             environment/create-path)))
 
     (deftest "Delete an environment"
       :blockers (open-bz-bugs "790246")
@@ -143,9 +153,9 @@
 
       (with-unique [env-name "test-dup"]
         (expecting-error-2nd-try (errtype ::notification/env-name-must-be-unique-within-org)
-          (environment/create env-name
-                              {:org-name @test-org-name
-                               :description "dup env description"}))))
+                                 (environment/create env-name
+                                                     {:org-name @test-org-name
+                                                      :description "dup env description"}))))
       
     (deftest "Edit an environment description"
      
@@ -165,9 +175,9 @@
       (fn [env-name env-label notif] 
         (organization/switch @test-org-name)
         (expecting-error 
-          (errtype notif)
-          (environment/create env-name {:org-name @test-org-name
-                                        :label env-label})))
+         (errtype notif)
+         (environment/create env-name {:org-name @test-org-name
+                                       :label env-label})))
 
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
@@ -204,7 +214,7 @@
           ;;we haven't subscribed to anything so the below
           ;;verification doesn't work - repo file will be empty
           #_(let [cmd (format "grep %s /etc/yum.repos.d/redhat.repo" env-test)
-                result (client/run-cmd ssh-conn cmd)]
-            (assert/is (->> result :exit-code (= 0)))))))))
+                  result (client/run-cmd ssh-conn cmd)]
+              (assert/is (->> result :exit-code (= 0)))))))))
         
         

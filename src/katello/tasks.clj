@@ -41,6 +41,17 @@
   [ts]
   (.format date-format (Date. ts)))
 
+(defprotocol Uniqueable
+  (uniques [o] "Generates an infinite series of unique objects based on this one"))
+
+(extend java.lang.String
+  Uniqueable
+  {:uniques (fn [s] (map (partial format "%s-%s" s)
+                        (map date-string (timestamps))))})
+
+(extend nil
+  Uniqueable {:uniques (constantly (repeat nil))})
+
 (defn timestamped-seq
   "Returns an infinite lazy sequence of timestamped values. f is a
    function to pass each timestamp (a long) to."
@@ -53,28 +64,20 @@
   [s]
   (timestamped-seq (comp (partial format s) date-string)))
 
-(defn unique-names
-  "Returns an infinite lazy sequence of timestamped strings, uses s as
-  the base string."
-  [s]
-  (uniques-formatted (str s "-%s")))
+(def ^{:doc "Returns an infinite lazy sequence of timestamped objects, uses s as
+             the base string."}
+  unique-names uniques)
 
-(defprotocol Uniqueable
-  (uniqueify [x] "Returns an object that is guaranteed not to collide with an
-                  existing one of that type."))
-
-(extend java.lang.String
-  Uniqueable
-  {:uniqueify (comp first unique-names)})
-
-(extend nil
-  Uniqueable {:uniqueify (constantly nil)})
+(defn uniqueify [o]
+  (first (uniques o)))
 
 (def entity-uniqueable-impl
-  {:uniqueify (fn [ent]
-                (-> ent
-                    (update-in [:name] uniqueify)
-                    (update-in [:label] uniqueify)))})
+  {:uniques (fn [ent] (for [s (timestamps)]
+                       (let [stamped-id (format "%s-%s" (:name ent)
+                                                (date-string s))]
+                         (assoc ent :name stamped-id
+                                :label stamped-id))))})
+
 
 (def ^{:doc "Returns one unique string using s as the format string.
              Example: (unique-name 'joe-%s.zip') -> 'joe-12694956934.zip'"}
@@ -86,7 +89,7 @@
      ['foo-12346748964356' 'bar-12346748964357']"
   [bindings & forms]
   `(let ~(vec (apply concat
-                 (for [[k v] (apply hash-map bindings)]
+                 (for [[k v] (partition 2 bindings)]
                    [k `(uniqueify ~v)])))
      ~@forms))
 

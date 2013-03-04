@@ -2,6 +2,7 @@
   (:require [clj-http.client :as httpclient]
             [clojure.data.json :as json]
             [katello.conf :as conf]
+            
             [slingshot.slingshot :refer [throw+]])
   (:refer-clojure :exclude (get)))
 
@@ -118,3 +119,5 @@
                (query ent))))
 
 (def default-id-impl {:id id-impl})
+
+

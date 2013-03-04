@@ -4,6 +4,7 @@
             (katello [ui-common :as common]
                      [ui :as ui]
                      [api-tasks :as api]
+                     [rest :as rest]
                      [validation :as validation] 
                      [providers :as provider]
                      [repositories :as repo]
@@ -19,14 +20,8 @@
 
 ;; Functions
 
-(defn get-all-org-names
-  "Returns a list of the names of all the organizations in the system.
-   Uses the API."
-  []
-  (doall (map :name (api/all-entities :organization))))
-
 (defn exists? [org]
-  (some #{(:name org)} (get-all-org-names)))
+  (rest/read org))
 
 (def does-not-exist? (complement exists?))
 

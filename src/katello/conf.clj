@@ -164,6 +164,7 @@
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (@config :environments))) 
 
+(def promotion-deletion-lock nil) ;; var to lock on for promotions
 
 (defn no-clients-defined "Blocks a test if no client machines are accessible." [_]
   (try

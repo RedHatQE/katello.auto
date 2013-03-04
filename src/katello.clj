@@ -18,3 +18,7 @@
 (defrecord Provider [id name description org])
 
 (defrecord Product [id name provider])
+
+(defrecord Repository [id name product url gpg-key])
+
+(defrecord Changeset [id name ])

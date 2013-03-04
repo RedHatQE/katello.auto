@@ -3,9 +3,11 @@
                      [tasks :refer :all]
                      [ui-common :as common]
                      [ui :as ui]
+                     [rest :as rest]
+                     [conf :as conf]
                      [sync-management :as sync]
                      [notifications :as notification :refer [check-for-success request-type?]])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]))
 
@@ -243,3 +245,31 @@
                                  (click ::promotion-eligible-home)
                                  (refresh))
                   visible))))))
+
+(defn api-promote-changeset
+  "Promotes a changeset, polls the API until the promotion completes,
+   and returns the changeset. If the timeout is hit before the
+   promotion completes, throws an exception."
+  [changeset]
+  (let [cs-id (rest/id changeset)]
+    (locking #'conf/promotion-deletion-lock
+      (rest/post (rest/api-url "api/changesets/" cs-id "/promote"))
+      (loop-with-timeout (* 20 60 1000) [cs {}]
+        (let [state (:state cs)]
+          (case state
+            "promoted" cs
+            "failed" (throw+ {:type :failed-promotion :response cs})    
+            (do (Thread/sleep 5000)
+                (recur (rest/read changeset)))))))))
+
+(defn api-promote
+  "Does a promotion of the given content (creates a changeset, adds
+   the content, and promotes it. Content should match the JSON format
+   that the API expects. currently like {:product_id '1234567890'}"
+  [env content]
+  (with-unique [cs (katello/newChangeset {:name "api-changeset"
+                                          :env env})]
+    (rest/create cs)
+    (doseq [ent content]
+      (rest/update cs update-in [:content] conj ent)  ;;TODO fix this
+    (api-promote-changeset cs))))

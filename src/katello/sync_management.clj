@@ -121,11 +121,11 @@
   [repos & [{:keys [timeout]}]]
   (nav/go-to ::status-page)
   (doseq [repo repos]
-    (browser check (provider-checkbox repo)))
+    (browser check (provider-checkbox (:name repo))))
   (browser click ::synchronize-now)
   (browser sleep 10000)
   (zipmap repos (for [repo repos]
                   (sel/loop-with-timeout (or timeout 120000) []
-                    (or (complete-status repo)
+                    (or (complete-status (:name repo))
                         (do (Thread/sleep 10000)
                             (recur)))))))
