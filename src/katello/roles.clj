@@ -15,6 +15,7 @@
    ::users                           "role_users"
    ::permissions                     "role_permissions"
    ::next                            "next_button"
+   ::previous                        "previous_button"
    ::permission-resource-type-select "permission[resource_type_attributes[name]]"
    ::permission-verb-select          "permission[verb_values][]"
    ::permission-tag-select           "tags"        
@@ -114,4 +115,27 @@
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 
-
+(defn validate-roles-navigation
+  "Verify the Navigation of Roles, related to permissions."
+  [role-name perm-name resource-type verbs tags]
+    (create role-name)
+    (nav/go-to ::named-permissions-page {:role-name role-name})
+    (browser click ::add-permission)
+    (if (= resource-type :all)
+      (browser click ::all-types)
+      (do 
+        (browser select ::permission-resource-type-select resource-type)
+        (browser click ::next)
+        (doseq [verb verbs]
+          (browser addSelection ::permission-verb-select verb))
+        (browser click ::next)
+        (doseq [tag tags]
+          (browser addSelection ::permission-tag-select tag))))
+    (sel/fill-ajax-form {::permission-name-text perm-name
+                         ::permission-description-text "myperm descriptions"})
+  (while (browser isElementPresent ::previous_button)
+    (browser click ::previous))
+  (while (not (browser isElementPresent ::save-permission))
+    (browser click ::next))
+  (sel/fill-ajax-form ::save-permission)
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))

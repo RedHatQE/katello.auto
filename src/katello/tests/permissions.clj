@@ -310,7 +310,10 @@
     
     [["Read Systems"]
      ["Delete Systems"]])
-  
+
+  (deftest "Verify the Navigation of Roles, related to permissions"
+    (assert/is (role/validate-roles-navigation (uniqueify "nav-roles") (uniqueify "perm-namess") "Environments" ["Administer Changesets in Environment"] ["Dev"])))
+     
   (deftest "Add a permission and user to a role"
     (with-unique [user-name "role-user"
                   role-name "edit-role"]
@@ -363,3 +366,7 @@
 
       verify-access
       access-test-data) ))
+
+(defgroup validate-roles1
+  (deftest "Verify the Navigation of Roles, related to permissions"
+    (assert/is (role/validate-roles-navigation (uniqueify "nav-roles") (uniqueify "perm-namess") "Environments" ["Administer Changesets in Environment"] ["Dev"]))))
