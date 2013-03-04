@@ -94,7 +94,7 @@
    
    :changeset-create         "changesets___create"
    :changeset-apply          "changesets___apply"
-   :changeset-promoted       nil})
+   :changeset-promoted       "changesets___promote"})
 
 
 (def ^{:doc "A mapping of known errors in Katello. This helps
