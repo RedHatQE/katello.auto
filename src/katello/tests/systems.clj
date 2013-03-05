@@ -26,6 +26,8 @@
 
 ;; Functions
 
+(def sys-count 3)
+
 (defn create-test-environment []
   (def test-environment (first *environments*))
   (api/ensure-env-exist test-environment {:prior library}))
@@ -138,6 +140,19 @@
     (let [system-names (take 3 (unique-names "mysys"))]
       (create-multiple-systems system-names)
       (system/multi-delete system-names)))
+  
+  (deftest "Remove systems and validate sys-count"
+    (with-unique [env  "dev"
+                  org-name "test-sys"
+                  system-name "mysystem"]
+      (org/create org-name)
+      (env/create env {:org-name org-name})
+      (org/switch org-name)
+      (let [system-names (take sys-count (unique-names "mysys"))]
+        (create-multiple-systems system-names)
+        (system/create system-name {:sockets "1"
+                                  :system-arch "x86_64"})
+        (system/verify-sys-count system-name system-names (inc sys-count)))))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined

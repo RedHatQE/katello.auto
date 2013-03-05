@@ -33,6 +33,7 @@
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::total-sys-count             "total_items_count"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -156,6 +157,22 @@
         (when-not (= name old-name)
           (throw+ {:type ::sysname-edited-anyway
                    :msg "System name changed even after clicking cancel button."}))))))
+
+(defn verify-sys-count
+  "Verify system-count after deleting one or more systems"
+  [sys-name system-names count]
+  (when-not (= count (Integer/parseInt (browser getText ::total-sys-count)))
+    (throw+ {:type ::total-syscount-not-updated
+             :msg "On adding new systems, sys-count is not updating."}))
+  (delete sys-name)
+  (when-not (= (dec count) (Integer/parseInt (browser getText ::total-sys-count)))
+    (throw+ {:type ::syscount-on-deleting-single-system
+             :msg "sys-count not updating on deleting a single system."}))
+  (multi-delete system-names)
+  (browser clickAndWait ::sys-tab) ; this is a workaround; hitting the systab will refesh the sys-count. See bz #859237
+  (when-not (= 0 (Integer/parseInt (browser getText ::total-sys-count)))
+    (throw+ {:type ::syscount-on-deleting-multi-system
+             :msg "sys-count not updating on deleting multiple systems."})))
 
 
 (defn set-environment "Move a system to a new environment."
