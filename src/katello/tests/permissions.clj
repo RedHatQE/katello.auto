@@ -312,7 +312,17 @@
      ["Delete Systems"]])
 
   (deftest "Verify the Navigation of Roles, related to permissions"
-    (assert/is (role/validate-roles-navigation (uniqueify "nav-roles") (uniqueify "perm-namess") "Environments" ["Administer Changesets in Environment"] ["Dev"])))
+    :data-driven true
+    
+    (fn [resource-type verbs tags]
+      (let [role-name    (uniqueify "nav-roles")
+            perm-name    (uniqueify "perm-namess")
+            organization (@conf/config :admin-org)]
+       
+      (role/create role-name)  
+      (assert/is (role/validate-permissions-navigation role-name perm-name organization resource-type verbs tags))))
+    
+    [["Environments" ["Administer Changesets in Environment"] ["Dev"]]])
      
   (deftest "Add a permission and user to a role"
     (with-unique [user-name "role-user"
@@ -367,6 +377,3 @@
       verify-access
       access-test-data) ))
 
-(defgroup validate-roles1
-  (deftest "Verify the Navigation of Roles, related to permissions"
-    (assert/is (role/validate-roles-navigation (uniqueify "nav-roles") (uniqueify "perm-namess") "Environments" ["Administer Changesets in Environment"] ["Dev"]))))
