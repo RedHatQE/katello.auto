@@ -15,9 +15,10 @@
    ::users                           "role_users"
    ::permissions                     "role_permissions"
    ::next                            "next_button"
+   ::previous                        "previous_button"
    ::permission-resource-type-select "permission[resource_type_attributes[name]]"
    ::permission-verb-select          "permission[verb_values][]"
-   ::permission-tag-select           "tags"        
+   ::permission-tag-select           "permission[tag_values][]"        
    ::permission-name-text            "permission[name]"
    ::permission-description-text     "permission[description]"
    ::save-permission                 "save_permission_button"
@@ -114,4 +115,26 @@
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 
-
+(defn validate-permissions-navigation
+  "Validate Navigation of permissions page under Roles."
+  [role-name perm-name org resource-type verbs tags]
+  (nav/go-to ::named-permissions-page {:role-name role-name})
+  (sel/->browser (click (permission-org org))
+                 (sleep 1000))
+  (browser click ::add-permission)
+  (browser select ::permission-resource-type-select resource-type)
+  (browser click ::next)
+  (doseq [verb verbs]
+    (browser addSelection ::permission-verb-select verb))
+  (browser click ::next)
+  (doseq [tag tags]
+    (browser addSelection ::permission-tag-select tag))
+  (sel/->browser (click ::next)
+                 (setText ::permission-name-text perm-name)
+                 (setText ::permission-description-text "myperm descriptions"))
+  (while (browser isVisible ::previous)
+    (browser click ::previous))  
+  (while (not (browser isVisible ::save-permission))
+    (browser click ::next))
+  (browser click ::save-permission)
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
