@@ -86,6 +86,24 @@
     :blockers (open-bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
 
+  (deftest "System-details: Edit system-name"
+    :data-driven true
+    ;:blockers (open-bz-bugs "917033")
+    
+    (fn [new-system save? & [expected-err]]
+      (let [system (uniqueify "newsystem")]
+        (system/create system {:sockets "1"
+                               :system-arch "x86_64"})
+        (if expected-err
+          (expecting-error (common/errtype expected-err)
+                           (system/edit-sysname system new-system save?))
+          (system/edit-sysname system new-system save?))))
+    
+    [["yoursys" false]
+     ["test.pnq.redhat.com" true]
+     [(random-string (int \a) (int \z) 256) true :katello.notifications/system-name-255-char-limit]
+     [(random-string (int \a) (int \z) 255) true]])
+
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
     :blockers (open-bz-bugs "738054")
