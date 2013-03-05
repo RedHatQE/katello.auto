@@ -146,15 +146,11 @@
     (browser setText ::name-text-edit new-name)
     (if save?
       (do
-        (if (> (count new-name) 255)
-          (do 
-            (expecting-error (common/errtype :katello.notifications/system-name-255-char-limit)
-                             (browser click ::save-button)))
-          (do
-            (browser click ::save-button)
-            (when-not (= new-name (browser getText ::edit-sysname))
-              (throw+ {:type ::sysname-not-edited
-                       :msg "Still getting old system name."})))))
+        (browser click ::save-button)
+        (notification/check-for-success)
+        (when-not (= new-name (browser getText ::edit-sysname))
+          (throw+ {:type ::sysname-not-edited
+                   :msg "Still getting old system name."})))
       (do
         (browser click ::cancel-button)
         (when-not (= name old-name)
