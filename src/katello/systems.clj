@@ -2,6 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
             [slingshot.slingshot :refer [throw+]]
+            [katello.tasks :refer [expecting-error]]
             [test.assert :as assert]
             (katello [navigation :as nav]
                      [notifications :as notification]
@@ -56,6 +57,9 @@
    ::release-version-select      "system[releaseVer]"
    ::environment                 "//div[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
+   ::edit-sysname                "system_name"
+   ::save-button                 "//button[@type='submit']"
+   ::cancel-button               "//button[@type='cancel']"
    
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
@@ -132,6 +136,27 @@
                          ::description-text-edit description
                          ::location-text-edit location
                          ::release-version-select release-version}))
+
+(defn edit-sysname
+  "Edits system-name"
+  [name new-name save?]
+  (nav/go-to ::details-page {:system-name name})
+  (let [old-name (browser getText ::edit-sysname)]
+    (browser click ::edit-sysname)
+    (browser setText ::name-text-edit new-name)
+    (if save?
+      (do
+        (browser click ::save-button)
+        (notification/check-for-success)
+        (when-not (= new-name (browser getText ::edit-sysname))
+          (throw+ {:type ::sysname-not-edited
+                   :msg "Still getting old system name."})))
+      (do
+        (browser click ::cancel-button)
+        (when-not (= name old-name)
+          (throw+ {:type ::sysname-edited-anyway
+                   :msg "System name changed even after clicking cancel button."}))))))
+
 
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
