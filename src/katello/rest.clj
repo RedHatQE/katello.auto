@@ -4,7 +4,7 @@
             [katello.conf :as conf]
             
             [slingshot.slingshot :refer [throw+]])
-  (:refer-clojure :exclude (get)))
+  (:refer-clojure :exclude (get read delete)))
 
 (defn- read-json-safe [s]
   (try (json/read-json s)

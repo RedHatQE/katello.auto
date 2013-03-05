@@ -6,8 +6,8 @@
             [clojure.set :refer [index]]
             katello
             (katello [rest :as rest] 
-                     [conf :refer [config *session-user* *session-password* *session-org*]] 
-                     [tasks :refer [uniqueify promotion-deletion-lock chain-envs]])))
+                     [conf :refer [config *session-user* *session-password* *session-org* ]] 
+                     [tasks :refer [uniqueify chain-envs]])))
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
@@ -252,7 +252,7 @@
    promotion completes, throws an exception."
   [changeset-name]
   (let [id (get-id-by-name :changeset changeset-name)]
-    (locking #'promotion-deletion-lock
+    (locking #'katello.conf/promotion-deletion-lock
       (rest/post (rest/api-url "api/changesets/" id "/promote"))
       (loop-with-timeout (* 20 60 1000) [cs {}]
         (let [state (:state cs)]

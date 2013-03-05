@@ -3,11 +3,6 @@
             [clojure.string :refer [split join capitalize]])
   (:import java.util.Date))
 
-;;var for synchronizing promotion calls, since only one can be done in
-;;the system at a time.
-(def promotion-deletion-lock nil)
-
-
 (defmacro ^{:see-also "https://github.com/scgilardi/slingshot"}
   expecting-error
   "Inverts exception handling. Execute forms, if error is caught

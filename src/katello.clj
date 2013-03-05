@@ -16,7 +16,11 @@
 (def library (newEnvironment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
-
+(defn mklibrary
+  "Creates a library record for a particular org and next
+   environment (used for env selection in UI)"
+  [env]
+  (assoc library :org (:org env) :next env))
 
 (defrecord Provider [id name description org])
 

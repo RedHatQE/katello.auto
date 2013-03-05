@@ -52,8 +52,8 @@
 
 (defn add-product
   "Adds a product to a provider, with the given name and description."
-  [{:keys [provider-name name description]}]
-  (nav/go-to ::products-page {:provider-name provider-name})
+  [{:keys [provider name description]}]
+  (nav/go-to ::products-page {:provider-name (:name provider)})
   (browser click ::add-product)
   (sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}

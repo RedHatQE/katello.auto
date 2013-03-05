@@ -13,7 +13,7 @@
 
 ;; because protocols don't support varargs
 (defn update [x f & args]
-  (update* x (apply f args)))
+  (update* x (apply f x args)))
 
 ;; Locators
 

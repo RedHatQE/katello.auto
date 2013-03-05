@@ -1,5 +1,7 @@
 (ns katello.tests.promotions
-  (:require (katello [api-tasks :as api] 
+  (:require katello
+            (katello [rest :as rest]
+                     [api-tasks :as api] 
                      [changesets :as changesets]
                      [providers :as provider]
                      [environments :as environment]
@@ -20,8 +22,7 @@
 
 ;; Variables
 
-(def provider-name (atom nil))
-(def template-name (atom nil))
+(def provider (atom nil))
 (def envs (atom nil))
 
 (def content-map
@@ -35,10 +36,22 @@
 ;; Functions
 
 (defn create-test-provider-and-envs "Create a test provider and enviroments." []
-  (reset! provider-name (uniqueify "promo-"))
-  (api/create-provider  @provider-name {:description "test provider for promotions"})
-  (reset! envs (conj *environments* library))
-  (api/create-env-chain @envs))
+  (reset! provider (-> {:name "promo"
+                        :description "test provider for promotions"
+                        :org (@config :admin-org)}
+                       katello/newProvider
+                       uniqueify
+                       rest/create))
+  
+  
+  (reset! envs (environments/chain-envs
+                (for [e (list "Dev" "QE" "Prod")]
+                  (-> {:name e
+                       :org (@config :admin-org)}
+                      katello/newEnvironment
+                      uniqueify))))
+  
+  (environment/create-all @envs))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]
@@ -47,12 +60,17 @@
       (assert/is (every? current promoted)))))
 
 (defn verify-promote-content [envs content]
+  ;;create content
+  
+  )
+
+(defn verify-promote-content [envs content]
   (org/switch)
   (let [create-repo-fn
         (fn [prod]
           (let [product-id (-> prod
                               (api/create-product
-                               {:provider-name @provider-name
+                               {:provider-name @provider
                                 :description "test product"})
                               :id)
                 repo-name (uniqueify "mytestrepo")]
@@ -65,16 +83,16 @@
              :product-id product-id}))]
     (doseq [product-name (content :products)]
       (create-repo-fn product-name))
-    (doseq [template-name (content :templates)]
+    (doseq [template (content :templates)]
       (let [product-name (uniqueify "templ-prod")
             {:keys [product-id repo-name]} (create-repo-fn product-name)] 
         (doseq [to-env (drop 1 envs)]
           (api/with-env to-env
             (api/promote {:products [{:product_id product-id}]} )))
         (api/with-env library
-          (api/create-template {:name template-name
+          (api/create-template {:name template
                                 :description "template to be promoted"})
-          (api/add-to-template template-name {:repositories [{:product product-name
+          (api/add-to-template template {:repositories [{:product product-name
                                                               :name repo-name}]})))))
   (doseq [[from-env target-env] (chain-envs envs)] 
     (changesets/promote-delete-content from-env target-env false content)
@@ -120,18 +138,13 @@
     (every? true? (for [repromoted-item repromoted-items]
                     (if (some #{repromoted-item} items) true)))))
                     
-    
-
 (def promo-data
   (runtime-data
-   [(take 2 @envs) {:products (set (take 3 (unique-names "MyProduct")))}]
-   [(take 3 @envs) {:products (set (take 3 (unique-names "ProductMulti")))}]
-   [(take 3 @envs) {:templates (set (take 3 (unique-names "TemplateMulti")))}]
+   [(take 2 @envs) (->> {:name "MyProduct"} katello/newProduct uniques (take 3) set)]
+   [(take 3 @envs) (->> {:name "ProductMulti"} katello/newProduct uniques (take 3) set)]
+   [(take 3 @envs) (->> {:name "TemplateMulti"} katello/newTemplate uniques (take 3) set)]
 
-   #_(comment "promoting errata requires some extra setup, disabled for now"
-               [(take 2 @envs) {:errata {:advisory "RHEA-2012:0001"
-                                         :title "Beat_Erratum"
-                                         :others ["Sea" "Bird" "Gorilla"]}}])))
+   ))
 
 (def custom-products
   (for [prod (-> fake/custom-provider first :products)]

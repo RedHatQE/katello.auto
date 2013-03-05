@@ -16,7 +16,8 @@
 ;; Locators
 
 (sel/template-fns
- {add-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_')]"
+ {add-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Add')]"
+  remove-content-item "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Undo')]"
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product      "//span[contains(.,'%s')]"
@@ -57,47 +58,48 @@
 
 ;; Protocol
 
-(defn add-item [category-loc item]
+(defn go-to-item-in-product [category-loc item]
   (browser click ::products-category)
   (browser click (select-product (-> item :product :name)))
-  (browser click category-loc)
-  (browser click (add-content-item (:name item))))
+  (browser click category-loc))
 
 (defprotocol Promotable
-  "For adding/removing various things to a changeset (note these
-   operations are stateful, UI must already be on the changeset
-   content page."
-  (add [x cs] "adds x content to changeset")
-  (remove [x cs] "deletes x content from changeset"))
+  "Interface for entities that are promotable"
+  (go-to [x] "Navigates to entity from a changeset's environment content view"))
 
 (extend-protocol Promotable
   katello.Product
-  (add [prod cs]
-    (browser click ::products-category)
-    (browser click (add-content-item (:name prod))))
+  (go-to [prod]
+    (browser click ::products-category))
 
   katello.Template
-  (add [template cs]
-    (browser click ::templates-category)
-    (browser click (add-content-item (:name template))))
+  (go-to [template]
+    (browser click ::templates-category))
   
   katello.Repository
-  (add [repo cs] (add-item ::select-repos repo))
+  (go-to [repo] (go-to-item-in-product ::select-repos repo))
 
   katello.Package
-  (add [package cs] (add-item ::select-packages package))
+  (go-to [package] (go-to-item-in-product ::select-packages package))
 
   katello.Erratum
-  (add [erratum cs]
+  (go-to [erratum]
     (if (:product erratum)
-      (add-item ::select-errata erratum)
+      (go-to-item-in-product ::select-errata erratum)
       (do (browser click ::errata-category)
-          (browser click ::select-errata-all)
-          (browser click (add-content-item (:name erratum)))))
-    ))
+          (browser click ::select-errata-all)))))
 
+(defn- add-rm [loc ent]
+  (go-to ent)
+  (browser click (-> ent :name loc)))
 
+(def ^{:doc "Adds ent to current changeset (assumes the ui is on that
+             page already)"}
+  add (partial add-rm add-content-item))
 
+(def ^{:doc "Removes ent from current changeset (assumes the ui is on
+             that page already)"}
+  remove (partial add-rm remove-content-item))
 ;; Tasks
 
 (defn create
@@ -105,7 +107,7 @@
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
   (nav/go-to ::named-environment-page {:env-name (:name env)
-                                       :next-env-name (:next env)})
+                                       :next-env-name (-> env :next :name)})
   (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
@@ -122,12 +124,16 @@
                              :next-env-name (-> env :next :name)
                              :changeset-name name
                              :deletion? deletion?})
-    (doseq [item to-add]
+    (doseq [item (:content to-add)]
       (add item changeset)
       (go-home))
-    (doseq [item to-remove]
+    (doseq [item (:content to-remove)]
       (remove item changeset)
       (go-home))))
+
+(extend katello.Changeset
+  ui/CRUD {:create create
+           :update* update})
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete
@@ -140,7 +146,7 @@
                                     :changeset-name name
                                     :deletion? deletion?}))]
     (nav-to-cs)
-    (locking #'promotion-deletion-lock
+    (locking #'conf/promotion-deletion-lock
       (browser click ::review-for-promotion)
       ;;for the submission
       (sel/loop-with-timeout (* 10 60 1000) []
@@ -170,7 +176,7 @@
   [cs]
   (doto (uniqueify cs)
     (ui/create)
-    (ui/update identity) ; since creating doesn't allow adding content
+    (ui/update identity) ; since creating doesn't include content
     (promote-or-delete)))
 
 (defn sync-and-promote [products from-env to-env]
@@ -181,7 +187,7 @@
                        sync-results))
     (promote-delete-content from-env to-env false {:products all-prods})))
 
-(defn- extract-content []
+(defn- extract-content [] 
   (let [elems (for [index (iterate inc 1)]
                 (content-item-n (str index)))
         retrieve (fn [elem]
@@ -194,16 +200,16 @@
   [env-name]
   (nav/go-to ::named-environment-page {:env-name env-name
                                        :next-env-name nil})
-  (let [categories {:products ::products-category,
-                    :templates ::templates-category}]
-    (zipmap (keys categories)
-            (doall (for [category (vals categories)]
-                     (do
-                       (browser click category)
-                       (browser sleep 2000)
-                       (let [result (extract-content)]
-                         (browser click ::promotion-eligible-home)
-                         result)))))))
+  (let [categories {katello/newProduct ::products-category,
+                    katello/newTemplate ::templates-category}]
+    (apply concat (for [[f category] categories]
+              (do
+                (browser click category)
+                (browser sleep 2000)
+                (let [result (for [item (extract-content)]
+                               (f {:name item}))]
+                  (browser click ::promotion-eligible-home)
+                  result))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
   (nav/go-to ::named-environment-page {:env-name env}))
@@ -211,16 +217,13 @@
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (nav/go-to ::named-environment-page {:env-name env :next-env-name ""})
-  (every? true?
-          (flatten
-           (for [category (keys content)]
-             (do (browser click (-> category name (str "-category") keyword))
-                 (for [item (content category)]
-                   (try (do (browser isVisible
-                                     (add-content-item item))
-                            true)
-                        (catch Exception e false))))))))
+  (nav/go-to ::named-environment-page {:env-name (:name env) :next-env-name ""})
+  (let [visible? #(try (do (browser isVisible (add-content-item %))
+                           true)
+                       (catch Exception e false))]
+    (every? true? (for [item content]
+                    (go-to item)
+                    (visible? (:name item))))))
 
 (defn add-link-exists?
   "When the product is not promoted to next env and if there is no add-link 

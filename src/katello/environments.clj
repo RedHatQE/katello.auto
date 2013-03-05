@@ -74,8 +74,8 @@
            :delete delete}
   
   rest/CRUD
-  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/"] [:org]])
-        id-url (partial rest/url-maker [["api/organizations/%s/environments/%s"] [:org identity]])]
+  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/" [:org]]])
+        id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
     {:id rest/id-impl
      :query (partial rest/query-by-name org-url)
      :create (fn [env] 
@@ -91,7 +91,7 @@
      :read (partial rest/read-impl id-url)
      
      :update (fn [env new-env]
-               (merge updated (rest/put (id-url env)
+               (merge new-env (rest/put (id-url env)
                                         {:environment (select-keys new-env [:description])})))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
@@ -100,7 +100,7 @@
   "Sets prior of each env to be the previous env in the list"
   [environments]
   {:pre [(apply = (map :org environments))]} ; all in same org
-  (for [[prior curr] (partition 2 1 (concat (list katello/library) environments))]
+  (for [[prior curr] (partition 2 1 (conj (list* environments) katello/library))]
     (assoc curr :prior prior)))
 
 (defn create-all
