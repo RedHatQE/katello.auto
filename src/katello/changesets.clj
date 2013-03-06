@@ -6,6 +6,7 @@
                      [ui :as ui]
                      [rest :as rest]
                      [conf :as conf]
+                     [organizations :as organization]
                      [sync-management :as sync]
                      [notifications :as notification :refer [check-for-success request-type?]])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
@@ -120,10 +121,7 @@
         go-home (fn []
                   (browser sleep 5000)
                   (browser click ::promotion-eligible-home))]
-    (nav/go-to ::named-page {:env-name (:name env)
-                             :next-env-name (-> env :next :name)
-                             :changeset-name name
-                             :deletion? deletion?})
+    (nav/go-to changeset)
     (doseq [item (:content to-add)]
       (add item changeset)
       (go-home))
@@ -133,43 +131,45 @@
 
 (extend katello.Changeset
   ui/CRUD {:create create
-           :update* update})
+           :update* update}
+  
+  nav/Destination {:go-to (fn [{:keys [name deletion? env]}]
+                            (organization/switch (-> env :org))
+                            (nav/go-to ::named-page {:env-name (:name env)
+                                                     :next-env-name (-> env :next :name)
+                                                     :changeset-name name
+                                                     :deletion? deletion?}))})
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete
    content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
-  [{:keys [name deletion? env]} & [timeout-ms]]
-  (let [nav-to-cs (fn [] (nav/go-to ::named-page
-                                   {:env-name (:name env)
-                                    :next-env-name (-> env :next :name)
-                                    :changeset-name name
-                                    :deletion? deletion?}))]
-    (nav-to-cs)
-    (locking #'conf/promotion-deletion-lock
-      (browser click ::review-for-promotion)
-      ;;for the submission
-      (sel/loop-with-timeout (* 10 60 1000) []
-        (when-not (try+ (browser click ::promote-to-next-environment)
-                        (check-for-success)
-                        (catch (common/errtype ::notification/deletion-already-in-progress) _
-                          (nav-to-cs))
-                        (catch (common/errtype ::notification/promotion-already-in-progress) _
-                          (nav-to-cs)))
-          (Thread/sleep 30000)
-          (recur)))
-      ;;for confirmation
-      (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
-        (case current-status
-          "Applied" current-status
-          "Apply Failed" (throw+ {:type :promotion-failed
-                                  :changeset name
-                                  :from-env (:name env)
-                                  :to-env (-> env :next :name)})
-          (do (Thread/sleep 2000)
-              (recur (browser getText (status name))))))
-      ;;wait for async success notif
-      (check-for-success {:timeout-ms (* 20 60 1000)}))))
+  [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
+  (nav/go-to changeset)
+  (locking #'conf/promotion-deletion-lock
+    (browser click ::review-for-promotion)
+    ;;for the submission
+    (sel/loop-with-timeout (* 10 60 1000) []
+      (when-not (try+ (browser click ::promote-to-next-environment)
+                      (check-for-success)
+                      (catch (common/errtype ::notification/deletion-already-in-progress) _
+                        (nav/go-to changeset))
+                      (catch (common/errtype ::notification/promotion-already-in-progress) _
+                        (nav/go-to changeset)))
+        (Thread/sleep 30000)
+        (recur)))
+    ;;for confirmation
+    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+      (case current-status
+        "Applied" current-status
+        "Apply Failed" (throw+ {:type :promotion-failed
+                                :changeset name
+                                :from-env (:name env)
+                                :to-env (-> env :next :name)})
+        (do (Thread/sleep 2000)
+            (recur (browser getText (status name))))))
+    ;;wait for async success notif
+    (check-for-success {:timeout-ms (* 20 60 1000)})))
 
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "
@@ -179,13 +179,19 @@
     (ui/update identity) ; since creating doesn't include content
     (promote-or-delete)))
 
-(defn sync-and-promote [products from-env to-env]
-  (let [all-prods (map :name products)
-        all-repos (apply concat (map :repos products))
-        sync-results (sync/perform-sync all-repos {:timeout 600000})]
-    (assert/is (every? (fn [[_ res]] (sync/success? res))
-                       sync-results))
-    (promote-delete-content from-env to-env false {:products all-prods})))
+(defn sync-and-promote
+  "Syncs all the repos and then promotes all their parent products
+  *from* the env given."
+  [repos env]
+  (let [all-prods (distinct (map :product repos))]
+    (assert/is (every? sync/success?
+                       (vals (sync/perform-sync repos {:timeout 600000}))))
+    (-> {:name "cs"
+         :content all-prods
+         :env env}
+        katello/newChangeset
+        uniqueify
+        promote-delete-content)))
 
 (defn- extract-content [] 
   (let [elems (for [index (iterate inc 1)]
@@ -221,9 +227,9 @@
   (let [visible? #(try (do (browser isVisible (add-content-item %))
                            true)
                        (catch Exception e false))]
-    (every? true? (for [item content]
-                    (go-to item)
-                    (visible? (:name item))))))
+    (every? true? (doall (for [item content]
+                           (do (go-to item)
+                               (visible? (:name item))))))))
 
 (defn add-link-exists?
   "When the product is not promoted to next env and if there is no add-link 

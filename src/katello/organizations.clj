@@ -74,17 +74,15 @@
 (defn update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
-  [{:keys [name] :as org} f & args]
+  [{:keys [name]} {:keys [description]}]
   (nav/go-to ::named-page {:org-name name})
-  (common/in-place-edit {::description-text (:description (apply f org args))}))
+  (common/in-place-edit {::description-text (:description description)}))
 
 (extend katello.Organization
   ui/CRUD {:create create
-           :update update
+           :update* update
            :delete delete}
   
-  tasks/Uniqueable  tasks/entity-uniqueable-impl
-
   rest/CRUD (let [uri "api/organizations/"
                  label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
              {:id rest/label-impl
@@ -95,11 +93,15 @@
 
               :read (partial rest/read-impl label-url) 
               
-              :update (fn [org new-org]
+              :update* (fn [org new-org]
                         (rest/put (label-url org)
                                   {:body {:organization (select-keys new-org [:description])}}))
               :delete (fn [org]
-                        (rest/delete (label-url org)))}))
+                        (rest/delete (label-url org)))})
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
+                                               {:org-name (:name org)}))})
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."
@@ -114,22 +116,23 @@
    org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
-  ([org-name & [{:keys [force? default-org]}]]
-  (nav/go-to ::nav/top-level) 
+  ([{:keys [name]} & [{:keys [force? default-org]}]]
+     {:pre [name]}
+     (nav/go-to ::nav/top-level) 
      (when (or force?
                default-org
-               (not= (current) org-name)) 
+               (not= (current) name)) 
        (browser click ::ui/switcher)
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
              (browser click (ui/default-star (if (= default-org :none)
-                                            current-default
-                                            default-org)))
+                                               current-default
+                                               default-org)))
              (notification/check-for-success))))
-       (when org-name
-         (browser clickAndWait (ui/switcher-link org-name))))))
+       (when name
+         (browser clickAndWait (ui/switcher-link name))))))
 
 (defn before-test-switch
   "A pre-made fn to switch to the session org, meant to be used in

@@ -1,7 +1,9 @@
 (ns katello.repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
             katello
-            (katello [navigation :as nav]
+            (katello [tasks :as tasks]
+                     [organizations :as organization]
+                     [navigation :as nav]
                      [providers :as provider]        ;to load navigation
                      [notifications :as notification] 
                      [ui :as ui])))
@@ -23,7 +25,7 @@
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
-   [::named-page [product repo-name] (browser click (ui/editable repo-name))]])
+   [::named-page [repo-name] (browser click (ui/editable repo-name))]])
 
 ;; Tasks
 
@@ -40,10 +42,8 @@
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
 (defn delete "Deletes a repository from the given provider and product."
-  [{:keys [name provider product]}]
-  (nav/go-to ::named-page {:provider-name (:name provider)
-                           :product-name (:name product)
-                           :repo-name name})
+  [repo]
+  (nav/go-to repo)
   (browser click ::remove-repository)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-destroy)}))
@@ -58,4 +58,12 @@
 
 (extend katello.Repository
   ui/CRUD {:create create
-           :delete delete})
+           :delete delete}
+  
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [{:keys [product name]}]
+                            (organization/switch (-> product :provider :org))
+                            (nav/go-to ::named-page {:provider-name  (-> product :provider :name)
+                                                     :product-name (:name product)
+                                                     :repo-name name}))})

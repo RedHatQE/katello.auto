@@ -92,8 +92,15 @@
                                             `(nav/nav-tree ~child#))))))))
        (defmethod page-tree *ns* [k#] (~'pages))))
 
-(defn go-to [location-kw & [argmap]]
-  (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap )) 
+(defprotocol Destination
+  (go-to [place] [place args] "Navigates to a given place"))
+
+(extend clojure.lang.Keyword
+  Destination
+  {:go-to (fn go-to*
+            ([location-kw argmap]
+               (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap))
+            ([location-kw] (go-to* location-kw {})))})
 
 (defn returns-403? [url]
   (=

@@ -94,7 +94,11 @@
                (merge new-env (rest/put (id-url env)
                                         {:environment (select-keys new-env [:description])})))})
 
-  tasks/Uniqueable tasks/entity-uniqueable-impl)
+  tasks/Uniqueable tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [env]
+                            (nav/go-to ::named-page {:org-name (-> env :org :name)
+                                                     :env-name (:name env)}))})
 
 (defn chain-envs
   "Sets prior of each env to be the previous env in the list"

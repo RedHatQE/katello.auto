@@ -5,7 +5,9 @@
                      [notifications :as notification] 
                      [ui :as ui]
                      [rest :as rest]
-                     [ui-common :as common])))
+                     [organizations :as organization]
+                     [ui-common :as common]
+                     [tasks :as tasks])))
 
 ;; Locators
 
@@ -62,18 +64,17 @@
 
 (defn delete-product
   "Deletes a product from the given provider."
-  [{:keys [name provider]}]
+  [{:keys [provider] :as product}]
   {:pre [(not-empty provider)]}
-  (nav/go-to ::named-product-page {:provider-name (:name provider)
-                                   :product-name name})
+  (nav/go-to product)
   (browser click ::remove-product)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
 
 (defn delete
   "Deletes the named custom provider."
-  [{:keys [name]}]
-  (nav/go-to ::named-page {:provider-name name})
+  [provider]
+  (nav/go-to provider)
   (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-destroy)}))
@@ -81,11 +82,10 @@
 (defn edit
   "Edits the named custom provider. Takes an optional new name, and
   new description."
-  [{:keys [name] :as prov} f & args]
-  (nav/go-to ::details-page {:provider-name name})
-  (let [updated (apply f prov args)]
-    (common/in-place-edit {::name-text (:name updated)
-                           ::description-text (:description updated)})))
+  [provider updated]
+  (nav/go-to ::details-page {:provider-name (:name provider)})
+  (common/in-place-edit {::name-text (:name updated)
+                         ::description-text (:description updated)}))
 
 (extend katello.Provider
   ui/CRUD {:create create
@@ -108,23 +108,36 @@
                         (merge new-prov (rest/put (id-url prov)
                                                  {:body {:provider
                                                          (select-keys new-prov [:repository_url])}})))
-              :delete (fn [prov] (rest/delete (id-url prov)))}))
+              :delete (fn [prov] (rest/delete (id-url prov)))})
+
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [prov]
+                            (organization/switch (:org prov))
+                            (nav/go-to ::named-page {:provider-name (:name prov) }))})
 
 (extend katello.Product
   ui/CRUD {:create add-product
            :delete delete-product}
 
   rest/CRUD (let [id-url (partial rest/url-maker [["api/organizations/%s/products/%s" [:org identity]]])
-                 org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
-                 query-urls (partial rest/url-maker [["api/organizations/%s/products" [:org]]
-                                                    ["/api/environments/%s/products" [:env]]])]
-             {:id rest/id-impl
-              :query (partial rest/query-by-name query-urls)
-              :create (fn [prod]
-                        (merge prod
-                               (rest/post
-                                (rest/url-maker [["api/providers/%s/product_create" [:provider]]] prod)
-                                {:body {:product (select-keys prod [:name :description :gpg_key_name])}})))
-              :read (partial rest/read-impl id-url)
-              }))
+                  org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
+                  query-urls (partial rest/url-maker [["api/organizations/%s/products" [:org]]
+                                                      ["/api/environments/%s/products" [:env]]])]
+              {:id rest/id-impl
+               :query (partial rest/query-by-name query-urls)
+               :create (fn [prod]
+                         (merge prod
+                                (rest/post
+                                 (rest/url-maker [["api/providers/%s/product_create" [:provider]]] prod)
+                                 {:body {:product (select-keys prod [:name :description :gpg_key_name])}})))
+               :read (partial rest/read-impl id-url)
+               })
+
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
+                            (organization/switch (:org provider))
+                            (nav/go-to ::named-product-page {:provider-name name
+                                                             :product-name (:name  product)}))})
 
