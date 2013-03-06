@@ -5,6 +5,7 @@
             selenium-server
             [fn.trace :refer [all-fns]]
             [deltacloud :as cloud]
+            katello
             [katello.tasks :refer [unique-names]])
   
   (:import [java.io PushbackReader FileNotFoundException]
@@ -156,7 +157,7 @@
   
   (def ^:dynamic *session-user* (@config :admin-user))
   (def ^:dynamic *session-password* (@config :admin-password))
-  (def ^:dynamic *session-org* (@config :admin-org))
+  (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
   (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
                                 (cloud/connection dc-url           
                                                   (@config :deltacloud-user)

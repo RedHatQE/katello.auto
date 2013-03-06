@@ -45,8 +45,8 @@
 
 (defn create
   "Creates a custom provider with the given name and description."
-  [{:keys [name description]}]
-  (nav/go-to ::new-page)
+  [{:keys [name description org]}]
+  (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        ::description-text description}
                       ::create-save)
@@ -55,7 +55,8 @@
 (defn add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider name description]}]
-  (nav/go-to ::products-page {:provider-name (:name provider)})
+  (nav/go-to ::products-page {:provider-name (:name provider)
+                              :org (:org provider)})
   (browser click ::add-product)
   (sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}
@@ -83,7 +84,8 @@
   "Edits the named custom provider. Takes an optional new name, and
   new description."
   [provider updated]
-  (nav/go-to ::details-page {:provider-name (:name provider)})
+  (nav/go-to ::details-page {:provider-name (:name provider)
+                             :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
                          ::description-text (:description updated)}))
 
@@ -113,8 +115,8 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [prov]
-                            (organization/switch (:org prov))
-                            (nav/go-to ::named-page {:provider-name (:name prov) }))})
+                            (nav/go-to ::named-page {:org (:org prov)
+                                                     :provider-name (:name prov) }))})
 
 (extend katello.Product
   ui/CRUD {:create add-product
@@ -137,7 +139,7 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
-                            (organization/switch (:org provider))
-                            (nav/go-to ::named-product-page {:provider-name name
-                                                             :product-name (:name  product)}))})
+                            (nav/go-to ::named-product-page {:org (:org provider)
+                                                             :provider-name name
+                                                             :product-name (:name product)}))})
 

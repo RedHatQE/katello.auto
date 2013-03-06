@@ -33,7 +33,8 @@
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
   [{:keys [product name url gpg-key]}]
-  (nav/go-to ::provider/products-page {:provider-name (-> product :provider :name)})
+  (nav/go-to ::provider/products-page {:org (-> product :provider :org)
+                                       :provider-name (-> product :provider :name)})
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select gpg-key))
   (sel/fill-ajax-form {::repo-name-text name
@@ -63,7 +64,7 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [{:keys [product name]}]
-                            (organization/switch (-> product :provider :org))
-                            (nav/go-to ::named-page {:provider-name  (-> product :provider :name)
+                            (nav/go-to ::named-page {:org (-> product :provider :org)
+                                                     :provider-name  (-> product :provider :name)
                                                      :product-name (:name product)
                                                      :repo-name name}))})

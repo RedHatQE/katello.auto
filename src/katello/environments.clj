@@ -64,7 +64,7 @@
   the new env."
   [env {:keys [description]}]
   (nav/go-to env)
-  (common/in-place-edit {::description-text (:description description)}))
+  (common/in-place-edit {::description-text description}))
 
 (extend katello.Environment
   ui/CRUD {:create create

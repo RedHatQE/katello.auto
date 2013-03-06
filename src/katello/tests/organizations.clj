@@ -1,6 +1,6 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require [katello :refer [newOrganization]]
+  (:require [katello :refer [newOrganization newProvider newProduct newRepository]]
             (katello [ui-common :as common]
                      [ui :as ui]
                      [api-tasks :as api]
@@ -134,21 +134,17 @@
         :blockers api/katello-only
         
         (with-unique [org (mkorg "delorg")
-                      provider (katello/newProvider {:name "delprov" :org org})
-                      product (katello/newProduct {:name "delprod" :provider provider})
-                      repo (katello/newRepository {:name "delrepo" :product product
+                      provider (newProvider {:name "delprov" :org org})
+                      product (newProduct {:name "delprod" :provider provider})
+                      repo (newRepository {:name "delrepo" :product product
                                                    :url "http://blah.com/blah"})]
           (let [create-all #(doseq [i (list org provider product repo)]
                              (ui/create i))]
-            (try
-              (create-all)
-              (organization/switch (@config :admin-org))
-              (organization/delete org)
-              ;;wait for delayed job to delete org
-              (Thread/sleep 30000)
-              (create-all)
-              (finally
-                (organization/switch (@config :admin-org))))))))
+            (create-all)
+            ;; not allowed to delete the current org, so switch first.
+            (organization/switch)
+            (organization/delete org)
+            (create-all)))))
     
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
