@@ -51,26 +51,25 @@
 
 (defn delete
   "Deletes an environment from the given organization."
-  [{:keys [name org]}]
-  (nav/go-to ::named-page {:org-name (:name org)
-                           :env-name name})
+  [env]
+  (nav/go-to env)
   (if (browser isElementPresent ::remove-link)
     (browser click ::remove-link)
-    (throw+ {:type ::cant-be-deleted :env-name name}))
+    (throw+ {:type ::cant-be-deleted :env env}))
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
 (defn edit
   "Edits an environment. Passes env through f (with extra args) to get
   the new env."
-  [{:keys [name org description] :as env} f & args]
+  [{:keys [name org description] :as env} {:keys [description]}]
   (nav/go-to ::named-page {:org-name (:name org)
                            :env-name name})
-  (common/in-place-edit {::description-text (:description (apply f env args))}))
+  (common/in-place-edit {::description-text (:description description)}))
 
 (extend katello.Environment
   ui/CRUD {:create create
-           :update edit
+           :update* edit
            :delete delete}
   
   rest/CRUD
@@ -90,7 +89,7 @@
                                                           :org (:org env))))}}})))
      :read (partial rest/read-impl id-url)
      
-     :update (fn [env new-env]
+     :update* (fn [env new-env]
                (merge new-env (rest/put (id-url env)
                                         {:environment (select-keys new-env [:description])})))})
 
