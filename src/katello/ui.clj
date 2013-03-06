@@ -15,6 +15,11 @@
 (defn update [x f & args]
   (update* x (apply f x args)))
 
+;;convenience
+(defn create-all [ents]
+  (doseq [ent ents]
+    (create ent)))
+
 ;; Locators
 
 (sel/template-fns

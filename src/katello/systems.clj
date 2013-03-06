@@ -66,7 +66,7 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [system-name] (nav/choose-left-pane system-name)
+   [::named-page [system] (nav/choose-left-pane system)
     [::details-page [] (browser click ::details)]
     [::subscriptions-page [] (browser click ::subscriptions)]
     [::content-menu [] (browser mouseOver ::content-link)
@@ -74,80 +74,72 @@
      [::content-packages-page [] (browser click ::packages-link)]
      [::content-errata-page [] (browser click ::errata-link)]]]]
   [::by-environments-page
-   [::environment-page [env-name] (nav/select-environment-widget env-name)
-    [::named-by-environment-page [system-name] (nav/choose-left-pane system-name)]]])
+   [::environment-page [env] (nav/select-environment-widget env)
+    [::named-by-environment-page [system] (nav/choose-left-pane system)]]])
 
 ;; Tasks
 
 (defn create
   "Creates a system"
-  [name & [{:keys [sockets system-arch]}]]
-  (nav/go-to ::new-page)
-  (sel/fill-ajax-form {::name-text name
+  [{:keys [name env sockets system-arch org]}]
+  (nav/go-to ::new-page {:org org})
+  (sel/fill-ajax-form [::name-text name
                        ::sockets-text sockets
-                       ::arch-select (or system-arch "x86_64")}
+                       ::arch-select (or system-arch "x86_64")
+                       (fn [env]
+                         (when env (nav/select-environment-widget env))) env]
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
 (defn delete "Deletes the selected system."
-  [system-name]
-  (nav/go-to ::named-page {:system-name system-name})
+  [system]
+  (nav/go-to system)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
 
 (defn select-multisys-with-ctrl
-  [system-names]
+  [systems]
   (browser clickAndWait ::sys-tab)
   (browser controlKeyDown)
-  (doseq [system-name system-names]
-    (nav/scroll-to-left-pane-item system-name)
-    (nav/choose-left-pane system-name))
+  (doseq [{:keys [name]} systems]
+    (nav/scroll-to-left-pane-item name)
+    (nav/choose-left-pane name))
   (browser controlKeyUp))
 
 (defn multi-delete "Delete multiple systems."
-  [system-names]
-  (select-multisys-with-ctrl system-names)
+  [systems]
+  (select-multisys-with-ctrl systems)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-bulk-destroy)}))
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [system-names group-name]
-  (select-multisys-with-ctrl system-names)
+  [systems group-name]
+  (select-multisys-with-ctrl systems)
   (browser click ::select-sysgrp)
   (browser click (sysgroup-checkbox group-name))
   (browser click ::add-sysgrp)
   (browser click ::confirm-to-yes)
   (notification/check-for-success))
 
-(defn edit
-  "Edits the properties of the given system. Optionally specify a new
-  name, a new description, and a new location."
-  [name {:keys [new-name description location release-version]}]
-  (nav/go-to ::details-page {:system-name name})
-  (common/in-place-edit {::name-text-edit new-name
-                         ::description-text-edit description
-                         ::location-text-edit location
-                         ::release-version-select release-version}))
-
-(defn set-environment "Move a system to a new environment."
-  [system-name new-environment]
-  (assert (not (blank? new-environment))) 
-  (nav/go-to ::details-page {:system-name system-name})
+(defn- set-environment "select a new environment for a system"
+  [new-environment]
+  {:pre [(not-empty new-environment)]} 
   (sel/->browser (click ::environment)
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
 
-(defn subscribe
+(defn- subscribe
   "Subscribes the given system to the products. (products should be a
   list). Can also set the auto-subscribe for a particular SLA.
   auto-subscribe must be either true or false to select a new setting
   for auto-subscribe and SLA. If auto-subscribe is nil, no changes
   will be made."
-  [{:keys [system-name add-products remove-products auto-subscribe sla]}]
-  (nav/go-to ::subscriptions-page {:system-name system-name})
+  [{:keys [system add-products remove-products auto-subscribe sla]}]
+  ;;(nav/go-to ::subscriptions-page {:system-name system})
+  (browser click ::subscriptions)
   (when-not (nil? auto-subscribe)
     (common/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
                                                           (if auto-subscribe "On" "Off")
@@ -163,13 +155,42 @@
                                                                              :sys-update-subscriptions
                                                                              :sys-update))}))
 
+(defn update
+  "Edits the properties of the given system. Optionally specify a new
+  name, a new description, and a new location."
+  [system updated]
+  (let [[to-remove {:keys [name description
+                           location release-version
+                           products]
+                    :as to-add} _] (data/diff system updated)]
+    (when (or name description location release-version)
+      (nav/go-to ::details-page {:system system})
+      (common/in-place-edit {::name-text-edit name
+                             ::description-text-edit description
+                             ::location-text-edit location
+                             ::release-version-select release-version}))
+    (when (or (:products to-add)
+              (:products to-remove))
+      )))
+
+(extend katello.System
+  ui/CRUD {:create create
+           :delete delete
+           :update* update}
+  
+  nav/Destination {:go-to (fn [system]
+                            (nav/go-to ::named-page {:system system
+                                                     :org (-> system :env :org)}))})
+
+
+
 (defn environment "Get current environment of the system"
-  [system-name]
-  (nav/go-to ::details-page {:system-name system-name})
+  [system]
+  (nav/go-to ::details-page {:system-name system})
   (browser getText ::environment))
 
-(defn get-details [system-name]
-  (nav/go-to ::details-page {:system-name system-name})
+(defn get-details [system]
+  (nav/go-to ::details-page {:system-name system})
   (let [details ["Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
@@ -179,8 +200,8 @@
                      (browser getText (system-detail-textbox detail)))))))
 
 (defn add-package "Add a package or package group to a system."
-  [system-name {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system-name system-name})
+  [system {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system})
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
@@ -195,8 +216,8 @@
 
 
 (defn remove-package "Remove a package or package group from a system."
-  [system-name {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system-name system-name})
+  [system {:keys [package package-group]}]
+  (nav/go-to ::content-packages-page {:system-name system})
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items
@@ -207,3 +228,5 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
+
+

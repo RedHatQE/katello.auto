@@ -29,7 +29,7 @@
 (nav/defpages (org/pages)
   [:katello.organizations/named-page
    [::new-page [] (browser click ::new)]
-   [::named-page [env-name] (browser click (ui/environment-link env-name))]])
+   [::named-page [env] (browser click (ui/environment-link (:name env)))]])
 
 ;; Tasks
 
@@ -38,7 +38,7 @@
    the organization name to create the environment in, the prior
    environment, and an optional description."
   [{:keys [name label org description prior]}]
-  (nav/go-to ::new-page {:org-name (:name org)})
+  (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        (fn [label] (when label
                                      (browser fireEvent ::name-text "blur")
@@ -95,8 +95,8 @@
   tasks/Uniqueable tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [env]
-                            (nav/go-to ::named-page {:org-name (-> env :org :name)
-                                                     :env-name (:name env)}))})
+                            (nav/go-to ::named-page {:org (-> env :org)
+                                                     :env env}))})
 
 (defn chain-envs
   "Sets prior of each env to be the previous env in the list"

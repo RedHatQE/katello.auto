@@ -37,8 +37,7 @@
   {:pre [(apply = (map :name envs))  ; names all same
          (= (count envs)
             (count (distinct (map :org envs))))]} ; orgs all different
-  (doseq [env envs]
-    (ui/create env)))
+  (ui/create-all envs))
 
 (defn verify-delete-env-restricted-to-this-org
   "Verify that when you create multiple environments with the same
@@ -53,8 +52,7 @@
   (create-same-env-in-multiple-orgs envs)
   (ui/delete (first envs))
   (doseq [env (rest envs)]
-    (nav/go-to ::environment/named-page {:env-name (:name env)
-                                         :org-name (-> env :org :name)})))
+    (nav/go-to env)))
 
 
 
@@ -78,7 +76,7 @@
   "Creates a new org for testing environments
    using the API."
   []
-  (reset! test-org-name (-> {:name "env-test"
+  (reset! test-org (-> {:name "env-test"
                              :description "organization used to test environments."}
                             katello/newOrganization
                             uniqueify
@@ -115,7 +113,7 @@
       :blockers (open-bz-bugs "790246")
 
       (with-unique [env (katello/newEnvironment {:name "delete-env"
-                                                 :org @test-org-name
+                                                 :org @test-org
                                                  :description "simple environment description"})]
         (ui/create env)
         (ui/delete env))
@@ -126,7 +124,7 @@
 
 
       (deftest "Delete an environment that has had content promoted into it"
-        :blockers api/katello-only
+        :blockers rest/katello-only
 
         (with-unique [env (katello/newEnvironment {:name "del-w-content"
                                                    :org (@conf/config :admin-org)})]
@@ -152,7 +150,7 @@
       :blockers (open-bz-bugs "726724")
 
       (with-unique [env (katello/newEnvironment {:name "test-dup"
-                                                 :org @test-org-name
+                                                 :org @test-org
                                                  :description "dup env description"})]
         (expecting-error-2nd-try (errtype ::notification/env-name-must-be-unique-within-org)
                                  (ui/create env))))
@@ -160,7 +158,7 @@
     (deftest "Edit an environment description"
      
       (with-unique [env  (katello/newEnvironment {:name "edit"
-                                                  :org @test-org-name
+                                                  :org @test-org
                                                   :description "try to change me!"})]
         (ui/create env)
         (ui/update env assoc :description "I changed it!")))
@@ -172,10 +170,10 @@
       :data-driven true
 
       (fn [env-name env-label notif] 
-        (organization/switch @test-org-name)
+        (organization/switch @test-org)
         (let [env (katello/newEnvironment {:name env-name
                                            :label env-label
-                                           :org @test-org-name})]
+                                           :org @test-org})]
           (expecting-error (errtype notif)
                            (ui/create env))))
 
@@ -186,7 +184,8 @@
 
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
-                     (ui/create (katello/newEnvironment {:org-name @test-org-name
+                     (ui/create (katello/newEnvironment {:name ""
+                                                         :org @test-org
                                                          :description "env description"}))))
 
   (deftest "Move systems from one env to another"
@@ -194,22 +193,25 @@
     
     (provision/with-client "envmovetest" ssh-conn
       (with-unique [env-dev  (katello/newEnvironment {:name "dev"
-                                                      :org @test-org-name})
+                                                      :org @test-org})
                     env-test (katello/newEnvironment {:name "test"
-                                                      :org @test-org-name})]
-        (doseq [env [env-dev env-test]]
-          (ui/create env))
-        (organization/switch @test-org-name)
+                                                      :org @test-org})]
+        (ui/create-all (list env-dev env-test))
+        (organization/switch @test-org)
         (client/setup-client ssh-conn)
         (client/register ssh-conn {:username conf/*session-user*
                                    :password conf/*session-password*
-                                   :org @test-org-name
+                                   :org @test-org
                                    :env env-dev
                                    :force true})
-        (let [client-hostname (-> ssh-conn (client/run-cmd "hostname") :stdout trim)]
-          (assert/is (= (:name env-dev) (system/environment client-hostname)))
-          (system/set-environment client-hostname env-test)
-          (assert/is (= (:name env-test) (system/environment client-hostname)))
+        (let [system (katello/newSystem {:name (-> ssh-conn
+                                                   (client/run-cmd "hostname")
+                                                   :stdout
+                                                   trim)})
+              names= (fn [& args] (apply = (map :name args)))]
+          (assert/is (names= env-dev (system/environment system)))
+          (system/set-environment system env-test)
+          (assert/is (= env-test (system/environment system)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           ;;verify the env name is now in the urls in redhat.repo

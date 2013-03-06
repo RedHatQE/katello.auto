@@ -6,12 +6,10 @@
                      [api-tasks :as api]
                      [rest :as rest]
                      [validation :as validation] 
-                     [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all] 
                      [notifications :as notification]
-                     [organizations :as organization] 
-                     [conf :refer [config]])
+                     [organizations :as organization])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -26,7 +24,7 @@
     (rest/read org)
     (catch [:status 404] _ false)))
 
-(def does-not-exist? (complement exists?))
+(def not-exists? (complement exists?))
 
 (defn verify-bad-entity-create-gives-expected-error
   [ent expected-error]
@@ -128,7 +126,7 @@
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
         (ui/delete org)
-        (assert/is (does-not-exist? org)))
+        (assert/is (not-exists? org)))
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
@@ -137,9 +135,8 @@
                       provider (newProvider {:name "delprov" :org org})
                       product (newProduct {:name "delprod" :provider provider})
                       repo (newRepository {:name "delrepo" :product product
-                                                   :url "http://blah.com/blah"})]
-          (let [create-all #(doseq [i (list org provider product repo)]
-                             (ui/create i))]
+                                           :url "http://blah.com/blah"})]
+          (let [create-all #(ui/create-all (list org provider product repo))]
             (create-all)
             ;; not allowed to delete the current org, so switch first.
             (organization/switch)

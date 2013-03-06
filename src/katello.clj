@@ -30,9 +30,12 @@
 
 (defrecord Changeset [id name env deletion?])
 
-(ns-unmap *ns* 'Package)
+(ns-unmap *ns* 'Package) ; collision w java.lang.Package
 (defrecord Package [id name product])
 
 (defrecord Erratum [id name product])
 
 (defrecord Template [id name product])
+
+(ns-unmap *ns* 'System) ; collision w java.lang.System
+(defrecord System [id name env])

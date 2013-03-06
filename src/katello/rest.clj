@@ -124,3 +124,32 @@
 (def default-id-impl {:id id-impl})
 
 
+(def get-version-from-server
+  (memoize
+    (fn [url]
+      (try
+        (get url)
+        (catch Exception e {:name "unknown"
+                            :version "unknown"
+                            :exception e})))))
+
+(def get-version
+  (fn [] (get-version-from-server (api-url "/api/version"))))
+
+(defn is-headpin? []
+  (-> (get-version) :name (= "Headpin")))
+
+(def is-katello? (complement is-headpin?))
+
+(defmacro when-katello [& body]
+  `(when (is-katello?) ~@body))
+
+(defmacro when-headpin [& body]
+  `(when (is-headpin?) ~@body))
+
+(defn katello-only
+  "A function you can call from :blockers of any test so it will skip
+   if run against a non-katello (eg SAM or headpin) deployment"
+  [_]
+  (if (->> (get-version) :name (= "Headpin"))
+    ["This test is for Katello based deployments only and this is a headpin-based server."] []))

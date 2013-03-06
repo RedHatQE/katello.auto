@@ -34,7 +34,7 @@
 (nav/defpages (common/pages)
   [::page 
    [::new-page [] (browser click ::new)]
-   [::named-page [org-name] (nav/choose-left-pane org-name)]])
+   [::named-page [org] (nav/choose-left-pane org)]])
 
 ;; Tasks
 
@@ -101,7 +101,7 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
-                                               {:org-name (:name org)}))})
+                                               {:org org}))})
 
 (defn current
   "Return the currently active org (a string) shown in the org switcher."

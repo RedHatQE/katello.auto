@@ -14,10 +14,10 @@
      (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
      name next)))
 
-(defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
+(defn select-environment-widget [env & [{:keys [wait]}]]
   (do (when (browser isElementPresent ::ui/expand-path)
         (browser click ::ui/expand-path))
-      (browser click (environment-breadcrumb env-name next-env-name))
+      (browser click (environment-breadcrumb (:name env) (-> env :next :name)))
       (when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]
@@ -38,15 +38,15 @@
                (ajaxWait))))
 
 (defn choose-left-pane
-  "Selects an item in the left pane. If the item is not found, a
+  "Selects an entity in the left pane. If the entity is not found, a
    search is performed and the select is attempted again."
-  ([item]
-     (choose-left-pane left-pane-item item))
-  ([templ item]
-     (let [loc (templ item)]
+  ([entity]
+     (choose-left-pane left-pane-item entity))
+  ([templ entity]
+     (let [loc (templ (:name entity))]
        (try (browser click loc)
             (catch com.thoughtworks.selenium.SeleniumException se
-              (do (search-here (format "\"%s\"" item))
+              (do (search-here (format "\"%s\"" entity))
                   (browser click loc)))))))
 
 
