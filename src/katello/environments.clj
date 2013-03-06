@@ -62,9 +62,8 @@
 (defn edit
   "Edits an environment. Passes env through f (with extra args) to get
   the new env."
-  [{:keys [name org description] :as env} {:keys [description]}]
-  (nav/go-to ::named-page {:org-name (:name org)
-                           :env-name name})
+  [env {:keys [description]}]
+  (nav/go-to env)
   (common/in-place-edit {::description-text (:description description)}))
 
 (extend katello.Environment
