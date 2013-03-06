@@ -16,6 +16,7 @@
                      [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-password* config *environments*]])
             [katello.client.provision :as provision]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
 
@@ -53,6 +54,17 @@
               :system-name (:name system)})
   (assert/is (= (:environment_id system)
                 (api/get-id-by-name :environment test-environment))))
+
+(defn verify-sys-count
+  "Verify system-count after deleting one or more systems"
+  [sys-name system-names count]
+  (assert/is (= count (Integer/parseInt (browser getText ::system/total-sys-count))))
+  (system/delete sys-name)
+  (browser clickAndWait ::system/sys-tab)
+  (assert/is (= (dec count) (Integer/parseInt (browser getText ::system/total-sys-count))))
+  (system/multi-delete system-names)
+  (browser clickAndWait ::system/sys-tab) ; this is a workaround; hitting the systab will refesh the sys-count. See bz #859237
+  (assert/is (= 0 (Integer/parseInt (browser getText ::system/total-sys-count)))))
 
 (defn step-to-configure-server-for-pkg-install [product-name target-env]
   (let [provider-name (uniqueify "custom_provider")
@@ -138,6 +150,20 @@
     (let [system-names (take 3 (unique-names "mysys"))]
       (create-multiple-systems system-names)
       (system/multi-delete system-names)))
+  
+  (deftest "Remove systems and validate sys-count"
+    (with-unique [env  "dev"
+                  org-name "test-sys"
+                  system-name "mysystem"]
+      (org/create org-name)
+      (env/create env {:org-name org-name})
+      (org/switch org-name)
+      (let [system-names (take 3 (unique-names "mysys"))]
+        (create-multiple-systems system-names)
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (let [syscount (-> system-names count inc)]
+          (verify-sys-count system-name system-names syscount)))))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined

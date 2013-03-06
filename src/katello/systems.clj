@@ -33,6 +33,7 @@
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::total-sys-count             "total_items_count"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -156,7 +157,6 @@
         (when-not (= name old-name)
           (throw+ {:type ::sysname-edited-anyway
                    :msg "System name changed even after clicking cancel button."}))))))
-
 
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
