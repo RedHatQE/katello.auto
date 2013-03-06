@@ -21,6 +21,8 @@
 
 (def tmp-gpg-keyfile (tmpfile "output.txt"))
 
+(def gpg-key-content (slurp (@config :gpg-key)))
+
 ;; Functions
 
 (defn get-all-providers "Uses API to return all provider names in the admin org"
@@ -103,23 +105,23 @@
 ;; Tests
 
 (defgroup gpg-key-tests
-  :group-setup #(spit tmp-gpg-keyfile "test")
+  :group-setup #(spit tmp-gpg-keyfile gpg-key-content)
   
   (deftest "Create a new GPG key from text input"
     :blockers api/katello-only
     
     (with-unique [test-key "test-key-text"]
-      (gpg-key/create test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
+      (gpg-key/create test-key {:contents gpg-key-content})))
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
-    (with-unique [test-key "test-key"]
+    (with-unique [test-key "test-key-file"]
       (gpg-key/create test-key {:filename tmp-gpg-keyfile}))
 
     
     (deftest "Delete existing GPG key" 
-      (with-unique [test-key "test-key"]
+      (with-unique [test-key "test-key-del"]
         (gpg-key/create test-key {:filename tmp-gpg-keyfile})
         (gpg-key/remove test-key)))))
 
@@ -178,5 +180,3 @@
 
   gpg-key-tests
   package-filter-tests)
-
-
