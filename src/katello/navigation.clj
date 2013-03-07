@@ -112,3 +112,17 @@
     (open url)
     (getText "//article[@id='maincontent']"))))
 
+(defn current-org
+  "Return the currently active org (a string) shown in the org switcher."
+  []
+  ((->> ::ui/active-org (browser getAttributes) (into {})) "title"))
+
+(defn switch-org
+  "Switches to the given org. Other org-switcher functionality (eg
+   setting default orgs) see katello.organizations/switch."
+  ([{:keys [name]}]
+     {:pre [name]}
+     (go-to ::top-level)
+     (when-not (= name (current-org))
+       (browser click ::ui/switcher)
+       (browser clickAndWait (ui/switcher-link name)))))

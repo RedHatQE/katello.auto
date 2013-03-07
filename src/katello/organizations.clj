@@ -103,10 +103,7 @@
   nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
                                                {:org org}))})
 
-(defn current
-  "Return the currently active org (a string) shown in the org switcher."
-  []
-  ((->> ::active (browser getAttributes) (into {})) "title"))
+
 
 (defn switch
   "Switch to the given organization in the UI. If no args are given,
@@ -121,7 +118,7 @@
      (nav/go-to ::nav/top-level) 
      (when (or force?
                default-org
-               (not= (current) name)) 
+               (not= (nav/current-org) name)) 
        (browser click ::ui/switcher)
        (when default-org
          (let [current-default (try (browser getText ::default)

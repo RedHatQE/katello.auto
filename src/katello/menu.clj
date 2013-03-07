@@ -1,8 +1,7 @@
 (ns katello.menu
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser] :as sel] 
             (katello [ui :as ui]
-                     [navigation :as nav]
-                     [organizations :as organization])))
+                     [navigation :as nav])))
 
 (defn fmap "Passes all values of m through f." [f m]
   (into {} (for [[k v] m] [k (f v)])))
@@ -39,12 +38,16 @@
                       ::systems-link                     "systems"
                       ::users-link                       "users"}))
 
+;; Functions
+
+
+
 ;; Nav
 
 (nav/defpages (nav/pages)
   [::nav/top-level
                
-   [::org-context [org] (organization/switch org)
+   [::org-context [org] (nav/switch-org org)
     [::systems-menu [] (browser mouseOver ::systems-link)
      [:katello.systems/page [] (browser clickAndWait ::systems-all-link)]
      [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]

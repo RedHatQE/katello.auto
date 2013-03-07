@@ -62,6 +62,7 @@
    ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
 
    ::switcher                "switcherButton"
+   ::active-org              "//*[@id='switcherButton']"
    ::manage-orgs             "manage_orgs"
    ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
    

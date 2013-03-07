@@ -38,4 +38,6 @@
 (defrecord Template [id name product])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
-(defrecord System [id name env])
+(defrecord System [id name env service-level])
+
+(defrecord Subscription [id system product])

@@ -1,6 +1,7 @@
 (ns katello.systems
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
+            [clojure.data :as data]
             [slingshot.slingshot :refer [throw+]]
             [test.assert :as assert]
             (katello [navigation :as nav]
@@ -81,13 +82,13 @@
 
 (defn create
   "Creates a system"
-  [{:keys [name env sockets system-arch org]}]
-  (nav/go-to ::new-page {:org org})
+  [{:keys [name env sockets system-arch]}]
+  (nav/go-to ::new-page {:org (:org env)})
   (sel/fill-ajax-form [::name-text name
                        ::sockets-text sockets
                        ::arch-select (or system-arch "x86_64")
                        (fn [env]
-                         (when env (nav/select-environment-widget env))) env]
+                         (when env (nav/select-environment-widget env))) [env]]
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
@@ -131,47 +132,51 @@
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
 
+
+
 (defn- subscribe
   "Subscribes the given system to the products. (products should be a
   list). Can also set the auto-subscribe for a particular SLA.
   auto-subscribe must be either true or false to select a new setting
   for auto-subscribe and SLA. If auto-subscribe is nil, no changes
   will be made."
-  [{:keys [system add-products remove-products auto-subscribe sla]}]
-  ;;(nav/go-to ::subscriptions-page {:system-name system})
-  (browser click ::subscriptions)
-  (when-not (nil? auto-subscribe)
-    (common/in-place-edit {::service-level-select (format "Auto-subscribe %s, %s"
-                                                          (if auto-subscribe "On" "Off")
-                                                          sla)}))
+  [add-products remove-products]
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
-                           (browser check (checkbox-fn item)))
-                         (browser click submit)) )]
+                           (browser check (checkbox-fn (:name item))))
+                         (browser click submit)
+                         (notification/check-for-success
+                          {:match-pred (notification/request-type? :sys-update-subscriptions)})) )]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
-    (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe))
-  (notification/check-for-success {:match-pred (notification/request-type? (if (or add-products remove-products)
-                                                                             :sys-update-subscriptions
-                                                                             :sys-update))}))
+    (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 
 (defn update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]
-  (let [[to-remove {:keys [name description
-                           location release-version
-                           products]
+  (let [[to-remove {:keys [name description location release-version
+                           products service-level auto-attach]
                     :as to-add} _] (data/diff system updated)]
-    (when (or name description location release-version)
-      (nav/go-to ::details-page {:system system})
+    
+    (when (some not-empty (list to-remove to-add))
+      (nav/go-to ::details-page {:system system
+                                 :org (-> system :env :org)})
       (common/in-place-edit {::name-text-edit name
                              ::description-text-edit description
                              ::location-text-edit location
-                             ::release-version-select release-version}))
-    (when (or (:products to-add)
-              (:products to-remove))
-      )))
+                             ::release-version-select release-version})
+      
+      (let [added-products (:products to-add) 
+            removed-products (:products to-remove) ]
+        (when (some #(not (nil? %)) (list added-products removed-products
+                                          service-level auto-attach))
+          (browser click ::subscriptions)
+          (subscribe added-products removed-products)
+          (when (some #(not (nil? %)) (list service-level auto-attach))
+            (common/in-place-edit {::service-level-select (format "Auto-attach %s, %s"
+                                                                  (if (:auto-attach updated) "On" "Off")
+                                                                  (:service-level updated))})))))))
 
 (extend katello.System
   ui/CRUD {:create create
@@ -181,7 +186,6 @@
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system
                                                      :org (-> system :env :org)}))})
-
 
 
 (defn environment "Get current environment of the system"

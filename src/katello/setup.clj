@@ -38,8 +38,7 @@
    (setAjaxFinishedCondition jquery-ajax-finished)
    (open (@config :server-url) false)
    (setTimeout "60000"))
-  (login (@config :admin-user) (@config :admin-password)
-         {:org (@config :admin-org)}))
+  (login))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
