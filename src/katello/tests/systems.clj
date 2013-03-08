@@ -164,6 +164,18 @@
                                     :system-arch "x86_64"})
         (let [syscount (-> system-names count inc)]
           (verify-sys-count system-name system-names syscount)))))
+  
+  (deftest "Remove System: with yes-no confirmation"
+    :data-driven true
+    
+    (fn [del?]
+      (with-unique [system-name "mysystem"]
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (system/confirm-yes-no-to-delete system-name del?)))
+    
+    [[false]
+     [true]])
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined

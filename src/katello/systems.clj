@@ -33,6 +33,7 @@
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    
    ;;content
@@ -210,6 +211,20 @@
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
+
+(defn confirm-yes-no-to-delete
+  [system-name del?]
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser click ::remove)
+  (if del?
+    (do
+      (browser click ::ui/confirmation-yes)
+      (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
+    (do
+      (browser click ::confirm-to-no)
+      (let [details (get-details system-name)]
+        (when-not (= system-name (details "Name"))
+          (throw+ {:type ::system-deleted-anyway :msg "system deleted even after clicking 'NO' on confirmation dialog"}))))))
 
 (defn add-package "Add a package or package group to a system."
   [system-name {:keys [package package-group]}]
