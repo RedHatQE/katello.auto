@@ -72,7 +72,8 @@
   (update* [x new-x] "Change an existing entity x via the api, to make
                       it match new-x, returns true on success")
   (delete [x] "Delete an existing entity via the api")
-  (id [e] "Returns the id of the given entity used for API calls")
+  (id [e] "Returns the id of the given entity used for API calls (does
+           not query server if not present)")
   (query [e] "Searches the server by the entity's name, returning the full entity"))
 
 ;; Because protocols do not support varargs
@@ -82,12 +83,18 @@
 (defn api-url [uri]
   (format "%s/%s" (@conf/config :server-url) uri ))
 
+(defn get-id
+  "Gets the id from the entity, querying the server first, if necessary."
+  [ent]
+  (or (id ent)
+      (id (merge ent (query ent)))))
+
 (defn url-maker [coll ent]
   "Creates a fn that when given an entity will call fs on the entity
    to get deps and look up the ids on those deps.  Then fill in the
    format with those ids, and make a url"
   (-> (for [[fmt fs] coll
-            :let [ids (for [f fs] (-> ent f id))]
+            :let [ids (for [f fs] (some-> ent f get-id))]
             :when (every? identity ids)]
            (apply format fmt ids))
       first
@@ -108,20 +115,19 @@
   (or (f e)
       (some-> e query f str)))
 
-(def id-impl (partial katello-id :id))
-(def label-impl (partial katello-id :label))
+(def id-field :id)
+(def label-field :label)
 
 (defn query-by-name [url-fn e]
-  (first (get (url-fn e)
-              {:query-params {:name (:name e)}})))
+  (or (first (get (url-fn e)
+                  {:query-params {:name (:name e)}}))
+      (throw+ {:type ::entity-not-found
+               :entity e})))
 
 (defn read-impl [read-url-fn ent]
-  (merge ent (if-let [handle (id ent)]
+  (merge ent (if (id ent)
                (get (read-url-fn ent))
                (query ent))))
-
-(def default-id-impl {:id id-impl})
-
 
 (def get-version-from-server
   (memoize

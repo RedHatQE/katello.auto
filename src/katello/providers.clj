@@ -101,7 +101,7 @@
               :create (fn [{:keys [name description org] :as prov}]
                         (merge prov
                                (rest/post (rest/api-url "api/providers")
-                                          {:body {:organization_id (rest/id org)
+                                          {:body {:organization_id (rest/get-id org)
                                                   :provider {:name name
                                                              :description description
                                                              :provider_type "Custom"}}})))

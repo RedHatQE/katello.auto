@@ -74,7 +74,7 @@
   rest/CRUD
   (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/" [:org]]])
         id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
-    {:id rest/id-impl
+    {:id rest/id-field
      :query (partial rest/query-by-name org-url)
      :create (fn [env] 
                (merge env
@@ -83,9 +83,8 @@
                                   {:environment
                                    {:name (:name env)
                                     :description (:description env)
-                                    :prior (rest/id (or (:prior env)
-                                                        (assoc katello/library
-                                                          :org (:org env))))}}})))
+                                    :prior (rest/get-id (or (:prior env)
+                                                        (katello/mklibrary env)))}}})))
      :read (partial rest/read-impl id-url)
      
      :update* (fn [env new-env]

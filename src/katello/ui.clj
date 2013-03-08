@@ -13,7 +13,9 @@
 
 ;; because protocols don't support varargs
 (defn update [x f & args]
-  (update* x (apply f x args)))
+  (let [updated (apply f x args)]
+    (update* x updated)
+    updated))
 
 ;;convenience
 (defn create-all [ents]

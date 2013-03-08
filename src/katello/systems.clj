@@ -235,3 +235,69 @@
                     (browser getText ::pkg-install-status))))))
 
 
+(defn random-facts
+  "Generate facts about a system - used to register fake systems via
+  the api. Some facts are randomized to guarantee uniqueness."
+  []
+  (let [rand (java.util.Random.)
+        rand-255 #(.nextInt rand 255)
+        splice (comp (partial apply str) interpose) 
+        ip-prefix (splice "." (repeatedly 3 rand-255 ))
+        mac  (splice ":" (repeatedly 6 #(format "%02x" (rand-255))))] {
+    "dmi.bios.runtime_size" "128 KB"
+    "lscpu.cpu_op-mode(s)" "64-bit"
+    "uname.sysname" "Linux"
+    "distribution.name" "Fedora"
+    "dmi.system.family" "Virtual Machine"
+    "lscpu.l1d_cache" "32K"
+    "dmi.system.product_name" "VirtualBox"
+    "dmi.bios.address" "0xe0000"
+    "lscpu.stepping" "5"
+    "virt.host_type" "virtualbox"
+    "lscpu.l2d_cache" "6144K"
+    "uname.machine" "x86_64"
+    "lscpu.thread(s)_per_core" "1"
+    "cpu.cpu_socket(s)" "1"
+    "net.interface.eth1.hwaddr" mac
+    "lscpu.cpu(s)" "1"
+    "uname.version" "#1 SMP Fri Oct 22 15:36:08 UTC 2010"
+    "distribution.version" "14"
+    "lscpu.architecture" "x86_64"
+    "dmi.system.manufacturer" "innotek GmbH"
+    "network.ipaddr" (format "%s.4" ip-prefix),
+    "system.entitlements_valid" "true"
+    "dmi.system.uuid" (.toString (java.util.UUID/randomUUID)),
+    "uname.release" "2.6.35.6-48.fc14.x86_64"
+    "dmi.system.serial_number" "0"
+    "dmi.bios.version" "VirtualBox"
+    "cpu.core(s)_per_socket" "1"
+    "lscpu.core(s)_per_socket" "1"
+    "net.interface.lo.broadcast" "0.0.0.0"
+    "memory.swaptotal" "2031612"
+    "net.interface.lo.netmask" "255.0.0.0"
+    "lscpu.model" "37"
+    "lscpu.cpu_mhz" "2825.811"
+    "net.interface.eth1.netmask" "255.255.255.0"
+    "lscpu.numa_node(s)" "1"
+    "net.interface.lo.hwaddr" "00:00:00:00:00:00"
+    "uname.nodename" "killing-time.appliedlogic.ca"
+    "dmi.bios.vendor" "innotek GmbH"
+    "network.hostname" (str "killing-time" (rand-255) ".appliedlogic."
+                            (rand-nth ["ca" "org" "com" "edu" "in"])),
+    "net.interface.eth1.broadcast" (format "%s.255" ip-prefix),
+    "memory.memtotal" "1023052"
+    "dmi.system.wake-up_type" "Power Switch"
+    "cpu.cpu(s)" "1"
+    "virt.is_guest" "true"
+    "dmi.system.sku_number" "Not Specified"
+    "net.interface.lo.ipaddr" "127.0.0.1"
+    "distribution.id" "Laughlin"
+    "lscpu.cpu_socket(s)" "1"
+    "dmi.system.version" "1.2"
+    "dmi.bios.rom_size" "128 KB"
+    "lscpu.vendor_id" "GenuineIntel"
+    "net.interface.eth1.ipaddr" (format "%s.8" ip-prefix),
+    "lscpu.cpu_family" "6"
+    "dmi.bios.relase_date" "12/01/2006"
+    "lscpu.numa_node0_cpu(s)" "0"
+    }))

@@ -1,7 +1,9 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:require (katello [navigation :as nav]
-                     [api-tasks :as api]
+  (:require katello
+            (katello [navigation :as nav]
+                     [ui :as ui]
+                     [rest :as rest]
                      [validation :as val]
                      [organizations :as org]
                      [environments :as env]
@@ -13,7 +15,8 @@
                      [tasks :refer :all]            
                      [systems :as system]                   
                      [gpg-keys :as gpg-key]
-                     [conf :refer [*session-user* *session-password* config *environments*]])
+                     [conf :refer [*session-user* *session-password*
+                                   *session-org* config *environments*]])
             [katello.client.provision :as provision]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
@@ -27,23 +30,17 @@
 
 (defn create-test-environment []
   (def test-environment (first *environments*))
-  (api/ensure-env-exist test-environment {:prior library}))
+  (env/ensure-exist test-environment))
 
 (defn register-new-test-system []
-  (api/with-env test-environment
-    (api/create-system (uniqueify "newsystem")
-                       {:facts (api/random-facts)})))
-
-(defn create-multiple-systems
-  [system-names]
-  (doseq [system-name system-names]
-    (system/create system-name {:sockets "1"
-                                :system-arch "x86_64"})))
+  (-> {:name "newsystem"
+       :env test-environment
+       :facts (system/random-facts)}
+      katello/newSystem
+      rest/create))
 
 (defn verify-system-rename [system]
-  (with-unique [new-name "yoursys"]
-    (system/edit (:name system) {:new-name new-name})
-    (nav/go-to ::system/named-page {:system-name new-name})))
+  (nav/go-to (ui/update system update-in [:name] uniqueify)))
 
 (defn verify-system-appears-on-env-page
   [system]
@@ -53,33 +50,24 @@
   (assert/is (= (:environment_id system)
                 (api/get-id-by-name :environment test-environment))))
 
-(defn step-to-configure-server-for-pkg-install [product-name target-env]
-  (let [provider-name (uniqueify "custom_provider")
-        repo-name (uniqueify "zoo_repo")
-        org-name "ACME_Corporation"
-        testkey (uniqueify "mykey")]
-    (org/switch)
-    (api/ensure-env-exist target-env {:prior library})
-    (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
-      (gpg-key/create testkey {:contents mykey}))
-    (provider/create {:name provider-name})
-    (provider/add-product {:provider-name provider-name
-                           :name product-name})
-    (repo/add-with-key {:provider-name provider-name
-                        :product-name product-name
-                        :name repo-name
-                        :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                        :gpgkey testkey})
-    (let [products [{:name product-name :repos [repo-name]}]]
-      (when (api/is-katello?)
-        (changeset/sync-and-promote products library target-env)))))
+(defn step-to-configure-server-for-pkg-install [product target-env]
+  (with-unique [provider (katello/newProvider (:name "custom_provider" :org *session-org*))
+                testkey (katello/newGPGKey {:name "mykey" :org *session-org*
+                                            :contents (slurp
+                                                       "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")})
+                repo (katello/newRepository {:name "zoo_repo"
+                                             :product product
+                                             :gpg-key testkey})]
+    (env/ensure-exist target-env)
+    (ui/create-all testkey provider product repo)
+    (when (api/is-katello?)
+      (changeset/sync-and-promote (list repo) target-env))))
 
 ;; Tests
 
 (defgroup system-tests
   :group-setup create-test-environment
   :blockers (open-bz-bugs "717408" "728357")
-  :test-setup org/before-test-switch
 
   (deftest "Rename an existing system"
     :blockers (open-bz-bugs "729364")
@@ -116,9 +104,11 @@
       (system/delete system-name)))
 
   (deftest "Remove multiple systems"
-    (let [system-names (take 3 (unique-names "mysys"))]
-      (create-multiple-systems system-names)
-      (system/multi-delete system-names)))
+    (let [systems (->> {:name "mysys"
+                        :sockets "1"
+                        :system-arch "x86_64"} katello/newSystem uniques (take 3))]
+      (ui/create-all systems)
+      (system/multi-delete systems)))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined
@@ -128,14 +118,14 @@
       (client/register ssh-conn
                        {:username *session-user*
                         :password *session-password*
-                        :org "ACME_Corporation"
-                        :env test-environment
+                        :org (:name *session-org*)
+                        :env (:name test-environment)
                         :force true})
       (let [hostname (client/my-hostname ssh-conn)
             details (system/get-details hostname)]
         (assert/is (= (client/get-distro ssh-conn)
                       (details "OS")))
-        (assert/is (every? (complement empty?) (vals details))))))
+        (assert/is (every? not-empty (vals details))))))
 
   (deftest "Install package group"
     :data-driven true
@@ -188,31 +178,31 @@
     
   
   (deftest "Install package after moving a system from one env to other"
-   (with-unique [env-dev  "dev"
-                 env-test  "test"
-                 product-name "fake"]
-     (let [org-name "ACME_Corporation"]
-       (doseq [env [env-dev env-test]]
-         (env/create env {:org-name org-name}))
-       (org/switch org-name)
-       (step-to-configure-server-for-pkg-install product-name env-dev)
-       (provision/with-client "env_change"
-           ssh-conn
-           (client/register ssh-conn
-                            {:username *session-user*
-                             :password *session-password*
-                             :org org-name
-                             :env env-dev
-                             :force true})
-           (let [mysys (client/my-hostname ssh-conn)]
-             (assert/is (= env-dev (system/environment mysys)))
-             (system/set-environment mysys env-test)
-             (assert/is (= env-test (system/environment mysys)))
-             (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
-             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-             (client/sm-cmd ssh-conn :refresh)
-             (client/run-cmd ssh-conn "yum repolist")
-             (expecting-error [:type :katello.systems/package-install-failed]
-                              (system/add-package mysys {:package "cow"}))
-             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-               (assert/is (->> cmd_result :exit-code (= 1))))))))))
+    (with-unique [env-dev  "dev"
+                  env-test  "test"
+                  product-name "fake"]
+      (let [org-name "ACME_Corporation"]
+        (doseq [env [env-dev env-test]]
+          (env/create env {:org-name org-name}))
+        (org/switch org-name)
+        (step-to-configure-server-for-pkg-install product-name env-dev)
+        (provision/with-client "env_change"
+          ssh-conn
+          (client/register ssh-conn
+                           {:username *session-user*
+                            :password *session-password*
+                            :org org-name
+                            :env env-dev
+                            :force true})
+          (let [mysys (client/my-hostname ssh-conn)]
+            (assert/is (= env-dev (system/environment mysys)))
+            (system/set-environment mysys env-test)
+            (assert/is (= env-test (system/environment mysys)))
+            (client/subscribe ssh-conn (client/get-pool-id mysys product-name))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/sm-cmd ssh-conn :refresh)
+            (client/run-cmd ssh-conn "yum repolist")
+            (expecting-error [:type :katello.systems/package-install-failed]
+                             (system/add-package mysys {:package "cow"}))
+            (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
+              (assert/is (->> cmd_result :exit-code (= 1))))))))))
