@@ -162,7 +162,7 @@
 (defn exists? [ent]
   (try+
     (read ent)
-    (catch [:status 404] _ false)))
+    (catch [:type ::entity-not-found] _ false)))
 
 (def not-exists? (complement exists?))
 

@@ -40,4 +40,4 @@
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name env service-level])
 
-(defrecord Subscription [id system product])
+(defrecord GPGKey [id name org content])

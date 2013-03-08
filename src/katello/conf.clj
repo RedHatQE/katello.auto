@@ -163,7 +163,9 @@
                                                   (@config :deltacloud-user)
                                                   (@config :deltacloud-password))))
   (def ^:dynamic *browsers* (@config :browser-types))
-  (def ^:dynamic *environments* (@config :environments))) 
+  (def ^:dynamic *environments* (for [e (@config :environments)]
+                                  (katello/newEnvironment {:name e
+                                                           :org *session-org*})))) 
 
 (def promotion-deletion-lock nil) ;; var to lock on for promotions
 

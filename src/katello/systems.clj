@@ -7,7 +7,9 @@
             (katello [navigation :as nav]
                      [notifications :as notification]
                      [ui :as ui]
-                     [ui-common :as common])))
+                     [ui-common :as common]
+                     [rest :as rest]
+                     [tasks :as tasks])))
 
 ;; Locators
 
@@ -183,6 +185,17 @@
   ui/CRUD {:create create
            :delete delete
            :update* update}
+
+  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [:env]]
+                                                     ["api/organizations/%s/systems" [(comp :org :env)]]])
+                  id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :create (fn [sys]
+                         (merge sys (rest/post (query-url sys)
+                                               {:body (assoc (select-keys sys [:name :facts])
+                                                        :type "system")})))})
+  tasks/Uniqueable tasks/entity-uniqueable-impl
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system

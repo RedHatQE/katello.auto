@@ -37,6 +37,7 @@
        :env test-environment
        :facts (system/random-facts)}
       katello/newSystem
+      uniqueify
       rest/create))
 
 (defn verify-system-rename [system]
@@ -45,10 +46,11 @@
 (defn verify-system-appears-on-env-page
   [system]
   (nav/go-to ::system/named-by-environment-page
-             {:env-name test-environment
-              :system-name (:name system)})
+             {:env (:env system)
+              :org (-> system :env :org)
+              :system system})
   (assert/is (= (:environment_id system)
-                (api/get-id-by-name :environment test-environment))))
+                (-> test-environment rest/query :id))))
 
 (defn step-to-configure-server-for-pkg-install [product target-env]
   (with-unique [provider (katello/newProvider (:name "custom_provider" :org *session-org*))
@@ -84,12 +86,12 @@
     :blockers (union (open-bz-bugs "733780" "736547" "784701")
                      api/katello-only)
 
-    (with-unique [provider-name "subscr-prov"
-                  product-name "subscribe-me"]
-      (api/create-provider provider-name)
-      (api/create-product product-name {:provider-name provider-name})
-      (system/subscribe {:system-name (:name (register-new-test-system))
-                         :add-products [product-name]})))
+    (with-unique [provider (katello/newProvider {:name "subscr-prov" :org *session-org*})
+                  product (katello/newProduct {:name "subscribe-me"
+                                               :provider provider})]
+      (rest/create provider)
+      (rest/create product)
+      (ui/update (register-new-test-system) :assoc :products (list product))))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
     :blockers (open-bz-bugs "845261")
