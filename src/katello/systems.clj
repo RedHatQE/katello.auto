@@ -17,6 +17,7 @@
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
   activation-key-link             (ui/link "%s")
+  env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
 
@@ -26,6 +27,8 @@
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
+   ::system-virtual-type         "system_type_virtualized_virtual"
+   ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
    ::sys-tab                     (ui/link "Systems")
@@ -63,6 +66,17 @@
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
    
+   ;;system-facts
+   ::facts                       (ui/link "Facts")
+   ::network-expander            "network"
+   ::cpu-expander                "cpu"
+   ::uname-expander              "uname"
+   ::virt-expander               "virt" 
+   ::net-hostname                "//tr[@id='network.hostname']/td[3]"  
+   ::cpu-socket	                 "//tr[@id='cpu.cpu_socket(s)']/td[3]" 
+   ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
+   ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
+   
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
@@ -74,7 +88,8 @@
   [::page
    [::new-page [] (browser click ::new)]
    [::named-page [system-name] (nav/choose-left-pane system-name)
-    [::details-page [] (browser click ::details)]
+    [::details-page [] (browser click ::details)
+     [::facts-page [] (browser click ::facts)]]
     [::subscriptions-page [] (browser click ::subscriptions)]
     [::content-menu [] (browser mouseOver ::content-link)
      [::content-software-page [] (browser click ::software-link)]
@@ -94,6 +109,22 @@
                        ::sockets-text sockets
                        ::arch-select (or system-arch "x86_64")}
                       ::create)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+
+(defn create-with-details
+  "Creates a system"
+  [name & [{:keys [sockets system-arch type-is-virtual? env]}]]
+  (nav/go-to ::new-page)
+  (when (not (nil? env))
+    (when (browser isElementPresent ::expand-env-widget)
+      (browser click ::expand-env-widget))
+    (browser click (env-select env)))
+  (when type-is-virtual?
+    (browser click ::system-virtual-type))
+  (sel/fill-ajax-form {::name-text name
+                       ::sockets-text sockets
+                       ::arch-select (or system-arch "x86_64")}
+                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
 (defn delete "Deletes the selected system."

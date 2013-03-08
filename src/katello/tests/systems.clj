@@ -66,6 +66,24 @@
   (browser clickAndWait ::system/sys-tab) ; this is a workaround; hitting the systab will refesh the sys-count. See bz #859237
   (assert/is (= 0 (Integer/parseInt (browser getText ::system/total-sys-count)))))
 
+(defn validate-system-facts
+  [name cpu arch virt? env]
+  (nav/go-to ::system/facts-page {:system-name name})
+  (browser click ::system/cpu-expander)
+  (assert/is (= cpu (browser getText ::system/cpu-socket)))
+  (browser click ::system/network-expander)
+  (assert/is (= name (browser getText ::system/net-hostname)))
+  (browser click ::system/uname-expander)
+  (assert/is (= arch (browser getText ::system/machine-arch)))
+  (browser click ::system/virt-expander)
+  (if virt?
+      (assert/is (= "true" (browser getText ::system/virt-status)))
+      (assert/is (= "false" (browser getText ::system/virt-status))))
+  (let [details (system/get-details name)]
+    (assert/is (= name (details "Name")))
+    (assert/is (= arch (details "Arch")))
+    (assert/is (= env  (details "Environment")))))
+
 (defn step-to-configure-server-for-pkg-install [product-name target-env]
   (let [provider-name (uniqueify "custom_provider")
         repo-name (uniqueify "zoo_repo")
@@ -177,6 +195,22 @@
     [[false]
      [true]])
 
+  (deftest "Add system from UI"
+    :data-driven true
+    
+    (fn [virt?]
+      (with-unique [env "dev"
+                    system-name "mysystem"]
+        (let [arch "x86_64"
+              cpu "2"]
+          (env/create env {:org-name (@config :admin-org)})
+          (system/create-with-details system-name {:sockets cpu
+                                                   :system-arch arch :type-is-virtual? virt? :env env})
+          (validate-system-facts system-name cpu arch virt? env))))
+    
+    [[false]
+     [true]])
+  
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined
 
