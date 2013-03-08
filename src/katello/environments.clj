@@ -113,6 +113,12 @@
 
 (def create-path (comp create-all chain-envs))
 
+(defn ensure-exist
+  "If the given environment doesn't exist, create it."
+  [env]
+  (locking (keyword (-> env :org :name)) ;;lock on org name to prevent race condition
+    (if-not (rest/exists? env)
+      (rest/create env))))
 
 
 

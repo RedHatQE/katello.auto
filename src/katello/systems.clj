@@ -156,7 +156,7 @@
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
-                           products service-level auto-attach]
+                           products service-level auto-attach env]
                     :as to-add} _] (data/diff system updated)]
     
     (when (some not-empty (list to-remove to-add))
@@ -166,6 +166,7 @@
                              ::description-text-edit description
                              ::location-text-edit location
                              ::release-version-select release-version})
+      (when env (set-environment (:name env)))
       
       (let [added-products (:products to-add) 
             removed-products (:products to-remove) ]
@@ -190,11 +191,11 @@
 
 (defn environment "Get current environment of the system"
   [system]
-  (nav/go-to ::details-page {:system-name system})
+  (nav/go-to ::details-page {:system system})
   (browser getText ::environment))
 
 (defn get-details [system]
-  (nav/go-to ::details-page {:system-name system})
+  (nav/go-to ::details-page {:system system})
   (let [details ["Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
@@ -205,7 +206,7 @@
 
 (defn add-package "Add a package or package group to a system."
   [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system-name system})
+  (nav/go-to ::content-packages-page {:system system})
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
@@ -221,7 +222,7 @@
 
 (defn remove-package "Remove a package or package group from a system."
   [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system-name system})
+  (nav/go-to ::content-packages-page {:system system})
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items

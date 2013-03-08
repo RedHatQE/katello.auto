@@ -2,8 +2,7 @@
   (:require [clj-http.client :as httpclient]
             [clojure.data.json :as json]
             [katello.conf :as conf]
-            
-            [slingshot.slingshot :refer [throw+]])
+            [slingshot.slingshot :refer [try+ throw+]])
   (:refer-clojure :exclude (get read delete)))
 
 (defn- read-json-safe [s]
@@ -107,7 +106,7 @@
    considers id - eg for orgs it's :label) from the entity, or if not
    present, queries the server first to get it."
   (or (f e)
-      (-> e query f str)))
+      (some-> e query f str)))
 
 (def id-impl (partial katello-id :id))
 (def label-impl (partial katello-id :label))
@@ -153,3 +152,11 @@
   [_]
   (if (->> (get-version) :name (= "Headpin"))
     ["This test is for Katello based deployments only and this is a headpin-based server."] []))
+
+(defn exists? [ent]
+  (try+
+    (read ent)
+    (catch [:status 404] _ false)))
+
+(def not-exists? (complement exists?))
+

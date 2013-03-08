@@ -197,12 +197,11 @@
                     env-test (katello/newEnvironment {:name "test"
                                                       :org @test-org})]
         (ui/create-all (list env-dev env-test))
-        (organization/switch @test-org)
-        (client/setup-client ssh-conn)
+        (client/setup-client ssh-conn (uniqueify "envmovetest"))
         (client/register ssh-conn {:username conf/*session-user*
                                    :password conf/*session-password*
-                                   :org @test-org
-                                   :env env-dev
+                                   :org (:name @test-org)
+                                   :env (:name env-dev)
                                    :force true})
         (let [system (katello/newSystem {:name (-> ssh-conn
                                                    (client/run-cmd "hostname")
@@ -210,7 +209,7 @@
                                                    trim)})
               names= (fn [& args] (apply = (map :name args)))]
           (assert/is (names= env-dev (system/environment system)))
-          (system/set-environment system env-test)
+          (ui/update system assoc :env env-test)
           (assert/is (= env-test (system/environment system)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
@@ -220,5 +219,3 @@
           #_(let [cmd (format "grep %s /etc/yum.repos.d/redhat.repo" env-test)
                   result (client/run-cmd ssh-conn cmd)]
               (assert/is (->> result :exit-code (= 0)))))))))
-        
-        

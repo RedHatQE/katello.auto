@@ -19,13 +19,6 @@
 
 ;; Functions
 
-(defn exists? [org]
-  (try+
-    (rest/read org)
-    (catch [:status 404] _ false)))
-
-(def not-exists? (complement exists?))
-
 (defn verify-bad-entity-create-gives-expected-error
   [ent expected-error]
   (expecting-error (common/errtype expected-error) (ui/create ent)))
@@ -35,7 +28,7 @@
 
 (defn create-and-verify [org]
   (ui/create org)
-  (assert/is (exists? org)))
+  (assert/is (rest/exists? org)))
 
 (def create-and-verify-with-name
   (comp create-and-verify mkorg))
@@ -126,7 +119,7 @@
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
         (ui/delete org)
-        (assert/is (not-exists? org)))
+        (assert/is (rest/not-exists? org)))
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers api/katello-only
@@ -156,5 +149,5 @@
 
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
-       ["Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
-       [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+       ["Library" (uniqueify "env-label") ::notification/env-name-lib-is-builtin]
+       [(uniqueify "env-name") "Library" ::notification/env-label-lib-is-builtin]])))
