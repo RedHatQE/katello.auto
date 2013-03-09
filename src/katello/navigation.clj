@@ -30,9 +30,9 @@
   left-pane-item
   (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
-(defn scroll-to-left-pane-item [item]
+(defn scroll-to-left-pane-item [ent]
   (while (and (< (ui/current-items) (ui/total-items))
-              (not (browser isElementPresent (left-pane-item item))))
+              (not (browser isElementPresent (left-pane-item (:name ent)))))
     ;;scroll to bottom of page to load more items
     (->browser (getEval (str "window.scrollTo(0,1000000);"))
                (ajaxWait))))

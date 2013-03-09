@@ -105,13 +105,14 @@
   [systems]
   (browser clickAndWait ::sys-tab)
   (browser controlKeyDown)
-  (doseq [{:keys [name]} systems]
-    (nav/scroll-to-left-pane-item name)
-    (nav/choose-left-pane name))
+  (doseq [system systems]
+    (nav/scroll-to-left-pane-item system)
+    (nav/choose-left-pane system))
   (browser controlKeyUp))
 
-(defn multi-delete "Delete multiple systems."
+(defn multi-delete "Delete multiple systems at once."
   [systems]
+  (nav/go-to ::page {:org (-> systems first :env :org)})
   (select-multisys-with-ctrl systems)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
@@ -208,7 +209,8 @@
   (browser getText ::environment))
 
 (defn get-details [system]
-  (nav/go-to ::details-page {:system system})
+  (nav/go-to ::details-page {:system system
+                             :org (-> system :env :org)})
   (let [details ["Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"

@@ -91,25 +91,23 @@
                                                :provider provider})]
       (rest/create provider)
       (rest/create product)
-      (ui/update (register-new-test-system) :assoc :products (list product))))
+      (ui/update (register-new-test-system) assoc :products (list product))))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
     :blockers (open-bz-bugs "845261")
-    (system/subscribe {:system-name (:name (register-new-test-system))
-                       :auto-subscribe true
-                       :sla "No Service Level Preference"}))
+    (ui/update (register-new-test-system) assoc
+               :auto-attach true
+               :service-level "No Service Level Preference"))
 
   (deftest "Remove System"
-    (with-unique [system-name "mysystem"]
-      (system/create system-name {:sockets "1"
-                                  :system-arch "x86_64"})
-      (system/delete system-name)))
+    (ui/delete (register-new-test-system)))
 
   (deftest "Remove multiple systems"
     (let [systems (->> {:name "mysys"
                         :sockets "1"
-                        :system-arch "x86_64"} katello/newSystem uniques (take 3))]
-      (ui/create-all systems)
+                        :system-arch "x86_64"
+                        :env test-environment} katello/newSystem uniques (take 3))]
+      (rest/create-all systems)
       (system/multi-delete systems)))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"

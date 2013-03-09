@@ -80,6 +80,11 @@
 (defn update [x f & args]
   (update* x (apply f args)))
 
+
+(defn create-all [ents]
+  (doseq [ent ents]
+    (create ent)))
+
 (defn api-url [uri]
   (format "%s/%s" (@conf/config :server-url) uri ))
 
