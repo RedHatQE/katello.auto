@@ -193,7 +193,7 @@
               {:id rest/id-field
                :query (partial rest/query-by-name query-url)
                :create (fn [sys]
-                         (merge sys (rest/post (query-url sys)
+                         (merge sys (rest/http-post (query-url sys)
                                                {:body (assoc (select-keys sys [:name :facts])
                                                         :type "system")})))})
   tasks/Uniqueable tasks/entity-uniqueable-impl

@@ -46,7 +46,7 @@
 (nav/defpages
   (common/pages)
   [::page 
-   [::named-page [username] (nav/choose-left-pane user-list-item username)
+   [::named-page [user] (nav/choose-left-pane user-list-item user)
     [::environments-page [] (browser click ::environments-link)]
     [::roles-permissions-page [] (browser click ::roles-link)]]])
 

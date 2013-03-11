@@ -85,19 +85,19 @@
   
   rest/CRUD (let [uri "api/organizations/"
                  label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
-             {:id rest/label-impl
+             {:id rest/label-field
               :query (fn [e] (rest/query-by-name (constantly (rest/api-url uri)) e))
               :create (fn [org]
-                        (merge org (rest/post (rest/api-url uri)
+                        (merge org (rest/http-post (rest/api-url uri)
                                               {:body (select-keys org [:name :description])})))
 
               :read (partial rest/read-impl label-url) 
               
               :update* (fn [org new-org]
-                        (rest/put (label-url org)
+                        (rest/http-put (label-url org)
                                   {:body {:organization (select-keys new-org [:description])}}))
               :delete (fn [org]
-                        (rest/delete (label-url org)))})
+                        (rest/http-delete (label-url org)))})
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [org] (nav/go-to ::named-page

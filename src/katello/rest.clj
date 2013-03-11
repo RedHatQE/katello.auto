@@ -3,7 +3,7 @@
             [clojure.data.json :as json]
             [katello.conf :as conf]
             [slingshot.slingshot :refer [try+ throw+]])
-  (:refer-clojure :exclude (get read delete)))
+  (:refer-clojure :exclude (http-get)))
 
 (defn- read-json-safe [s]
   (try (json/read-json s)
@@ -41,25 +41,25 @@
   (fn [url & [req]]
     (read-json-safe (method url req))))
 
-(def get (-> httpclient/get
-            wrap-session-auth
-            wrap-json-body
-            wrap-body-get
-            wrap-json-decode))
+(def http-get (-> httpclient/get
+                  wrap-session-auth
+                  wrap-json-body
+                  wrap-body-get
+                  wrap-json-decode))
 
-(def post (-> httpclient/post
+(def http-post (-> httpclient/post
              wrap-session-auth
              wrap-json-body
              wrap-body-get
              wrap-json-decode))
 
-(def put (-> httpclient/put
+(def http-put (-> httpclient/put
             wrap-session-auth
             wrap-json-body
             wrap-body-get
             wrap-json-decode))
 
-(def delete (-> httpclient/delete
+(def http-delete (-> httpclient/delete
                wrap-session-auth
                wrap-json-body
                wrap-body-get))
@@ -96,7 +96,7 @@
 
 (defn url-maker [coll ent]
   "Creates a fn that when given an entity will call fs on the entity
-   to get deps and look up the ids on those deps.  Then fill in the
+   to http-get deps and look up the ids on those deps.  Then fill in the
    format with those ids, and make a url"
   (-> (for [[fmt fs] coll
             :let [ids (for [f fs] (some-> ent f get-id))]
@@ -124,21 +124,21 @@
 (def label-field :label)
 
 (defn query-by-name [url-fn e]
-  (or (first (get (url-fn e)
+  (or (first (http-get (url-fn e)
                   {:query-params {:name (:name e)}}))
       (throw+ {:type ::entity-not-found
                :entity e})))
 
 (defn read-impl [read-url-fn ent]
   (merge ent (if (id ent)
-               (get (read-url-fn ent))
+               (http-get (read-url-fn ent))
                (query ent))))
 
 (def get-version-from-server
   (memoize
     (fn [url]
       (try
-        (get url)
+        (http-get url)
         (catch Exception e {:name "unknown"
                             :version "unknown"
                             :exception e})))))

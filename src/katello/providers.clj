@@ -100,17 +100,17 @@
               :query (partial rest/query-by-name org-url)
               :create (fn [{:keys [name description org] :as prov}]
                         (merge prov
-                               (rest/post (rest/api-url "api/providers")
-                                          {:body {:organization_id (rest/get-id org)
+                               (rest/http-post (rest/api-url "api/providers")
+                                          {:body {:organization_id (rest/http-get-id org)
                                                   :provider {:name name
                                                              :description description
                                                              :provider_type "Custom"}}})))
               :read (partial rest/read-impl id-url)
               :update (fn [prov new-prov]
-                        (merge new-prov (rest/put (id-url prov)
+                        (merge new-prov (rest/http-put (id-url prov)
                                                  {:body {:provider
                                                          (select-keys new-prov [:repository_url])}})))
-              :delete (fn [prov] (rest/delete (id-url prov)))})
+              :delete (fn [prov] (rest/http-delete (id-url prov)))})
 
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
@@ -130,7 +130,7 @@
                :query (partial rest/query-by-name query-urls)
                :create (fn [prod]
                          (merge prod
-                                (rest/post
+                                (rest/http-post
                                  (rest/url-maker [["api/providers/%s/product_create" [:provider]]] prod)
                                  {:body {:product (select-keys prod [:name :description :gpg_key_name])}})))
                :read (partial rest/read-impl id-url)

@@ -179,7 +179,7 @@
                               :force true})
             (assert/is (= {:name env} (system/environment mysys))))
           (assert/is (not= (:environment_id mysys)
-                           (rest/get-id env-dev)))))))
+                           (rest/http-get-id env-dev)))))))
     
   
   (deftest "Install package after moving a system from one env to other"

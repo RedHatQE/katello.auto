@@ -78,17 +78,17 @@
      :query (partial rest/query-by-name org-url)
      :create (fn [env] 
                (merge env
-                      (rest/post (org-url env)
+                      (rest/http-post (org-url env)
                                  {:body
                                   {:environment
                                    {:name (:name env)
                                     :description (:description env)
-                                    :prior (rest/get-id (or (:prior env)
+                                    :prior (rest/http-get-id (or (:prior env)
                                                         (katello/mklibrary env)))}}})))
      :read (partial rest/read-impl id-url)
      
      :update* (fn [env new-env]
-               (merge new-env (rest/put (id-url env)
+               (merge new-env (rest/http-put (id-url env)
                                         {:environment (select-keys new-env [:description])})))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
