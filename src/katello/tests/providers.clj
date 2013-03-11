@@ -21,7 +21,6 @@
 
 (def tmp-gpg-keyfile (tmpfile "output.txt"))
 
-(def gpg-key-content (slurp (@config :gpg-key)))
 
 ;; Functions
 
@@ -105,13 +104,13 @@
 ;; Tests
 
 (defgroup gpg-key-tests
-  :group-setup #(spit tmp-gpg-keyfile gpg-key-content)
+  :group-setup #(spit tmp-gpg-keyfile (slurp (@config :gpg-key)))
   
   (deftest "Create a new GPG key from text input"
     :blockers api/katello-only
     
     (with-unique [test-key "test-key-text"]
-      (gpg-key/create test-key {:contents gpg-key-content})))
+      (gpg-key/create test-key {:contents (slurp (@config :gpg-key))})))
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
