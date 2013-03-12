@@ -115,7 +115,6 @@
 
 
 (declare ^:dynamic *session-user*
-         ^:dynamic *session-password*
          ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *cloud-conn*
@@ -155,8 +154,8 @@
     (selenium-server/start)
     (swap! config assoc :selenium-address "localhost:4444"))
   
-  (def ^:dynamic *session-user* (@config :admin-user))
-  (def ^:dynamic *session-password* (@config :admin-password))
+  (def ^:dynamic *session-user* (katello/newUser {:name (@config :admin-user)
+                                                  :password (@config :admin-password)}))
   (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
   (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
                                 (cloud/connection dc-url           
@@ -188,8 +187,7 @@
    will use these creds.  No explicit logging in/out is done in the
    UI."
   [user password & body]
-  `(binding [*session-user* ~user
-             *session-password* ~password]
+  `(binding [*session-user* ~user]
      ~@body))
 
 (defmacro with-org

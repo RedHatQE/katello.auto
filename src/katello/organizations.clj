@@ -8,7 +8,7 @@
                      [tasks :as tasks]
                      [ui-common :as common]
                      [notifications :as notification]
-                     [conf :refer [*session-org* with-org]]))
+                     [conf :refer [*session-org*]]))
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;; Locators
@@ -126,7 +126,7 @@
            (when (not= current-default default-org)
              (browser click (ui/default-star (if (= default-org :none)
                                                current-default
-                                               default-org)))
+                                               (:name default-org))))
              (notification/check-for-success))))
        (when name
          (browser clickAndWait (ui/switcher-link name))))))

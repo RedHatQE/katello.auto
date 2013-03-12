@@ -1,7 +1,10 @@
 (ns katello.tests.users
-  (:require (katello [validation :refer :all] 
+  (:require katello
+            (katello [validation :refer :all] 
                      [organizations :as organization]
                      [ui :as ui]
+                     [navigation :as nav]
+                     [rest :as rest]
                      [login :refer [login logout]]
                      [ui-common :as common]
                      [roles :as role] 
@@ -17,82 +20,84 @@
 
 ;;; Constants
 
-(def generic-user-details {:password "password", :email "blah@blah.com"})
+(def generic-user (katello/newUser {:password "password", :email "blah@blah.com"}))
 
 ;;; Functions
 
-(defn step-create-org-and-user [{:keys [username org roles default-org default-env]}]
-  (api/create-user username generic-user-details)
-  (api/create-organization org)
-  (user/assign {:user username :roles (or roles ["Administrator"])})
-  (when default-org 
-    (user/assign-default-org-and-env username default-org default-env)))
+(defn new-unique-user []
+  (with-unique [org (katello/newOrganization {:name "org"})
+                user (assoc generic-user :name "user" :default-org org)]
+    user))
 
-(defn step-set-default-org-at-login-screen [{:keys [username org]}]
-  (login username (:password generic-user-details) {:default-org org
-                                                         :org org}))
+(defn create-org-and-user
+  [{:keys [default-org] :as user}]
+  (rest/create-all (list user default-org))
+  (ui/update user assoc :roles (hash-set (katello/newRole {:name "Administrator"}))))
 
-(defn step-logout [_]
-  (logout))
+(defn set-default-org-at-login-screen
+  [{:keys [default-org] :as user}]
+  (login user  {:default-org default-org
+                :org default-org})
+  user) ;; return user for more steps
 
-(defn step-verify-login-direct-to-default-org [{:keys [username org]}]
-  (login username (:password generic-user-details))
-  (assert/is (= (organization/current)
-                org)))
+(defn logout-user [user]
+  (logout)
+  user)
 
-(defn step-verify-login-direct-to-new-default-org [{:keys [username new-org]}]
-  (login username (:password generic-user-details))
-  (assert/is (= (organization/current)
-                new-org)))
+(defn verify-login-direct-to-default-org
+  [{:keys [default-org] :as user}]
+  (login user)
+  (assert/is (= (nav/current-org) (:name default-org))))
 
-(defn step-verify-login-prompts-org [{:keys [username org]}]
+
+
+(defn verify-login-prompts-org [user]
   (expecting-error [:type :katello.login/login-org-required]
-                   (login username (:password generic-user-details))))
+                   (login user)))
 
-(defn step-verify-only-one-org [_]
+(defn verify-only-one-org [_]
   (assert/is (= (list-available-orgs) 
-                (organization/current))))
+                (nav/current-org))))
 
-(defn step-verify-multiple-orgs [_]
+(defn verify-multiple-orgs [_]
   (assert/is (< 1 (count (list-available-orgs)))))
   
-(defn step-set-default-org [{:keys [new-org]}]
-  (organization/switch new-org {:default-org new-org}))
+(defn set-default-org [{:keys [default-org] :as user}]
+  (organization/switch nil {:default-org default-org})
+  user)
 
-(defn step-unset-default-org [_]
-  (organization/switch nil {:default-org :none}))
 
 ;;; Tests
 
 (defgroup default-org-tests
   :test-teardown #(login)
   (deftest "Set default org for a user at login"
-    (do-steps (uniqueify-vals {:username "deforg"
-                               :org "usersorg"})
-              step-create-org-and-user
-              step-set-default-org-at-login-screen
-              step-logout
-              step-verify-login-direct-to-default-org) 
+    (-> (new-unique-user)
+        create-org-and-user
+        set-default-org-at-login-screen
+        logout-user
+        verify-login-direct-to-default-org)
+     
 
     (deftest "Unset default org for a user at login"
       (do-steps (uniqueify-vals {:username "deforg"
                                  :org "usersorg"})
-                step-create-org-and-user
-                step-set-default-org-at-login-screen
+                create-org-and-user
+                set-default-org-at-login-screen
                 step-unset-default-org
-                step-logout
-                step-verify-login-prompts-org)))
+                logout-user
+                verify-login-prompts-org)))
   
     (deftest "Default Org - user can change default org (smoke test)"
       (do-steps(merge (uniqueify-vals 
                         {:username "deforg"
                          :org "usersorg"})
                         {:new-org "ACME_Corporation"})
-                step-create-org-and-user
-                step-set-default-org-at-login-screen
-                step-logout
-                step-verify-login-direct-to-default-org
-                step-set-default-org
+                create-org-and-user
+                set-default-org-at-login-screen
+                logout-user
+                verify-login-direct-to-default-org
+                set-default-org
                 step-verify-login-direct-to-new-default-org 
                 ))
     
@@ -103,24 +108,24 @@
                       :org org
                       :roles []
                       :default-org "ACME_Corporation"
-                     :default-env nil}
-                   step-create-org-and-user
-                   step-set-default-org-at-login-screen
-                   step-verify-only-one-org
+                      :default-env nil}
+                   create-org-and-user
+                   set-default-org-at-login-screen
+                   verify-only-one-org
                    ))))
 
 
 (defgroup user-tests
 
   (deftest "Admin creates a user"
-    (user/create (uniqueify "autouser")   generic-user-details)
+    (user/create (uniqueify "autouser")   generic-user)
     
     (deftest "Admin creates a user with i18n characters"
       :data-driven true
       :blockers (open-bz-bugs "868906")
       
       (fn [username]
-        (user/create (uniqueify username)   generic-user-details))
+        (user/create (uniqueify username)   generic-user))
       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
     (deftest "User validation"
@@ -128,7 +133,7 @@
 
       (fn [username expected-err]
         (expecting-error (common/errtype expected-err)
-                         (user/create username generic-user-details)))
+                         (user/create username generic-user)))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
        [(random-string (int \a) (int \z) 65) :katello.notifications/username-64-char-limit]
        ["foo   " :katello.notifications/validation-error]
@@ -145,19 +150,19 @@
                     username "autouser"]
         (ui/create (assoc org {:initial-env-name env-name}))
         
-        (user/create username (merge generic-user-details {:default-org org-name, :default-env env-name}))))
+        (user/create username (merge generic-user {:default-org org-name, :default-env env-name}))))
 
     (deftest "Admin changes a user's password"
       :blockers (open-bz-bugs "720469")
 
       (with-unique [username "edituser"]
-        (user/create username generic-user-details)
+        (user/create username generic-user)
         (user/edit username {:new-password "changedpwd"})))
 
 
     (deftest "Admin deletes a user"
       (with-unique [username "deleteme"]
-        (user/create username generic-user-details)
+        (user/create username generic-user)
         (user/delete username))
 
       (deftest "Admin who deletes the original admin account can still do admin things"
@@ -180,15 +185,15 @@
 
       (with-unique [username "dupeuser"]
         (expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
-                                 (user/create username generic-user-details))))
+                                 (user/create username generic-user))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
       :blockers (open-bz-bugs "857876")
       :data-driven true
       (fn [orig-name modify-case-fn]
         (with-unique [name orig-name]
-          (user/create name generic-user-details)
-          (user/create (modify-case-fn name) generic-user-details)))
+          (user/create name generic-user)
+          (user/create (modify-case-fn name) generic-user)))
 
       [["usr"     capitalize]
        ["yourusr" capitalize]
@@ -219,12 +224,12 @@
 
     (deftest "Admin assigns a role to user"
       (with-unique [username "autouser"]
-        (user/create username generic-user-details)
+        (user/create username generic-user)
         (user/assign {:user username, :roles ["Administrator"]})))
   
     (deftest "Roles can be removed from user"
       (with-unique [username "autouser"]
-        (user/create username generic-user-details)
+        (user/create username generic-user)
         (user/assign {:user username, :roles ["Administrator" "Read Everything"]})
         (user/unassign {:user username, :roles ["Read Everything"]}))))
 

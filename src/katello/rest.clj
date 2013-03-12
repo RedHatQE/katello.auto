@@ -14,7 +14,7 @@
   [method]
   (fn [url & [req]]
     (method url (assoc req
-                  :basic-auth [conf/*session-user* conf/*session-password*]
+                  :basic-auth [(:name conf/*session-user*) (:password conf/*session-user*)]
                   :insecure?  true))))
 
 (defn wrap-json-body

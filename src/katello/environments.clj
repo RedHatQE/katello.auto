@@ -83,7 +83,7 @@
                                   {:environment
                                    {:name (:name env)
                                     :description (:description env)
-                                    :prior (rest/http-get-id (or (:prior env)
+                                    :prior (rest/get-id (or (:prior env)
                                                         (katello/mklibrary env)))}}})))
      :read (partial rest/read-impl id-url)
      

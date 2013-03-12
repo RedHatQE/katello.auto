@@ -2,7 +2,8 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
-            (katello [navigation :as nav] 
+            (katello [navigation :as nav]
+                     [tasks :as tasks]
                      [ui :as ui]
                      [rest :as rest]
                      [login :refer [logged-in?]]
@@ -66,7 +67,7 @@
                          ::password-text password
                          ::confirm-text (or password-confirm password)
                          ::email-text email
-                         ::default-org default-org
+                         ::default-org (:name default-org)
                          env-chooser [default-env]]
                         ::save))
   (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
@@ -144,10 +145,9 @@
                :create (fn [user]
                          (rest/http-post (rest/api-url url)
                                          {:body
-                                          (-> user
-                                             (assoc (select-keys user [:password :disabled
-                                                                       :email])
-                                               :username (:name user)))}))
+                                          (assoc (select-keys user [:password :disabled
+                                                                    :email])
+                                            :username (:name user))}))
                :read (partial rest/read-impl url-by-id)
                :update* (fn [user updated]
                           ;; TODO implement me
@@ -155,7 +155,9 @@
                :delete (fn [user]
                          (rest/http-delete (url-by-id user)))})
   
-  nav/Destination {:go-to #(nav/go-to ::named-page {:user %})})
+  nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."

@@ -32,7 +32,7 @@
     (browser clickAndWait ::ui/log-out)))
 
 (defn login
-  "Logs in a user to the UI with the given username and password. If
+  "Logs in a user to the UI with the given user and password. If
    none are given, the current value of katello.conf/*session-user*
    *session-password* and *session-org* are used. If any user is
    currently logged in, he will be logged out first. If the user
@@ -41,10 +41,10 @@
    default-org. The org and default-org do not have to be the same. If
    the user does have a default already, the org and/or default-org
    will be set after logging in on the dashboard page."
-  ([] (login *session-user* *session-password* {:org *session-org*}))
-  ([username password & [{:keys [org default-org]}]]
+  ([] (login *session-user* {:org *session-org*}))
+  ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
-     (sel/fill-ajax-form {::username-text username
+     (sel/fill-ajax-form {::username-text name
                           ::password-text password}
                          ::log-in)
      (let [retval (notification/check-for-success {:timeout-ms 20000})
@@ -58,6 +58,6 @@
              (organization/switch (or org
                                       (throw+ {:type ::login-org-required
                                                :msg (format "User %s has no default org, cannot fully log in without specifying an org."
-                                                            username)}))
+                                                            user)}))
                                   {:default-org default-org})))
        retval)))
