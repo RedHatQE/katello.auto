@@ -41,3 +41,7 @@
 (defrecord System [id name env service-level])
 
 (defrecord GPGKey [id name org content])
+
+(defrecord User [id name email password password-confirm default-org default-env])
+
+(defrecord Role [id name users permissions])

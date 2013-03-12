@@ -3,7 +3,7 @@
             [clojure.data.json :as json]
             [katello.conf :as conf]
             [slingshot.slingshot :refer [try+ throw+]])
-  (:refer-clojure :exclude (http-get)))
+  (:refer-clojure :exclude (get read)))
 
 (defn- read-json-safe [s]
   (try (json/read-json s)
@@ -123,11 +123,14 @@
 (def id-field :id)
 (def label-field :label)
 
-(defn query-by-name [url-fn e]
+(defn query-by [query-field-kw rec-field-kw url-fn e]
   (or (first (http-get (url-fn e)
-                  {:query-params {:name (:name e)}}))
+                  {:query-params {query-field-kw (rec-field-kw e)}}))
       (throw+ {:type ::entity-not-found
                :entity e})))
+
+(defn query-by-name [url-fn e]
+  (partial query-by :name :name))
 
 (defn read-impl [read-url-fn ent]
   (merge ent (if (id ent)

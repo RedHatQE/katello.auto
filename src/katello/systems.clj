@@ -154,22 +154,41 @@
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 
+(defn- add-remove-content
+  "Adds/removes package[-groups] to a system.  Must already be on a system page."
+  [to-add to-remove]
+  (let [packages-to-add (:packages to-add)
+        packages-to-remove (:packages to-remove)
+        groups-to-add (:package-groups to-add)
+        groups-to-remove (:package-groups to-remove)]
+    (when (or packages-to-add packages-to-remove)
+      (let [x {}] (browser click ::packages-link))
+      ))
+  (let [ks (list :packages :package-groups)]
+    (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
+      (browser click ::packages-link)
+      )))
+
+(defn- edit-system-details [{:keys [name description location release-version]}]
+  (common/in-place-edit {::name-text-edit name
+                         ::description-text-edit description
+                         ::location-text-edit location
+                         ::release-version-select release-version}))
 (defn update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
-                           products service-level auto-attach env]
+                            service-level auto-attach env]
                     :as to-add} _] (data/diff system updated)]
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page {:system system
                                  :org (-> system :env :org)})
-      (common/in-place-edit {::name-text-edit name
-                             ::description-text-edit description
-                             ::location-text-edit location
-                             ::release-version-select release-version})
+      (edit-system-details to-add)
       (when env (set-environment (:name env)))
+
+      (add-remove-content to-add to-remove)
       
       (let [added-products (:products to-add) 
             removed-products (:products to-remove) ]
