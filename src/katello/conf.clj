@@ -80,7 +80,10 @@
     :default "https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
    
    ["--agent-repo" "URL of a .repo file to point to where katello-agent can be installed from."
-    :default "https://raw.github.com/gist/1978881"]])
+    :default "https://raw.github.com/gist/1978881"]
+   
+   ["--gpg-key" "URL of a GPG-Key"
+    :default "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator"]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 
