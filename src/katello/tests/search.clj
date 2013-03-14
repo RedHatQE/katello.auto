@@ -192,9 +192,8 @@
                         ))))))
     [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]
      [["sg-fed1" {:description "the rh system-group"}] ["mysystem1" {:sockets "2" :system-arch "x86"}] {:criteria "name:sg-fed1*"}]
-     [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]]))
+     [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]])
  
-(defgroup search-tests11
   (deftest "search GPG keys"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
