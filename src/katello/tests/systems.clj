@@ -194,7 +194,16 @@
     
     [[false]
      [true]])
-
+  
+  (deftest "System Details: Add custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system-name "mysystem"]
+      (let [key-name "Hypervisor"
+            key-value "KVM"]
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (system/add-custom-info system-name key-name key-value))))
+  
   (deftest "Add system from UI"
     :data-driven true
     

@@ -78,6 +78,12 @@
    ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
    ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
    
+   ;;custom-info
+   ::custom-info                (ui/link "Custom Information")
+   ::key-name                   "new_custom_info_keyname"
+   ::key-value                  "new_custom_info_value"
+   ::create-custom-info         "create_custom_info_button"
+   
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
@@ -90,7 +96,8 @@
    [::new-page [] (browser click ::new)]
    [::named-page [system-name] (nav/choose-left-pane system-name)
     [::details-page [] (browser click ::details)
-     [::facts-page [] (browser click ::facts)]]
+     [::facts-page [] (browser click ::facts)]
+     [::custom-info-page [] (browser click ::custom-info)]]
     [::subscriptions-page [] (browser click ::subscriptions)]
     [::content-menu [] (browser mouseOver ::content-link)
      [::content-software-page [] (browser click ::software-link)]
@@ -292,3 +299,11 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
+
+(defn add-custom-info
+  [name key-name key-value]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser setText ::key-name  key-name)
+  (browser setText ::key-value  key-value)
+  (browser click ::create-custom-info)
+  (notification/check-for-success))
