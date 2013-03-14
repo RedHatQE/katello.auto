@@ -38,6 +38,7 @@
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
+   ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -232,6 +233,11 @@
   [system-name]
   (nav/go-to ::details-page {:system-name system-name})
   (browser getText ::environment))
+
+(defn get-ip-addr
+  [system-name]
+  (nav/go-to ::details-page {:system-name system-name})
+  (browser getText ::interface-addr))
 
 (defn get-details [system-name]
   (nav/go-to ::details-page {:system-name system-name})

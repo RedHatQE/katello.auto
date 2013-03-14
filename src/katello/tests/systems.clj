@@ -226,6 +226,8 @@
             details (system/get-details hostname)]
         (assert/is (= (client/get-distro ssh-conn)
                       (details "OS")))
+        (assert/is (= (client/get-ip-address ssh-conn)
+                            (system/get-ip-addr hostname)))
         (assert/is (every? (complement empty?) (vals details))))))
   
   (deftest "System-Details: Validate Activation-key link"
