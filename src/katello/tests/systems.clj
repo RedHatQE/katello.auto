@@ -291,6 +291,28 @@
               (assert/is (= env (system/environment mysys))))
             (assert/is (not= (map :environment_id (api/get-by-name :system mysys))
                              (map :id (api/get-by-name :environment env-dev)))))))))
+  
+  
+  (deftest  "Registering a system from CLI and consuming contents from UI"
+    (let [target-env (first *environments*)
+          org-name "ACME_Corporation"
+          product-name (uniqueify "fake")]
+      (step-to-configure-server-for-pkg-install product-name target-env)
+      (provision/with-client "consume-content"
+        ssh-conn
+        (client/register ssh-conn
+                         {:username *session-user*
+                          :password *session-password*
+                          :org org-name
+                          :env target-env
+                          :force true})
+        (let [mysys (client/my-hostname ssh-conn)]
+          (system/subscribe {:system-name mysys
+                             :add-products product-name})
+          (client/sm-cmd ssh-conn :refresh)
+          (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
+                result (client/run-cmd ssh-conn cmd)]
+            (assert/is (->> result :exit-code (= 0))))))))
     
   
   (deftest "Install package after moving a system from one env to other"
