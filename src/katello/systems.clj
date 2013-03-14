@@ -23,6 +23,8 @@
 
 (ui/deflocators
   {::new                         "new"
+   ::new-class-attrib            "new@class"
+   ::new-title-attrib            "new@original-title"
    ::create                      "system_submit"
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
