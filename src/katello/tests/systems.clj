@@ -217,6 +217,27 @@
                                     :system-arch "x86_64"})
         (system/add-custom-info system-name key-name key-value))))
   
+  (deftest "System Details: Update custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system-name "mysystem"]
+      (let [key-name "Hypervisor"
+            key-value "KVM"
+            new-key-value "Xen"]
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (system/add-custom-info system-name key-name key-value)
+        (system/update-custom-info system-name key-name new-key-value))))
+
+  (deftest "System Details: Delete custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system-name "mysystem"]
+      (let [key-name "Hypervisor"
+            key-value "KVM"]
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (system/add-custom-info system-name key-name key-value)
+        (system/remove-custom-info system-name key-name))))
+  
   (deftest "Add system from UI"
     :data-driven true
     
