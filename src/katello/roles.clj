@@ -1,5 +1,6 @@
 (ns katello.roles
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            katello
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -38,6 +39,10 @@
     [::named-users-page [] (browser click ::users)]
     [::named-permissions-page [] (browser click ::permissions)]]])
 
+
+;; Vars
+
+(def administrator (katello/newRole {:name "Administrator"}))
 
 ;; Tasks
 

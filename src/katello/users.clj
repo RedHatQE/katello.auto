@@ -5,6 +5,7 @@
             (katello [navigation :as nav]
                      [tasks :as tasks]
                      [ui :as ui]
+                     [conf :as conf]
                      [rest :as rest]
                      [login :refer [logged-in?]]
                      [ui-common :as common]
@@ -54,6 +55,13 @@
     [::roles-permissions-page [] (browser click ::roles-link)]]])
 
 
+;; Vars
+
+;; since @config isn't set until runtime, make this a delay object
+(def admin (delay (assert (@conf/config :admin-user))
+                  (katello/newUser {:name (@conf/config :admin-user)
+                                    :password (@conf/config :admin-password)
+                                    :email "root@localhost"})))
 ;; Tasks
 
 (defn create

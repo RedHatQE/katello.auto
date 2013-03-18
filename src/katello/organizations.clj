@@ -114,7 +114,6 @@
    necessary if also setting the default-org."
   ([] (switch *session-org*))
   ([{:keys [name]} & [{:keys [force? default-org]}]]
-     {:pre [name]}
      (nav/go-to ::nav/top-level) 
      (when (or force?
                default-org
