@@ -48,3 +48,10 @@
   (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
+
+
+(defn new-gpgkey-link-exists?
+  "Check whether new gpg-key link exists ?"
+  []
+  (nav/go-to ::page)
+  (browser isElementPresent ::new))
