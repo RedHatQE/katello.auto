@@ -1,5 +1,6 @@
 (ns katello.tests.providers.custom
-  (:require (katello [api-tasks :as api]
+  (:require katello
+            (katello [api-tasks :as api]
                      [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all]
@@ -11,8 +12,8 @@
 
 ;; Variables
 
-(def test-provider-name (atom nil))
-(def test-product-name (atom nil))
+(def test-provider (atom nil))
+(def test-product (atom nil))
 
 
 ;; Functions
@@ -20,9 +21,10 @@
 (defn create-test-provider
   "Sets up a test custom provider to be used by other tests."
   []
-  (organization/switch)
-  (provider/create {:name (reset! test-provider-name (uniqueify "cust"))
-                    :description "my description"}))
+  (ui/create (reset! test-provider
+                     (uniqueify (katello/newProvider {:name "cust"
+                                                      :description "my description"
+                                                      :org conf/*session-org*})))))
 
 (defn create-same-product-in-multiple-providers
   [product-name providers]
@@ -40,48 +42,60 @@
         (provider/add-product {:provider-name provider-name
                                :name product-name})))))
 
+(defn with-two-providers
+  "Create two providers with unique names, and call f with a unique
+  entity name, and the provider names. Used for verifying (for
+  instance) that products with the same name can be created in 2
+  different providers."
+  [f]
+  (let [ent-name (uniqueify "samename")
+        providers (take 2 (unique-names "ns-provider"))]
+    (doseq [provider providers]
+      (api/create-provider provider))
+    (f ent-name providers)))
 ;; Tests
 
 (defgroup custom-product-tests
   :group-setup create-test-provider
   :blockers (open-bz-bugs "751910")
-  :test-setup  organization/before-test-switch
   
   (deftest "Create a custom product"
-    (provider/add-product {:provider-name @test-provider-name
-                            :name (reset! test-product-name (uniqueify "prod"))
-                            :description "test product"})
+    (ui/create (reset! test-product
+                       (uniqueify (katello/newProduct {:provider @test-provider
+                                                       :name "prod"
+                                                       :description "test product"}))))
 
     
     (deftest "Delete a custom product"
       :blockers (open-bz-bugs "729364")
       
-      (let [product {:provider-name @test-provider-name
-                     :name (uniqueify "deleteme")
-                     :description "test product to delete"}]
-        (provider/add-product product)
-        (provider/delete-product product)))
+      (doto (uniqueify (katello/newProduct {:provider @test-provider
+                                            :name "deleteme"
+                                            :description "test product to delete"}))
+        (ui/create)
+        (ui/delete)))
 
     (deftest "Create a repository"
       :blockers (open-bz-bugs "729364")
-
-      (repo/add {:provider-name @test-provider-name
-                           :product-name @test-product-name
-                           :name (uniqueify "repo")
-                           :url "http://test.com/myurl"})
-
+      
+      (-> {:name "repo"
+           :url "http://test.com/myurl"
+           :product @test-product}
+          katello/newRepository
+          uniqueify
+          ui/create)
       
       (deftest "Delete a repository"
         :blockers (open-bz-bugs "745279")
-        
-        (let [repo {:provider-name @test-provider-name
-                    :product-name @test-product-name
-                    :name (uniqueify "deleteme")
-                    :url "http://my.fake/url"}]
-          (repo/add repo)
-          (repo/delete repo))))
 
-    
+        (doto (-> {:name "deleteme"
+                   :url "http://my.fake/url" 
+                   :product @test-product}
+                  katello/newRepository
+                  uniqueify)
+          (ui/create)
+          (ui/delete))))
+
     (deftest "Create two products with the same name, in different orgs"
       :blockers (open-bz-bugs "784712" "802795")
 

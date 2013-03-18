@@ -96,12 +96,12 @@
 
   rest/CRUD (let [org-url (partial rest/url-maker [["api/organizations/%s/providers" [:org]]])
                  id-url (partial rest/url-maker [["api/providers/%s" [identity]]])]
-             {:id rest/id-impl
+             {:id rest/id-field
               :query (partial rest/query-by-name org-url)
               :create (fn [{:keys [name description org] :as prov}]
                         (merge prov
                                (rest/http-post (rest/api-url "api/providers")
-                                          {:body {:organization_id (rest/http-get-id org)
+                                          {:body {:organization_id (rest/get-id org)
                                                   :provider {:name name
                                                              :description description
                                                              :provider_type "Custom"}}})))
@@ -126,7 +126,7 @@
                   org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
                   query-urls (partial rest/url-maker [["api/organizations/%s/products" [:org]]
                                                       ["/api/environments/%s/products" [:env]]])]
-              {:id rest/id-impl
+              {:id rest/id-field
                :query (partial rest/query-by-name query-urls)
                :create (fn [prod]
                          (merge prod

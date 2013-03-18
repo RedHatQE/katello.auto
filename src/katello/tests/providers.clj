@@ -5,7 +5,9 @@
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
-            (katello [tasks           :refer :all]
+            (katello [rest :as rest]
+                     [ui :as ui]
+                     [tasks           :refer :all]
                      [ui-common       :as common]
                      [notifications   :refer [success?]]
                      [organizations   :as organization]
@@ -15,7 +17,7 @@
                      [gpg-keys        :as gpg-key]
                      [package-filters :as filter]
                      [validation      :refer :all]
-                     [conf            :refer [config]])))
+                     [conf            :as conf])))
 
 ;; Constants
 
@@ -23,43 +25,16 @@
 
 ;; Functions
 
-(defn get-all-providers "Uses API to return all provider names in the admin org"
-  []
-  (map :name (api/all-entities :provider)))
-
 (defn verify-provider-renamed
-  "Verifies that a provider named old-name doesn't exist, that that a
-  provider named new-name does exist."
-  [old-name new-name]
-  (let [current-provider-names (get-all-providers)]
-    (assert/is (and (some #{new-name} current-provider-names)
-                    (not (some #{old-name} current-provider-names))))))
+  "Verifies that a provider named old-prov doesn't exist, that that a
+  provider named new-prov does exist."
+  [old-prov new-prov]
+  (assert (and (rest/exists? new-prov)
+               (not (rest/exists? old-prov)))))
 
-(defn with-n-new-orgs
-  "Create n organizations with unique names. Then calls function f
-  with a unique name, and the org names. This is useful for verifying
-  whether the same name for an entity can be used across orgs.
-  Switches back to admin org after f is called."
-  [n f]
-  (let [ent-name (uniqueify "samename")
-        orgs (take n (unique-names "ns-org"))]
-    (doseq [org orgs]
-      (api/create-organization org))
-    (try
-      (f ent-name orgs)
-      (finally (organization/switch (@config :admin-org))))))
 
-(defn with-two-providers
-  "Create two providers with unique names, and call f with a unique
-  entity name, and the provider names. Used for verifying (for
-  instance) that products with the same name can be created in 2
-  different providers."
-  [f]
-  (let [ent-name (uniqueify "samename")
-        providers (take 2 (unique-names "ns-provider"))]
-    (doseq [provider providers]
-      (api/create-provider provider))
-    (f ent-name providers)))
+(defn unique-orgs "Create a lazy seq of orgs based on org" [org]
+  (lazy-seq (map rest/create (uniques org))))
 
 (defn create-same-provider-in-multiple-orgs
   "Create providers with the same name in multiple orgs."
@@ -72,7 +47,7 @@
   "Attempts to create a provider and validates the result using
    pred."
   [provider pred]
-  (expecting-error pred (provider/create provider)))
+  (expecting-error pred (ui/create (katello/newProvider provider))))
 
 (defn get-validation-data
   []
@@ -108,47 +83,45 @@
   (deftest "Create a new GPG key from text input"
     :blockers api/katello-only
     
-    (with-unique [test-key "test-key-text"]
-      (gpg-key/create test-key {:contents "asdfasdfasdfasdfasdfasdfasdf"})))
+    (-> {:name "test-key-text"
+         :contents "asdfasdfasdfasdfasdfasdfasdf"}
+        katello/newGPGKey
+        uniqueify
+        ui/create))
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
-    (with-unique [test-key "test-key"]
-      (gpg-key/create test-key {:filename tmp-gpg-keyfile}))
-
-    
+    (-> {:name "test-key-file"
+         :filename tmp-gpg-keyfile}
+        katello/newGPGKey
+        uniqueify
+        ui/create)
+        
     (deftest "Delete existing GPG key" 
-      (with-unique [test-key "test-key"]
-        (gpg-key/create test-key {:filename tmp-gpg-keyfile})
-        (gpg-key/remove test-key)))))
-
-
-(defgroup package-filter-tests
-
-  (deftest "Create new Package Filter test"
-    (with-unique [test-package-filter "test-package-filter"]
-      (filter/create test-package-filter {:description "Test filter"}))
-    
-    (deftest "Delete existing Package Filter test" 
-      (with-unique [test-package-filter "test-package-filter"]
-        (filter/create test-package-filter {:description "Test filter"})
-        (filter/remove test-package-filter)))))
-
+      (doto (-> {:name "test-key"
+                 :filename tmp-gpg-keyfile}
+                katello/newGPGKey
+                uniqueify)
+        ui/create
+        ui/delete))))
 
 (defgroup provider-tests
-  :test-setup organization/before-test-switch
   
   (deftest "Create a custom provider" 
-    (provider/create {:name (uniqueify "auto-cp")
-                      :description "my description"})
+    (-> {:name "auto-cp"
+         :description "my description"
+         :org conf/*session-org*}
+        katello/newProvider
+        uniqueify
+        ui/create)
 
 
     (deftest "Cannot create two providers in the same org with the same name"
-      (with-unique [provider-name "dupe"]
+      (with-unique [provider (katello/newProvider {:name "dupe"
+                                                   :org conf/*session-org*})]
         (expecting-error-2nd-try duplicate-disallowed
-          (provider/create {:name provider-name
-                            :description "mydescription"}))))
+                                 (ui/create provider))))
     
     (deftest "Provider validation"
       :data-driven true
@@ -160,23 +133,32 @@
 
     
     (deftest "Rename a custom provider"
-      (with-unique [old-name  "rename"
-                    new-name  "newname"]
-        (provider/create {:name old-name :description "my description"})
-        (provider/edit {:name old-name :new-name new-name})
-        (verify-provider-renamed old-name new-name)))
-    
+      (let [provider (-> {:name "rename"
+                          :description "my description"
+                          :org conf/*session-org*}
+                         katello/newProvider
+                         uniqueify)]
+        (ui/create provider)
+        (let [updated (ui/update assoc :name "newname")]
+          (verify-provider-renamed provider updated))))
     
     (deftest "Delete a custom provider"
-      (with-unique [provider-name "auto-provider-delete"]
-        (provider/create {:name provider-name :description "my description"})
-        (provider/delete provider-name)))
+      (doto (-> {:name "auto-provider-delete"
+                 :org conf/*session-org*}
+                katello/newProvider
+                uniqueify)
+        (ui/create)
+        (ui/delete)))
 
     
     (deftest "Create two providers with the same name, in two different orgs"
-      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs)))
+      (with-unique [provider (katello/newProvider {:name "prov"})]
+        (doseq [org (->> {:name "prov-org"}
+                         katello/newOrganization
+                         unique-orgs
+                         (take 2))]
+          (ui/create (assoc provider :org org))))))
 
-  gpg-key-tests
-  package-filter-tests)
+  gpg-key-tests)
 
 
