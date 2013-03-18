@@ -19,7 +19,9 @@
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
-  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
+  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  existing-key-value-field        "//div[@name='custom_info[%s]']"
+  remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/deflocators
   {::new                         "new"
@@ -303,9 +305,25 @@
                     (browser getText ::pkg-install-status))))))
 
 (defn add-custom-info
+  "Adds a custom keyname/value pair for the given system."
   [name key-name key-value]
   (nav/go-to ::custom-info-page {:system-name name})
   (browser setText ::key-name  key-name)
   (browser setText ::key-value  key-value)
   (browser click ::create-custom-info)
+  (notification/check-for-success))
+
+(defn update-custom-info
+  "Updates the value for a system given the keyname."
+  [name key-name new-key-value]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser click (existing-key-value-field key-name))
+  (sel/fill-ajax-form {(existing-key-value-field key-name) new-key-value} ::save-button)
+  (notification/check-for-success))
+
+(defn remove-custom-info
+  "Removes custom information from a system matching a keyname"
+  [name key-name]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser click (remove-custom-info-button key-name))
   (notification/check-for-success))
