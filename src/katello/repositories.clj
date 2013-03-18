@@ -13,7 +13,8 @@
    ::repo-url-text     "repo[feed]" 
    ::save-repository   "//input[@value='Create']"
    ::remove-repository (ui/link "Remove Repository")
-   ::repo-gpg-select   "//select[@id='repo_gpg_key']"}
+   ::repo-gpg-select   "//select[@id='repo_gpg_key']"
+   ::add-repo-button   "//div[contains(@class,'button') and contains(.,'Add Repository')]"}
   ui/locators)
 
 (sel/template-fns
@@ -64,3 +65,13 @@
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
     (browser check (repo-enable-checkbox repo))))
+
+(defn check-for-newlink-and-addrepobutton?
+  "Checks whether gpg-key can be added to a provider or existing repos"
+  [provider-name]
+  (nav/go-to ::provider/custom-page)
+  (let [new-link (browser isElementPresent ::provider/new)]
+    (nav/go-to ::provider/products-page {:provider-name provider-name})
+    (let [repo-button (browser isElementPresent ::add-repo-button)]
+      (every? false? [new-link repo-button]))))
+  
