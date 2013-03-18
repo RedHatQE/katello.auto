@@ -45,3 +45,5 @@
 (defrecord User [id name email password password-confirm default-org default-env])
 
 (defrecord Role [id name users permissions])
+
+(defrecord Permission [name role org resource-type verbs])
