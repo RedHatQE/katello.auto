@@ -1,6 +1,8 @@
 (ns katello.gpg-keys
-  (:require (katello [navigation :as nav]
+  (:require katello
+            (katello [navigation :as nav]
                      [ui :as ui]
+                     [rest :as rest]
                      [ui-common :as common]
                      [notifications :as notification])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
@@ -22,11 +24,11 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)]])
+   [::named-page [gpg-key] (nav/choose-left-pane gpg-key)]])
 
 ;;Tasks
 
-(defn create [name & [{:keys [filename contents]}]]
+(defn create [{:keys [name filename contents]}]
   (assert (not (and filename contents))
           "Must specify one one of :filename or :contents.")
   (assert (string? name))
@@ -41,10 +43,15 @@
   (notification/check-for-success))
 
 
-(defn remove 
+(defn delete 
   "Deletes existing GPG keys"
-  [gpg-key-name]
-  (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
+  [gpg-key]
+  (nav/go-to ::named-page {:gpg-key gpg-key})
   (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
+
+(extend katello.GPGKey
+  ui/CRUD {:create create
+           :delete delete}
+  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %})})
