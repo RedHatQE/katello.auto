@@ -14,7 +14,8 @@
                      [api-tasks :as api]
                      [providers :as provider] 
                      [repositories :as repo]
-                     [gpg-keys :as gpg-key]) 
+                     [gpg-keys :as gpg-key]
+                     [navigation :as nav]) 
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [clojure.string :refer [capitalize upper-case lower-case]]
@@ -296,8 +297,7 @@
              (login)))))
      
      (deftest "Assure user w/o Manage Permissions cannot associate GPG keys"
-       (let [user-name (@config :admin-user)
-             new-user (uniqueify "gpgkeyuser1")
+       (let [new-user (uniqueify "gpgkeyuser1")
              new-pass "gpgkey123"
              gpg-key-name (uniqueify "test-key-text5")
              provider-name (uniqueify "provider")
@@ -326,8 +326,23 @@
                                                     :verbs ["Read Providers"]}]}]
                   :users [new-user]})
          (user/assign {:user new-user, :roles ["Read Everything"]})
-         (login new-user new-pass {:org (@config :admin-org)})
-         (assert/is (repo/check-for-newlink-and-addrepobutton? provider-name)))))      
+         (try 
+           (login new-user new-pass {:org organization})
+           (assert/is (repo/check-for-newlink-and-addrepobutton? provider-name))
+           (finally
+             (login)))))
+     
+     (deftest "Users w/o GPG key permissions cannot create GPG keys"
+       (let [new-user (uniqueify "gpgkeyuser1")
+             new-pass "gpgkey123"
+             organization (@config :admin-org)]
+         (user/create new-user {:password new-pass :email "me@my.org"})
+         (user/assign {:user new-user, :roles ["Read Everything"]})
+         (try 
+           (login new-user new-pass {:org organization})
+           (assert/is (not (gpg-key/new-gpgkey-link-exists?)))
+           (finally
+             (login))))))      
 
 user-settings
 default-org-tests)
