@@ -22,7 +22,6 @@
                       ::gpg-keys-link                    "gpg"
                       ::import-history-link              "import_history"
                       ::manage-organizations-link        "orgs"
-                      ::package-filters-link             "filters"
                       ::red-hat-repositories-link        "redhat_providers"
                       ::red-hat-subscriptions-link       "red_hat_subscriptions"
                       ::repositories-link                "providers"
@@ -62,7 +61,6 @@
      [::repositories-menu [] (browser mouseOver ::repositories-link)
       [:katello.providers/custom-page [] (browser clickAndWait ::custom-content-repositories-link)]
       [:katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
-      [:katello.package-filters/page [] (browser clickAndWait ::package-filters-link)]
       [:katello.gpg-keys/page [] (browser clickAndWait ::gpg-keys-link)]]
 
      [::sync-management-menu [] (browser mouseOver ::sync-management-link)

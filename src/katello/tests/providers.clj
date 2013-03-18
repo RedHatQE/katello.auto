@@ -15,7 +15,6 @@
                      [repositories    :as repo]
                      [providers       :as provider]
                      [gpg-keys        :as gpg-key]
-                     [package-filters :as filter]
                      [validation      :refer :all]
                      [conf            :as conf])
             [katello.tests.useful :refer [create-series create-recursive]]))
