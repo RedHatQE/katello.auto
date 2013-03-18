@@ -100,6 +100,9 @@
 (defn get-distro [runner]
   ((get-client-facts runner) "distribution.name"))
 
+(defn get-ip-address [runner]
+  ((get-client-facts runner) "net.interface.eth0.ipv4_address"))
+
 (defn get-pool-id "Fetch subscription pool-id"
   [mysys product-name]
   (let [pool-provides-product (fn [prod pool]

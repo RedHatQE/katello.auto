@@ -16,6 +16,7 @@
                      [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-password* config *environments*]])
             [katello.client.provision :as provision]
+            [clojure.string :refer [blank?]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
@@ -54,6 +55,18 @@
               :system-name (:name system)})
   (assert/is (= (:environment_id system)
                 (api/get-id-by-name :environment test-environment))))
+
+(defn validate-new-system-link
+  [env? env org-name system-name]
+  (browser clickAndWait ::system/sys-tab)
+  (if env?
+    (do
+      (env/create env {:org-name org-name})
+      (system/create system-name {:sockets "1"
+                                  :system-arch "x86_64"}))
+    (do
+      (assert (not (= "disabled" (subs (browser getAttribute ::system/new-class-attrib) 1 8))))
+      (assert (not (blank? (browser getAttribute ::system/new-title-attrib)))))))
 
 (defn verify-sys-count
   "Verify system-count after deleting one or more systems"
@@ -194,7 +207,16 @@
     
     [[false]
      [true]])
-
+  
+  (deftest "System Details: Add custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system-name "mysystem"]
+      (let [key-name "Hypervisor"
+            key-value "KVM"]
+        (system/create system-name {:sockets "1"
+                                    :system-arch "x86_64"})
+        (system/add-custom-info system-name key-name key-value))))
+  
   (deftest "Add system from UI"
     :data-driven true
     
@@ -211,6 +233,20 @@
     [[false]
      [true]])
   
+  (deftest "Add system when no env is available for selected org"
+    :data-driven true
+    (fn [env?]
+      (with-unique [env "dev"
+                    org-name "test-sys"
+                    system-name "mysystem"]
+        (org/create org-name)
+        (org/switch org-name)
+        (validate-new-system-link env? env org-name system-name)
+        (org/switch (@config :admin-org))))
+  
+  [[true]
+   [false]])
+  
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     ;;:blockers no-clients-defined
 
@@ -226,6 +262,8 @@
             details (system/get-details hostname)]
         (assert/is (= (client/get-distro ssh-conn)
                       (details "OS")))
+        (assert/is (= (client/get-ip-address ssh-conn)
+                            (system/get-ip-addr hostname)))
         (assert/is (every? (complement empty?) (vals details))))))
   
   (deftest "System-Details: Validate Activation-key link"
@@ -291,6 +329,28 @@
               (assert/is (= env (system/environment mysys))))
             (assert/is (not= (map :environment_id (api/get-by-name :system mysys))
                              (map :id (api/get-by-name :environment env-dev)))))))))
+  
+  
+  (deftest  "Registering a system from CLI and consuming contents from UI"
+    (let [target-env (first *environments*)
+          org-name "ACME_Corporation"
+          product-name (uniqueify "fake")]
+      (step-to-configure-server-for-pkg-install product-name target-env)
+      (provision/with-client "consume-content"
+        ssh-conn
+        (client/register ssh-conn
+                         {:username *session-user*
+                          :password *session-password*
+                          :org org-name
+                          :env target-env
+                          :force true})
+        (let [mysys (client/my-hostname ssh-conn)]
+          (system/subscribe {:system-name mysys
+                             :add-products product-name})
+          (client/sm-cmd ssh-conn :refresh)
+          (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
+                result (client/run-cmd ssh-conn cmd)]
+            (assert/is (->> result :exit-code (= 0))))))))
     
   
   (deftest "Install package after moving a system from one env to other"
