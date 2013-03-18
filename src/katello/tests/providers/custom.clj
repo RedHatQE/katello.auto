@@ -1,14 +1,14 @@
 (ns katello.tests.providers.custom
   (:require katello
-            (katello [api-tasks :as api]
+            (katello [ui :as ui]
                      [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all]
                      [organizations :as organization]
-                     [conf :refer [with-org]])
+                     [conf :as conf])
             [test.tree.script :refer [defgroup deftest]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [katello.tests.providers :refer [with-n-new-orgs with-two-providers]]))
+            [katello.tests.useful :refer [create-recursive]]))
 
 ;; Variables
 
@@ -26,33 +26,6 @@
                                                       :description "my description"
                                                       :org conf/*session-org*})))))
 
-(defn create-same-product-in-multiple-providers
-  [product-name providers]
-  (doseq [provider providers]
-    (provider/add-product {:provider-name provider
-                           :name product-name})))
-
-(defn create-same-product-name-in-multiple-orgs
-  [product-name orgs]
-  (doseq [org orgs]
-    (with-org org
-      (organization/switch)
-      (let [provider-name (uniqueify "prov")]
-        (api/create-provider provider-name)
-        (provider/add-product {:provider-name provider-name
-                               :name product-name})))))
-
-(defn with-two-providers
-  "Create two providers with unique names, and call f with a unique
-  entity name, and the provider names. Used for verifying (for
-  instance) that products with the same name can be created in 2
-  different providers."
-  [f]
-  (let [ent-name (uniqueify "samename")
-        providers (take 2 (unique-names "ns-provider"))]
-    (doseq [provider providers]
-      (api/create-provider provider))
-    (f ent-name providers)))
 ;; Tests
 
 (defgroup custom-product-tests
@@ -99,11 +72,25 @@
     (deftest "Create two products with the same name, in different orgs"
       :blockers (open-bz-bugs "784712" "802795")
 
-      (with-n-new-orgs 2 create-same-product-name-in-multiple-orgs))
+      (with-unique [provider (katello/newProvider {:name "prov"})
+                    product (katello/newProduct {:name "prod"
+                                                 :provider provider})]
+        (doseq [org (->> {:name "prov-org"}
+                         katello/newOrganization
+                         uniques
+                         (take 2))]
+          (create-recursive (update-in product [:provider :org] (constantly org))))))
 
 
     (deftest "Create two products with same name in same org different provider"
       :description "Creates products with the same name in different
                     providers, where the providers are in the same
                     org."
-      (with-two-providers create-same-product-in-multiple-providers))))
+      (with-unique [org (katello/newOrganization {:name "org"})
+                    product (katello/newProduct {:name "prod"})]
+        (doseq [prov (->> {:name "prov"
+                           :org org}
+                          katello/newProvider
+                          uniques
+                          (take 2))]
+          (create-recursive (assoc product :provider prov)))))))

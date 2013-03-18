@@ -17,7 +17,8 @@
                      [gpg-keys        :as gpg-key]
                      [package-filters :as filter]
                      [validation      :refer :all]
-                     [conf            :as conf])))
+                     [conf            :as conf])
+            [katello.tests.useful :refer [create-series create-recursive]]))
 
 ;; Constants
 
@@ -31,10 +32,6 @@
   [old-prov new-prov]
   (assert (and (rest/exists? new-prov)
                (not (rest/exists? old-prov)))))
-
-
-(defn unique-orgs "Create a lazy seq of orgs based on org" [org]
-  (lazy-seq (map rest/create (uniques org))))
 
 (defn create-same-provider-in-multiple-orgs
   "Create providers with the same name in multiple orgs."
@@ -155,9 +152,9 @@
       (with-unique [provider (katello/newProvider {:name "prov"})]
         (doseq [org (->> {:name "prov-org"}
                          katello/newOrganization
-                         unique-orgs
+                         uniques
                          (take 2))]
-          (ui/create (assoc provider :org org))))))
+          (create-recursive (assoc provider :org org))))))
 
   gpg-key-tests)
 
