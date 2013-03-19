@@ -16,6 +16,7 @@
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
+  select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
@@ -43,6 +44,9 @@
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
+   ::system-groups               (ui/menu-link "systems_system_groups")
+   ::add-group-form              "//form[@id='add_group_form']/button"
+   ::add-group                    "//input[@id='add_groups']"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -171,6 +175,20 @@
   (browser click ::add-sysgrp)
   (browser click ::confirm-to-yes)
   (notification/check-for-success))
+
+(defn add-sys-to-sysgrp
+  "Adding sys to sysgroup from right pane"
+  [system-name group-name]
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser click ::system-groups)
+  (browser click ::add-group-form)
+  (if (browser isElementPresent (select-sysgroup-checkbox group-name))
+    (do
+      (browser click (select-sysgroup-checkbox group-name))
+      (browser click ::add-group)
+      (notification/check-for-success))
+    (throw+ {:type ::selected-sys-group-is-unavailable 
+             :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
 (defn edit
   "Edits the properties of the given system. Optionally specify a new
@@ -327,3 +345,5 @@
   (nav/go-to ::custom-info-page {:system-name name})
   (browser click (remove-custom-info-button key-name))
   (notification/check-for-success))
+
+
