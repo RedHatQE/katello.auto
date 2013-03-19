@@ -64,12 +64,9 @@
 (defn- goto-org-perms [org]
   (browser click ::permissions)
   (sel/->browser (click (permission-org (:name org)))
-                 (sleep 1000))
-  
-  )
+                 (sleep 1000)))
 
-(defn- add-permissions
-  [permissions]
+(defn- add-permissions [permissions]
   (doseq [{:keys [name org description resource-type verbs tags]} permissions]
     (goto-org-perms org)
     (browser click ::add-permission)
@@ -88,8 +85,7 @@
   (notification/check-for-success {:match-pred
                                    (notification/request-type? :roles-create-permission)}))
 
-(defn- remove-permissions
-  [permissions]
+(defn- remove-permissions [permissions]
   (doseq [{:keys [name org]} permissions]
     (goto-org-perms org)
     (browser click (user-role-toggler name false))
@@ -136,4 +132,5 @@
 (extend katello.Role
   ui/CRUD {:create create
            :update* edit
-           :delete delete})
+           :delete delete}
+  nav/Destination {:go-to #(nav/go-to ::named-page {:role %})})
