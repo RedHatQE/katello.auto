@@ -17,4 +17,4 @@ bin/
 pom.xml
 .settings/
 autodoc/**
-
+.lein-repl-history
