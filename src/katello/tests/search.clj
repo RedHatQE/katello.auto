@@ -207,6 +207,6 @@
                                     (constantly true)
                                     [(first unique-gpg_key)])]
         (assert/is (valid-search-results (extract-left-pane-list))))))
-    [(fn [] [["gpg_key1"  {:contents "gpgkeys1234"}] {:criteria "content:\"gpgkeys1234\""}])
+    [[["gpg_key1"  {:contents "gpgkeys1234"}] {:criteria "content:\"gpgkeys1234\""}]
      (fn [] [["gpg_key2"  {:contents (slurp (@config :gpg-key))}] {:criteria "name:gpg_key2*"}])
      (fn [] [["gpg_key3"  {:contents (slurp (@config :gpg-key))}] {:criteria "name:gpg_key*"}])]))
