@@ -2,7 +2,8 @@
   (:require (katello [navigation :as nav]
                      [ui :as ui]
                      [ui-common :as common]
-                     [notifications :as notification])
+                     [notifications :as notification]
+                     [conf :refer [config]])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
   (:refer-clojure :exclude [remove]))
 
@@ -17,6 +18,9 @@
    ::new              "new"
    ::remove-link      (ui/remove-link "gpg_keys")})
 
+(sel/template-fns
+ {gpgkey-product-association  "//ul[contains (@class,'bordered-table')]/div[contains (.,'%s')]"})
+
 ;; Nav
 
 (nav/defpages (common/pages)
@@ -26,15 +30,15 @@
 
 ;;Tasks
 
-(defn create [name & [{:keys [filename contents]}]]
-  (assert (not (and filename contents))
+(defn create [name & [{:keys [url contents]}]]
+  (assert (not (and url contents))
           "Must specify one one of :filename or :contents.")
   (assert (string? name))
   (nav/go-to ::new-page)
-  (if filename
-    (sel/fill-ajax-form {::name-text name
-                         ::file-upload-text filename}
-                        ::upload-button)
+  (if url
+    (sel/->browser (setText ::name-text name)
+                   (attachFile ::file-upload-text url)
+                   (click ::upload-button))
     (sel/fill-ajax-form {::name-text name
                          ::content-text contents}
                         ::save))
@@ -49,9 +53,14 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 
-
 (defn new-gpgkey-link-exists?
   "Check whether new gpg-key link exists ?"
   []
   (nav/go-to ::page)
   (browser isElementPresent ::new))
+
+(defn gpg-keys-prd-association?
+  [gpg-key-name repo-name]
+  (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
+  (browser isElementPresent (gpgkey-product-association repo-name)))
+  

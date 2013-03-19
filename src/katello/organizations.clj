@@ -89,9 +89,10 @@
    org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
-  ([org-name & [{:keys [force? default-org]}]]
-  (nav/go-to ::nav/top-level) 
+  ([org-name & [{:keys [force? default-org login?]}]]
+     (if-not login? (nav/go-to ::nav/top-level)) 
      (when (or force?
+               login?
                default-org
                (not= (current) org-name))       
        (browser click ::ui/switcher)
@@ -100,8 +101,8 @@
                                     (catch SeleniumException _ :none))]
            (when (not= current-default default-org)
              (browser click (ui/default-star (if (= default-org :none)
-                                            current-default
-                                            default-org)))
+                                               current-default
+                                               default-org)))
              (notification/check-for-success))))
        (when org-name
          (browser clickAndWait (ui/switcher-link org-name))))))

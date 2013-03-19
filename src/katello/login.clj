@@ -11,7 +11,8 @@
 
 (ui/deflocators {::username-text     "username"
                  ::password-text     "password"
-                 ::log-in            "//input[@value='Log In' or @value='Login']"}
+                 ::log-in            "//input[@value='Log In' or @value='Login']"
+                 ::interstitial      "//div[@id='interstitial' and contains(@style,'z-index')]"}
   ui/locators)
 
 (defn logged-in?
@@ -47,18 +48,13 @@
      (sel/fill-ajax-form {::username-text username
                           ::password-text password}
                          ::log-in)
-     (let [retval (notification/check-for-success {:timeout-ms 20000})
-           direct-login? (some (fn [n] (or (= "Login Successful" n)
-                                          (re-find #"please contact administrator" n) 
-                                          (re-find #"logging into" n)))
-                               (mapcat :notices retval))]
-       ;; if user only has access to one org, he will bypass org select
-       (if direct-login? 
-         (browser waitForPageToLoad)
-         (do (Thread/sleep 3000)
-             (organization/switch (or org
-                                      (throw+ {:type ::login-org-required
-                                               :msg (format "User %s has no default org, cannot fully log in without specifying an org."
-                                                            username)}))
-                                  {:default-org default-org})))
-       retval)))
+     ;; if user only has access to one org, he will bypass org select
+     (if (browser isElementPresent ::interstitial) 
+       (do (Thread/sleep 3000)
+           (organization/switch (or org
+                                    (throw+ {:type ::login-org-required
+                                             :msg (format "User %s has no default org, cannot fully log in without specifying an org."
+                                                          username)}))
+                                {:default-org default-org
+                                 :login? true}))
+       (browser waitForPageToLoad))))

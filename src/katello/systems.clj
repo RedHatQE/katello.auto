@@ -17,15 +17,22 @@
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
   activation-key-link             (ui/link "%s")
+  env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
-  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
+  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  existing-key-value-field        "//div[@name='custom_info[%s]']"
+  remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/deflocators
   {::new                         "new"
+   ::new-class-attrib            "new@class"
+   ::new-title-attrib            "new@original-title"
    ::create                      "system_submit"
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
+   ::system-virtual-type         "system_type_virtualized_virtual"
+   ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
    ::sys-tab                     (ui/link "Systems")
@@ -33,6 +40,9 @@
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
+   ::total-sys-count             "total_items_count"
+   ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -61,6 +71,23 @@
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
    
+   ;;system-facts
+   ::facts                       (ui/link "Facts")
+   ::network-expander            "network"
+   ::cpu-expander                "cpu"
+   ::uname-expander              "uname"
+   ::virt-expander               "virt" 
+   ::net-hostname                "//tr[@id='network.hostname']/td[3]"  
+   ::cpu-socket	                 "//tr[@id='cpu.cpu_socket(s)']/td[3]" 
+   ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
+   ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
+   
+   ;;custom-info
+   ::custom-info                (ui/link "Custom Information")
+   ::key-name                   "new_custom_info_keyname"
+   ::key-value                  "new_custom_info_value"
+   ::create-custom-info         "create_custom_info_button"
+   
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
@@ -72,7 +99,9 @@
   [::page
    [::new-page [] (browser click ::new)]
    [::named-page [system-name] (nav/choose-left-pane system-name)
-    [::details-page [] (browser click ::details)]
+    [::details-page [] (browser click ::details)
+     [::facts-page [] (browser click ::facts)]
+     [::custom-info-page [] (browser click ::custom-info)]]
     [::subscriptions-page [] (browser click ::subscriptions)]
     [::content-menu [] (browser mouseOver ::content-link)
      [::content-software-page [] (browser click ::software-link)]
@@ -92,6 +121,22 @@
                        ::sockets-text sockets
                        ::arch-select (or system-arch "x86_64")}
                       ::create)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+
+(defn create-with-details
+  "Creates a system"
+  [name & [{:keys [sockets system-arch type-is-virtual? env]}]]
+  (nav/go-to ::new-page)
+  (when (not (nil? env))
+    (when (browser isElementPresent ::expand-env-widget)
+      (browser click ::expand-env-widget))
+    (browser click (env-select env)))
+  (when type-is-virtual?
+    (browser click ::system-virtual-type))
+  (sel/fill-ajax-form {::name-text name
+                       ::sockets-text sockets
+                       ::arch-select (or system-arch "x86_64")}
+                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
 (defn delete "Deletes the selected system."
@@ -157,7 +202,6 @@
           (throw+ {:type ::sysname-edited-anyway
                    :msg "System name changed even after clicking cancel button."}))))))
 
-
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
   (assert (not (blank? new-environment))) 
@@ -201,6 +245,11 @@
   (nav/go-to ::details-page {:system-name system-name})
   (browser getText ::environment))
 
+(defn get-ip-addr
+  [system-name]
+  (nav/go-to ::details-page {:system-name system-name})
+  (browser getText ::interface-addr))
+
 (defn get-details [system-name]
   (nav/go-to ::details-page {:system-name system-name})
   (let [details ["Name" "Description" "OS" "Release" "Release Version"
@@ -210,6 +259,20 @@
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
+
+(defn confirm-yes-no-to-delete
+  [system-name del?]
+  (nav/go-to ::named-page {:system-name system-name})
+  (browser click ::remove)
+  (if del?
+    (do
+      (browser click ::ui/confirmation-yes)
+      (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
+    (do
+      (browser click ::confirm-to-no)
+      (let [details (get-details system-name)]
+        (when-not (= system-name (details "Name"))
+          (throw+ {:type ::system-deleted-anyway :msg "system deleted even after clicking 'NO' on confirmation dialog"}))))))
 
 (defn add-package "Add a package or package group to a system."
   [system-name {:keys [package package-group]}]
@@ -240,3 +303,27 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
+
+(defn add-custom-info
+  "Adds a custom keyname/value pair for the given system."
+  [name key-name key-value]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser setText ::key-name  key-name)
+  (browser setText ::key-value  key-value)
+  (browser click ::create-custom-info)
+  (notification/check-for-success))
+
+(defn update-custom-info
+  "Updates the value for a system given the keyname."
+  [name key-name new-key-value]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser click (existing-key-value-field key-name))
+  (sel/fill-ajax-form {(existing-key-value-field key-name) new-key-value} ::save-button)
+  (notification/check-for-success))
+
+(defn remove-custom-info
+  "Removes custom information from a system matching a keyname"
+  [name key-name]
+  (nav/go-to ::custom-info-page {:system-name name})
+  (browser click (remove-custom-info-button key-name))
+  (notification/check-for-success))
