@@ -13,7 +13,10 @@
    ::repo-url-text     "repo[feed]" 
    ::save-repository   "//input[@value='Create']"
    ::remove-repository (ui/link "Remove Repository")
-   ::repo-gpg-select   "//select[@id='repo_gpg_key']"}
+   ::repo-gpg-select   "//select[@id='repo_gpg_key']"
+   ::repo-discovery    "//a[contains(@href, 'repo_discovery')]"
+   ::discover-url-text "discover_url"
+   ::discover-button   "//input[@type='submit']"}
   ui/locators)
 
 (sel/template-fns
