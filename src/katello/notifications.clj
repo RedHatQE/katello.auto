@@ -24,6 +24,7 @@
                 ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
                 ::name-must-not-contain-characters    #"Name cannot contain characters other than"
                 ::name-must-not-contain-html          #"Username cannot contain characters >, <, or /"
+                ::org-name-must-not-contain-html      #"Name cannot contain characters >, <, or /"
                 ::env-name-lib-is-builtin             #"Name : 'Library' is a built-in environment"
                 ::env-name-must-be-unique-within-org  #"Name of environment must be unique within one organization" 
                 ::env-label-lib-is-builtin            #"Label : 'Library' is a built-in environment"

@@ -13,6 +13,7 @@
 (def trailing-whitespace-strings [ "abc123 ", " ", "abc  1-2-3   "]) 
 (def javascript-strings          ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
 (def invalid-character-strings   [".", "#", "   ]", "xyz%123", "123 abc 5 % b", "+abc123"])
+(def invalid-org-name-strings   ["/", ">", "   <", "xyz/123", "123 abc 5 > b", "<abc123"])
 (def invalid-urls                ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
 (def i8n-chars                   [["صالح"] ["Гесер"] ["洪"] ["標準語"]])
     ;;if i8n strings are rendered backwards in emacs, run M-: (setq bidi-display-reordering nil) 
