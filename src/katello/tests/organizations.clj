@@ -66,8 +66,8 @@
 
 (def bad-org-names
   (concat
-   (for [inv-char-str validation/invalid-character-strings]
-     [inv-char-str ::notification/name-must-not-contain-characters])
+   (for [inv-char-str validation/invalid-org-name-strings]
+     [inv-char-str ::notification/org-name-must-not-contain-html])
    (for [trailing-ws-str validation/trailing-whitespace-strings]
      [trailing-ws-str ::notification/name-no-leading-trailing-whitespace])))
 
