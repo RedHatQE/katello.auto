@@ -87,6 +87,15 @@
       (expecting-error (common/errtype :katello.notifications/add-systems-greater-than-allowed)
                        (group/add-to group-name system-name)))))
 
+(defn step-add-sys-to-sysgroup-from-right-pane
+  "Creates a system, adds the system to existing system group from right pane"
+  [{:keys [group-name system-name] :as m}]
+  (with-unique [system-name "test-sys"]
+    (system/create system-name {:sockets "1"
+                                :system-arch "x86_64"})
+    (expecting-error [:type :katello.systems/selected-sys-group-is-unavailable]
+                     (system/add-sys-to-sysgrp system-name group-name))))
+
 (defn step-add-exiting-system-to-new-group
   "Create a system group and add existing system (which was earlier member of some other group)"
   [{:keys [new-group system-name] :as m}]
@@ -277,7 +286,8 @@
                     :group-name  "copygrp"})
                   step-add-new-system
                   step-add-sys-to-sysgroup-with-new-limit
-                  step-add-bulk-sys-to-sysgrp))
+                  step-add-bulk-sys-to-sysgrp
+                  step-add-sys-to-sysgroup-from-right-pane))
 
       (deftest "Register a system using AK & sys count should increase by 1"
         (with-unique [system-name "mysystem"
