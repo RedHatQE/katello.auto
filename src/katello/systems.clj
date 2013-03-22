@@ -291,7 +291,7 @@
 
 (defn get-details [system-name]
   (nav/go-to ::details-page {:system-name system-name})
-  (let [details ["Name" "Description" "OS" "Release" "Release Version"
+  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
                  "System Type" "Host"]]
