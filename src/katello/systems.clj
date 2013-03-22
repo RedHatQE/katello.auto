@@ -21,6 +21,8 @@
   env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
+  system-fact-group-expand        "//tr[@id='%s']/td/span"
   existing-key-value-field        "//div[@name='custom_info[%s]']"
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
@@ -298,6 +300,33 @@
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
+
+(defn get-facts [system-name]
+  (nav/go-to ::facts-page {:system-name system-name})
+  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
+               "distribution.id" "distribution.name" "distribution.version"
+               "memory.memtotal" "memory.swaptotal"
+               "virt.host_type" "virt.is_guest" "virt.uuid"
+               "uname.machine" "uname.nodename" "uname.release"
+               "uname.sysname" "uname.version" "system.entitlements_valid"
+               "network.hostname" "network.ipv4_address" "network.ipv6_address"
+               "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
+               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
+    (zipmap facts
+            (doall (for [fact facts]
+                     (browser getText (system-fact-textbox fact)))))))
+
+(defn expand-collapse-facts-group
+  [system-name]
+  "Expand/collapse group of selected system's facts"
+  (nav/go-to ::facts-page {:system-name system-name})
+  (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
+    (doseq [group groups] ;;To expand
+      (when (browser isElementPresent (system-fact-group-expand group))
+        (browser click (system-fact-group-expand group))))
+    (doseq [group groups] ;;To collapse
+      (browser click (system-fact-group-expand group)))))
+
 
 (defn confirm-yes-no-to-delete
   [system-name del?]

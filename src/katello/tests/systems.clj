@@ -303,6 +303,22 @@
                             (system/get-ip-addr hostname)))
         (assert/is (every? (complement empty?) (vals details))))))
   
+  (deftest "Review Facts of registered system"
+    ;;:blockers no-clients-defined
+    (provision/with-client "sys-facts"
+      ssh-conn
+      (let [target-env (first *environments*)]
+        (client/register ssh-conn
+                         {:username *session-user*
+                          :password *session-password*
+                          :org (@config :admin-org)
+                          :env target-env
+                          :force true})
+        (let [hostname (client/my-hostname ssh-conn)
+              facts (system/get-facts hostname)]
+          (system/expand-collapse-facts-group hostname)
+          (assert/is (every? (complement empty?) (vals facts)))))))
+  
   (deftest "System-Details: Validate Activation-key link"
     (with-unique [system-name "mysystem"
                   key-name "auto-key"]
