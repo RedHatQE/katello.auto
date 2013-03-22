@@ -12,6 +12,7 @@
   {::import-manifest     "new"
    ::upload              "upload_form_button"
    ::repository-url-text "provider[repository_url]"
+   ::new-distributor-disabled "//*[@id='new' and contains(@class,'disabled')]"
    ::choose-file         "provider_contents"
    ::fetch-history-info   "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
 
@@ -53,4 +54,9 @@
   []
   (nav/go-to ::import-history-page)
   (browser isElementPresent ::fetch-history-info))
-  
+
+(defn new-distributor-disabled?
+  "Returns true if the new distributor button is disabled"
+  []
+  (nav/go-to ::distributors-page)
+  (browser isElementPresent ::new-distributor-disabled))
