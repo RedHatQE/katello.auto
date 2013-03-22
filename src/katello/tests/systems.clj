@@ -147,6 +147,22 @@
      [(random-string (int \a) (int \z) 256) true :katello.notifications/system-name-255-char-limit]
      [(random-string (int \a) (int \z) 255) true]])
 
+  (deftest "System-details: Edit Description"
+    :data-driven true
+    
+    (fn [new-description save? & [expected-err]]
+      (let [system (uniqueify "newsystem")]
+        (system/create system {:sockets "1"
+                               :system-arch "x86_64"})
+        (if expected-err
+          (expecting-error (common/errtype expected-err)
+                           (system/edit-sys-description system new-description save?))
+          (system/edit-sys-description system new-description save?))))
+    
+    [["cancel description" false]
+     ["System Registration Info" true]
+     [(random-string (int \a) (int \z) 256) true :katello.notifications/sys-description-255-char-limit]
+     [(random-string (int \a) (int \z) 255) true]])
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
     :blockers (open-bz-bugs "738054")

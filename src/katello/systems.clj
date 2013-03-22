@@ -72,6 +72,7 @@
    ::environment                 "//div[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
+   ::edit-description            "system_description"
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
    
@@ -219,6 +220,26 @@
         (when-not (= name old-name)
           (throw+ {:type ::sysname-edited-anyway
                    :msg "System name changed even after clicking cancel button."}))))))
+
+(defn edit-sys-description
+  "Edit description of selected system"
+  [name new-description save?]
+  (nav/go-to ::details-page {:system-name name})
+  (let [original-description (browser getText ::edit-description)]
+    (browser click ::edit-description)
+    (browser setText ::description-text-edit new-description)
+    (if save?
+      (do
+        (browser click ::save-button)
+        (notification/check-for-success)
+        (when-not (= new-description (browser getText ::edit-description))
+          (throw+ {:type ::sys-description-not-edited
+                   :msg "Still getting old description of selected system."})))
+      (do
+        (browser click ::cancel-button)
+        (when-not (= original-description (browser getText ::edit-description))
+          (throw+ {:type ::sys-description-edited-anyway
+                   :msg "System description changed even after clicking cancel button."}))))))
 
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
