@@ -56,7 +56,9 @@
   (browser isElementPresent ::fetch-history-info))
 
 (defn new-distributor-disabled?
-  "Returns true if the new distributor button is disabled"
+  "Returns true if the new distributor button is disabled and the correct message is shown"
   []
   (nav/go-to ::distributors-page)
-  (browser isElementPresent ::new-distributor-disabled))
+  (-> (browser getAttributes ::new-distributor-disabled)
+      (get "original-title")
+      (= "At least one environment is required to create or register distributors in your current organization.")))
