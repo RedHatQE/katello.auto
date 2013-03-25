@@ -21,4 +21,4 @@
     (with-unique [org-name "auto-org"]
       (api/create-organization org-name)
       (org/switch org-name)
-      (assert/is (subs/new-distributor-disabled?)))))
+      (assert/is (subs/new-distributor-button-disabled?)))))

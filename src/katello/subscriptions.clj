@@ -55,7 +55,7 @@
   (nav/go-to ::import-history-page)
   (browser isElementPresent ::fetch-history-info))
 
-(defn new-distributor-disabled?
+(defn new-distributor-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
   []
   (nav/go-to ::distributors-page)
