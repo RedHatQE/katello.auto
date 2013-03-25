@@ -49,3 +49,5 @@
 (defrecord Permission [name role org resource-type verbs])
 
 (defrecord ActivationKey [id name env description])
+
+(defrecord SystemGroup [id name systems org])

@@ -1,11 +1,14 @@
 (ns katello.system-groups
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
+            [clojure.data :as data]
             [test.assert :as assert]
+            [katello :as kt]
             (katello [navigation :as nav]
                      [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
+                     [tasks :refer [when-some-let]]
                      [ui-common :as common]))
   (:refer-clojure :exclude [remove]))
 
@@ -39,7 +42,7 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
+   [::named-page [system-group] (nav/choose-left-pane system-group)
     [::systems-page [] (browser click ::systems-link)]
     [::details-page [] (browser click ::details-link)]]])
 
@@ -48,7 +51,7 @@
 
 (defn create
   "Creates a system group"
-  [name & [{:keys [description]}]]
+  [{:keys [name description]}]
   (nav/go-to ::new-page)
   (sel/fill-ajax-form
    {::name-text name
@@ -59,7 +62,7 @@
 (defn add-to
   "Adds a system to a system group"
   [group system]
-  (nav/go-to ::named-page {:system-group-name group})
+  (nav/go-to ::named-page {:system-group group})
   (comment (browser setText ::hostname-toadd system)
            (browser typeKeys ::hostname-toadd " ")
            (Thread/sleep 5000)
@@ -77,7 +80,7 @@
 (defn remove-from
   "Remove a system from a system group"
   [group system]
-  (nav/go-to ::named-page {:system-group-name group})
+  (nav/go-to ::named-page {:system-group group})
   (browser click (system/checkbox system))
   (browser click ::remove-system))
 
@@ -85,7 +88,7 @@
   "Clones a system group, given the name of the original system group
    to clone, and the new name and description."
   [orig-name new-name & [{:keys [description]}]]
-  (nav/go-to ::named-page {:system-group-name orig-name})
+  (nav/go-to ::named-page {:system-group orig-name})
   (browser click ::copy)
   (sel/fill-ajax-form {::copy-name-text new-name
                        ::copy-description-text description}
@@ -96,7 +99,7 @@
   "Click 'cancel' on copy widget and widget should close properly 
    OR closing system-group widget should also close copy widget"
   [orig-name {:keys [close-widget?]}]
-  (nav/go-to ::named-page {:system-group-name orig-name})
+  (nav/go-to ::named-page {:system-group orig-name})
   (browser click ::copy)
   (browser click (if close-widget?
                    ::close
@@ -105,8 +108,8 @@
 (defn remove
   "Removes a system group. Optionally, remove all the systems in the
    group as well."
-  [group & [{:keys [also-remove-systems?]}]]
-  (nav/go-to ::named-page {:system-group-name group})
+  [[{:keys [also-remove-systems?] :as group}]]
+  (nav/go-to group)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (browser click (if also-remove-systems?
@@ -119,7 +122,7 @@
 
 (defn edit "Change the value of limit field in system group"
   [sg-name {:keys [new-limit new-sg-name description]}]
-  (nav/go-to ::details-page {:system-group-name sg-name})
+  (nav/go-to ::details-page {:system-group sg-name})
   (let [needed-flipping (and new-limit
                              (not= (= new-limit :unlimited)
                                    (browser isChecked ::unlimited-checkbox)))]
@@ -136,5 +139,17 @@
 (defn system-count
   "Get number of systems in system group according to the UI"
   [sg-name]
-  (nav/go-to ::details-page {:system-group-name sg-name})
+  (nav/go-to ::details-page {:system-group sg-name})
   (Integer/parseInt (browser getText ::total)))
+
+(defn update [sg updated]
+  (nav/go-to sg)
+  (let [[add remove] (data/diff sg updated)]
+    (when-some-let [])))
+
+(extend katello.SystemGroup
+  ui/CRUD {:create create
+           :delete remove
+           :update* update}
+  nav/Destination {:go-to (fn [sg] ::named-page {:system-group sg
+                                                 :org (:org sg)})})
