@@ -4,6 +4,7 @@
             katello
             (katello [navigation :as nav]
                      [notifications :as notification] 
+                     [tasks :as tasks]
                      [ui :as ui]
                      [rest :as rest]
                      [ui-common :as common])))
@@ -26,7 +27,8 @@
    ::save-permission                 "save_permission_button"
    ::remove                          "remove_role"
    ::add-permission                  "add_permission"
-   ::all-types                       "all_types"}
+   ::all-types                       "all_types"
+   ::slide-link-home                 "//span[@id='roles']"}
   ui/locators)
 
 (sel/template-fns
@@ -67,6 +69,7 @@
                  (sleep 1000)))
 
 (defn- add-permissions [permissions]
+  (browser click ::slide-link-home)
   (doseq [{:keys [name org description resource-type verbs tags]} permissions]
     (goto-org-perms org)
     (browser click ::add-permission)
@@ -81,11 +84,12 @@
             (browser addSelection ::permission-tag-select tag))))
     (sel/fill-ajax-form {::permission-name-text name
                          ::permission-description-text description}
-                        ::save-permission))
-  (notification/check-for-success {:match-pred
-                                   (notification/request-type? :roles-create-permission)}))
+                        ::save-permission)
+    (notification/check-for-success {:match-pred
+                                     (notification/request-type? :roles-create-permission)})))
 
 (defn- remove-permissions [permissions]
+  (browser click ::slide-link-home)
   (doseq [{:keys [name org]} permissions]
     (goto-org-perms org)
     (browser click (user-role-toggler name false))
@@ -113,9 +117,9 @@
     (when (or users-to-add users-to-remove)
       (browser click ::users)
       (doseq [user users-to-add]
-        (common/toggle user-role-toggler user true))
+        (common/toggle user-role-toggler (:name user) true))
       (doseq [user users-to-remove]
-        (common/toggle user-role-toggler user false)))
+        (common/toggle user-role-toggler (:name user) false)))
 
     (add-permissions (:permissions to-add))
     (remove-permissions (:permissions to-remove))))
@@ -133,4 +137,5 @@
   ui/CRUD {:create create
            :update* edit
            :delete delete}
+  tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to #(nav/go-to ::named-page {:role %})})

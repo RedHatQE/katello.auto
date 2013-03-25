@@ -4,15 +4,12 @@
             (katello [ui :as ui]
                      [rest :as rest]
                      [ui-common :as common]
-                     [login :refer [login  logged-in?]]
+                     [login :refer [login logged-in?]]
                      [navigation :as nav]
-                     [validation :as v]
                      [conf :as conf]
-                     [tasks :refer :all]
-                     [system-templates :as template]
-                     [login :as login]
+                     [tasks :refer [with-unique uniqueify expecting-error random-string]]
                      [systems :as system])
-            [test.tree.script :refer :all]
+            [test.tree.script :refer [deftest defgroup]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]])
@@ -29,11 +26,12 @@
                       (try (f)
                            (catch Exception e e))))))
 
-(defn- navigate-fn [page]
-  (fn [] (nav/go-to page)))
+(defn- navigate-fn [page & [org]]
+  (fn [] (nav/go-to page {:org (or org conf/*session-org*)})))
 
-(defn- navigate-all [& pages]
-  (map navigate-fn pages))
+(defn- navigate-all [pages & [org]]
+  (for [page pages]
+    (navigate-fn page org)))
 
 
 (defn verify-role-access
@@ -69,7 +67,7 @@
     (when setup (setup))
     (ui/create role)
     (ui/update role assoc :permissions (map kt/newPermission permissions))
-    (apply verify-role-access [:rolename role :allowed-actions allowed-actions :disallowed-actions disallowed-actions])))
+    (apply verify-role-access [:role role :allowed-actions allowed-actions :disallowed-actions disallowed-actions])))
 
 (def create-an-env
   (fn [] (-> {:name "blah" :org conf/*session-org*} kt/newEnvironment uniqueify ui/create)))
@@ -77,36 +75,43 @@
 (def create-an-org
   (fn [] (-> {:name "org"} kt/newOrganization uniqueify ui/create)))
 
-(def create-an-ak
-  (fn [] (ak/create {:name (uniqueify "blah")
+(def create-an-ak ;;FIXME
+  (fn [] (ui/create {:name (uniqueify "blah")
                      :environment (first conf/*environments*)})))
 
-(def create-a-st
-  (fn [] (template/create {:name (uniqueify "blah")})))
+(def create-a-st ;;FIXME
+  (fn [] (ui/create {:name (uniqueify "blah")})))
 
 (def create-a-user
   (fn [] (-> {:name "blah" :password "password" :email "me@me.com"} kt/newUser uniqueify ui/create)))
 
 (def global (kt/newOrganization {:name "Global Permissions"}))
 
+(defn- delete-system-data [sysverb]
+  (fn [] (with-unique [system (kt/newSystem {:sockets "1", :system-arch "x86_64", :facts (system/random-facts)})]
+           [:permissions [[{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]]
+            :setup (fn [] (rest/create system))
+            :allowed-actions [(fn [] (ui/delete system))]])))
+
 (def access-test-data
   (let [baseuser (kt/newUser {:name "user" :password "password" :email "me@me.com"})
         baseorg (kt/newOrganization {:name "org"})]
     [(fn [] [:permissions [{:org global, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
-             :allowed-actions [(nav/go-to conf/*session-org*)]
-             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
-                                                     :katello.providers/custom-page :katello.system-templates/page
-                                                     :katello.changesets/page )
-                                       (fn [] (organization/create (uniqueify "cantdothis")))
+             :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
+             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                      :katello.providers/custom-page :katello.system-templates/page
+                                                      :katello.changesets/page])
+                                       (fn [] (ui/create (uniqueify baseorg)))
                                        create-an-env)])
 
      (fn [] (with-unique [org (kt/newOrganization {:name "org-create-perm"})
                           prov (kt/newProvider {:name "myprov" :org org})]
               [:permissions [{:org global, :resource-type "Organizations", :verbs ["Administer Organization"], :name "orgcreate"}]
                :allowed-actions [(fn [] (ui/create org)) (fn [] (ui/delete org)) create-an-env]
-               :disallowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
-                                                       :katello.providers/custom-page :katello.system-templates/page
-                                                       :katello.changesets/page )
+               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                        :katello.providers/custom-page :katello.system-templates/page
+                                                        :katello.changesets/page]
+                                                       org )
                                          (fn [] (ui/create prov))
                                          (fn [] (rest/create prov)))]))
 
@@ -117,33 +122,33 @@
                                             :facts (system/random-facts)}
                                            kt/newSystem uniqueify rest/create))
                                 (navigate-fn :katello.systems/page)]
-              :disallowed-actions (conj (navigate-all :katello.providers/custom-page :katello.organizations/page)
+              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page :katello.organizations/page])
                                         create-an-org)])
       assoc :blockers (open-bz-bugs "757775"))
 
      (vary-meta
       (fn [] [:permissions [{:org global, :resource-type "Activation Keys", :verbs ["Read Activation Keys"], :name "akaccess"}]
               :allowed-actions [(navigate-fn :katello.activation-keys/page)]
-              :disallowed-actions (conj (navigate-all :katello.organizations/page
-                                                      :katello.systems/page :katello.systems/by-environments-page
-                                                      :katello.repositories/redhat-page)
+              :disallowed-actions (conj (navigate-all [:katello.organizations/page
+                                                       :katello.systems/page :katello.systems/by-environments-page
+                                                       :katello.repositories/redhat-page])
                                         create-an-ak)])
       assoc :blockers (open-bz-bugs "757817"))
 
      (vary-meta
       (fn [] [:permissions [{:org global, :resource-type "Activation Keys", :verbs ["Administer Activation Keys"], :name "akmang"}]
               :allowed-actions [create-an-ak]
-              :disallowed-actions (conj (navigate-all :katello.organizations/page
-                                                      :katello.systems/page :katello.systems/by-environments-page
-                                                      :katello.repositories/redhat-page)
+              :disallowed-actions (conj (navigate-all [:katello.organizations/page
+                                                       :katello.systems/page :katello.systems/by-environments-page
+                                                       :katello.repositories/redhat-page])
                                         create-an-org)])
       assoc :blockers (open-bz-bugs "757817"))
 
      (fn [] [:permissions [{:org global, :resource-type "System Templates", :verbs ["Read System Templates"], :name "stread"}]
              :allowed-actions [(navigate-fn :katello.system-templates/page)]
-             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.organizations/page
-                                                     :katello.providers/custom-page :katello.sync-management/status-page
-                                                     :katello.changesets/page)
+             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
+                                                      :katello.providers/custom-page :katello.sync-management/status-page
+                                                      :katello.changesets/page])
                                        create-a-st
                                        create-an-org
                                        create-an-env)])
@@ -153,16 +158,16 @@
                             :verbs ["Administer System Templates"]
                             :name "stmang"}]
              :allowed-actions [create-a-st]
-             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.organizations/page
-                                                     :katello.providers/custom-page :katello.sync-management/status-page
-                                                     :katello.changesets/page)
+             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
+                                                      :katello.providers/custom-page :katello.sync-management/status-page
+                                                      :katello.changesets/page])
                                        create-an-org
                                        create-an-env)])
 
      (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
              :allowed-actions [(navigate-fn :katello.users/page)]
-             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.organizations/page :katello.roles/page
-                                                     :katello.changesets/page)
+             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                      :katello.changesets/page])
                                        create-an-org
                                        create-an-env
                                        create-a-user)])
@@ -171,43 +176,51 @@
               [:setup (fn [] (rest/create user))
                :permissions [{:org global, :resource-type "Users", :verbs ["Modify Users"], :name "usermod"}]
                :allowed-actions [(fn [] (ui/update user assoc :email "blah@me.com"))]
-               :disallowed-actions (conj (navigate-all :katello.systems/page :katello.organizations/page :katello.roles/page
-                                                       :katello.changesets/page)
+               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                        :katello.changesets/page])
                                          (fn [] (with-unique [cannot-delete baseuser]
                                                   (ui/create cannot-delete)
                                                   (ui/delete cannot-delete))))]))
 
      (fn [] (with-unique [user baseuser]
               [:permissions [{:org global, :resource-type "Users", :verbs ["Delete Users"], :name "userdel"}]
-               :setup (fn [] (api/create-user user {:password "password" :email "me@me.com"}))
-               :allowed-actions [(fn [] (user/delete user))]
-               :disallowed-actions (conj (navigate-all :katello.systems/page :katello.organizations/page :katello.roles/page
-                                                       :katello.changesets/page)
+               :setup (fn [] (rest/create user))
+               :allowed-actions [(fn [] (ui/delete user))]
+               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                        :katello.changesets/page])
                                          create-a-user)]))
 
      (fn [] (with-unique [org baseorg]
               [:permissions [{:org conf/*session-org*, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
-               :setup (fn [] (api/create-organization org))
-               :allowed-actions [(nav/go-to conf/*session-org*)]
-               :disallowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
-                                                       :katello.providers/custom-page :katello.system-templates/page
-                                                       :katello.changesets/page )
-                                         (fn [] (organization/switch org))
+               :setup (fn [] (rest/create org))
+               :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
+               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                        :katello.providers/custom-page :katello.system-templates/page
+                                                        :katello.changesets/page] )
                                          (fn [] (nav/go-to org)))]))
 
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
                :setup (fn [] (rest/create org))
-               :allowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
-                                                    :katello.providers/custom-page :katello.system-templates/page
-                                                    :katello.changesets/page )
-                                      (nav/go-to org)
+               :allowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                     :katello.providers/custom-page :katello.system-templates/page
+                                                     :katello.changesets/page]
+                                                    org)
+                                      (fn [] (nav/go-to org))
                                       (fn [] (ui/create env)))
-               :disallowed-actions [(nav/go-to conf/*session-org*)
-                                    (fn [] (organization/switch conf/*session-org*))]]))
+               :disallowed-actions [(fn [] (nav/go-to conf/*session-org*))]]))
 
-     ]))
+     (fn [] (let [url-fn #(str "/katello/" %)
+                  nav-fn (comp partial partial nav/returns-403? url-fn)]
+              [:permissions []
+               :allowed-actions (map nav-fn ["users"])
+               :disallowed-actions (map nav-fn ["subscriptions" "systems" "systems/environments" "system_groups"
+                                                "roles" "sync_management/index" "content_search" "system_templates"
+                                                "organizations" "providers"])]))
+
+     (delete-system-data "Read Systems")
+     (delete-system-data "Delete Systems")]))
 
 ;; Tests
 (defn- create-role* [f name]
@@ -244,39 +257,9 @@
      ])
 
   (deftest "Remove a role"
-    (with-unique [role (kt/newRole {:name "deleteme-role"})]
-      (ui/create role)
-      (ui/delete role)))
-
-  (deftest "Remove systems with appropriate permissions"
-    :data-driven true
-    :description "Allow user to remove system only when user has approriate permissions to remove system"
-
-    (fn [sysverb]
-      (with-unique [user-name "role-user"
-                    role-name "myrole"
-                    system-name "sys_perm"]
-        (let [password "abcd1234"]
-          (user/create user-name {:password password :email "me@my.org"})
-          (role/create role-name)
-          (role/edit role-name
-                     {:add-permissions [{:permissions [{:org global
-                                                        :name "blah2"
-                                                        :resource-type "Organizations"
-                                                        :verbs [sysverb]}]}]
-                      :users [user-name]})
-          (system/create system-name {:sockets "1"
-                                      :system-arch "x86_64"})
-          (login/logout)
-          (login/login user-name password {:org "ACME_Corporation"})
-          (try
-            (system/delete system-name)
-            (catch SeleniumException e)
-            (finally
-              (login))))))
-
-    [["Read Systems"]
-     ["Delete Systems"]])
+    (doto (uniqueify (kt/newRole {:name "deleteme-role"}))
+      (ui/create)
+      (ui/delete)))
 
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
@@ -289,42 +272,10 @@
                                 :verbs ["Read Organization"]}]
                  :users [user]))
 
-    (deftest "Verify user with no role has no access"
-      :blockers (fn [t] (if (api/is-headpin?)
-                          ((open-bz-bugs "868179") t)
-                          []))
-
-      (let [url-fn #(str "/katello/" %)
-            forbidden-url-list (map url-fn
-                                    ["subscriptions"
-                                     "systems"
-                                     "systems/environments"
-                                     "system_groups"
-                                     "roles"
-                                     "sync_management/index"
-                                     "content_search"
-                                     "system_templates"
-                                     "organizations"
-                                     "providers"])
-            allowed-url-list (map url-fn ["users"])]
-        (let [username (uniqueify "user-perm")
-              pw "password"]
-          (api/create-user username {:password pw :email (str username "@my.org")})
-          (conf/with-creds username pw
-            (try (login) (catch Exception e)) ;ERROR, notification too soon, test things we havent logged in
-            (assert/is logged-in?) ; so I suppress errors and check manually
-            (assert/is
-             (and
-              (every? nav/returns-403? forbidden-url-list)
-              (not-any? nav/returns-403? allowed-url-list)))))
-        (login)))
-
-
-
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true
-      :blockers (fn [t] (if (api/is-headpin?)
-                          ((open-bz-bugs "868179") t)
+      :blockers (fn [_] (if (rest/is-headpin?)
+                          ((open-bz-bugs "868179") _)
                           []))
 
       verify-access

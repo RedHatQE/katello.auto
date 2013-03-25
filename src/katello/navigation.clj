@@ -46,7 +46,7 @@
      (let [loc (templ (:name entity))]
        (try (browser click loc)
             (catch com.thoughtworks.selenium.SeleniumException se
-              (do (search-here (format "\"%s\"" entity))
+              (do (search-here (format "\"%s\"" (:name entity)))
                   (browser click loc)))))))
 
 
