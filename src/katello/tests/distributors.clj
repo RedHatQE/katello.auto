@@ -2,18 +2,10 @@
   (:refer-clojure :exclude [fn])
   (:require (katello [api-tasks :as api]
                      [organizations :as org]
-                     [client :as client]
-                     [ui-common :as common]
-                     [tasks :refer :all]
-                     [subscriptions :as subs]
-                     [validation :as val]
-                     [fake-content  :as fake])
-            [katello.tests.organizations :as org-tests]
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
+                     [subscriptions :as subs])
+            (test.tree [script :refer [defgroup deftest]])
             [serializable.fn :refer [fn]]
-            [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [test.assert :as assert]))
 
 (defgroup distributor-tests
 
