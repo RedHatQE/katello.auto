@@ -1,9 +1,12 @@
 (ns katello.activation-keys
-  (:require (katello [navigation :as nav]
-                     [notifications :as notification]
-                     [ui-common :as common]
-                     [ui :as ui])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
+  (:require [katello :as kt]
+            (katello [navigation :as nav]
+                        [notifications :as notification]
+                        [ui-common :as common]
+                        [ui :as ui]
+                        [tasks :refer [when-some-let]])
+            [clojure.data :as data]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
 ;; Locators
 
@@ -11,6 +14,7 @@
                  ::name-text               "activation_key[name]"
                  ::description-text        "activation_key[description]"
                  ::template-select         "activation_key[system_template_id]"
+                 ::content-view-select     "activation_key[content_view_id]"
                  ::save                    "save_key"
                  ::system-group-select     (ui/menu-link "activation_keys_menu_system_groups")
                  ::add-sys-group-form      "//form[@id='add_group_form']/button"
@@ -31,7 +35,7 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::named-page [activation-key-name] (nav/choose-left-pane activation-key-name)
+   [::named-page [activation-key] (nav/choose-left-pane activation-key)
     [::system-group-menu [] (browser mouseOver ::system-groups)
      [::system-group-page [] (browser click ::system-group-select)]]]
    [::new-page [] (browser click ::new)]])
@@ -41,43 +45,76 @@
 (defn create
   "Creates an activation key with the given properties. Description
   and system-template are optional."
-  [{:keys [name description environment system-template] :as m}]
-  (nav/go-to ::new-page)
-  (browser click (ui/environment-link environment))
+  [{:keys [name description env system-template]}]
+  (nav/go-to ::new-page {:org (:org env)})
+  (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       ::template-select system-template}
+                       ::template-select (:name system-template)}
                       ::save)
   (notification/check-for-success))
 
 (defn delete
   "Deletes the given activation key."
-  [name]
-  (nav/go-to ::named-page {:activation-key-name name})
+  [ak]
+  (nav/go-to ak)
   (browser click ::remove-link)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 
-(defn add-subscriptions
+(defn- add-subscriptions
   "Add subscriptions to activation key."
-  [name subscriptions]
-  (nav/go-to ::named-page {:activation-key-name name})
+  [subscriptions]
   (browser click ::available-subscriptions)
   (doseq [subscription subscriptions]
     (browser click (subscription-checkbox subscription)))
   (browser click ::add-subscriptions)
   (notification/check-for-success))
 
-(defn associate-system-group
+(defn- remove-subscriptions [subscriptions]
+  ;;TODO
+  )
+(defn- associate-system-group
   "Asscociate activation key to selected sytem group"
-  [name group-name]
-  (nav/go-to ::system-group-page {:activation-key-name name})
-  (browser click ::add-sys-group-form)
-  (browser click (sysgroup-checkbox group-name))
-  (browser click ::add-sys-group))
+  [sg]
+  (->browser (click ::system-group-page)
+             (click ::add-sys-group-form)
+             (click (sysgroup-checkbox (:name sg)))
+             (click ::add-sys-group)))
 
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [name]
-  (nav/go-to ::named-page {:activation-key-name name})
+  (nav/go-to ::named-page {:activation-key name})
   (browser click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))
+
+(defn update [ak updated]
+  (let [[remove add] (data/diff ak updated)]
+    (when (some not-empty [remove add])
+      (nav/go-to ak)
+      (when-some-let [name (:name add)
+                      description (:description add)] 
+                     (common/in-place-edit {::name-text name
+                                            ::description-text description}))
+      (when-some-let [st (:system-template add)
+                      cv (:content-view add)
+                      env (:env add)]
+                     
+                     (sel/fill-ajax-form {::template-select st
+                                          ::content-view-select cv
+                                          nav/select-environment-widget env}
+                                         ::save))
+      (when-let [sg (:system-group add)]
+        (associate-system-group sg))
+      (when-let [subs (:subscriptions add)]
+        (add-subscriptions subs))
+      (when-let [subs (:subscriptions remove)]
+        (remove-subscriptions subs)))))
+
+(extend katello.ActivationKey
+  ui/CRUD {:create create
+           :delete delete
+           :update* update}
+  
+  nav/Destination {:go-to #(nav/go-to ::named-page {:activation-key %1
+                                                    :org (-> %1 :env :org)})})

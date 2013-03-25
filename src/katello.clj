@@ -47,3 +47,5 @@
 (defrecord Role [id name users permissions])
 
 (defrecord Permission [name role org resource-type verbs])
+
+(defrecord ActivationKey [id name env description])

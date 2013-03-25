@@ -132,3 +132,10 @@
        (map char)
        (take length)
        (apply str))))
+
+(defmacro when-some-let
+  "When any of the bindings evaluate to logical true, evaluate body."
+  [bindings & body]
+  `(let ~bindings
+     (when (or ~@(keys (apply hash-map bindings)))
+       ~@body)))
