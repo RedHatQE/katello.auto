@@ -1,7 +1,7 @@
 (ns katello.login
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
-            (katello [conf :refer [*session-user* *session-password* *session-org*]]
+            (katello [conf :refer [*session-user* *session-org*]]
                      [ui :as ui] 
                      [ui-common :as common]
                      [organizations :as organization]
@@ -33,15 +33,15 @@
     (browser clickAndWait ::ui/log-out)))
 
 (defn login
-  "Logs in a user to the UI with the given user and password. If
-   none are given, the current value of katello.conf/*session-user*
-   *session-password* and *session-org* are used. If any user is
-   currently logged in, he will be logged out first. If the user
-   doesn't have a default org selected, the value of optional org
-   provided will be selected, and optionally also select a future
-   default-org. The org and default-org do not have to be the same. If
-   the user does have a default already, the org and/or default-org
-   will be set after logging in on the dashboard page."
+  "Logs in a user to the UI with the given user and password. If none
+   are given, the current value of katello.conf/*session-user* and
+   *session-org* are used. If any user is currently logged in, he will
+   be logged out first. If the user doesn't have a default org
+   selected, the value of optional org provided will be selected, and
+   optionally also select a future default-org. The org and
+   default-org do not have to be the same. If the user does have a
+   default already, the org and/or default-org will be set after
+   logging in on the dashboard page."
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))

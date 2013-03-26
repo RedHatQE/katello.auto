@@ -137,5 +137,7 @@
   "When any of the bindings evaluate to logical true, evaluate body."
   [bindings & body]
   `(let ~bindings
-     (when (or ~@(keys (apply hash-map bindings)))
+     (when (or ~@(filter symbol?
+                         (tree-seq coll? identity
+                                   (keys (apply hash-map bindings)))))
        ~@body)))

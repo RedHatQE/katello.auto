@@ -5,6 +5,7 @@
             [slingshot.slingshot :refer [throw+]]
             [test.assert :as assert]
             (katello [navigation :as nav]
+                     environments
                      [notifications :as notification]
                      [ui :as ui]
                      [ui-common :as common]

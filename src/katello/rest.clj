@@ -130,7 +130,7 @@
                :entity e})))
 
 (defn query-by-name [url-fn e]
-  (partial query-by :name :name))
+  (query-by :name :name url-fn e))
 
 (defn read-impl [read-url-fn ent]
   (merge ent (if (id ent)

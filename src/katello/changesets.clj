@@ -26,6 +26,9 @@
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
+(defn check-all [template coll]
+  (doseq [item coll]
+    (browser check (template item))))
 ;; Nav
 
 (ui/deflocators

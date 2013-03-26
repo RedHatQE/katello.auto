@@ -6,7 +6,7 @@
             [clojure.set :refer [index]]
             katello
             (katello [rest :as rest] 
-                     [conf :refer [config *session-user* *session-password* *session-org* ]] 
+                     [conf :refer [config *session-user* *session-org* ]] 
                      [tasks :refer [uniqueify chain-envs]])))
 
 (def ^:dynamic *env-id* nil)
