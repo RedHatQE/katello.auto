@@ -41,8 +41,8 @@
 
 (extend java.lang.String
   Uniqueable
-  {:uniques (fn [s] (map (partial format "%s-%s" s)
-                        (map date-string (timestamps))))})
+  {:uniques (fn [s] (map (comp date-string (partial format "%s-%s" s))
+                         (timestamps)))})
 
 (extend nil
   Uniqueable {:uniques (constantly (repeat nil))})
@@ -66,12 +66,16 @@
 (defn uniqueify [o]
   (first (uniques o)))
 
+(defn stamp-entity
+  "stamps entity name and label with timestamp s"
+  [ent s]
+  (let [stamped-id (format "%s-%s" (:name ent)
+                           (date-string s))]
+    (assoc ent :name stamped-id, :label stamped-id)))
+
 (def entity-uniqueable-impl
-  {:uniques (fn [ent] (for [s (timestamps)]
-                       (let [stamped-id (format "%s-%s" (:name ent)
-                                                (date-string s))]
-                         (assoc ent :name stamped-id
-                                :label stamped-id))))})
+  {:uniques #(for [s (timestamps)]
+               (stamp-entity % s))})
 
 
 (def ^{:doc "Returns one unique string using s as the format string.
@@ -101,11 +105,10 @@
     (.appendTail matcher buffer)
     (.toString buffer)))
 
-(defn chain-envs
-  "Given a list of environments, return successive pairs (eg:
-   envs ['a' 'b' 'c'] -> ('a' 'b'), ('b' 'c')"
-  [envs]
-  (partition 2 1 envs))
+(def ^{:doc "Given a list of things (eg, environments), return
+             successive pairs (eg: envs ['a' 'b' 'c'] -> ('a'
+             'b'), ('b' 'c')"} chain
+  (partial partition 2 1))
 
 (defn do-steps
   "Call all fs in order, with single argument m"

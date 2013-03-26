@@ -8,7 +8,7 @@
                      [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
-                     [tasks :refer [when-some-let]]
+                     [tasks :refer [when-some-let] :as tasks]
                      [ui-common :as common]))
   (:refer-clojure :exclude [remove]))
 
@@ -96,8 +96,8 @@
 (defn cancel-close-widget
   "Click 'cancel' on copy widget and widget should close properly 
    OR closing system-group widget should also close copy widget"
-  [orig-name {:keys [close-widget?]}]
-  (nav/go-to ::named-page {:system-group orig-name})
+  [orig {:keys [close-widget?]}]
+  (nav/go-to orig)
   (browser click ::copy)
   (browser click (if close-widget?
                    ::close
@@ -155,6 +155,7 @@
   ui/CRUD {:create create
            :delete remove
            :update* update}
-  
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [sg] (nav/go-to ::named-page {:system-group sg
                                                             :org (-> sg :env :org)}))})

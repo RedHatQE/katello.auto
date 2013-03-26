@@ -270,7 +270,7 @@
    and returns the changeset. If the timeout is hit before the
    promotion completes, throws an exception."
   [changeset]
-  (let [cs-id (rest/http-get-id changeset)]
+  (let [cs-id (rest/get-id changeset)]
     (locking #'conf/promotion-deletion-lock
       (rest/http-post (rest/api-url "api/changesets/" cs-id "/promote"))
       (loop-with-timeout (* 20 60 1000) [cs {}]

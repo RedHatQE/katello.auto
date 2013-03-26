@@ -7,7 +7,7 @@
             katello
             (katello [rest :as rest] 
                      [conf :refer [config *session-user* *session-org* ]] 
-                     [tasks :refer [uniqueify chain-envs]])))
+                     [tasks :refer [uniqueify chain]])))
 
 (def ^:dynamic *env-id* nil)
 (def ^:dynamic *product-id* nil)
@@ -139,7 +139,7 @@
       (create-environment name {:prior-env prior}))))
 
 (defn create-env-chain [envs]
-  (doseq [[prior curr] (chain-envs envs)]
+  (doseq [[prior curr] (chain envs)]
     (ensure-env-exist curr {:prior prior})))
 
 (defn create-product [name {:keys [provider-name description]}]

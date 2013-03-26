@@ -216,7 +216,9 @@
                          (merge sys (rest/http-post (query-url sys)
                                                {:body (assoc (select-keys sys [:name :facts])
                                                         :type "system")})))})
-  tasks/Uniqueable tasks/entity-uniqueable-impl
+  
+  tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
+                                (assoc (tasks/stamp-entity %) :facts (random-facts)))}
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system

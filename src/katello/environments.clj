@@ -97,7 +97,7 @@
                             (nav/go-to ::named-page {:org (-> env :org)
                                                      :env env}))})
 
-(defn chain-envs
+(defn chain
   "Sets prior of each env to be the previous env in the list"
   [environments]
   {:pre [(apply = (map :org environments))]} ; all in same org
@@ -110,7 +110,7 @@
   (doseq [env environments]
     (ui/create env)))
 
-(def create-path (comp create-all chain-envs))
+(def create-path (comp create-all chain))
 
 (defn ensure-exist
   "If the given environment doesn't exist, create it."

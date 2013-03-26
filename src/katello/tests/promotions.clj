@@ -44,7 +44,7 @@
                        rest/create))
   
   
-  (reset! envs (environments/chain-envs
+  (reset! envs (environments/chain
                 (for [e (list "Dev" "QE" "Prod")]
                   (-> {:name e
                        :org (@config :admin-org)}
@@ -94,7 +94,7 @@
                                 :description "template to be promoted"})
           (api/add-to-template template {:repositories [{:product product-name
                                                               :name repo-name}]})))))
-  (doseq [[from-env target-env] (chain-envs envs)] 
+  (doseq [[from-env target-env] (chain envs)] 
     (changesets/promote-delete-content from-env target-env false content)
     (verify-all-content-present content (changesets/environment-content target-env))))
 
