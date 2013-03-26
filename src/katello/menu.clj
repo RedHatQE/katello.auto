@@ -29,6 +29,7 @@
                       ::repositories-link                "providers"
                       ::roles-link                       "roles"
                       ::subscriptions-link               "subscriptions"
+                      ::distributors-link                "distributors_list"
                       ::sync-management-link             "sync_mgmt"
                       ::sync-plans-link                  "sync_plans"
                       ::sync-schedule-link               "sync_schedule"
@@ -53,6 +54,7 @@
    [::content-menu [] (browser mouseOver ::content-link)
     [:subscriptions [] (browser mouseOver ::subscriptions-link)
      [:katello.subscriptions/page [] (browser clickAndWait ::red-hat-subscriptions-link)]
+     [:katello.subscriptions/distributors-page [] (browser clickAndWait ::distributors-link)]
      [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]
      [:katello.subscriptions/import-history-page [] (browser clickAndWait ::import-history-link)]]
 
