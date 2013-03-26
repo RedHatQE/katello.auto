@@ -322,16 +322,6 @@
         sync-info
         (recur (rest/get url))))))
 
-(defn discover-repo [provider-name repo-url & [timeout-ms]]
-  (let [prov-id (get-id-by-name :provider provider-name)
-        uuid ((rest/post (api-url "api/providers/" prov-id "/discovery")
-               {:body {:url repo-url :type "yum"}}) :uuid)]
-    (loop-with-timeout (or timeout-ms 180000) [discovery-info {}]
-      (Thread/sleep 15000)
-      (if (-> discovery-info :state (= "finished"))
-        discovery-info
-        (recur (api-url "api/tasks/" uuid))))))
-
 (def get-version-from-server
   (memoize
     (fn [url]
