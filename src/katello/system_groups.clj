@@ -106,7 +106,7 @@
 (defn remove
   "Removes a system group. Optionally, remove all the systems in the
    group as well."
-  [[{:keys [also-remove-systems?] :as group}]]
+  [{:keys [also-remove-systems?] :as group}]
   (nav/go-to group)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
@@ -138,7 +138,8 @@
 (defn system-count
   "Get number of systems in system group according to the UI"
   [group]
-  (nav/go-to group)
+  (nav/go-to ::details-page {:system-group group
+                             :org (-> group :env :org)})
   (Integer/parseInt (browser getText ::total)))
 
 (defn update [sg updated]

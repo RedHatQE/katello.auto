@@ -41,7 +41,7 @@
 
 (extend java.lang.String
   Uniqueable
-  {:uniques (fn [s] (map (comp date-string (partial format "%s-%s" s))
+  {:uniques (fn [s] (map (comp (partial format "%s-%s" s) date-string)
                          (timestamps)))})
 
 (extend nil
@@ -83,13 +83,16 @@
   unique-format (comp first uniques-formatted))
 
 (defmacro with-unique
-  "Binds variables to unique strings. Example:
-   (with-unique [x 'foo' y 'bar'] [x y]) will give something like:
-     ['foo-12346748964356' 'bar-12346748964357']"
+  "Binds variables to unique strings. Supports simple list
+  destructuring. Example:
+   (with-unique [[x y] 'foo' z 'bar'] [x y z]) will give something like:
+     ['foo-12346748964356' 'foo-12346748964357' 'bar-12346748964358']"
   [bindings & forms]
   `(let ~(vec (apply concat
                  (for [[k v] (partition 2 bindings)]
-                   [k `(uniqueify ~v)])))
+                   (if (vector? k)
+                     [k `(take ~(count k) (uniques ~v))]
+                     [k `(uniqueify ~v)]))))
      ~@forms))
 
 (defn uniqueify-vals
@@ -104,11 +107,6 @@
       (.appendReplacement matcher buffer (capitalize (.group matcher 1))))
     (.appendTail matcher buffer)
     (.toString buffer)))
-
-(def ^{:doc "Given a list of things (eg, environments), return
-             successive pairs (eg: envs ['a' 'b' 'c'] -> ('a'
-             'b'), ('b' 'c')"} chain
-  (partial partition 2 1))
 
 (defn do-steps
   "Call all fs in order, with single argument m"

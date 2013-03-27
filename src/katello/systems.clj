@@ -1,5 +1,5 @@
 (ns katello.systems
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
             [slingshot.slingshot :refer [throw+]]
@@ -121,12 +121,12 @@
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [systems group-name]
+  [systems group]
   (select-multisys-with-ctrl systems)
-  (browser click ::select-sysgrp)
-  (browser click (sysgroup-checkbox group-name))
-  (browser click ::add-sysgrp)
-  (browser click ::confirm-to-yes)
+  (->browser (click ::select-sysgrp)
+             (click (-> group :name sysgroup-checkbox))
+             (click ::add-sysgrp)
+             (click ::confirm-to-yes))
   (notification/check-for-success))
 
 (defn- set-environment "select a new environment for a system"
@@ -135,8 +135,6 @@
   (sel/->browser (click ::environment)
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
-
-
 
 (defn- subscribe
   "Subscribes the given system to the products. (products should be a
@@ -212,13 +210,14 @@
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id rest/id-field
                :query (partial rest/query-by-name query-url)
+               :read (partial rest/read-impl id-url)
                :create (fn [sys]
                          (merge sys (rest/http-post (query-url sys)
                                                {:body (assoc (select-keys sys [:name :facts])
                                                         :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
-                                (assoc (tasks/stamp-entity %) :facts (random-facts)))}
+                                (assoc (tasks/stamp-entity % s) :facts (random-facts)))}
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system
