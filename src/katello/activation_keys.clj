@@ -1,10 +1,10 @@
 (ns katello.activation-keys
   (:require [katello :as kt]
             (katello [navigation :as nav]
-                        [notifications :as notification]
-                        [ui-common :as common]
-                        [ui :as ui]
-                        [tasks :refer [when-some-let]])
+                     [notifications :as notification]
+                     [ui-common :as common]
+                     [ui :as ui]
+                     [tasks :refer [when-some-let] :as tasks])
             [clojure.data :as data]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
@@ -115,6 +115,6 @@
   ui/CRUD {:create create
            :delete delete
            :update* update}
-  
+  tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to #(nav/go-to ::named-page {:activation-key %1
                                                     :org (-> %1 :env :org)})})

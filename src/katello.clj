@@ -22,6 +22,7 @@
   [env]
   (assoc library :org (:org env) :next env))
 
+
 (defrecord Provider [id name description org])
 
 (defrecord Product [id name provider])
@@ -51,3 +52,7 @@
 (defrecord ActivationKey [id name env description])
 
 (defrecord SystemGroup [id name systems org])
+
+(defrecord Manifest [provider file-path url])
+
+(def red-hat-provider (newProvider {:name "Red Hat"}))

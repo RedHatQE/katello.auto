@@ -1,15 +1,30 @@
 (ns katello.fake-content
   (:require [clojure.java.io :as io]
+            [katello :as kt]
             (katello [manifest :as manifest]
+                     [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
                      [repositories :as repo]
                      [providers :as providers]
-                     [api-tasks :as api]
+                     [rest :as rest]
                      [sync-management :as sync])))
 
+(def nature (kt/newProduct {:name "Nature Enterprise" :provider kt/red-hat-provider}))
+(def zoo (kt/newProduct {:name "Zoo Enterprise" :provider kt/red-hat-provider}))
+(def some-repos (concat (for [reponame ["Nature Enterprise x86_64 1.0"
+                                        "Nature Enterprise x86_64 1.1"
+                                        "Nature Enterprise x86_64 6Server"]]
+                          (kt/newRepository {:name reponame, :product nature}))
+                        (for [reponame ["Zoo Enterprise x86_64 6.2"
+                                        "Zoo Enterprise x86_64 6.3"
+                                        "Zoo Enterprise x86_64 6.4"
+                                        "Zoo Enterprise x86_64 5.8"
+                                        "Zoo Enterprise x86_64 5.7"
+                                        "Zoo Enterprise x86_64 6Server"]]
+                          (kt/newRepository {:name reponame, :product zoo}))))
 
 (def some-product-repos [{:name       "Nature Enterprise"
                           :repos      ["Nature Enterprise x86_64 1.0"
@@ -24,6 +39,37 @@
                                      "Zoo Enterprise x86_64 6Server"]}])
 
 (def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7"))
+
+(let [prov (kt/newProvider {:name "Custom Provider"})
+      com-nature (kt/newProduct {:name "Com Nature Enterprise"})
+      weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"})
+      many (kt/newProduct {:name "ManyRepository Enterprise"})]
+  (concat (for [r [{:name "CompareZoo1" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "CompareZoo2" 
+                    :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
+                   {:name "CompareZooNosync"
+                    :unsyncable true
+                    :url "http://inecas.fedorapeople.org/fakerepos/"}
+                   {:name "ManyRepositoryA" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
+            (kt/newRepository (assoc r :product com-nature)))
+          (for [r [{:name "洪" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "Гесер" 
+                    :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]]
+            (kt/newRepository (assoc r :product weird-locals)))
+          (for [r [{:name "ManyRepositoryA" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "ManyRepositoryB" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "ManyRepositoryC" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "ManyRepositoryD" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                   {:name "ManyRepositoryE" 
+                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
+            (kt/newRepository (assoc r :product many)))))
 
 (def custom-providers [{:name "Custom Provider"
                         :products [{:name "Com Nature Enterprise"
@@ -106,46 +152,45 @@
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})
 
-(defn download-original [dest]
-  (io/copy (-> config deref :redhat-manifest-url java.net.URL. io/input-stream)
-           (java.io.File. dest)))
+(declare local-clone-source)
+
+(defn download-original-once []
+  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)]
+                                (io/copy (-> config deref :redhat-manifest-url java.net.URL. io/input-stream)
+                                         (java.io.File. dest))
+                                (kt/newManifest {:file-path dest
+                                                 :url (@config :redhat-repo-url)
+                                                 :provider kt/red-hat-provider}))))
 
 (defn prepare-org
   "Clones a manifest, uploads it to the given org (via api), and then
    enables and syncs the given repos"
-  [org-name repos]
-  (let [dl-loc (manifest/new-tmp-loc)]
-    (download-original dl-loc)
-    (with-org org-name
-      (let [clone-loc (manifest/new-tmp-loc)]
-        (manifest/clone dl-loc clone-loc)
-        (api/upload-manifest clone-loc (@config :redhat-repo-url)))
-      (when (api/is-katello?)
-        (repo/enable-redhat repos)
-        (sync/perform-sync repos)))))
+  [repos]
+  (with-unique [manifest (do (when-not (bound? #'local-clone-source)
+                               (download-original-once))
+                             local-clone-source) ]
+    (rest/create (assoc manifest :provider (-> repos first :product :provider)))
+    (sync/perform-sync repos)))
 
-(defn prepare-org-custom-provider
-  "Clones a manifest, uploads it to the given org, and then enables
-  and syncs the given repos"
-  [org-name providers]
-  (with-org org-name
-    (org/switch)
-    (doseq [provider providers]
-      (providers/create {:name (provider :name)})
-      (doseq [product (provider :products)]  
-        (providers/add-product {:provider-name (provider :name) 
-                                :name (product :name)})
-        (doseq [repo (product :repos)]
-          (repo/add {:provider-name (provider :name)  
-                     :product-name (product :name)
-                     :name (repo :name) 
-                     :url (repo :url)})) 
-        (sync/perform-sync 
-         (map :name (get-custom-repos providers ;effing ugly filter 
-                                      :filter-product? (fn [any-product]  ( = (:name any-product) (:name product)))                         
-                                      :filter-repos? (fn [repo] (not (contains? repo :unsyncable))))))))))
+(defn create-all-and-sync
+  "Creates all the given repos, including their products and
+  providers, and orgs.  All must not exist already."
+  [repos]
+  (let [distinct-parents (fn [& ks]
+                           (->> repos
+                                (map (apply comp (reverse ks)))
+                                hash-set))
+        ;; orgs (distinct-parents :product :provider :org)
+        providers (distinct-parents :product :provider)
+        products (distinct-parents :product)]
+    (rest/create-all (concat providers products repos))
+    (sync/perform-sync (filter (complement :unsyncable) repos))))
 
-(defn setup-org [test-org envs]
-  (api/create-organization test-org)
-  (prepare-org test-org (mapcat :repos some-product-repos))
-  (if (not (nil? envs)) (env/create-path test-org envs)))
+(defn setup-org [envs]
+  (let [org (-> envs first :org)
+        repos (for [r some-repos]
+                (update-in r [:product :provider] assoc :org org))]
+    (rest/create org)
+    (doseq [e (env/chain envs)]
+      (rest/create e))
+    (prepare-org repos)))

@@ -89,7 +89,7 @@
      
      :update* (fn [env new-env]
                (merge new-env (rest/http-put (id-url env)
-                                        {:environment (select-keys new-env [:description])})))})
+                                             {:environment (select-keys new-env [:description])})))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
 
@@ -101,8 +101,10 @@
   "Sets prior of each env to be the previous env in the list"
   [environments]
   {:pre [(apply = (map :org environments))]} ; all in same org
-  (for [[prior curr] (partition 2 1 (conj (list* environments) katello/library))]
-    (assoc curr :prior prior)))
+  (let [org (-> environments first :org)]
+    (for [[prior curr] (partition 2 1 (conj (list* environments)
+                                            (assoc katello/library :org org)))]
+      (assoc curr :prior prior))))
 
 (defn create-all
   "Creates multiple environments."
