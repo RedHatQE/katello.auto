@@ -86,7 +86,9 @@
   ui/CRUD {:create create-plan
            :update* edit-plan}
   
-  tasks/Uniqueable tasks/entity-uniqueable-impl
+  tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
+                                (assoc (tasks/stamp-entity % s)
+                                  :start-time (java.util.Date.)))}
   
   nav/Destination {:go-to #(nav/go-to ::named-plan-page {:sync-plan %1
                                                          :org (:org %1)})})
@@ -143,3 +145,17 @@
                     (or (complete-status (:name repo))
                         (do (Thread/sleep 10000)
                             (recur)))))))
+
+(defn create-all-and-sync
+  "Creates all the given repos, including their products and
+  providers.  All must not exist already."
+  [repos]
+  (let [distinct-parents (fn [& ks]
+                           (->> repos
+                                (map (apply comp (reverse ks)))
+                                hash-set))
+        ;; orgs (distinct-parents :product :provider :org)
+        providers (distinct-parents :product :provider)
+        products (distinct-parents :product)]
+    (rest/create-all (concat providers products repos))
+    (perform-sync (filter (complement :unsyncable) repos))))

@@ -95,6 +95,15 @@
                      [k `(uniqueify ~v)]))))
      ~@forms))
 
+(defmacro with-unique-ent
+  "macro-defining macro to create macros you can call
+  like (with-unique-org o (create o))"
+  [suffix-str base-ent-sym]
+  `(defmacro ~(symbol (str "with-unique-" suffix-str))
+     [sym# ~'& body#]
+     `(with-unique [~sym# ~~base-ent-sym]
+        ~@body#)))
+
 (defn uniqueify-vals
   "Uniquifies the values in map m"
   [m]

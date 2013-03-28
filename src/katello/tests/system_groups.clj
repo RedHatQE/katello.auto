@@ -8,7 +8,7 @@
                      [activation-keys :as ak]
                      [client :as client]
                      [ui-common :as common]
-                     [tasks :refer [uniqueify with-unique]]
+                     [tasks :refer [uniqueify with-unique with-unique-ent]]
                      [systems :as system]
                      [system-groups :as group]
                      [conf :refer [*session-user* config *environments*]])
@@ -30,9 +30,7 @@
   unique-groups
   (uniques some-group))
 
-(defmacro with-unique-group [sym & body]
-  `(with-unique [~sym some-group]
-     ~@body))
+(with-unique-ent "group" some-group)
 
 (defn assert-system-count
   "Assert the group g contains n systems."

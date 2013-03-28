@@ -172,20 +172,6 @@
     (rest/create (assoc manifest :provider (-> repos first :product :provider)))
     (sync/perform-sync repos)))
 
-(defn create-all-and-sync
-  "Creates all the given repos, including their products and
-  providers, and orgs.  All must not exist already."
-  [repos]
-  (let [distinct-parents (fn [& ks]
-                           (->> repos
-                                (map (apply comp (reverse ks)))
-                                hash-set))
-        ;; orgs (distinct-parents :product :provider :org)
-        providers (distinct-parents :product :provider)
-        products (distinct-parents :product)]
-    (rest/create-all (concat providers products repos))
-    (sync/perform-sync (filter (complement :unsyncable) repos))))
-
 (defn setup-org [envs]
   (let [org (-> envs first :org)
         repos (for [r some-repos]
