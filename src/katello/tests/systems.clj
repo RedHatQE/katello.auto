@@ -11,7 +11,7 @@
                      [repositories :as repo]
                      [ui-common :as common]
                      [changesets :as changeset]
-                     [tasks :refer :all]            
+                     [tasks :refer :all]
                      [systems :as system]                   
                      [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-password* config *environments*]])
@@ -55,6 +55,19 @@
               :system-name (:name system)})
   (assert/is (= (:environment_id system)
                 (api/get-id-by-name :environment test-environment))))
+
+(defn verify-new-system-tooltip
+  "Confirms that tooltips in the New System form appear and show the correct messages"
+  [icon-locator expected-text]
+  (nav/go-to ::system/new-page)
+  (browser mouseOver icon-locator)
+  (Thread/sleep 2000)
+  (if (browser isTextPresent expected-text)
+    (do
+      (browser mouseOut icon-locator)
+      (Thread/sleep 2000)
+      (false? (browser isTextPresent expected-text)))
+    false))
 
 (defn validate-new-system-link
   [env? env org-name system-name]
@@ -237,6 +250,15 @@
                                     :system-arch "x86_64"})
         (system/add-custom-info system-name key-name key-value)
         (system/remove-custom-info system-name key-name))))
+
+  (deftest "System name is required when creating a system"
+    (expecting-error val/name-field-required
+                     (system/create "")))
+
+  (deftest "New System Form: tooltips pop-up with correct information"
+    (map verify-new-system-tooltip
+         [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]
+         [::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]))
   
   (deftest "Add system from UI"
     :data-driven true
