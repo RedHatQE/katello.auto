@@ -7,6 +7,9 @@
 
 ;; Locators
 
+(sel/template-fns
+ {product-or-repository    "//li[contains(text(), '%s')]"})
+
 (ui/deflocators
   {::new              "new"
    ::name-text        "content_view_definition[name]"
@@ -14,7 +17,16 @@
    ::description-text "content_view_definition[description]"
    ::composite        "content_view_definition[composite]"
    ::save-new         "commit"
-   ::remove           (ui/link "Remove")})
+   ::remove           (ui/link "Remove")
+
+   ::views-tab        "//li[@id='view_definition_views']/a"
+   ::content-tab      "//li[@id='view_definition_content']/a"
+   ::filter-tab       "//li[@id='view_definition_filter']/a"
+   ::details-tab      "//li[@id='view_definition_details']/a"
+   ::update-content   "update_products"
+
+   ::sel-products     "window.$(\"#product_select_chzn\").mousedown()"
+   ::add-product-btn  "add_product"})
 
 ;; Nav
 
@@ -34,6 +46,17 @@
                        ::description-text description
                        ::composite composite}
                       ::save-new)
+  (notification/check-for-success))
+
+(defn add-product-to-content-view-definition
+  "Adds the given product or repository to a content view definition"
+  [name prod-name]
+  (nav/go-to ::named-page {:definition-name name})
+  (browser getEval ::sel-products)
+  (browser click ::content-tab)
+  (browser mouseUp (product-or-repository prod-name))
+  (browser click ::add-product-btn)
+  (browser click ::update-content)
   (notification/check-for-success))
 
 (defn delete-content-view-definition
