@@ -56,3 +56,5 @@
 (defrecord Manifest [provider file-path url])
 
 (def red-hat-provider (newProvider {:name "Red Hat"}))
+
+(defrecord SyncPlan [id name org interval])

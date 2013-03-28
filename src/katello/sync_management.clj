@@ -1,9 +1,13 @@
 (ns katello.sync-management
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clojure.data :as data]
+            [katello :as kt]
             (katello [navigation :as nav] 
                      [notifications :as notification] 
                      [ui-common :as common]
-                     [ui :as ui]))
+                     [tasks :as tasks]
+                     [ui :as ui]
+                     [rest :as rest]))
   (:import [java.text SimpleDateFormat]))
 
 ;; Locators
@@ -23,15 +27,15 @@
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
-  plan              "//div[@id='plans']//div[normalize-space(.)='%s']"
+  plan-link         "//div[@id='plans']//div[normalize-space(.)='%s']"
   schedule-item     "//div[normalize-space(.)='%s']"})
 
 ;; Nav
 
 (nav/defpages (common/pages)
   [::plans-page
-   [::named-plan-page [sync-plan-name]
-    (nav/choose-left-pane sync-plan-name)]
+   [::named-plan-page [sync-plan]
+    (nav/choose-left-pane sync-plan)]
    [::new-plan-page [] (browser click ::new-plan)]])
 
 ;; Tasks
@@ -52,9 +56,9 @@
   The latter can also be used to specify invalid dates for validation
   tests."
   [{:keys [name description interval start-date
-           start-date-literal start-time-literal] :as m}]
+           start-date-literal start-time-literal] :as plan}]
   (nav/go-to ::new-plan-page)
-  (let [[date time] (split-date m)]
+  (let [[date time] (split-date plan)]
     (sel/fill-ajax-form {::plan-name-text name
                          ::plan-description-text description
                          ::plan-interval-select interval
@@ -66,25 +70,35 @@
 (defn edit-plan
   "Edits the given sync plan with optional new properties. See also
   create-sync-plan for more details."
-  [name {:keys [new-name description interval start-date start-date-literal start-time-literal]
-         :as m}]
-  (nav/go-to ::named-plan-page {:sync-plan-name name})
-  (let [[date time] (split-date m)]
-    (common/in-place-edit {::plan-name-text new-name
+  [plan updated]
+  (nav/go-to plan)
+  (let [[removed {:keys [name description interval]
+                  :as added}] (data/diff plan updated)
+        [date time] (split-date added)]
+    (common/in-place-edit {::plan-name-text name
                            ::plan-description-text description
                            ::plan-interval-select interval
                            ::plan-time-text time
                            ::plan-date-text date}))
   (notification/check-for-success {:match-pred (notification/request-type? :sync-update)}))
 
+(extend katello.SyncPlan
+  ui/CRUD {:create create-plan
+           :update* edit-plan}
+  
+  tasks/Uniqueable tasks/entity-uniqueable-impl
+  
+  nav/Destination {:go-to #(nav/go-to ::named-plan-page {:sync-plan %1
+                                                         :org (:org %1)})})
+
 (defn schedule
   "Schedules the given list of products to be synced using the given
   sync plan name."
-  [{:keys [products plan-name]}]
+  [{:keys [products plan]}]
   (nav/go-to ::schedule-page)
   (doseq [product products]
     (browser click (schedule-item product)))
-  (browser click (plan plan-name))
+  (browser click (plan-link (:name plan)))
   (browser clickAndWait ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
                                         ;don't match 
@@ -92,13 +106,13 @@
 (defn current-plan
   "Returns a map of what sync plan a product is currently scheduled
   for. nil if UI says 'None'"
-  [product-names]
+  [products]
   (nav/go-to ::schedule-page)
-  (->> (for [product-name product-names]
-       (browser getText (product-schedule product-name)))
-     doall
-     (replace {"None" nil})
-     (zipmap product-names)))
+  (->> (for [product products]
+         (browser getText (product-schedule (:name product))))
+       doall
+       (replace {"None" nil})
+       (zipmap products)))
 
 (def messages {:ok "Sync complete."
                :fail "Error syncing!"})
@@ -107,7 +121,7 @@
   "Returns final status if complete. If sync is still in progress, not
   synced, or queued, returns nil."
   [product]
-  (some #{(browser getText (provider-progress product))}
+  (some #{(browser getText (provider-progress (:name product)))}
         (vals messages)))
 
 (defn success? "Returns true if given sync result is a success."

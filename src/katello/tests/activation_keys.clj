@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require [katello :as kt]
             (katello [ui :as ui]
-                     [activation-keys :as ak]
-                     
+                     [activation-keys :as ak]                   
                      [client :as client]
                      [ui-common :as common]
                      [tasks :refer :all]
@@ -11,8 +10,7 @@
                      [validation :as val]
                      [fake-content  :as fake]
                      [conf :refer [*environments*]])
-            [katello.client.provision :as provision]
-            
+            [katello.client.provision :as provision]            
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
             [serializable.fn :refer [fn]]
