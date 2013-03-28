@@ -35,10 +35,10 @@
 (nav/defpages (common/pages)
   [::custom-page
    [::new-page [] (browser click ::new)]
-   [::named-page [provider-name] (nav/choose-left-pane  provider-name)
+   [::named-page [provider] (nav/choose-left-pane provider)
     [::products-page [] (sel/->browser (click ::products-and-repositories)
                                        (sleep 2000))
-     [::named-product-page [product-name] (browser click (ui/editable product-name))]]
+     [::named-product-page [product] (browser click (ui/editable (:name product)))]]
     [::details-page [] (browser click ::details-link)]]])
 
 ;; Tasks
@@ -55,7 +55,7 @@
 (defn add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider name description]}]
-  (nav/go-to ::products-page {:provider-name (:name provider)
+  (nav/go-to ::products-page {:provider provider
                               :org (:org provider)})
   (browser click ::add-product)
   (sel/fill-ajax-form {::product-name-text name
@@ -84,7 +84,7 @@
   "Edits the named custom provider. Takes an optional new name, and
   new description."
   [provider updated]
-  (nav/go-to ::details-page {:provider-name (:name provider)
+  (nav/go-to ::details-page {:provider provider
                              :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
                          ::description-text (:description updated)}))
@@ -116,7 +116,7 @@
 
   nav/Destination {:go-to (fn [prov]
                             (nav/go-to ::named-page {:org (:org prov)
-                                                     :provider-name (:name prov) }))})
+                                                     :provider prov }))})
 
 (extend katello.Product
   ui/CRUD {:create add-product
@@ -124,7 +124,7 @@
 
   rest/CRUD (let [id-url (partial rest/url-maker [["api/organizations/%s/products/%s" [:org identity]]])
                   org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
-                  query-urls (partial rest/url-maker [["api/organizations/%s/products" [:org]]
+                  query-urls (partial rest/url-maker [["api/organizations/%s/products" [(comp :org :provider)]]
                                                       ["/api/environments/%s/products" [:env]]])]
               {:id rest/id-field
                :query (partial rest/query-by-name query-urls)
@@ -140,6 +140,6 @@
 
   nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
                             (nav/go-to ::named-product-page {:org (:org provider)
-                                                             :provider-name name
+                                                             :provider name
                                                              :product-name (:name product)}))})
 

@@ -1,7 +1,7 @@
 (ns katello.changesets
   (:refer-clojure :exclude [remove])
   (:require (katello [navigation :as nav]
-                     [tasks :refer :all]
+                     [tasks :as tasks :refer [uniqueify with-unique]]
                      [ui-common :as common]
                      [ui :as ui]
                      [rest :as rest]
@@ -12,7 +12,9 @@
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]
-            [clojure.data :as data]))
+            [clojure.data :as data]
+            [clojure.string :as string]
+            [inflections.core :refer [pluralize]]))
 
 ;; Locators
 
@@ -135,6 +137,37 @@
 (extend katello.Changeset
   ui/CRUD {:create create
            :update* update}
+
+  rest/CRUD (let [id-url (partial rest/url-maker ["api/changesets/%s" [identity]])
+                  env-url (partial rest/url-maker [["api/organizations/%s/environments/%s/changesets"
+                                                    [(comp :org :env) :env]]])
+                  ent-to-api-name #(-> % class .getName (string/split #"\.") last string/lower-case pluralize)
+                  ent-to-api-req-field #(-> % class .getName (string/split #"\.") last string/lower-case (str "_id")) 
+                  content-add-url (fn [cs additem]
+                                    (rest/api-url (format "api/changesets/%s/%s"
+                                                          (rest/get-id cs)
+                                                          (ent-to-api-name additem))))
+                  content-delete-url (fn [cs remitem]
+                                       (rest/api-url (format "api/changesets/%s/%s/%s"
+                                                             (rest/get-id cs)
+                                                             (ent-to-api-name remitem)
+                                                             (rest/get-id remitem))))]
+              {:id rest/id-field
+               :query (partial rest/query-by-name env-url)
+               :read (partial rest/read-impl id-url)
+               :create (fn [{:keys [name deletion?] :as cs}]
+                         (rest/http-post (env-url cs)
+                                         {:body {:changeset {:name name
+                                                             :type (if deletion? "DELETION" "PROMOTION")}}}))
+               :update* (fn [cs updated] ; updates content only for now
+                          (let [[remove add] (data/diff cs updated)]
+                            (doseq [i (:content add)]
+                              (rest/http-post (content-add-url cs i)
+                                              {:body {(ent-to-api-req-field i) (rest/get-id i)}}))
+                            (doseq [i (:content remove)]
+                              (rest/http-delete (content-delete-url cs i)))))})
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl
   
   nav/Destination {:go-to (fn [{:keys [name deletion? env]}]
                             (organization/switch (-> env :org))
@@ -270,16 +303,15 @@
    and returns the changeset. If the timeout is hit before the
    promotion completes, throws an exception."
   [changeset]
-  (let [cs-id (rest/get-id changeset)]
-    (locking #'conf/promotion-deletion-lock
-      (rest/http-post (rest/api-url "api/changesets/" cs-id "/promote"))
-      (loop-with-timeout (* 20 60 1000) [cs {}]
-        (let [state (:state cs)]
-          (case state
-            "promoted" cs
-            "failed" (throw+ {:type :failed-promotion :response cs})    
-            (do (Thread/sleep 5000)
-                (recur (rest/read changeset)))))))))
+  (locking #'conf/promotion-deletion-lock
+    (rest/http-post (rest/url-maker [["api/changesets/%s/promote" [identity]]] changeset))
+    (loop-with-timeout (* 20 60 1000) [cs {}]
+      (let [state (:state cs)]
+        (case state
+          "promoted" cs
+          "failed" (throw+ {:type :failed-promotion :response cs})    
+          (do (Thread/sleep 5000)
+              (recur (rest/read changeset))))))))
 
 (defn api-promote
   "Does a promotion of the given content (creates a changeset, adds
@@ -289,6 +321,5 @@
   (with-unique [cs (katello/newChangeset {:name "api-changeset"
                                           :env env})]
     (rest/create cs)
-    (doseq [ent content]
-      (rest/update cs update-in [:content] conj ent)  
-    (api-promote-changeset cs))))
+    (rest/update cs update-in [:content] (fnil concat (list)) content)  
+    (api-promote-changeset cs)))

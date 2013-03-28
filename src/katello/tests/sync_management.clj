@@ -16,7 +16,8 @@
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]))
 
-(def some-plan (kt/newSyncPlan {:name "syncplan", :description "mydescription", :interval "daily"}))
+(def some-plan (kt/newSyncPlan {:name "syncplan", :description "mydescription", :interval "daily",
+                                :org *session-org*}))
 
 ;; Functions
 
@@ -46,7 +47,7 @@
 (defgroup sync-tests
 
   (deftest "Sync a small repo"
-    (->> (fresh-repo) list sync/perform-sync vals (every? complete?) assert/is))
+    (->> (fresh-repo) list sync/create-all-and-sync vals (every? complete?) assert/is))
 
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")
@@ -56,7 +57,7 @@
     (deftest "Change interval of an existing sync plan"
       (with-unique-plan p
         (ui/create p)
-        (ui/update p assoc :interval "Daily")))
+        (ui/update p assoc :interval "Weekly")))
 
     (deftest "Rename an existing sync plan"
       (with-unique-plan p
@@ -79,9 +80,10 @@
       :blockers (open-bz-bugs "751876")
       (with-unique-plan p
         (let [prov (uniqueify (kt/newProvider {:name "multiplan", :org *session-org*}))
-              prods (for [repo (take 3 (repeatedly fresh-repo))]
-                      (assoc (:product repo) :provider prov))]
-          (rest/create-all (conj prods prov))
+              repos (for [repo (take 3 (repeatedly fresh-repo))]
+                      (update-in repo [:product] assoc :provider prov))
+              prods (map :product repos)]
+          (rest/create-all (conj (concat prods repos) prov))
           (changeset/api-promote (first *environments*) prods)
           (ui/create p)
           (sync/schedule {:products prods, :plan p})
@@ -90,11 +92,12 @@
             (assert/is (every? (partial = expected-plan) actual-plans)))))
 
       (deftest "Re-assign a different sync plan to a product"
-        (with-unique [[p1 p2] some-plan
-                      prod (:product (fresh-repo))]
-          (ui/create-all (list p1 p2 (:provider prod) prod))
-          (let [prods (list prod)]
-            (sync/schedule prods p1)
-            (sync/schedule prods p2)
-            (assert/is (= ((sync/current-plan prods) prod)
-                          (:name p2)))))))))
+        (with-unique [[p1 p2] some-plan]
+          (let [repo (fresh-repo)
+                prod (:product repo)
+                prods (list prod)]
+           (ui/create-all (list p1 p2 (:provider prod) prod repo))
+           (sync/schedule {:products prods :plan p1})
+           (sync/schedule {:products prods :plan p2})
+           (assert/is (= ((sync/current-plan prods) prod)
+                         (:name p2)))))))))

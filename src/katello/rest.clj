@@ -78,7 +78,7 @@
 
 ;; Because protocols do not support varargs
 (defn update [x f & args]
-  (update* x (apply f args)))
+  (update* x (apply f x args)))
 
 
 (defn create-all [ents]
@@ -96,7 +96,7 @@
 
 (defn url-maker [coll ent]
   "Creates a fn that when given an entity will call fs on the entity
-   to http-get deps and look up the ids on those deps.  Then fill in the
+   to get deps and look up the ids on those deps.  Then fill in the
    format with those ids, and make a url"
   (-> (for [[fmt fs] coll
             :let [ids (for [f fs] (some-> ent f get-id))]

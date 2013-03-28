@@ -6,7 +6,8 @@
                      [navigation :as nav]
                      [providers :as provider]        ;to load navigation
                      [notifications :as notification] 
-                     [ui :as ui])))
+                     [ui :as ui]
+                     [rest :as rest])))
 
 ;; Locators
 
@@ -25,7 +26,7 @@
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
-   [::named-page [repo-name] (browser click (ui/editable repo-name))]])
+   [::named-page [repo] (browser click (ui/editable (:name repo)))]])
 
 ;; Tasks
 
@@ -34,7 +35,7 @@
    name and url be given for the repo."
   [{:keys [product name url gpg-key]}]
   (nav/go-to ::provider/products-page {:org (-> product :provider :org)
-                                       :provider-name (-> product :provider :name)})
+                                       :provider (:provider product)})
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select gpg-key))
   (sel/fill-ajax-form {::repo-name-text name
@@ -60,11 +61,18 @@
 (extend katello.Repository
   ui/CRUD {:create create
            :delete delete}
+
+  rest/CRUD {:create (fn [{:keys [product name url]}]
+                       (rest/http-post (rest/api-url "api/repositories/")
+                                       {:body {:organization_id (-> product :provider :org :name)
+                                               :product_id (rest/get-id product)
+                                               :name name
+                                               :url url}}))}
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [{:keys [product name]}]
                             (nav/go-to ::named-page {:org (-> product :provider :org)
-                                                     :provider-name  (-> product :provider :name)
-                                                     :product-name (:name product)
+                                                     :provider (:provider product)
+                                                     :product product
                                                      :repo-name name}))})

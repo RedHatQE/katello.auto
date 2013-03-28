@@ -56,8 +56,8 @@
   The latter can also be used to specify invalid dates for validation
   tests."
   [{:keys [name description interval start-date
-           start-date-literal start-time-literal] :as plan}]
-  (nav/go-to ::new-plan-page)
+           start-date-literal start-time-literal org] :as plan}]
+  (nav/go-to ::new-plan-page {:org org})
   (let [[date time] (split-date plan)]
     (sel/fill-ajax-form {::plan-name-text name
                          ::plan-description-text description
@@ -97,9 +97,9 @@
   "Schedules the given list of products to be synced using the given
   sync plan name."
   [{:keys [products plan]}]
-  (nav/go-to ::schedule-page)
+  (nav/go-to ::schedule-page {:org (:org plan)})
   (doseq [product products]
-    (browser click (schedule-item product)))
+    (browser click (schedule-item (:name product))))
   (browser click (plan-link (:name plan)))
   (browser clickAndWait ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
@@ -109,7 +109,7 @@
   "Returns a map of what sync plan a product is currently scheduled
   for. nil if UI says 'None'"
   [products]
-  (nav/go-to ::schedule-page)
+  (nav/go-to ::schedule-page {:org (-> products first :provider :org)})
   (->> (for [product products]
          (browser getText (product-schedule (:name product))))
        doall
@@ -122,8 +122,8 @@
 (defn complete-status
   "Returns final status if complete. If sync is still in progress, not
   synced, or queued, returns nil."
-  [product]
-  (some #{(browser getText (provider-progress (:name product)))}
+  [product-or-repo]
+  (some #{(browser getText (provider-progress (:name product-or-repo)))}
         (vals messages)))
 
 (defn success? "Returns true if given sync result is a success."
@@ -135,14 +135,14 @@
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
-  (nav/go-to ::status-page)
+  (nav/go-to ::status-page {:org (-> repos first :product :provider :org)})
   (doseq [repo repos]
     (browser check (provider-checkbox (:name repo))))
   (browser click ::synchronize-now)
   (browser sleep 10000)
   (zipmap repos (for [repo repos]
                   (sel/loop-with-timeout (or timeout 120000) []
-                    (or (complete-status (:name repo))
+                    (or (complete-status repo)
                         (do (Thread/sleep 10000)
                             (recur)))))))
 
@@ -153,9 +153,10 @@
   (let [distinct-parents (fn [& ks]
                            (->> repos
                                 (map (apply comp (reverse ks)))
-                                hash-set))
+                                (apply hash-set)))
         ;; orgs (distinct-parents :product :provider :org)
         providers (distinct-parents :product :provider)
         products (distinct-parents :product)]
+    (println (count providers))
     (rest/create-all (concat providers products repos))
     (perform-sync (filter (complement :unsyncable) repos))))
