@@ -53,12 +53,6 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
 
-(defn new-gpgkey-link-exists?
-  "Check whether new gpg-key link exists ?"
-  []
-  (nav/go-to ::page)
-  (browser isElementPresent ::new))
-
 (defn gpg-keys-prd-association?
   [gpg-key-name repo-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})

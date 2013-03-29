@@ -12,9 +12,6 @@
                      [content-search :refer [list-available-orgs]]
                      [conf :refer [config]]
                      [api-tasks :as api]
-                     [providers :as provider] 
-                     [repositories :as repo]
-                     [gpg-keys :as gpg-key]
                      [navigation :as nav]) 
             [test.tree.script :refer :all]
             [test.assert :as assert]
@@ -294,54 +291,6 @@
            (finally  
              (login new-user new-pass {:org (@config :admin-org)})
              (user/assign {:user user, :roles ["Administrator"]})
-             (login)))))
-     
-     (deftest "Assure user w/o Manage Permissions cannot associate GPG keys"
-       (let [new-user (uniqueify "gpgkeyuser1")
-             new-pass "gpgkey123"
-             gpg-key-name (uniqueify "test-key-text5")
-             provider-name (uniqueify "provider")
-             product-name  (uniqueify "product")
-             repo-name (uniqueify "repo")
-             role-name (uniqueify "role")
-             organization (@config :admin-org)]
-         (gpg-key/create gpg-key-name {:contents (slurp (@config :gpg-key))})
-         (provider/create {:name provider-name})
-         (provider/add-product {:provider-name provider-name
-                                :name product-name})
-         (repo/add-with-key {:provider-name provider-name
-                             :product-name product-name
-                             :name repo-name
-                             :url (-> fake/custom-providers first :products first :repos second :url)
-                             :gpgkey gpg-key-name})
-         (user/create new-user {:password new-pass :email "me@my.org"})
-         (role/create role-name)
-         (role/edit role-name
-                 {:add-permissions [{:org organization
-                                     :permissions [{:name "blah1"
-                                                    :resource-type "Organizations"
-                                                    :verbs ["Administer GPG Keys"]}
-                                                   {:name "blah2"
-                                                    :resource-type "Providers"
-                                                    :verbs ["Read Providers"]}]}]
-                  :users [new-user]})
-         (user/assign {:user new-user, :roles ["Read Everything"]})
-         (try 
-           (login new-user new-pass {:org organization})
-           (assert/is (repo/check-for-newlink-and-addrepobutton? provider-name))
-           (finally
-             (login)))))
-     
-     (deftest "Users w/o GPG key permissions cannot create GPG keys"
-       (let [new-user (uniqueify "gpgkeyuser1")
-             new-pass "gpgkey123"
-             organization (@config :admin-org)]
-         (user/create new-user {:password new-pass :email "me@my.org"})
-         (user/assign {:user new-user, :roles ["Read Everything"]})
-         (try 
-           (login new-user new-pass {:org organization})
-           (assert/is (not (gpg-key/new-gpgkey-link-exists?)))
-           (finally
              (login))))))      
 
 user-settings
