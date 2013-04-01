@@ -49,6 +49,10 @@
    ::system-groups               (ui/menu-link "systems_system_groups")
    ::add-group-form              "//form[@id='add_group_form']/button"
    ::add-group                    "//input[@id='add_groups']"
+
+   ;;new system form
+   ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
+   ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -395,5 +399,4 @@
   (nav/go-to ::custom-info-page {:system-name name})
   (browser click (remove-custom-info-button key-name))
   (notification/check-for-success))
-
 
