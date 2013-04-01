@@ -62,12 +62,10 @@
   (nav/go-to ::system/new-page)
   (browser mouseOver icon-locator)
   (Thread/sleep 2000)
-  (if (browser isTextPresent expected-text)
-    (do
-      (browser mouseOut icon-locator)
-      (Thread/sleep 2000)
-      (false? (browser isTextPresent expected-text)))
-    false))
+  (assert/is (browser isTextPresent expected-text))
+  (browser mouseOut icon-locator)
+  (Thread/sleep 2000)
+  (assert/is (false? (browser isTextPresent expected-text))))
 
 (defn validate-new-system-link
   [env? env org-name system-name]
@@ -257,8 +255,8 @@
 
   (deftest "New System Form: tooltips pop-up with correct information"
     (map verify-new-system-tooltip
-         [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]
-         [::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]))
+         [::system/ram-icon ::system/sockets-icon]
+         [ "The amount of RAM memory, in megabytes (MB), which this system has" "The number of CPU Sockets or LPARs which this system uses"]))
   
   (deftest "Add system from UI"
     :data-driven true
