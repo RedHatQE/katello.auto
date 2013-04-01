@@ -36,7 +36,7 @@
 
 (defrecord Erratum [id name product])
 
-(defrecord Template [id name product])
+(defrecord Template [id name product org content])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name env service-level])
@@ -58,3 +58,34 @@
 (def red-hat-provider (newProvider {:name "Red Hat"}))
 
 (defrecord SyncPlan [id name org interval])
+
+;; Relationship protocol
+
+(defprotocol BelongsTo
+  (org [x])
+  (env [x])
+  (product [x])
+  (provider [x])
+  (repository [x]))
+
+(def relationships
+  {Organization {:org identity}
+   Environment {:org :org, :env identity}  ; the org is in the env's :org field
+   Provider {:org :org, :provider identity}
+   Product {:org (comp org provider), :provider :provider, :product identity} ; the org is the provider's org
+   Repository {:org (comp org product), :product :product, :repository identity} ; the org is the product's org
+   Package {:org (comp org product), :product :product}
+   Erratum {:org (comp org product), :product :product}
+   Template {:org (fn [t] (or (:org t)
+                              (-> t product org)))
+             :product :product}
+   System {:org (comp org env), :env :env}
+   GPGKey {:org :org}
+   Permission {:org :org}
+   ActivationKey {:org (comp org env), :env :env}
+   SystemGroup {:org :org}
+   Manifest {:org (comp org provider), :provider :provider}
+   SyncPlan {:org :org}})
+
+(for [[rec impls] relationships]
+  (extend rec BelongsTo impls))

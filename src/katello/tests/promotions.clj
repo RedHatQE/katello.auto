@@ -9,7 +9,8 @@
                      [tasks :refer :all] 
                      [fake-content :as fake]
                      [sync-management :as sync]
-                     [conf :refer [with-org config *environments* *session-user* *session-password*]]) 
+                     [conf :refer [with-org config *environments* *session-user*
+                                   *session-password* *session-org*]]) 
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -38,20 +39,17 @@
 (defn create-test-provider-and-envs "Create a test provider and enviroments." []
   (reset! provider (-> {:name "promo"
                         :description "test provider for promotions"
-                        :org (@config :admin-org)}
+                        :org *session-org*}
                        katello/newProvider
                        uniqueify
                        rest/create))
-  
-  
   (reset! envs (environments/chain
                 (for [e (list "Dev" "QE" "Prod")]
                   (-> {:name e
-                       :org (@config :admin-org)}
+                       :org *session-org*}
                       katello/newEnvironment
-                      uniqueify))))
-  
-  (environment/create-all @envs))
+                      uniqueify)))) 
+  (ui/create-all @envs))
 
 (defn verify-all-content-present [from in]
   (doseq [content-type (keys from)]

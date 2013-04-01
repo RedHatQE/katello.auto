@@ -45,8 +45,8 @@
 (defn create
   "Creates an activation key with the given properties. Description
   and system-template are optional."
-  [{:keys [name description env system-template]}]
-  (nav/go-to ::new-page {:org (:org env)})
+  [{:keys [name description env system-template] :as ak}]
+  (nav/go-to ::new-page {:org (kt/org ak)})
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
@@ -117,4 +117,4 @@
            :update* update}
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to #(nav/go-to ::named-page {:activation-key %1
-                                                    :org (-> %1 :env :org)})})
+                                                    :org (kt/org %1)})})
