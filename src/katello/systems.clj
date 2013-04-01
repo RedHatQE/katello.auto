@@ -21,6 +21,8 @@
   env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
+  system-fact-group-expand        "//tr[@id='%s']/td/span"
   existing-key-value-field        "//div[@name='custom_info[%s]']"
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
@@ -76,6 +78,7 @@
    ::environment                 "//div[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
+   ::edit-description            "system_description"
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
    
@@ -224,6 +227,26 @@
           (throw+ {:type ::sysname-edited-anyway
                    :msg "System name changed even after clicking cancel button."}))))))
 
+(defn edit-sys-description
+  "Edit description of selected system"
+  [name new-description save?]
+  (nav/go-to ::details-page {:system-name name})
+  (let [original-description (browser getText ::edit-description)]
+    (browser click ::edit-description)
+    (browser setText ::description-text-edit new-description)
+    (if save?
+      (do
+        (browser click ::save-button)
+        (notification/check-for-success)
+        (when-not (= new-description (browser getText ::edit-description))
+          (throw+ {:type ::sys-description-not-edited
+                   :msg "Still getting old description of selected system."})))
+      (do
+        (browser click ::cancel-button)
+        (when-not (= original-description (browser getText ::edit-description))
+          (throw+ {:type ::sys-description-edited-anyway
+                   :msg "System description changed even after clicking cancel button."}))))))
+
 (defn set-environment "Move a system to a new environment."
   [system-name new-environment]
   (assert (not (blank? new-environment))) 
@@ -274,13 +297,40 @@
 
 (defn get-details [system-name]
   (nav/go-to ::details-page {:system-name system-name})
-  (let [details ["Name" "Description" "OS" "Release" "Release Version"
+  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
                  "System Type" "Host"]]
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
+
+(defn get-facts [system-name]
+  (nav/go-to ::facts-page {:system-name system-name})
+  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
+               "distribution.id" "distribution.name" "distribution.version"
+               "memory.memtotal" "memory.swaptotal"
+               "virt.host_type" "virt.is_guest" "virt.uuid"
+               "uname.machine" "uname.nodename" "uname.release"
+               "uname.sysname" "uname.version" "system.entitlements_valid"
+               "network.hostname" "network.ipv4_address" "network.ipv6_address"
+               "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
+               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
+    (zipmap facts
+            (doall (for [fact facts]
+                     (browser getText (system-fact-textbox fact)))))))
+
+(defn expand-collapse-facts-group
+  [system-name]
+  "Expand/collapse group of selected system's facts"
+  (nav/go-to ::facts-page {:system-name system-name})
+  (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
+    (doseq [group groups] ;;To expand
+      (when (browser isElementPresent (system-fact-group-expand group))
+        (browser click (system-fact-group-expand group))))
+    (doseq [group groups] ;;To collapse
+      (browser click (system-fact-group-expand group)))))
+
 
 (defn confirm-yes-no-to-delete
   [system-name del?]

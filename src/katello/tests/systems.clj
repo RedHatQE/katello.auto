@@ -158,6 +158,22 @@
      [(random-string (int \a) (int \z) 256) true :katello.notifications/system-name-255-char-limit]
      [(random-string (int \a) (int \z) 255) true]])
 
+  (deftest "System-details: Edit Description"
+    :data-driven true
+    
+    (fn [new-description save? & [expected-err]]
+      (let [system (uniqueify "newsystem")]
+        (system/create system {:sockets "1"
+                               :system-arch "x86_64"})
+        (if expected-err
+          (expecting-error (common/errtype expected-err)
+                           (system/edit-sys-description system new-description save?))
+          (system/edit-sys-description system new-description save?))))
+    
+    [["cancel description" false]
+     ["System Registration Info" true]
+     [(random-string (int \a) (int \z) 256) true :katello.notifications/sys-description-255-char-limit]
+     [(random-string (int \a) (int \z) 255) true]])
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
     :blockers (open-bz-bugs "738054")
@@ -306,6 +322,22 @@
         (assert/is (= (client/get-ip-address ssh-conn)
                             (system/get-ip-addr hostname)))
         (assert/is (every? (complement empty?) (vals details))))))
+  
+  (deftest "Review Facts of registered system"
+    ;;:blockers no-clients-defined
+    (provision/with-client "sys-facts"
+      ssh-conn
+      (let [target-env (first *environments*)]
+        (client/register ssh-conn
+                         {:username *session-user*
+                          :password *session-password*
+                          :org (@config :admin-org)
+                          :env target-env
+                          :force true})
+        (let [hostname (client/my-hostname ssh-conn)
+              facts (system/get-facts hostname)]
+          (system/expand-collapse-facts-group hostname)
+          (assert/is (every? (complement empty?) (vals facts)))))))
   
   (deftest "System-Details: Validate Activation-key link"
     (with-unique [system-name "mysystem"
