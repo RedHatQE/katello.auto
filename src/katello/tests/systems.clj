@@ -270,9 +270,10 @@
                      (system/create "")))
 
   (deftest "New System Form: tooltips pop-up with correct information"
-    (map verify-new-system-tooltip
-         [::system/ram-icon ::system/sockets-icon]
-         [ "The amount of RAM memory, in megabytes (MB), which this system has" "The number of CPU Sockets or LPARs which this system uses"]))
+    :data-driven true
+    verify-new-system-tooltip
+    [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
+     [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
   
   (deftest "Add system from UI"
     :data-driven true
