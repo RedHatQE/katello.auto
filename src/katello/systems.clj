@@ -51,8 +51,8 @@
    ::add-group                    "//input[@id='add_groups']"
 
    ;;new system form
-   ::sockets-icon                "xpath=(//i[@class='details-icon'])[1]"
-   ::ram-icon                    "xpath=(//i[@class='details-icon'])[2]"
+   ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
+   ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
