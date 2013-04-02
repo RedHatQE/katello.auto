@@ -101,7 +101,7 @@
   [suffix-str base-ent-sym]
   `(defmacro ~(symbol (str "with-unique-" suffix-str))
      [sym# ~'& body#]
-     `(with-unique [~sym# ~~base-ent-sym]
+     `(with-unique [~sym# ~'~base-ent-sym]
         ~@body#)))
 
 (defn uniqueify-vals
