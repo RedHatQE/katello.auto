@@ -37,7 +37,7 @@
       (expecting-error (common/errtype ::notifications/label-taken-error)
                        (views/create-content-view-definition view-definition-name {:description "Automatically created."}))))
 
-  (deftest "Delete a content view definition"
+  (deftest "Edit a content view definition"
     (with-unique [env-name "auto-env"
                   org-name "real-org"
                   view-definition-name "content-view"
