@@ -24,7 +24,9 @@
    ::save-permission                 "save_permission_button"
    ::remove                          "remove_role"
    ::add-permission                  "add_permission"
-   ::all-types                       "all_types"}
+   ::all-types                       "all_types"
+   ::all-verbs                       "all_verbs"
+   ::all-tags                        "all_tags"}
   ui/locators)
 
 (sel/template-fns
@@ -95,11 +97,21 @@
                     (browser click ::all-types)
                     (do (browser select ::permission-resource-type-select resource-type)
                         (browser click ::next)
-                        (doseq [verb verbs]
-                          (browser addSelection ::permission-verb-select verb))
+                        (cond 
+                          (and (not verbs) (browser isVisible ::all-verbs)) 
+                          (browser click ::all-verbs)
+                          
+                          (not (nil? verbs))
+                          (doseq [verb verbs]
+                            (browser addSelection ::permission-verb-select verb)))
                         (browser click ::next)
-                        (doseq [tag tags]
-                          (browser addSelection ::permission-tag-select tag))))
+                        (cond 
+                          (and (not tags) (browser isVisible ::all-tags)) 
+                          (browser click ::all-tags)
+                          
+                          (not (nil? tags))
+                          (doseq [tag tags]
+                            (browser addSelection ::permission-tag-select tag)))))
                   (sel/fill-ajax-form {::permission-name-text name
                                        ::permission-description-text description}
                                       ::save-permission))

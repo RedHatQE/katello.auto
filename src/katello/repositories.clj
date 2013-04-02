@@ -13,7 +13,8 @@
    ::repo-url-text     "repo[feed]" 
    ::save-repository   "//input[@value='Create']"
    ::remove-repository (ui/link "Remove Repository")
-   ::repo-gpg-select   "//select[@id='repo_gpg_key']"}
+   ::repo-gpg-select   "//select[@id='repo_gpg_key']"
+   ::add-repo-button   "//div[contains(@class,'button') and contains(.,'Add Repository')]"}
   ui/locators)
 
 (sel/template-fns
@@ -64,3 +65,4 @@
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
     (browser check (repo-enable-checkbox repo))))
+  
