@@ -92,18 +92,6 @@
   (doseq [ent ents]
     (create ent)))
 
-(defn create-entity
-  "Creates the entity, including all parents (if they don't already exist)."
-  [ent]
-  (when-let [parent (kt/parent ent)]
-    (create-entity parent))
-  (when-not (exists? ent)
-    (create ent)))
-
-(defn create-all-hierarchy [ents]
-  (doseq [ent ents]
-    (create-entity ent)))
-
 (defn api-url [uri]
   (format "%s/%s" (@conf/config :server-url) uri ))
 

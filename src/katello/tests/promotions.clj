@@ -10,7 +10,8 @@
                      [fake-content :as fake]
                      [changesets :as changeset]
                      [sync-management :as sync]
-                     [conf :refer [config *session-org*]]) 
+                     [conf :refer [config *session-org*]])
+            [katello.tests.useful :refer [create-recursive]]
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -18,12 +19,6 @@
             [test.assert :as assert]
             [clojure.set :refer [index]])
   (:refer-clojure :exclude [fn]))
-
-(defn verify-all-content-present [from in]
-  (doseq [content-type (keys from)]
-    (let [promoted (content-type from)
-          current (content-type in)]
-      (assert/is (every? current promoted)))))
 
 (defn fresh-repo "New repo in a new product in a new provider"
   []
@@ -35,8 +30,6 @@
 (def promo-data
   (runtime-data [[2 (list (:product (fresh-repo)))]]))
 
-
-
 (defn verify-promote-content [num-envs content-to-promote]
   ;;create envs
   (let [envs (->> {:name "promo-env", :org *session-org*}
@@ -46,11 +39,11 @@
                   env/chain)
         setup-item {katello.Product (fn [prod] ; create a repo in the given product and sync it
                                       (let [repo (assoc (fresh-repo) :product prod)]
-                                        (rest/create-entity repo)
+                                        (create-recursive repo)
                                         (sync/perform-sync (list repo))))
                     katello.Template (fn [t] ; create a repo and sync it, promote it and add it to template
                                        (let [repo (fresh-repo)]
-                                         (rest/create-entity repo)
+                                         (create-recursive repo)
                                          (sync/perform-sync (list repo))
                                          (doseq [target-env envs]
                                            (changeset/api-promote target-env (list (:product repo))))
@@ -62,7 +55,7 @@
     (doseq [target-env envs]
       (changeset/promote-delete-content (uniqueify (kt/newChangeset {:name "cs", :env target-env
                                                                      :content content-to-promote}))))
-    (let [ui-member (fn [s m]
+    (let [ui-member (fn [s m] ; check that m's name and class match an item in the set.
                       (some (fn [i]
                               (let [l (list i m)]
                                 (and (map (comp = class) l)

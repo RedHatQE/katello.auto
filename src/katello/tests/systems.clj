@@ -18,6 +18,7 @@
                      [conf :refer [*session-user* *session-password*
                                    *session-org* config *environments*]])
             [katello.client.provision :as provision]
+            [katello.tests.useful :refer [create-series]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
 
@@ -162,9 +163,8 @@
   (deftest "Re-registering a system to different environment"
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
-                                           uniques
+                                           create-series
                                            (take 2))]
-      (rest/create-all envs)
       (provision/with-client "reg-with-env-change"
         ssh-conn
         (let [mysys (-> {:name (client/my-hostname ssh-conn)}
@@ -185,11 +185,10 @@
   (deftest "Install package after moving a system from one env to other"
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
-                                           uniques
+                                           create-series
                                            (take 2))
           product (configure-product-for-pkg-install env-dev)
           package (katello/newPackage {:name "cow" :product product})]
-      (rest/create-all envs)
       (provision/with-client "env_change"
         ssh-conn
         (client/register ssh-conn
