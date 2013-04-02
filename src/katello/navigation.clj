@@ -14,10 +14,10 @@
      (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
      name next)))
 
-(defn select-environment-widget [env & [{:keys [wait]}]]
+(defn select-environment-widget [env & [{:keys [next-env wait]}]]
   (do (when (browser isElementPresent ::ui/expand-path)
         (browser click ::ui/expand-path))
-      (browser click (environment-breadcrumb (:name env) (-> env :next :name)))
+      (browser click (environment-breadcrumb (:name env) (:name next-env)))
       (when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]

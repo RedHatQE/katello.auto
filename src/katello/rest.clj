@@ -1,5 +1,6 @@
 (ns katello.rest
-  (:require [clj-http.client :as httpclient]
+  (:require [katello :as kt]
+            [clj-http.client :as httpclient]
             [clojure.data.json :as json]
             [katello.conf :as conf]
             [slingshot.slingshot :refer [try+ throw+]])
@@ -80,10 +81,28 @@
 (defn update [x f & args]
   (update* x (apply f x args)))
 
+(defn exists? [ent]
+  (try+
+    (boolean (read ent))
+    (catch [:type ::entity-not-found] _ false)))
+
+(def not-exists? (complement exists?))
 
 (defn create-all [ents]
   (doseq [ent ents]
     (create ent)))
+
+(defn create-entity
+  "Creates the entity, including all parents (if they don't already exist)."
+  [ent]
+  (when-let [parent (kt/parent ent)]
+    (create-entity parent))
+  (when-not (exists? ent)
+    (create ent)))
+
+(defn create-all-hierarchy [ents]
+  (doseq [ent ents]
+    (create-entity ent)))
 
 (defn api-url [uri]
   (format "%s/%s" (@conf/config :server-url) uri ))
@@ -167,10 +186,4 @@
   (if (->> (get-version) :name (= "Headpin"))
     ["This test is for Katello based deployments only and this is a headpin-based server."] []))
 
-(defn exists? [ent]
-  (try+
-    (read ent)
-    (catch [:type ::entity-not-found] _ false)))
-
-(def not-exists? (complement exists?))
 

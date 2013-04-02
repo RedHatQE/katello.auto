@@ -135,7 +135,7 @@
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
-  (nav/go-to ::status-page {:org (-> repos first :product :provider :org)})
+  (nav/go-to ::status-page {:org (-> repos first kt/org)})
   (doseq [repo repos]
     (browser check (provider-checkbox (:name repo))))
   (browser click ::synchronize-now)
@@ -157,6 +157,5 @@
         ;; orgs (distinct-parents :product :provider :org)
         providers (distinct-parents :product :provider)
         products (distinct-parents :product)]
-    (println (count providers))
     (rest/create-all (concat providers products repos))
     (perform-sync (filter (complement :unsyncable) repos))))

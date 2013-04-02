@@ -1,6 +1,7 @@
 (ns katello.changesets
   (:refer-clojure :exclude [remove])
-  (:require (katello [navigation :as nav]
+  (:require [katello :as kt]
+            (katello [navigation :as nav]
                      [tasks :as tasks :refer [uniqueify with-unique]]
                      [ui-common :as common]
                      [ui :as ui]
@@ -56,11 +57,11 @@
    
 (nav/defpages (common/pages)
   [::page
-   [::named-environment-page [env-name next-env-name]
-    (nav/select-environment-widget env-name {:next-env-name next-env-name :wait true})
-    [::named-page [changeset-name deletion?] (do (when deletion?
-                                                   (browser click ::deletion))
-                                                 (browser click (list-item changeset-name)))]]])
+   [::named-environment-page [env next-env]
+    (nav/select-environment-widget env {:next-env next-env :wait true})
+    [::named-page [changeset deletion?] (do (when deletion?
+                                              (browser click ::deletion))
+                                            (browser click (list-item (:name changeset))))]]])
 
 ;; Protocol
 
@@ -109,11 +110,12 @@
 ;; Tasks
 
 (defn create
-  "Creates a changeset for promotion from env-name to next-env name
+  "Creates a changeset for promotion from env to next-env 
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
-  (nav/go-to ::named-environment-page {:env-name (:name env)
-                                       :next-env-name (-> env :next :name)})
+  (nav/go-to ::named-environment-page {:org (kt/org env)
+                                       :env (:prior env)
+                                       :next-env env})
   (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
@@ -128,10 +130,10 @@
                   (browser click ::promotion-eligible-home))]
     (nav/go-to changeset)
     (doseq [item (:content to-add)]
-      (add item changeset)
+      (add item)
       (go-home))
     (doseq [item (:content to-remove)]
-      (remove item changeset)
+      (remove item)
       (go-home))))
 
 (extend katello.Changeset
@@ -169,11 +171,11 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
   
-  nav/Destination {:go-to (fn [{:keys [name deletion? env]}]
-                            (organization/switch (-> env :org))
-                            (nav/go-to ::named-page {:env-name (:name env)
-                                                     :next-env-name (-> env :next :name)
-                                                     :changeset-name name
+  nav/Destination {:go-to (fn [{:keys [name deletion? env] :as cs}]
+                            (nav/go-to ::named-page {:org (kt/org env)
+                                                     :env (:prior env)
+                                                     :next-env env
+                                                     :changeset cs
                                                      :deletion? deletion?}))})
 
 (defn promote-or-delete
@@ -210,10 +212,11 @@
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "
   [cs]
-  (doto (uniqueify cs)
-    (ui/create)
-    (ui/update identity) ; since creating doesn't include content
-    (promote-or-delete)))
+  (let [content (:content cs)
+        cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
+    (ui/create cs)
+    (ui/update cs assoc :content content)
+    (promote-or-delete cs)))
 
 (defn sync-and-promote
   "Syncs all the repos and then promotes all their parent products
@@ -239,9 +242,10 @@
 
 (defn environment-content
   "Returns the content that is available to promote, in the given environment."
-  [env-name]
-  (nav/go-to ::named-environment-page {:env-name env-name
-                                       :next-env-name nil})
+  [env]
+  (nav/go-to ::named-environment-page {:env env
+                                       :org (kt/org env)
+                                       :next-env nil})
   (let [categories {katello/newProduct ::products-category,
                     katello/newTemplate ::templates-category}]
     (apply concat (for [[f category] categories]
@@ -254,12 +258,12 @@
                   result))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
-  (nav/go-to ::named-environment-page {:env-name env}))
+  (nav/go-to ::named-environment-page {:env env}))
 
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (nav/go-to ::named-environment-page {:env-name (:name env) :next-env-name ""})
+  (nav/go-to ::named-environment-page {:env env :next-env ""})
   (let [visible? #(try (do (browser isVisible (add-content-item %))
                            true)
                        (catch Exception e false))]
@@ -271,7 +275,7 @@
   "When the product is not promoted to next env and if there is no add-link 
    visible for repos/packages, it returns true."
   [env content]
-  (nav/go-to ::named-environment-page {:env-name env :next-env-name nil})
+  (nav/go-to ::named-environment-page {:env env :next-env nil})
   (sel/->browser (click ::new)
                  (setText ::name-text (uniqueify "changeset1"))
                  (click ::save))

@@ -1,6 +1,6 @@
 (ns katello.repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
-            katello
+            [katello :as kt]
             (katello [tasks :as tasks]
                      [organizations :as organization]
                      [navigation :as nav]
@@ -64,15 +64,18 @@
 
   rest/CRUD {:create (fn [{:keys [product name url]}]
                        (rest/http-post (rest/api-url "api/repositories/")
-                                       {:body {:organization_id (-> product :provider :org :name)
+                                       {:body {:organization_id (-> product kt/org :name)
                                                :product_id (rest/get-id product)
                                                :name name
-                                               :url url}}))}
+                                               :url url}}))
+             :read (partial rest/read-impl (partial rest/url-maker [["api/repositories/%s" [identity]]]))
+             :id rest/id-field
+             :query (partial rest/query-by-name (partial rest/url-maker [["api/organizations/%s/products/%s/repositories" [kt/org kt/product]]]) )}
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (fn [{:keys [product name]}]
-                            (nav/go-to ::named-page {:org (-> product :provider :org)
-                                                     :provider (:provider product)
+                            (nav/go-to ::named-page {:org (kt/org product)
+                                                     :provider (kt/provider product)
                                                      :product product
                                                      :repo-name name}))})

@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
-            katello
+            [katello :as kt]
             (katello [navigation :as nav]
                      [tasks :as tasks] 
                      [notifications :as notification] 
@@ -98,13 +98,15 @@
                                                      :env env}))})
 
 (defn chain
-  "Sets prior of each env to be the previous env in the list"
-  [environments]
-  {:pre [(apply = (map :org environments))]} ; all in same org
-  (let [org (-> environments first :org)]
-    (for [[prior curr] (partition 2 1 (conj (list* environments)
-                                            (assoc katello/library :org org)))]
-      (assoc curr :prior prior))))
+  "Sets the next and prior fields of successive envs to make a doubly
+  linked list."
+  [environments] {:pre [(apply = (map kt/org environments))]} ; all in same org
+  (let [org (-> environments first kt/org)
+        f (fn [envs latest-env]
+            (let [l (last envs)
+                  r (butlast envs)]
+              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
+    (rest (reduce f (vector (assoc katello/library :org org)) (vec environments)))))
 
 (defn create-all
   "Creates multiple environments."
