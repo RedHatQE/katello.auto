@@ -62,7 +62,14 @@
     (doseq [target-env envs]
       (changeset/promote-delete-content (uniqueify (kt/newChangeset {:name "cs", :env target-env
                                                                      :content content-to-promote}))))
-    (assert/is ((set content-to-promote) (changeset/environment-content (last envs))))))
+    (let [ui-member (fn [s m]
+                      (some (fn [i]
+                              (let [l (list i m)]
+                                (and (map (comp = class) l)
+                                     (map (comp = :name) l))))
+                            s))]
+      (assert/is (every? (partial ui-member (changeset/environment-content (last envs)))
+                         (set content-to-promote))))))
 
 (defgroup promotion-tests
   
