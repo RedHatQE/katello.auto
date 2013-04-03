@@ -1,21 +1,21 @@
 (ns katello.tests.environments
   (:refer-clojure :exclude [fn])
-  (:require katello
+  (:require [katello :as kt]
             (katello [navigation :as nav]
                      [rest :as rest]
                      [ui :as ui]
                      [organizations :as organization] 
                      [ui-common :refer [errtype]] 
                      [sync-management :as sync] 
-                     [tasks :refer :all] 
+                     [tasks :refer [uniques uniqueify with-unique expecting-error]] 
                      [environments :as environment]
                      [notifications :as notification]
                      [systems :as system]
                      [validation :refer :all] 
                      [client :as client] 
                      [conf :as conf]
-                     [changesets :as changeset]) 
-            [katello.tests.providers :refer [with-n-new-orgs]]
+                     [changesets :as changeset])
+            [katello.tests.useful :refer [create-all-recursive]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
             [test.assert :as assert]
@@ -26,9 +26,9 @@
 ;; Variables
 
 (def test-org (atom nil))
-(def first-env "dev")
 
 ;; Functions
+
 (defn create-same-env-in-multiple-orgs
   "Verifies that the same environment name can be used independently
    in different organizations. See also
@@ -37,7 +37,7 @@
   {:pre [(apply = (map :name envs))  ; names all same
          (= (count envs)
             (count (distinct (map :org envs))))]} ; orgs all different
-  (ui/create-all envs))
+  (create-all-recursive envs))
 
 (defn verify-delete-env-restricted-to-this-org
   "Verify that when you create multiple environments with the same
@@ -77,10 +77,10 @@
    using the API."
   []
   (reset! test-org (-> {:name "env-test"
-                             :description "organization used to test environments."}
-                            katello/newOrganization
-                            uniqueify
-                            rest/create)))
+                        :description "organization used to test environments."}
+                       katello/newOrganization
+                       uniqueify
+                       rest/create)))
 
 
 ;; Tests
@@ -103,11 +103,12 @@
       (doseq [[basename thismany] [["envpath1" 2]
                                    ["envpath2" 5]]]
         (->> {:name basename
-              :org (@conf/config :admin-org)}
+              :org @test-org}
              katello/newEnvironment
              uniques
              (take thismany)
-             environment/create-path)))
+             environment/chain
+             ui/create-all)))
 
     (deftest "Delete an environment"
       :blockers (open-bz-bugs "790246")
@@ -120,7 +121,11 @@
 
 
       (deftest "Deleting an environment does not affect another org with the same name environment"
-        (with-n-new-orgs 2 verify-delete-env-restricted-to-this-org))
+        (let [orgs (take 2 (uniques (kt/newOrganization {:name "delete-env-other"})))]
+          (verify-delete-env-restricted-to-this-org
+           (for [org orgs]
+             (kt/newEnvironment {:name "same-name-diff-org"
+                                 :org org})))))
 
 
       (deftest "Delete an environment that has had content promoted into it"
@@ -139,8 +144,8 @@
         :blockers    (open-bz-bugs "794799")
 
         (let [envs (take 3 (uniques (katello/newEnvironment {:name "env"
-                                                             :org (@conf/config :admin-org)})))]
-          (environment/create-path envs)
+                                                             :org conf/*session-org*})))]
+          (-> envs environment/chain ui/create-all)
           (expecting-error [:type ::environment/cant-be-deleted]
                            (ui/delete (second envs)))
           (ui/delete (last envs)))))
@@ -164,7 +169,11 @@
         (ui/update env assoc :description "I changed it!")))
 
     (deftest "Create environments with the same name but in different orgs"
-      (with-n-new-orgs 2 create-same-env-in-multiple-orgs))
+      (let [orgs (take 2 (uniques (kt/newOrganization {:name "delete-env-other"})))
+            envs (for [org orgs]
+                   (kt/newEnvironment {:name "same-name-diff-org"
+                                       :org org}))]
+        (ui/create-all (concat orgs envs))))
     
     (deftest "Adding environment named or labeled 'Library' is disallowed"
       :data-driven true
@@ -198,8 +207,8 @@
                                                       :org @test-org})]
         (ui/create-all (list env-dev env-test))
         (client/setup-client ssh-conn (uniqueify "envmovetest"))
-        (client/register ssh-conn {:username conf/*session-user*
-                                   :password conf/*session-password*
+        (client/register ssh-conn {:username (:name conf/*session-user*)
+                                   :password (:password conf/*session-user*)
                                    :org (:name @test-org)
                                    :env (:name env-dev)
                                    :force true})

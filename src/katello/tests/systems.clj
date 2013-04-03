@@ -15,10 +15,9 @@
                      [tasks :refer :all]            
                      [systems :as system]                   
                      [gpg-keys :as gpg-key]
-                     [conf :refer [*session-user* *session-password*
-                                   *session-org* config *environments*]])
+                     [conf :refer [*session-user* *session-org* config *environments*]])
             [katello.client.provision :as provision]
-            [katello.tests.useful :refer [create-series]]
+            [katello.tests.useful :refer [create-series create-recursive]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
 
@@ -31,7 +30,7 @@
 
 (defn create-test-environment []
   (def test-environment (first *environments*))
-  (env/ensure-exist test-environment))
+  (create-recursive test-environment))
 
 (defn register-new-test-system []
   (-> {:name "newsystem"
@@ -65,9 +64,9 @@
                 repo (katello/newRepository {:name "zoo_repo"
                                              :product product
                                              :gpg-key testkey})]
-    (env/ensure-exist target-env)
+    (create-recursive target-env)
     (ui/create-all testkey provider product repo)
-    (when (api/is-katello?)
+    (when (rest/is-katello?)
       (changeset/sync-and-promote (list repo) target-env))
     product))
 
@@ -90,7 +89,7 @@
 
   (deftest "Subscribe a system to a custom product"
     :blockers (union (open-bz-bugs "733780" "736547" "784701")
-                     api/katello-only)
+                     rest/katello-only)
 
     (with-unique [provider (katello/newProvider {:name "subscr-prov" :org *session-org*})
                   product (katello/newProduct {:name "subscribe-me"
@@ -122,8 +121,8 @@
     (provision/with-client "sys-detail"
       ssh-conn
       (client/register ssh-conn
-                       {:username *session-user*
-                        :password *session-password*
+                       {:username (:name *session-user*)
+                        :password (:password *session-user*)
                         :org (:name *session-org*)
                         :env (:name test-environment)
                         :force true})
@@ -136,7 +135,7 @@
   (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"
-    :blockers api/katello-only
+    :blockers rest/katello-only
 
     (fn [package-name]
       (let [target-env (first *environments*)
@@ -147,8 +146,8 @@
         (provision/with-client sys-name
           ssh-conn
           (client/register ssh-conn
-                           {:username *session-user*
-                            :password *session-password*
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
                             :org (-> product :provider :org :name)
                             :env (:name target-env)
                             :force true})
@@ -172,14 +171,14 @@
                         rest/read)]
           (doseq [env [env-dev env-test]]
             (client/register ssh-conn
-                             {:username *session-user*
-                              :password *session-password*
+                             {:username (:name *session-user*)
+                              :password (:password *session-user*)
                               :org (-> env :org :name)
                               :env (:name env)
                               :force true})
             (assert/is (= {:name env} (system/environment mysys))))
           (assert/is (not= (:environment_id mysys)
-                           (rest/http-get-id env-dev)))))))
+                           (rest/get-id env-dev)))))))
     
   
   (deftest "Install package after moving a system from one env to other"
@@ -192,8 +191,8 @@
       (provision/with-client "env_change"
         ssh-conn
         (client/register ssh-conn
-                         {:username *session-user*
-                          :password *session-password*
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
                           :org (-> env-dev :org :name)
                           :env (:name env-dev)
                           :force true})

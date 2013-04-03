@@ -1,42 +1,24 @@
 (ns katello.tests.templates
   (:refer-clojure :exclude [fn])
-  (:require [clj-http.client :as http]
-            [clojure.java.io :as io]
-            [test.tree.script :refer :all] 
+  (:require [test.tree.script :refer :all] 
             [serializable.fn :refer [fn]]
             [bugzilla.checker :refer [open-bz-bugs]]
+            [katello :as kt]
             (katello [api-tasks :as api] 
                      [tasks :refer :all] 
-                     [system-templates :as template]
-                     [conf :refer [*environments*]])))
+                     system-templates
+                     [changesets :as changeset]
+                     [sync-management :as sync]
+                     [ui :as ui]
+                     [conf :refer [*environments* *session-org* config]])
+            [katello.tests.useful :as testfns]))
 
 ;; Variables
 
-(def test-template-name (atom nil))
-(def content (atom nil))
-(def products (atom []))
-(def repos (atom []))
-
 ;; Functions
 
-(defn setup-custom-content []  
-  (let [provider-name (uniqueify "template")
-        cs-name (uniqueify "cs")]
-    (api/create-provider provider-name)
-    (reset! products (take 3 (unique-names "templateProduct")))
-    (reset! repos [])
-    (let [prods (doall
-                 (for [product @products]
-                   (let [created-prod (api/create-product
-                                       product {:provider-name provider-name
-                                                :description "product to test templates"})
-                         repo-name (uniqueify "templ")]
-                     (api/create-repo repo-name {:product-name product :url "http://my.fakerepo.com/blah/blah"})
-                     (swap! repos conj {:product product :repositories [repo-name]})
-                     created-prod)))
-          content {:products (for [prod prods] {:product_id (:id prod)})}]
-      (api/with-env (first *environments*)
-        (api/promote content)))))
+(defmacro fresh-repo []
+  `(testfns/fresh-repo *session-org* (@config :sync-repo)))
 
 ;; Tests
 
@@ -44,9 +26,15 @@
   :blockers (open-bz-bugs "765888")
   
   (deftest "Create a system template" 
-    (template/create {:name (reset! test-template-name (uniqueify "template"))
-                               :description "my test template"})
+    (-> {:name "template" :org *session-org*}
+        kt/newTemplate uniqueify ui/create)
 
     (deftest "Add custom content to a system template"
-      (setup-custom-content)
-      (template/add-to @test-template-name @repos))))
+      (with-unique [t (kt/newTemplate {:name "templ", :org *session-org*})]
+        (ui/create t)
+        (let [repo (fresh-repo)]
+          (testfns/create-recursive repo)
+          (sync/perform-sync (list repo))
+          (changeset/api-promote (first *environments*) (list (:product repo)))
+          (ui/create t)
+          (ui/update t assoc :content (list repo)))))))

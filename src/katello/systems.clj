@@ -4,6 +4,7 @@
             [clojure.data :as data]
             [slingshot.slingshot :refer [throw+]]
             [test.assert :as assert]
+            [katello :as kt]
             (katello [navigation :as nav]
                      environments
                      [notifications :as notification]
@@ -275,7 +276,7 @@
   rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [:env]]
                                                      ["api/organizations/%s/systems" [(comp :org :env)]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
-              {:id rest/id-field
+              {:id :uuid
                :query (partial rest/query-by-name query-url)
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
@@ -290,6 +291,13 @@
                             (nav/go-to ::named-page {:system system
                                                      :org (-> system :env :org)}))})
 
+
+(defn api-pools
+  "Gets all pools a system is subscribed to"
+  [system]
+  (->> (rest/http-get (rest/url-maker [["api/systems/%s/pools" [identity]]] system))
+       :pools
+       (map kt/newPool)))
 
 (defn environment "Get current environment of the system"
   [system]

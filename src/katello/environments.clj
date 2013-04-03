@@ -108,21 +108,6 @@
               (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
     (rest (reduce f (vector (assoc katello/library :org org)) (vec environments)))))
 
-(defn create-all
-  "Creates multiple environments."
-  [environments]
-  (doseq [env environments]
-    (ui/create env)))
-
-(def create-path (comp create-all chain))
-
-(defn ensure-exist
-  "If the given environment doesn't exist, create it."
-  [env]
-  (locking (keyword (-> env :org :name)) ;;lock on org name to prevent race condition
-    (if-not (rest/exists? env)
-      (rest/create env))))
-
 
 
 

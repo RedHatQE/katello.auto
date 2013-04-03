@@ -6,6 +6,7 @@
             [fn.trace :refer [all-fns]]
             [deltacloud :as cloud]
             katello
+            [katello.environments :refer [chain]]
             [katello.tasks :refer [unique-names]])
   
   (:import [java.io PushbackReader FileNotFoundException]
@@ -139,14 +140,14 @@
   
   (swap! config merge defaults opts)
   (swap! config merge (->> (:config @config)
-                         try-read-configs
-                         (drop-while nil?)
-                         first))
+                           try-read-configs
+                           (drop-while nil?)
+                           first))
   (let [non-defaults (into {}
                            (filter (fn [[k v]] (not= v (k defaults)))
                                    opts))]
     (swap! config merge non-defaults)) ; merge 2nd time to override anything in
-                                       ; config files
+                                        ; config files
 
   ;; if user didn't specify sel address, start a server and use that
   ;; address.
@@ -162,9 +163,9 @@
                                                   (@config :deltacloud-user)
                                                   (@config :deltacloud-password))))
   (def ^:dynamic *browsers* (@config :browser-types))
-  (def ^:dynamic *environments* (for [e (@config :environments)]
-                                  (katello/newEnvironment {:name e
-                                                           :org *session-org*})))) 
+  (def ^:dynamic *environments* (chain (for [e (@config :environments)]
+                                         (katello/newEnvironment {:name e
+                                                                  :org *session-org*}))))) 
 
 (def promotion-deletion-lock nil) ;; var to lock on for promotions
 

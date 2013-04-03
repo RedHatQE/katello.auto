@@ -59,6 +59,8 @@
 
 (defrecord SyncPlan [id name org interval])
 
+(defrecord Pool [id productId org])
+
 ;; Relationship protocol
 
 (defprotocol BelongsTo

@@ -10,6 +10,7 @@
                      [validation :as val]
                      [fake-content  :as fake]
                      [conf :refer [*environments*]])
+            [katello.tests.useful :refer [create-recursive]]
             [katello.client.provision :as provision]            
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
@@ -19,16 +20,16 @@
 
 ;; Tests
 
-(def some-ak (kt/newActivationKey {:name "ak"
-                                   :env (first *environments*)
-                                   :description "auto activation key"}))
+(defn some-ak [] (kt/newActivationKey {:name "ak"
+                                       :env (first *environments*)
+                                       :description "auto activation key"}))
 
 (defmacro with-unique-ak [sym & body]
-  `(with-unique [~sym some-ak]
+  `(with-unique [~sym (some-ak)]
      ~@body))
 
 (defgroup ak-tests
-  :group-setup #(env/ensure-exist (first *environments*))
+  :group-setup #(create-recursive (first *environments*))
   
   (deftest "Create an activation key"
     :blockers (open-bz-bugs "750354")
@@ -38,7 +39,7 @@
     (deftest "Create an activation key with i18n characters"
       :data-driven true
       (fn [name]
-        (with-unique [a (assoc some-ak :name name)]
+        (with-unique [a (assoc (some-ak) :name name)]
           (ui/create a)))
       val/i8n-chars)
 
@@ -56,7 +57,7 @@
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
         (fake/setup-org envz)
-        (with-unique [ak (assoc some-ak :env e1)]
+        (with-unique [ak (assoc (some-ak) :env e1)]
           (ui/create ak)
           (ui/update ak assoc :subscriptions fake/subscription-names)
           (assert/is (some #{(first fake/subscription-names)}

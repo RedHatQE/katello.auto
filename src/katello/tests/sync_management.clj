@@ -11,7 +11,7 @@
                      [sync-management :as sync]
                      [changesets :as changeset]
                      [conf :refer [config *environments* *session-org* *session-user*]])
-
+            [katello.tests.useful :as testfns]
             [test.tree.script :refer :all]
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]))
@@ -21,12 +21,8 @@
 
 ;; Functions
 
-(defn fresh-repo "New repo in a new product in a new provider"
-  []
-  (with-unique [prov (kt/newProvider {:name "sync", :org *session-org*})
-                prod (kt/newProduct {:name "sync-test1", :provider prov})
-                repo (kt/newRepository {:name "testrepo", :product prod, :url (@config :sync-repo)})]
-    repo))
+(defmacro fresh-repo []
+  `(testfns/fresh-repo *session-org* (@config :sync-repo)))
 
 (defn complete? [sync-result]
   (= "Sync complete." sync-result))

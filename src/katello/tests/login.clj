@@ -38,7 +38,7 @@
   ;;to be used as a :before-test for all tests
   (if (logged-in?)
     (do (nav/go-to ::nav/top-level)
-        (if (= (organization/current) "Select an Organization:") ;;see bz 857173
+        (if (= (nav/current-org) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
                (catch Exception _
                  (login-admin)))))
@@ -72,6 +72,6 @@
     :data-driven true
     verify-invalid-login-rejected
 
-    [(fn [] [(.toUpperCase *session-user*) (.toUpperCase *session-password*)])
-     (fn [] [(.toUpperCase *session-user*) *session-password*])
-     (fn [] [*session-user* (.toUpperCase *session-password*)])]))
+    [(fn [] [(-> *session-user* :name .toUpperCase) (-> *session-user* :password .toUpperCase)])
+     (fn [] [(-> *session-user* :name .toUpperCase) (:password *session-user*)])
+     (fn [] [(:name *session-user*) (-> *session-user* :password .toUpperCase)])]))

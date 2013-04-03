@@ -11,7 +11,7 @@
                      [changesets :as changeset]
                      [sync-management :as sync]
                      [conf :refer [config *session-org*]])
-            [katello.tests.useful :refer [create-recursive]]
+            [katello.tests.useful :refer [create-recursive] :as testfns]
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -20,12 +20,8 @@
             [clojure.set :refer [index]])
   (:refer-clojure :exclude [fn]))
 
-(defn fresh-repo "New repo in a new product in a new provider"
-  []
-  (with-unique [prov (kt/newProvider {:name "sync", :org *session-org*})
-                prod (kt/newProduct {:name "sync-test1", :provider prov})
-                repo (kt/newRepository {:name "testrepoo", :product prod, :url (@config :sync-repo)})]
-    repo))
+(defmacro fresh-repo []
+  `(testfns/fresh-repo *session-org* (@config :sync-repo)))
 
 (def promo-data
   (runtime-data [[2 (list (:product (fresh-repo)))]]))
@@ -47,7 +43,8 @@
                                          (sync/perform-sync (list repo))
                                          (doseq [target-env envs]
                                            (changeset/api-promote target-env (list (:product repo))))
-                                         (ui/update t assoc :content (list (repo)))))}]
+                                         (ui/create t)
+                                         (ui/update t assoc :content (list repo))))}]
     (rest/create-all envs)
     (doseq [item content-to-promote]
       ((setup-item (class item)) item))
