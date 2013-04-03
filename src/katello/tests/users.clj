@@ -2,6 +2,7 @@
   (:require (katello [validation :refer :all] 
                      [organizations :as organization]
                      [ui :as ui]
+                     [fake-content :as fake]
                      [login :refer [login logout logged-in?]]
                      [ui-common :as common]
                      [roles :as role]
@@ -10,7 +11,8 @@
                      [tasks :refer :all] 
                      [content-search :refer [list-available-orgs]]
                      [conf :refer [config]]
-                     [api-tasks :as api]) 
+                     [api-tasks :as api]
+                     [navigation :as nav]) 
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [clojure.string :refer [capitalize upper-case lower-case]]
@@ -289,7 +291,7 @@
            (finally  
              (login new-user new-pass {:org (@config :admin-org)})
              (user/assign {:user user, :roles ["Administrator"]})
-             (login))))))
+             (login))))))      
 
 user-settings
 default-org-tests)
