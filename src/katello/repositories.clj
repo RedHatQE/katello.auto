@@ -8,13 +8,17 @@
 ;; Locators
 
 (ui/deflocators
-  {::repo-name-text    "repo[name]"
-   ::repo-label-text   "repo[label]"
-   ::repo-url-text     "repo[feed]" 
-   ::save-repository   "//input[@value='Create']"
-   ::remove-repository (ui/link "Remove Repository")
-   ::repo-gpg-select   "//select[@id='repo_gpg_key']"
-   ::add-repo-button   "//div[contains(@class,'button') and contains(.,'Add Repository')]"}
+  {::repo-name-text         "repo[name]"
+   ::repo-label-text        "repo[label]"
+   ::repo-url-text          "repo[feed]"
+   ::save-repository        "//input[@value='Create']"
+   ::remove-repository      (ui/link "Remove Repository")
+   ::repo-gpg-select        "//select[@id='repo_gpg_key']"
+   ::add-repo-button        "//div[contains(@class,'button') and contains(.,'Add Repository')]"   
+   ::repo-discovery         "//a[contains(@href, 'repo_discovery')]"
+   ::discover-url-text      "discover_url"
+   ::discover-button        "//input[@type='submit']"
+   ::discover-cancel-button "//*[@class='grid_2 la' and @style='display: none;']"}
   ui/locators)
 
 (sel/template-fns
@@ -37,6 +41,15 @@
                        ::repo-url-text url}
                       ::save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
+
+(defn add-with-url-autodiscovery
+  "Adds auto-discovered repositories based on the url passed."
+  [{:keys [provider-name product-name url]}]
+  (nav/go-to ::provider/products-page {:provider-name provider-name})
+  (browser click ::repo-discovery)
+  (browser setText ::discover-url-text url)
+  (browser click ::discover-button)
+  (browser waitForElement ::discover-cancel-button "10000"))
 
 (defn add-with-key
   "Adds a repository under the given provider and product. Requires a
@@ -65,4 +78,3 @@
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
     (browser check (repo-enable-checkbox repo))))
-  
