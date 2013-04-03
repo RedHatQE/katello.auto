@@ -63,7 +63,8 @@
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
                        (fn [composite] (when composite (browser click ::composite) (browser click (composite-view-name composite-name)))) [composite]}
-                      ::save-new))
+                      ::save-new)
+  (notification/check-for-success))
 
 (defn add-product-to-content-view
   "Adds the given product or repository to a content view definition"
@@ -82,7 +83,8 @@
       (sel/->browser
        (mouseUp (product-or-repository prod-name))
        (click ::add-product-btn)
-       (click ::update-content)))))
+       (click ::update-content))))
+  (notification/check-for-success))
 
 (defn remove-product-from-content-view
   "Removes the given product from existing Content View"
@@ -103,7 +105,8 @@
             (sel/->browser
              (click ::toggle-products)
              (click (remove-repository prod-name))
-             (click ::update-content)))))))
+             (click ::update-content))))))
+  (notification/check-for-success))
 
 (defn publish-content-view-definition
   "Publishes a Content View Definition"
@@ -122,11 +125,13 @@
   (nav/go-to ::named-page {:definition-name name})
   (browser click ::details-tab)
   (common/in-place-edit {::details-name-text new-name
-                         ::details-description-text description}))
+                         ::details-description-text description})
+  (notification/check-for-success))
 
 (defn delete-content-view-definition
   "Deletes an existing View Definition."
   [name]
   (nav/go-to ::named-page {:definition-name name})
   (browser click ::remove)
-  (browser click ::ui/confirmation-yes))
+  (browser click ::ui/confirmation-yes)
+  (notification/check-for-success))
