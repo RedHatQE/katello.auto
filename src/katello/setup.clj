@@ -47,11 +47,11 @@
    permissions and logs in as that user."
   [user]
   (rest/create user)
-  (ui/update user assoc :roles ["Administrator"])
+  (ui/update user assoc :roles [(kt/newRole {:name  "Administrator"})])
   (logout)
   ;;login and set the default org to save time later
-  (login (:name user) (:password user) {:default-org (@config :admin-org)
-                                        :org (@config :admin-org)}))
+  (login user {:default-org *session-org*
+               :org *session-org*}))
 
 (defn stop-selenium []
    (browser stop))

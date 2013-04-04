@@ -27,8 +27,11 @@
    ::initial-env-desc-text  "environment_description"
    
    ::active                 "//*[@id='switcherButton']"
+   ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
 
+(sel/template-fns
+ {org-switcher-row "//div[@id='orgbox']//div[contains(@class, 'row') and position()=%s]"})
 ;; Nav
 
 (nav/defpages (common/pages)
@@ -131,8 +134,11 @@
        (when name
          (browser clickAndWait (ui/switcher-link name))))))
 
-(defn before-test-switch
-  "A pre-made fn to switch to the session org, meant to be used in
-   test groups as a :test-setup."
-  [& _]
-  (switch))
+(defn switcher-available-orgs
+  "List of names of orgs currently selectable in the org dropdown."
+  []
+  (browser click ::ui/switcher)
+  (doall (take-while identity
+                     (for [i (iterate inc 1)]
+                       (try (browser getText (org-switcher-row i))
+                            (catch SeleniumException _ nil))))))

@@ -7,7 +7,7 @@
                      [tasks         :refer :all] 
                      [notifications :as notification] 
                      [conf          :refer [config]] 
-                     [api-tasks     :refer [when-katello when-headpin]]) 
+                     [rest     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
             [inflections.core    :refer [pluralize]])

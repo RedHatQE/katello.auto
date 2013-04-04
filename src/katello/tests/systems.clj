@@ -140,10 +140,10 @@
     (fn [package-name]
       (let [target-env (first *environments*)
             
-            sys-name (uniqueify "pkg_install")
+            system (uniqueify {kt/newSystem {:name "pkg_install", :env target-env}})
             product (configure-product-for-pkg-install target-env)]
         
-        (provision/with-client sys-name
+        (provision/with-client (:name system)
           ssh-conn
           (client/register ssh-conn
                            {:username (:name *session-user*)
@@ -152,7 +152,7 @@
                             :env (:name target-env)
                             :force true})
           (let [mysys (client/my-hostname ssh-conn)]
-            (client/subscribe ssh-conn (client/get-pool-id mysys product))
+            (client/subscribe ssh-conn (system/pool-id system product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (system/add-package mysys package-name)))))
 
@@ -202,7 +202,7 @@
           (assert/is (= (:name env-dev) (system/environment mysys)))
           (ui/update mysys assoc :env env-test)
           (assert/is (= (:name env-test) (system/environment mysys)))
-          (client/subscribe ssh-conn (client/get-pool-id mysys (:name product)))
+          (client/subscribe ssh-conn (system/pool-id mysys product))
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")

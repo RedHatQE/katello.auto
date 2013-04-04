@@ -3,7 +3,6 @@
   (:require [katello :refer [newOrganization newProvider newProduct newRepository]]
             (katello [ui-common :as common]
                      [ui :as ui]
-                     [api-tasks :as api]
                      [rest :as rest]
                      [validation :as validation] 
                      [repositories :as repo]
@@ -122,7 +121,7 @@
         (assert/is (rest/not-exists? org)))
 
       (deftest "Create an org with content, delete it and recreate it"
-        :blockers api/katello-only
+        :blockers rest/katello-only
         
         (with-unique [org (mkorg "delorg")
                       provider (newProvider {:name "delprov" :org org})

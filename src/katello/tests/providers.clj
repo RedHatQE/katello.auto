@@ -1,7 +1,6 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
-  (:require [katello.api-tasks :as api]
-            [test.tree.script  :refer [deftest defgroup]]
+  (:require [test.tree.script  :refer [deftest defgroup]]
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
@@ -32,18 +31,12 @@
   (assert (and (rest/exists? new-prov)
                (not (rest/exists? old-prov)))))
 
-(defn create-same-provider-in-multiple-orgs
-  "Create providers with the same name in multiple orgs."
-  [prov-name orgs]
-  (doseq [org orgs]
-    (organization/switch org)
-    (provider/create {:name prov-name})))
-
 (defn validation
   "Attempts to create a provider and validates the result using
    pred."
   [provider pred]
-  (expecting-error pred (ui/create (katello/newProvider provider))))
+  (expecting-error pred (ui/create (katello/newProvider
+                                    (assoc provider :org conf/*session-org*)))))
 
 (defn get-validation-data
   []
@@ -77,10 +70,9 @@
   :group-setup #(spit tmp-gpg-keyfile "test")
   
   (deftest "Create a new GPG key from text input"
-    :blockers api/katello-only
+    :blockers rest/katello-only
     
-    (-> {:name "test-key-text"
-         :contents "asdfasdfasdfasdfasdfasdfasdf"}
+    (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
         ui/create))
@@ -88,15 +80,13 @@
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
-    (-> {:name "test-key-file"
-         :filename tmp-gpg-keyfile}
+    (-> {:name "test-key-file", :filename tmp-gpg-keyfile, :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
         ui/create)
         
     (deftest "Delete existing GPG key" 
-      (doto (-> {:name "test-key"
-                 :filename tmp-gpg-keyfile}
+      (doto (-> {:name "test-key", :filename tmp-gpg-keyfile, :org conf/*session-org*}
                 katello/newGPGKey
                 uniqueify)
         ui/create
@@ -105,9 +95,7 @@
 (defgroup provider-tests
   
   (deftest "Create a custom provider" 
-    (-> {:name "auto-cp"
-         :description "my description"
-         :org conf/*session-org*}
+    (-> {:name "auto-cp", :description "my description", :org conf/*session-org*}
         katello/newProvider
         uniqueify
         ui/create)
@@ -129,9 +117,7 @@
 
     
     (deftest "Rename a custom provider"
-      (let [provider (-> {:name "rename"
-                          :description "my description"
-                          :org conf/*session-org*}
+      (let [provider (-> {:name "rename", :description "my description", :org conf/*session-org*}
                          katello/newProvider
                          uniqueify)]
         (ui/create provider)

@@ -3,7 +3,6 @@
   (:require [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
-                     [api-tasks :as api]
 ;                     [organizations :as org]
                      [activation-keys :as ak]
                      [client :as client]
@@ -34,7 +33,7 @@
   (assert/is (= n (group/system-count g))))
 
 (defgroup sg-tests
-  :blockers api/katello-only
+  :blockers rest/katello-only
   
   (deftest "Create a system group"
     (with-unique-group g (ui/create g))

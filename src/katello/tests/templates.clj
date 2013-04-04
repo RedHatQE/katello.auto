@@ -4,8 +4,7 @@
             [serializable.fn :refer [fn]]
             [bugzilla.checker :refer [open-bz-bugs]]
             [katello :as kt]
-            (katello [api-tasks :as api] 
-                     [tasks :refer :all] 
+            (katello [tasks :refer :all] 
                      system-templates
                      [changesets :as changeset]
                      [sync-management :as sync]

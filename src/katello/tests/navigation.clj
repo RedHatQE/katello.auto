@@ -2,7 +2,7 @@
   (:require [test.tree.script :refer :all] 
             (katello [navigation :as nav]
                      [notifications :refer [verify-no-error]]
-                     [api-tasks :refer [katello-only]])))
+                     [rest :refer [katello-only]])))
 
 ;; Constants
 

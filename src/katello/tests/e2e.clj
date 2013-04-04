@@ -28,11 +28,7 @@
    products, and then installs packages-to-install."
   [target-env products packages-to-install]
   (let [all-packages (apply str (interpose " " packages-to-install))
-        pool-provides-product (fn [{:keys [name] :as product}
-                                   {:keys [productName providedProducts] :as pool}]
-                                (or (= productName name)
-                                    (some #(= (:productName %) name)
-                                          providedProducts)))]
+         ]
     ;;client side
     (provision/with-client "e2e-custom" ssh-conn
       (client/setup-client ssh-conn)
@@ -44,14 +40,8 @@
                                  :force true})
       
       (doseq [product products]
-        (if-let [matching-pool (->> ssh-conn
-                                    client/my-hostname
-                                    (hash-map :name)
-                                    kt/newSystem
-                                    system/api-pools
-                                    (filter (partial pool-provides-product product))
-                                    first
-                                    :id)]
+        (if-let [matching-pool (system/pool-id (->> ssh-conn client/my-hostname (hash-map :name) kt/newSystem)
+                                               product)]
           (client/subscribe ssh-conn matching-pool)
           (throw+ {:type :no-matching-pool :product product})))
       (let [cmd-results [(client/run-cmd ssh-conn "yum repolist")

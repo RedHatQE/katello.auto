@@ -155,7 +155,8 @@
     (swap! config assoc :selenium-address "localhost:4444"))
   
   (def ^:dynamic *session-user* (katello/newUser {:name (@config :admin-user)
-                                                  :password (@config :admin-password)}))
+                                                  :password (@config :admin-password)
+                                                  :email "admin@katello.org"}))
   (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
   (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
                                 (cloud/connection dc-url           

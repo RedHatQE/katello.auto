@@ -10,9 +10,8 @@
                      [roles :as role] 
                      [users :as user]
                      [tasks :refer :all] 
-                     [content-search :refer [list-available-orgs]]
-                     [conf :refer [config *session-org*]]
-                     [api-tasks :as api]) 
+                     
+                     [conf :refer [config *session-org*]]) 
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [clojure.string :refer [capitalize upper-case lower-case]]
@@ -66,12 +65,8 @@
   user)
 
 (defn verify-only-one-org [user]
-  (assert/is (= (list-available-orgs) 
-                (nav/current-org)))
-  user)
-
-(defn verify-multiple-orgs [user]
-  (assert/is (< 1 (count (list-available-orgs))))
+  (assert/is (= (set (organization/switcher-available-orgs)) 
+                (hash-set (nav/current-org))))
   user)
   
 (defn set-default-org-at-dashboard [{:keys [default-org] :as user}]

@@ -299,7 +299,20 @@
        :pools
        (map kt/newPool)))
 
-(defn environment "Get current environment of the system"
+(defn pool-provides-product [{:keys [name] :as product}
+                             {:keys [productName providedProducts] :as pool}]
+  (or (= productName name)
+      (some #(= (:productName %) name)
+            providedProducts)))
+
+(defn pool-id "Fetch subscription pool-id"
+  [system product]
+  (->> system
+       api-pools
+       (filter (partial pool-provides-product product))
+       first :id))
+
+(defn environment "Get name of current environment of the system"
   [system]
   (nav/go-to ::details-page {:system system})
   (browser getText ::environment))

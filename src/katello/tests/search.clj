@@ -33,7 +33,7 @@
                   (every? (into #{} results) expected-items)))))
 
 (defn validate-search-results [expected-items]
-  (assert/is (every? (set (extract-left-pane-list)) expected-items)))
+  (assert/is (every? (set (extract-left-pane-list)) (map :name expected-items))))
 
 ;; Tests
 (defgroup search-tests
@@ -120,8 +120,8 @@
     [[{:name "username1" :password "password" :email "username1@my.org"} {:criteria "username1*"}]
      [{:name "username2" :password "password" :email "username2@my.org"} {:criteria "username:username?*"}]
      [{:name "lucene4"   :password "password" :email "lucene4@my.org"} {:criteria "email:\"*@my.org\""}]
-     [{:name "lucene5"   :password "password" :email "lucene5@my.org"}  {:criteria "email:@my.org"}]
-     [{:name "lucene6"   :password "password" :email "lucene6@my.org"}  {:criteria "email:my.org"}]])
+     [{:name "lucene5"   :password "password" :email "lucene5@my.org"} {:criteria "email:@my.org"}]
+     [{:name "lucene6"   :password "password" :email "lucene6@my.org"} {:criteria "email:my.org"}]])
   
   (deftest "search activation keys"
     :data-driven true
@@ -135,10 +135,10 @@
         (search :activation-keys searchterms)
         (validate-search-results (list ak))))
     
-    [[{:name (uniqueify "activation_key1") :description "my auto-key" :environment "dev"} {:criteria "environment:dev*"}]
-     [{:name (uniqueify "activation_key2") :description "my activation-key" :environment "dev"} {:criteria "name:activation_key2*"}]
-     [{:name (uniqueify "activation_key3") :description "my activation-key" :environment "dev"} {:criteria "description:\"my activation-key\""}]
-     [{:name (uniqueify "activation_key4") :description "my activation-key" :environment "dev"} {:criteria "name:activation*"}]])
+    [[{:name "activation_key1" :description "my auto-key"} {:criteria "environment:dev*"}]
+     [{:name "activation_key2" :description "my activation-key"} {:criteria "name:activation_key2*"}]
+     [{:name "activation_key3" :description "my activation-key"} {:criteria "description:\"my activation-key\""}]
+     [{:name "activation_key4" :description "my activation-key"} {:criteria "name:activation*"}]])
   
   
   (deftest "search sync plans"
@@ -152,10 +152,10 @@
         (search :sync-plans searchterms)
         (validate-search-results (list plan))))
     
-    [[{:name (uniqueify "new_plan1") :description "my sync plan" :interval "daily" :start-date (java.util.Date.)}  {:criteria "new_plan*"}]
-     [{:name (uniqueify "new_plan2") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "interval:hourly"}]
-     [{:name (uniqueify "new_plan3") :description "my sync plan" :interval "weekly" :start-date (java.util.Date.)} {:criteria "description:\"my sync plan\""}]
-     [{:name (uniqueify "new_plan4") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "name:new_plan?*"}]])
+    [[{:name "new_plan1" :description "my sync plan" :interval "daily" :start-date (java.util.Date.)}  {:criteria "new_plan*"}]
+     [{:name "new_plan2" :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "interval:hourly"}]
+     [{:name "new_plan3" :description "my sync plan" :interval "weekly" :start-date (java.util.Date.)} {:criteria "description:\"my sync plan\""}]
+     [{:name "new_plan4" :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "name:new_plan?*"}]])
 
   (deftest "search system groups"
     :data-driven true
