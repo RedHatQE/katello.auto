@@ -27,6 +27,7 @@
    ::errata-category             (content-category "errata")
    ::kickstart-trees-category    (content-category "kickstart trees")
    ::templates-category          (content-category "templates")
+   ::content-views-category      (content-category "content_views") 
    ::select-errata               (select-types "Errata")
    ::select-repos                (select-types "Repositories")
    ::select-packages             (select-types "Packages")
@@ -107,6 +108,10 @@
 
        (= category :templates)
        (do (browser click ::templates-category)
+           (add-all data))
+       
+       (= category :content-views)
+       (do (browser click ::content-views-category)
            (add-all data))
 
        :else

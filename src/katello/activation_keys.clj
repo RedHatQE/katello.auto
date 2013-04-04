@@ -11,6 +11,7 @@
                  ::name-text               "activation_key[name]"
                  ::description-text        "activation_key[description]"
                  ::template-select         "activation_key[system_template_id]"
+                 ::content-view-select     "activation_key_content_view_id"
                  ::save                    "save_key"
                  ::system-group-select     (ui/menu-link "activation_keys_menu_system_groups")
                  ::add-sys-group-form      "//form[@id='add_group_form']/button"
@@ -41,11 +42,12 @@
 (defn create
   "Creates an activation key with the given properties. Description
   and system-template are optional."
-  [{:keys [name description environment system-template] :as m}]
+  [{:keys [name description environment system-template content-view] :as m}]
   (nav/go-to ::new-page)
   (browser click (ui/environment-link environment))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
+                       ::content-view-select content-view
                        ::template-select system-template}
                       ::save)
   (notification/check-for-success))
