@@ -2,6 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [notifications :as notification]
+                     [system-groups :as sg]
                      [ui-common :as common]
                      [ui :as ui])))
 
@@ -20,6 +21,7 @@
    ::composite                "content_view_definition[composite]"
    ::save-new                 "commit"
    ::remove                   (ui/link "Remove")
+   ::clone                    (ui/link "Clone")
 
    ::views-tab                 "//li[@id='view_definition_views']/a"
    ::content-tab               "//li[@id='view_definition_content']/a"
@@ -135,3 +137,14 @@
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
+
+(defn clone
+  "Clones a content-view definition, given the name of the original definition
+   to clone, and the new name and description."
+  [orig-name new-name & [{:keys [description]}]]
+  (nav/go-to ::named-page {:definition-name orig-name})
+  (browser click ::clone)
+  (sel/fill-ajax-form {::sg/copy-name-text new-name
+                       ::sg/copy-description-text description}
+                      ::sg/copy-submit)
+  (notification/check-for-success)) 
