@@ -107,7 +107,7 @@
              katello/newEnvironment
              uniques
              (take thismany)
-             environment/chain
+             katello/chain
              ui/create-all)))
 
     (deftest "Delete an environment"
@@ -145,7 +145,7 @@
 
         (let [envs (take 3 (uniques (katello/newEnvironment {:name "env"
                                                              :org conf/*session-org*})))]
-          (-> envs environment/chain ui/create-all)
+          (-> envs katello/chain ui/create-all)
           (expecting-error [:type ::environment/cant-be-deleted]
                            (ui/delete (second envs)))
           (ui/delete (last envs)))))

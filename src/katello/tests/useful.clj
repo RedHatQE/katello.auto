@@ -3,6 +3,10 @@
             (katello [rest :as rest]
                      [tasks :as tasks])))
 
+(defn ensure-exists [ent]
+  (when-not (rest/exists? ent)
+    (rest/create ent)))
+
 (defn create-recursive
   "Recursively create in katello, all the entites that satisfy
    katello.rest/CRUD (innermost first).  Example, an env that contains
@@ -10,9 +14,8 @@
    the env." [ent & [{:keys [check-exist?] :or {check-exist? true}}]]
    (doseq [field (vals ent) :when (satisfies? rest/CRUD field)]
      (create-recursive field))
-   (when (or (and check-exist? (rest/not-exists? ent))
-             (not check-exist?))
-     (rest/create ent)))
+   (if check-exist? (ensure-exists ent)
+       (rest/create ent)))
 
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]
@@ -30,3 +33,4 @@
                       prod (kt/newProduct {:name "sync-test1", :provider prov})
                       repo (kt/newRepository {:name "testrepo", :product prod, :url url})]
     repo))
+

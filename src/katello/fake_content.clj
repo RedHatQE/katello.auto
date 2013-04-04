@@ -177,6 +177,6 @@
         repos (for [r some-repos]
                 (update-in r [:product :provider] assoc :org org))]
     (rest/create org)
-    (doseq [e (env/chain envs)]
+    (doseq [e (kt/chain envs)]
       (rest/create e))
     (prepare-org repos)))

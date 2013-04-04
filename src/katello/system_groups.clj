@@ -159,4 +159,4 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [sg] (nav/go-to ::named-page {:system-group sg
-                                                            :org (-> sg :env :org)}))})
+                                                            :org (kt/org sg)}))})

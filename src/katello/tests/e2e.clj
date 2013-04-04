@@ -9,7 +9,7 @@
                      [systems :as system]
                      [changesets :refer [sync-and-promote]]                    
                      [tasks :refer :all]
-                     [conf :refer [*session-user* *session-org* *environments*
+                     [conf :refer [*session-user* *session-org* 
                                    config no-clients-defined]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
@@ -69,8 +69,9 @@
                      no-clients-defined)
     (let [repo (fresh-repo *session-org*
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-          target-env (first *environments*)
+          target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment uniqueify)
           package-to-install "cheetah"]
+      (rest/create target-env)
       (create-recursive repo)
       (when (rest/is-katello?)
         (sync-and-promote (list repo) target-env))

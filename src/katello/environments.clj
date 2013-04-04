@@ -97,17 +97,4 @@
                             (nav/go-to ::named-page {:org (-> env :org)
                                                      :env env}))})
 
-(defn chain
-  "Sets the next and prior fields of successive envs to make a doubly
-  linked list."
-  [environments] {:pre [(apply = (map kt/org environments))]} ; all in same org
-  (let [org (-> environments first kt/org)
-        f (fn [envs latest-env]
-            (let [l (last envs)
-                  r (butlast envs)]
-              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
-    (rest (reduce f (vector (assoc katello/library :org org)) (vec environments)))))
-
-
-
 

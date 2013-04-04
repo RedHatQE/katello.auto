@@ -76,8 +76,8 @@
   (fn [] (-> {:name "org"} kt/newOrganization uniqueify ui/create)))
 
 (def create-an-ak ;;FIXME
-  (fn [] (ui/create {:name (uniqueify "blah")
-                     :environment (first conf/*environments*)})))
+  (fn [] (ui/create (kt/newActivationKey {:name (uniqueify "blah")
+                                          :env (first conf/*environments*)}))))
 
 (def create-a-st ;;FIXME
   (fn [] (ui/create {:name (uniqueify "blah")})))

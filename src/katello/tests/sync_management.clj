@@ -76,7 +76,7 @@
       :blockers (open-bz-bugs "751876")
       (with-unique-plan p
         (let [prov (uniqueify (kt/newProvider {:name "multiplan", :org *session-org*}))
-              repos (for [repo (take 3 (repeatedly fresh-repo))]
+              repos (for [repo (take 3 (repeatedly #(fresh-repo)))]
                       (update-in repo [:product] assoc :provider prov))
               prods (map :product repos)]
           (rest/create-all (conj (concat prods repos) prov))

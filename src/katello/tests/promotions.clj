@@ -32,7 +32,7 @@
                   kt/newEnvironment
                   uniques
                   (take num-envs)
-                  env/chain)
+                  kt/chain)
         setup-item {katello.Product (fn [prod] ; create a repo in the given product and sync it
                                       (let [repo (assoc (fresh-repo) :product prod)]
                                         (create-recursive repo)

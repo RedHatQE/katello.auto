@@ -22,7 +22,6 @@
   [env]
   (assoc library :org (:org env) :next env))
 
-
 (defrecord Provider [id name description org])
 
 (defrecord Product [id name provider])
@@ -82,13 +81,26 @@
    Template {:org (fn [t] (or (:org t)
                               (-> t product org)))
              :product :product}
-   System {:org (comp org env), :env :env, :parent org}
-   GPGKey {:org :org, :parent org}
-   Permission {:org :org, :parent org}
-   ActivationKey {:org (comp org env), :env :env, :parent env}
+   System {:org (comp #'org #'env), :env :env, :parent #'org}
+   GPGKey {:org :org, :parent #'org}
+   Permission {:org :org, :parent #'org}
+   ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
-   Manifest {:org (comp org provider), :provider :provider, :parent provider}
-   SyncPlan {:org :org, :parent org}})
+   Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
+   SyncPlan {:org :org, :parent #'org}})
 
 (doseq [[rec impls] relationships]
   (extend rec BelongsTo impls))
+
+
+
+(defn chain
+  "Sets the next and prior fields of successive envs to make a doubly
+  linked list."
+  [environments] {:pre [(apply = (map org environments))]} ; all in same org
+  (let [org (-> environments first org)
+        f (fn [envs latest-env]
+            (let [l (last envs)
+                  r (butlast envs)]
+              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
+    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))

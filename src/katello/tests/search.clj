@@ -1,15 +1,19 @@
 (ns katello.tests.search
-  (:require (katello [api-tasks :as api]
+  (:require [katello :as kt]
+            (katello [ui :as ui]
+                     [rest :as rest]
                      [organizations :as organization]
+                     environments
                      [users :as user]
                      [ui-common :refer [search extract-left-pane-list]]
                      [sync-management :as sync]
                      [tasks :refer :all]
                      [system-groups :as sg]
                      [activation-keys :as ak]
-                     [systems :as system])
-            [katello.tests.organizations :refer [create-test-org]]
-            [katello.tests.users :refer [generic-user-details]]
+                     [systems :as system]
+                     [conf :refer [*session-org*]])
+            
+            [katello.tests.useful :refer [ensure-exists]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -28,77 +32,69 @@
     (boolean (and (every? pred results)
                   (every? (into #{} results) expected-items)))))
 
+(defn validate-search-results [expected-items]
+  (assert/is (every? (set (extract-left-pane-list)) expected-items)))
+
 ;; Tests
 (defgroup search-tests
   
   (deftest "Perform search operation on systems"
     :data-driven true
     :description "Search for a system based on criteria."
-    :blockers api/katello-only
-    
-    (fn [system searchterms & [system-group]]
-      (organization/switch)
-      (api/ensure-env-exist "dev" {:prior "Library"})
-      
-      (let [[name opts] system
-            unique-system [(uniqueify name) opts]
-            [sgname opt] system-group
-            unique-sg [(uniqueify sgname) opt]]
-        (apply system/create unique-system)
-        (if (not (nil? system-group))
-          (do
-            (system/edit (first unique-system) {:description "most unique system"})
-            (apply sg/create unique-sg)
-            (sg/add-to (first unique-sg) (first unique-system))))
+    :blockers rest/katello-only
+    (fn [sysinfo searchterms & [groupinfo]]
+      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+                    system (kt/newSystem (assoc sysinfo :env env))
+                    sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
+        (ensure-exists env)
+        (rest/create system) 
+        (when groupinfo
+          (ui/update system assoc :description "most unique system")
+          (ui/create sg)
+          (ui/update sg assoc :systems (list system)))
         (search :systems searchterms)
-        (let [valid-search-results (search-results-valid?
-                                    (constantly true)
-                                    [(first unique-system)])]
-          (assert/is (valid-search-results (extract-left-pane-list))))))
-    [[["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"most unique system\""} ["fed" {:description "centos system-group"}]]
-     [["mysystem3" {:sockets "2" :system-arch "x86"}] {:criteria "system_group:fed1*"} ["fed1" {:description "rh system-group"}]]
-     [["mysystem1" {:sockets "1" :system-arch "x86_64"}] {:criteria "name:mysystem1*"}]
-     [["mysystem-123" {:sockets "1" :system-arch "x86"}] {:criteria "network.hostname:mysystem-123*"}]
-     [["mysystem2" {:sockets "2" :system-arch "i686"}] {:criteria "mysystem2*"}]])
+        (validate-search-results (list system))))
+    
+    [[{:name "mysystem3", :sockets "4", :system-arch "x86_64"} {:criteria "description: \"most unique system\""} {:name "fed", :description "centos system-group"}]
+     [{:name "mysystem3", :sockets "2", :system-arch "x86"} {:criteria "system_group:fed1*"} {:name "fed1", :description "rh system-group"}]
+     [{:name "mysystem1", :sockets "1", :system-arch "x86_64"} {:criteria "name:mysystem1*"}]
+     [{:name "mysystem-123", :sockets "1", :system-arch "x86"} {:criteria "network.hostname:mysystem-123*"}]
+     [{:name "mysystem2", :sockets "2", :system-arch "i686"} {:criteria "mysystem2*"}]])
 
 
   (deftest "Search organizations"
     :data-driven true
     :description "Search for organizations based on criteria." 
     
-    (fn [org searchterms]
-      (let [[name opts] org
-            unique-org [(uniqueify name) opts]]
-        (apply organization/create unique-org)
+    (fn [orginfo searchterms]
+      (with-unique [org (kt/newOrganization orginfo)]
+        (ui/create org)
         (search :organizations searchterms)
-        (let [valid-search-results (search-results-valid?
-                                    (constantly true)
-                                    [(first unique-org)])]
-          (assert/is (valid-search-results (extract-left-pane-list))))))
+        (validate-search-results (list org))))
 
     (concat
      ;;'normal' org searches
      
-     [[["test123" {:initial-env-name "test" :description "This is a test123 org"}] {:criteria "test123*"}]
-      [["test-123" {:initial-env-name "dev" :description "This is a test-123 org"}] {:criteria "name:test-123*"}]
-      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:\"This is a test org\""}]
-      [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "description:(+test+org)"}]
+     [[{:name "test123" :initial-env-name "test" :description "This is a test123 org"} {:criteria "test123*"}]
+      [{:name "test-123" :initial-env-name "dev" :description "This is a test-123 org"} {:criteria "name:test-123*"}]
+      [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:\"This is a test org\""}]
+      [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:(+test+org)"}]
       (with-meta
-        [["test" {:initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+        [[{:name "test" :initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
         {:blockers (open-bz-bugs "852119")})]
 
      ;;with latin-1/multibyte searches
      
      (for [row
-           [[["niños"  {:initial-env-name "test" :description "This is a test org with latin charcters in name"}] {:criteria "niños*"}]
-            [["bilingüe" {:description "This is a test org with spanish characters like bilingüe" :initial-env-name "test"}]  {:criteria "bilingüe*"}]
-            [["misión"  {:description "This is a test org with spanish char misión,biños  " :initial-env-name "dev"}] {:criteria "misión*"}]
-            [["biños" {:description "This is a test_123 org" :initial-env-name "dev"}]  {:criteria "name:?iños*"}]
-            [["misión"  {:description "This is a test org with spanish char misión,biños " :initial-env-name "dev"}] {:criteria "description:\"This is a test org with spanish char misión,biños\""}]
-            [["test_华语華語"  {:description "This is a test org with multi-byte charcters in name" :initial-env-name "test"}] {:criteria "test_华语華語*"}]
-            [["兩千三百六十二" {:description "This is a test org with multi-byte characters like తెలుగు" :initial-env-name "test"}] {:criteria "兩千三百六十二*"}]
-            [["hill_山"  {:description "This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語" :initial-env-name "dev"}] {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}]
-            [["తెలుగు" {:description "This is a test_123 org" :initial-env-name "dev"}] {:criteria "తెలుగు*"}]]]
+           [[{:name "niños"  :initial-env-name "test" :description "This is a test org with latin charcters in name"} {:criteria "niños*"}]
+            [{:name "bilingüe" :description "This is a test org with spanish characters like bilingüe" :initial-env-name "test"}  {:criteria "bilingüe*"}]
+            [{:name "misión"  :description "This is a test org with spanish char misión,biños  " :initial-env-name "dev"} {:criteria "misión*"}]
+            [{:name "biños" :description "This is a test_123 org" :initial-env-name "dev"}  {:criteria "name:?iños*"}]
+            [{:name "misión"  :description "This is a test org with spanish char misión,biños " :initial-env-name "dev"} {:criteria "description:\"This is a test org with spanish char misión,biños\""}]
+            [{:name "test_华语華語"  :description "This is a test org with multi-byte charcters in name" :initial-env-name "test"} {:criteria "test_华语華語*"}]
+            [{:name "兩千三百六十二" :description "This is a test org with multi-byte characters like తెలుగు" :initial-env-name "test"} {:criteria "兩千三百六十二*"}]
+            [{:name "hill_山"  :description "This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語" :initial-env-name "dev"} {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}]
+            [{:name "తెలుగు" :description "This is a test_123 org" :initial-env-name "dev"} {:criteria "తెలుగు*"}]]]
 
 
        ;;modify each above row with metadata specific to multibyte
@@ -114,34 +110,31 @@
   (deftest "search users"
     :data-driven true
     :description "Search for a user based on criteria and with use of lucene-syntax" 
-    (fn [user searchterms]
-      (let [[name opts] user
-            unique-user [(uniqueify name) opts]]
-        (apply user/create unique-user)
+
+    (fn [userinfo searchterms]
+      (with-unique [user (kt/newUser userinfo)]
+        (ui/create user)
         (search :users searchterms)
-        (let [valid-search-results (search-results-valid?
-                                    (constantly true)
-                                    [(first unique-user)])]
-          (assert/is (valid-search-results (extract-left-pane-list))))))
+        (validate-search-results (list user))))
     
-    [[["username1" {:password "password" :email "username1@my.org"}] {:criteria "username1*"}]
-     [["username2" {:password "password" :email "username2@my.org"}] {:criteria "username:username?*"}]
-     [["lucene4"   {:password "password" :email "lucene4@my.org"}] {:criteria "email:\"*@my.org\""}]
-     [["lucene5"   {:password "password" :email "lucene5@my.org"}]  {:criteria "email:@my.org"}]
-     [["lucene6"   {:password "password" :email "lucene6@my.org"}]  {:criteria "email:my.org"}]])
+    [[{:name "username1" :password "password" :email "username1@my.org"} {:criteria "username1*"}]
+     [{:name "username2" :password "password" :email "username2@my.org"} {:criteria "username:username?*"}]
+     [{:name "lucene4"   :password "password" :email "lucene4@my.org"} {:criteria "email:\"*@my.org\""}]
+     [{:name "lucene5"   :password "password" :email "lucene5@my.org"}  {:criteria "email:@my.org"}]
+     [{:name "lucene6"   :password "password" :email "lucene6@my.org"}  {:criteria "email:my.org"}]])
   
   (deftest "search activation keys"
     :data-driven true
     :description "search activation keys by default criteria i.e. name"
-    (fn [key_opt searchterms]
-      (organization/switch)
-      (api/ensure-env-exist "dev" {:prior "Library"})
-      (ak/create key_opt)
-      (search :activation-keys searchterms)
-      (let [valid-search-results (search-results-valid?
-                                  (constantly true)
-                                  [(:name key_opt)])]
-        (assert/is (valid-search-results (extract-left-pane-list)))))
+    
+    (fn [akinfo searchterms]
+      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+                    ak (kt/newActivationKey (assoc akinfo :env env))]
+        (rest/create env)
+        (ui/create ak)
+        (search :activation-keys searchterms)
+        (validate-search-results (list ak))))
+    
     [[{:name (uniqueify "activation_key1") :description "my auto-key" :environment "dev"} {:criteria "environment:dev*"}]
      [{:name (uniqueify "activation_key2") :description "my activation-key" :environment "dev"} {:criteria "name:activation_key2*"}]
      [{:name (uniqueify "activation_key3") :description "my activation-key" :environment "dev"} {:criteria "description:\"my activation-key\""}]
@@ -151,15 +144,14 @@
   (deftest "search sync plans"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
-    :blockers api/katello-only
+    :blockers rest/katello-only
     
-    (fn [key_opt searchterms]
-      (sync/create-plan key_opt)
-      (search :sync-plans searchterms)
-      (let [valid-search-results (search-results-valid?
-                                  (constantly true)
-                                  [(:name key_opt)])]
-        (assert/is (valid-search-results (extract-left-pane-list)))))
+    (fn [planinfo searchterms]
+      (with-unique [plan (kt/newSyncPlan (assoc planinfo :org *session-org*))]
+        (ui/create plan)
+        (search :sync-plans searchterms)
+        (validate-search-results (list plan))))
+    
     [[{:name (uniqueify "new_plan1") :description "my sync plan" :interval "daily" :start-date (java.util.Date.)}  {:criteria "new_plan*"}]
      [{:name (uniqueify "new_plan2") :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "interval:hourly"}]
      [{:name (uniqueify "new_plan3") :description "my sync plan" :interval "weekly" :start-date (java.util.Date.)} {:criteria "description:\"my sync plan\""}]
@@ -168,26 +160,22 @@
   (deftest "search system groups"
     :data-driven true
     :description "search for a system group based on criteria"
-    :blockers api/katello-only
+    :blockers rest/katello-only
     
-    (fn [system-group system searchterms]
-      (organization/switch)
-      (api/ensure-env-exist "dev" {:prior "Library"})
-      (let [[name opts] system
-            unique-system [(uniqueify name) opts]
-            [sgname opt] system-group
-            unique-sg [(uniqueify sgname) opt]]
-        (apply system/create unique-system)
-        (apply sg/create unique-sg)
-        (sg/add-to (first unique-sg) (first unique-system))
+    (fn [groupinfo sysinfo searchterms]
+      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+                    system (kt/newSystem (assoc sysinfo :env env))
+                    sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
+        (ensure-exists env)
+        (ui/create-all (list system sg))
+        (ui/update sg assoc :systems (list system))
         (search :system-groups searchterms)
-        (let [valid-search-results (search-results-valid?
-                                    (constantly true)
-                                    [(first unique-sg)])]
+        (let [validate-search-results (search-results-valid?
+                                       (constantly true)
+                                       (list sg))]
           (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))]
-            (assert/is (valid-search-results
-                        (doall (map strip-num (extract-left-pane-list)))
-                        ))))))
-    [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]
-     [["sg-fed1" {:description "the rh system-group"}] ["mysystem1" {:sockets "2" :system-arch "x86"}] {:criteria "name:sg-fed1*"}]
-     [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]]))
+            (assert/is (validate-search-results
+                        (doall (map strip-num (extract-left-pane-list)))))))))
+    [[{:name "sg-fed" :description "the centos system-group"} {:name "mysystem3" :sockets "4" :system-arch "x86_64"} {:criteria "description: \"the centos system-group\""}]
+     [{:name "sg-fed1" :description "the rh system-group"} {:name "mysystem1" :sockets "2" :system-arch "x86"} {:criteria "name:sg-fed1*"}]
+     [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]]))

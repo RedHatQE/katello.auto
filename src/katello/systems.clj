@@ -273,8 +273,8 @@
            :delete delete
            :update* update}
 
-  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [:env]]
-                                                     ["api/organizations/%s/systems" [(comp :org :env)]]])
+  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]
+                                                     ["api/organizations/%s/systems" [#'kt/org]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
                :query (partial rest/query-by-name query-url)

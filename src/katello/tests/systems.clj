@@ -1,6 +1,6 @@
 (ns katello.tests.systems
   (:refer-clojure :exclude [fn])
-  (:require katello
+  (:require [katello :as kt] 
             (katello [navigation :as nav]
                      [ui :as ui]
                      [rest :as rest]
