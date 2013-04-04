@@ -14,6 +14,9 @@
                      [roles :as role]
                      [login :as login]
                      [systems :as system]
+                     [fake-content :as fake]                    
+                     [repositories :as repo]
+                     [gpg-keys :as gpg-key]
                      [users :as user]
                      [organizations :as organization])
             [test.tree.script :refer :all] 
@@ -244,7 +247,42 @@
             :disallowed-actions [(access-org (@conf/config :admin-org))
                                  (fn [] (organization/switch (@conf/config :admin-org)))]]))
    
-   ])
+   (fn [] (let [gpg-key-name (uniqueify "test-key-text5")
+                provider-name (uniqueify "provider")
+                product-name (uniqueify "product")
+                repo-name (uniqueify "repo")
+                organization (@conf/config :admin-org)
+                url (-> fake/custom-providers first :products first :repos second :url)]
+            [:permissions [{:org organization
+                            :permissions [{:name "blah1"
+                                           :resource-type "Organizations"
+                                           :verbs ["Administer GPG Keys"]}]}]
+             :allowed-actions [(fn [] (gpg-key/create gpg-key-name {:contents (slurp (@conf/config :gpg-key))}))]
+             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
+                                                     :katello.system-templates/page :katello.changesets/page
+                                                     :katello.providers/custom-page)
+                                       (fn [] (providers/create {:name provider-name}))
+                                       (fn [] (providers/add-product {:provider-name provider-name
+                                                                     :name product-name}))                           
+                                       (fn [] (repo/add-with-key {:provider-name provider-name
+                                                                  :product-name product-name
+                                                                  :name repo-name
+                                                                  :url url
+                                                                  :gpgkey gpg-key-name}))
+                                       (fn [] (api/create-provider "myprov")))]))
+   
+    (fn [] (let [gpg-key-name (uniqueify "test-key-text3")
+                 organization (@conf/config :admin-org)]
+            [:permissions [{:org organization
+                            :permissions [{:name "blah3"
+                                           :resource-type "Organizations"
+                                           :verbs ["Read Organization"]}]}]
+             :allowed-actions [(navigate-fn :katello.gpg-keys/page)]
+             :disallowed-actions (conj (navigate-all :katello.systems/page :katello.sync-management/status-page
+                                                     :katello.providers/custom-page :katello.system-templates/page
+                                                     :katello.changesets/page)
+                                       (fn [] (gpg-key/create gpg-key-name {:contents (slurp (@conf/config :gpg-key))})))]))])
+
 
 ;; Tests
 
@@ -376,4 +414,3 @@
 
       verify-access
       access-test-data) ))
-
