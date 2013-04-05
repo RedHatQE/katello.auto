@@ -78,8 +78,8 @@
 
 (defn new-distributor-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
-  []
-  (nav/go-to ::distributors-page)
+  [org]
+  (nav/go-to ::distributors-page {:org org})
   (-> (browser getAttributes ::new-distributor-disabled)
       (get "original-title")
       (= "At least one environment is required to create or register distributors in your current organization.")))
