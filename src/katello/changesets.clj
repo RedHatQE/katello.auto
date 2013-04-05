@@ -182,7 +182,6 @@
   "Promotes the given changeset to its target environment and could also Delete
    content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
-<<<<<<< HEAD
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset)
   (locking #'conf/promotion-deletion-lock

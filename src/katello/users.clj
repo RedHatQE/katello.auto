@@ -106,7 +106,6 @@
   (browser click ::save-environment)
   (notification/check-for-success))
 
-<<<<<<< HEAD
 (defn edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once). Can add or remove roles, and change
@@ -167,26 +166,6 @@
   nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
-=======
-(defn- edit-form [{:keys [inline-help clear-disabled-helptips
-                    new-password new-password-confirm new-email default-org]}]
-    (when-not (nil? inline-help)
-    (browser checkUncheck ::enable-inline-help-checkbox inline-help))
-  (when new-password
-    (browser setText ::password-text new-password)
-    (browser setText ::confirm-text (or new-password-confirm new-password))
-
-    ;;hack alert - force the page to check the passwords (selenium
-    ;;doesn't fire the event by itself
-    (browser getEval "window.KT.user_page.verifyPassword();")
-
-    (when (browser isElementPresent ::password-conflict)
-      (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
-    (browser click ::save-edit) 
-    (notification/check-for-success))
-  (when new-email
-    (common/in-place-edit {::email-text new-email})))
->>>>>>> master
 
 (defn self-edit
   "Edits the given user, changing any of the given properties (can
