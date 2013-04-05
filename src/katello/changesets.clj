@@ -182,6 +182,7 @@
   "Promotes the given changeset to its target environment and could also Delete
    content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
+<<<<<<< HEAD
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset)
   (locking #'conf/promotion-deletion-lock
@@ -207,7 +208,7 @@
         (do (Thread/sleep 2000)
             (recur (browser getText (status name))))))
     ;;wait for async success notif
-    (check-for-success {:timeout-ms (* 20 60 1000)})))
+    (check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :changeset-promoted)})))
 
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "

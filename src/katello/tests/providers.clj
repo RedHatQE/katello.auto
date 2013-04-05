@@ -4,23 +4,30 @@
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
+<<<<<<< HEAD
             (katello [rest :as rest]
                      [ui :as ui]
                      [tasks           :refer :all]
+=======
+            (katello [tasks           :refer :all]
+                     [api-tasks :as api]
+>>>>>>> master
                      [ui-common       :as common]
                      [notifications   :refer [success?]]
                      [organizations   :as organization]
+                     [environments   :as env]
                      [sync-management :as sync] 
                      [repositories    :as repo]
                      [providers       :as provider]
                      [gpg-keys        :as gpg-key]
+<<<<<<< HEAD
+=======
+                     [package-filters :as filter]
+                     [fake-content    :as fake]
+>>>>>>> master
                      [validation      :refer :all]
                      [conf            :as conf])
             [katello.tests.useful :refer [create-series create-recursive]]))
-
-;; Constants
-
-(def tmp-gpg-keyfile (tmpfile "output.txt"))
 
 ;; Functions
 
@@ -64,22 +71,80 @@
        :description nil
        :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)])))
 
+(defn setup-custom-providers-with-gpg-keys [gpg-key-name url]
+  (let [provider-name (uniqueify "custom_provider")
+        product-name (uniqueify "custom_product")
+        repo-name (uniqueify "zoo_repo")
+        product-name2 (uniqueify "custom_product2")
+        repo-name2 (uniqueify "zoo_repo2")]
+    (provider/create {:name provider-name})
+    (provider/add-product {:provider-name provider-name
+                           :name product-name})
+    (repo/add-with-key {:provider-name provider-name
+                        :product-name product-name
+                        :name repo-name
+                        :url url
+                        :gpgkey gpg-key-name})
+    (provider/add-product {:provider-name provider-name
+                           :name product-name2})
+    (repo/add-with-key {:provider-name provider-name
+                        :product-name product-name2
+                        :name repo-name2
+                        :url url
+                        :gpgkey gpg-key-name})
+    (assert/is (every? true? (for [reponame [repo-name repo-name2]]
+                               (gpg-key/gpg-keys-prd-association? gpg-key-name reponame))))))
+  
+
+(defn create-gpg-key-with-products [gpg-key-type gpg-key gpg-key-name]
+  ;; gpg-key is a string when type is content and 
+  ;; gpg-key is a url when type is url
+  (let [org-name   (@config :admin-org)
+        zoo-url    (-> fake/custom-providers first :products first :repos second :url) 
+        safari-url (-> fake/custom-provider first :products first :repos first :url)]
+    (organization/switch org-name)
+    (api/ensure-env-exist (first (@config :environments)) {:prior library})
+    (gpg-key/create gpg-key-name {(keyword gpg-key-type) gpg-key})
+    (setup-custom-providers-with-gpg-keys gpg-key-name zoo-url)
+    (setup-custom-providers-with-gpg-keys gpg-key-name safari-url)))
+
+(defn upload-gpg-key-to-multiple-orgs [gpg-key gpg-key-name]
+  (let [test-org (uniqueify "custom-org")
+        org-name (@config :admin-org)
+        url      (-> fake/custom-providers first :products first :repos second :url)
+        envz     (take 3 (unique-names "env3"))]
+    (organization/switch org-name)
+    (api/ensure-env-exist (first (@config :environments)) {:prior library})
+    (gpg-key/create gpg-key-name {:contents gpg-key})
+    (setup-custom-providers-with-gpg-keys gpg-key-name url)
+    (organization/create test-org)
+    (organization/switch test-org)
+    (env/create-path test-org envz)
+    (gpg-key/create gpg-key-name {:contents gpg-key})
+    (setup-custom-providers-with-gpg-keys gpg-key-name url)
+    (organization/switch org-name)))
+
 ;; Tests
 
 (defgroup gpg-key-tests
-  :group-setup #(spit tmp-gpg-keyfile "test")
   
   (deftest "Create a new GPG key from text input"
     :blockers rest/katello-only
     
+<<<<<<< HEAD
     (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
         ui/create))
+=======
+    (with-unique [test-key "test-key-text"]
+      (gpg-key/create test-key {:contents (slurp (@config :gpg-key))})))
+>>>>>>> master
   
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
 
+<<<<<<< HEAD
     (-> {:name "test-key-file", :filename tmp-gpg-keyfile, :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
@@ -91,6 +156,57 @@
                 uniqueify)
         ui/create
         ui/delete))))
+=======
+    (with-unique [test-key "test-key-file"]
+      (gpg-key/create test-key {:url (@config :gpg-key)}))
+    
+    (deftest "Delete existing GPG key" 
+      (with-unique [test-key "test-key-del"]
+        (gpg-key/create test-key {:url (@config :gpg-key) })
+        (gpg-key/remove test-key))))
+    
+  (deftest "Create a new GPG key from text input and associate it with products/providers"
+    :blockers api/katello-only
+    
+    (let  [gpg-key (slurp (@config :gpg-key))
+           gpg-key-name (uniqueify "test-key-text2")]
+      (create-gpg-key-with-products "contents" gpg-key gpg-key-name)))
+  
+  (deftest "Create a new GPG key from file and associate it with products/providers"
+    :blockers api/katello-only
+
+    (let  [gpg-key-name (uniqueify "test-key-file2")
+           gpg-key-url  (@config :gpg-key)]
+      (create-gpg-key-with-products "url" gpg-key-url gpg-key-name)))
+  
+  (deftest "Delete existing GPG key, associated with products/providers"
+    :blockers api/katello-only
+    
+    (let [gpg-key      (slurp (@config :gpg-key))
+          gpg-key-name (uniqueify "test-key-del")]
+      (create-gpg-key-with-products "contents" gpg-key gpg-key-name)
+      (gpg-key/remove gpg-key-name)))
+  
+  (deftest "Associate same GPG key to multiple orgs"
+    :blockers api/katello-only
+    
+    (let [gpg-key      (slurp (@config :gpg-key))
+          gpg-key-name (uniqueify "test-key-multiorg")]
+      (upload-gpg-key-to-multiple-orgs gpg-key gpg-key-name))))
+
+
+(defgroup package-filter-tests
+
+  (deftest "Create new Package Filter test"
+    (with-unique [test-package-filter "test-package-filter"]
+      (filter/create test-package-filter {:description "Test filter"}))
+    
+    (deftest "Delete existing Package Filter test" 
+      (with-unique [test-package-filter "test-package-filter"]
+        (filter/create test-package-filter {:description "Test filter"})
+        (filter/remove test-package-filter)))))
+
+>>>>>>> master
 
 (defgroup provider-tests
   
@@ -134,6 +250,7 @@
 
     
     (deftest "Create two providers with the same name, in two different orgs"
+<<<<<<< HEAD
       (with-unique [provider (katello/newProvider {:name "prov"})]
         (doseq [org (->> {:name "prov-org"}
                          katello/newOrganization
@@ -144,3 +261,9 @@
   gpg-key-tests)
 
 
+=======
+      (with-n-new-orgs 2 create-same-provider-in-multiple-orgs)))
+
+  gpg-key-tests
+  package-filter-tests)
+>>>>>>> master

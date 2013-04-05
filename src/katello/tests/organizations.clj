@@ -8,7 +8,15 @@
                      [repositories :as repo]
                      [tasks :refer :all] 
                      [notifications :as notification]
+<<<<<<< HEAD
                      [organizations :as organization])
+=======
+                     [organizations :as organization] 
+                     [environments :as environment]
+                     [changesets :as changesets]
+                     [fake-content :as fake]
+                     [conf :refer [config]])
+>>>>>>> master
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -35,15 +43,32 @@
 (def create-and-verify-with-basename
   (comp create-and-verify uniqueify mkorg))
 
+(defn setup-custom-org-with-content
+  [org-name envz promotion-content]
+  (organization/create org-name)           
+  (organization/switch org-name)
+  (environment/create-path org-name envz)
+  (fake/prepare-org-custom-provider org-name fake/custom-provider)
+  (changesets/promote-delete-content library (first envz) false promotion-content))
+
+
 ;; Data (Generated)
 
 (def bad-org-names
+<<<<<<< HEAD
   (for [[name err] (concat
                     (for [inv-char-str validation/invalid-character-strings]
                       [inv-char-str ::notification/name-must-not-contain-characters])
                     (for [trailing-ws-str validation/trailing-whitespace-strings]
                       [trailing-ws-str ::notification/name-no-leading-trailing-whitespace]))]
     [(mkorg name) err]))
+=======
+  (concat
+   (for [inv-char-str validation/invalid-org-name-strings]
+     [inv-char-str ::notification/org-name-must-not-contain-html])
+   (for [trailing-ws-str validation/trailing-whitespace-strings]
+     [trailing-ws-str ::notification/name-no-leading-trailing-whitespace])))
+>>>>>>> master
 
 (def name-taken-error (common/errtype ::notification/name-taken-error))
 (def label-taken-error (common/errtype ::notification/label-taken-error))
@@ -115,14 +140,27 @@
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
     
+<<<<<<< HEAD
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
         (ui/delete org)
         (assert/is (rest/not-exists? org)))
 
+=======
+      (let [org-name (uniqueify "del-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          (organization/delete org-name)
+          (assert/is (org-does-not-exist? org-name)))
+    
+>>>>>>> master
       (deftest "Create an org with content, delete it and recreate it"
         :blockers rest/katello-only
         
+<<<<<<< HEAD
         (with-unique [org (mkorg "delorg")
                       provider (newProvider {:name "delprov" :org org})
                       product (newProduct {:name "delprod" :provider provider})
@@ -134,6 +172,17 @@
             (organization/switch)
             (organization/delete org)
             (create-all)))))
+=======
+        (let [org-name (uniqueify "recreate-org")
+              envz     (take 3 (unique-names "env"))
+              promotion-content {:products (map :name (-> fake/custom-provider first :products))}]
+          
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (organization/switch (@config :admin-org))
+          (organization/delete org-name)
+          (setup-custom-org-with-content org-name envz promotion-content)
+          (assert/is (org-exists? org-name)))))
+>>>>>>> master
     
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
@@ -146,7 +195,15 @@
             (common/errtype notif)
             (ui/create org))))
 
+<<<<<<< HEAD
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
        ["Library" (uniqueify "env-label") ::notification/env-name-lib-is-builtin]
        [(uniqueify "env-name") "Library" ::notification/env-label-lib-is-builtin]])))
+=======
+      [["lib-org" "Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
+       ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+ 
+>>>>>>> master

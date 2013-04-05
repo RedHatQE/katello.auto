@@ -99,4 +99,5 @@
 (defn get-distro [runner]
   ((get-client-facts runner) "distribution.name"))
 
-
+(defn get-ip-address [runner]
+  ((get-client-facts runner) "net.interface.eth0.ipv4_address"))

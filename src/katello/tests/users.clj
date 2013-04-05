@@ -3,15 +3,28 @@
             (katello [validation :refer :all] 
                      [organizations :as organization]
                      [ui :as ui]
+<<<<<<< HEAD
                      [navigation :as nav]
                      [rest :as rest]
                      [login :refer [login logout]]
+=======
+                     [fake-content :as fake]
+                     [login :refer [login logout logged-in?]]
+>>>>>>> master
                      [ui-common :as common]
-                     [roles :as role] 
+                     [roles :as role]
+                     [menu :as menu]
                      [users :as user]
                      [tasks :refer :all] 
+<<<<<<< HEAD
                      
                      [conf :refer [config *session-org*]]) 
+=======
+                     [content-search :refer [list-available-orgs]]
+                     [conf :refer [config]]
+                     [api-tasks :as api]
+                     [navigation :as nav]) 
+>>>>>>> master
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [clojure.string :refer [capitalize upper-case lower-case]]
@@ -77,7 +90,7 @@
 ;;; Tests
 
 (defgroup default-org-tests
-  :test-teardown #(login)
+  :test-teardown (fn [& _ ] (login))
   (deftest "Set default org for a user at login"
     (-> (new-unique-user)
         create-org-and-user
@@ -108,15 +121,74 @@
         set-default-org-at-dashboard
         verify-login-direct-to-default-org))
     
+<<<<<<< HEAD
   (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
     (-> (new-unique-user)
         create-org-and-user 
         set-default-org-at-login-screen
         verify-only-one-org)))
+=======
+    (deftest "User's Favorite Organization"
+      :data-driven true
+      
+      (fn [saved-org-with expected]
+        (let [user (uniqueify "deforg")
+              org {:login  (uniqueify "usersorg-login")
+                    :star  (uniqueify "usersorg-star")
+                    :settings  (uniqueify "usersorg-settings")}]
+          (login)
+          (api/create-user user generic-user-details)
+          (user/assign {:user user :roles  ["Administrator"]})
+          
+          (api/create-organization (org :login))
+          (if (saved-org-with :login)
+              (step-set-default-org-at-login-screen {:username user :org (org :login)})
+              (login user (:password generic-user-details) {:org (org :login)}))
+          
+          (when (saved-org-with :star)
+            (api/create-organization (org :star))
+            (step-set-default-org {:new-org (org :star)}))
+          
+          (when (saved-org-with :settings)
+            (api/create-organization (org :settings)) 
+            (try 
+              (user/assign-default-org-and-env user (org :settings) nil)
+              (catch Exception e)))
+          
+          (step-verify-login-direct-to-new-default-org {:username user :new-org (org expected)})))
+      
+      [[#{:login :star :settings} :star]
+       [#{:login :settings} :login]
+       [#{:login :star} :star]
+       [#{:settings :star} :star]])
+   
+    (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
+      (let [user (uniqueify "deforg")
+               org  (uniqueify "usersorg")]
+           (do-steps {:username user
+                      :org org
+                      :roles []
+                      :default-org "ACME_Corporation"
+                     :default-env nil}
+                   step-create-org-and-user
+                   step-set-default-org-at-login-screen
+                   step-verify-only-one-org
+                   ))))
+>>>>>>> master
 
+(defgroup user-settings
+    :test-teardown (fn [& _ ] (login))
+ 
+    (deftest "User changes his password"
+      :blockers (open-bz-bugs "915960")
+      (with-unique [username "edituser"]
+        (user/create username generic-user-details)
+        (login username (:password generic-user-details))
+        (user/self-edit {:new-password "changedpwd"})
+        (login username "changedpwd"))))   
 
 (defgroup user-tests
-
+  
   (deftest "Admin creates a user"
     (ui/create (uniqueify (assoc generic-user :name "user")))
     
@@ -135,10 +207,10 @@
         (expecting-error (common/errtype expected-err)
                          (ui/create (uniqueify (assoc generic-user :name username )))))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
-       [(random-string (int \a) (int \z) 65) :katello.notifications/username-64-char-limit]
+       [(random-string (int \a) (int \z) 129) :katello.notifications/username-128-char-limit]
        ["foo   " :katello.notifications/validation-error]
        ["   foo   " :katello.notifications/validation-error]
-       ["<a href='foo'>Click Here></a>" :katello.notifications/validation-error]
+       ["<a href='foo'>Click Here></a>" :katello.notifications/name-must-not-contain-html]
        ["#$%^" :katello.notifications/validation-error]
        ["" :katello.notifications/username-cant-be-blank]])
 
@@ -160,7 +232,6 @@
       (with-unique [user (assoc generic-user :name "edituser")]
         (ui/create user)
         (ui/update user assoc :password "changedpwd")))
-
 
     (deftest "Admin deletes a user"
       (with-unique [user (assoc generic-user :name "deluser")]
@@ -204,12 +275,22 @@
       :data-driven true
       
       (fn [delete-all?]
+<<<<<<< HEAD
         (with-unique [user (assoc generic-user {:name "autouser"})]
           (rest/create user)
           (ui/update user assoc :roles #{role/administrator})
           (logout)
           (login user {:org *session-org*})
           (user/delete-notifications delete-all?)))
+=======
+        (with-unique [username "autouser"]
+          (let [password "abcd1234"]
+            (user/create username {:password password :email "me@my.org"})
+            (user/assign {:user username, :roles ["Administrator"]})
+            (logout)
+            (login username password {:org (@config :admin-org)})
+            (user/delete-notifications delete-all?))))
+>>>>>>> master
       
       [[true]
        [false]])
@@ -227,6 +308,7 @@
           (rest/create user)
           (ui/update user assoc :roles #{role/administrator})))
   
+<<<<<<< HEAD
     (deftest "Roles can be removed from user"
       (with-unique [user (assoc generic-user {:name "autouser"})]
           (rest/create user)
@@ -234,3 +316,33 @@
           (ui/update user assoc :roles #{}))))
 
   default-org-tests)
+=======
+     (deftest "Roles can be removed from user"
+      (with-unique [username "autouser"]
+        (user/create username generic-user-details)
+        (user/assign {:user username, :roles ["Administrator" "Read Everything"]})
+        (user/unassign {:user username, :roles ["Read Everything"]})))
+     
+     (deftest "Unassign admin rights to admin user and then login
+               to find only dashboard menu"
+       :blockers (open-bz-bugs "916156")
+       
+       (let [user (@config :admin-user)
+             pass (@config :admin-password)
+             new-user (uniqueify "autouser1")
+             new-pass "admin123"
+             menu-links [::menu/systems-link ::menu/content-link ::menu/setup-link]]
+         (user/create new-user {:password new-pass :email "me@my.org"})
+         (user/assign {:user new-user, :roles ["Administrator"]})
+         (user/unassign {:user user, :roles ["Administrator"]})
+         (try
+           (login)
+           (assert/is (menu/menu-does-not-exists? menu-links))
+           (finally  
+             (login new-user new-pass {:org (@config :admin-org)})
+             (user/assign {:user user, :roles ["Administrator"]})
+             (login))))))      
+
+user-settings
+default-org-tests)
+>>>>>>> master

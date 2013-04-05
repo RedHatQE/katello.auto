@@ -19,16 +19,19 @@
    ::users                           "role_users"
    ::permissions                     "role_permissions"
    ::next                            "next_button"
+   ::previous                        "previous_button"
    ::permission-resource-type-select "permission[resource_type_attributes[name]]"
    ::permission-verb-select          "permission[verb_values][]"
-   ::permission-tag-select           "tags"        
+   ::permission-tag-select           "permission[tag_values][]"        
    ::permission-name-text            "permission[name]"
    ::permission-description-text     "permission[description]"
    ::save-permission                 "save_permission_button"
    ::remove                          "remove_role"
    ::add-permission                  "add_permission"
    ::all-types                       "all_types"
-   ::slide-link-home                 "//span[@id='roles']"}
+   ::slide-link-home                 "//span[@id='roles']"
+   ::all-verbs                       "all_verbs"
+   ::all-tags                        "all_tags"}
   ui/locators)
 
 (sel/template-fns
@@ -77,16 +80,27 @@
       (browser click ::all-types)
       (do (browser select ::permission-resource-type-select resource-type)
           (browser click ::next)
-          (doseq [verb verbs]
-            (browser addSelection ::permission-verb-select verb))
+          (cond 
+           (and (not verbs) (browser isVisible ::all-verbs)) 
+           (browser click ::all-verbs)
+                          
+           (not (nil? verbs))
+           (doseq [verb verbs]
+             (browser addSelection ::permission-verb-select verb)))
           (browser click ::next)
-          (doseq [tag tags]
-            (browser addSelection ::permission-tag-select tag))))
+          (cond 
+           (and (not tags) (browser isVisible ::all-tags)) 
+           (browser click ::all-tags)
+                          
+           (not (nil? tags))
+           (doseq [tag tags]
+             (browser addSelection ::permission-tag-select tag)))))
     (sel/fill-ajax-form {::permission-name-text name
                          ::permission-description-text description}
                         ::save-permission)
     (notification/check-for-success {:match-pred
                                      (notification/request-type? :roles-create-permission)})))
+    
 
 (defn- remove-permissions [permissions]
   (browser click ::slide-link-home)
@@ -133,9 +147,35 @@
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
 
 
+
 (extend katello.Role
   ui/CRUD {:create create
            :update* edit
            :delete delete}
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to #(nav/go-to ::named-page {:role %})})
+
+(defn validate-permissions-navigation
+  "Validate Navigation of permissions page under Roles."
+  [role-name perm-name org resource-type verbs tags]
+  (nav/go-to ::named-permissions-page {:role-name role-name})
+  (sel/->browser (click (permission-org org))
+                 (sleep 1000))
+  (browser click ::add-permission)
+  (browser select ::permission-resource-type-select resource-type)
+  (browser click ::next)
+  (doseq [verb verbs]
+    (browser addSelection ::permission-verb-select verb))
+  (browser click ::next)
+  (doseq [tag tags]
+    (browser addSelection ::permission-tag-select tag))
+  (sel/->browser (click ::next)
+                 (setText ::permission-name-text perm-name)
+                 (setText ::permission-description-text "myperm descriptions"))
+  (while (browser isVisible ::previous)
+    (browser click ::previous))  
+  (while (not (browser isVisible ::save-permission))
+    (browser click ::next))
+  (browser click ::save-permission)
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
+

@@ -24,8 +24,8 @@
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
    ::username-text               "user[username]"
-   ::password-text               "password_field" ; use id attr 
-   ::confirm-text                "confirm_field" ; for these two (name is the same)
+   ::password-text               "//input[@id='password_field']" ; use id attr 
+   ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
    ::default-org                 "org_id[org_id]"
    ::email-text                  "user[email]"
    ::save                        "save_user"
@@ -106,6 +106,7 @@
   (browser click ::save-environment)
   (notification/check-for-success))
 
+<<<<<<< HEAD
 (defn edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once). Can add or remove roles, and change
@@ -166,6 +167,41 @@
   nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
+=======
+(defn- edit-form [{:keys [inline-help clear-disabled-helptips
+                    new-password new-password-confirm new-email default-org]}]
+    (when-not (nil? inline-help)
+    (browser checkUncheck ::enable-inline-help-checkbox inline-help))
+  (when new-password
+    (browser setText ::password-text new-password)
+    (browser setText ::confirm-text (or new-password-confirm new-password))
+
+    ;;hack alert - force the page to check the passwords (selenium
+    ;;doesn't fire the event by itself
+    (browser getEval "window.KT.user_page.verifyPassword();")
+
+    (when (browser isElementPresent ::password-conflict)
+      (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
+    (browser click ::save-edit) 
+    (notification/check-for-success))
+  (when new-email
+    (common/in-place-edit {::email-text new-email})))
+>>>>>>> master
+
+(defn self-edit
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once)."
+  [edit-map]
+  (browser click ::account)
+  (browser waitForElement ::password-text "10000")
+  (edit-form edit-map))
+
+(defn edit
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once)."
+  [username edit-map]
+  (nav/go-to ::named-page {:username username})
+  (edit-form edit-map))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
