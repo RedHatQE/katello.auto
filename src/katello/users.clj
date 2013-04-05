@@ -167,21 +167,6 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
-(defn self-edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [edit-map]
-  (browser click ::account)
-  (browser waitForElement ::password-text "10000")
-  (edit-form edit-map))
-
-(defn edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [username edit-map]
-  (nav/go-to ::named-page {:username username})
-  (edit-form edit-map))
-
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
   []
