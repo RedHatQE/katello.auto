@@ -2,6 +2,7 @@
   :description "Katello automation"  
   :main ^{:skip-aot true} katello.tests.suite
   :dependencies [[org.clojure/clojure "1.5.0"]
+                 [org.clojure/core.logic "0.8.3"]
                  [test.tree.jenkins "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [org.clojure/data.json "0.1.1"]

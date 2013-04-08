@@ -21,6 +21,11 @@
   []
   (browser isElementPresent ::ui/log-out))
 
+(defn wait-for-login
+  "Waits until logout is present."
+  []
+  (browser waitForElement ::ui/log-out "2000"))
+
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
@@ -60,4 +65,5 @@
                                                           name)}))
                                 {:default-org default-org
                                  :login? true})))
-     ))
+     (when (not (logged-in?))
+                (wait-for-login))))
