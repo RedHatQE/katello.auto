@@ -1,23 +1,13 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-<<<<<<< HEAD
   (:require [katello :as kt]
             (katello [navigation :as nav]
                         [conf :refer :all] 
                         [tasks :refer :all]
-                        [login :refer [login logout logged-in?]]
+                        [login :refer [login logout logged-in? logged-out?]]
                         [users :as user]
                         [ui-common :as common]
                         [organizations :as organization])
-=======
-  (:require (katello [navigation :as nav]
-                     [conf :refer :all] 
-                     [tasks :refer :all]
-                     [login :refer [login logout logged-in? logged-out?]]
-                     [users :as user]
-                     [ui-common :as common]
-                     [organizations :as organization])
->>>>>>> master
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
