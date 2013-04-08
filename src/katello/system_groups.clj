@@ -93,16 +93,6 @@
                       ::copy-submit)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
 
-(defn cancel-close-widget
-  "Click 'cancel' on copy widget and widget should close properly 
-   OR closing system-group widget should also close copy widget"
-  [orig {:keys [close-widget?]}]
-  (nav/go-to orig)
-  (browser click ::copy)
-  (browser click (if close-widget?
-                   ::close
-                   ::cancel-copy)))
-
 (defn remove
   "Removes a system group. Optionally, remove all the systems in the
    group as well."
