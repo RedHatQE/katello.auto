@@ -11,16 +11,9 @@
                      [system-groups :as sg]
                      [activation-keys :as ak]
                      [systems :as system]
-<<<<<<< HEAD
-                     [conf :refer [*session-org*]])
+                     [conf :refer [*session-org* config]])
             
             [katello.tests.useful :refer [ensure-exists]]
-=======
-                     [conf :refer [config]]
-                     [gpg-keys :as gpg-key])
-            [katello.tests.organizations :refer [create-test-org]]
-            [katello.tests.users :refer [generic-user-details]]
->>>>>>> master
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -181,34 +174,21 @@
                                        (constantly true)
                                        (list sg))]
           (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))]
-<<<<<<< HEAD
             (assert/is (validate-search-results
                         (doall (map strip-num (extract-left-pane-list)))))))))
     [[{:name "sg-fed" :description "the centos system-group"} {:name "mysystem3" :sockets "4" :system-arch "x86_64"} {:criteria "description: \"the centos system-group\""}]
      [{:name "sg-fed1" :description "the rh system-group"} {:name "mysystem1" :sockets "2" :system-arch "x86"} {:criteria "name:sg-fed1*"}]
-     [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]]))
-=======
-            (assert/is (valid-search-results
-                        (doall (map strip-num (extract-left-pane-list)))
-                        ))))))
-    [[["sg-fed" {:description "the centos system-group"}] ["mysystem3" {:sockets "4" :system-arch "x86_64"}] {:criteria "description: \"the centos system-group\""}]
-     [["sg-fed1" {:description "the rh system-group"}] ["mysystem1" {:sockets "2" :system-arch "x86"}] {:criteria "name:sg-fed1*"}]
-     [["sg-fed2" {:description "the fedora system-group"}] ["mysystem2" {:sockets "1" :system-arch "i686"}] {:criteria "system:mysystem2*"}]])
- 
+     [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]])
+
   (deftest "search GPG keys"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
     
-    (fn [gpg-key_opt searchterms]
-      (let [[name opts] gpg-key_opt
-            unique-gpg_key [(uniqueify name) opts]] 
-        (apply gpg-key/create unique-gpg_key)
+    (fn [gpg-key-info searchterms]
+      (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]
+        (ui/create key)
         (search :gpg-keys searchterms)
-        (let [valid-search-results (search-results-valid?
-                                    (constantly true)
-                                    [(first unique-gpg_key)])]
-        (assert/is (valid-search-results (extract-left-pane-list))))))
-    [[["gpg_key1"  {:contents "gpgkeys1234"}] {:criteria "content:\"gpgkeys1234\""}]
-     (fn [] [["gpg_key2"  {:contents (slurp (@config :gpg-key))}] {:criteria "name:gpg_key2*"}])
-     (fn [] [["gpg_key3"  {:contents (slurp (@config :gpg-key))}] {:criteria "name:gpg_key*"}])]))
->>>>>>> master
+        (validate-search-results (list key))))
+    [[{:name "gpg_key1" :contents "gpgkeys1234"} {:criteria "content:\"gpgkeys1234\""}]
+     (fn [] [{:name "gpg_key2" :contents (slurp (@config :gpg-key))} {:criteria "name:gpg_key2*"}])
+     (fn [] [{:name "gpg_key3" :contents (slurp (@config :gpg-key))} {:criteria "name:gpg_key*"}])]))
