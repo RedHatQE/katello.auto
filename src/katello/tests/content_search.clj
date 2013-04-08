@@ -88,7 +88,7 @@
                  (def ^:dynamic test-org-compare (uniqueify "comparesearch"))
                  (api/create-organization test-org-compare)
                  (org/switch test-org-compare)
-                ; (fake/prepare-org-custom-provider test-org-compare fake/custom-providers)
+                 (fake/prepare-org-custom-provider test-org-compare fake/custom-providers)
                  (env/create (uniqueify "simple-env") {:org-name test-org-compare :prior-env "Library"}))
   
   (deftest "Repo compare: Differences between repos can be qualified"
@@ -152,23 +152,23 @@
   (deftest "\"Compare\" UI - Selecting repos for compare"
     (org/switch test-org-compare)
     (let [repositories ["CompareZoo1" "CompareZoo2"]]
-      ;(content-search/add-repositories (fake/get-all-custom-repos))
+      (content-search/add-repositories (fake/get-all-custom-repos))
       (content-search/check-repositories repositories)
       (content-search/click-if-compare-button-is-disabled?)
       (assert/is (= (into #{} (content-search/get-repo-content-search))
                     (into #{} repositories)))))
   
-  ;(deftest "Repo compare: Add many repos to compare"
-  ;  (org/switch test-org-compare)
-  ;  (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
-  ;    (assert/is (= repos
-   ;                 (set (content-search/compare-repositories (into [] repos)))))))
+  (deftest "Repo compare: Add many repos to compare"
+    (org/switch test-org-compare)
+    (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
+      (assert/is (= repos
+                   (set (content-search/compare-repositories (into [] repos)))))))
   
- ; (deftest "Repo compare: repos render correctly when internationalized"
- ;   (org/switch test-org-compare)
- ;   (let [expected (set (fake/get-i18n-repos))
- ;         result (set (content-search/compare-repositories expected))]
- ;     (assert/is (= expected result))))    
+  (deftest "Repo compare: repos render correctly when internationalized"
+    (org/switch test-org-compare)
+    (let [expected (set (fake/get-i18n-repos))
+          result (set (content-search/compare-repositories expected))]
+      (assert/is (= expected result))))    
 
   (deftest "Content Search: search repo info"
     :data-driven true
@@ -239,20 +239,19 @@
                       ~data)))))
 
 
-  (def errata-search-table
-   ((fn [header table] (into #{} (map #(zipmap header %1) table)))
-   
-   [:errata          :title             :type         :severity]
-  [["RHEA-2012:2010" "Squirrel_Erratum" "enhancement" "low"]
-   ["RHEA-2012:2011" "Camel_Erratum"    "security"    "important"]
-   ["RHEA-2012:2012" "Dog_Erratum"      "security"    "critical"]
-   ["RHEA-2012:2013" "Cow_Erratum"      "bugfix"      "moderate"]]))
+(def errata-search-table
+  (let [[header & table] [[:errata :title :type :severity]
+                          ["RHEA-2012:2010" "Squirrel_Erratum" "enhancement" "low"]
+                          ["RHEA-2012:2011" "Camel_Erratum" "security" "important"]
+                          ["RHEA-2012:2012" "Dog_Erratum" "security" "critical"]
+                          ["RHEA-2012:2013" "Cow_Erratum" "bugfix" "moderate"]]]
+  (map (partial zipmap header) table)))
 
 (defgroup content-search-errata
   :group-setup (fn []
                  (def ^:dynamic test-org-errata (uniqueify "erratasearch"))
                  (api/create-organization test-org-errata)
-                 ;(fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
+                 (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
                  (env/create (uniqueify "simple-env") {:org-name test-org-errata :prior-env "Library"}))
 
   
@@ -319,7 +318,7 @@
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/create-organization test-org)
-  ;               (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+                 (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
                  )
   
  (comment 
@@ -393,7 +392,7 @@
                  (def ^:dynamic test-org-env      (uniqueify "env-org"))
                  (api/create-organization test-org-env)
                  (org/switch test-org-env)
-        ;         (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
+                 (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
                  (env/create env-dev {:org-name test-org-env :prior-env "Library"})
                  (env/create env-qa {:org-name test-org-env :prior-env env-dev})
                  (env/create env-release {:org-name test-org-env :prior-env env-qa})
