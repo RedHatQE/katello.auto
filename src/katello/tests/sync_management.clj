@@ -37,6 +37,13 @@
      [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal ""}) :katello.notifications/start-date-time-cant-be-blank]
      {:blockers (open-bz-bugs "853229")})])
 
+(defn create-all-and-sync
+  "Creates all the given repos, including their products and
+  providers.  All must not exist already."
+  [repos]
+  (testfns/create-all-recursive repos)
+  (perform-sync (filter (complement :unsyncable) repos)))
+
 (with-unique-ent "plan" some-plan)
 ;; Tests
 

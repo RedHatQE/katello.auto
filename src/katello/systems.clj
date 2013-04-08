@@ -492,20 +492,6 @@
       (browser click (system-fact-group-expand group)))))
 
 
-(defn confirm-yes-no-to-delete
-  [system del?]
-  (nav/go-to system)
-  (browser click ::remove)
-  (if del?
-    (do
-      (browser click ::ui/confirmation-yes)
-      (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
-    (do
-      (browser click ::confirm-to-no)
-      (let [details (get-details system)]
-        (when-not (= system (details "Name"))
-          (throw+ {:type ::system-deleted-anyway :msg "system deleted even after clicking 'NO' on confirmation dialog"}))))))
-
 (defn add-package "Add a package or package group to a system."
   [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page {:system system})

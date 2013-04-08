@@ -40,65 +40,36 @@
 
 (def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7"))
 
-(let [prov (kt/newProvider {:name "Custom Provider"})
-      com-nature (kt/newProduct {:name "Com Nature Enterprise"})
-      weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"})
-      many (kt/newProduct {:name "ManyRepository Enterprise"})]
-  (concat (for [r [{:name "CompareZoo1" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "CompareZoo2" 
-                    :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
-                   {:name "CompareZooNosync"
-                    :unsyncable true
-                    :url "http://inecas.fedorapeople.org/fakerepos/"}
-                   {:name "ManyRepositoryA" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
-            (kt/newRepository (assoc r :product com-nature)))
-          (for [r [{:name "洪" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "Гесер" 
-                    :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]]
-            (kt/newRepository (assoc r :product weird-locals)))
-          (for [r [{:name "ManyRepositoryA" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "ManyRepositoryB" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "ManyRepositoryC" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "ManyRepositoryD" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                   {:name "ManyRepositoryE" 
-                    :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
-            (kt/newRepository (assoc r :product many)))))
-
-(def custom-providers [{:name "Custom Provider"
-                        :products [{:name "Com Nature Enterprise"
-                                    :repos [{:name "CompareZoo1" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "CompareZoo2" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
-                                            {:name "CompareZooNosync"
-                                             :unsyncable true
-                                             :url "http://inecas.fedorapeople.org/fakerepos/"}
-                                            {:name "ManyRepositoryA" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
-                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
-                                    :i18n true
-                                    :repos [{:name "洪" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "Гесер" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
-                                   {:name "ManyRepository Enterprise"
-                                    :repos [{:name "ManyRepositoryA" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryB" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryC" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryD" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "ManyRepositoryE" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
+(def custom-repos (let [prov (kt/newProvider {:name "Custom Provider"})
+                        com-nature (kt/newProduct {:name "Com Nature Enterprise"})
+                        weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"})
+                        many (kt/newProduct {:name "ManyRepository Enterprise"})]
+                    (concat (for [r [{:name "CompareZoo1" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "CompareZoo2" 
+                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
+                                     {:name "CompareZooNosync"
+                                      :unsyncable true
+                                      :url "http://inecas.fedorapeople.org/fakerepos/"}
+                                     {:name "ManyRepositoryA" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
+                              (kt/newRepository (assoc r :product com-nature)))
+                            (for [r [{:name "洪" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "Гесер" 
+                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]]
+                              (kt/newRepository (assoc r :product weird-locals)))
+                            (for [r [{:name "ManyRepositoryA" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "ManyRepositoryB" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "ManyRepositoryC" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "ManyRepositoryD" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                     {:name "ManyRepositoryE" 
+                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
+                              (kt/newRepository (assoc r :product many))))))
 
 (def custom-provider [{:name "fedorapeople"
                        :products [{:name "safari-1_0"
