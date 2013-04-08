@@ -6,8 +6,8 @@
   `(do (clojure.core/defrecord ~rec ~args
          clojure.lang.IFn
          (invoke [this#] this#)
-         (invoke [this# query#] (query# this#))
-         (applyTo [this# args#] (clojure.lang.AFn/applyToHelper this# args#)))
+         (invoke [this# query#] (get this# query#))
+         (applyTo [this# args#] (get-in this# args#)))
        (def ~(symbol (str "new" rec)) ~(symbol (str "map->" rec)))))
 
 ;; Define records for all entities we'll be testing with
