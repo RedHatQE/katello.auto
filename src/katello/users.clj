@@ -2,6 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
+            [katello :as kt]
             (katello [navigation :as nav]
                      [tasks :as tasks]
                      [ui :as ui]
@@ -167,20 +168,10 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
-(defn self-edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [edit-map]
-  (browser click ::account)
-  (browser waitForElement ::password-text "10000")
-  (edit-form edit-map))
-
-(defn edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [username edit-map]
-  (nav/go-to ::named-page {:username username})
-  (edit-form edit-map))
+(defn admin "Returns the admin user" []
+  (kt/newUser {:name (@conf/config :admin-user)
+               :password (@conf/config :admin-password)
+               :email "admin@katello.org"}))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."

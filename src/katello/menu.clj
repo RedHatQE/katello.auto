@@ -87,9 +87,3 @@
     [:katello.users/page [] (browser clickAndWait ::users-link)]
     [:katello.roles/page [] (browser clickAndWait ::roles-link)]
     [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]]])
-
-(defn menu-does-not-exists? 
-  [menu-links]
-  (every? false? (doall
-                   (for [menu-link menu-links]
-                     (browser isElementPresent menu-link)))))
