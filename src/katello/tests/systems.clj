@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [fn])
   (:require [katello :as kt]
             (katello [navigation :as nav]
+                     [notifications :as notification]
                      [ui :as ui]
                      [rest :as rest]
                      [validation :as val]
@@ -112,7 +113,7 @@
     :blockers (open-bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
 
-  (deftest "System-details: Edit system-name"
+  (deftest "System-details: Edit system"
     :data-driven true
                                         ;:blockers (open-bz-bugs "917033")
 
@@ -181,7 +182,7 @@
       (rest/create-all systems)
       (system/multi-delete systems)))
 
-  ;; FIXME - convert-to-records
+  
   (deftest "Remove systems and validate sys-count"
     (with-unique [org (kt/newOrganization {:name "delsyscount"})
                   env (kt/newEnvironment {:name "dev", :org org})]
@@ -196,65 +197,52 @@
         (assert/is (= (dec (count systems)) (ui-count)))
         (system/multi-delete (rest systems))
         (assert/is (= 0 (ui-count))))))
-  
-  #_((deftest "Remove System: with yes-no confirmation"
-       :data-driven true
 
-       (fn [del?]
-         (with-unique [system-name "mysystem"]
-           (system/create system-name {:sockets "1"
-                                       :system-arch "x86_64"})
-           (nav/go-to system)
-           (browser click ::remove)
-           (if del?
-             (do
-               (browser click ::ui/confirmation-yes)
-               (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
-             (do
-               (browser click ::confirm-to-no)
-               (let [details (get-details system)]
-                 (when-not (= system (details "Name"))
-                   (throw+ {:type ::system-deleted-anyway :msg "system deleted even after clicking 'NO' on confirmation dialog"})))))
-           (system/confirm-yes-no-to-delete system-name del?)))
+  (deftest "Remove System: with yes-no confirmation"
+    :data-driven true
 
-       [[false]
-        [true]])
+    (fn [confirm?]
+      (with-unique [system (kt/newSystem {:name "mysystem"
+                                          :sockets "1"
+                                          :system-arch "x86_64"})]
+        (ui/create system)
+        (nav/go-to system)
+        (browser click ::remove)
+        (if confirm?
+          (do (browser click ::ui/confirmation-yes)
+              (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
+              (assert (rest/not-exists? system)))
+          (do (browser click ::confirm-to-no)
+              (nav/go-to system)))))
+    [[false]
+     [true]])
 
-     (deftest "System Details: Add custom info"
-       :blockers (open-bz-bugs "919373")
-       (with-unique [system-name "mysystem"]
-         (let [key-name "Hypervisor"
-               key-value "KVM"]
-           (system/create system-name {:sockets "1"
-                                       :system-arch "x86_64"})
-           (system/add-custom-info system-name key-name key-value))))
+  (deftest "System Details: Add custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system (kt/newSystem {:name "mysystem"})]
+      (ui/create system)
+      (ui/update system assoc :custom-info "Hypervisor" "KVM")))
 
-     (deftest "System Details: Update custom info"
-       :blockers (open-bz-bugs "919373")
-       (with-unique [system-name "mysystem"]
-         (let [key-name "Hypervisor"
-               key-value "KVM"
-               new-key-value "Xen"]
-           (system/create system-name {:sockets "1"
-                                       :system-arch "x86_64"})
-           (system/add-custom-info system-name key-name key-value)
-           (system/update-custom-info system-name key-name new-key-value))))
+  (deftest "System Details: Update custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system (kt/newSystem {:name "mysystem"})]
+      (ui/create system)
+      (ui/update system assoc :custom-info "Hypervisor" "KVM")
+      (ui/update system assoc :custom-info "Hypervisor" "Xen")))
 
-     (deftest "System Details: Delete custom info"
-       :blockers (open-bz-bugs "919373")
-       (with-unique [system-name "mysystem"]
-         (let [key-name "Hypervisor"
-               key-value "KVM"]
-           (system/create system-name {:sockets "1"
-                                       :system-arch "x86_64"})
-           (system/add-custom-info system-name key-name key-value)
-           (system/remove-custom-info system-name key-name))))
+  (deftest "System Details: Delete custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique [system (kt/newSystem {:name "mysystem"})]
+      (ui/create system)
+      (ui/update system assoc :custom-info "Hypervisor" "KVM")
+      (ui/update system update-in [:custom-info] dissoc "Hypervisor")))
 
-     (deftest "System name is required when creating a system"
-       (expecting-error val/name-field-required
-                        (system/create "")))
+  (deftest "System name is required when creating a system"
+    (expecting-error val/name-field-required
+                     (ui/create (kt/newSystem {:name "" :facts (system/random-facts)}))))
+  ;; FIXME - convert-to-records
 
-     (deftest "New System Form: tooltips pop-up with correct information"
+  #_((deftest "New System Form: tooltips pop-up with correct information"
        :data-driven true
        verify-new-system-tooltip
        [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
@@ -265,13 +253,13 @@
 
        (fn [virt?]
          (with-unique [env "dev"
-                       system-name "mysystem"]
+                       system "mysystem"]
            (let [arch "x86_64"
                  cpu "2"]
              (env/create env {:org-name (@config :admin-org)})
-             (system/create-with-details system-name {:sockets cpu
-                                                      :system-arch arch :type-is-virtual? virt? :env env})
-             (validate-system-facts system-name cpu arch virt? env))))
+             (system/create-with-details system {:sockets cpu
+                                                 :system-arch arch :type-is-virtual? virt? :env env})
+             (validate-system-facts system cpu arch virt? env))))
 
        [[false]
         [true]])
@@ -320,7 +308,7 @@
              (assert/is (every? (complement empty?) (vals facts)))))))
 
      (deftest "System-Details: Validate Activation-key link"
-       (with-unique [system-name "mysystem"
+       (with-unique [system "mysystem"
                      key-name "auto-key"]
          (let [target-env (first *environments*)]
            (api/ensure-env-exist target-env {:prior library})
@@ -381,31 +369,30 @@
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
 
-  ;; FIXME convert-to-records
-  #_(deftest  "Registering a system from CLI and consuming contents from UI"
-      (let [gpgkey (-> {:name "mykey", :org *session-org*,
-                        :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
-                       kt/newGPGKey
-                       uniqueify)
-            repo (assoc (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/") :gpg-key gpgkey)]
-        (create-recursive repo)
-        (when (rest/is-katello?)
-          (changeset/sync-and-promote (list repo) (first *environments*)))
-        (provision/with-client "consume-content"
-          ssh-conn
-          (client/register ssh-conn {:username (:name *session-user*)
-                                     :password (:password *session-user*)
-                                     :org (kt/org repo)
-                                     :env (first *environments*)
-                                     :force true})
-          (let [mysys (client/my-hostname ssh-conn)
-                product-name (-> repo kt/product :name)]
-            (system/subscribe {:system-name mysys
-                               :add-products product-name})
-            (client/sm-cmd ssh-conn :refresh)
-            (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
-                  result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0))))))))
+  (deftest  "Registering a system from CLI and consuming contents from UI"
+    (let [gpgkey (-> {:name "mykey", :org *session-org*,
+                      :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
+                     kt/newGPGKey
+                     uniqueify)
+          repo (assoc (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/") :gpg-key gpgkey)]
+      (create-recursive repo)
+      (when (rest/is-katello?)
+        (changeset/sync-and-promote (list repo) (first *environments*)))
+      (provision/with-client "consume-content"
+        ssh-conn
+        (client/register ssh-conn {:username (:name *session-user*)
+                                   :password (:password *session-user*)
+                                   :org (kt/org repo)
+                                   :env (first *environments*)
+                                   :force true})
+        (let [mysys (client/my-hostname ssh-conn)
+              product-name (-> repo kt/product :name)]
+          (system/subscribe {:system-name mysys
+                             :add-products product-name})
+          (client/sm-cmd ssh-conn :refresh)
+          (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
+                result (client/run-cmd ssh-conn cmd)]
+            (assert/is (->> result :exit-code (= 0))))))))
 
   (deftest "Install package after moving a system from one env to other"
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}

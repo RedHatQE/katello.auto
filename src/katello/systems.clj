@@ -294,27 +294,46 @@
       ))
   (let [ks (list :packages :package-groups)]
     (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (browser click ::packages-link)
-      )))
+      (browser click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
                          ::description-text-edit description
                          ::location-text-edit location
                          ::release-version-select release-version}))
+
+(defn- update-custom-info [to-add to-remove]
+  (browser click ::custom-info)
+  (doseq [[k v] to-add]
+    (if (to-remove k) ;;if also in the remove, it's an update
+      (do (browser click (existing-key-value-field k))
+          (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button)
+          (notification/check-for-success))
+      (do (browser setText ::key-name k)
+          (browser setText ::key-value v)
+          (browser click ::create-custom-info)
+          (notification/check-for-success))))
+  ;; process removes
+  (doseq [[k _] (apply dissoc to-remove (keys to-add))]
+    (browser click (remove-custom-info-button k))
+    (notification/check-for-success)))
+
 (defn update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
                             service-level auto-attach env]
-                    :as to-add} _] (data/diff system updated)]
+             :as to-add} _] (data/diff system updated)]
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page {:system system
                                  :org (-> system :env :org)})
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
+
+      (when (or (:custom-info to-add) (:custom-info to-remove) )
+        (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
 
       (add-remove-content to-add to-remove)
       
@@ -518,28 +537,6 @@
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
 
-(defn add-custom-info
-  "Adds a custom keyname/value pair for the given system."
-  [name key-name key-value]
-  (nav/go-to ::custom-info-page {:system name})
-  (browser setText ::key-name  key-name)
-  (browser setText ::key-value  key-value)
-  (browser click ::create-custom-info)
-  (notification/check-for-success))
 
-(defn update-custom-info
-  "Updates the value for a system given the keyname."
-  [name key-name new-key-value]
-  (nav/go-to ::custom-info-page {:system name})
-  (browser click (existing-key-value-field key-name))
-  (sel/fill-ajax-form {(existing-key-value-field key-name) new-key-value} ::save-button)
-  (notification/check-for-success))
-
-(defn remove-custom-info
-  "Removes custom information from a system matching a keyname"
-  [name key-name]
-  (nav/go-to ::custom-info-page {:system name})
-  (browser click (remove-custom-info-button key-name))
-  (notification/check-for-success))
 
 
