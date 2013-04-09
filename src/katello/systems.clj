@@ -211,46 +211,6 @@
                          ::location-text-edit location
                          ::release-version-select release-version}))
 
-(defn edit-sysname
-  "Edits system"
-  [name new-name save?]
-  (nav/go-to ::details-page {:system name})
-  (let [old-name (browser getText ::edit-sysname)]
-    (browser click ::edit-sysname)
-    (browser setText ::name-text-edit new-name)
-    (if save?
-      (do
-        (browser click ::save-button)
-        (notification/check-for-success)
-        (when-not (= new-name (browser getText ::edit-sysname))
-          (throw+ {:type ::sysname-not-edited
-                   :msg "Still getting old system name."})))
-      (do
-        (browser click ::cancel-button)
-        (when-not (= name old-name)
-          (throw+ {:type ::sysname-edited-anyway
-                   :msg "System name changed even after clicking cancel button."}))))))
-
-(defn edit-sys-description
-  "Edit description of selected system"
-  [name new-description save?]
-  (nav/go-to ::details-page {:system name})
-  (let [original-description (browser getText ::edit-description)]
-    (browser click ::edit-description)
-    (browser setText ::description-text-edit new-description)
-    (if save?
-      (do
-        (browser click ::save-button)
-        (notification/check-for-success)
-        (when-not (= new-description (browser getText ::edit-description))
-          (throw+ {:type ::sys-description-not-edited
-                   :msg "Still getting old description of selected system."})))
-      (do
-        (browser click ::cancel-button)
-        (when-not (= original-description (browser getText ::edit-description))
-          (throw+ {:type ::sys-description-edited-anyway
-                   :msg "System description changed even after clicking cancel button."}))))))
-
 (defn- set-environment "select a new environment for a system"
   [new-environment]
   {:pre [(not-empty new-environment)]} 
