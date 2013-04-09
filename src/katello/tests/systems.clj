@@ -114,17 +114,15 @@
     (browser click ::system/edit-sysname)
     (browser setText ::system/name-text-edit new-name)
     (if save?
-      (do
-        (browser click ::system/save-button)
-        (notification/check-for-success)
-        (when-not (= new-name (browser getText ::system/edit-sysname))
-          (throw+ {:type ::system/sysname-not-edited
-                   :msg "Still getting old system name."})))
-      (do
-        (browser click ::system/cancel-button)
-        (when-not (= (:name system) old-name)
-          (throw+ {:type ::system/sysname-edited-anyway
-                   :msg "System system changed even after clicking cancel button."}))))))
+      (do (browser click ::system/save-button)
+          (notification/check-for-success)
+          (when-not (= new-name (browser getText ::system/edit-sysname))
+            (throw+ {:type ::system/sysname-not-edited
+                     :msg "Still getting old system name."})))
+      (do (browser click ::system/cancel-button)
+          (when-not (= (:name system) old-name)
+            (throw+ {:type ::system/sysname-edited-anyway
+                     :msg "System system changed even after clicking cancel button."}))))))
 
 (defn edit-sys-description
   "Edit description of selected system"
@@ -134,17 +132,15 @@
     (browser click ::system/edit-description)
     (browser setText ::system/description-text-edit new-description)
     (if save?
-      (do
-        (browser click ::system/save-button)
-        (notification/check-for-success)
-        (when-not (= new-description (browser getText ::system/edit-description))
-          (throw+ {:type ::system/sys-description-not-edited
-                   :msg "Still getting old description of selected system."})))
-      (do
-        (browser click ::system/cancel-button)
-        (when-not (= original-description (browser getText ::system/edit-description))
-          (throw+ {:type ::system/sys-description-edited-anyway
-                   :msg "System description changed even after clicking cancel button."}))))))
+      (do (browser click ::system/save-button)
+          (notification/check-for-success)
+          (when-not (= new-description (browser getText ::system/edit-description))
+            (throw+ {:type ::system/sys-description-not-edited
+                     :msg "Still getting old description of selected system."})))
+      (do (browser click ::system/cancel-button)
+          (when-not (= original-description (browser getText ::system/edit-description))
+            (throw+ {:type ::system/sys-description-edited-anyway
+                     :msg "System description changed even after clicking cancel button."}))))))
 
 ;; Tests
 
@@ -158,7 +154,7 @@
 
   (deftest "System-details: Edit system"
     :data-driven true
-                                        ;:blockers (open-bz-bugs "917033")
+    ;; blockers (open-bz-bugs "917033")
 
     (fn [new-system-name save? expected-res]
       (with-unique-system s
@@ -283,83 +279,81 @@
      [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
   ;; FIXME - convert-to-records
 
-  #_(
+  
 
-     (deftest "Add system from UI"
-       :data-driven true
+  (deftest "Add system from UI"
+    :data-driven true
 
-       (fn [virt?]
-         (with-unique [env "dev"
-                       system "mysystem"]
-           (let [arch "x86_64"
-                 cpu "2"]
-             (env/create env {:org-name (@config :admin-org)})
-             (system/create-with-details system {:sockets cpu
-                                                 :system-arch arch :type-is-virtual? virt? :env env})
-             (validate-system-facts system cpu arch virt? env))))
+    (fn [virt?]
+      (with-unique [env "dev"
+                    system "mysystem"]
+        (let [arch "x86_64"
+              cpu "2"]
+          (env/create env {:org-name (@config :admin-org)})
+          (system/create-with-details system {:sockets cpu
+                                              :system-arch arch :type-is-virtual? virt? :env env})
+          (validate-system-facts system cpu arch virt? env))))
 
-       [[false]
-        [true]])
+    [[false]
+     [true]])
 
-     (deftest "Add system link is disabled when org has no environments"
-       (with-unique [org (kt/newOrganization {:name "addsys"})]
-         (rest/create org)
-         (nav/go-to ::system/page)
-         (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
-           (assert (and (.contains class "disabled")
-                        (.contains original-title "environment is required"))))))
+  (deftest "Add system link is disabled when org has no environments"
+    (with-unique [org (kt/newOrganization {:name "addsys"})]
+      (rest/create org)
+      (nav/go-to ::system/page)
+      (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
+        (assert (and (.contains class "disabled")
+                     (.contains original-title "environment is required"))))))
 
-     (deftest "Check whether the details of registered system are correctly displayed in the UI"
-       ;;:blockers no-clients-defined
-       (provision/with-client "sys-detail"
-         ssh-conn
-         (client/register ssh-conn
-                          {:username (:name *session-user*)
-                           :password (:password *session-user*)
-                           :org (:name *session-org*)
-                           :env (:name test-environment)
-                           :force true})
-         (let [hostname (client/my-hostname ssh-conn)1
-               details (system/get-details hostname)]
-           (assert/is (= (client/get-distro ssh-conn)
-                         (details "OS")))
-           (assert/is (every? not-empty (vals details)))
-           (assert/is (= (client/get-ip-address ssh-conn)
-                         (system/get-ip-addr hostname)))))))
+  (deftest "Check whether the details of registered system are correctly displayed in the UI"
+    ;;:blockers no-clients-defined
+    (provision/with-client "sys-detail"
+      ssh-conn
+      (client/register ssh-conn
+                       {:username (:name *session-user*)
+                        :password (:password *session-user*)
+                        :org (:name *session-org*)
+                        :env (:name test-environment)
+                        :force true})
+      (let [hostname (client/my-hostname ssh-conn)
+            details (system/get-details hostname)]
+        (assert/is (= (client/get-distro ssh-conn)
+                      (details "OS")))
+        (assert/is (every? not-empty (vals details)))
+        (assert/is (= (client/get-ip-address ssh-conn)
+                      (system/get-ip-addr hostname))))))
 
-  ;;FIXME - convert-to-records
+  (deftest "Review Facts of registered system"
+    ;;:blockers no-clients-defined
+    (provision/with-client "sys-facts"
+      ssh-conn
+      (client/register ssh-conn {:username (:name *session-user*)
+                                 :password (:password *session-user*)
+                                 :org (:name *session-org*)
+                                 :env (:name test-environment)
+                                 :force true})
+      (let [hostname (client/my-hostname ssh-conn)
+            facts (system/get-facts hostname)
+            system (kt/newSystem {:name hostname})]
+        (system/expand-collapse-facts-group system)
+        (assert/is (every? (complement empty?) (vals facts))))))
 
-  #_((deftest "Review Facts of registered system"
-       ;;:blockers no-clients-defined
-       (provision/with-client "sys-facts"
-         ssh-conn
-         (let [target-env test-environment]
-           (client/register ssh-conn {:username *session-user*
-                                      :password *session-password*
-                                      :org (@config :admin-org)
-                                      :env target-env
-                                      :force true})
-           (let [hostname (client/my-hostname ssh-conn)
-                 facts (system/get-facts hostname)]
-             (system/expand-collapse-facts-group hostname)
-             (assert/is (every? (complement empty?) (vals facts)))))))
 
-     (deftest "System-Details: Validate Activation-key link"
-       (with-unique [system "mysystem"
-                     key-name "auto-key"]
-         (let [target-env test-environment]
-           (api/ensure-env-exist target-env {:prior library})
-           (ak/create {:name key-name
-                       :description "my description"
-                       :environment target-env})
-           (provision/with-client "ak-link" ssh-conn
-             (client/register ssh-conn
-                              {:org "ACME_Corporation"
-                               :activationkey key-name})
-             (let [mysys (client/my-hostname ssh-conn)]
-               (system/validate-activation-key-link mysys key-name)))))))
+  (deftest "System-Details: Validate Activation-key link"
+    (with-unique [ak (kt/newActivationKey {:name "ak-link"
+                                           :env test-environment})]
+      (rest/create ak)
+      (provision/with-client "ak-link" ssh-conn
+        (client/register ssh-conn
+                         {:org *session-org*
+                          :activationkey (:name ak)})
+        (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
+              aklink (system/activation-key-link (:name ak))]
+          (nav/go-to ::system/details-page {:system system})
+          (when (browser isElementPresent aklink)
+            (browser clickAndWait aklink))))))
 
-  (deftest "Install package group"
+   (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"
     :blockers rest/katello-only

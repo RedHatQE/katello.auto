@@ -218,13 +218,6 @@
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
 
-(defn validate-activation-key-link
-  "Validate activation key link under system details"
-  [name keyname]
-  (nav/go-to ::details-page {:system name})
-  (when (browser isElementPresent (activation-key-link keyname))
-    (browser clickAndWait (activation-key-link keyname))))
-
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
   list). Can also set the auto-subscribe for a particular SLA.
