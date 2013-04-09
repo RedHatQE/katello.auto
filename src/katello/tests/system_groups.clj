@@ -206,7 +206,7 @@
       (fn [opts]
         (with-unique-group g 
           (ui/create g)
-          (group/cancel-close-widget g opts)))
+          (cancel-close-widget g opts)))
 
       [[{:close-widget? true}]
        [{:close-widget? false}]])
