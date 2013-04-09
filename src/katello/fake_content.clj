@@ -42,7 +42,8 @@
 
 (def custom-repos (let [prov (kt/newProvider {:name "Custom Provider"})
                         com-nature (kt/newProduct {:name "Com Nature Enterprise"})
-                        weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"})
+                        weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                                     :i18n true})
                         many (kt/newProduct {:name "ManyRepository Enterprise"})]
                     (concat (for [r [{:name "CompareZoo1" 
                                       :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
@@ -99,25 +100,9 @@
                                                     {:name "Гесер" 
                                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
 
-(defn get-custom-repos [custom-providers-v & {:keys [filter-product? filter-repos?]
-                                              :or {filter-product? (constantly true),
-                                                   filter-repos? (constantly true)}}]
-  (->> (for [provider custom-providers-v,
-           product (:products provider), :when (filter-product? product)
-           repo (:repos product), :when (filter-repos? repo)]
-       repo)
-     doall
-     set
-     (remove nil?)))
-
-
-(defn get-all-custom-repos []
-  (map :name (get-custom-repos custom-providers ))) 
-
 
 (defn get-i18n-repos []
-  (map :name (get-custom-repos custom-providers 
-                               :filter-product? (fn [product] (contains? product :i18n))))) 
+  (filter #(-> % kt/product :i18n) custom-repos)) 
 
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
