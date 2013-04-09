@@ -17,7 +17,7 @@
                      [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-org* config *environments*]])
             [katello.client.provision :as provision]
-            [katello.tests.useful :refer [create-series create-recursive]]
+            [katello.tests.useful :refer [create-all-recursive create-recursive fresh-repo]]
             [clojure.string :refer [blank?]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
@@ -81,30 +81,8 @@
   (assert/is (browser isTextPresent expected-text))
   (browser mouseOut icon-locator)
   (Thread/sleep 2000)
-  (assert/is (false? (browser isTextPresent expected-text))))
+  (assert/is (not (browser isTextPresent expected-text))))
 
-(defn validate-new-system-link
-  [env? env org-name system-name]
-  (browser clickAndWait ::system/sys-tab)
-  (if env?
-    (do
-      (env/create env {:org-name org-name})
-      (system/create system-name {:sockets "1"
-                                  :system-arch "x86_64"}))
-    (do
-      (assert (not (= "disabled" (subs (browser getAttribute ::system/new-class-attrib) 1 8))))
-      (assert (not (blank? (browser getAttribute ::system/new-title-attrib)))))))
-
-(defn verify-sys-count
-  "Verify system-count after deleting one or more systems"
-  [sys-name system-names count]
-  (assert/is (= count (Integer/parseInt (browser getText ::system/total-sys-count))))
-  (system/delete sys-name)
-  (browser clickAndWait ::system/sys-tab)
-  (assert/is (= (dec count) (Integer/parseInt (browser getText ::system/total-sys-count))))
-  (system/multi-delete system-names)
-  (browser clickAndWait ::system/sys-tab) ; this is a workaround; hitting the systab will refesh the sys-count. See bz #859237
-  (assert/is (= 0 (Integer/parseInt (browser getText ::system/total-sys-count)))))
 
 (defn validate-system-facts
   [name cpu arch virt? env]
@@ -123,28 +101,6 @@
     (assert/is (= name (details "Name")))
     (assert/is (= arch (details "Arch")))
     (assert/is (= env  (details "Environment")))))
-
-(defn step-to-configure-server-for-pkg-install [product-name target-env]
-  (let [provider-name (uniqueify "custom_provider")
-        repo-name (uniqueify "zoo_repo")
-        org-name "ACME_Corporation"
-        testkey (uniqueify "mykey")]
-    (org/switch)
-    (api/ensure-env-exist target-env {:prior library})
-    (let [mykey (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")]
-      (gpg-key/create testkey {:contents mykey}))
-    (provider/create {:name provider-name})
-    (provider/add-product {:provider-name provider-name
-                           :name product-name})
-    (repo/add-with-key {:provider-name provider-name
-                        :product-name product-name
-                        :name repo-name
-                        :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
-                        :gpgkey testkey})
-    (let [products [{:name product-name :repos [repo-name]}]]
-      (when (api/is-katello?)
-        (changeset/sync-and-promote products library target-env)))))
-
 
 ;; Tests
 
@@ -226,21 +182,22 @@
       (system/multi-delete systems)))
 
   ;; FIXME - convert-to-records
-  #_((deftest "Remove systems and validate sys-count"
-       (with-unique [env  "dev"
-                     org-name "test-sys"
-                     system-name "mysystem"]
-         (org/create org-name)
-         (env/create env {:org-name org-name})
-         (org/switch org-name)
-         (let [system-names (take 3 (unique-names "mysys"))]
-           (create-multiple-systems system-names)
-           (system/create system-name {:sockets "1"
-                                       :system-arch "x86_64"})
-           (let [syscount (-> system-names count inc)]
-             (verify-sys-count system-name system-names syscount)))))
-
-     (deftest "Remove System: with yes-no confirmation"
+  (deftest "Remove systems and validate sys-count"
+    (with-unique [org (kt/newOrganization {:name "delsyscount"})
+                  env (kt/newEnvironment {:name "dev", :org org})]
+      (let [systems (->> {:name "delsys", :env env}
+                         kt/newSystem
+                         uniques
+                         (take 4))
+            ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
+        (create-all-recursive systems)
+        (assert/is (= (count systems) (ui-count)))
+        (ui/delete (first systems))
+        (assert/is (= (dec (count systems)) (ui-count)))
+        (system/multi-delete (rest systems))
+        (assert/is (= 0 (ui-count))))))
+  
+  #_((deftest "Remove System: with yes-no confirmation"
        :data-driven true
 
        (fn [del?]
@@ -319,19 +276,13 @@
        [[false]
         [true]])
 
-     (deftest "Add system when no env is available for selected org"
-       :data-driven true
-       (fn [env?]
-         (with-unique [env "dev"
-                       org-name "test-sys"
-                       system-name "mysystem"]
-           (org/create org-name)
-           (org/switch org-name)
-           (validate-new-system-link env? env org-name system-name)
-           (org/switch (@config :admin-org))))
-
-       [[true]
-        [false]])
+     (deftest "Add system link is disabled when org has no environments"
+       (with-unique [org (kt/newOrganization {:name "addsys"})]
+         (rest/create org)
+         (nav/go-to ::system/page)
+         (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
+           (assert (and (.contains class "disabled")
+                        (.contains original-title "environment is required"))))))
 
      (deftest "Check whether the details of registered system are correctly displayed in the UI"
        ;;:blockers no-clients-defined
@@ -343,7 +294,7 @@
                            :org (:name *session-org*)
                            :env (:name test-environment)
                            :force true})
-         (let [hostname (client/my-hostname ssh-conn)
+         (let [hostname (client/my-hostname ssh-conn)1
                details (system/get-details hostname)]
            (assert/is (= (client/get-distro ssh-conn)
                          (details "OS")))
@@ -432,19 +383,23 @@
 
   ;; FIXME convert-to-records
   #_(deftest  "Registering a system from CLI and consuming contents from UI"
-      (let [target-env (first *environments*)
-            org-name "ACME_Corporation"
-            product-name (uniqueify "fake")]
-        (step-to-configure-server-for-pkg-install product-name target-env)
-
+      (let [gpgkey (-> {:name "mykey", :org *session-org*,
+                        :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
+                       kt/newGPGKey
+                       uniqueify)
+            repo (assoc (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/") :gpg-key gpgkey)]
+        (create-recursive repo)
+        (when (rest/is-katello?)
+          (changeset/sync-and-promote (list repo) (first *environments*)))
         (provision/with-client "consume-content"
           ssh-conn
-          (client/register ssh-conn {:username *session-user*
-                                     :password *session-password*
-                                     :org org-name
-                                     :env target-env
+          (client/register ssh-conn {:username (:name *session-user*)
+                                     :password (:password *session-user*)
+                                     :org (kt/org repo)
+                                     :env (first *environments*)
                                      :force true})
-          (let [mysys (client/my-hostname ssh-conn)]
+          (let [mysys (client/my-hostname ssh-conn)
+                product-name (-> repo kt/product :name)]
             (system/subscribe {:system-name mysys
                                :add-products product-name})
             (client/sm-cmd ssh-conn :refresh)

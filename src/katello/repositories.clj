@@ -42,7 +42,7 @@
   (nav/go-to ::provider/products-page {:org (-> product :provider :org)
                                        :provider (:provider product)})
   (browser click (add-repo-link (:name product)))
-  (when gpg-key (browser select ::repo-gpg-select gpg-key))
+  (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
                       ::save-repository)

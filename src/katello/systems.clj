@@ -33,8 +33,6 @@
 
 (ui/deflocators
   {::new                         "new"
-   ::new-class-attrib            "new@class"
-   ::new-title-attrib            "new@original-title"
    ::create                      "system_submit"
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
@@ -43,7 +41,6 @@
    ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
-   ::sys-tab                     (ui/link "Systems")
    ::confirm-yes                 "//input[@value='Yes']"
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
@@ -164,9 +161,9 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
 
-(defn select-multisys-with-ctrl
+(defn- select-multisys-with-ctrl 
   [systems]
-  (browser clickAndWait ::sys-tab)
+  (nav/go-to ::page {:org (-> systems first :env :org)})
   (browser controlKeyDown)
   (doseq [system systems]
     (nav/scroll-to-left-pane-item system)
@@ -175,7 +172,6 @@
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
-  (nav/go-to ::page {:org (-> systems first :env :org)})
   (select-multisys-with-ctrl systems)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
@@ -183,7 +179,7 @@
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [systems group]
+  [systems group] 
   (select-multisys-with-ctrl systems)
   (->browser (click ::select-sysgrp)
              (click (-> group :name sysgroup-checkbox))
