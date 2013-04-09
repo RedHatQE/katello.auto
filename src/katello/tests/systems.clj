@@ -18,7 +18,7 @@
                      [gpg-keys :as gpg-key]
                      [conf :refer [*session-user* *session-org* config *environments*]])
             [katello.client.provision :as provision]
-            [katello.tests.useful :refer [create-all-recursive create-recursive fresh-repo]]
+            [katello.tests.useful :refer [create-all-recursive create-series create-recursive fresh-repo]]
             [clojure.string :refer [blank?]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
