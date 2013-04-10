@@ -66,8 +66,8 @@
 
 (defn delete
   "Deletes an organization."
-  [{:keys [name]}]
-  (nav/go-to ::named-page {:org-name name})
+  [org]
+  (nav/go-to org)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success
