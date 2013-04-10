@@ -26,8 +26,9 @@
    (expecting-error (common/errtype :katello.notifications/invalid-credentials)
                     (login (kt/newUser {:name username, :password password})))
                                         ; Notifications must be flushed so login can succeed in 'finally'
-   (katello.notifications/flush)
+     (katello.notifications/flush)
    (finally
+     (katello.notifications/flush)
      (login))))
 
 (defn login-admin []
@@ -39,6 +40,7 @@
 (defn logout-verify []
   (logout)
   (assert/is (logged-out?)))
+  (assert/is (= (:name (user/current)) (:name *session-user*))))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
