@@ -1,15 +1,19 @@
 (ns katello
-  (:refer-clojure :exclude [defrecord]))
+  (:refer-clojure :exclude [defrecord])
+  )
 
 (defmacro defrecord [rec args]
-  `(do (clojure.core/defrecord ~rec ~args)
+  `(do (clojure.core/defrecord ~rec ~args
+         clojure.lang.IFn
+         (invoke [this#] this#)
+         (invoke [this# query#] (get this# query#))
+         (applyTo [this# args#] (get-in this# args#)))
        (def ~(symbol (str "new" rec)) ~(symbol (str "map->" rec)))))
 
 ;; Define records for all entities we'll be testing with
 
 (defrecord Organization [id name label description initial-env-name
                          initial-env-label initial-env-description])
-
 
 (defrecord Environment [id name label description org prior])
 
