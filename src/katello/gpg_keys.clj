@@ -32,11 +32,11 @@
 
 ;;Tasks
 
-(defn create [{:keys [name url contents]}]
+(defn create [{:keys [name url contents org]}]
   (assert (not (and url contents))
           "Must specify one one of :url or :contents.")
   (assert (string? name))
-  (nav/go-to ::new-page)
+  (nav/go-to ::new-page {:org org})
   (if url
     (sel/->browser (setText ::name-text name)
                    (attachFile ::file-upload-text url)
@@ -50,7 +50,7 @@
 (defn delete 
   "Deletes existing GPG keys"
   [gpg-key]
-  (nav/go-to ::named-page {:gpg-key gpg-key})
+  (nav/go-to gpg-key)
   (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
@@ -58,7 +58,8 @@
 (extend katello.GPGKey
   ui/CRUD {:create create
            :delete delete}
-  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %})})
+  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
+                                                     :org (katello/org %1)})})
 
 (defn gpg-keys-prd-association?
   [gpg-key-name repo-name]
