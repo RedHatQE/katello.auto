@@ -5,7 +5,8 @@
                      [rest :as rest]
                      [ui-common :as common]
                      [notifications :as notification]
-                     [conf :refer [config]])
+                     [conf :refer [config]]
+                     [tasks :as tasks])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
   (:refer-clojure :exclude [remove]))
 
@@ -59,7 +60,8 @@
   ui/CRUD {:create create
            :delete delete}
   nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
-                                                     :org (katello/org %1)})})
+                                                     :org (katello/org %1)})}
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn gpg-keys-prd-association?
   [gpg-key-name repo-name]
