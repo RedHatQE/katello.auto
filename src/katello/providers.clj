@@ -92,7 +92,7 @@
 (extend katello.Provider
   ui/CRUD {:create create
            :delete delete
-           :update edit}
+           :update* edit}
 
   rest/CRUD (let [org-url (partial rest/url-maker [["api/organizations/%s/providers" [:org]]])
                  id-url (partial rest/url-maker [["api/providers/%s" [identity]]])]
@@ -106,7 +106,7 @@
                                                              :description description
                                                              :provider_type "Custom"}}})))
               :read (partial rest/read-impl id-url)
-              :update (fn [prov new-prov]
+              :update* (fn [prov new-prov]
                         (merge new-prov (rest/http-put (id-url prov)
                                                  {:body {:provider
                                                          (select-keys new-prov [:repository_url])}})))
