@@ -174,7 +174,7 @@
       (with-unique-system s
         (ui/create s)
         (expecting-error (common/errtype expected-res)
-                         (system/edit-sys-description s new-description save?))))
+                         (edit-sys-description s new-description save?))))
 
     [["cancel description" false :success]
      ["System Registration Info" true :success]
