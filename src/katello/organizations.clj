@@ -1,6 +1,7 @@
 (ns katello.organizations
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
             [ui.navigate :as navlib :refer [nav-tree]]
+            [slingshot.slingshot :refer [try+ throw+]]
             katello
             (katello [navigation :as nav]
                      [ui :as ui]
@@ -94,7 +95,12 @@
                         (merge org (rest/http-post (rest/api-url uri)
                                               {:body (select-keys org [:name :description])})))
 
-              :read (partial rest/read-impl label-url) 
+              ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
+              ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
+              :read (fn [org]
+                      (try+ (rest/http-get (label-url org))
+                            (catch [:status 404] _
+                                (throw+ {:type ::rest/entity-not-found, :entity org})))) 
               
               :update* (fn [org new-org]
                         (rest/http-put (label-url org)
