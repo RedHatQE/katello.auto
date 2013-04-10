@@ -15,6 +15,7 @@
   {::import-manifest     "new"
    ::upload              "upload_form_button"
    ::repository-url-text "provider[repository_url]"
+   ::new-distributor-disabled "//*[@id='new' and contains(@class,'disabled')]"
    ::choose-file         "provider_contents"
    ::fetch-history-info   "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
 
@@ -74,3 +75,12 @@
                                (repeatedly (fn [] (let [newpath (manifest/new-tmp-loc)]
                                                     (manifest/clone (:file-path m) newpath)
                                                     (assoc m :file-path newpath)))))})
+
+(defn new-distributor-button-disabled?
+  "Returns true if the new distributor button is disabled and the correct message is shown"
+  [org]
+  (nav/go-to ::distributors-page {:org org})
+  (-> (browser getAttributes ::new-distributor-disabled)
+      (get "original-title")
+      (= "At least one environment is required to create or register distributors in your current organization.")))
+

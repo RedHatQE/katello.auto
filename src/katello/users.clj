@@ -2,6 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
+            [katello :as kt]
             (katello [navigation :as nav]
                      [tasks :as tasks]
                      [ui :as ui]
@@ -24,8 +25,8 @@
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
    ::username-text               "user[username]"
-   ::password-text               "password_field" ; use id attr 
-   ::confirm-text                "confirm_field" ; for these two (name is the same)
+   ::password-text               "//input[@id='password_field']" ; use id attr 
+   ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
    ::default-org                 "org_id[org_id]"
    ::email-text                  "user[email]"
    ::save                        "save_user"
@@ -166,6 +167,11 @@
   nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
+
+(defn admin "Returns the admin user" []
+  (kt/newUser {:name (@conf/config :admin-user)
+               :password (@conf/config :admin-password)
+               :email "admin@katello.org"}))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."

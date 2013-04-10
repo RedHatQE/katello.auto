@@ -19,10 +19,12 @@
              that match the error notification message in the UI."}
   validation-errors
   (let [errors {::name-taken-error                    #"(Username|Name) has already been taken"
-                ::label-taken-error                   #"Label already exists"
+                ::label-taken-error                   #"Label has already been taken"
                 ::sg-name-taken-error                 #"Name must be unique within one organization"
                 ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
                 ::name-must-not-contain-characters    #"Name cannot contain characters other than"
+                ::name-must-not-contain-html          #"Username cannot contain characters >, <, or /"
+                ::org-name-must-not-contain-html      #"Name cannot contain characters >, <, or /"
                 ::env-name-lib-is-builtin             #"Name : 'Library' is a built-in environment"
                 ::env-name-must-be-unique-within-org  #"Name of environment must be unique within one organization" 
                 ::env-label-lib-is-builtin            #"Label : 'Library' is a built-in environment"
@@ -32,7 +34,9 @@
                 ::password-too-short                  #"Password must be at least"
                 ::username-must-contain-3-char        #"Username must contain at least 3 character"
                 ::username-cant-be-blank              #"Username can't be blank"
-                ::username-64-char-limit              #"Username cannot contain more than 64 characters"
+                ::username-128-char-limit              #"Username cannot contain more than 128 characters"
+                ::system-name-255-char-limit          #"Name cannot contain more than 255 characters"
+                ::sys-description-255-char-limit      #"Description cannot contain more than 255 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
@@ -90,7 +94,11 @@
 
    :sync-create              "sync_plans___create"
    :sync-destroy             "sync_plans___destroy"
-   :sync-update              "sync_plans___update"})
+   :sync-update              "sync_plans___update"
+   
+   :changeset-create         "changesets___create"
+   :changeset-apply          "changesets___apply"
+   :changeset-promoted       "changesets___promote"})
 
 
 (def ^{:doc "A mapping of known errors in Katello. This helps

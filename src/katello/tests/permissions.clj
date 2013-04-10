@@ -8,7 +8,10 @@
                      [navigation :as nav]
                      [conf :as conf]
                      [tasks :refer [with-unique uniqueify expecting-error random-string]]
-                     [systems :as system])
+                     [systems :as system]
+                     [users :as user]
+                     [roles :as role]
+                     [login :as login])
             [test.tree.script :refer [deftest defgroup]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
@@ -32,7 +35,6 @@
 (defn- navigate-all [pages & [org]]
   (for [page pages]
     (navigate-fn page org)))
-
 
 (defn verify-role-access
   [& {:keys [role allowed-actions disallowed-actions]}]
@@ -260,7 +262,50 @@
     (doto (uniqueify (kt/newRole {:name "deleteme-role"}))
       (ui/create)
       (ui/delete)))
+  
+(deftest "Remove systems with appropriate permissions"
+    :data-driven true
+    :description "Allow user to remove system only when user has approriate permissions to remove system"
+    
+    (fn [sysverb]
+      (with-unique [user-name "role-user"
+                    role-name "myrole"
+                    system-name "sys_perm"]
+        (let [password "abcd1234"]
+          (user/create user-name {:password password :email "me@my.org"})
+          (role/create role-name)
+          (role/edit role-name
+                     {:add-permissions [{:org "Global Permissions"
+                                         :permissions [{:name "blah2"
+                                                        :resource-type "Organizations"
+                                                        :verbs [sysverb]}]}]
+                      :users [user-name]})
+          (system/create system-name {:sockets "1"
+                                      :system-arch "x86_64"})
+          (login/logout)
+          (login/login user-name password {:org "ACME_Corporation"})
+          (try
+            (system/delete system-name)
+            (catch SeleniumException e)
+            (finally
+              (login))))))
+    
+    [["Read Systems"]
+     ["Delete Systems"]])
 
+  (deftest "Verify the Navigation of Roles, related to permissions"
+    :data-driven true
+    
+    (fn [resource-type verbs tags]
+      (let [role-name    (uniqueify "nav-roles")
+            perm-name    (uniqueify "perm-namess")
+            organization (@conf/config :admin-org)]
+       
+      (role/create role-name)  
+      (assert/is (role/validate-permissions-navigation role-name perm-name organization resource-type verbs tags))))
+    
+    [["Environments" ["Administer Changesets in Environment"] ["Dev"]]])
+     
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
                   role (kt/newRole {:name "edit-role"})]

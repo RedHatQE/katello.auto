@@ -71,7 +71,6 @@
   (notification/check-for-success))
 
 
-
 (defn add-product
   "Adds the given product or repository to a content view definition"
   [{:keys [ name prod-name composite composite-name]}]
@@ -160,3 +159,4 @@
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
                                                             :org (kt/org dn)}))})
+

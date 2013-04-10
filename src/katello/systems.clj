@@ -3,6 +3,7 @@
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
             [slingshot.slingshot :refer [throw+]]
+            [katello.tasks :refer [expecting-error]]
             [test.assert :as assert]
             [katello :as kt]
             (katello [navigation :as nav]
@@ -20,8 +21,15 @@
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
+  select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
+  activation-key-link             (ui/link "%s")
+  env-select                      (ui/link "%s")
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
-  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"})
+  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
+  system-fact-group-expand        "//tr[@id='%s']/td/span"
+  existing-key-value-field        "//div[@name='custom_info[%s]']"
+  remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/deflocators
   {::new                         "new"
@@ -29,13 +37,24 @@
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
+   ::system-virtual-type         "system_type_virtualized_virtual"
+   ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
-   ::sys-tab                     (ui/link "Systems")
    ::confirm-yes                 "//input[@value='Yes']"
    ::select-sysgrp               "//button[@type='button']"
    ::add-sysgrp                  "//input[@value='Add']"
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
+   ::total-sys-count             "total_items_count"
+   ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
+   ::system-groups               (ui/menu-link "systems_system_groups")
+   ::add-group-form              "//form[@id='add_group_form']/button"
+   ::add-group                    "//input[@id='add_groups']"
+
+   ;;new system form
+   ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
+   ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content
    ::content-link                (ui/menu-link "system_content")
@@ -60,6 +79,27 @@
    ::release-version-select      "system[releaseVer]"
    ::environment                 "//div[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
+   ::edit-sysname                "system_name"
+   ::edit-description            "system_description"
+   ::save-button                 "//button[@type='submit']"
+   ::cancel-button               "//button[@type='cancel']"
+   
+   ;;system-facts
+   ::facts                       (ui/link "Facts")
+   ::network-expander            "network"
+   ::cpu-expander                "cpu"
+   ::uname-expander              "uname"
+   ::virt-expander               "virt" 
+   ::net-hostname                "//tr[@id='network.hostname']/td[3]"  
+   ::cpu-socket	                 "//tr[@id='cpu.cpu_socket(s)']/td[3]" 
+   ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
+   ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
+   
+   ;;custom-info
+   ::custom-info                (ui/link "Custom Information")
+   ::key-name                   "new_custom_info_keyname"
+   ::key-value                  "new_custom_info_value"
+   ::create-custom-info         "create_custom_info_button"
    
    ;;subscriptions pane
    ::subscriptions               (ui/menu-link "systems_subscriptions")
@@ -72,7 +112,9 @@
   [::page
    [::new-page [] (browser click ::new)]
    [::named-page [system] (nav/choose-left-pane system)
-    [::details-page [] (browser click ::details)]
+    [::details-page [] (browser click ::details)
+     [::facts-page [] (browser click ::facts)]
+     [::custom-info-page [] (browser click ::custom-info)]]
     [::subscriptions-page [] (browser click ::subscriptions)]
     [::content-menu [] (browser mouseOver ::content-link)
      [::content-software-page [] (browser click ::software-link)]
@@ -96,6 +138,22 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
+(defn create-with-details
+  "Creates a system"
+  [name & [{:keys [sockets system-arch type-is-virtual? env]}]]
+  (nav/go-to ::new-page)
+  (when (not (nil? env))
+    (when (browser isElementPresent ::expand-env-widget)
+      (browser click ::expand-env-widget))
+    (browser click (env-select env)))
+  (when type-is-virtual?
+    (browser click ::system-virtual-type))
+  (sel/fill-ajax-form {::name-text name
+                       ::sockets-text sockets
+                       ::arch-select (or system-arch "x86_64")}
+                       ::create)
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+
 (defn delete "Deletes the selected system."
   [system]
   (nav/go-to system)
@@ -103,9 +161,9 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
 
-(defn select-multisys-with-ctrl
+(defn- select-multisys-with-ctrl 
   [systems]
-  (browser clickAndWait ::sys-tab)
+  (nav/go-to ::page {:org (-> systems first :env :org)})
   (browser controlKeyDown)
   (doseq [system systems]
     (nav/scroll-to-left-pane-item system)
@@ -114,7 +172,6 @@
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
-  (nav/go-to ::page {:org (-> systems first :env :org)})
   (select-multisys-with-ctrl systems)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
@@ -122,13 +179,37 @@
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [systems group]
+  [systems group] 
   (select-multisys-with-ctrl systems)
   (->browser (click ::select-sysgrp)
              (click (-> group :name sysgroup-checkbox))
              (click ::add-sysgrp)
              (click ::confirm-to-yes))
   (notification/check-for-success))
+
+(defn add-sys-to-sysgrp
+  "Adding sys to sysgroup from right pane"
+  [system group-name]
+  (nav/go-to ::named-page {:system system})
+  (browser click ::system-groups)
+  (browser click ::add-group-form)
+  (if (browser isElementPresent (select-sysgroup-checkbox group-name))
+    (do
+      (browser click (select-sysgroup-checkbox group-name))
+      (browser click ::add-group)
+      (notification/check-for-success))
+    (throw+ {:type ::selected-sys-group-is-unavailable 
+             :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
+
+(defn edit
+  "Edits the properties of the given system. Optionally specify a new
+  name, a new description, and a new location."
+  [name {:keys [new-name description location release-version]}]
+  (nav/go-to ::details-page {:system name})
+  (common/in-place-edit {::name-text-edit new-name
+                         ::description-text-edit description
+                         ::location-text-edit location
+                         ::release-version-select release-version}))
 
 (defn- set-environment "select a new environment for a system"
   [new-environment]
@@ -137,7 +218,7 @@
                  (check (environment-checkbox new-environment))
                  (click ::save-environment)))
 
-(defn- subscribe
+(defn subscribe
   "Subscribes the given system to the products. (products should be a
   list). Can also set the auto-subscribe for a particular SLA.
   auto-subscribe must be either true or false to select a new setting
@@ -166,27 +247,46 @@
       ))
   (let [ks (list :packages :package-groups)]
     (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (browser click ::packages-link)
-      )))
+      (browser click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
                          ::description-text-edit description
                          ::location-text-edit location
                          ::release-version-select release-version}))
+
+(defn- update-custom-info [to-add to-remove]
+  (browser click ::custom-info)
+  (doseq [[k v] to-add]
+    (if (to-remove k) ;;if also in the remove, it's an update
+      (do (browser click (existing-key-value-field k))
+          (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button)
+          (notification/check-for-success))
+      (do (browser setText ::key-name k)
+          (browser setText ::key-value v)
+          (browser click ::create-custom-info)
+          (notification/check-for-success))))
+  ;; process removes
+  (doseq [[k _] (apply dissoc to-remove (keys to-add))]
+    (browser click (remove-custom-info-button k))
+    (notification/check-for-success)))
+
 (defn update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
                             service-level auto-attach env]
-                    :as to-add} _] (data/diff system updated)]
+             :as to-add} _] (data/diff system updated)]
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page {:system system
                                  :org (-> system :env :org)})
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
+
+      (when (or (:custom-info to-add) (:custom-info to-remove) )
+        (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
 
       (add-remove-content to-add to-remove)
       
@@ -317,16 +417,48 @@
   (nav/go-to ::details-page {:system system})
   (browser getText ::environment))
 
+(defn get-ip-addr
+  [system]
+  (nav/go-to ::details-page {:system system})
+  (browser getText ::interface-addr))
+
 (defn get-details [system]
   (nav/go-to ::details-page {:system system
                              :org (-> system :env :org)})
-  (let [details ["Name" "Description" "OS" "Release" "Release Version"
+  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
                  "System Type" "Host"]]
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
+
+(defn get-facts [system]
+  (nav/go-to ::facts-page {:system system})
+  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
+               "distribution.id" "distribution.name" "distribution.version"
+               "memory.memtotal" "memory.swaptotal"
+               "virt.host_type" "virt.is_guest" "virt.uuid"
+               "uname.machine" "uname.nodename" "uname.release"
+               "uname.sysname" "uname.version" "system.entitlements_valid"
+               "network.hostname" "network.ipv4_address" "network.ipv6_address"
+               "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
+               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
+    (zipmap facts
+            (doall (for [fact facts]
+                     (browser getText (system-fact-textbox fact)))))))
+
+(defn expand-collapse-facts-group
+  [system]
+  "Expand/collapse group of selected system's facts"
+  (nav/go-to ::facts-page {:system system})
+  (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
+    (doseq [group groups] ;;To expand
+      (when (browser isElementPresent (system-fact-group-expand group))
+        (browser click (system-fact-group-expand group))))
+    (doseq [group groups] ;;To collapse
+      (browser click (system-fact-group-expand group)))))
+
 
 (defn add-package "Add a package or package group to a system."
   [system {:keys [package package-group]}]
@@ -357,4 +489,7 @@
       (Thread/sleep 50000)
       (assert/is (= exp-status
                     (browser getText ::pkg-install-status))))))
+
+
+
 

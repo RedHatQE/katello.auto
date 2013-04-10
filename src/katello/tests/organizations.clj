@@ -1,6 +1,6 @@
 (ns katello.tests.organizations
   (:refer-clojure :exclude [fn])
-  (:require [katello :refer [newOrganization newProvider newProduct newRepository]]
+  (:require [katello :as kt]
             (katello [ui-common :as common]
                      [ui :as ui]
                      [rest :as rest]
@@ -8,7 +8,11 @@
                      [repositories :as repo]
                      [tasks :refer :all] 
                      [notifications :as notification]
-                     [organizations :as organization])
+                     [organizations :as organization] 
+                     [environments :as environment]
+                     [changesets :as changeset]
+                     [fake-content :as fake]
+                     [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -23,7 +27,7 @@
   (expecting-error (common/errtype expected-error) (ui/create ent)))
 
 (defn mkorg [name]
-  (newOrganization {:name name}))
+  (kt/newOrganization {:name name}))
 
 (defn create-and-verify [org]
   (ui/create org)
@@ -35,12 +39,18 @@
 (def create-and-verify-with-basename
   (comp create-and-verify uniqueify mkorg))
 
+(defn setup-custom-org-with-content
+  [env repos]
+  (ui/create-all (list (kt/org env) env))
+  (changeset/sync-and-promote repos env))
+
+
 ;; Data (Generated)
 
 (def bad-org-names
   (for [[name err] (concat
                     (for [inv-char-str validation/invalid-character-strings]
-                      [inv-char-str ::notification/name-must-not-contain-characters])
+                      [inv-char-str ::notification/org-name-must-not-contain-html])
                     (for [trailing-ws-str validation/trailing-whitespace-strings]
                       [trailing-ws-str ::notification/name-no-leading-trailing-whitespace]))]
     [(mkorg name) err]))
@@ -71,7 +81,7 @@
                                 (partial random-string 0x0080 0x5363 1)))))
     
     (deftest "Create an organization with an initial environment"
-      (-> (newOrganization {:name "auto-org"
+      (-> (kt/newOrganization {:name "auto-org"
                             :initial-env-name "environment"})
           uniqueify
           create-and-verify))
@@ -79,7 +89,7 @@
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
       
-      (with-unique [org (newOrganization {:name "test-dup"
+      (with-unique [org (kt/newOrganization {:name "test-dup"
                                           :description "org-description"})]
        (validation/expecting-error-2nd-try name-taken-error (ui/create org))))
   
@@ -87,7 +97,7 @@
       :blockers (open-bz-bugs "726724")
       
       (expecting-error validation/name-field-required
-                       (ui/create (newOrganization {:name ""
+                       (ui/create (kt/newOrganization {:name ""
                                                     :description "org with empty name"}))))
 
     (deftest "Verify proper error message when invalid org name is used"
@@ -104,8 +114,8 @@
         (ui/update org assoc :description "edited description")))
 
     (deftest "Organization names and labels are unique to all orgs"
-      (with-unique [org1 (newOrganization {:name "myorg" :label "mylabel"})
-                    org2 (newOrganization {:name "yourorg" :label "yourlabel"})]
+      (with-unique [org1 (kt/newOrganization {:name "myorg" :label "mylabel"})
+                    org2 (kt/newOrganization {:name "yourorg" :label "yourlabel"})]
         (ui/create org1)
         (expecting-error name-taken-error
                          (ui/create (assoc org1 :label {:label org2})))
@@ -123,30 +133,30 @@
       (deftest "Create an org with content, delete it and recreate it"
         :blockers rest/katello-only
         
+
         (with-unique [org (mkorg "delorg")
-                      provider (newProvider {:name "delprov" :org org})
-                      product (newProduct {:name "delprod" :provider provider})
-                      repo (newRepository {:name "delrepo" :product product
-                                           :url "http://blah.com/blah"})]
-          (let [create-all #(ui/create-all (list org provider product repo))]
-            (create-all)
-            ;; not allowed to delete the current org, so switch first.
-            (organization/switch)
-            (organization/delete org)
-            (create-all)))))
+                      env (-> {:name "env" :org org} uniqueify kt/chain)
+              repos (for [r fake/custom-repos]
+                      (update-in r [:product :provider] assoc :org org))]
+          (setup-custom-org-with-content env repos)
+          ;; not allowed to delete the current org, so switch first.
+          (organization/switch)  (ui/delete org)
+          (setup-custom-org-with-content env repos))))
     
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
-
+      
       (fn [env-name env-lbl notif]
-        (with-unique [org (newOrganization {:name "lib-org"
+        (with-unique [org (kt/newOrganization {:name "lib-org"
                                             :initial-env-name env-name
                                             :initial-env-label env-lbl})]
           (expecting-error 
-            (common/errtype notif)
+           (common/errtype notif)
             (ui/create org))))
 
-      [["Library" "Library" ::notification/env-name-lib-is-builtin]
-       ["Library" "Library" ::notification/env-label-lib-is-builtin]
-       ["Library" (uniqueify "env-label") ::notification/env-name-lib-is-builtin]
-       [(uniqueify "env-name") "Library" ::notification/env-label-lib-is-builtin]])))
+      [["lib-org" "Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
+       ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+ 
+

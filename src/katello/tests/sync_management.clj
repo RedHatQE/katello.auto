@@ -37,13 +37,20 @@
      [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal ""}) :katello.notifications/start-date-time-cant-be-blank]
      {:blockers (open-bz-bugs "853229")})])
 
+(defn create-all-and-sync
+  "Creates all the given repos, including their products and
+  providers.  All must not exist already."
+  [repos]
+  (testfns/create-all-recursive repos)
+  (sync/perform-sync (filter (complement :unsyncable) repos)))
+
 (with-unique-ent "plan" some-plan)
 ;; Tests
 
 (defgroup sync-tests
 
   (deftest "Sync a small repo"
-    (->> (fresh-repo) list sync/create-all-and-sync vals (every? complete?) assert/is))
+    (->> (fresh-repo) list create-all-and-sync vals (every? complete?) assert/is))
 
   (deftest "Create a sync plan"
     :blockers (open-bz-bugs "729364")

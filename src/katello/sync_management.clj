@@ -146,16 +146,3 @@
                         (do (Thread/sleep 10000)
                             (recur)))))))
 
-(defn create-all-and-sync
-  "Creates all the given repos, including their products and
-  providers.  All must not exist already."
-  [repos]
-  (let [distinct-parents (fn [& ks]
-                           (->> repos
-                                (map (apply comp (reverse ks)))
-                                (apply hash-set)))
-        ;; orgs (distinct-parents :product :provider :org)
-        providers (distinct-parents :product :provider)
-        products (distinct-parents :product)]
-    (rest/create-all (concat providers products repos))
-    (perform-sync (filter (complement :unsyncable) repos))))

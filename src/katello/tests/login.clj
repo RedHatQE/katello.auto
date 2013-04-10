@@ -4,7 +4,7 @@
             (katello [navigation :as nav]
                         [conf :refer :all] 
                         [tasks :refer :all]
-                        [login :refer [login logout logged-in?]]
+                        [login :refer [login logout logged-in? logged-out?]]
                         [users :as user]
                         [ui-common :as common]
                         [organizations :as organization])
@@ -26,8 +26,9 @@
    (expecting-error (common/errtype :katello.notifications/invalid-credentials)
                     (login (kt/newUser {:name username, :password password})))
                                         ; Notifications must be flushed so login can succeed in 'finally'
-   (katello.notifications/flush)
+     (katello.notifications/flush)
    (finally
+     (katello.notifications/flush)
      (login))))
 
 (defn login-admin []
@@ -35,6 +36,11 @@
   (login)
   (assert/is (= (:name (user/current))
                 (:name *session-user*))))
+
+(defn logout-verify []
+  (logout)
+  (assert/is (logged-out?)))
+  (assert/is (= (:name (user/current)) (:name *session-user*))))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
@@ -51,7 +57,12 @@
 (defgroup login-tests
 
   (deftest "login as valid user"
-    (login-admin)) 
+    (login-admin))
+  
+  (deftest "User - Log out"
+    (login-admin)
+    (logout-verify)
+    (login)) 
 
   
   

@@ -21,6 +21,11 @@
   []
   (browser isElementPresent ::ui/log-out))
 
+(defn wait-for-login
+  "Waits until logout is present."
+  []
+  (browser waitForElement ::ui/log-out "2000"))
+
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
@@ -48,7 +53,10 @@
      (sel/fill-ajax-form {::username-text name
                           ::password-text password}
                          ::log-in)
-     ;; if user only has access to one org, he will bypass org select
+     ; throw errors
+     (notification/verify-no-error)
+     (notification/flush)
+     ; if user only has access to one org, he will bypass org select
      (if (browser isElementPresent ::interstitial) 
        (do (Thread/sleep 3000)
            (organization/switch (or org
@@ -56,5 +64,6 @@
                                              :msg (format "User %s has no default org, cannot fully log in without specifying an org."
                                                           name)}))
                                 {:default-org default-org
-                                 :login? true}))
-       (browser waitForPageToLoad))))
+                                 :login? true})))
+     (when (not (logged-in?))
+                (wait-for-login))))

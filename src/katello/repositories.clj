@@ -12,12 +12,17 @@
 ;; Locators
 
 (ui/deflocators
-  {::repo-name-text    "repo[name]"
-   ::repo-label-text   "repo[label]"
-   ::repo-url-text     "repo[feed]" 
-   ::save-repository   "//input[@value='Create']"
-   ::remove-repository (ui/link "Remove Repository")
-   ::repo-gpg-select   "//select[@id='repo_gpg_key']"}
+  {::repo-name-text         "repo[name]"
+   ::repo-label-text        "repo[label]"
+   ::repo-url-text          "repo[feed]"
+   ::save-repository        "//input[@value='Create']"
+   ::remove-repository      (ui/link "Remove Repository")
+   ::repo-gpg-select        "//select[@id='repo_gpg_key']"
+   ::add-repo-button        "//div[contains(@class,'button') and contains(.,'Add Repository')]"   
+   ::repo-discovery         "//a[contains(@href, 'repo_discovery')]"
+   ::discover-url-text      "discover_url"
+   ::discover-button        "//input[@type='submit']"
+   ::discover-cancel-button "//*[@class='grid_2 la' and @style='display: none;']"}
   ui/locators)
 
 (sel/template-fns
@@ -37,7 +42,7 @@
   (nav/go-to ::provider/products-page {:org (-> product :provider :org)
                                        :provider (:provider product)})
   (browser click (add-repo-link (:name product)))
-  (when gpg-key (browser select ::repo-gpg-select gpg-key))
+  (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
                       ::save-repository)

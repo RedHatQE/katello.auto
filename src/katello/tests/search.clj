@@ -11,7 +11,7 @@
                      [system-groups :as sg]
                      [activation-keys :as ak]
                      [systems :as system]
-                     [conf :refer [*session-org*]])
+                     [conf :refer [*session-org* config]])
             
             [katello.tests.useful :refer [ensure-exists]]
             [test.tree.script :refer :all]
@@ -178,4 +178,17 @@
                         (doall (map strip-num (extract-left-pane-list)))))))))
     [[{:name "sg-fed" :description "the centos system-group"} {:name "mysystem3" :sockets "4" :system-arch "x86_64"} {:criteria "description: \"the centos system-group\""}]
      [{:name "sg-fed1" :description "the rh system-group"} {:name "mysystem1" :sockets "2" :system-arch "x86"} {:criteria "name:sg-fed1*"}]
-     [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]]))
+     [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]])
+
+  (deftest "search GPG keys"
+    :data-driven true
+    :description "search GPG keys by default criteria i.e. name"
+    
+    (fn [gpg-key-info searchterms]
+      (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]
+        (ui/create key)
+        (search :gpg-keys searchterms)
+        (validate-search-results (list key))))
+    [[{:name "gpg_key1" :contents "gpgkeys1234"} {:criteria "content:\"gpgkeys1234\""}]
+     (fn [] [{:name "gpg_key2" :contents (slurp (@config :gpg-key))} {:criteria "name:gpg_key2*"}])
+     (fn [] [{:name "gpg_key3" :contents (slurp (@config :gpg-key))} {:criteria "name:gpg_key*"}])]))

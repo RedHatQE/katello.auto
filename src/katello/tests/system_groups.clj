@@ -3,8 +3,8 @@
   (:require [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
-;                     [organizations :as org]
-                     [activation-keys :as ak]
+                     [navigation :as nav]
+                     activation-keys
                      [client :as client]
                      [ui-common :as common]
                      [tasks :refer [uniqueify uniques expecting-error with-unique with-unique-ent]]
@@ -17,13 +17,25 @@
                        [builder :refer [union]])
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [bugzilla.checker :refer [open-bz-bugs]]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
 
 (alias 'notif 'katello.notifications)
+
 ;; Functions
 
 (defn some-group [] (kt/newSystemGroup {:name "group" :env (first *environments*)}))
 (defn some-system [] (kt/newSystem {:name "system" :env (first *environments*)}))
+
+(defn cancel-close-widget
+  "Click 'cancel' on copy widget and widget should close properly 
+   OR closing system-group widget should also close copy widget"
+  [group {:keys [close-widget?]}]
+  (nav/go-to group)
+  (browser click ::group/copy)
+  (browser click (if close-widget?
+                   ::group/close
+                   ::group/cancel-copy)))
 
 (with-unique-ent "group" (some-group))
 
@@ -194,7 +206,7 @@
       (fn [opts]
         (with-unique-group g 
           (ui/create g)
-          (group/cancel-close-widget g opts)))
+          (cancel-close-widget g opts)))
 
       [[{:close-widget? true}]
        [{:close-widget? false}]])
@@ -217,6 +229,18 @@
               (group/copy g clone)
               (ui/delete clone)
               (assert/is (= (:also-remove-systems? clone) (rest/not-exists? s))))))
-
         [[{:also-remove-systems? true}]
-         [{:also-remove-systems? false}]]))))
+         [{:also-remove-systems? false}]])
+
+      (deftest "cancel OR close widget"
+        :data-driven true
+        :description "Closing the system-group widget should also close the copy widget (if its already open)
+                         and 'cancel' copy widget should also work"
+        (fn [opts]
+          (with-unique-group g
+            (ui/create g)
+            (cancel-close-widget g opts)))
+
+        [[{:close-widget? true}]
+         [{:close-widget? false}]]))))
+

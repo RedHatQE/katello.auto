@@ -207,7 +207,7 @@
         (do (Thread/sleep 2000)
             (recur (browser getText (status name))))))
     ;;wait for async success notif
-    (check-for-success {:timeout-ms (* 20 60 1000)})))
+    (check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :changeset-promoted)})))
 
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "

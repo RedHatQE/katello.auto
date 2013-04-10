@@ -19,7 +19,7 @@
    ::description-text  "kt_environment_description"
    ::prior             "kt_environment_prior"
    ::create            "kt_environment_submit"
-   ::new               "//div[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
+   ::new               "//form[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
    ::remove-link       (ui/remove-link "environments")
    ::prior-select-edit "kt_environment_prior" }
   ui/locators)

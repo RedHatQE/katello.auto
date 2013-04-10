@@ -17,7 +17,7 @@
                       ::changesets-link                  "changesets"
                       ::content-link                     "content"
                       ::content-search-link              "content_search"
-                      ::content-view-link                "content_view_definitions"
+                      ::content-view-definitions-link    "content_view_definitions"
                       ::custom-content-repositories-link "custom_providers"
                       ::dashboard-link                   "dashboard"
                       ::gpg-keys-link                    "gpg"
@@ -28,6 +28,7 @@
                       ::repositories-link                "providers"
                       ::roles-link                       "roles"
                       ::subscriptions-link               "subscriptions"
+                      ::distributors-link                "distributors_list"
                       ::sync-management-link             "sync_mgmt"
                       ::sync-plans-link                  "sync_plans"
                       ::sync-schedule-link               "sync_schedule"
@@ -36,7 +37,8 @@
                       ::system-templates-link            "system_templates"
                       ::systems-all-link                 "registered"
                       ::systems-link                     "systems"
-                      ::users-link                       "users"}))
+                      ::users-link                       "users"
+                      ::setup-link                       "setup"}))
 
 ;; Functions
 
@@ -53,11 +55,12 @@
      [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]
      [:katello.system-groups/page [] (browser clickAndWait ::system-groups-link)]]
 
-    [::content-menu [] (browser mouseOver ::content-link)
-     [:subscriptions [] (browser mouseOver ::subscriptions-link)
-      [:katello.subscriptions/page [] (browser clickAndWait ::red-hat-subscriptions-link)]
-      [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]
-      [:katello.subscriptions/import-history-page [] (browser clickAndWait ::import-history-link)]]
+   [::content-menu [] (browser mouseOver ::content-link)
+    [:subscriptions [] (browser mouseOver ::subscriptions-link)
+     [:katello.subscriptions/page [] (browser clickAndWait ::red-hat-subscriptions-link)]
+     [:katello.subscriptions/distributors-page [] (browser clickAndWait ::distributors-link)]
+     [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]
+     [:katello.subscriptions/import-history-page [] (browser clickAndWait ::import-history-link)]]
 
      [::repositories-menu [] (browser mouseOver ::repositories-link)
       [:katello.providers/custom-page [] (browser clickAndWait ::custom-content-repositories-link)]
@@ -69,11 +72,11 @@
       [:katello.sync-management/plans-page [] (browser clickAndWait ::sync-plans-link)]
       [:katello.sync-management/schedule-page [] (browser clickAndWait ::sync-schedule-link)]]
 
-     [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
-     
-     [:katello.content-view-definitions/page [] (browser clickAndWait ::content-view-link)]
-      
-     [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
+    [:katello.content-view-definitions/page [] (browser clickAndWait ::content-view-definitions-link)]
+    
+    [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
+                
+    [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
 
      [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
       [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
@@ -84,4 +87,3 @@
     [:katello.users/page [] (browser clickAndWait ::users-link)]
     [:katello.roles/page [] (browser clickAndWait ::roles-link)]
     [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]]])
-
