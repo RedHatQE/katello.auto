@@ -16,8 +16,6 @@
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]))
 
-(def some-plan (kt/newSyncPlan {:name "syncplan", :description "mydescription", :interval "daily",
-                                :org *session-org*}))
 
 ;; Functions
 
@@ -44,7 +42,8 @@
   (testfns/create-all-recursive repos)
   (sync/perform-sync (filter (complement :unsyncable) repos)))
 
-(with-unique-ent "plan" some-plan)
+(with-unique-ent "plan" (kt/newSyncPlan {:name "syncplan", :description "mydescription", :interval "daily",
+                                         :org *session-org*}))
 ;; Tests
 
 (defgroup sync-tests
@@ -95,7 +94,7 @@
             (assert/is (every? (partial = expected-plan) actual-plans)))))
 
       (deftest "Re-assign a different sync plan to a product"
-        (with-unique [[p1 p2] some-plan]
+        (with-unique-plan [p1 p2]
           (let [repo (fresh-repo)
                 prod (:product repo)
                 prods (list prod)]
