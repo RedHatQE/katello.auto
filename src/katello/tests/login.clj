@@ -39,7 +39,7 @@
 
 (defn logout-verify []
   (logout)
-  (assert/is (logged-out?))))
+  (assert/is (logged-out?)))
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
