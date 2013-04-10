@@ -17,6 +17,7 @@
                       ::changesets-link                  "changesets"
                       ::content-link                     "content"
                       ::content-search-link              "content_search"
+                      ::content-view-link                "content_view_definitions"
                       ::custom-content-repositories-link "custom_providers"
                       ::dashboard-link                   "dashboard"
                       ::gpg-keys-link                    "gpg"
@@ -69,6 +70,8 @@
       [:katello.sync-management/schedule-page [] (browser clickAndWait ::sync-schedule-link)]]
 
      [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
+     
+     [:katello.content-view-definitions/page [] (browser clickAndWait ::content-view-link)]
       
      [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
 

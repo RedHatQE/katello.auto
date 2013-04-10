@@ -52,6 +52,8 @@
 
 (defrecord SystemGroup [id name systems org])
 
+(defrecord ContentView [id name description composite composite-name org])
+
 (defrecord Manifest [provider file-path url])
 
 (def red-hat-provider (newProvider {:name "Red Hat"}))
@@ -86,6 +88,7 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
+   ContentView {:org :org, :parent #'org}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
    SyncPlan {:org :org, :parent #'org}})
 
