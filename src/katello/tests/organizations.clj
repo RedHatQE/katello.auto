@@ -154,9 +154,9 @@
            (common/errtype notif)
             (ui/create org))))
 
-      [["lib-org" "Library" "Library" ::notification/env-name-lib-is-builtin]
-       ["lib-org" "Library" "Library" ::notification/env-label-lib-is-builtin]
-       ["lib-org" "Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
-       ["lib-org" (with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
+      [["Library" "Library" ::notification/env-name-lib-is-builtin]
+       ["Library" "Library" ::notification/env-label-lib-is-builtin]
+       ["Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
+       [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
  
 
