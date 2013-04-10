@@ -71,7 +71,7 @@
   [ent s]
   (let [stamped-id (format "%s-%s" (:name ent)
                            (date-string s))]
-    (assoc ent :name stamped-id, :label stamped-id)))
+    (assoc ent :name stamped-id)))
 
 (def entity-uniqueable-impl
   {:uniques #(for [s (timestamps)]
