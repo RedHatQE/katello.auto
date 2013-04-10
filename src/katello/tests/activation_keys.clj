@@ -68,7 +68,7 @@
       (ui/create ak)
       (provision/with-client "ak-delete" ssh-conn
         (client/register ssh-conn
-                         {:org (-> ak :env :org)
+                         {:org (-> ak :env :org :name)
                           :activationkey (:name ak)})
         (ui/delete ak)
         (client/sm-cmd ssh-conn :refresh)))))
