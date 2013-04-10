@@ -1,6 +1,7 @@
 (ns katello.ui-common
   (:require [clojure.data.json  :as json]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
+            [katello :as kt]
             (katello [navigation :as nav]
                      [menu :as menu]
                      [ui :as ui]
@@ -83,31 +84,37 @@
                  (click ::ui/search-clear-the-search)))
 
 (defn search
-  "Search for criteria in entity-type, scope not yet implemented.
-  if with-favorite is specified, criteria is ignored and the existing
-  search favorite is chosen from the search menu. If add-as-favorite
-  is true, use criteria and save it as a favorite, and also execute
-  the search."
-  [entity-type & [{:keys [criteria scope with-favorite add-as-favorite]}]]
-  (nav/go-to (entity-type {:users :katello.users/page 
-                           :organizations :katello.organizations/page
-                           :roles :katello.roles/page
-                           :subscriptions :redhat-subscriptions-page
-                           :gpg-keys :katello.gpg-keys/page
-                           :sync-plans :katello.sync-management/plans-page
-                           :systems  :katello.systems/page
-                           :system-groups :katello.system-groups/page
-                           :activation-keys :katello.activation-keys/page
-                           :changeset-promotion-history :katello.changesets/history-page}))
-  (if with-favorite
-    (sel/->browser (click ::ui/search-menu)
-                   (click (ui/search-favorite with-favorite)))
-    (do (browser type ::ui/search-bar criteria)
-        (when add-as-favorite
-          (sel/->browser (click ::ui/search-menu)
-                         (click ::ui/search-save-as-favorite)))
-        (browser click ::ui/search-submit)))
-  (notification/verify-no-error {:timeout-ms 2000}))
+  "Search for criteria in a particular class of entity (eg, katello.Role), within a given org.
+   Scope is not yet implemented.  if with-favorite is specified,
+   criteria is ignored and the existing search favorite is chosen from
+   the search menu. If add-as-favorite is true, use criteria and save
+   it as a favorite, and also execute the search.
+
+   Alternatively, pass in an mostly empty prototype record, as long as
+   the class and org can be derived, eg (katello/newRole {:org myorg})"
+  ([ent-class org {:keys [criteria scope with-favorite add-as-favorite]}]
+     (nav/go-to ({katello.User :katello.users/page 
+                  katello.Organization :katello.organizations/page
+                  katello.Role :katello.roles/page
+                  katello.Subscription :redhat-subscriptions-page
+                  katello.GPGKey :katello.gpg-keys/page
+                  katello.SyncPlan :katello.sync-management/plans-page
+                  katello.System  :katello.systems/page
+                  katello.SystemGroup :katello.system-groups/page
+                  katello.ActivationKey :katello.activation-keys/page
+                  katello.Changeset :katello.changesets/history-page} ent-class)
+                {:org org})
+     (if with-favorite
+       (sel/->browser (click ::ui/search-menu)
+                      (click (ui/search-favorite with-favorite)))
+       (do (browser type ::ui/search-bar criteria)
+           (when add-as-favorite
+             (sel/->browser (click ::ui/search-menu)
+                            (click ::ui/search-save-as-favorite)))
+           (browser click ::ui/search-submit)))
+     (notification/verify-no-error {:timeout-ms 2000}))
+  ([proto-entity opts]
+     (search (class proto-entity) (kt/org proto-entity) opts)))
 
 
 

@@ -64,6 +64,8 @@
 
 (defrecord Pool [id productId org])
 
+(defrecord Subscription [id system pool quantity])
+
 ;; Relationship protocol
 
 (defprotocol BelongsTo

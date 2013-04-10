@@ -52,7 +52,7 @@
           (ui/update system assoc :description "most unique system")
           (ui/create sg)
           (ui/update sg assoc :systems (list system)))
-        (search :systems searchterms)
+        (search system searchterms)
         (validate-search-results (list system))))
     
     [[{:name "mysystem3", :sockets "4", :system-arch "x86_64"} {:criteria "description: \"most unique system\""} {:name "fed", :description "centos system-group"}]
@@ -69,7 +69,7 @@
     (fn [orginfo searchterms]
       (with-unique [org (kt/newOrganization orginfo)]
         (ui/create org)
-        (search :organizations searchterms)
+        (search org searchterms)
         (validate-search-results (list org))))
 
     (concat
@@ -114,7 +114,7 @@
     (fn [userinfo searchterms]
       (with-unique [user (kt/newUser userinfo)]
         (ui/create user)
-        (search :users searchterms)
+        (search user searchterms)
         (validate-search-results (list user))))
     
     [[{:name "username1" :password "password" :email "username1@my.org"} {:criteria "username1*"}]
@@ -132,7 +132,7 @@
                     ak (kt/newActivationKey (assoc akinfo :env env))]
         (rest/create env)
         (ui/create ak)
-        (search :activation-keys searchterms)
+        (search ak searchterms)
         (validate-search-results (list ak))))
     
     [[{:name "activation_key1" :description "my auto-key"} {:criteria "environment:dev*"}]
@@ -149,7 +149,7 @@
     (fn [planinfo searchterms]
       (with-unique [plan (kt/newSyncPlan (assoc planinfo :org *session-org*))]
         (ui/create plan)
-        (search :sync-plans searchterms)
+        (search plan searchterms)
         (validate-search-results (list plan))))
     
     [[{:name "new_plan1" :description "my sync plan" :interval "daily" :start-date (java.util.Date.)}  {:criteria "new_plan*"}]
@@ -169,7 +169,7 @@
         (ensure-exists env)
         (ui/create-all (list system sg))
         (ui/update sg assoc :systems (list system))
-        (search :system-groups searchterms)
+        (search sg searchterms)
         (let [validate-search-results (search-results-valid?
                                        (constantly true)
                                        (list sg))]
@@ -187,7 +187,7 @@
     (fn [gpg-key-info searchterms]
       (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]
         (ui/create key)
-        (search :gpg-keys searchterms)
+        (search key searchterms)
         (validate-search-results (list key))))
     [[{:name "gpg_key1" :contents "gpgkeys1234"} {:criteria "content:\"gpgkeys1234\""}]
      (fn [] [{:name "gpg_key2" :contents (slurp (@config :gpg-key))} {:criteria "name:gpg_key2*"}])
