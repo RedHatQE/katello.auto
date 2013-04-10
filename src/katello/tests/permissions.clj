@@ -262,36 +262,6 @@
     (doto (uniqueify (kt/newRole {:name "deleteme-role"}))
       (ui/create)
       (ui/delete)))
-  
-(deftest "Remove systems with appropriate permissions"
-    :data-driven true
-    :description "Allow user to remove system only when user has approriate permissions to remove system"
-    
-    (fn [sysverb]
-      (with-unique [user-name "role-user"
-                    role-name "myrole"
-                    system-name "sys_perm"]
-        (let [password "abcd1234"]
-          (user/create user-name {:password password :email "me@my.org"})
-          (role/create role-name)
-          (role/edit role-name
-                     {:add-permissions [{:org "Global Permissions"
-                                         :permissions [{:name "blah2"
-                                                        :resource-type "Organizations"
-                                                        :verbs [sysverb]}]}]
-                      :users [user-name]})
-          (system/create system-name {:sockets "1"
-                                      :system-arch "x86_64"})
-          (login/logout)
-          (login/login user-name password {:org "ACME_Corporation"})
-          (try
-            (system/delete system-name)
-            (catch SeleniumException e)
-            (finally
-              (login))))))
-    
-    [["Read Systems"]
-     ["Delete Systems"]])
 
   (deftest "Verify the Navigation of Roles, related to permissions"
     :data-driven true
