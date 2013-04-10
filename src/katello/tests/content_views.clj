@@ -31,12 +31,6 @@
       (ui/create content-def)
       (expecting-error (common/errtype ::notifications/name-taken-error)
                        (ui/create content-def))))
-
-  (deftest "Edit a content view definition"
-      (with-unique [content-def (katello/newContentView {:name "con-def"
-                                                         :org conf/*session-org*})]
-        (ui/create content-def)
-        (ui/update assoc :name "modified_def")))
   
   (deftest "Delete a content view definition"
     (doto (-> {:name "view-def" :org *session-org*}
@@ -57,17 +51,6 @@
       (ui/create content-def)
       (views/publish {:name content-def :published-name "pub-name" :org *session-org*})))
   
-  (deftest "Create a new content view definition and add a product"
-     (with-unique [org  (newOrganization {:name "auto-org"})
-                  provider (newProvider {:name "auto-provider" :org org})
-                  product (newProduct {:name "auto-product" :provider provider})
-                  repo (newRepository {:name "auto-repo" :product product
-                                       :url "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/"})
-                  view-definition (newContentView {:name "auto-view-definition" :org org})]
-      (let [create-all #(ui/create-all (list org provider product repo view-definition))]
-        (create-all))
-      (views/add-product {:name view-definition :prod-name product})
-      (views/publish {:name view-definition :published-name "pub-name" :org *session-org*})))
 
   (deftest "Create a new content-view/composite definition and add a product"
     :data-driven true
