@@ -115,7 +115,8 @@
 (defn current-org
   "Return the currently active org (a string) shown in the org switcher."
   []
-  ((->> ::ui/active-org (browser getAttributes) (into {})) "title"))
+  (let [org-text ((->> ::ui/active-org (browser getAttributes) (into {})) "title")]
+    (if (empty? org-text) nil org-text)))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg
