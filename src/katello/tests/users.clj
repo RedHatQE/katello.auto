@@ -251,7 +251,7 @@
       :data-driven true
       
       (fn [delete-all?]
-        (with-unique [user (assoc generic-user {:name "autouser"})]
+        (with-unique [user (assoc generic-user :name "autouser")]
           (rest/create user)
           (assign-admin user)
           (logout)
