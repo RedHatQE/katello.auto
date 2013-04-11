@@ -201,13 +201,13 @@
         (assert/is (browser isTextPresent keyname))))
     
     (deftest "Create org with default keyname and delete keyname"
-      :blockers (open-bz-bugs "951197")
        (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
                                              :initial-env-name "keyname-env"
                                              :initial-env-label "env-label"})
-                    keyname "default-keyname"]
+                    keyname "deleteme-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org keyname)
-        (assert/is (browser isTextPresent keyname))))
+        (organization/remove-custom-keyname org keyname)
+        (assert/is (not (browser isTextPresent keyname)))))
 ))
