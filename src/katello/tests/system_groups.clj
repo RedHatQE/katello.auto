@@ -10,7 +10,7 @@
                      [tasks :refer [uniqueify uniques expecting-error with-unique with-unique-ent]]
                      [systems :as system]
                      [system-groups :as group]
-                     [conf :refer [*session-user* config *environments*]])
+                     [conf :refer [*session-user* *session-org* config *environments*]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-recursive]]
             (test.tree [script :refer [defgroup deftest]]
@@ -24,7 +24,7 @@
 
 ;; Functions
 
-(defn some-group [] (kt/newSystemGroup {:name "group" :env (first *environments*)}))
+(defn some-group [] (kt/newSystemGroup {:name "group" :org *session-org*}))
 (defn some-system [] (kt/newSystem {:name "system" :env (first *environments*)}))
 
 (defn cancel-close-widget
@@ -128,7 +128,7 @@
           (client/register ssh-conn {:username (:name *session-user*)
                                      :password (:password *session-user*)
                                      :org "ACME_Corporation"
-                                     :env (-> g :env :name)
+                                     :env (-> s1 kt/env :name)
                                      :force true})
           (let [s2 (assoc (some-system) :name (client/my-hostname ssh-conn))
                 g (ui/update g assoc :systems #{s1 s2})]
@@ -189,13 +189,13 @@
     (deftest "Register a system using AK & sys count should increase by 1"
       (with-unique [g (some-group)
                     s (some-system)
-                    ak (kt/newActivationKey {:name "ak", :env (:env g)})]
+                    ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]
         (ui/create-all (list g s ak))
         (ui/update g assoc :systems #{s})
         (ui/update ak assoc :system-group g)
         (provision/with-client "sys-count" ssh-conn
           (client/register ssh-conn
-                           {:org (-> ak :env :org)
+                           {:org (kt/org ak)
                             :activationkey (:name ak)})
           (assert-system-count g 2))))
 
