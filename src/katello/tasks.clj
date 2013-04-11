@@ -66,16 +66,17 @@
 (defn uniqueify [o]
   (first (uniques o)))
 
+(defn stamp [ts s]
+  (format "%s-%s" s (date-string ts)))
+
 (defn stamp-entity
-  "stamps entity name and label with timestamp s"
-  [ent s]
-  (let [stamped-id (format "%s-%s" (:name ent)
-                           (date-string s))]
-    (assoc ent :name stamped-id)))
+  "stamps entity name with timestamp s"
+  [ent ts]
+  (update-in ent [:name] (partial stamp ts)))
 
 (def entity-uniqueable-impl
-  {:uniques #(for [s (timestamps)]
-               (stamp-entity % s))})
+  {:uniques #(for [ts (timestamps)]
+               (stamp-entity % ts))})
 
 
 (def ^{:doc "Returns one unique string using s as the format string.
@@ -98,10 +99,10 @@
 (defmacro with-unique-ent
   "macro-defining macro to create macros you can call
   like (with-unique-org o (create o))"
-  [suffix-str base-ent-sym]
+  [suffix-str base-ent-expr]
   `(defmacro ~(symbol (str "with-unique-" suffix-str))
      [sym# ~'& body#]
-     `(with-unique [~sym# ~'~base-ent-sym]
+     `(with-unique [~sym# ~'~base-ent-expr]
         ~@body#)))
 
 (defn uniqueify-vals
