@@ -33,11 +33,12 @@
 
 (ui/deflocators
   {::new                         "new"
-   ::create                      "system_submit"
+   ::create                      "commit"
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"
    ::system-virtual-type         "system_type_virtualized_virtual"
+   ::content-view-select         "system[content_view_id]"
    ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
@@ -128,11 +129,14 @@
 
 (defn create
   "Creates a system"
-  [{:keys [name env sockets system-arch]}]
+  [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page {:org (:org env)})
   (sel/fill-ajax-form [::name-text name
-                       ::sockets-text sockets
                        ::arch-select (or system-arch "x86_64")
+                       ::sockets-text sockets
+                       ::ram-mb-text ram-mb
+                       (fn [v] (when v
+                                 (browser click ::system-virtual-type))) [virtual?]
                        (fn [env]
                          (when env (nav/select-environment-widget env))) [env]]
                       ::create)
@@ -385,7 +389,10 @@
                                                         :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
-                                (assoc (tasks/stamp-entity % s) :facts (random-facts)))}
+                                (assoc (tasks/stamp-entity %1 s)
+                                  :facts (if-let [f (:facts %1)]
+                                           f
+                                           (random-facts))))}
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system

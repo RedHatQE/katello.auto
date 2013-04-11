@@ -46,14 +46,16 @@
       (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
-        (ensure-exists env)
-        (rest/create system) 
-        (when groupinfo
-          (ui/update system assoc :description "most unique system")
-          (ui/create sg)
-          (ui/update sg assoc :systems (list system)))
-        (search system searchterms)
-        (validate-search-results (list system))))
+        ;; update hostname in facts to match uniquified system name
+        (let [system (update-in system [:facts] assoc "network.hostname" (:name system))]
+          (ensure-exists env)
+         (rest/create system) 
+         (when groupinfo
+           (ui/update system assoc :description "most unique system")
+           (ui/create sg)
+           (ui/update sg assoc :systems (list system)))
+         (search system searchterms)
+         (validate-search-results (list system)))))
     
     [[{:name "mysystem3", :sockets "4", :system-arch "x86_64"} {:criteria "description: \"most unique system\""} {:name "fed", :description "centos system-group"}]
      [{:name "mysystem3", :sockets "2", :system-arch "x86"} {:criteria "system_group:fed1*"} {:name "fed1", :description "rh system-group"}]

@@ -16,7 +16,7 @@
         ::name-text                 "provider[name]"
         ::description-text          "provider[description]"
         ::repository-url-text       "provider[repository_url]"
-        ::create-save               "provider_submit"
+        ::create-save               "commit"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
         ::details-link              (ui/menu-link "edit_custom_providers")}

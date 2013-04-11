@@ -7,7 +7,7 @@
                      [ui :as ui]
                      [tasks         :refer :all] 
                      [notifications :as notification] 
-                     [conf          :refer [config]] 
+                     [conf          :refer [config *session-org*]] 
                      [rest     :refer [when-katello when-headpin]]) 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
@@ -103,7 +103,7 @@
                   katello.SystemGroup :katello.system-groups/page
                   katello.ActivationKey :katello.activation-keys/page
                   katello.Changeset :katello.changesets/history-page} ent-class)
-                {:org org})
+                {:org (or org *session-org*)})
      (if with-favorite
        (sel/->browser (click ::ui/search-menu)
                       (click (ui/search-favorite with-favorite)))
@@ -114,7 +114,8 @@
            (browser click ::ui/search-submit)))
      (notification/verify-no-error {:timeout-ms 2000}))
   ([proto-entity opts]
-     (search (class proto-entity) (kt/org proto-entity) opts)))
+     (search (class proto-entity) (try (kt/org proto-entity)
+                                       (catch IllegalArgumentException _ nil)) opts)))
 
 
 

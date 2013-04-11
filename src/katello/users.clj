@@ -107,16 +107,27 @@
   (browser click ::save-environment)
   (notification/check-for-success))
 
+(defn current
+  "Returns the name of the currently logged in user, or nil if logged out."
+  []
+  (when (logged-in?)
+    (katello/newUser {:name (browser getText ::account)})))
+
 (defn edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once). Can add or remove roles, and change
   default org and env."
   [user updated]
   (let [[to-remove {:keys [inline-help clear-disabled-helptips
-                 password password-confirm email
-                 default-org default-env]
-          :as to-add} _] (data/diff user updated)]
-    (nav/go-to user)
+                           password password-confirm email
+                           default-org default-env]
+                    :as to-add} _] (data/diff user updated)]
+    ;; use the {username} link at upper right if we're self-editing.
+    (if (= (:name (current)) (:name user))
+      (do (browser click ::account)
+          (browser waitForElement ::password-text "10000"))
+      (nav/go-to user))
+    
     (when-not (nil? inline-help)
       (browser checkUncheck ::enable-inline-help-checkbox inline-help))
     (when password
@@ -172,12 +183,6 @@
   (kt/newUser {:name (@conf/config :admin-user)
                :password (@conf/config :admin-password)
                :email "admin@katello.org"}))
-
-(defn current
-  "Returns the name of the currently logged in user, or nil if logged out."
-  []
-  (when (logged-in?)
-    (katello/newUser {:name (browser getText ::account)})))
 
 (defn delete-notifications
   [delete-all?]

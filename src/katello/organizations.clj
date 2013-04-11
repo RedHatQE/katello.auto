@@ -16,7 +16,7 @@
 
 (ui/deflocators
   {::new                    "//a[@id='new']"
-   ::create                 "//input[@class='create_button']"
+   ::create                 "commit"
    ::name-text              "organization[name]"
    ::label-text             "organization[label]"
    ::description-text       "organization[description]"
@@ -103,8 +103,8 @@
 (defn update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
-  [{:keys [name]} {:keys [description]}]
-  (nav/go-to ::named-page {:org-name name})
+  [org {:keys [description]}]
+  (nav/go-to org)
   (common/in-place-edit {::description-text (:description description)}))
 
 (extend katello.Organization
@@ -113,26 +113,31 @@
            :delete delete}
   
   rest/CRUD (let [uri "api/organizations/"
-                 label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
-             {:id rest/label-field
-              :query (fn [e] (rest/query-by-name (constantly (rest/api-url uri)) e))
-              :create (fn [org]
-                        (merge org (rest/http-post (rest/api-url uri)
-                                              {:body (select-keys org [:name :description])})))
+                  label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
+              {:id rest/label-field
+               :query (fn [e] (rest/query-by-name (constantly (rest/api-url uri)) e))
+               :create (fn [org]
+                         (merge org (rest/http-post (rest/api-url uri)
+                                                    {:body (select-keys org [:name :description])})))
 
-              ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
-              ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
-              :read (fn [org]
-                      (try+ (rest/http-get (label-url org))
-                            (catch [:status 404] _
-                                (throw+ {:type ::rest/entity-not-found, :entity org})))) 
+               ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
+               ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
+               :read (fn [org]
+                       (try+ (rest/http-get (label-url org))
+                             (catch [:status 404] _
+                               (throw+ {:type ::rest/entity-not-found, :entity org})))) 
               
-              :update* (fn [org new-org]
-                        (rest/http-put (label-url org)
-                                  {:body {:organization (select-keys new-org [:description])}}))
-              :delete (fn [org]
-                        (rest/http-delete (label-url org)))})
-  tasks/Uniqueable  tasks/entity-uniqueable-impl
+               :update* (fn [org new-org]
+                          (rest/http-put (label-url org)
+                                         {:body {:organization (select-keys new-org [:description])}}))
+               :delete (fn [org]
+                         (rest/http-delete (label-url org)))})
+  tasks/Uniqueable  {:uniques (fn [org]
+                                (for [ts (tasks/timestamps)]
+                                  (let [stamp-if-set (fn [s] (if (seq s) (tasks/stamp ts s) nil))]
+                                    (-> org
+                                        (update-in [:name] (partial tasks/stamp ts))
+                                        (update-in [:label] stamp-if-set)))))}
 
   nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
                                                {:org org}))})
