@@ -67,3 +67,12 @@
                                  :login? true})))
      (when (not (logged-in?))
                 (wait-for-login))))
+
+(defmacro with-user-temporarily
+  "Logs in as user, executes body with *session-user* bound to user,
+   then finally logs back in as original *session-user*."
+  [user & body]
+  `(try (binding [*session-user* ~user]
+          (login)
+          ~@body)
+        (finally (login))))

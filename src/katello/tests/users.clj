@@ -6,7 +6,7 @@
                      [navigation :as nav]
                      [rest :as rest]
                      [fake-content :as fake]
-                     [login :refer [login logout logged-in?]]
+                     [login :refer [login logout logged-in? with-user-temporarily]]
                      [ui-common :as common]
                      [roles :as role]
                      [menu :as menu]
@@ -14,6 +14,7 @@
                      [tasks :refer :all] 
                      [conf :refer [config *session-org* *session-user*]] 
                      [navigation :as nav]) 
+            
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -60,6 +61,10 @@
   (login user)
   user)
 
+(defn create-user [user]
+  (rest/create user)
+  user)
+
 (defn verify-login-direct-to-default-org
   [{:keys [default-org] :as user}]
   (login user)
@@ -79,15 +84,6 @@
 (defn set-default-org-at-dashboard [{:keys [default-org] :as user}]
   (organization/switch nil {:default-org default-org})
   user)
-
-(defmacro with-user-temporarily
-  "Logs in as user, executes body with *session-user* bound to user,
-   then finally logs back in as original *session-user*."
-  [user & body]
-  `(try (binding [*session-user* ~user]
-          (login)
-          ~@body)
-        (finally (login))))
 
 ;;; Tests
 
@@ -161,7 +157,7 @@
   (deftest "User changes his password"
     :blockers (open-bz-bugs "915960")
     (-> (new-unique-user)
-        rest/create
+        create-user
         login-user
         (ui/update assoc :password "changedpwd"))))   
 
@@ -270,11 +266,11 @@
 
 
     (deftest "Admin assigns a role to user"
-      (-> (new-unique-user) rest/create assign-admin))
+      (-> (new-unique-user) create-user assign-admin))
   
 
     (deftest "Roles can be removed from user"
-      (-> (new-unique-user), rest/create, assign-admin, (ui/update assoc :roles #{}))))
+      (-> (new-unique-user), create-user, assign-admin, (ui/update assoc :roles #{}))))
 
   (deftest "Unassign admin rights to admin user and then login
                to find only dashboard menu"
