@@ -78,8 +78,8 @@
 (defn update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
-  [{:keys [name]} {:keys [description]}]
-  (nav/go-to ::named-page {:org-name name})
+  [org {:keys [description]}]
+  (nav/go-to org)
   (common/in-place-edit {::description-text (:description description)}))
 
 (extend katello.Organization
