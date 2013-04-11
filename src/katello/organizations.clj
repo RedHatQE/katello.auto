@@ -63,12 +63,12 @@
   (nav/go-to org)
   (->browser (setText ::keyname-text keyname)
              (keyUp ::keyname-text "w")
-             (click ::create-keyname)
-             (if apply-default
-               (do
-                 (browser click ::apply-default-info)
-                 (browser click ::ui/confirmation-yes)
-                 (notification/check-for-success)))))
+             (click ::create-keyname))
+  (if apply-default
+    (do
+      (browser click ::apply-default-info)
+      (browser click ::ui/confirmation-yes)
+      (notification/check-for-success))))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
