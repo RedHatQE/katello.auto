@@ -18,6 +18,7 @@
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
             [clojure.string :refer [capitalize upper-case lower-case]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Functions
@@ -156,6 +157,57 @@
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
        ["Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
-       [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])))
- 
+       [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])
 
+    (deftest "Create org with default keyname field"
+      :data-driven true
+      
+      (fn [keyname & [apply-it]]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env-name "keyname-env"
+                                             :initial-env-label "env-label"})]
+        (ui/create org)
+        (organization/add-custom-keyname org keyname apply-it)
+        (assert/is (browser isTextPresent keyname))))
+      
+      [["Color"]
+       ["Shape" {:apply-default true}]
+       [(random-string (int \a) (int \z) 255) {:apply-default true}]
+       [(random-string (int \a) (int \z) 255) {:apply-default true}]
+       [(random-string 0x0080 0x5363 10) {:apply-default true}]
+       [(random-string 0x0080 0x5363 10)]])
+
+    (deftest "Create org and use the same default keyname value twice"
+      :blockers (open-bz-bugs "951197")
+       (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env-name "keyname-env"
+                                             :initial-env-label "env-label"})
+                    keyname "default-keyname"]
+        (ui/create org)
+        (organization/add-custom-keyname org keyname)
+        (assert/is (browser isTextPresent keyname))))
+
+    (deftest "Create org with default keyname value twice"
+      :blockers (open-bz-bugs "951197")
+       (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env-name "keyname-env"
+                                             :initial-env-label "env-label"})
+                    keyname "default-keyname"]
+        (ui/create org)
+        (organization/add-custom-keyname org keyname)
+        (assert/is (browser isTextPresent keyname))))
+    
+    (deftest "Create org with default keyname and delete keyname"
+       (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env-name "keyname-env"
+                                             :initial-env-label "env-label"})
+                    keyname "deleteme-keyname"]
+        (ui/create org)
+        (organization/add-custom-keyname org keyname)
+        (organization/remove-custom-keyname org keyname)
+        (assert/is (not (browser isTextPresent keyname)))))
+))

@@ -29,10 +29,16 @@
    ::access-dashboard       ""
    ::active                 "//*[@id='switcherButton']"
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
-   ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"})
+   ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
+
+   ;; System Default Info
+   ::keyname-text           "new_default_info_keyname"
+   ::create-keyname         "add_default_info_button"
+   ::apply-default-info     "apply_default_info_button"})
 
 (sel/template-fns
- {org-switcher-row "//div[@id='orgbox']//div[contains(@class, 'row') and position()=%s]"})
+ {org-switcher-row   "//div[@id='orgbox']//div[contains(@class, 'row') and position()=%s]"
+  remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
 (nav/defpages (common/pages)
@@ -50,6 +56,25 @@
     (->browser (fireEvent name-loc "blur")
                (ajaxWait)
                (setText label-loc label-text))))
+
+(defn add-custom-keyname
+  "Adds a custom keyname field to an organization and optionally apply it to existing systems"
+  [org keyname & [{:keys [apply-default]}]]
+  (nav/go-to org)
+  (->browser (setText ::keyname-text keyname)
+             (keyUp ::keyname-text "w")
+             (click ::create-keyname))
+  (if apply-default
+    (do
+      (browser click ::apply-default-info)
+      (browser click ::ui/confirmation-yes)
+      (notification/check-for-success))))
+
+(defn remove-custom-keyname
+  "Removes custom keyname field from an organization"
+  [org keyname]
+  (nav/go-to org)
+  (browser click (remove-keyname-btn keyname)))
 
 (defn create
   "Creates an organization with the given name and optional description."
