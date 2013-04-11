@@ -262,7 +262,7 @@
 (defn- update-custom-info [to-add to-remove]
   (browser click ::custom-info)
   (doseq [[k v] to-add]
-    (if (to-remove k) ;;if also in the remove, it's an update
+    (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (browser click (existing-key-value-field k))
           (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button)
           (notification/check-for-success))
