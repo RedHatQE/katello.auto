@@ -24,7 +24,7 @@
   `(testfns/fresh-repo *session-org* (@config :sync-repo)))
 
 (def promo-data
-  (runtime-data [[2 (list (:product (fresh-repo)))]]))
+  (runtime-data [2 (list (:product (fresh-repo)))]))
 
 (defn verify-promote-content [num-envs content-to-promote]
   ;;create envs
