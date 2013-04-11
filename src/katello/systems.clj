@@ -385,7 +385,10 @@
                                                         :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
-                                (assoc (tasks/stamp-entity % s) :facts (random-facts)))}
+                                (assoc (tasks/stamp-entity %1 s)
+                                  :facts (if-let [f (:facts %1)]
+                                           f
+                                           (random-facts))))}
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system
