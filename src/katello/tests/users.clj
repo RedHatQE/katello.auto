@@ -234,7 +234,7 @@
       :blockers (open-bz-bugs "857876")
       :data-driven true
       (fn [orig-name modify-case-fn]
-        (with-unique [user (assoc generic-user {:name orig-name})]
+        (with-unique [user (assoc generic-user :name orig-name)]
           (ui/create-all (list user (update-in user [:name] modify-case-fn)))))
 
       [["usr"     capitalize]
