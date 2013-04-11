@@ -118,9 +118,9 @@
                     org2 (kt/newOrganization {:name "yourorg" :label "yourlabel"})]
         (ui/create org1)
         (expecting-error name-taken-error
-                         (ui/create (assoc org1 :label {:label org2})))
+                         (ui/create (assoc org1 :label (:label org2))))
         (expecting-error label-taken-error
-                         (ui/create (assoc org2 :label {:label org1})))))
+                         (ui/create (assoc org2 :label (:label org1))))))
     
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
@@ -147,9 +147,8 @@
       :data-driven true
       
       (fn [env-name env-lbl notif]
-        (with-unique [org (kt/newOrganization {:name "lib-org"
-                                            :initial-env-name env-name
-                                            :initial-env-label env-lbl})]
+        (with-unique [org (kt/newOrganization
+                           {:name "lib-org", :initial-env-name env-name, :initial-env-label env-lbl})]
           (expecting-error 
            (common/errtype notif)
             (ui/create org))))
