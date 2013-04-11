@@ -131,7 +131,7 @@
     (fn [saved-org-with expected]
       (let [orgs (zipmap saved-org-with
                          (for [o saved-org-with]
-                           (kt/newOrganization {:name (name o)})))
+                           (uniqueify (kt/newOrganization {:name (name o)}))))
             user (new-unique-user)
             ways-to-set-default {:login (fn [user org]
                                           (login user {:org org}))
