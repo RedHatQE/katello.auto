@@ -33,7 +33,7 @@
 
 (ui/deflocators
   {::new                         "new"
-   ::create                      "system_submit"
+   ::create                      "commit"
    ::name-text                   "system[name]"
    ::sockets-text                "system[sockets]"
    ::arch-select                 "arch[arch_id]"

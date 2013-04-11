@@ -16,7 +16,7 @@
 
 (ui/deflocators
   {::new                    "//a[@id='new']"
-   ::create                 "organization_submit"
+   ::create                 "commit"
    ::name-text              "organization[name]"
    ::label-text             "organization[label]"
    ::description-text       "organization[description]"
