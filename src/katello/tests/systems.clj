@@ -104,7 +104,7 @@
   (let [details (system/get-details name)]
     (assert/is (= name (details "Name")))
     (assert/is (= arch (details "Arch")))
-    (assert/is (= env  (details "Environment")))))
+    (assert/is (= (:name env)  (details "Environment")))))
 
 (defn edit-sysname
   "Edits system"
@@ -250,23 +250,23 @@
 
   (deftest "System Details: Add custom info"
     :blockers (open-bz-bugs "919373")
-    (with-unique [system (kt/newSystem {:name "mysystem"})]
-      (ui/create system)
-      (ui/update system assoc :custom-info "Hypervisor" "KVM")))
+    (with-unique-system s
+      (ui/create s)
+      (ui/update s assoc :custom-info "Hypervisor" "KVM")))
 
   (deftest "System Details: Update custom info"
     :blockers (open-bz-bugs "919373")
-    (with-unique [system (kt/newSystem {:name "mysystem"})]
-      (ui/create system)
-      (ui/update system assoc :custom-info "Hypervisor" "KVM")
-      (ui/update system assoc :custom-info "Hypervisor" "Xen")))
+    (with-unique-system s
+      (ui/create s)
+      (let [s (ui/update s assoc :custom-info "Hypervisor" "KVM")]
+        (ui/update s assoc :custom-info "Hypervisor" "Xen"))))
 
   (deftest "System Details: Delete custom info"
     :blockers (open-bz-bugs "919373")
-    (with-unique [system (kt/newSystem {:name "mysystem"})]
-      (ui/create system)
-      (ui/update system assoc :custom-info "Hypervisor" "KVM")
-      (ui/update system update-in [:custom-info] dissoc "Hypervisor")))
+    (with-unique-system s
+      (ui/create s)
+      (let [s (ui/update s assoc :custom-info "Hypervisor" "KVM")]
+        (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "System name is required when creating a system"
     (expecting-error val/name-field-required
@@ -283,16 +283,15 @@
 
   (deftest "Add system from UI"
     :data-driven true
-
     (fn [virt?]
-      (with-unique [env "dev"
-                    system "mysystem"]
-        (let [arch "x86_64"
-              cpu "2"]
-          (env/create env {:org-name (@config :admin-org)})
-          (system/create-with-details system {:sockets cpu
-                                              :system-arch arch :type-is-virtual? virt? :env env})
-          (validate-system-facts system cpu arch virt? env))))
+      (let [arch "x86_64", cpu "2"]
+        (with-unique [system (kt/newSystem {:name "mysystem"
+                                            :env test-environment
+                                            :sockets cpu
+                                            :system-arch arch
+                                            :virtual? virt?})]
+          (ui/create system)
+          (validate-system-facts system cpu arch virt? test-environment))))
 
     [[false]
      [true]])
@@ -353,7 +352,7 @@
           (when (browser isElementPresent aklink)
             (browser clickAndWait aklink))))))
 
-   (deftest "Install package group"
+  (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"
     :blockers rest/katello-only
