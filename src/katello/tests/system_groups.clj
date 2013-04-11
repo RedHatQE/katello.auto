@@ -101,7 +101,7 @@
 
       (fn [group-fn & args]
         (with-unique [s (some-system)
-                      g (apply group-fn some-group args)]
+                      g (apply group-fn (some-group) args)]
           (ui/create-all (list s g))
           (ui/update g assoc :systems #{s})))
       [[identity]
@@ -113,7 +113,7 @@
       :blockers (open-bz-bugs "857031")
 
       (with-unique [s (some-system)
-                    g some-group]
+                    g (some-group)]
         (ui/create-all (list s g))
         (let [g (ui/update g assoc :systems #{s})]
           (assert-system-count g 1)
@@ -122,7 +122,7 @@
 
     (deftest "Unregister a system & check count under sys-group details is -1"
       (with-unique [s1 (some-system)
-                    g some-group]
+                    g (some-group)]
         (ui/create-all (list s1 g))
         (provision/with-client "check-sys-count" ssh-conn
           (client/register ssh-conn {:username (:name *session-user*)
@@ -140,7 +140,7 @@
       :data-driven true
 
       (fn [data]
-        (with-unique [g (merge some-group data)
+        (with-unique [g (merge (some-group) data)
                       s (some-system)]
           (ui/create-all (list s g))
           (ui/update g assoc :systems #{s})
@@ -152,7 +152,7 @@
 
     (deftest "Remove a system from copied system group"
       :blockers (open-bz-bugs "857031")
-      (with-unique [g some-group
+      (with-unique [g (some-group)
                     s (some-system)]
         (ui/create-all (list s g))
         (let [g (ui/update g assoc :systems #{s})
@@ -161,7 +161,7 @@
           (ui/update clone update-in [:systems] disj s))))
 
     (deftest "Systems removed from System Group can be re-added to a new group"
-      (with-unique [[g1 g2] some-group
+      (with-unique [[g1 g2] (some-group)
                     s (some-system)]
         (ui/create-all (list g1 g2 s))
         (-> g1
@@ -170,7 +170,7 @@
         (ui/update g2 assoc :systems #{s})))
 
     (deftest "Reduce the max-limit after associating systems to max allowed limit"
-      (with-unique [g some-group
+      (with-unique [g (some-group)
                     [s1 s2] (some-system)]
         (ui/create-all (list g s1 s2))
         (ui/update g assoc :systems #{s1 s2})
@@ -179,7 +179,7 @@
 
     (deftest "Add systems to sys group greater than the max allowed limit"
       (let [limit 2
-            g (uniqueify some-group)
+            g (uniqueify (some-group))
             systems (take (inc limit) (uniques (some-system)))]
         (ui/create-all (conj systems g))
         (ui/update g assoc :limit limit)
@@ -212,7 +212,7 @@
        [{:close-widget? false}]])
 
     (deftest "Copy a system group"
-      (with-unique [g some-group
+      (with-unique [g (some-group)
                     s (some-system)]
         (ui/create-all (list g s))
         (ui/update g assoc :systems #{s})
@@ -221,7 +221,7 @@
       (deftest "Delete a copied system group"
         :data-driven true
         (fn [data]
-          (with-unique [g (merge some-group data)
+          (with-unique [g (merge (some-group) data)
                         s (some-system)]
             (ui/create-all (list s g))
             (ui/update g assoc :systems #{s})
