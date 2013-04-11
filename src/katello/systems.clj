@@ -264,16 +264,14 @@
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (browser click (existing-key-value-field k))
-          (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button)
-          (notification/check-for-success))
+          (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button))
       (do (browser setText ::key-name k)
           (browser setText ::key-value v)
-          (browser click ::create-custom-info)
-          (notification/check-for-success))))
+          (browser keyUp ::key-name "w")
+          (browser click ::create-custom-info))))
   ;; process removes
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (browser click (remove-custom-info-button k))
-    (notification/check-for-success)))
+    (browser click (remove-custom-info-button k))))
 
 (defn update
   "Edits the properties of the given system. Optionally specify a new

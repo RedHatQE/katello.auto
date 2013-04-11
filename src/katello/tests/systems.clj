@@ -252,20 +252,20 @@
     :blockers (open-bz-bugs "919373")
     (with-unique-system s
       (ui/create s)
-      (ui/update s assoc :custom-info "Hypervisor" "KVM")))
+      (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
 
   (deftest "System Details: Update custom info"
     :blockers (open-bz-bugs "919373")
     (with-unique-system s
       (ui/create s)
-      (let [s (ui/update s assoc :custom-info "Hypervisor" "KVM")]
-        (ui/update s assoc :custom-info "Hypervisor" "Xen"))))
+      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
+        (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
   (deftest "System Details: Delete custom info"
     :blockers (open-bz-bugs "919373")
     (with-unique-system s
       (ui/create s)
-      (let [s (ui/update s assoc :custom-info "Hypervisor" "KVM")]
+      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "System name is required when creating a system"
