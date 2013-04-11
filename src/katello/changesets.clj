@@ -249,13 +249,13 @@
   (let [categories {katello/newProduct ::products-category,
                     katello/newTemplate ::templates-category}]
     (apply concat (for [[f category] categories]
-              (do
-                (browser click category)
-                (browser sleep 2000)
-                (let [result (for [item (extract-content)]
-                               (f {:name item}))]
-                  (browser click ::promotion-eligible-home)
-                  result))))))
+                    (do
+                      (browser click category)
+                      (browser sleep 2000)
+                      (let [result (for [item (extract-content)]
+                                     (f {:name item}))]
+                        (browser click ::promotion-eligible-home)
+                        result))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
   (nav/go-to ::named-environment-page {:env env}))

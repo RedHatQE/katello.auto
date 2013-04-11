@@ -71,7 +71,10 @@
       :data-driven true
 
       plan-validate
-      (plan-validation-data))
+      [(fn [] [(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily"}, :org *session-org*) :katello.notifications/name-cant-be-blank])
+       (with-meta
+         (fn [] [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal "", :org *session-org*}) :katello.notifications/start-date-time-cant-be-blank])
+         {:blockers (open-bz-bugs "853229")})])
 
     (deftest "Cannot create two sync plans with the same name"
       (with-unique-plan p
@@ -98,8 +101,8 @@
           (let [repo (fresh-repo)
                 prod (:product repo)
                 prods (list prod)]
-           (ui/create-all (list p1 p2 (:provider prod) prod repo))
-           (sync/schedule {:products prods :plan p1})
-           (sync/schedule {:products prods :plan p2})
-           (assert/is (= ((sync/current-plan prods) prod)
-                         (:name p2)))))))))
+            (ui/create-all (list p1 p2 (:provider prod) prod repo))
+            (sync/schedule {:products prods :plan p1})
+            (sync/schedule {:products prods :plan p2})
+            (assert/is (= ((sync/current-plan prods) prod)
+                          (:name p2)))))))))
