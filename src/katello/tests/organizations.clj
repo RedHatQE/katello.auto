@@ -161,14 +161,16 @@
 
     (deftest "Create org with default keyname field"
       :data-driven true
-      (fn [keyname apply-it]
-         (with-unique [org (kt/newOrganization {:name "keyname-org"
+      
+      (fn [keyname & [apply-it]]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
                                              :initial-env-name "keyname-env"
                                              :initial-env-label "env-label"})]
         (ui/create org)
         (organization/add-custom-keyname org keyname apply-it)
         (assert/is (browser isTextPresent keyname))))
+      
       [["Color"]
        ["Shape" {:apply-default "yes"}]
        [(random-string (int \a) (int \z) 255) {:apply-default "yes"}]
