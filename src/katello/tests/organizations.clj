@@ -172,10 +172,10 @@
         (assert/is (browser isTextPresent keyname))))
       
       [["Color"]
-       ["Shape" {:apply-default "yes"}]
-       [(random-string (int \a) (int \z) 255) {:apply-default "yes"}]
-       [(random-string (int \a) (int \z) 255) {:apply-default "yes"}]
-       [(random-string 0x0080 0x5363 10) {:apply-default "yes"}]
+       ["Shape" {:apply-default true}]
+       [(random-string (int \a) (int \z) 255) {:apply-default true}]
+       [(random-string (int \a) (int \z) 255) {:apply-default true}]
+       [(random-string 0x0080 0x5363 10) {:apply-default true}]
        [(random-string 0x0080 0x5363 10)]])
 
     (deftest "Create org and use the same default keyname value twice"
