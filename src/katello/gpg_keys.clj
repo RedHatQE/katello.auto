@@ -59,6 +59,13 @@
 (extend katello.GPGKey
   ui/CRUD {:create create
            :delete delete}
+
+  rest/CRUD (let [query-url (partial rest/url-maker [["api/organizations/%s/gpg_keys" [#'katello/org]]])
+                  id-url (partial rest/url-maker [["api/gpg_keys/%s" [identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :read (partial rest/read-impl id-url)})
+  
   nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
                                                      :org (katello/org %1)})}
   tasks/Uniqueable tasks/entity-uniqueable-impl)
