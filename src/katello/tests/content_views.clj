@@ -10,6 +10,8 @@
                      [ui-common :as common]
                      [validation :refer :all])
             [test.tree.script :refer :all]
+            [katello :as kt]
+            [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
             [bugzilla.checker :refer [open-bz-bugs]]))
 
@@ -34,10 +36,10 @@
   
   (deftest "Delete a content view definition"
     (doto (-> {:name "view-def" :org *session-org*}
-        katello/newContentView
-        uniqueify)
-        (ui/create)
-        (ui/delete)))
+            katello/newContentView
+            uniqueify)
+      (ui/create)
+      (ui/delete)))
   
   (deftest "Clone content view definition"
      (with-unique [content-def (katello/newContentView {:name "con-def"
@@ -56,22 +58,18 @@
     :data-driven true
     
     (fn [composite?]
-      (with-unique [org  (newOrganization {:name "auto-org"})
-                    provider (newProvider {:name "auto-provider" :org org})
-                    product (newProduct {:name "auto-product" :provider provider})
-                    repo (newRepository {:name "auto-repo" :product product
-                                         :url "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/"})
+      (with-unique [org (newOrganization {:name "auto-org"})
                     view-definition (newContentView {:name "auto-view-definition" :org org})
                     published-name "pub-name"
-                    composite-view (newContentView {:name "composite-view" :org org :description "Composite Content View" :composite 'yes' :composite-name published-name})]
-        (let [create-all #(ui/create-all (list org provider product repo view-definition))]
-          (create-all))
-        (views/add-product {:name view-definition :prod-name product})
+                    composite-view (newContentView {:name "composite-view" :org org :description "Composite Content View" :composite 'yes' :composite-name published-name})]      
+        (ui/create-all (list org view-definition))
+        (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
+          (create-recursive repo)
+          (views/add-product {:name view-definition :prod-name (kt/product repo)}))
         (views/publish {:name view-definition :published-name published-name :org *session-org*})
         (when composite?
           (ui/create composite-view))))
     
     [[true]
-     [false]])
-  )
+     [false]]))
 
