@@ -341,7 +341,7 @@
   (deftest "System-Details: Validate Activation-key link"
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
-      (rest/create ak)
+      (ui/create ak)
       (provision/with-client "ak-link" ssh-conn
         (client/register ssh-conn
                          {:org *session-org*
