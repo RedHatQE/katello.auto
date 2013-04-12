@@ -66,8 +66,7 @@
   "Creates a provider with products and repositories that use the provided gpg-key. returns the provider."
   [gpg-key]
   (with-unique [provider (katello/newProvider {:name "custom_provider" :org (:org gpg-key conf/*session-org*)})
-                product1 (katello/newProduct {:name "fake1" :provider provider})
-                product2 (katello/newProduct {:name "fake2" :provider provider})
+                [product1 product2] (katello/newProduct {:name "fake1" :provider provider})
                 repo1 (katello/newRepository {:name "testrepo1"
                                               :product product1
                                               :url (-> fake/custom-repos first :url)
@@ -78,7 +77,7 @@
                                               :gpg-key gpg-key})]
     (if (rest/not-exists? gpg-key) (ui/create gpg-key))
     (ui/create-all (list provider product1 product2 repo1 repo2))
-    (provider)))
+    provider))
 
 ;; Tests
 
@@ -138,7 +137,6 @@
     (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env-name "DEV"})
                   gpg-key     (katello/newGPGKey {:name "test-key" :url (@config :gpg-key) :org test-org})]
       (ui/create test-org)
-      #_(organization/switch test-org)
       (create-custom-provider-with-gpg-key gpg-key)
       (create-custom-provider-with-gpg-key gpg-key))))
 
