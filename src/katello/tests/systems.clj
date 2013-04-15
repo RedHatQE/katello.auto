@@ -79,7 +79,7 @@
 (defn verify-new-system-tooltip
   "Confirms that tooltips in the New System form appear and show the correct messages"
   [icon-locator expected-text]
-  (nav/go-to ::system/new-page)
+  (nav/go-to ::system/new-page {:org *session-org*})
   (browser mouseOver icon-locator)
   (Thread/sleep 2000)
   (assert/is (browser isTextPresent expected-text))
@@ -167,8 +167,8 @@
 
     [["yoursys" false :success]
      ["test.pnq.redhat.com" true :success]
-     [(random-string (int \a) (int \z) 256) true ::notification/system-name-255-char-limit]
-     [(random-string (int \a) (int \z) 255) true :success]])
+     [(random-string (int \a) (int \z) 251) true ::notification/system-name-char-limit]
+     [(random-string (int \a) (int \z) 250) true :success]])
 
   (deftest "System-details: Edit Description"
     :data-driven true
@@ -176,12 +176,12 @@
     (fn [new-description save? expected-res]
       (with-unique-system s
         (ui/create s)
-        (expecting-error (common/errtype expected-res)
+        (expecting-error expected-res
                          (edit-sys-description s new-description save?))))
 
     [["cancel description" false :success]
      ["System Registration Info" true :success]
-     [(random-string (int \a) (int \z) 256) true ::notification/sys-description-255-char-limit]
+     [(random-string (int \a) (int \z) 256) true (common/errtype ::notification/sys-description-255-char-limit)]
      [(random-string (int \a) (int \z) 255) true :success]])
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
@@ -273,7 +273,9 @@
 
   (deftest "System name is required when creating a system"
     (expecting-error val/name-field-required
-                     (ui/create (kt/newSystem {:name "" :facts (system/random-facts)}))))
+                     (ui/create (kt/newSystem {:name ""
+                                               :facts (system/random-facts)
+                                               :env test-environment}))))
 
   (deftest "New System Form: tooltips pop-up with correct information"
     :data-driven true
