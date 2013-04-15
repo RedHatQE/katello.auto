@@ -124,13 +124,19 @@
                  ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
+(defn edit-definition [{:keys [name description]}]
+    (common/in-place-edit {::details-name-text name
+                           ::details-description-text description}))
+
 (defn update
   "Edits an existing Content View Definition."
-  [name updated]
-  (nav/go-to ::details-page {:definition-name name})
-  (common/in-place-edit {::details-name-text (:name updated)
-                         ::details-description-text (:description updated)})
-  (notification/check-for-success))
+  [definition-name  updated]
+  (let [[to-remove {:keys [name description]
+                    :as to-add} _] (data/diff definition-name updated)]
+    (nav/go-to ::details-page {:definition-name definition-name
+                               :org (:org definition-name)})
+    (edit-definition to-add)
+    (notification/check-for-success)))
 
 (defn delete
   "Deletes an existing View Definition."
@@ -154,7 +160,7 @@
 (extend katello.ContentView
   ui/CRUD {:create create
            :delete delete
-           :update update}
+           :update* update}
   
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn

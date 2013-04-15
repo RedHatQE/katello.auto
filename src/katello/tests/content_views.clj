@@ -71,5 +71,12 @@
           (ui/create composite-view))))
     
     [[true]
-     [false]]))
+     [false]])
+  
+   (deftest "Edit a content view definition"
+    (with-unique [org (newOrganization {:name "auto-org"})
+                  view-definition (newContentView {:name "auto-view-definition" :description "new description" :org org})
+                  modified-name "mod-name"]
+      (ui/create-all (list org view-definition))
+      (ui/update view-definition assoc :name modified-name :description "modified description"))))
 
