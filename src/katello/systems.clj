@@ -394,7 +394,7 @@
   
   nav/Destination {:go-to (fn [system]
                             (nav/go-to ::named-page {:system system
-                                                     :org (-> system :env :org)}))})
+                                                     :org (kt/org system)}))})
 
 
 (defn api-pools

@@ -53,7 +53,7 @@
   [system]
   (nav/go-to ::system/named-by-environment-page
              {:env (:env system)
-              :org (-> system :env :org)
+              :org (kt/org system)
               :system system})
   (assert/is (= (:environment_id system)
                 (-> test-environment rest/query :id))))
@@ -90,7 +90,8 @@
 
 (defn validate-system-facts
   [system cpu arch virt? env]
-  (nav/go-to ::system/facts-page {:system system})
+  (nav/go-to ::system/facts-page {:system system
+                                  :org (kt/org system)})
   (browser click ::system/cpu-expander)
   (assert/is (= cpu (browser getText ::system/cpu-socket)))
   (browser click ::system/network-expander)
@@ -109,7 +110,8 @@
 (defn edit-sysname
   "Edits system"
   [system new-name save?]
-  (nav/go-to ::system/details-page {:system system})
+  (nav/go-to ::system/details-page {:system system
+                                    :org (kt/org system)})
   (let [old-name (browser getText ::system/edit-sysname)]
     (browser click ::system/edit-sysname)
     (browser setText ::system/name-text-edit new-name)
@@ -127,7 +129,8 @@
 (defn edit-sys-description
   "Edit description of selected system"
   [system new-description save?]
-  (nav/go-to ::system/details-page {:system system})
+  (nav/go-to ::system/details-page {:system system
+                                    :org (kt/org system)})
   (let [original-description (browser getText ::system/edit-description)]
     (browser click ::system/edit-description)
     (browser setText ::system/description-text-edit new-description)
@@ -162,7 +165,7 @@
         (expecting-error (common/errtype expected-res)
                          (edit-sysname s new-system-name save?))))
 
-    [["yoursys" false]
+    [["yoursys" false :success]
      ["test.pnq.redhat.com" true :success]
      [(random-string (int \a) (int \z) 256) true ::notification/system-name-255-char-limit]
      [(random-string (int \a) (int \z) 255) true :success]])
