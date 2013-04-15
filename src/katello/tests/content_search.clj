@@ -5,13 +5,14 @@
                      [environments  :as env]
                      [conf          :refer [config with-org]]
                      [changesets :refer [promote-delete-content]]
-                     [api-tasks     :as api]
-                     [fake-content  :as fake])
+                     [rest     :as rest]
+                     [fake-content  :as fake]
+            )
+            [katello :as kt]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]
-            [clojure.set :refer [intersection difference union project select]]
-            [clojure.core.logic :as l]))
+            [clojure.set :refer [intersection difference union project select]]))
 
 (declare test-org)
 (declare test-org-compare)
@@ -85,17 +86,17 @@
 
 (defgroup content-search-repo-compare
   :group-setup (fn []
-                 (def ^:dynamic test-org-compare (uniqueify "comparesearch"))
-                 (api/create-organization test-org-compare)
+                 (def ^:dynamic test-org-compare (uniqueify  (kt/newOrganization {:name "comparesearch"})))
+                 (rest/create test-org-compare)
                  (org/switch test-org-compare)
                  (fake/prepare-org-custom-provider test-org-compare fake/custom-providers)
-                 (env/create (uniqueify "simple-env") {:org-name test-org-compare :prior-env "Library"}))
+                 (env/create {:name (uniqueify "simple-env") :org test-org-compare :prior "Library"}))
   
   (deftest "Repo compare: Differences between repos can be qualified"
     :data-driven true
     
     (fn [type repo1 repo2]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (assert/is 
        (repo-compare-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                            repo2 (into #{} (content-search/get-repo-packages repo2 :view type)))))
@@ -107,7 +108,7 @@
     :data-driven true
     
     (fn [type repo1 repo2]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (assert/is 
        (repo-all-shared-different-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                                         repo2 (into #{} (content-search/get-repo-packages repo2 :view type)))))
@@ -119,7 +120,7 @@
     :data-driven true
     
     (fn [type repo1]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (assert/is (repo-compare-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                                      "CompareZooNosync" #{}))
       (assert/is (repo-all-shared-different-test type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
@@ -132,7 +133,7 @@
   (deftest "Repo compare: Add and remove repos to compare"
     :data-driven true
     (fn [to-add to-remove result]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (content-search/add-repositories to-add)
       (content-search/remove-repositories to-remove)
       
@@ -141,7 +142,7 @@
     [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"] {"Com Nature Enterprise" "CompareZoo2"}]])
   
   (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
-    (org/switch test-org-compare)
+    (content-search/go-to-content-search-page test-org-compare)
     (let [repositories ["CompareZoo1" "CompareZoo2"]]
       (content-search/add-repositories repositories)
       (assert/is (content-search/click-if-compare-button-is-disabled?))
@@ -150,30 +151,30 @@
   
   
   (deftest "\"Compare\" UI - Selecting repos for compare"
-    (org/switch test-org-compare)
+    (content-search/go-to-content-search-page test-org-compare)
     (let [repositories ["CompareZoo1" "CompareZoo2"]]
-      (content-search/add-repositories (fake/get-all-custom-repos))
+      (content-search/add-repositories (fake/get-all-custom-repo-names))
       (content-search/check-repositories repositories)
       (content-search/click-if-compare-button-is-disabled?)
       (assert/is (= (into #{} (content-search/get-repo-content-search))
                     (into #{} repositories)))))
   
   (deftest "Repo compare: Add many repos to compare"
-    (org/switch test-org-compare)
-    (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
+    (content-search/go-to-content-search-page test-org-compare)
+    (let [repos (difference (set (fake/get-all-custom-repo-names)) (set (fake/get-i18n-repo-names)))]
       (assert/is (= repos
                    (set (content-search/compare-repositories (into [] repos)))))))
   
   (deftest "Repo compare: repos render correctly when internationalized"
-    (org/switch test-org-compare)
-    (let [expected (set (fake/get-i18n-repos))
+    (content-search/go-to-content-search-page test-org-compare)
+    (let [expected (set (fake/get-i18n-repo-names))
           result (set (content-search/compare-repositories expected))]
       (assert/is (= expected result))))    
 
   (deftest "Content Search: search repo info"
     :data-driven true
     (fn [repo-search expected-repos]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (assert/is (= expected-repos (content-search/search-for-repositories repo-search))))
     
     [["Co*"  {"Com Nature Enterprise" 
@@ -191,7 +192,7 @@
     :data-driven true
     
     (fn [pkg-search expected-pkgs lib-cp]
-      (org/switch test-org-compare)
+      (content-search/go-to-content-search-page test-org-compare)
       (do
         (assert/is (= expected-pkgs (content-search/search-for-packages pkg-search)))))     
     [["bear-4.1-1.noarch" {"WeirdLocalsUsing 標準語 Enterprise" {"Гесер"  #{"4.1-1.noarch" "bear"}},
@@ -221,7 +222,7 @@
        :second "simple-env" :spackages ["Nature"]}]]))
 
 (defn verify-errata [type expected-errata]
-  (org/switch test-org-errata)  
+  (content-search/go-to-content-search-page test-org-errata)
   (assert/is (= (if (= expected-errata {}) ; I don't need to add prefix if result is empty
                   {}
                   {"Com Errata Enterprise" {"ErrataZoo" expected-errata}} )
@@ -249,15 +250,14 @@
 
 (defgroup content-search-errata
   :group-setup (fn []
-                 (def ^:dynamic test-org-errata (uniqueify "erratasearch"))
-                 (api/create-organization test-org-errata)
+                 (def ^:dynamic test-org-errata (uniqueify  (kt/newOrganization {:name"erratasearch"})))
+                 (rest/create test-org-errata)
+                 (org/switch test-org-errata)
                  (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
-                 (env/create (uniqueify "simple-env") {:org-name test-org-errata :prior-env "Library"}))
-
-  
+                 (env/create {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"}))
   
   (deftest "Content Browser: Errata information"
-    (org/switch test-org-errata)  
+    (content-search/go-to-content-search-page test-org-errata)
     (content-search/get-errata-set "*")
     (content-search/test-errata-popup-click "RHEA-2012:2011")
     (content-search/add-repositories ["ErrataZoo"])
@@ -313,15 +313,14 @@
 
 
 
-
+(comment
 (defgroup content-search-tests-ensure-env
   :group-setup (fn []
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/create-organization test-org)
                  (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
-                 )
+                 
   
- (comment 
   (deftest "Search for content"
     :data-driven true
     :blockers (open-bz-bugs "855945")
@@ -345,7 +344,7 @@
                                              (* (count fake/errata)
                                                 (count (repo-names results)))))))]])
   
-  )
+  
   (deftest "Ensure for Library Env, Content Search"
     :data-driven true
 
@@ -372,6 +371,7 @@
        [ nil :prod-type (fn [results] (= (set (product-names results))
                                          (set (map :name fake/some-product-repos))))]
        {:blockers (open-bz-bugs "855945")})]))
+)
 
 (declare test-org-env)
 (def env-dev "Development")
@@ -379,7 +379,7 @@
 (def env-release "Release")
 
 (defn test-env-shared-unique [environments result view]
-      (org/switch test-org-env)  
+      (content-search/go-to-content-search-page test-org-env)
       (content-search/select-content-type :repo-type)
       (content-search/submit-browse-button)
       (content-search/select-environments environments)
@@ -389,13 +389,13 @@
 
 (defgroup content-search-env-compare
   :group-setup (fn []
-                 (def ^:dynamic test-org-env      (uniqueify "env-org"))
-                 (api/create-organization test-org-env)
+                 (def ^:dynamic test-org-env  (uniqueify  (kt/newOrganization {:name "env-org"})))
+                 (rest/create  test-org-env)
                  (org/switch test-org-env)
                  (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
-                 (env/create env-dev {:org-name test-org-env :prior-env "Library"})
-                 (env/create env-qa {:org-name test-org-env :prior-env env-dev})
-                 (env/create env-release {:org-name test-org-env :prior-env env-qa})
+                 (env/create {:name env-dev :org test-org-env :prior-env "Library"})
+                 (env/create {:name env-qa :org test-org-env :prior-env env-dev})
+                 (env/create {:name env-release :org test-org-env :prior-env env-qa})
                  (promote-delete-content "Library" env-dev false 
                                          {:products ["Com Errata Enterprise" "WeirdLocalsUsing 標準語 Enterprise"]})
                  (promote-delete-content env-dev env-qa false 
@@ -425,7 +425,7 @@
         :data-driven true
         
     (fn [environments]
-      (org/switch test-org-env)  
+      (content-search/go-to-content-search-page test-org-env)
       (content-search/select-content-type :repo-type)
       (content-search/submit-browse-button)
       (content-search/select-environments environments)
@@ -439,7 +439,7 @@
     :data-driven true
     
     (fn [repo env result]
-      (org/switch test-org-env)  
+      (content-search/go-to-content-search-page test-org-env)
       (content-search/select-content-type :repo-type)
       (content-search/submit-browse-button)
       (content-search/select-environments [env-dev env-qa env-release])
@@ -483,7 +483,7 @@
                 ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}]])
 
   (deftest "Content Search: search repo info"
-    (org/switch test-org-env)  
+    (content-search/go-to-content-search-page test-org-env)
     (content-search/select-content-type :repo-type)
     (content-search/submit-browse-button)
     (content-search/select-environments [env-dev env-qa env-release])
@@ -498,7 +498,7 @@
 
 
   (deftest "Content Browser: Repositories grouped by product"
-    (org/switch test-org-env)  
+    (content-search/go-to-content-search-page test-org-env)
     (content-search/select-content-type :repo-type)
     (content-search/submit-browse-button)
     (assert/is 
@@ -514,4 +514,4 @@
   content-search-repo-compare
   content-search-errata
   content-search-env-compare
-  content-search-tests-ensure-env)
+  )

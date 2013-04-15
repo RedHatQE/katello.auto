@@ -12,7 +12,7 @@
                      [ui-common     :as common]
                      [notifications :as notification]
                      [conf          :refer [config]]
-                     [api-tasks     :refer [when-katello when-headpin]])
+                     [rest     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
             [pl.danieljanus.tagsoup :refer [parse-xml]]
             [test.assert         :as assert]
@@ -320,9 +320,11 @@
     (doseq [repository repositories]
       (browser check (compare-checkbox (str "repo_" (repo-id-map repository)))))))
 
+(defn go-to-content-search-page [with-org]
+  (nav/go-to ::page  {:org with-org}))
 
 (defn add-repositories [repositories]
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser check ::repo-auto-complete-radio)
   (doseq [repository repositories]
@@ -338,8 +340,7 @@
     (browser click (result-repo-errata-link  repo-id))))
 
 (defn compare-repositories [repositories]
-  ;(add-repositories repositories)
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser check ::repo-auto-complete-radio)
   (browser click ::browse-button)
@@ -365,14 +366,14 @@
   (get-result-packages))
 
 (defn search-for-repositories [repo]
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser setText ::repo-search repo)
   (submit-browse-button)
   (get-search-page-result-map-of-maps-of-sets-of-sets 0))
 
 (defn search-for-packages [package]
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Packages")
   (browser setText ::pkg-search package)
   (submit-browse-button)
@@ -385,7 +386,7 @@
                    :pkg-type    "Packages"
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
-    (nav/go-to ::page)
+    ;(nav/go-to ::page)
     (browser select ::type-select ctype-str)))
 
 (defn select-environments [envs]
