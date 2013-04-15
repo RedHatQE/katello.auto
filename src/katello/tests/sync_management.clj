@@ -71,7 +71,7 @@
       :data-driven true
 
       plan-validate
-      [(fn [] [(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily"}, :org *session-org*) :katello.notifications/name-cant-be-blank])
+      [(fn [] [(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily", :org *session-org*}) :katello.notifications/name-cant-be-blank])
        (with-meta
          (fn [] [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal "", :org *session-org*}) :katello.notifications/start-date-time-cant-be-blank])
          {:blockers (open-bz-bugs "853229")})])
