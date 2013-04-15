@@ -16,9 +16,17 @@
         ::name-text                 "provider[name]"
         ::description-text          "provider[description]"
         ::repository-url-text       "provider[repository_url]"
+        ::discovery-url-text        "discover_url"
+        ::discover-button           "//input[@value='Discover']"
+
+        ::create-within-product     "new_repos"
+        ::create-repositories       "create_repos"
+        ::discover-spinner          "//img[@alt='Spinner']"
+        ::existing-product-dropdown "window.$(\"#existing_product_select_chzn\").mousedown()"
         ::create-save               "commit"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
+        ::repository-discovery      (ui/menu-link "repo_discovery")
         ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
@@ -30,6 +38,10 @@
         ::remove-product           (ui/remove-link "products")}
        ui/locators)
 
+(sel/template-fns
+ {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
+  existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"})
+
 ;; Nav
 
 (nav/defpages (common/pages)
@@ -39,7 +51,8 @@
     [::products-page [] (sel/->browser (click ::products-and-repositories)
                                        (sleep 2000))
      [::named-product-page [product] (browser click (ui/editable (:name product)))]]
-    [::details-page [] (browser click ::details-link)]]])
+    [::details-page [] (browser click ::details-link)]
+    [::repo-discovery-page [] (browser click ::repository-discovery)]]])
 
 ;; Tasks
 
@@ -88,6 +101,21 @@
                              :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
                          ::description-text (:description updated)}))
+
+(defn create-discovered-repos-within-product
+  "Autodiscovers repositories at the provided url and creates the
+  selected repositories within the named product."
+  [provider product discoverable-url enabled-urls]
+  (nav/go-to ::repo-discovery-page {:provider provider
+                                    :org (:org provider)})
+  (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
+  (browser waitForInvisible ::discover-spinner "90000")
+  (doall (map #(browser click (repo-create-checkbox %)) enabled-urls))
+  (browser click ::create-within-product)
+  (browser getEval ::existing-product-dropdown)
+  (browser mouseUp (existing-product-select (:name product)))
+  (browser click ::create-repositories)
+  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
 (extend katello.Provider
   ui/CRUD {:create create
