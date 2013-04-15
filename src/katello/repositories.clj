@@ -18,6 +18,8 @@
    ::save-repository        "//input[@value='Create']"
    ::remove-repository      (ui/link "Remove Repository")
    ::repo-gpg-select        "//select[@id='repo_gpg_key']"
+   ::update-gpg-key         "//div[@class='jspPane' and contains(.,'Repository Details')]//div[@name='gpg_key']"
+   ::save-updated-gpg-key   "//div[@name='gpg_key']//button[contains(.,'Save')]"
    ::add-repo-button        "//div[contains(@class,'button') and contains(.,'Add Repository')]"   
    ::repo-discovery         "//a[contains(@href, 'repo_discovery')]"
    ::discover-url-text      "discover_url"
@@ -27,7 +29,8 @@
 
 (sel/template-fns
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
+  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+  select-repository "//div[@id='products']//div[contains(@class,'grid') and contains(.,'%s')]"})
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
@@ -47,6 +50,19 @@
                        ::repo-url-text url}
                       ::save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
+
+(defn update
+  "Edits a repository. Currently the only property of a repository that
+   can be edited is the gpg-key associated."
+  [{:keys [repo gpg-key-update]}]
+  (nav/go-to ::provider/products-page {:org (-> repo :product :provider :org)
+                                       :provider (-> repo :product :provider)})
+  (sel/->browser (click (select-repository (:name repo)))
+                 (click  ::update-gpg-key)
+                 (select ::repo-gpg-select (:name gpg-key-update))
+                 (click  ::save-updated-gpg-key))
+  (notification/check-for-success {:match-pred (notification/request-type? :repo-update-gpg-key)}))
+  
 
 (defn delete "Deletes a repository from the given provider and product."
   [repo]
