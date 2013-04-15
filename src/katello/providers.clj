@@ -109,8 +109,8 @@
   (nav/go-to ::repo-discovery-page {:provider provider
                                     :org (:org provider)})
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
-  (browser waitForInvisible ::discover-spinner "90000")
-  (doall (map #(browser click (repo-create-checkbox %)) enabled-urls))
+  (browser waitForInvisible ::discover-spinner "120000")
+  (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
   (browser click ::create-within-product)
   (browser getEval ::existing-product-dropdown)
   (browser mouseUp (existing-product-select (:name product)))
