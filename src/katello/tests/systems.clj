@@ -95,15 +95,15 @@
   (browser click ::system/cpu-expander)
   (assert/is (= cpu (browser getText ::system/cpu-socket)))
   (browser click ::system/network-expander)
-  (assert/is (= name (browser getText ::system/net-hostname)))
+  (assert/is (= (:name system) (browser getText ::system/net-hostname)))
   (browser click ::system/uname-expander)
   (assert/is (= arch (browser getText ::system/machine-arch)))
   (browser click ::system/virt-expander)
   (if virt?
     (assert/is (= "true" (browser getText ::system/virt-status)))
     (assert/is (= "false" (browser getText ::system/virt-status))))
-  (let [details (system/get-details name)]
-    (assert/is (= name (details "Name")))
+  (let [details (system/get-details system)]
+    (assert/is (= (:name system) (details "Name")))
     (assert/is (= arch (details "Arch")))
     (assert/is (= (:name env)  (details "Environment")))))
 
