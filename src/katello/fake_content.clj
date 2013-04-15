@@ -1,6 +1,7 @@
 (ns katello.fake-content
   (:require [clojure.java.io :as io]
             [katello :as kt]
+            [katello.tests.useful :refer [create-all-recursive]]
             (katello [manifest :as manifest]
                      [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
@@ -10,7 +11,9 @@
                      [repositories :as repo]
                      [providers :as providers]
                      [rest :as rest]
-                     [sync-management :as sync])))
+                     [ui :as ui]
+                     [sync-management :as sync]
+                     )))
 
 (def nature (kt/newProduct {:name "Nature Enterprise" :provider kt/red-hat-provider}))
 (def zoo (kt/newProduct {:name "Zoo Enterprise" :provider kt/red-hat-provider}))
@@ -40,37 +43,35 @@
 
 (def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7"))
 
-(def custom-repos (let [prov (kt/newProvider {:name "Custom Provider"})
-                        com-nature (kt/newProduct {:name "Com Nature Enterprise"})
-                        weird-locals (kt/newProduct {:name "WeirdLocalsUsing 標準語 Enterprise"
-                                                     :i18n true})
-                        many (kt/newProduct {:name "ManyRepository Enterprise"})]
-                    (concat (for [r [{:name "CompareZoo1" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "CompareZoo2" 
-                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
-                                     {:name "CompareZooNosync"
-                                      :unsyncable true
-                                      :url "http://inecas.fedorapeople.org/fakerepos/"}
-                                     {:name "ManyRepositoryA" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
-                              (kt/newRepository (assoc r :product com-nature)))
-                            (for [r [{:name "洪" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "Гесер" 
-                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]]
-                              (kt/newRepository (assoc r :product weird-locals)))
-                            (for [r [{:name "ManyRepositoryA" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "ManyRepositoryB" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "ManyRepositoryC" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "ManyRepositoryD" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                     {:name "ManyRepositoryE" 
-                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]]
-                              (kt/newRepository (assoc r :product many))))))
+
+(def custom-providers [{:name "Custom Provider"
+                        :products [{:name "Com Nature Enterprise"
+                                    :repos [{:name "CompareZoo1" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "CompareZoo2" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}
+                                            {:name "CompareZooNosync"
+                                             :unsyncable true
+                                             :url "http://inecas.fedorapeople.org/fakerepos/"}
+                                            {:name "ManyRepositoryA" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
+                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                    :i18n true
+                                    :repos [{:name "洪" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "Гесер" 
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
+                                   {:name "ManyRepository Enterprise"
+                                    :repos [{:name "ManyRepositoryA" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryB" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryC" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryD" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                            {:name "ManyRepositoryE" 
+                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}]}])
 
 (def custom-provider [{:name "fedorapeople"
                        :products [{:name "safari-1_0"
@@ -99,11 +100,36 @@
                                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
                                                     {:name "Гесер" 
                                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
+    
+(defn repo-list-from-tree [tree org]
+  (into [] (flatten
+    (for [provider tree]
+      (for [product (provider :products)] 
+        (for [repo (product :repos)]
+          (kt/newRepository 
+             {:name (repo :name) 
+             :url (repo :url)
+             :product (kt/newProduct 
+                        {:name (product :name) 
+                         :i18n (product :i18n)
+                         :provider (kt/newProvider 
+                                     {:name (provider :name) 
+                                      :org org})})}))))))) 
+                              
+(defn prepare-org-custom-provider [org tree]
+  (let [repolist (repo-list-from-tree tree org)]
+    (ui/create-all-recursive repolist)
+    (sync/perform-sync repolist)))
 
+
+(defn get-all-custom-repo-names []
+  (map :name (repo-list-from-tree custom-providers nil)))
 
 (defn get-i18n-repos []
-  (filter #(-> % kt/product :i18n) custom-repos)) 
+  (filter #(-> % kt/product :i18n) (repo-list-from-tree custom-providers nil)))
 
+(defn get-i18n-repo-names []
+  (map :name (get-i18n-repos))) 
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})
