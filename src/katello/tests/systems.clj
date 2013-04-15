@@ -62,7 +62,7 @@
   "Creates and promotes a product with fake content repo, returns the
   product."
   [target-env]
-  (with-unique [provider (katello/newProvider (:name "custom_provider" :org *session-org*))
+  (with-unique [provider (katello/newProvider {:name "custom_provider" :org *session-org*})
                 product (katello/newProduct {:name "fake" :provider provider})
                 testkey (katello/newGPGKey {:name "mykey" :org *session-org*
                                             :contents (slurp
