@@ -82,7 +82,7 @@
       [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:\"This is a test org\""}]
       [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:(+test+org)"}]
       (with-meta
-        [[{:name "test" :initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+        [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "environment:dev*"}]
         {:blockers (open-bz-bugs "852119")})]
 
      ;;with latin-1/multibyte searches
