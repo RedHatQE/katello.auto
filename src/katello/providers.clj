@@ -1,6 +1,7 @@
 (ns katello.providers
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             katello
+            [katello :as kt]
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -46,6 +47,7 @@
 (defn create
   "Creates a custom provider with the given name and description."
   [{:keys [name description org]}]
+   {:pre [(instance? katello.Organization org)]} 
   (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        ::description-text description}
@@ -55,6 +57,8 @@
 (defn add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider name description]}]
+   {:pre [(instance? katello.Provider provider)
+          (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::products-page {:provider provider
                               :org (:org provider)})
   (browser click ::add-product)
@@ -66,7 +70,8 @@
 (defn delete-product
   "Deletes a product from the given provider."
   [{:keys [provider] :as product}]
-  {:pre [(not-empty provider)]}
+   {:pre [(not-empty provider)
+          (instance? katello.Product product)]}
   (nav/go-to product)
   (browser click ::remove-product)
   (browser click ::ui/confirmation-yes)
@@ -75,6 +80,7 @@
 (defn delete
   "Deletes the named custom provider."
   [provider]
+  {:pre [(instance? katello.Provider provider)]}
   (nav/go-to provider)
   (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
@@ -84,6 +90,8 @@
   "Edits the named custom provider. Takes an optional new name, and
   new description."
   [provider updated]
+  {:pre [(instance? katello.Provider provider)
+         (instance? katello.Provider updated)]}
   (nav/go-to ::details-page {:provider provider
                              :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
@@ -99,6 +107,7 @@
              {:id rest/id-field
               :query (partial rest/query-by-name org-url)
               :create (fn [{:keys [name description org] :as prov}]
+                           {:pre [(instance? katello.Organization org)]} 
                         (merge prov
                                (rest/http-post (rest/api-url "api/providers")
                                           {:body {:organization_id (rest/get-id org)
@@ -107,6 +116,8 @@
                                                              :provider_type "Custom"}}})))
               :read (partial rest/read-impl id-url)
               :update (fn [prov new-prov]
+                         {:pre [(instance? katello.Provider provider)
+                                (instance? katello.Provider new-prov)]}
                         (merge new-prov (rest/http-put (id-url prov)
                                                  {:body {:provider
                                                          (select-keys new-prov [:repository_url])}})))

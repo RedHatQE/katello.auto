@@ -1,11 +1,13 @@
 (ns katello.tests.useful
   (:require [katello :as kt]
             (katello [rest :as rest]
+                     [ui :as ui]
                      [tasks :as tasks])))
 
 (defn ensure-exists [ent]
   (when-not (rest/exists? ent)
     (rest/create ent)))
+
 
 (defn create-recursive
   "Recursively create in katello, all the entites that satisfy
