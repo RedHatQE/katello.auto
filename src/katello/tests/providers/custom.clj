@@ -4,6 +4,7 @@
                      [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all]
+                     [validation :as val]
                      [organizations :as organization]
                      [conf :as conf])
             [test.tree.script :refer [defgroup deftest]]
@@ -93,4 +94,27 @@
                           katello/newProvider
                           uniques
                           (take 2))]
-          (create-recursive (assoc product :provider prov)))))))
+          (create-recursive (assoc product :provider prov))))))
+
+  (deftest "Repository Autodiscovery for existing product"
+    :description "Uses the repo autodiscovery tool to create custom repositories within a new custom product."
+    (with-unique [org      (katello/newOrganization {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  product  (katello/newProduct  {:name "prod"
+                                                 :provider provider})]
+      (ui/create-all (list org provider product))
+      (provider/create-discovered-repos-within-product provider product
+                                                       "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
+
+  (deftest "Add the same autodiscovered repo to a product twice"
+    :description "Adds the repositories to the selected product twice."
+    (with-unique [org (katello/newOrganization  {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  product (katello/newProduct   {:name "prod"
+                                                 :provider provider})]
+      (ui/create-all (list org provider product))
+      (val/expecting-error-2nd-try (katello.ui-common/errtype :katello.notifications/label-taken-error)
+                                   (provider/create-discovered-repos-within-product provider product
+                                                                                    "http://inecas.fedorapeople.org/fakerepos/"  ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))))
