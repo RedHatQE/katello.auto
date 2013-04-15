@@ -169,5 +169,5 @@
   nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
                             (nav/go-to ::named-product-page {:org (:org provider)
                                                              :provider name
-                                                             :product-name (:name product)}))})
+                                                             :product product}))})
 
