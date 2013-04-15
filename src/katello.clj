@@ -81,7 +81,8 @@
    Environment {:org :org, :env identity, :parent #'org}  ; the org is in the env's :org field
    Provider {:org :org, :provider identity, :parent #'org}
    Product {:org (comp #'org #'provider), :provider :provider, :product identity, :parent #'provider} ; the org is the provider's org
-   Repository {:org (comp #'org #'product), :product :product, :repository identity, :parent #'product} ; the org is the product's org
+   Repository {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product)
+               :repository identity, :parent #'product} ; the org is the product's org
    Package {:org (comp #'org #'product), :product :product, :parent #'product}
    Erratum {:org (comp #'org #'product), :product :product, :parent #'product}
    Template {:org (fn [t] (or (:org t)
