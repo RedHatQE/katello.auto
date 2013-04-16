@@ -162,20 +162,7 @@
   ui/CRUD {:create create
            :delete delete
            :update* update}
-  
-  rest/CRUD (let [query-url (partial rest/url-maker ["api/organizations/%s/content_view_definitions" [#'kt/org]])
-                  id-url (partial rest/url-maker [["api/content_view_definitions/%s" [identity]]])]
-              {:id rest/id-field
-               :query (partial rest/query-by-name query-url)
-               :read (partial rest/read-impl id-url)
-               :create (fn [content-defn]
-                         (merge content-defn
-                                (rest/http-post
-                                  (rest/api-url "api/content_view_definitions/")
-                                  {:body (select-keys content-defn [:name])})))
-               :delete (fn [content-defn]
-                         (rest/http-delete (id-url content-defn)))})
-  
+    
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
                                                             :org (kt/org dn)}))})
