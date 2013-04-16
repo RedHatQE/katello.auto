@@ -1,6 +1,7 @@
 (ns katello.tests.content-views
   (:require (katello [conf :refer [*session-org*] :as conf]
                      [ui :as ui]
+                     [rest :as rest]
                      [content-view-definitions :as views]
                      [notifications :as notifications]
                      [organizations :as organization]
@@ -75,8 +76,33 @@
   
    (deftest "Edit a content view definition"
     (with-unique [org (newOrganization {:name "auto-org"})
-                  view-definition (newContentView {:name "auto-view-definition" :description "new description" :org org})
+                  content-definition (newContentView {:name "auto-view-definition" :description "new description" :org org})
                   modified-name "mod-name"]
-      (ui/create-all (list org view-definition))
-      (ui/update view-definition assoc :name modified-name :description "modified description"))))
-
+      (ui/create-all (list org content-definition))
+      (ui/update content-definition assoc :name modified-name :description "modified description")))
+   
+   
+   (deftest "Remove complete product or a repo from content-view-defnition"
+     :data-driven "true"
+     
+     (fn [repo?]
+       (with-unique [org (newOrganization {:name "auto-org"})
+                     content-defn (newContentView {:name "auto-view-definition" :org org})
+                     published-name "pub-name"
+                     composite-view (newContentView {:name "composite-view" 
+                                                     :org org 
+                                                     :description "Composite Content View" 
+                                                     :composite 'yes' :composite-name published-name})]
+         (ui/create-all (list org content-defn))
+         (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
+           (create-recursive repo)                               
+           (views/add-product {:name content-defn :prod-name (kt/product repo)})
+           (views/remove-product content-defn)
+           (when repo?
+             (views/remove-repo content-defn {:repo-name (kt/repository repo)})))))
+     
+     [[true]
+      [false]])   
+   )
+       
+                   

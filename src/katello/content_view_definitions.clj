@@ -3,6 +3,7 @@
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.data :as data]
             (katello [navigation :as nav]
+                     [rest :as rest]
                      [notifications :as notification]
                      [system-groups :as sg]
                      [tasks :refer [when-some-let] :as tasks]
@@ -38,9 +39,12 @@
 
 
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
+   ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
+   ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
    ::remove-product            "//a[@class='remove_product']"
+   ::remove-repo               "//a[@class='remove_repo']"
    ::toggle-products           "//div[@class='small_col toggle collapsed']"
 
    ;; Promotion
@@ -93,26 +97,27 @@
 
 (defn remove-product
   "Removes the given product from existing Content View"
-  [{:keys [name prod-name all-products composite composite-name]}]
-  (nav/go-to name)
+  [content-defn]
+  (nav/go-to content-defn)
   (browser click ::content-tab)
-  (if composite
-    (do
-      (sel/->browser
-       (click (composite-view-name composite-name))
-       (click ::update-component_view)))
-    (do (if all-products
-          (do
-            (sel/->browser
-             (click ::remove-product)
-             (click ::update-content)))
-          (do
-            (sel/->browser
-             (click ::toggle-products)
-             (click (-> prod-name :name remove-repository))
-             (click ::update-content))))))
+  (sel/->browser
+    (click ::remove-product)
+    (click ::update-content))
   (notification/check-for-success))
 
+(defn remove-repo
+  "Removes the given product from existing Content View"
+  [content-defn]
+  (nav/go-to content-defn)
+  (browser click ::content-tab)
+  (sel/->browser
+    (click ::toggle-products)
+    (click ::sel-repo) 
+    (click ::add-repo)
+    (click ::remove-repo)
+    (click ::update-content))
+  (notification/check-for-success))
+  
 (defn publish
   "Publishes a Content View Definition"
   [{:keys [name published-name description]}]
@@ -124,24 +129,20 @@
                  ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
-(defn edit-definition [{:keys [name description]}]
-    (common/in-place-edit {::details-name-text name
-                           ::details-description-text description}))
-
 (defn update
   "Edits an existing Content View Definition."
-  [definition-name  updated]
-  (let [[to-remove {:keys [name description]
-                    :as to-add} _] (data/diff definition-name updated)]
-    (nav/go-to ::details-page {:definition-name definition-name
-                               :org (:org definition-name)})
-    (edit-definition to-add)
+  [content-definition  updated]
+  (let [[{:keys [name description]}] (data/diff content-definition updated)]
+    (nav/go-to ::details-page {:definition-name content-definition
+                               :org (:org content-definition)})
+    (common/in-place-edit {::details-name-text (:name updated)
+                           ::details-description-text (:description updated)})
     (notification/check-for-success)))
 
 (defn delete
   "Deletes an existing View Definition."
-  [name]
-  (nav/go-to name)
+  [content-defn]
+  (nav/go-to content-defn)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
@@ -161,6 +162,19 @@
   ui/CRUD {:create create
            :delete delete
            :update* update}
+  
+  rest/CRUD (let [query-url (partial rest/url-maker ["api/organizations/%s/content_view_definitions" [#'kt/org]])
+                  id-url (partial rest/url-maker [["api/content_view_definitions/%s" [identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :read (partial rest/read-impl id-url)
+               :create (fn [content-defn]
+                         (merge content-defn
+                                (rest/http-post
+                                  (rest/api-url "api/content_view_definitions/")
+                                  {:body (select-keys content-defn [:name])})))
+               :delete (fn [content-defn]
+                         (rest/http-delete (id-url content-defn)))})
   
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
