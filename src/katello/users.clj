@@ -161,7 +161,7 @@
                   url-by-id (partial rest/url-maker [["api/users/%s" [identity]]])]
               {:id rest/id-field
                :query (partial rest/query-by :username :name
-                               (constantly (rest/api-url url)))
+                               (fn [& _] (rest/api-url url)))
                :create (fn [user]
                          (rest/http-post (rest/api-url url)
                                          {:body
