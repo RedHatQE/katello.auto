@@ -4,6 +4,7 @@
                      [notifications :as notification]
                      [ui-common :as common]
                      [ui :as ui]
+                     [rest :as rest]
                      [tasks :refer [when-some-let] :as tasks])
             [clojure.data :as data]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
@@ -115,6 +116,13 @@
   ui/CRUD {:create create
            :delete delete
            :update* update}
+
+  rest/CRUD (let [id-url (partial rest/url-maker [["api/activation_keys/%s" [identity]]])
+                  query-url (partial rest/url-maker [["api/organizations/%s/activation_keys" [#'katello/org]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :read (partial rest/read-impl id-url)})
+  
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to #(nav/go-to ::named-page {:activation-key %1
                                                     :org (kt/org %1)})})
