@@ -18,6 +18,7 @@
    ::save-repository        "//input[@value='Create']"
    ::remove-repository      (ui/link "Remove Repository")
    ::repo-gpg-select        "//select[@id='repo_gpg_key']"
+   ::update-repo-gpg-select "//select[@name='gpg_key']"
    ::update-gpg-key         "//div[@class='jspPane' and contains(.,'Repository Details')]//div[@name='gpg_key']"
    ::save-updated-gpg-key   "//div[@name='gpg_key']//button[contains(.,'Save')]"
    ::add-repo-button        "//div[contains(@class,'button') and contains(.,'Add Repository')]"   
@@ -54,14 +55,13 @@
 (defn update
   "Edits a repository. Currently the only property of a repository that
    can be edited is the gpg-key associated."
-  [{:keys [repo gpg-key-update]}]
-  (nav/go-to ::provider/products-page {:org (-> repo :product :provider :org)
-                                       :provider (-> repo :product :provider)})
-  (sel/->browser (click (select-repository (:name repo)))
-                 (click  ::update-gpg-key)
-                 (select ::repo-gpg-select (:name gpg-key-update))
-                 (click  ::save-updated-gpg-key))
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-update-gpg-key)}))
+  [repo {:keys [gpg-key]}]
+  (when (not= (:gpg-key repo) gpg-key)
+    (nav/go-to repo)
+    (sel/->browser (click  ::update-gpg-key)
+                   (select ::update-repo-gpg-select gpg-key)
+                   (click  ::save-updated-gpg-key))
+    (notification/check-for-success {:match-pred (notification/request-type? :repo-update-gpg-key)})))
   
 
 (defn delete "Deletes a repository from the given provider and product."
@@ -81,6 +81,7 @@
 
 (extend katello.Repository
   ui/CRUD {:create create
+           :update* update
            :delete delete}
 
   rest/CRUD {:create (fn [{:keys [product name url]}]
@@ -95,8 +96,8 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [{:keys [product name]}]
-                            (nav/go-to ::named-page {:org (kt/org product)
-                                                     :provider (kt/provider product)
-                                                     :product product
-                                                     :repo-name name}))})
+  nav/Destination {:go-to (fn [repo]
+                            (nav/go-to ::named-page {:org (kt/org repo)
+                                                     :provider (kt/provider repo)
+                                                     :product (kt/product repo)
+                                                     :repo-name repo}))})
