@@ -179,7 +179,7 @@
 
       (fn [username expected-err]
         (expecting-error (common/errtype expected-err)
-                         (ui/create (uniqueify (assoc generic-user :name username )))))
+                         (ui/create (assoc generic-user :name username ))))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
        [(random-string (int \a) (int \z) 129) :katello.notifications/username-128-char-limit]
        ["foo   " :katello.notifications/validation-error]

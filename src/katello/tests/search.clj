@@ -13,7 +13,7 @@
                      [systems :as system]
                      [conf :refer [*session-org* config]])
             
-            [katello.tests.useful :refer [ensure-exists]]
+            [katello.tests.useful :refer [ensure-exists chained-env]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -43,7 +43,7 @@
     :description "Search for a system based on criteria."
     :blockers rest/katello-only
     (fn [sysinfo searchterms & [groupinfo]]
-      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+      (with-unique [env (chained-env {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         ;; update hostname in facts to match uniquified system name
@@ -82,7 +82,7 @@
       [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:\"This is a test org\""}]
       [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:(+test+org)"}]
       (with-meta
-        [[{:name "test" :initial-env-name "dev" :description "This is a test org"}] {:criteria "environment:dev*"}]
+        [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "environment:dev*"}]
         {:blockers (open-bz-bugs "852119")})]
 
      ;;with latin-1/multibyte searches
@@ -130,7 +130,7 @@
     :description "search activation keys by default criteria i.e. name"
     
     (fn [akinfo searchterms]
-      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+      (with-unique [env (chained-env {:name "dev", :org *session-org*})
                     ak (kt/newActivationKey (assoc akinfo :env env))]
         (rest/create env)
         (ui/create ak)
@@ -165,7 +165,7 @@
     :blockers rest/katello-only
     
     (fn [groupinfo sysinfo searchterms]
-      (with-unique [env (-> {:name "dev", :org *session-org*} kt/newEnvironment list kt/chain first)
+      (with-unique [env (chained-env {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         (ensure-exists env)

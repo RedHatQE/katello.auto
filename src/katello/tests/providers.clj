@@ -89,7 +89,15 @@
     (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
-        ui/create))
+        ui/create)
+
+    (deftest "Create a new GPG key from text input and associate it with products/providers"
+      :blockers rest/katello-only
+
+      (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
+          katello/newGPGKey
+          uniqueify
+          create-custom-provider-with-gpg-key)))
 
   (deftest "Create a new GPG key from file"
     :blockers (open-bz-bugs "835902" "846432")
@@ -97,48 +105,40 @@
     (-> {:name "test-key-file", :url (@config :gpg-key), :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
-        ui/create))
+        ui/create)
 
-  (deftest "Delete existing GPG key"
+    (deftest "Create a new GPG key from file and associate it with products/providers"
+      :blockers rest/katello-only
+
+      (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
+          katello/newGPGKey
+          uniqueify
+          create-custom-provider-with-gpg-key)
+
+      (deftest "Associate same GPG key to multiple providers"
+        :blockers rest/katello-only
+        :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
+
+        (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env-name "DEV"})
+                      gpg-key     (katello/newGPGKey {:name "test-key" :url (@config :gpg-key) :org test-org})]
+          (ui/create test-org)
+          (create-custom-provider-with-gpg-key gpg-key)
+          (create-custom-provider-with-gpg-key gpg-key))))
+    
+    (deftest "Delete existing GPG key"
       (doto (-> {:name (uniqueify "test-key"), :url (@config :gpg-key), :org conf/*session-org*}
                 katello/newGPGKey)
         ui/create
-        ui/delete))
+        ui/delete)
 
-  (deftest "Create a new GPG key from text input and associate it with products/providers"
-    :blockers rest/katello-only
+      (deftest "Delete existing GPG key, associated with products/providers"
+        :blockers rest/katello-only
 
-    (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
-        katello/newGPGKey
-        uniqueify
-        create-custom-provider-with-gpg-key))
-
-  (deftest "Create a new GPG key from file and associate it with products/providers"
-    :blockers rest/katello-only
-
-    (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
-        katello/newGPGKey
-        uniqueify
-        create-custom-provider-with-gpg-key))
-
-  (deftest "Delete existing GPG key, associated with products/providers"
-    :blockers rest/katello-only
-
-    (doto (-> {:name "test-key", :url (@config :gpg-key), :org conf/*session-org*}
-              katello/newGPGKey
-              uniqueify)
-        create-custom-provider-with-gpg-key
-        ui/delete))
-
-  (deftest "Associate same GPG key to multiple providers"
-    :blockers rest/katello-only
-    :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
-
-    (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env-name "DEV"})
-                  gpg-key     (katello/newGPGKey {:name "test-key" :url (@config :gpg-key) :org test-org})]
-      (ui/create test-org)
-      (create-custom-provider-with-gpg-key gpg-key)
-      (create-custom-provider-with-gpg-key gpg-key))))
+        (doto (-> {:name "test-key", :url (@config :gpg-key), :org conf/*session-org*}
+                  katello/newGPGKey
+                  uniqueify)
+          create-custom-provider-with-gpg-key
+          ui/delete)))))
 
 
 #_(defgroup package-filter-tests
