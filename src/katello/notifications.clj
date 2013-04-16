@@ -21,7 +21,7 @@
   (let [errors {::name-taken-error                    #"(Username|Name) has already been taken"
                 ::label-taken-error                   #"Label has already been taken"
                 ::sg-name-taken-error                 #"Name must be unique within one organization"
-                ::name-no-leading-trailing-whitespace #"Name must not contain leading or trailing white space"
+                ::name-no-leading-trailing-whitespace #"(Username|Name) must not contain leading or trailing white space"
                 ::name-must-not-contain-characters    #"Name cannot contain characters other than"
                 ::name-must-not-contain-html          #"Username cannot contain characters >, <, or /"
                 ::org-name-must-not-contain-html      #"Name cannot contain characters >, <, or /"
