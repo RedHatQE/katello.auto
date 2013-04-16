@@ -34,3 +34,6 @@
                       repo (kt/newRepository {:name "testrepo", :product prod, :url url})]
     repo))
 
+(def ^{:doc "Returns env but chained onto the end of Library"}
+  chained-env
+  (comp first kt/chain list tasks/uniqueify kt/newEnvironment))
