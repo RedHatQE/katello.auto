@@ -23,6 +23,7 @@
         ::create-repositories       "create_repos"
         ::discover-spinner          "//img[@alt='Spinner']"
         ::existing-product-dropdown "window.$(\"#existing_product_select_chzn\").mousedown()"
+        ::new-product-name-text     "//input[@name='product_name']"
         ::create-save               "commit"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
@@ -40,6 +41,7 @@
 
 (sel/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
+  new-product-radio-btn   "//input[@name='new_product' and @value='%s']"
   existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"})
 
 ;; Nav
@@ -105,15 +107,20 @@
 (defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
   selected repositories within the named product."
-  [provider product discoverable-url enabled-urls]
+  [provider product discoverable-url enabled-urls & [{:keys [new-prod]}]]
   (nav/go-to ::repo-discovery-page {:provider provider
                                     :org (:org provider)})
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
   (browser waitForInvisible ::discover-spinner "120000")
   (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
   (browser click ::create-within-product)
-  (browser getEval ::existing-product-dropdown)
-  (browser mouseUp (existing-product-select (:name product)))
+  (if new-prod
+    (do
+      (browser click (new-product-radio-btn "true"))
+      (browser setText ::new-product-name-text (:name product)))
+    (do
+      (browser getEval ::existing-product-dropdown)
+      (browser mouseUp (existing-product-select (:name product)))))
   (browser click ::create-repositories)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
@@ -168,6 +175,5 @@
 
   nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
                             (nav/go-to ::named-product-page {:org (:org provider)
-                                                             :provider name
+                                                             :provider provider
                                                              :product product}))})
-
