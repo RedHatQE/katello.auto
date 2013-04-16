@@ -100,4 +100,4 @@
                             (nav/go-to ::named-page {:org (kt/org repo)
                                                      :provider (kt/provider repo)
                                                      :product (kt/product repo)
-                                                     :repo-name repo}))})
+                                                     :repo repo}))})
