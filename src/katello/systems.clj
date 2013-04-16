@@ -28,7 +28,7 @@
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
   system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
   system-fact-group-expand        "//tr[@id='%s']/td/span"
-  existing-key-value-field        "//div[@name='custom_info[%s]']"
+  existing-key-value-field        "custom_info_%s"
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/deflocators
@@ -263,8 +263,7 @@
   (browser click ::custom-info)
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
-      (do (browser click (existing-key-value-field k))
-          (sel/fill-ajax-form {(existing-key-value-field k) v} ::save-button))
+      (do (common/in-place-edit {(existing-key-value-field k) v}))
       (do (browser setText ::key-name k)
           (browser setText ::key-value v)
           (browser keyUp ::key-name "w")

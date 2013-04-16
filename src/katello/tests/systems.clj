@@ -253,16 +253,37 @@
 
   (deftest "System Details: Add custom info"
     :blockers (open-bz-bugs "919373")
-    (with-unique-system s
-      (ui/create s)
-      (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
+    :data-driven true
+    
+    (fn [keyname custom-value success?]
+       (with-unique-system s
+         (ui/create s)
+         (ui/update s assoc :custom-info {keyname custom-value})
+         (assert/is (= (browser isTextPresent keyname) success?))))
+    
+    [["Hypervisor" "KVM" true]
+     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
+     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
+     ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+     ["foo@!#$%^&*()" "bar_+{}|\"?hi" false]])
 
   (deftest "System Details: Update custom info"
     :blockers (open-bz-bugs "919373")
-    (with-unique-system s
-      (ui/create s)
-      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
-        (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
+    :data-driven true
+
+    (fn [keyname custom-value new-value success?]
+      (with-unique-system s
+        (ui/create s)
+        (let [s (ui/update s assoc :custom-info {keyname custom-value})]
+          (ui/update s assoc :custom-info {keyname new-value})
+          (assert/is (= (browser isTextPresent new-value) success?)))))
+    
+    [["Hypervisor" "KVM" "Xen" true]
+     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
+     ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
+     ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
 
   (deftest "System Details: Delete custom info"
     :blockers (open-bz-bugs "919373")
