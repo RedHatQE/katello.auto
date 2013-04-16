@@ -30,8 +30,7 @@
 
 (sel/template-fns
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-  select-repository "//div[@id='products']//div[contains(@class,'grid') and contains(.,'%s')]"})
+  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
