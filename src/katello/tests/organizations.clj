@@ -136,7 +136,7 @@
         
 
         (with-unique [org (mkorg "delorg")
-                      env (-> {:name "env" :org org} kt/newEnvironment uniqueify kt/chain)
+                      env (-> {:name "env" :org org} kt/newEnvironment uniqueify list kt/chain)
               repos (for [r fake/custom-repos]
                       (update-in r [:product :provider] assoc :org org))]
           (setup-custom-org-with-content env repos)

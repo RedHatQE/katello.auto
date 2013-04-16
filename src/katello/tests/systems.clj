@@ -238,7 +238,8 @@
       (fn [confirm?]
         (with-unique [system (kt/newSystem {:name "mysystem"
                                             :sockets "1"
-                                            :system-arch "x86_64"})]
+                                            :system-arch "x86_64"
+                                            :env test-environment})]
           (ui/create system)
           (nav/go-to system)
           (browser click ::remove)
@@ -349,7 +350,7 @@
         (ui/create ak)
         (provision/with-client "ak-link" ssh-conn
           (client/register ssh-conn
-                           {:org *session-org*
+                           {:org (:name *session-org*)
                             :activationkey (:name ak)})
           (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
                 aklink (system/activation-key-link (:name ak))]

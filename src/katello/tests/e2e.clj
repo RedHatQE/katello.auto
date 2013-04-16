@@ -59,7 +59,7 @@
                      no-clients-defined)
     (let [repo (fresh-repo *session-org*
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-          target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment list kt/chain uniqueify)
+          target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment uniqueify list kt/chain)
           package-to-install "cheetah"]
       (rest/create target-env)
       (create-recursive repo)

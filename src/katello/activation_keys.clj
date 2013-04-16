@@ -77,7 +77,7 @@
 (defn- associate-system-group
   "Asscociate activation key to selected sytem group"
   [sg]
-  (->browser (click ::system-group-page)
+  (->browser (click ::system-group-select)
              (click ::add-sys-group-form)
              (click (sysgroup-checkbox (:name sg)))
              (click ::add-sys-group)))
