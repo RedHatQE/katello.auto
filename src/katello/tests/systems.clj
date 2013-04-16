@@ -264,25 +264,93 @@
         (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
           (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
-    (deftest "System Details: Delete custom info"
-      :blockers (open-bz-bugs "919373")
+  (deftest "Remove systems and validate sys-count"
+    (with-unique [org (kt/newOrganization {:name "delsyscount"})
+                  env (kt/newEnvironment {:name "dev", :org org})]
+      (let [systems (->> {:name "delsys", :env env}
+                         kt/newSystem
+                         uniques
+                         (take 4))
+            ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
+        (create-all-recursive systems)
+        (assert/is (= (count systems) (ui-count)))
+        (ui/delete (first systems))
+        (assert/is (= (dec (count systems)) (ui-count)))
+        (system/multi-delete (rest systems))
+        (assert/is (= 0 (ui-count))))))
+
+  (deftest "Remove System: with yes-no confirmation"
+    :data-driven true
+
+    (fn [confirm?]
+      (with-unique [system (kt/newSystem {:name "mysystem"
+                                          :sockets "1"
+                                          :system-arch "x86_64"})]
+        (ui/create system)
+        (nav/go-to system)
+        (browser click ::remove)
+        (if confirm?
+          (do (browser click ::ui/confirmation-yes)
+              (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
+              (assert (rest/not-exists? system)))
+          (do (browser click ::confirm-to-no)
+              (nav/go-to system)))))
+    [[false]
+     [true]])
+
+  (deftest "System Details: Add custom info"
+    :blockers (open-bz-bugs "919373")
+    :data-driven true
+
+    (fn [keyname custom-value success?]
+       (with-unique-system s
+         (ui/create s)
+         (ui/update s assoc :custom-info {keyname custom-value})
+         (assert/is (= (browser isTextPresent keyname) success?))))
+
+    [["Hypervisor" "KVM" true]
+     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
+     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
+     ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+     ["foo@!#$%^&*()" "bar_+{}|\"?hi" false]])
+
+  (deftest "System Details: Update custom info"
+    :blockers (open-bz-bugs "919373")
+    :data-driven true
+
+    (fn [keyname custom-value new-value success?]
       (with-unique-system s
         (ui/create s)
-        (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
-          (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
+        (let [s (ui/update s assoc :custom-info {keyname custom-value})]
+          (ui/update s assoc :custom-info {keyname new-value})
+          (assert/is (= (browser isTextPresent new-value) success?)))))
 
-    (deftest "System name is required when creating a system"
-      (expecting-error val/name-field-required
-                       (ui/create (kt/newSystem {:name ""
-                                                 :facts (system/random-facts)
-                                                 :env test-environment}))))
+    [["Hypervisor" "KVM" "Xen" true]
+     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
+     ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
+     ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
 
-    (deftest "New System Form: tooltips pop-up with correct information"
-      :data-driven true
-      verify-new-system-tooltip
-      [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
-       [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
-    ;; FIXME - convert-to-records
+  (deftest "System Details: Delete custom info"
+    :blockers (open-bz-bugs "919373")
+    (with-unique-system s
+      (ui/create s)
+      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
+        (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
+
+  (deftest "System name is required when creating a system"
+    (expecting-error val/name-field-required
+                     (ui/create (kt/newSystem {:name ""
+                                               :facts (system/random-facts)
+                                               :env test-environment}))))
+
+  (deftest "New System Form: tooltips pop-up with correct information"
+    :data-driven true
+    verify-new-system-tooltip
+    [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
+     [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
+  ;; FIXME - convert-to-records
 
   
 
