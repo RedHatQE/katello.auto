@@ -13,7 +13,7 @@
                      [changesets :as changeset]
                      [fake-content :as fake]
                      [conf :refer [config]])
-            [katello.tests.useful :only [chained-env]]
+            [katello.tests.useful :refer [chained-env]]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
