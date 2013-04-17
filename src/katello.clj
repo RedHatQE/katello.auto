@@ -24,8 +24,7 @@
 
 ;; Define records for all entities we'll be testing with
 
-(defrecord Organization [id name label description initial-env-name
-                         initial-env-label initial-env-description])
+(defrecord Organization [id name label description initial-env])
 
 (defrecord Environment [id name label description ^Organization org prior])
 
@@ -40,7 +39,7 @@
 
 (defrecord Provider [id name description ^Organization org])
 
-(defrecord Product [id name ^Provider provider])
+(defrecord Product [id name ^Provider provider description gpg-key])
 
 (defrecord Repository [id name ^Product product url gpg-key])
 
@@ -67,6 +66,8 @@
 (defrecord ActivationKey [id name ^Environment env description])
 
 (defrecord SystemGroup [id name systems  ^Organization org])
+
+(defrecord ContentView [id name description composite composite-name org])
 
 (defrecord Manifest [provider file-path url])
 
@@ -105,6 +106,7 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
+   ContentView {:org :org, :parent #'org}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
    SyncPlan {:org :org, :parent #'org}})
 

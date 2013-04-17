@@ -57,10 +57,13 @@
    :prov-update              "providers___update"
    
    :prod-create              "products___create"
+   :prod-update              "products___update"
    :prod-destroy             "products___destroy"
    
    :repo-create              "repositories___create"
    :repo-destroy             "repositories___destroy"
+   
+   :repo-update-gpg-key      "repositories___update_gpg_key"
    
    :sys-create               "systems___create"
    :sys-destroy              "systems___destroy"

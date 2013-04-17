@@ -15,7 +15,7 @@
 (ui/deflocators
        {::new                       "new"
         ::name-text                 "provider[name]"
-        ::description-text          "provider[description]"
+        ::provider-description-text "provider[description]"
         ::repository-url-text       "provider[repository_url]"
         ::discovery-url-text        "discover_url"
         ::discover-button           "//input[@value='Discover']"
@@ -28,7 +28,7 @@
         ::create-save               "//input[@value='Save']"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
-        ::repository-discovery      (ui/menu-link "repo_discovery")
+        ::repository-discovery      (ui/menu-link "repo_discovery") 
         ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
@@ -37,6 +37,10 @@
         ::product-name-text        "//*[@name='product[name]']"
         ::product-label-text       "//*[@name='product[label]']"
         ::product-description-text "//*[@name='product[description]']"
+        ::update-prd-gpg-keys      "//div[contains(@class,'edit_select_product_gpg')]"
+        ::update-prd-gpg-select    "//select[@name='product[gpg_key]']"
+        ::save-updated-gpg-key     "//div[@name='product[gpg_key]']//button[contains(.,'Save')]"
+        ::confirm-gpg-update       "//span[@class='ui-button-text' and contains(.,'Yes')]"
         ::remove-product           (ui/remove-link "products")}
        ui/locators)
 
@@ -65,7 +69,7 @@
    {:pre [(instance? katello.Organization org)]} 
   (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
-                       ::description-text description}
+                       ::provider-description-text description}
                       ::create-save)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-create)}))
 
@@ -81,6 +85,18 @@
                        ::product-description-text description}
                       ::create-product)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-create)}))
+
+(defn update-product
+  "Updates product. Currently the properties of a product that
+   can be edited are description and gpg-key"
+  [product {:keys [gpg-key]}]
+  (when (not= (:gpg-key product) gpg-key) 
+    (nav/go-to product)
+    (sel/->browser (click  ::update-prd-gpg-keys)
+                   (select ::update-prd-gpg-select gpg-key)
+                   (click  ::save-updated-gpg-key)
+                   (click  ::confirm-gpg-update))
+    (notification/check-for-success {:match-pred (notification/request-type? :prod-update)})))
 
 (defn delete-product
   "Deletes a product from the given provider."
@@ -110,7 +126,7 @@
   (nav/go-to ::details-page {:provider provider
                              :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
-                         ::description-text (:description updated)}))
+                         ::provider-description-text (:description updated)}))
 
 (defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
@@ -169,7 +185,8 @@
 
 (extend katello.Product
   ui/CRUD {:create add-product
-           :delete delete-product}
+           :delete delete-product
+           :update* update-product}
 
   rest/CRUD (let [id-url (partial rest/url-maker [["api/organizations/%s/products/%s" [:org identity]]])
                   org-prod-url ["api/organizations/%s/products/%s" [:org identity]]
@@ -187,8 +204,8 @@
 
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [{:keys [provider name] :as product}]
-                            (nav/go-to ::named-product-page {:org (:org provider)
-                                                             :provider provider
+  nav/Destination {:go-to (fn [product]
+                            (nav/go-to ::named-product-page {:org (kt/org product)
+                                                             :provider (kt/provider product)
                                                              :product product}))})
 
