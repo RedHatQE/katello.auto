@@ -252,26 +252,27 @@
        [true]])
 
     (deftest "Creates org with default custom key and adds new system"
-      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")
-                                             :initial-env (kt/newEnvironment {:name "dev"})})
+      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
+                    env (kt/newEnvironment {:name "dev" :org org})
                     system (kt/newSystem {:name (uniqueify "sys")
                                           :sockets "1"
                                           :system-arch "x86_64"
-                                          :env (:initial-env org)})]
-        (ui/create org)
-        (org/add-custom-keyname org "Manager")
-        (ui/create system)
-        (browser click :katello.systems/custom-info)
-        (assert/is (browser isTextPresent "Manager"))))
+                                          :env env})]
+        (let [org (assoc org :initial-env env)]
+          (ui/create org)
+          (org/add-custom-keyname org "Manager")
+          (ui/create system)
+          (browser click :katello.systems/custom-info)
+          (assert/is (browser isTextPresent "Manager")))))
 
     (deftest "Creates org adds new system then applies custom org default"
-      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")
-                                             :initial-env (kt/newEnvironment {:name "dev"})})
-                    system (kt/newSystem {:name "sys"
+      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
+                    env (kt/newEnvironment {:name "dev" :org org})
+                    system (kt/newSystem {:name (uniqueify "sys")
                                           :sockets "1"
                                           :system-arch "x86_64"
-                                          :env (:initial-env org)})]
-        (ui/create-all (list org system))
+                                          :env env})]
+        (ui/create-all (list org env system))
         (browser click :katello.systems/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
         (org/add-custom-keyname org "Manager" {:apply-default true})
