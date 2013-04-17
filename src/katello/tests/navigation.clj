@@ -1,8 +1,9 @@
 (ns katello.tests.navigation
   (:require [test.tree.script :refer :all] 
             (katello [navigation :as nav]
+                     [conf :refer [*session-org*]]
                      [notifications :refer [verify-no-error]]
-                     [api-tasks :refer [katello-only]])))
+                     [rest :refer [katello-only]])))
 
 ;; Constants
 
@@ -21,7 +22,7 @@
 (defn verify-navigation
   "Navigates to a page"
   [page]
-  (nav/go-to page)
+  (nav/go-to page {:org *session-org*})
   (verify-no-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs

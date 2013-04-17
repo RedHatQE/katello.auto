@@ -23,7 +23,6 @@
                       ::gpg-keys-link                    "gpg"
                       ::import-history-link              "import_history"
                       ::manage-organizations-link        "orgs"
-                      ::package-filters-link             "filters"
                       ::red-hat-repositories-link        "redhat_providers"
                       ::red-hat-subscriptions-link       "red_hat_subscriptions"
                       ::repositories-link                "providers"
@@ -41,15 +40,20 @@
                       ::users-link                       "users"
                       ::setup-link                       "setup"}))
 
+;; Functions
+
+
+
 ;; Nav
 
 (nav/defpages (nav/pages)
   [::nav/top-level
-                 
-   [::systems-menu [] (browser mouseOver ::systems-link)
-    [:katello.systems/page [] (browser clickAndWait ::systems-all-link)]
-    [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]
-    [:katello.system-groups/page [] (browser clickAndWait ::system-groups-link)]]
+               
+   [::org-context [org] (nav/switch-org org)
+    [::systems-menu [] (browser mouseOver ::systems-link)
+     [:katello.systems/page [] (browser clickAndWait ::systems-all-link)]
+     [:katello.systems/by-environments-page [] (browser clickAndWait ::by-environments-link)]
+     [:katello.system-groups/page [] (browser clickAndWait ::system-groups-link)]]
 
    [::content-menu [] (browser mouseOver ::content-link)
     [:subscriptions [] (browser mouseOver ::subscriptions-link)
@@ -58,16 +62,15 @@
      [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]
      [:katello.subscriptions/import-history-page [] (browser clickAndWait ::import-history-link)]]
 
-    [::repositories-menu [] (browser mouseOver ::repositories-link)
-     [:katello.providers/custom-page [] (browser clickAndWait ::custom-content-repositories-link)]
-     [:katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
-     [:katello.package-filters/page [] (browser clickAndWait ::package-filters-link)]
-     [:katello.gpg-keys/page [] (browser clickAndWait ::gpg-keys-link)]]
+     [::repositories-menu [] (browser mouseOver ::repositories-link)
+      [:katello.providers/custom-page [] (browser clickAndWait ::custom-content-repositories-link)]
+      [:katello.repositories/redhat-page [] (browser clickAndWait ::red-hat-repositories-link)]
+      [:katello.gpg-keys/page [] (browser clickAndWait ::gpg-keys-link)]]
 
-    [::sync-management-menu [] (browser mouseOver ::sync-management-link)
-     [:katello.sync-management/status-page [] (browser clickAndWait ::sync-status-link)]
-     [:katello.sync-management/plans-page [] (browser clickAndWait ::sync-plans-link)]
-     [:katello.sync-management/schedule-page [] (browser clickAndWait ::sync-schedule-link)]]
+     [::sync-management-menu [] (browser mouseOver ::sync-management-link)
+      [:katello.sync-management/status-page [] (browser clickAndWait ::sync-status-link)]
+      [:katello.sync-management/plans-page [] (browser clickAndWait ::sync-plans-link)]
+      [:katello.sync-management/schedule-page [] (browser clickAndWait ::sync-schedule-link)]]
 
     [:katello.content-view-definitions/page [] (browser clickAndWait ::content-view-definitions-link)]
     
@@ -75,18 +78,12 @@
                 
     [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
 
-    [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
-     [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
-     [:katello.changesets/history-page [] (browser clickAndWait ::changeset-history-link)]]]
+     [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
+      [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
+      [:katello.changesets/history-page [] (browser clickAndWait ::changeset-history-link)]]]]
 
    [::manage-orgs-menu [] (do (browser click ::ui/switcher)
                               (browser clickAndWait ::ui/manage-orgs))
     [:katello.users/page [] (browser clickAndWait ::users-link)]
     [:katello.roles/page [] (browser clickAndWait ::roles-link)]
     [:katello.organizations/page [] (browser clickAndWait ::manage-organizations-link)]]])
-
-(defn menu-does-not-exists? 
-  [menu-links]
-  (every? false? (doall
-                   (for [menu-link menu-links]
-                     (browser isElementPresent menu-link)))))

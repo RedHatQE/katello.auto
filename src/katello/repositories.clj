@@ -1,9 +1,13 @@
 (ns katello.repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
-            (katello [navigation :as nav]
+            [katello :as kt]
+            (katello [tasks :as tasks]
+                     [organizations :as organization]
+                     [navigation :as nav]
                      [providers :as provider]        ;to load navigation
                      [notifications :as notification] 
-                     [ui :as ui])))
+                     [ui :as ui]
+                     [rest :as rest])))
 
 ;; Locators
 
@@ -27,47 +31,26 @@
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
-   [::named-page [product-name repo-name] (browser click (ui/editable repo-name))]])
+   [::named-page [repo] (browser click (ui/editable (:name repo)))]])
 
 ;; Tasks
 
-(defn add
+(defn create
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
-  [{:keys [provider-name product-name name url]}]
-  (nav/go-to ::provider/products-page {:provider-name provider-name})
-  (browser click (add-repo-link product-name))
-  (sel/fill-ajax-form {::repo-name-text name
-                       ::repo-url-text url}
-                      ::save-repository)
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
-
-(defn add-with-url-autodiscovery
-  "Adds auto-discovered repositories based on the url passed."
-  [{:keys [provider-name product-name url]}]
-  (nav/go-to ::provider/products-page {:provider-name provider-name})
-  (browser click ::repo-discovery)
-  (browser setText ::discover-url-text url)
-  (browser click ::discover-button)
-  (browser waitForElement ::discover-cancel-button "10000"))
-
-(defn add-with-key
-  "Adds a repository under the given provider and product. Requires a
-   name and url be given for the repo."
-  [{:keys [provider-name product-name name url gpgkey]}]
-  (nav/go-to ::provider/products-page {:provider-name provider-name})
-  (browser click (add-repo-link product-name))
-  (browser select ::repo-gpg-select gpgkey)
+  [{:keys [product name url gpg-key]}]
+  (nav/go-to ::provider/products-page {:org (-> product :provider :org)
+                                       :provider (:provider product)})
+  (browser click (add-repo-link (:name product)))
+  (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
                       ::save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
 (defn delete "Deletes a repository from the given provider and product."
-  [{:keys [name provider-name product-name]}]
-  (nav/go-to ::named-page {:provider-name provider-name
-                                :product-name product-name
-                                :repo-name name})
+  [repo]
+  (nav/go-to repo)
   (browser click ::remove-repository)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-destroy)}))
@@ -77,4 +60,27 @@
   [repos]
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
-    (browser check (repo-enable-checkbox repo))))
+    (browser check (repo-enable-checkbox (:name repo)))))
+
+
+(extend katello.Repository
+  ui/CRUD {:create create
+           :delete delete}
+
+  rest/CRUD {:create (fn [{:keys [product name url]}]
+                       (rest/http-post (rest/api-url "api/repositories/")
+                                       {:body {:organization_id (-> product kt/org :name)
+                                               :product_id (rest/get-id product)
+                                               :name name
+                                               :url url}}))
+             :read (partial rest/read-impl (partial rest/url-maker [["api/repositories/%s" [identity]]]))
+             :id rest/id-field
+             :query (partial rest/query-by-name (partial rest/url-maker [["api/organizations/%s/products/%s/repositories" [kt/org kt/product]]]) )}
+  
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+
+  nav/Destination {:go-to (fn [repo]
+                            (nav/go-to ::named-page {:org (kt/org repo)
+                                                     :provider (kt/provider repo)
+                                                     :product (kt/product repo)
+                                                     :repo repo}))})

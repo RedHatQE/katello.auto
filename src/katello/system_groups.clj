@@ -1,11 +1,14 @@
 (ns katello.system-groups
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [clojure.string :refer [blank?]]
+            [clojure.data :as data]
             [test.assert :as assert]
+            [katello :as kt]
             (katello [navigation :as nav]
                      [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
+                     [tasks :refer [when-some-let] :as tasks]
                      [ui-common :as common]))
   (:refer-clojure :exclude [remove]))
 
@@ -39,7 +42,7 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [system-group-name] (nav/choose-left-pane system-group-name)
+   [::named-page [system-group] (nav/choose-left-pane system-group)
     [::systems-page [] (browser click ::systems-link)]
     [::details-page [] (browser click ::details-link)]]])
 
@@ -48,65 +51,53 @@
 
 (defn create
   "Creates a system group"
-  [name & [{:keys [description]}]]
-  (nav/go-to ::new-page)
+  [{:keys [name description] :as sg}]
+  (nav/go-to ::new-page {:org (kt/org sg)})
   (sel/fill-ajax-form
    {::name-text name
     ::description-text description}
    ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-create)}))
 
-(defn add-to
-  "Adds a system to a system group"
-  [group system]
-  (nav/go-to ::named-page {:system-group-name group})
-  (comment (browser setText ::hostname-toadd system)
-           (browser typeKeys ::hostname-toadd " ")
-           (Thread/sleep 5000)
-           (browser click ::add-system)
-           (check-for-success))
-  (sel/fill-ajax-form [::hostname-toadd system
-                       ;;try to trigger autocomplete via javascript -
-                       ;;hackalert - see
-                       ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
-                       #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
-                       #(Thread/sleep 5000) []]
-                      ::add-system)
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-add-sys)}))
+(defn- add-to
+  "Adds systems to a system group"
+  [systems]
+  (browser click ::systems-link)
+  (doseq [system systems]
+    (sel/fill-ajax-form [::hostname-toadd (:name system)
+                         ;;try to trigger autocomplete via javascript -
+                         ;;hackalert - see
+                         ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
+                         #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
+                         #(Thread/sleep 5000) []]
+                        ::add-system)
+    (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-add-sys)})))
 
-(defn remove-from
-  "Remove a system from a system group"
-  [group system]
-  (nav/go-to ::named-page {:system-group-name group})
-  (browser click (system/checkbox system))
-  (browser click ::remove-system))
+(defn- remove-from
+  "Remove systems from a system group"
+  [systems]
+  (browser click ::systems-link)
+  (doseq [system systems]
+    (browser click (system/checkbox (:name system)))
+    (browser click ::remove-system)))
 
 (defn copy
-  "Clones a system group, given the name of the original system group
-   to clone, and the new name and description."
-  [orig-name new-name & [{:keys [description]}]]
-  (nav/go-to ::named-page {:system-group-name orig-name})
+  "Clones a system group, given the original system group to clone,
+   and another system group record (from which the name and
+   description will be taken for the clone)."
+  [orig clone]
+  (nav/go-to orig)
   (browser click ::copy)
-  (sel/fill-ajax-form {::copy-name-text new-name
-                       ::copy-description-text description}
+  (sel/fill-ajax-form {::copy-name-text (:name clone)
+                       ::copy-description-text (:description clone)}
                       ::copy-submit)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
-
-(defn cancel-close-widget
-  "Click 'cancel' on copy widget and widget should close properly 
-   OR closing system-group widget should also close copy widget"
-  [orig-name {:keys [close-widget?]}]
-  (nav/go-to ::named-page {:system-group-name orig-name})
-  (browser click ::copy)
-  (browser click (if close-widget?
-                   ::close
-                   ::cancel-copy)))
 
 (defn remove
   "Removes a system group. Optionally, remove all the systems in the
    group as well."
-  [group & [{:keys [also-remove-systems?]}]]
-  (nav/go-to ::named-page {:system-group-name group})
+  [{:keys [also-remove-systems?] :as group}]
+  (nav/go-to group)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (browser click (if also-remove-systems?
@@ -117,24 +108,45 @@
                                                :sysgrps-destroy-sys
                                                :sysgrps-destroy))}))
 
-(defn edit "Change the value of limit field in system group"
-  [sg-name {:keys [new-limit new-sg-name description]}]
-  (nav/go-to ::details-page {:system-group-name sg-name})
-  (let [needed-flipping (and new-limit
-                             (not= (= new-limit :unlimited)
+(defn- edit-details
+  "Change the name, description and limit in system group"
+  [name description limit]
+  (browser click ::details-link)
+  (let [needed-flipping (and limit
+                             (not= (= limit :unlimited)
                                    (browser isChecked ::unlimited-checkbox)))]
-    (if (and new-limit (not= new-limit :unlimited))
+    (if (and limit (not= limit :unlimited))
       (do (browser uncheck ::unlimited-checkbox)
-          (sel/fill-ajax-form {::limit-value (str new-limit)}
+          (sel/fill-ajax-form {::limit-value (str limit)}
                               ::save-new-limit ))
       (browser check ::unlimited-checkbox))
     (when needed-flipping (notification/check-for-success
                            {:match-pred (notification/request-type? :sysgrps-update)})))
-  (common/in-place-edit {::name-text new-sg-name
+  (common/in-place-edit {::name-text name
                          ::description-text description}))
 
 (defn system-count
   "Get number of systems in system group according to the UI"
-  [sg-name]
-  (nav/go-to ::details-page {:system-group-name sg-name})
+  [group]
+  (nav/go-to ::details-page {:system-group group
+                             :org (kt/org group)})
   (Integer/parseInt (browser getText ::total)))
+
+(defn update [sg updated]
+  (nav/go-to sg)
+  (let [[remove add] (data/diff sg updated)]
+    (when-some-let [{:keys [name description limit]} add]
+                   (edit-details name description limit))
+    (when-some-let [sys-to-add (:systems add)
+                    sys-to-rm (:systems remove)]
+                   (add-to sys-to-add)
+                   (remove-from sys-to-rm))))
+
+(extend katello.SystemGroup
+  ui/CRUD {:create create
+           :delete remove
+           :update* update}
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl
+  nav/Destination {:go-to (fn [sg] (nav/go-to ::named-page {:system-group sg
+                                                            :org (kt/org sg)}))})

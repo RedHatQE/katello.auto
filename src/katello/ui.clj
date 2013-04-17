@@ -1,5 +1,26 @@
 (ns katello.ui
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]))
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel])
+  (:refer-clojure :exclude [read]))
+
+;; Protocols
+
+(defprotocol CRUD
+  "Create/read/update/delete operations on katello entities via the UI"
+  (create [x] "Create an entity in the UI")
+  (read [x] "Get details on an entity from the UI")
+  (update* [x new-x] "Change an existing entity in UI, from x to new-x")
+  (delete [x] "Delete an existing entity in the UI"))
+
+;; because protocols don't support varargs
+(defn update [x f & args]
+  (let [updated (apply f x args)]
+    (update* x updated)
+    updated))
+
+;;convenience
+(defn create-all [ents]
+  (doseq [ent ents]
+    (create ent)))
 
 ;; Locators
 
@@ -17,9 +38,6 @@
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
   default-star         "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
   switcher-link        "//div[@id='orgbox']//a[.='%s']"})
-
-
-
 
 ;;
 ;; Tells the clojure selenium client where to look up keywords to get
@@ -46,6 +64,7 @@
    ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
 
    ::switcher                "switcherButton"
+   ::active-org              "//*[@id='switcherButton']"
    ::manage-orgs             "manage_orgs"
    ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
    

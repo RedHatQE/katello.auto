@@ -10,7 +10,8 @@
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]
-            [clojure.set :refer [intersection difference union]]))
+            [clojure.set :refer [intersection difference union project select]]
+            [clojure.core.logic :as l]))
 
 (declare test-org)
 (declare test-org-compare)
@@ -161,7 +162,7 @@
     (org/switch test-org-compare)
     (let [repos (difference (set (fake/get-all-custom-repos)) (set (fake/get-i18n-repos)))]
       (assert/is (= repos
-                    (set (content-search/compare-repositories (into [] repos)))))))
+                   (set (content-search/compare-repositories (into [] repos)))))))
   
   (deftest "Repo compare: repos render correctly when internationalized"
     (org/switch test-org-compare)
@@ -237,6 +238,15 @@
                       verify-errata
                       ~data)))))
 
+
+(def errata-search-table
+  (let [[header & table] [[:errata :title :type :severity]
+                          ["RHEA-2012:2010" "Squirrel_Erratum" "enhancement" "low"]
+                          ["RHEA-2012:2011" "Camel_Erratum" "security" "important"]
+                          ["RHEA-2012:2012" "Dog_Erratum" "security" "critical"]
+                          ["RHEA-2012:2013" "Cow_Erratum" "bugfix" "moderate"]]]
+  (map (partial zipmap header) table)))
+
 (defgroup content-search-errata
   :group-setup (fn []
                  (def ^:dynamic test-org-errata (uniqueify "erratasearch"))
@@ -256,12 +266,13 @@
     (content-search/compare-repositories ["ErrataZoo"])
     (content-search/select-type :errata)
     (content-search/test-errata-popup-click "RHEA-2012:2011"))
-
+  
   (deftests-errata-search
     {"UI - Search Errata in Content Search by exact Errata"
-     [["\"RHEA-2012:2011\"" "RHEA-2012:2011"]
-      ["\"RHEA-2012:2012\"" "RHEA-2012:2012"]
-      ["\"RHEA-2012:2013\"" "RHEA-2012:2013"]]
+     [["\"RHEA-2012:2013\"" "RHEA-2012:2013"] 
+      ["\"RHEA-2012:2012\"" "RHEA-2012:2012"] 
+      ["\"RHEA-2012:2011\"" "RHEA-2012:2011"] 
+      ["\"RHEA-2012:2010\"" "RHEA-2012:2010"]]
 
      "UI - Search Errata in Content Search by exact title"
      [["title:\"Squirrel_Erratum\"""RHEA-2012:2010"]
@@ -308,8 +319,9 @@
                  (def ^:dynamic test-org (uniqueify "contentsearch"))
                  (api/create-organization test-org)
                  (fake/prepare-org test-org (mapcat :repos fake/some-product-repos)))
+                 )
   
-  
+ (comment 
   (deftest "Search for content"
     :data-driven true
     :blockers (open-bz-bugs "855945")
@@ -333,7 +345,7 @@
                                              (* (count fake/errata)
                                                 (count (repo-names results)))))))]])
   
-  
+  )
   (deftest "Ensure for Library Env, Content Search"
     :data-driven true
 

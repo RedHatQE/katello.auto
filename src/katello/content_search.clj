@@ -478,7 +478,3 @@
 
 (defn click-repo-desc [repo-name env-name]
   (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
-
-(defn list-available-orgs []
-  (browser click ::switcher-button)
-  (get-search-page-result-list-of-lists-html "orgbox"))

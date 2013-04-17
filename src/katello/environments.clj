@@ -2,10 +2,12 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [slingshot.slingshot :refer [throw+ try+]]
+            [katello :as kt]
             (katello [navigation :as nav]
-                     [tasks :refer [library]] 
+                     [tasks :as tasks] 
                      [notifications :as notification] 
                      [ui :as ui]
+                     [rest :as rest]
                      [ui-common :as common]
                      [organizations :as org]))) 
 
@@ -16,7 +18,7 @@
    ::label-text        "kt_environment_label"
    ::description-text  "kt_environment_description"
    ::prior             "kt_environment_prior"
-   ::create            "kt_environment_submit"
+   ::create            "commit"
    ::new               "//form[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
    ::remove-link       (ui/remove-link "environments")
    ::prior-select-edit "kt_environment_prior" }
@@ -27,7 +29,7 @@
 (nav/defpages (org/pages)
   [:katello.organizations/named-page
    [::new-page [] (browser click ::new)]
-   [::named-page [env-name] (browser click (ui/environment-link env-name))]])
+   [::named-page [env] (browser click (ui/environment-link (:name env)))]])
 
 ;; Tasks
 
@@ -35,46 +37,64 @@
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
-  [name {:keys [label org-name description prior-env]}]
-  (nav/go-to ::new-page {:org-name org-name})
+  [{:keys [name label org description prior]}]
+  (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
-                       (fn [label] (when label (browser fireEvent ::name-text "blur") (browser ajaxWait) (browser setText ::label-text label))) [label]
+                       (fn [label] (when label
+                                     (browser fireEvent ::name-text "blur")
+                                     (browser ajaxWait)
+                                     (browser setText ::label-text label))) [label]
                        ::description-text description
-                       ::prior prior-env}
+                       ::prior (:name prior)}
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
 
 (defn delete
   "Deletes an environment from the given organization."
-  [env-name {:keys [org-name]}]
-  (nav/go-to ::named-page {:org-name org-name
-                           :env-name env-name})
+  [env]
+  (nav/go-to env)
   (if (browser isElementPresent ::remove-link)
     (browser click ::remove-link)
-    (throw+ {:type ::cant-be-deleted :env-name env-name}))
+    (throw+ {:type ::cant-be-deleted :env env}))
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
 (defn edit
-  "Edits an environment with the given name. Also takes a map
-   containing the name of the environment's organization, and optional
-   fields: a new description."
-  [env-name {:keys [org-name description]}]
-  (nav/go-to ::named-page {:org-name org-name
-                           :env-name env-name})
+  "Edits an environment. Passes env through f (with extra args) to get
+  the new env."
+  [env {:keys [description]}]
+  (nav/go-to env)
   (common/in-place-edit {::description-text description}))
 
-(defn create-path
-  "Creates a path of environments in the given org. All the names in
-  the environment list must not already exist in the given org. Example:
-  (create-path 'ACME_Corporation' ['Dev' 'QA' 'Production'])"
-  [org-name environments]
-  (let [env-chain  (partition 2 1 (concat [library] environments))]
-    (doseq [[prior curr] env-chain]
-      (create curr {:prior-env prior
-                    :org-name org-name}))))
+(extend katello.Environment
+  ui/CRUD {:create create
+           :update* edit
+           :delete delete}
+  
+  rest/CRUD
+  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/" [:org]]])
+        id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
+    {:id rest/id-field
+     :query (partial rest/query-by-name org-url)
+     :create (fn [env] 
+               (merge env
+                      (rest/http-post (org-url env)
+                                 {:body
+                                  {:environment
+                                   {:name (:name env)
+                                    :description (:description env)
+                                    :prior (rest/get-id (or (:prior env)
+                                                        (katello/mklibrary env)))}}})))
+     :read (partial rest/read-impl id-url)
+     
+     :update* (fn [env new-env]
+               (merge new-env (rest/http-put (id-url env)
+                                             {:environment (select-keys new-env [:description])})))})
 
+  tasks/Uniqueable tasks/entity-uniqueable-impl
 
-
+  nav/Destination {:go-to (fn [env]
+                            (nav/go-to ::named-page {:org (-> env :org)
+                                                     :env env}))})
 
 

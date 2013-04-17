@@ -1,9 +1,12 @@
 (ns katello.gpg-keys
-  (:require (katello [navigation :as nav]
+  (:require katello
+            (katello [navigation :as nav]
                      [ui :as ui]
+                     [rest :as rest]
                      [ui-common :as common]
                      [notifications :as notification]
-                     [conf :refer [config]])
+                     [conf :refer [config]]
+                     [tasks :as tasks])
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
   (:refer-clojure :exclude [remove]))
 
@@ -26,15 +29,15 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [gpg-key-name] (nav/choose-left-pane gpg-key-name)]])
+   [::named-page [gpg-key] (nav/choose-left-pane gpg-key)]])
 
 ;;Tasks
 
-(defn create [name & [{:keys [url contents]}]]
+(defn create [{:keys [name url contents org]}]
   (assert (not (and url contents))
-          "Must specify one one of :filename or :contents.")
+          "Must specify one one of :url or :contents.")
   (assert (string? name))
-  (nav/go-to ::new-page)
+  (nav/go-to ::new-page {:org org})
   (if url
     (sel/->browser (setText ::name-text name)
                    (attachFile ::file-upload-text url)
@@ -45,13 +48,27 @@
   (notification/check-for-success))
 
 
-(defn remove 
+(defn delete 
   "Deletes existing GPG keys"
-  [gpg-key-name]
-  (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
+  [gpg-key]
+  (nav/go-to gpg-key)
   (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
+
+(extend katello.GPGKey
+  ui/CRUD {:create create
+           :delete delete}
+
+  rest/CRUD (let [query-url (partial rest/url-maker [["api/organizations/%s/gpg_keys" [#'katello/org]]])
+                  id-url (partial rest/url-maker [["api/gpg_keys/%s" [identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :read (partial rest/read-impl id-url)})
+  
+  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
+                                                     :org (katello/org %1)})}
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn gpg-keys-prd-association?
   [gpg-key-name repo-name]

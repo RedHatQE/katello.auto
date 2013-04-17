@@ -1,8 +1,13 @@
 (ns katello.users
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
-            (katello [navigation :as nav] 
+            [clojure.data :as data]
+            [katello :as kt]
+            (katello [navigation :as nav]
+                     [tasks :as tasks]
                      [ui :as ui]
+                     [conf :as conf]
+                     [rest :as rest]
                      [login :refer [logged-in?]]
                      [ui-common :as common]
                      [notifications :as notification])))
@@ -46,109 +51,138 @@
 (nav/defpages
   (common/pages)
   [::page 
-   [::named-page [username] (nav/choose-left-pane user-list-item username)
+   [::named-page [user] (nav/choose-left-pane user-list-item user)
     [::environments-page [] (browser click ::environments-link)]
     [::roles-permissions-page [] (browser click ::roles-link)]]])
 
 
+;; Vars
+
+;; since @config isn't set until runtime, make this a delay object
+(def admin (delay (assert (@conf/config :admin-user))
+                  (katello/newUser {:name (@conf/config :admin-user)
+                                    :password (@conf/config :admin-password)
+                                    :email "root@localhost"})))
 ;; Tasks
 
 (defn create
   "Creates a user with the given name and properties."
-  [username {:keys [password password-confirm email default-org default-env]}]
+  [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
   (browser click ::new)
   (let [env-chooser (fn [env] (when env
                                (nav/select-environment-widget env)))]
-    (sel/fill-ajax-form [::username-text username
+    (sel/fill-ajax-form [::username-text name
                          ::password-text password
                          ::confirm-text (or password-confirm password)
                          ::email-text email
-                         ::default-org default-org
+                         ::default-org (:name default-org)
                          env-chooser [default-env]]
                         ::save))
   (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
 
 (defn delete "Deletes the given user."
-  [username]
-  (nav/go-to ::named-page {:username username})
+  [user]
+  (nav/go-to user)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
 
-(defn modify-role [{:keys [user roles plus-minus]}]
-  (nav/go-to ::roles-permissions-page {:username user})
-  (doseq [role roles]
-    (browser click (plus-minus role)))
+(defn- modify-roles [to-add to-remove]
+  (doseq [role to-add]
+    (browser click (plus-icon (:name role))))
+  (doseq [role to-remove]
+    (browser click (minus-icon (:name role))))
   (browser click ::save-roles)
   (notification/check-for-success {:match-pred
                                    (notification/request-type? :users-update-roles)}))
 
-(defn assign
-  "Assigns the given user to the given roles. Roles should be a list
-  of roles to assign."
-  [{:keys [user roles]}]
-  (modify-role  {:user user ,
-                        :roles roles
-                        :plus-minus plus-icon}))
-
-(defn unassign
-  "Unassigns the given user to the given roles. Roles should be a list
-  of roles to assign. Reversal of assign."
-  [{:keys [user roles]}]
-  (modify-role  {:user user,
-                        :roles roles
-                        :plus-minus minus-icon}))
-
-(defn- edit-form [{:keys [inline-help clear-disabled-helptips
-                    new-password new-password-confirm new-email default-org]}]
-    (when-not (nil? inline-help)
-    (browser checkUncheck ::enable-inline-help-checkbox inline-help))
-  (when new-password
-    (browser setText ::password-text new-password)
-    (browser setText ::confirm-text (or new-password-confirm new-password))
-
-    ;;hack alert - force the page to check the passwords (selenium
-    ;;doesn't fire the event by itself
-    (browser getEval "window.KT.user_page.verifyPassword();")
-
-    (when (browser isElementPresent ::password-conflict)
-      (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
-    (browser click ::save-edit) 
-    (notification/check-for-success))
-  (when new-email
-    (common/in-place-edit {::email-text new-email})))
-
-(defn self-edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [edit-map]
-  (browser click ::account)
-  (browser waitForElement ::password-text "10000")
-  (edit-form edit-map))
-
-(defn edit
-  "Edits the given user, changing any of the given properties (can
-  change more than one at once)."
-  [username edit-map]
-  (nav/go-to ::named-page {:username username})
-  (edit-form edit-map))
+(defn- assign-default-org-and-env 
+  "Assigns a default organization and environment to a user"
+  [org env]
+  (when org
+    (browser select ::default-org-select (:name org)))
+  (when env
+    (browser click (ui/environment-link (:name env))))
+  (browser click ::save-environment)
+  (notification/check-for-success))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
   []
   (when (logged-in?)
-    (browser getText ::account)))
+    (katello/newUser {:name (browser getText ::account)})))
 
-(defn assign-default-org-and-env 
-  "Assigns a default organization and environment to a user"
-  [username org-name env-name]
-  (nav/go-to ::environments-page {:username username})
-  (browser select ::default-org-select org-name)
-  (when env-name
-    (browser click (ui/environment-link env-name)))
-  (browser click ::save-environment)
-  (notification/check-for-success))
+(defn edit
+  "Edits the given user, changing any of the given properties (can
+  change more than one at once). Can add or remove roles, and change
+  default org and env."
+  [user updated]
+  (let [[to-remove {:keys [inline-help clear-disabled-helptips
+                           password password-confirm email
+                           default-org default-env]
+                    :as to-add} _] (data/diff user updated)]
+    ;; use the {username} link at upper right if we're self-editing.
+    (if (= (:name (current)) (:name user))
+      (do (browser click ::account)
+          (browser waitForElement ::password-text "10000"))
+      (nav/go-to user))
+    
+    (when-not (nil? inline-help)
+      (browser checkUncheck ::enable-inline-help-checkbox inline-help))
+    (when password
+      (browser setText ::password-text password)
+      (browser setText ::confirm-text (or password-confirm password))
+
+      ;;hack alert - force the page to check the passwords (selenium
+      ;;doesn't fire the event by itself
+      (browser getEval "window.KT.user_page.verifyPassword();")
+
+      (when (browser isElementPresent ::password-conflict)
+        (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
+      (browser click ::save-edit) 
+      (notification/check-for-success))
+    (when email
+      (common/in-place-edit {::email-text email}))
+    (let [role-changes (map :roles (list to-add to-remove))]
+      (when (some seq role-changes)
+        (browser click ::roles-link)
+        (apply modify-roles role-changes)))
+    (when (or default-org default-env)
+      (browser click ::environments-link)
+      (assign-default-org-and-env default-org default-env))))
+
+(extend katello.User
+  ui/CRUD {:create #'create
+           :update* #'edit
+           :delete #'delete}
+
+  rest/CRUD (let [url "api/users"
+                  url-by-id (partial rest/url-maker [["api/users/%s" [identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by :username :name
+                               (fn [& _] (rest/api-url url)))
+               :create (fn [user]
+                         (rest/http-post (rest/api-url url)
+                                         {:body
+                                          (assoc (select-keys user [:password :disabled
+                                                                    :email])
+                                            :username (:name user))}))
+               :read (partial rest/read-impl url-by-id)
+               :update* (fn [user updated]
+                          ;; TODO implement me
+                          )
+               :delete (fn [user]
+                         (rest/http-delete (url-by-id user)))})
+  
+  nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
+
+(defn admin "Returns the admin user" []
+  (kt/newUser {:name (@conf/config :admin-user)
+               :password (@conf/config :admin-password)
+               :email "admin@katello.org"}))
 
 (defn delete-notifications
   [delete-all?]

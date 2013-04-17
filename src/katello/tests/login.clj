@@ -1,12 +1,13 @@
 (ns katello.tests.login
   (:refer-clojure :exclude [fn])
-  (:require (katello [navigation :as nav]
-                     [conf :refer :all] 
-                     [tasks :refer :all]
-                     [login :refer [login logout logged-in? logged-out?]]
-                     [users :as user]
-                     [ui-common :as common]
-                     [organizations :as organization])
+  (:require [katello :as kt]
+            (katello [navigation :as nav]
+                        [conf :refer :all] 
+                        [tasks :refer :all]
+                        [login :refer [login logout logged-in? logged-out?]]
+                        [users :as user]
+                        [ui-common :as common]
+                        [organizations :as organization])
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
@@ -23,16 +24,18 @@
   [username password]
   (try+
    (expecting-error (common/errtype :katello.notifications/invalid-credentials)
-                    (login username password))
+                    (login (kt/newUser {:name username, :password password})))
                                         ; Notifications must be flushed so login can succeed in 'finally'
-   (katello.notifications/flush)
+     (katello.notifications/flush)
    (finally
+     (katello.notifications/flush)
      (login))))
 
 (defn login-admin []
   (logout)
   (login)
-  (assert/is (= (user/current) *session-user*)))
+  (assert/is (= (:name (user/current))
+                (:name *session-user*))))
 
 (defn logout-verify []
   (logout)
@@ -42,7 +45,7 @@
   ;;to be used as a :before-test for all tests
   (if (logged-in?)
     (do (nav/go-to ::nav/top-level)
-        (if (= (organization/current) "Select an Organization:") ;;see bz 857173
+        (if (= (nav/current-org) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
                (catch Exception _
                  (login-admin)))))
@@ -81,6 +84,6 @@
     :data-driven true
     verify-invalid-login-rejected
 
-    [(fn [] [(.toUpperCase *session-user*) (.toUpperCase *session-password*)])
-     (fn [] [(.toUpperCase *session-user*) *session-password*])
-     (fn [] [*session-user* (.toUpperCase *session-password*)])]))
+    [(fn [] [(-> *session-user* :name .toUpperCase) (-> *session-user* :password .toUpperCase)])
+     (fn [] [(-> *session-user* :name .toUpperCase) (:password *session-user*)])
+     (fn [] [(:name *session-user*) (-> *session-user* :password .toUpperCase)])]))

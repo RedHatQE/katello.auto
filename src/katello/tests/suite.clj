@@ -4,8 +4,7 @@
                            sync_management login environments
                            systems system-groups activation-keys
                            users permissions templates
-                           e2e navigation search content_search)
-            katello.tests.providers.redhat
+                           e2e navigation search)
             katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
@@ -24,7 +23,7 @@
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
   katello.tests.promotions/promotion-tests
-  katello.tests.promotions/deletion-tests
+  ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
   katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
   katello.tests.system-groups/sg-tests
@@ -32,10 +31,11 @@
   katello.tests.sync_management/sync-tests
   katello.tests.users/user-tests
   katello.tests.e2e/end-to-end-tests
-  katello.tests.providers.redhat/manifest-tests
-  katello.tests.providers.redhat/redhat-content-provider-tests
+  ;; katello.tests.providers.redhat/manifest-tests  ;; do not work anyway due to manifest sig checking
+  ;; katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
-  katello.tests.content-search/content-search-tests)
+  ;; katello.tests.content-search/content-search-tests ;; waiting on asaleh's PR
+  )
 
 
 
@@ -51,9 +51,7 @@
   katello.tests.systems/system-tests
   katello.tests.system-groups/sg-tests
   katello.tests.activation-keys/ak-tests
-  katello.tests.users/user-tests
-  katello.tests.providers.redhat/manifest-tests
-  katello.tests.providers.redhat/redhat-content-provider-tests)
+  katello.tests.users/user-tests)
 
 (defn make-suite
   ([] (make-suite nil))

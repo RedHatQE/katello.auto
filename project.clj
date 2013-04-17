@@ -1,30 +1,36 @@
 (defproject katello.auto "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main ^{:skip-aot true} katello.tests.suite
-  :omit-default-repositories true
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [swank-clojure "1.4.2"]
-                 [test.tree.jenkins "0.9.0-SNAPSHOT"]
-                 [test.tree.runner "0.9.0-SNAPSHOT"]
+  :dependencies [[org.clojure/clojure "1.5.0"]
+                 [org.clojure/tools.macro "0.1.2"]
+                 [org.clojure/tools.cli "0.2.1"]
                  [org.clojure/data.json "0.1.1"]
-                 [org.clojure/data.zip "0.1.0"]
-                 [ui.navigate "0.2.2-SNAPSHOT"]
-                 [com.redhat.qe/test.assert "1.0.0-SNAPSHOT"]
-                 [com.redhat.qe/extended-selenium "1.1.1-SNAPSHOT" :exclusions [org.seleniumhq.selenium.client-drivers/selenium-java-client-driver]]
+                 [org.clojure/data.zip "0.1.1"]
+                 
                  [org.seleniumhq.selenium/selenium-server "2.29.1"]
                  [org.seleniumhq.selenium/selenium-java "2.29.1"]
-                 [com.redhat.qe/ssh-tools "1.0.0"]
-                 [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
-                 [clj-tagsoup "0.3.0"]
+
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
+                 
+                 [test.tree.jenkins "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 
+                 
+                 [com.redhat.qe/test.assert "1.0.0-SNAPSHOT"]
+                 [com.redhat.qe/extended-selenium "1.1.1-SNAPSHOT" :exclusions [org.seleniumhq.selenium.client-drivers/selenium-java-client-driver]]
+                 [com.redhat.qe/ssh-tools "1.0.0"]
+                 [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
+                 [com.redhat.qe/deltacloud.client "1.1.0-SNAPSHOT"]
+                 
+                 [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure]]
                  [clj-http "0.6.4"]
-                 [org.clojure/tools.cli "0.2.1"]
+
+                 [ui.navigate "0.2.2-SNAPSHOT"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
-                 [fn.trace "1.3.3-SNAPSHOT"]
-                 [com.redhat.qe/deltacloud.client "1.1.0-SNAPSHOT"]]
+                 [fn.trace "1.3.3-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m"]
-  :repositories {"my-clojars" {:url "http://clojars.org/repo"
-                               :snapshots {:update :always}}
-                 "my-central" {:url "http://repo1.maven.org/maven2"
-                               :snapshots false}})
+  :repositories ^:replace [["clojars" {:url "http://clojars.org/repo"
+                                       :snapshots {:update :always}}]
+                           ["central" {:url "http://repo1.maven.org/maven2"
+                                       :snapshots false}]])

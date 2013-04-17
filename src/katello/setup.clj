@@ -3,11 +3,13 @@
   (:require [test.tree.watcher :as watch]
             [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
+            [katello :as kt]
             (katello [login :refer [login logout]]
                      [ui-common :as common]
-                     [api-tasks :as api]
+                     [rest :as rest]
+                     [ui :as ui]
                      [client :as client]
-                     [conf :refer :all]
+                     [conf :refer [config *session-user* *session-org* *browsers*]]
                      [tasks :refer :all] 
                      [users :as user])
             [fn.trace :as trace]
@@ -38,21 +40,18 @@
    (setAjaxFinishedCondition jquery-ajax-finished)
    (open (@config :server-url) false)
    (setTimeout "60000"))
-  (login (@config :admin-user) (@config :admin-password)
-         {:org (@config :admin-org)}))
+  (login))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
    permissions and logs in as that user."
-  [user pw]
-  (api/create-user user {:password pw
-                         :email (str user "@myorg.org")})
-  (user/assign {:user user
-                :roles ["Administrator"]})
+  [user]
+  (rest/create user)
+  (ui/update user assoc :roles [(kt/newRole {:name  "Administrator"})])
   (logout)
   ;;login and set the default org to save time later
-  (login user pw {:default-org (@config :admin-org)
-                  :org (@config :admin-org)}))
+  (login user {:default-org *session-org*
+               :org *session-org*}))
 
 (defn stop-selenium []
    (browser stop))
@@ -64,13 +63,13 @@
   [consume-fn]
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)
-          user (uniqueify (str (@config :admin-user) thread-number))]
+          user (uniqueify (update-in *session-user* [:name] #(format "%s%s" % thread-number)))]
       (binding [sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))]
         (try 
           (start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
                                                   (config-with-profile locale))})
-          (switch-new-admin-user user *session-password*)
+          (switch-new-admin-user user)
           (binding [*session-user* user]
             (consume-fn))
           (finally 

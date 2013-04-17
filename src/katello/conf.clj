@@ -5,6 +5,7 @@
             selenium-server
             [fn.trace :refer [all-fns]]
             [deltacloud :as cloud]
+            katello
             [katello.tasks :refer [unique-names]])
   
   (:import [java.io PushbackReader FileNotFoundException]
@@ -117,7 +118,6 @@
 
 
 (declare ^:dynamic *session-user*
-         ^:dynamic *session-password*
          ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *cloud-conn*
@@ -142,14 +142,14 @@
   
   (swap! config merge defaults opts)
   (swap! config merge (->> (:config @config)
-                         try-read-configs
-                         (drop-while nil?)
-                         first))
+                           try-read-configs
+                           (drop-while nil?)
+                           first))
   (let [non-defaults (into {}
                            (filter (fn [[k v]] (not= v (k defaults)))
                                    opts))]
     (swap! config merge non-defaults)) ; merge 2nd time to override anything in
-                                       ; config files
+                                        ; config files
 
   ;; if user didn't specify sel address, start a server and use that
   ;; address.
@@ -157,16 +157,20 @@
     (selenium-server/start)
     (swap! config assoc :selenium-address "localhost:4444"))
   
-  (def ^:dynamic *session-user* (@config :admin-user))
-  (def ^:dynamic *session-password* (@config :admin-password))
-  (def ^:dynamic *session-org* (@config :admin-org))
+  (def ^:dynamic *session-user* (katello/newUser {:name (@config :admin-user)
+                                                  :password (@config :admin-password)
+                                                  :email "admin@katello.org"}))
+  (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
   (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
                                 (cloud/connection dc-url           
                                                   (@config :deltacloud-user)
                                                   (@config :deltacloud-password))))
   (def ^:dynamic *browsers* (@config :browser-types))
-  (def ^:dynamic *environments* (@config :environments))) 
+  (def ^:dynamic *environments* (for [e (@config :environments)]
+                                  (katello/newEnvironment {:name e
+                                                           :org *session-org*})))) 
 
+(def promotion-deletion-lock nil) ;; var to lock on for promotions
 
 (defn no-clients-defined "Blocks a test if no client machines are accessible." [_]
   (try
@@ -187,8 +191,7 @@
    will use these creds.  No explicit logging in/out is done in the
    UI."
   [user password & body]
-  `(binding [*session-user* ~user
-             *session-password* ~password]
+  `(binding [*session-user* ~user]
      ~@body))
 
 (defmacro with-org

@@ -3,13 +3,6 @@
             [clojure.string :refer [split join capitalize]])
   (:import java.util.Date))
 
-(def library "Library")
-
-;;var for synchronizing promotion calls, since only one can be done in
-;;the system at a time.
-(def promotion-deletion-lock nil)
-
-
 (defmacro ^{:see-also "https://github.com/scgilardi/slingshot"}
   expecting-error
   "Inverts exception handling. Execute forms, if error is caught
@@ -43,6 +36,17 @@
   [ts]
   (.format date-format (Date. ts)))
 
+(defprotocol Uniqueable
+  (uniques [o] "Generates an infinite series of unique objects based on this one"))
+
+(extend java.lang.String
+  Uniqueable
+  {:uniques (fn [s] (map (comp (partial format "%s-%s" s) date-string)
+                         (timestamps)))})
+
+(extend nil
+  Uniqueable {:uniques (constantly (repeat nil))})
+
 (defn timestamped-seq
   "Returns an infinite lazy sequence of timestamped values. f is a
    function to pass each timestamp (a long) to."
@@ -55,29 +59,51 @@
   [s]
   (timestamped-seq (comp (partial format s) date-string)))
 
-(defn unique-names
-  "Returns an infinite lazy sequence of timestamped strings, uses s as
-  the base string."
-  [s]
-  (uniques-formatted (str s "-%s")))
+(def ^{:doc "Returns an infinite lazy sequence of timestamped objects, uses s as
+             the base string."}
+  unique-names uniques)
 
-(def ^{:doc "Returns one unique string using s as the base string.
-             Example: (unique-name 'joe') -> 'joe-12694956934'"}
-  uniqueify (comp first unique-names))
+(defn uniqueify [o]
+  (first (uniques o)))
+
+(defn stamp [ts s]
+  (format "%s-%s" s (date-string ts)))
+
+(defn stamp-entity
+  "stamps entity name with timestamp s"
+  [ent ts]
+  (update-in ent [:name] (partial stamp ts)))
+
+(def entity-uniqueable-impl
+  {:uniques #(for [ts (timestamps)]
+               (stamp-entity % ts))})
+
 
 (def ^{:doc "Returns one unique string using s as the format string.
              Example: (unique-name 'joe-%s.zip') -> 'joe-12694956934.zip'"}
   unique-format (comp first uniques-formatted))
 
 (defmacro with-unique
-  "Binds variables to unique strings. Example:
-   (with-unique [x 'foo' y 'bar'] [x y]) will give something like:
-     ['foo-12346748964356' 'bar-12346748964357']"
+  "Binds variables to unique strings. Supports simple list
+  destructuring. Example:
+   (with-unique [[x y] 'foo' z 'bar'] [x y z]) will give something like:
+     ['foo-12346748964356' 'foo-12346748964357' 'bar-12346748964358']"
   [bindings & forms]
   `(let ~(vec (apply concat
-                 (for [[k v] (apply hash-map bindings)]
-                   [k `(uniqueify ~v)])))
+                 (for [[k v] (partition 2 bindings)]
+                   (if (vector? k)
+                     [k `(take ~(count k) (uniques ~v))]
+                     [k `(uniqueify ~v)]))))
      ~@forms))
+
+(defmacro with-unique-ent
+  "macro-defining macro to create macros you can call
+  like (with-unique-org o (create o))"
+  [suffix-str base-ent-expr]
+  `(defmacro ~(symbol (str "with-unique-" suffix-str))
+     [sym# ~'& body#]
+     `(with-unique [~sym# ~'~base-ent-expr]
+        ~@body#)))
 
 (defn uniqueify-vals
   "Uniquifies the values in map m"
@@ -91,12 +117,6 @@
       (.appendReplacement matcher buffer (capitalize (.group matcher 1))))
     (.appendTail matcher buffer)
     (.toString buffer)))
-
-(defn chain-envs
-  "Given a list of environments, return successive pairs (eg:
-   envs ['a' 'b' 'c'] -> ('a' 'b'), ('b' 'c')"
-  [envs]
-  (partition 2 1 envs))
 
 (defn do-steps
   "Call all fs in order, with single argument m"
@@ -123,3 +143,12 @@
        (map char)
        (take length)
        (apply str))))
+
+(defmacro when-some-let
+  "When any of the bindings evaluate to logical true, evaluate body."
+  [bindings & body]
+  `(let ~bindings
+     (when (or ~@(filter symbol?
+                         (tree-seq coll? identity
+                                   (keys (apply hash-map bindings)))))
+       ~@body)))

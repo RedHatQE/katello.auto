@@ -1,18 +1,20 @@
 (ns katello.tests.providers.custom
-  (:require (katello [api-tasks :as api]
+  (:require katello
+            (katello [ui :as ui]
                      [providers :as provider]
                      [repositories :as repo]
                      [tasks :refer :all]
+                     [validation :as val]
                      [organizations :as organization]
-                     [conf :refer [with-org]])
+                     [conf :as conf])
             [test.tree.script :refer [defgroup deftest]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [katello.tests.providers :refer [with-n-new-orgs with-two-providers]]))
+            [katello.tests.useful :refer [create-recursive]]))
 
 ;; Variables
 
-(def test-provider-name (atom nil))
-(def test-product-name (atom nil))
+(def test-provider (atom nil))
+(def test-product (atom nil))
 
 
 ;; Functions
@@ -20,76 +22,99 @@
 (defn create-test-provider
   "Sets up a test custom provider to be used by other tests."
   []
-  (organization/switch)
-  (provider/create {:name (reset! test-provider-name (uniqueify "cust"))
-                    :description "my description"}))
-
-(defn create-same-product-in-multiple-providers
-  [product-name providers]
-  (doseq [provider providers]
-    (provider/add-product {:provider-name provider
-                           :name product-name})))
-
-(defn create-same-product-name-in-multiple-orgs
-  [product-name orgs]
-  (doseq [org orgs]
-    (with-org org
-      (organization/switch)
-      (let [provider-name (uniqueify "prov")]
-        (api/create-provider provider-name)
-        (provider/add-product {:provider-name provider-name
-                               :name product-name})))))
+  (ui/create (reset! test-provider
+                     (uniqueify (katello/newProvider {:name "cust"
+                                                      :description "my description"
+                                                      :org conf/*session-org*})))))
 
 ;; Tests
 
 (defgroup custom-product-tests
   :group-setup create-test-provider
   :blockers (open-bz-bugs "751910")
-  :test-setup  organization/before-test-switch
   
   (deftest "Create a custom product"
-    (provider/add-product {:provider-name @test-provider-name
-                            :name (reset! test-product-name (uniqueify "prod"))
-                            :description "test product"})
+    (ui/create (reset! test-product
+                       (uniqueify (katello/newProduct {:provider @test-provider
+                                                       :name "prod"
+                                                       :description "test product"}))))
 
     
     (deftest "Delete a custom product"
       :blockers (open-bz-bugs "729364")
       
-      (let [product {:provider-name @test-provider-name
-                     :name (uniqueify "deleteme")
-                     :description "test product to delete"}]
-        (provider/add-product product)
-        (provider/delete-product product)))
+      (doto (uniqueify (katello/newProduct {:provider @test-provider
+                                            :name "deleteme"
+                                            :description "test product to delete"}))
+        (ui/create)
+        (ui/delete)))
 
     (deftest "Create a repository"
       :blockers (open-bz-bugs "729364")
-
-      (repo/add {:provider-name @test-provider-name
-                           :product-name @test-product-name
-                           :name (uniqueify "repo")
-                           :url "http://test.com/myurl"})
-
+      
+      (-> {:name "repo"
+           :url "http://test.com/myurl"
+           :product @test-product}
+          katello/newRepository
+          uniqueify
+          ui/create)
       
       (deftest "Delete a repository"
         :blockers (open-bz-bugs "745279")
-        
-        (let [repo {:provider-name @test-provider-name
-                    :product-name @test-product-name
-                    :name (uniqueify "deleteme")
-                    :url "http://my.fake/url"}]
-          (repo/add repo)
-          (repo/delete repo))))
 
-    
+        (doto (-> {:name "deleteme"
+                   :url "http://my.fake/url" 
+                   :product @test-product}
+                  katello/newRepository
+                  uniqueify)
+          (ui/create)
+          (ui/delete))))
+
     (deftest "Create two products with the same name, in different orgs"
       :blockers (open-bz-bugs "784712" "802795")
 
-      (with-n-new-orgs 2 create-same-product-name-in-multiple-orgs))
+      (with-unique [provider (katello/newProvider {:name "prov"})
+                    product (katello/newProduct {:name "prod"
+                                                 :provider provider})]
+        (doseq [org (->> {:name "prov-org"}
+                         katello/newOrganization
+                         uniques
+                         (take 2))]
+          (create-recursive (update-in product [:provider :org] (constantly org))))))
 
 
     (deftest "Create two products with same name in same org different provider"
       :description "Creates products with the same name in different
                     providers, where the providers are in the same
                     org."
-      (with-two-providers create-same-product-in-multiple-providers))))
+      (with-unique [org (katello/newOrganization {:name "org"})
+                    product (katello/newProduct {:name "prod"})]
+        (doseq [prov (->> {:name "prov"
+                           :org org}
+                          katello/newProvider
+                          uniques
+                          (take 2))]
+          (create-recursive (assoc product :provider prov))))))
+
+  (deftest "Repository Autodiscovery for existing product"
+    :description "Uses the repo autodiscovery tool to create custom repositories within a new custom product."
+    (with-unique [org      (katello/newOrganization {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  product  (katello/newProduct  {:name "prod"
+                                                 :provider provider})]
+      (ui/create-all (list org provider product))
+      (provider/create-discovered-repos-within-product provider product
+                                                       "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
+
+  (deftest "Add the same autodiscovered repo to a product twice"
+    :description "Adds the repositories to the selected product twice."
+    (with-unique [org (katello/newOrganization  {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  product (katello/newProduct   {:name "prod"
+                                                 :provider provider})]
+      (ui/create-all (list org provider product))
+      (val/expecting-error-2nd-try (katello.ui-common/errtype :katello.notifications/label-taken-error)
+                                   (provider/create-discovered-repos-within-product provider product
+                                                                                    "http://inecas.fedorapeople.org/fakerepos/"  ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))))

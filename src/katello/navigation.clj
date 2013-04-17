@@ -14,10 +14,10 @@
      (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
      name next)))
 
-(defn select-environment-widget [env-name & [{:keys [next-env-name wait]}]]
+(defn select-environment-widget [env & [{:keys [next-env wait]}]]
   (do (when (browser isElementPresent ::ui/expand-path)
         (browser click ::ui/expand-path))
-      (browser click (environment-breadcrumb env-name next-env-name))
+      (browser click (environment-breadcrumb (:name env) (:name next-env)))
       (when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]
@@ -30,23 +30,23 @@
   left-pane-item
   (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
-(defn scroll-to-left-pane-item [item]
+(defn scroll-to-left-pane-item [ent]
   (while (and (< (ui/current-items) (ui/total-items))
-              (not (browser isElementPresent (left-pane-item item))))
+              (not (browser isElementPresent (left-pane-item (:name ent)))))
     ;;scroll to bottom of page to load more items
     (->browser (getEval (str "window.scrollTo(0,1000000);"))
                (ajaxWait))))
 
 (defn choose-left-pane
-  "Selects an item in the left pane. If the item is not found, a
+  "Selects an entity in the left pane. If the entity is not found, a
    search is performed and the select is attempted again."
-  ([item]
-     (choose-left-pane left-pane-item item))
-  ([templ item]
-     (let [loc (templ item)]
+  ([entity]
+     (choose-left-pane left-pane-item entity))
+  ([templ entity]
+     (let [loc (templ (:name entity))]
        (try (browser click loc)
             (catch com.thoughtworks.selenium.SeleniumException se
-              (do (search-here (format "\"%s\"" item))
+              (do (search-here (format "\"%s\"" (:name entity)))
                   (browser click loc)))))))
 
 
@@ -92,8 +92,15 @@
                                             `(nav/nav-tree ~child#))))))))
        (defmethod page-tree *ns* [k#] (~'pages))))
 
-(defn go-to [location-kw & [argmap]]
-  (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap )) 
+(defprotocol Destination
+  (go-to [place] [place args] "Navigates to a given place"))
+
+(extend clojure.lang.Keyword
+  Destination
+  {:go-to (fn go-to*
+            ([location-kw argmap]
+               (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap))
+            ([location-kw] (go-to* location-kw {})))})
 
 (defn returns-403? [url]
   (=
@@ -105,3 +112,18 @@
     (open url)
     (getText "//article[@id='maincontent']"))))
 
+(defn current-org
+  "Return the currently active org (a string) shown in the org switcher."
+  []
+  (let [org-text ((->> ::ui/active-org (browser getAttributes) (into {})) "title")]
+    (if (empty? org-text) nil org-text)))
+
+(defn switch-org
+  "Switches to the given org. Other org-switcher functionality (eg
+   setting default orgs) see katello.organizations/switch."
+  ([{:keys [name]}]
+     {:pre [name]}
+     (go-to ::top-level)
+     (when-not (= name (current-org))
+       (browser click ::ui/switcher)
+       (browser clickAndWait (ui/switcher-link name)))))
