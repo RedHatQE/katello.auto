@@ -4,6 +4,7 @@
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
+            [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
                      [tasks           :refer :all]
