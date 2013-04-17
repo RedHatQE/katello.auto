@@ -57,6 +57,7 @@
    :prov-update              "providers___update"
    
    :prod-create              "products___create"
+   :prod-update              "products___update"
    :prod-destroy             "products___destroy"
    
    :repo-create              "repositories___create"
