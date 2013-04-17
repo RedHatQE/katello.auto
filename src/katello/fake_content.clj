@@ -115,7 +115,9 @@
                          :provider (kt/newProvider 
                                      {:name (provider :name) 
                                       :org org})})}))))))) 
-                              
+
+(def custom-repos  (repo-list-from-tree custom-providers nil))
+
 (defn prepare-org-custom-provider [org tree]
   (let [repolist (repo-list-from-tree tree org)]
     (ui/create-all-recursive repolist)

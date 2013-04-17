@@ -87,8 +87,8 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [{:keys [product name]}]
-                            (nav/go-to ::named-page {:org (kt/org product)
-                                                     :provider (kt/provider product)
-                                                     :product product
-                                                     :repo-name name}))})
+  nav/Destination {:go-to (fn [repo]
+                            (nav/go-to ::named-page {:org (kt/org repo)
+                                                     :provider (kt/provider repo)
+                                                     :product (kt/product repo)
+                                                     :repo repo}))}) 

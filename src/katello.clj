@@ -15,6 +15,7 @@
        (defn ~(symbol (str "new" rec)) [~(symbol "m")] 
          {:pre ~(into [] (for [anotated (keys anotations)]
                  `(or (not (contains? ~(symbol "m") ~anotated))
+                      (nil? (~anotated ~(symbol "m")))
                       (instance? ~(anotated anotations) (~anotated ~(symbol "m"))))))}
          (~(symbol (str "map->" rec)) ~(symbol "m"))))))
 
