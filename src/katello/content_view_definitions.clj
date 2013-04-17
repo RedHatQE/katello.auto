@@ -1,7 +1,12 @@
 (ns katello.content-view-definitions
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [katello :as kt]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clojure.data :as data]
             (katello [navigation :as nav]
+                     [rest :as rest]
                      [notifications :as notification]
+                     [system-groups :as sg]
+                     [tasks :refer [when-some-let] :as tasks]
                      [ui-common :as common]
                      [ui :as ui])))
 
@@ -20,6 +25,7 @@
    ::composite                "content_view_definition[composite]"
    ::save-new                 "commit"
    ::remove                   (ui/link "Remove")
+   ::clone                    (ui/link "Clone")
 
    ::views-tab                 "//li[@id='view_definition_views']/a"
    ::content-tab               "//li[@id='view_definition_content']/a"
@@ -33,9 +39,12 @@
 
 
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
+   ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
+   ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
    ::remove-product            "//a[@class='remove_product']"
+   ::remove-repo               "//a[@class='remove_repo']"
    ::toggle-products           "//div[@class='small_col toggle collapsed']"
 
    ;; Promotion
@@ -47,29 +56,33 @@
    })
 
 ;; Nav
-
 (nav/defpages (common/pages)
   [::page
-   [::named-page [definition-name]
-    (nav/choose-left-pane definition-name)]
-   [::new-page [] (browser click ::new)]])
+   [::new-page [] (browser click ::new)]
+   [::named-page [definition-name] (nav/choose-left-pane definition-name)
+    [::details-page [] (browser click ::details-tab)]]])
 
 ;; Tasks
 
-(defn create-content-view-definition
+(defn create
   "Creates a new Content View Definition."
-  [name & [{:keys [description composite composite-name]}]]
-  (nav/go-to ::new-page)
+  [{:keys [name description composite composite-names org]}]
+  (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       (fn [composite] (when composite (browser click ::composite) (browser click (composite-view-name composite-name)))) [composite]}
+                       (fn [composite] 
+                         (when composite 
+                           (browser click ::composite)
+                           (doseq [composite-name composite-names]
+                             (browser click (composite-view-name composite-name))))) [composite]}
                       ::save-new)
   (notification/check-for-success))
 
-(defn add-product-to-content-view
+
+(defn add-product
   "Adds the given product or repository to a content view definition"
-  [name & [{:keys [prod-name composite composite-name]}]]
-  (nav/go-to ::named-page {:definition-name name})
+  [{:keys [ name prod-name composite composite-name]}]
+  (nav/go-to name)
   (browser getEval ::sel-products)
   (browser click ::content-tab)
   ;; Composite Content Views are made up of other published views...
@@ -81,37 +94,38 @@
     ;; Non-composite Content Views are made up of products and/or repositories.
     (do
       (sel/->browser
-       (mouseUp (product-or-repository prod-name))
+       (mouseUp (->  prod-name :name product-or-repository))
        (click ::add-product-btn)
        (click ::update-content))))
   (notification/check-for-success))
 
-(defn remove-product-from-content-view
+(defn remove-product
   "Removes the given product from existing Content View"
-  [name & [{:keys [prod-name all-products composite composite-name]}]]
-  (nav/go-to ::named-page {:definition-name name})
+  [content-defn]
+  (nav/go-to content-defn)
   (browser click ::content-tab)
-  (if composite
-    (do
-      (sel/->browser
-       (click (composite-view-name composite-name))
-       (click ::update-component_view)))
-    (do (if all-products
-          (do
-            (sel/->browser
-             (click ::remove-product)
-             (click ::update-content)))
-          (do
-            (sel/->browser
-             (click ::toggle-products)
-             (click (remove-repository prod-name))
-             (click ::update-content))))))
+  (sel/->browser
+    (click ::remove-product)
+    (click ::update-content))
   (notification/check-for-success))
 
-(defn publish-content-view-definition
+(defn remove-repo
+  "Removes the given product from existing Content View"
+  [content-defn]
+  (nav/go-to content-defn)
+  (browser click ::content-tab)
+  (sel/->browser
+    (click ::toggle-products)
+    (click ::sel-repo) 
+    (click ::add-repo)
+    (click ::remove-repo)
+    (click ::update-content))
+  (notification/check-for-success))
+  
+(defn publish
   "Publishes a Content View Definition"
-  [name published-name & [description]]
-  (nav/go-to ::named-page {:definition-name name})
+  [{:keys [name published-name description]}]
+  (nav/go-to name)
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name
@@ -119,19 +133,41 @@
                  ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
-(defn edit-content-view-definition
+(defn update
   "Edits an existing Content View Definition."
-  [name & [{:keys [new-name description]}]]
-  (nav/go-to ::named-page {:definition-name name})
-  (browser click ::details-tab)
-  (common/in-place-edit {::details-name-text new-name
-                         ::details-description-text description})
-  (notification/check-for-success))
+  [content-definition  updated]
+  (let [[{:keys [name description]}] (data/diff content-definition updated)]
+    (nav/go-to ::details-page {:definition-name content-definition
+                               :org (:org content-definition)})
+    (common/in-place-edit {::details-name-text (:name updated)
+                           ::details-description-text (:description updated)})
+    (notification/check-for-success)))
 
-(defn delete-content-view-definition
+(defn delete
   "Deletes an existing View Definition."
-  [name]
-  (nav/go-to ::named-page {:definition-name name})
+  [content-defn]
+  (nav/go-to content-defn)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success))
+
+(defn clone
+  "Clones a content-view definition, given the name of the original definition
+   to clone, and the new name and description."
+  [orig clone]
+  (nav/go-to orig)
+  (browser click ::clone)
+  (sel/fill-ajax-form {::sg/copy-name-text (:name clone)
+                       ::sg/copy-description-text (:description clone)}
+                      ::sg/copy-submit)
+  (notification/check-for-success))
+
+(extend katello.ContentView
+  ui/CRUD {:create create
+           :delete delete
+           :update* update}
+    
+  tasks/Uniqueable tasks/entity-uniqueable-impl
+  nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
+                                                            :org (kt/org dn)}))})
+
