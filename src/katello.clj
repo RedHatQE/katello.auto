@@ -3,12 +3,21 @@
   )
 
 (defmacro defrecord [rec args]
+  (let [anotated-args (filter #(not (nil?(meta %))) args)
+        anotations (zipmap (map #(-> % name keyword) anotated-args) 
+                           (map #(-> % meta :tag) anotated-args))]
   `(do (clojure.core/defrecord ~rec ~args
          clojure.lang.IFn
          (invoke [this#] this#)
          (invoke [this# query#] (get this# query#))
          (applyTo [this# args#] (get-in this# args#)))
-       (def ~(symbol (str "new" rec)) ~(symbol (str "map->" rec)))))
+     
+       (defn ~(symbol (str "new" rec)) [~(symbol "m")] 
+         {:pre ~(into [] (for [anotated (keys anotations)]
+                 `(or (not (contains? ~(symbol "m") ~anotated))
+                      (nil? (~anotated ~(symbol "m")))
+                      (instance? ~(anotated anotations) (~anotated ~(symbol "m"))))))}
+         (~(symbol (str "map->" rec)) ~(symbol "m"))))))
 
 ;; Define records for all entities we'll be testing with
 
@@ -26,45 +35,45 @@
   [env]
   (assoc library :org (:org env) :next env))
 
-(defrecord Provider [id name description org])
+(defrecord Provider [id name description ^Organization org])
 
-(defrecord Product [id name provider])
+(defrecord Product [id name ^Provider provider])
 
-(defrecord Repository [id name product url gpg-key])
+(defrecord Repository [id name ^Product product url gpg-key])
 
-(defrecord Changeset [id name env deletion?])
+(defrecord Changeset [id name ^Environment env deletion?])
 
 (ns-unmap *ns* 'Package) ; collision w java.lang.Package
-(defrecord Package [id name product])
+(defrecord Package [id name ^Product product])
 
-(defrecord Erratum [id name product])
+(defrecord Erratum [id name ^Product product])
 
-(defrecord Template [id name product org content])
+(defrecord Template [id name ^Product product ^Organization org content])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
-(defrecord System [id name env service-level])
+(defrecord System [id name ^Environment env service-level])
 
-(defrecord GPGKey [id name org content])
+(defrecord GPGKey [id name ^Organization org content])
 
-(defrecord User [id name email password password-confirm default-org default-env])
+(defrecord User [id name email password password-confirm ^Organization default-org ^Environment default-env])
 
 (defrecord Role [id name users permissions])
 
-(defrecord Permission [name role org resource-type verbs])
+(defrecord Permission [name ^Role role ^Organization org resource-type verbs])
 
-(defrecord ActivationKey [id name env description])
+(defrecord ActivationKey [id name ^Environment env description])
 
-(defrecord SystemGroup [id name systems org])
+(defrecord SystemGroup [id name systems  ^Organization org])
 
 (defrecord Manifest [provider file-path url])
 
 (def red-hat-provider (newProvider {:name "Red Hat"}))
 
-(defrecord SyncPlan [id name org interval])
+(defrecord SyncPlan [id name ^Organization org interval])
 
-(defrecord Pool [id productId org])
+(defrecord Pool [id productId ^Organization org])
 
-(defrecord Subscription [id system pool quantity])
+(defrecord Subscription [id ^System system pool quantity])
 
 ;; Relationship protocol
 
