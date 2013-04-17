@@ -1,4 +1,4 @@
-ns katello.activation-keys
+(ns katello.activation-keys
   (:require [katello :as kt]
             (katello [navigation :as nav]
                      [notifications :as notification]
