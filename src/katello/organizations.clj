@@ -78,14 +78,14 @@
 
 (defn create
   "Creates an organization with the given name and optional description."
-  [{:keys [name label description initial-env-name initial-env-label initial-env-description]}]
+  [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
   (sel/fill-ajax-form [::name-text name
                        label-filler [::name-text ::label-text label]
                        ::description-text description
-                       ::initial-env-name-text initial-env-name
-                       label-filler [::initial-env-name-text ::initial-env-label-text initial-env-label]
-                       ::initial-env-desc-text initial-env-description]
+                       ::initial-env-name-text (:name initial-env)
+                       label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
+                       ::initial-env-desc-text (:description initial-env)]
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 

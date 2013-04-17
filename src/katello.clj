@@ -24,8 +24,7 @@
 
 ;; Define records for all entities we'll be testing with
 
-(defrecord Organization [id name label description initial-env-name
-                         initial-env-label initial-env-description])
+(defrecord Organization [id name label description initial-env])
 
 (defrecord Environment [id name label description ^Organization org prior])
 
