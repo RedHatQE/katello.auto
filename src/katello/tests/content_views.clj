@@ -102,7 +102,27 @@
              (views/remove-repo content-defn {:repo-name (kt/repository repo)})))))
      
      [[true]
-      [false]])   
-   )
+      [false]])
+
+   (deftest "Create composite content-definition with two products"
+     (with-unique [org (newOrganization {:name "auto-org"})]
+       (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
+             repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+             published-names (take 2 (uniques "publish-name"))
+             content-defns (->> {:name "view-definition"
+                                 :org org} katello/newContentView uniques (take 2))]
+         (ui/create org)
+         (ui/create-all content-defns)
+         (doseq [repo [repo1 repo2]]
+           (create-recursive repo))
+         (doseq [[repo content-defns published-names] [[repo1  (first content-defns) (first published-names)]
+                                                       [repo2  (last content-defns) (last published-names)]]]
+           (views/add-product {:name content-defns :prod-name (kt/product repo)})
+           (views/publish {:name content-defns :published-name published-names :org org}))
+         (with-unique [composite-view (newContentView {:name "composite-view" 
+                                                       :org org 
+                                                       :description "Composite Content View" 
+                                                       :composite 'yes' :composite-names published-names})]
+           (ui/create composite-view))))))
        
                    

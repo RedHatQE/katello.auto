@@ -66,11 +66,15 @@
 
 (defn create
   "Creates a new Content View Definition."
-  [{:keys [name description composite composite-name org]}]
+  [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       (fn [composite] (when composite (browser click ::composite) (browser click (composite-view-name composite-name)))) [composite]}
+                       (fn [composite] 
+                         (when composite 
+                           (browser click ::composite)
+                           (doseq [composite-name composite-names]
+                             (browser click (composite-view-name composite-name))))) [composite]}
                       ::save-new)
   (notification/check-for-success))
 
