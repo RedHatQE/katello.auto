@@ -74,39 +74,41 @@
         (search org searchterms)
         (validate-search-results (list org))))
 
-    (concat
-     ;;'normal' org searches
+    (let [dev-env (kt/newEnvironment {:name "dev"})
+          test-env (kt/newEnvironment {:name "test"})]
+      (concat
+             ;;'normal' org searches
      
-     [[{:name "test123" :initial-env-name "test" :description "This is a test123 org"} {:criteria "test123*"}]
-      [{:name "test-123" :initial-env-name "dev" :description "This is a test-123 org"} {:criteria "name:test-123*"}]
-      [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:\"This is a test org\""}]
-      [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "description:(+test+org)"}]
-      (with-meta
-        [{:name "test" :initial-env-name "dev" :description "This is a test org"} {:criteria "environment:dev*"}]
-        {:blockers (open-bz-bugs "852119")})]
+             [[{:name "test123" :initial-env test-env :description "This is a test123 org"} {:criteria "test123*"}]
+              [{:name "test-123" :initial-env dev-env :description "This is a test-123 org"} {:criteria "name:test-123*"}]
+              [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:\"This is a test org\""}]
+              [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
+              (with-meta
+                [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
+                {:blockers (open-bz-bugs "852119")})]
 
-     ;;with latin-1/multibyte searches
+             ;;with latin-1/multibyte searches
      
-     (for [row
-           [[{:name "niños"  :initial-env-name "test" :description "This is a test org with latin charcters in name"} {:criteria "niños*"}]
-            [{:name "bilingüe" :description "This is a test org with spanish characters like bilingüe" :initial-env-name "test"}  {:criteria "bilingüe*"}]
-            [{:name "misión"  :description "This is a test org with spanish char misión,biños  " :initial-env-name "dev"} {:criteria "misión*"}]
-            [{:name "biños" :description "This is a test_123 org" :initial-env-name "dev"}  {:criteria "name:?iños*"}]
-            [{:name "misión"  :description "This is a test org with spanish char misión,biños " :initial-env-name "dev"} {:criteria "description:\"This is a test org with spanish char misión,biños\""}]
-            [{:name "test_华语華語"  :description "This is a test org with multi-byte charcters in name" :initial-env-name "test"} {:criteria "test_华语華語*"}]
-            [{:name "兩千三百六十二" :description "This is a test org with multi-byte characters like తెలుగు" :initial-env-name "test"} {:criteria "兩千三百六十二*"}]
-            [{:name "hill_山"  :description "This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語" :initial-env-name "dev"} {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}]
-            [{:name "తెలుగు" :description "This is a test_123 org" :initial-env-name "dev"} {:criteria "తెలుగు*"}]]]
+             (for [row
+                   [[{:name "niños"  :initial-env test-env :description "This is a test org with latin charcters in name"} {:criteria "niños*"}]
+                    [{:name "bilingüe" :description "This is a test org with spanish characters like bilingüe" :initial-env test-env}  {:criteria "bilingüe*"}]
+                    [{:name "misión"  :description "This is a test org with spanish char misión,biños  " :initial-env dev-env} {:criteria "misión*"}]
+                    [{:name "biños" :description "This is a test_123 org" :initial-env dev-env}  {:criteria "name:?iños*"}]
+                    [{:name "misión"  :description "This is a test org with spanish char misión,biños " :initial-env dev-env} {:criteria "description:\"This is a test org with spanish char misión,biños\""}]
+                    [{:name "test_华语華語"  :description "This is a test org with multi-byte charcters in name" :initial-env test-env} {:criteria "test_华语華語*"}]
+                    [{:name "兩千三百六十二" :description "This is a test org with multi-byte characters like తెలుగు" :initial-env test-env} {:criteria "兩千三百六十二*"}]
+                    [{:name "hill_山"  :description "This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語" :initial-env dev-env} {:criteria "description:\"This is a test org with multi-byte char like hill_山  兩千三百六十二, test_华语華語\""}]
+                    [{:name "తెలుగు" :description "This is a test_123 org" :initial-env dev-env} {:criteria "తెలుగు*"}]]]
 
 
-       ;;modify each above row with metadata specific to multibyte
-       ;;testing
+               ;;modify each above row with metadata specific to multibyte
+               ;;testing
        
-       (with-meta row
-         {:blockers (open-bz-bugs "832978")
-          :description "Search for organizations names including
+               (with-meta row
+                 {:blockers (open-bz-bugs "832978")
+                  :description "Search for organizations names including
                         latin-1/multi-byte characters in search
-                        string."}))))
+                        string."})))))
   
   
   (deftest "search users"
