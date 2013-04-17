@@ -14,7 +14,7 @@
                      [tasks :refer :all] 
                      [conf :refer [config *session-org* *session-user*]] 
                      [navigation :as nav]) 
-            
+            [katello.tests.useful :refer [chained-env create-all-recursive]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -128,22 +128,31 @@
 
   (deftest "User's Favorite Organization"
     :data-driven true
-    (fn [saved-org-with expected]
-      (let [orgs (zipmap saved-org-with
-                         (for [o saved-org-with]
-                           (uniqueify (kt/newOrganization {:name (name o)}))))
+    (fn [saved-methods expected]
+      (let [save-method->env (into (array-map)
+                                   (for [save-method saved-methods]
+                                     (vector save-method
+                                             (chained-env {:name "Dev",
+                                                           :org (-> {:name (name save-method)}
+                                                                    kt/newOrganization
+                                                                    uniqueify)}))))
             user (new-unique-user)
-            ways-to-set-default {:login (fn [user org]
-                                          (login user {:org org}))
-                                 :settings (fn [user org] (ui/update user assoc :default-org org))
-                                 :star (fn [_ org]
+            ways-to-set-default {:login (fn [user {:keys [org]}]
+                                          (login user {:org org :default-org org}))
+                                 :settings (fn [user {:keys [org] :as env}]
+                                             (ui/update user assoc
+                                                        :default-org org,
+                                                        :default-env env))
+                                 :star (fn [_ {:keys [org]}]
                                          (organization/switch nil {:default-org org}))}]
-        (rest/create-all (conj (vals orgs) user))
+        (create-all-recursive (conj (vals save-method->env) user))
         (ui/update user assoc :roles (list role/administrator))
         (with-user-temporarily user
-          (doseq [[type org] orgs]
-            ((ways-to-set-default type) user org))
-          (verify-login-direct-to-default-org (assoc user :default-org (orgs expected))))))
+          (doseq [[save-method env] save-method->env]
+            ((ways-to-set-default save-method) user env))
+          (verify-login-direct-to-default-org (assoc user :default-org (-> expected
+                                                                           save-method->env
+                                                                           kt/org))))))
     
     [[[:login :star :settings] :star]
      [[:login :settings] :login]
