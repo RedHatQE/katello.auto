@@ -104,7 +104,7 @@
                   product  (katello/newProduct  {:name "prod"
                                                  :provider provider})]
       (ui/create-all (list org provider))
-      (provider/create-discovered-repos-within-product provider product
+      (provider/create-discovered-repos-within-product product
                                                        "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"] {:new-prod true})))
   
   
@@ -116,7 +116,7 @@
                   product  (katello/newProduct  {:name "prod"
                                                  :provider provider})]
       (ui/create-all (list org provider product))
-      (provider/create-discovered-repos-within-product provider product
+      (provider/create-discovered-repos-within-product product
                                                        "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
   
   (deftest "Add the same autodiscovered repo to a product twice"
@@ -128,5 +128,5 @@
                                                  :provider provider})]
       (ui/create-all (list org provider product))
       (val/expecting-error-2nd-try (katello.ui-common/errtype :katello.notifications/label-taken-error)
-                                   (provider/create-discovered-repos-within-product provider product
+                                   (provider/create-discovered-repos-within-product product
                                                                                     "http://inecas.fedorapeople.org/fakerepos/"  ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))))

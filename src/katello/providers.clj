@@ -107,9 +107,9 @@
 (defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
   selected repositories within the named product."
-  [provider product discoverable-url enabled-urls & [{:keys [new-prod]}]]
-  (nav/go-to ::repo-discovery-page {:provider provider
-                                    :org (:org provider)})
+  [product discoverable-url enabled-urls & [{:keys [new-prod]}]]
+  (nav/go-to ::repo-discovery-page {:provider (:provider product)
+                                    :org (:org (:provider product))})
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
   (browser waitForInvisible ::discover-spinner "120000")
   (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
