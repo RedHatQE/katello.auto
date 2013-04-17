@@ -39,8 +39,12 @@
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
   [{:keys [product name url gpg-key]}]
-  (nav/go-to ::provider/products-page {:org (-> product :provider :org)
-                                       :provider (:provider product)})
+   {:pre [(instance? katello.Product product)
+          (instance? katello.Provider (kt/provider product))
+          (instance? katello.Organization (kt/org product))]} 
+
+  (nav/go-to ::provider/products-page {:org (kt/org product)
+                                       :provider (kt/provider product)})
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name
@@ -50,6 +54,7 @@
 
 (defn delete "Deletes a repository from the given provider and product."
   [repo]
+  {:pre [(instance? katello.Repository repo)]}
   (nav/go-to repo)
   (browser click ::remove-repository)
   (browser click ::ui/confirmation-yes)
@@ -68,6 +73,9 @@
            :delete delete}
 
   rest/CRUD {:create (fn [{:keys [product name url]}]
+                       {:pre [(instance? katello.Product product)
+                              (instance? katello.Provider (kt/provider product))
+                              (instance? katello.Organization (kt/org product))]} 
                        (rest/http-post (rest/api-url "api/repositories/")
                                        {:body {:organization_id (-> product kt/org :name)
                                                :product_id (rest/get-id product)
@@ -83,4 +91,4 @@
                             (nav/go-to ::named-page {:org (kt/org repo)
                                                      :provider (kt/provider repo)
                                                      :product (kt/product repo)
-                                                     :repo repo}))})
+                                                     :repo repo}))}) 
