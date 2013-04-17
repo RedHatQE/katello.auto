@@ -9,7 +9,8 @@
                      [tasks :as tasks]
                      [ui-common :as common]
                      [notifications :as notification]
-                     [conf :refer [*session-org*]]))
+                     [conf :refer [*session-org*]])
+            [test.assert :as assert])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;; Locators
@@ -61,6 +62,8 @@
   "Adds a custom keyname field to an organization and optionally apply it to existing systems"
   [org keyname & [{:keys [apply-default]}]]
   (nav/go-to org)
+  ;; Make sure the 'Add' button is disabled
+  (assert (= (get (browser getAttributes ::create-keyname) "disabled") ""))
   (->browser (setText ::keyname-text keyname)
              (keyUp ::keyname-text "w")
              (click ::create-keyname))
