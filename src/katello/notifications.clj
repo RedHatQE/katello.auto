@@ -62,6 +62,8 @@
    :repo-create              "repositories___create"
    :repo-destroy             "repositories___destroy"
    
+   :repo-update-gpg-key      "repositories___update_gpg_key"
+   
    :sys-create               "systems___create"
    :sys-destroy              "systems___destroy"
    :sys-bulk-destroy         "systems___bulk_destroy"
