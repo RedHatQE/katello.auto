@@ -1,30 +1,33 @@
 (ns katello
-  (:refer-clojure :exclude [defrecord])
-  )
+  (:refer-clojure :exclude [defrecord]))
+
+(defn instance-or-nil? [c i]
+  (or (not c)
+      (nil? i)
+      (instance? c i)))
 
 (defmacro defrecord [rec args]
-  (let [anotated-args (filter #(not (nil?(meta %))) args)
-        anotations (zipmap (map #(-> % name keyword) anotated-args) 
-                           (map #(-> % meta :tag) anotated-args))]
-  `(do (clojure.core/defrecord ~rec ~args
-         clojure.lang.IFn
-         (invoke [this#] this#)
-         (invoke [this# query#] (get this# query#))
-         (applyTo [this# args#] (get-in this# args#)))
+  (let [annotated-arg-syms (filter #(not (nil? (meta %))) args)
+        annotations (zipmap annotated-arg-syms 
+                            (map (comp :tag meta) annotated-arg-syms))
+        constr-arg-sym (gensym "m")]
+    `(do (clojure.core/defrecord ~rec ~args
+           clojure.lang.IFn
+           (invoke [this#] this#)
+           (invoke [this# query#] (get this# query#))
+           (applyTo [this# args#] (get-in this# args#)))
      
-       (defn ~(symbol (str "new" rec)) [~(symbol "m")] 
-         {:pre ~(into [] (for [anotated (keys anotations)]
-                 `(or (not (contains? ~(symbol "m") ~anotated))
-                      (nil? (~anotated ~(symbol "m")))
-                      (instance? ~(anotated anotations) (~anotated ~(symbol "m"))))))}
-         (~(symbol (str "map->" rec)) ~(symbol "m"))))))
+         (defn ~(symbol (str "new" rec)) [{:keys ~(vec annotated-arg-syms) :as ~constr-arg-sym}] 
+           {:pre ~(vec (for [[sym clazz] annotations]
+                            `(instance-or-nil? ~clazz ~sym) ))}
+           (~(symbol (str "map->" rec)) ~constr-arg-sym)))))
 
 ;; Define records for all entities we'll be testing with
 
 (defrecord Organization [id name label description initial-env-name
                          initial-env-label initial-env-description])
 
-(defrecord Environment [id name label description org prior])
+(defrecord Environment [id name label description ^Organization org prior])
 
 (def library (newEnvironment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
