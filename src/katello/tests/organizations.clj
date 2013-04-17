@@ -4,15 +4,16 @@
             (katello [ui-common :as common]
                      [ui :as ui]
                      [rest :as rest]
-                     [validation :as validation] 
+                     [validation :as validation]
                      [repositories :as repo]
-                     [tasks :refer :all] 
+                     [tasks :refer :all]
                      [notifications :as notification]
-                     [organizations :as organization] 
+                     [organizations :as organization]
                      [environments :as environment]
                      [changesets :as changeset]
                      [fake-content :as fake]
                      [conf :refer [config]])
+            [katello.tests.useful :only [chained-env]]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -61,14 +62,14 @@
 
 ;; Tests
 
- (defgroup org-tests
+(defgroup org-tests
 
-   (deftest "Create an organization"
-     (create-and-verify-with-basename "auto-org")
-     
+  (deftest "Create an organization"
+    (create-and-verify-with-basename "auto-org")
+
     (deftest "Create an organization with i18n characters"
       :data-driven true
-      
+
       create-and-verify-with-basename
       validation/i8n-chars)
 
@@ -80,35 +81,35 @@
       ;;create 5 rows of data, 1 random 1-char utf8 string in each
       (take 5 (repeatedly (comp vector
                                 (partial random-string 0x0080 0x5363 1)))))
-    
+
     (deftest "Create an organization with an initial environment"
       (-> (kt/newOrganization {:name "auto-org"
-                            :initial-env-name "environment"})
+                               :initial-env (kt/newEnvironment {:name "environment"})})
           uniqueify
           create-and-verify))
-  
+
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
-      
+
       (with-unique [org (kt/newOrganization {:name "test-dup"
-                                          :description "org-description"})]
-       (validation/expecting-error-2nd-try name-taken-error (ui/create org))))
-  
+                                             :description "org-description"})]
+        (validation/expecting-error-2nd-try name-taken-error (ui/create org))))
+
     (deftest "Organization name is required when creating organization"
       :blockers (open-bz-bugs "726724")
-      
+
       (expecting-error validation/name-field-required
                        (ui/create (kt/newOrganization {:name ""
-                                                    :description "org with empty name"}))))
+                                                       :description "org with empty name"}))))
 
     (deftest "Verify proper error message when invalid org name is used"
       :data-driven true
       :blockers (open-bz-bugs "726724")
-      
+
       verify-bad-entity-create-gives-expected-error
       bad-org-names)
 
-  
+
     (deftest "Edit an organization"
       (with-unique [org (mkorg "auto-edit")]
         (ui/create org)
@@ -122,10 +123,10 @@
                          (ui/create (assoc org1 :label (:label org2))))
         (expecting-error label-taken-error
                          (ui/create (assoc org2 :label (:label org1))))))
-    
+
     (deftest "Delete an organization"
       :blockers (open-bz-bugs "716972")
-    
+
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
         (ui/delete org)
@@ -133,26 +134,26 @@
 
       (deftest "Create an org with content, delete it and recreate it"
         :blockers rest/katello-only
-        
+
 
         (with-unique [org (mkorg "delorg")
-                      env (-> {:name "env" :org org} kt/newEnvironment uniqueify list kt/chain)
-              repos (for [r fake/custom-repos]
-                      (update-in r [:product :provider] assoc :org org))]
+                      env (chained-env {:name "env" :org org})
+                      repos (for [r fake/custom-repos]
+                              (update-in r [:product :provider] assoc :org org))]
           (setup-custom-org-with-content env repos)
           ;; not allowed to delete the current org, so switch first.
-          (organization/switch)  (ui/delete org)
+          (organization/switch)
+          (ui/delete org)
           (setup-custom-org-with-content env repos))))
-    
+
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
-      
+
       (fn [env-name env-lbl notif]
         (with-unique [org (kt/newOrganization
-                           {:name "lib-org", :initial-env-name env-name, :initial-env-label env-lbl})]
-          (expecting-error 
-           (common/errtype notif)
-            (ui/create org))))
+                           {:name "lib-org", :initial-env (kt/newEnvironment {:name env-name, :label env-lbl})})]
+          (expecting-error (common/errtype notif)
+                           (ui/create org))))
 
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
@@ -161,16 +162,15 @@
 
     (deftest "Create org with default keyname field"
       :data-driven true
-      
+
       (fn [keyname & [apply-it]]
         (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")
-                                             :initial-env-name "keyname-env"
-                                             :initial-env-label "env-label"})]
-        (ui/create org)
-        (organization/add-custom-keyname org keyname apply-it)
-        (assert/is (browser isTextPresent keyname))))
-      
+                                               :label (uniqueify "org-label")
+                                               :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+          (ui/create org)
+          (organization/add-custom-keyname org keyname apply-it)
+          (assert/is (browser isTextPresent keyname))))
+
       [["Color"]
        ["Shape" {:apply-default true}]
        [(random-string (int \a) (int \z) 255) {:apply-default true}]
@@ -180,10 +180,9 @@
 
     (deftest "Create org and use the same default keyname value twice"
       :blockers (open-bz-bugs "951197")
-       (with-unique [org (kt/newOrganization {:name "keyname-org"
+      (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
-                                             :initial-env-name "keyname-env"
-                                             :initial-env-label "env-label"})
+                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
                     keyname "default-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org keyname)
@@ -191,23 +190,20 @@
 
     (deftest "Create org with default keyname value twice"
       :blockers (open-bz-bugs "951197")
-       (with-unique [org (kt/newOrganization {:name "keyname-org"
+      (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
-                                             :initial-env-name "keyname-env"
-                                             :initial-env-label "env-label"})
+                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
                     keyname "default-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org keyname)
         (assert/is (browser isTextPresent keyname))))
-    
+
     (deftest "Create org with default keyname and delete keyname"
-       (with-unique [org (kt/newOrganization {:name "keyname-org"
+      (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
-                                             :initial-env-name "keyname-env"
-                                             :initial-env-label "env-label"})
+                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
                     keyname "deleteme-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org keyname)
         (organization/remove-custom-keyname org keyname)
-        (assert/is (not (browser isTextPresent keyname)))))
-))
+        (assert/is (not (browser isTextPresent keyname)))))))
