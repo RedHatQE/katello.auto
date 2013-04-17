@@ -42,6 +42,7 @@
 
 (sel/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
+  new-product-radio-btn   "//input[@name='new_product' and @value='%s']"
   existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"}) 
 
 ;; Nav
