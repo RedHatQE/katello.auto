@@ -29,8 +29,9 @@
    predicate."
   [pred expected-items]
   (fn [results]
+    (println expected-items)
     (boolean (and (every? pred results)
-                  (every? (into #{} results) expected-items)))))
+                  (every? (into #{} results) (map :name expected-items))))))
 
 (defn validate-search-results [expected-items]
   (assert/is (every? (set (extract-left-pane-list)) (map :name expected-items))))
@@ -174,12 +175,9 @@
         (ui/create-all (list system sg))
         (ui/update sg assoc :systems (list system))
         (search sg searchterms)
-        (let [validate-search-results (search-results-valid?
-                                       (constantly true)
-                                       (list sg))]
-          (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))]
-            (assert/is (validate-search-results
-                        (doall (map strip-num (extract-left-pane-list)))))))))
+        (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))
+              sgs-in-results (doall (map strip-num (extract-left-pane-list)))]
+          (assert/is ((set sgs-in-results) (:name sg))))))
     [[{:name "sg-fed" :description "the centos system-group"} {:name "mysystem3" :sockets "4" :system-arch "x86_64"} {:criteria "description: \"the centos system-group\""}]
      [{:name "sg-fed1" :description "the rh system-group"} {:name "mysystem1" :sockets "2" :system-arch "x86"} {:criteria "name:sg-fed1*"}]
      [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]])
