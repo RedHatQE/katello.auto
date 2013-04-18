@@ -147,7 +147,7 @@
 
 ;; Tests
 
-(let [success [:type :success]]
+(let [success #(-> % :type (= :success))]
   
   (defgroup system-tests
     :group-setup create-test-environment
