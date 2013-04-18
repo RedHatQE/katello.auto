@@ -213,8 +213,7 @@
                                       (fn [] (ui/create env)))
                :disallowed-actions [(fn [] (nav/go-to conf/*session-org*))]]))
 
-     (fn [] (let [url-fn #(str "/katello/" %)
-                  nav-fn (comp partial partial nav/returns-403? url-fn)]
+     (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") nav/returns-403?)))]
               [:permissions []
                :allowed-actions (map nav-fn ["users"])
                :disallowed-actions (map nav-fn ["subscriptions" "systems" "systems/environments" "system_groups"
