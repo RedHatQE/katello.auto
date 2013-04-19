@@ -1,6 +1,7 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
   (:require [katello :as kt]
+            [katello.client.provision :as provision]
             [test.tree.script  :refer [deftest defgroup]]
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
@@ -8,6 +9,7 @@
             [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
+                     [client :as client]
                      [tasks           :refer :all]
                      [ui-common       :as common]
                      [notifications   :refer [success?]]
@@ -16,11 +18,13 @@
                      [sync-management :as sync]
                      [repositories    :as repo]
                      [providers       :as provider]
+                     [changesets :as changeset]
+                     [systems :as system]
                      [gpg-keys        :as gpg-key]
                      [fake-content    :as fake]
                      [validation      :refer :all]
                      [conf            :as conf :refer [config]])
-            [katello.tests.useful :refer [fresh-repo create-series create-all create-recursive]]))
+            [katello.tests.useful :refer [fresh-repo create-series create-recursive]]))
 
 ;; Functions
 
@@ -81,9 +85,14 @@
     (ui/create-all (list provider product1 product2 repo1 repo2))
     provider))
 
+(defn create-test-environment []
+  (def test-environment (first conf/*environments*))
+  (create-recursive test-environment))
+
 ;; Tests
 
 (defgroup gpg-key-tests
+  :group-setup create-test-environment
 
   (deftest "Create a new GPG key from text input"
     :blockers rest/katello-only
@@ -143,38 +152,38 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
-      (let [gpgkey (-> {:name "mykey", :org *session-org*,
+      (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
                        uniqueify)
-            repo1 (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
-            repo2 (fresh-repo *session-org* (-> custom-provider first :products first :repos first :url))]
-        (create-all (kt/provider repo1) (kt/provider repo2) (kt/product repo1) (kt/product repo2) repo1 repo2)
+            repo1 (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2 (fresh-repo conf/*session-org* (-> fake/custom-provider first :products first :repos first :url))]
+        (ui/create gpgkey)
+        (ui/create-all (kt/provider repo1) (kt/provider repo2) (kt/product repo1) (kt/product repo2) repo1 repo2)
         (when (rest/is-katello?)
           (changeset/sync-and-promote (list repo1) test-environment))
         (provision/with-client "consume-content"
           ssh-conn
-          (client/register ssh-conn {:username (:name *session-user*)
-                                     :password (:password *session-user*)
-                                     :org (kt/org repo)
+          (client/register ssh-conn {:username (:name conf/*session-user*)
+                                     :password (:password conf/*session-user*)
+                                     :org (kt/org repo1)
                                      :env test-environment
                                      :force true})
           (let [mysys (client/my-hostname ssh-conn)
-                product-name (-> repo kt/product :name)]
+                product-name (-> repo1 kt/product :name)]
             (system/subscribe {:system-name mysys
                                :add-products product-name})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=0")
                   result (client/run-cmd ssh-conn cmd)]
               (assert/is (->> result :exit-code (= 0))))
-            (ui/create gpgkey)
-            (ui/update (kt/product repo1) assoc :gpg-key (:name gpg-key))
+            (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
             (when (rest/is-katello?)
               (changeset/sync-and-promote (list repo1) test-environment))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=1")
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0)))))))
+              (assert/is (->> result :exit-code (= 0))))))))))
 
 
 #_(defgroup package-filter-tests
