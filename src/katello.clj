@@ -34,9 +34,13 @@
 
 (defrecord Environment [id name label description ^Organization org prior])
 
-;; override the default constructor to chain in to previous env
-(def newEnvironment (comp first chain list map->Environment))
+(def library (map->Environment {:name "Library"})) ;  Library is a special
+                                        ;  environment so create a var
+                                        ;  to refer to it later
 
+(declare org )
+
+;; override the default constructor to chain in to previous env
 (defn chain
   "Sets the next and prior fields of successive envs to make a doubly
   linked list."
@@ -48,9 +52,8 @@
               (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
     (rest (reduce f (vector (assoc library :org org)) (vec environments)))))
 
-(def library (map->Environment {:name "Library"})) ;  Library is a special
-                                        ;  environment so create a var
-                                        ;  to refer to it later
+(def newEnvironment (comp first chain list map->Environment))
+
 (defn mklibrary
   "Creates a library record for a particular org and next
    environment (used for env selection in UI)"
