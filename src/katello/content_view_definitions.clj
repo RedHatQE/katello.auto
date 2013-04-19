@@ -51,7 +51,7 @@
    ::publish-button            "//input[@type='button']"
    ::publish-name-text         "content_view[name]"
    ::publish-description-text  "content_view[description]"
-   ::publish-new               "content_view_submit"
+   ::publish-new               "commit"
    ::refresh-button            "refresh_action"
    })
 
