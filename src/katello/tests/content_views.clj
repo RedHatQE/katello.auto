@@ -29,7 +29,7 @@
         ui/create))
       
   (deftest "Create a new content view definition using the same name"
-    (with-unique [content-def (katello/newContentView {:name "con-def"
+    (with-unique [content-def (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})]
       (ui/create content-def)
       (expecting-error (common/errtype ::notifications/name-taken-error)
@@ -37,19 +37,19 @@
   
   (deftest "Delete a content view definition"
     (doto (-> {:name "view-def" :org *session-org*}
-            katello/newContentView
+            kt/newContentView
             uniqueify)
       (ui/create)
       (ui/delete)))
   
   (deftest "Clone content view definition"
-     (with-unique [content-def (katello/newContentView {:name "con-def"
+     (with-unique [content-def (kt/newContentView {:name "con-def"
                                                          :org conf/*session-org*})]
         (ui/create content-def)
         (views/clone content-def (update-in content-def [:name] #(str % "-clone")))))
   
   (deftest "Publish content view definition"
-    (with-unique [content-def (katello/newContentView {:name "con-def"
+    (with-unique [content-def (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})]
       (ui/create content-def)
       (views/publish {:name content-def :published-name "pub-name" :org *session-org*})))
@@ -60,9 +60,9 @@
     
     (fn [composite?]
       (with-unique [org (newOrganization {:name "auto-org"})
-                    view-definition (newContentView {:name "auto-view-definition" :org org})
+                    view-definition (kt/newContentView {:name "auto-view-definition" :org org})
                     published-name "pub-name"
-                    composite-view (newContentView {:name "composite-view" :org org :description "Composite Content View" :composite 'yes' :composite-name published-name})]      
+                    composite-view (kt/newContentView {:name "composite-view" :org org :description "Composite Content View" :composite 'yes' :composite-name published-name})]
         (ui/create-all (list org view-definition))
         (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
           (create-recursive repo)
@@ -75,8 +75,8 @@
      [false]])
   
    (deftest "Edit a content view definition"
-    (with-unique [org (newOrganization {:name "auto-org"})
-                  content-definition (newContentView {:name "auto-view-definition" :description "new description" :org org})
+    (with-unique [org (kt/newOrganization {:name "auto-org"})
+                  content-definition (kt/newContentView {:name "auto-view-definition" :description "new description" :org org})
                   modified-name "mod-name"]
       (ui/create-all (list org content-definition))
       (ui/update content-definition assoc :name modified-name :description "modified description")))
@@ -86,10 +86,10 @@
      :data-driven "true"
      
      (fn [repo?]
-       (with-unique [org (newOrganization {:name "auto-org"})
-                     content-defn (newContentView {:name "auto-view-definition" :org org})
+       (with-unique [org (kt/newOrganization {:name "auto-org"})
+                     content-defn (kt/newContentView {:name "auto-view-definition" :org org})
                      published-name "pub-name"
-                     composite-view (newContentView {:name "composite-view" 
+                     composite-view (kt/newContentView {:name "composite-view"
                                                      :org org 
                                                      :description "Composite Content View" 
                                                      :composite 'yes' :composite-name published-name})]
@@ -105,12 +105,12 @@
       [false]])
 
    (deftest "Create composite content-definition with two products"
-     (with-unique [org (newOrganization {:name "auto-org"})]
+     (with-unique [org (kt/newOrganization {:name "auto-org"})]
        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
              published-names (take 2 (uniques "publish-name"))
              content-defns (->> {:name "view-definition"
-                                 :org org} katello/newContentView uniques (take 2))]
+                                 :org org} kt/newContentView uniques (take 2))]
          (ui/create org)
          (ui/create-all content-defns)
          (doseq [repo [repo1 repo2]]
@@ -124,5 +124,3 @@
                                                        :description "Composite Content View" 
                                                        :composite 'yes' :composite-names published-names})]
            (ui/create composite-view))))))
-       
-                   
