@@ -73,8 +73,6 @@
 
 (defrecord Erratum [id name ^Product product])
 
-(defrecord Template [id name ^Product product ^Organization org content])
-
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name ^Environment env service-level])
 
