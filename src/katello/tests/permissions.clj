@@ -146,26 +146,6 @@
                                         create-an-org)])
       assoc :blockers (open-bz-bugs "757817"))
 
-     (fn [] [:permissions [{:org global, :resource-type "System Templates", :verbs ["Read System Templates"], :name "stread"}]
-             :allowed-actions [(navigate-fn )]
-             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
-                                                      :katello.providers/custom-page :katello.sync-management/status-page
-                                                      :katello.changesets/page])
-                                       create-a-st
-                                       create-an-org
-                                       create-an-env)])
-
-     (fn [] [:permissions [{:org global
-                            :resource-type "System Templates"
-                            :verbs ["Administer System Templates"]
-                            :name "stmang"}]
-             :allowed-actions [create-a-st]
-             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
-                                                      :katello.providers/custom-page :katello.sync-management/status-page
-                                                      :katello.changesets/page])
-                                       create-an-org
-                                       create-an-env)])
-
      (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
              :allowed-actions [(navigate-fn :katello.users/page)]
              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page

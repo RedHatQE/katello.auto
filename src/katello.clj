@@ -119,9 +119,6 @@
                :repository identity, :parent #'product} ; the org is the product's org
    Package {:org (comp #'org #'product), :product :product, :parent #'product}
    Erratum {:org (comp #'org #'product), :product :product, :parent #'product}
-   Template {:org (fn [t] (or (:org t)
-                              (-> t product org)))
-             :product :product}
    System {:org (comp #'org #'env), :env :env, :parent #'org}
    GPGKey {:org :org, :parent #'org}
    Permission {:org :org, :parent #'org}
