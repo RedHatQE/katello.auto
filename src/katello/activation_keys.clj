@@ -46,11 +46,12 @@
 (defn create
   "Creates an activation key with the given properties. Description
   and system-template are optional."
-  [{:keys [name description env system-template] :as ak}]
+  [{:keys [name description env system-template content-view] :as ak}]
   (nav/go-to ::new-page {:org (kt/org ak)})
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
+                       ::content-view-select content-view
                        ::template-select (:name system-template)}
                       ::save)
   (notification/check-for-success))

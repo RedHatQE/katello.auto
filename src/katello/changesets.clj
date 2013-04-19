@@ -84,6 +84,10 @@
   (go-to [template]
     (browser click ::templates-category))
   
+  katello.ContentView
+  (go-to [content-view]
+    (browser click ::content-views-category))
+    
   katello.Repository
   (go-to [repo] (go-to-item-in-product ::select-repos repo))
 

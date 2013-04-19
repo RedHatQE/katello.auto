@@ -51,7 +51,7 @@
    ::publish-button            "//input[@type='button']"
    ::publish-name-text         "content_view[name]"
    ::publish-description-text  "content_view[description]"
-   ::publish-new               "content_view_submit"
+   ::publish-new               "//input[@name='commit']"
    ::refresh-button            "refresh_action"
    })
 
@@ -59,7 +59,7 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [definition-name] (nav/choose-left-pane definition-name)
+   [::named-page [content-view] (nav/choose-left-pane content-view)
     [::details-page [] (browser click ::details-tab)]]])
 
 ;; Tasks
@@ -129,8 +129,8 @@
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name
-                  ::publish-description-text description}
-                 ::publish-new)
+                       ::publish-description-text description}
+                      ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
 (defn update
@@ -168,6 +168,6 @@
            :update* update}
     
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
-                                                            :org (kt/org dn)}))})
+  nav/Destination {:go-to (fn [cv] (nav/go-to ::named-page {:content-view cv
+                                                            :org (kt/org cv)}))})
 
