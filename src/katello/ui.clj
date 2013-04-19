@@ -1,5 +1,6 @@
 (ns katello.ui
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel])
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
+            [katello.rest :as rest])
   (:refer-clojure :exclude [read]))
 
 ;; Protocols
@@ -22,6 +23,24 @@
   (doseq [ent ents]
     (create ent)))
 
+(defn ensure-exists [ent]
+  {:pre [(satisfies? CRUD ent)]}
+  (when-not (rest/exists? ent)
+    (create ent)))
+
+(defn create-recursive
+  "Recursively create in katello, all the entites that satisfy
+   katello.ui/CRUD (innermost first).  Example, an env that contains
+   a field for its parent org, the org would be created first, then
+   the env." [ent & [{:keys [check-exist?] :or {check-exist? true}}]]
+   (doseq [field (vals ent) :when (satisfies? CRUD field)]
+     (create-recursive field))
+   (if check-exist? (ensure-exists ent)
+       (create ent)))
+
+(defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
+  (doseq [ent ents]
+    (create-recursive ent m)))
 ;; Locators
 
 (sel/template-fns

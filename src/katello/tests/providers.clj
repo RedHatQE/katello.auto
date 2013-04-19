@@ -5,6 +5,7 @@
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
+            [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
                      [tasks           :refer :all]
@@ -120,7 +121,7 @@
         :blockers rest/katello-only
         :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
 
-        (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env-name "DEV"})
+        (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env (kt/newEnvironment {:name "DEV"})})
                       gpg-key     (katello/newGPGKey {:name "test-key" :url (@config :gpg-key) :org test-org})]
           (ui/create test-org)
           (create-custom-provider-with-gpg-key gpg-key)

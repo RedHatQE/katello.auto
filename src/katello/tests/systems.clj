@@ -147,7 +147,7 @@
 
 ;; Tests
 
-(let [success [:type :success]]
+(let [success #(-> % :type (= :success))]
   
   (defgroup system-tests
     :group-setup create-test-environment
@@ -216,7 +216,6 @@
         (rest/create-all systems)
         (system/multi-delete systems)))
 
-  
     (deftest "Remove systems and validate sys-count"
       (with-unique [org (kt/newOrganization {:name "delsyscount"})
                     env (kt/newEnvironment {:name "dev", :org org})]
@@ -251,6 +250,35 @@
                 (nav/go-to system)))))
       [[false]
        [true]])
+
+    (deftest "Creates org with default custom key and adds new system"
+      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
+                    env (kt/newEnvironment {:name "dev" :org org})
+                    system (kt/newSystem {:name (uniqueify "sys")
+                                          :sockets "1"
+                                          :system-arch "x86_64"
+                                          :env env})]
+        (let [org (assoc org :initial-env env)]
+          (ui/create org)
+          (org/add-custom-keyname org "Manager")
+          (ui/create system)
+          (browser click :katello.systems/custom-info)
+          (assert/is (browser isTextPresent "Manager")))))
+
+    (deftest "Creates org adds new system then applies custom org default"
+      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
+                    env (kt/newEnvironment {:name "dev" :org org})
+                    system (kt/newSystem {:name (uniqueify "sys")
+                                          :sockets "1"
+                                          :system-arch "x86_64"
+                                          :env env})]
+        (ui/create-all (list org env system))
+        (browser click :katello.systems/custom-info)
+        (assert/is (not (browser isTextPresent "Manager")))
+        (org/add-custom-keyname org "Manager" {:apply-default true})
+        (nav/go-to system)
+        (browser click :katello.systems/custom-info)
+        (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "System Details: Add custom info"
       :blockers (open-bz-bugs "919373")
@@ -300,7 +328,7 @@
      [true]])
 
   (deftest "System Details: Add custom info"
-    :blockers (open-bz-bugs "919373")
+    :blockers (open-bz-bugs "919373" "951231" "951197")
     :data-driven true
 
     (fn [keyname custom-value success?]
@@ -312,24 +340,27 @@
     [["Hypervisor" "KVM" true]
      [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
      [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
+     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 256) false]
      [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
      [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
      ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
-     ["foo@!#$%^&*()" "bar_+{}|\"?hi" false]])
+     ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
   (deftest "System Details: Update custom info"
-    :blockers (open-bz-bugs "919373")
+    :blockers (open-bz-bugs "919373" "951231" "951197")
     :data-driven true
 
     (fn [keyname custom-value new-value success?]
       (with-unique-system s
         (ui/create s)
         (let [s (ui/update s assoc :custom-info {keyname custom-value})]
+          (assert/is (browser isTextPresent custom-value))
           (ui/update s assoc :custom-info {keyname new-value})
           (assert/is (= (browser isTextPresent new-value) success?)))))
 
     [["Hypervisor" "KVM" "Xen" true]
      ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
+     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 256) false]
      ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
      ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
 
@@ -338,6 +369,7 @@
     (with-unique-system s
       (ui/create s)
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
+        (assert/is (browser isTextPresent "Hypervisor"))
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "System name is required when creating a system"

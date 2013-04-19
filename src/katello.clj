@@ -1,21 +1,32 @@
 (ns katello
-  (:refer-clojure :exclude [defrecord])
-  )
+  (:refer-clojure :exclude [defrecord]))
+
+(defn instance-or-nil? [c i]
+  (or (not c)
+      (nil? i)
+      (instance? c i)))
 
 (defmacro defrecord [rec args]
-  `(do (clojure.core/defrecord ~rec ~args
-         clojure.lang.IFn
-         (invoke [this#] this#)
-         (invoke [this# query#] (get this# query#))
-         (applyTo [this# args#] (get-in this# args#)))
-       (def ~(symbol (str "new" rec)) ~(symbol (str "map->" rec)))))
+  (let [annotated-arg-syms (filter #(not (nil? (meta %))) args)
+        annotations (zipmap annotated-arg-syms 
+                            (map (comp :tag meta) annotated-arg-syms))
+        constr-arg-sym (gensym "m")]
+    `(do (clojure.core/defrecord ~rec ~args
+           clojure.lang.IFn
+           (invoke [this#] this#)
+           (invoke [this# query#] (get this# query#))
+           (applyTo [this# args#] (get-in this# args#)))
+     
+         (defn ~(symbol (str "new" rec)) [{:keys ~(vec annotated-arg-syms) :as ~constr-arg-sym}] 
+           {:pre ~(vec (for [[sym clazz] annotations]
+                            `(instance-or-nil? ~clazz ~sym) ))}
+           (~(symbol (str "map->" rec)) ~constr-arg-sym)))))
 
 ;; Define records for all entities we'll be testing with
 
-(defrecord Organization [id name label description initial-env-name
-                         initial-env-label initial-env-description])
+(defrecord Organization [id name label description initial-env])
 
-(defrecord Environment [id name label description org prior])
+(defrecord Environment [id name label description ^Organization org prior])
 
 (def library (newEnvironment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
@@ -26,45 +37,47 @@
   [env]
   (assoc library :org (:org env) :next env))
 
-(defrecord Provider [id name description org])
+(defrecord Provider [id name description ^Organization org])
 
-(defrecord Product [id name provider description gpg-key])
+(defrecord Product [id name ^Provider provider description gpg-key])
 
-(defrecord Repository [id name product url gpg-key])
+(defrecord Repository [id name ^Product product url gpg-key])
 
-(defrecord Changeset [id name env deletion?])
+(defrecord Changeset [id name ^Environment env deletion?])
 
 (ns-unmap *ns* 'Package) ; collision w java.lang.Package
-(defrecord Package [id name product])
+(defrecord Package [id name ^Product product])
 
-(defrecord Erratum [id name product])
+(defrecord Erratum [id name ^Product product])
 
-(defrecord Template [id name product org content])
+(defrecord Template [id name ^Product product ^Organization org content])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
-(defrecord System [id name env service-level])
+(defrecord System [id name ^Environment env service-level])
 
-(defrecord GPGKey [id name org content])
+(defrecord GPGKey [id name ^Organization org content])
 
-(defrecord User [id name email password password-confirm default-org default-env])
+(defrecord User [id name email password password-confirm ^Organization default-org ^Environment default-env])
 
 (defrecord Role [id name users permissions])
 
-(defrecord Permission [name role org resource-type verbs])
+(defrecord Permission [name ^Role role ^Organization org resource-type verbs])
 
-(defrecord ActivationKey [id name env description])
+(defrecord ActivationKey [id name ^Environment env description])
 
-(defrecord SystemGroup [id name systems org])
+(defrecord SystemGroup [id name systems  ^Organization org])
+
+(defrecord ContentView [id name description composite composite-name org])
 
 (defrecord Manifest [provider file-path url])
 
 (def red-hat-provider (newProvider {:name "Red Hat"}))
 
-(defrecord SyncPlan [id name org interval])
+(defrecord SyncPlan [id name ^Organization org interval])
 
-(defrecord Pool [id productId org])
+(defrecord Pool [id productId ^Organization org])
 
-(defrecord Subscription [id system pool quantity])
+(defrecord Subscription [id ^System system pool quantity])
 
 ;; Relationship protocol
 
@@ -93,6 +106,7 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
+   ContentView {:org :org, :parent #'org}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
    SyncPlan {:org :org, :parent #'org}})
 

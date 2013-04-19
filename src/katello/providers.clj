@@ -1,6 +1,7 @@
 (ns katello.providers
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             katello
+            [katello :as kt]
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -23,10 +24,11 @@
         ::create-repositories       "create_repos"
         ::discover-spinner          "//img[@alt='Spinner']"
         ::existing-product-dropdown "window.$(\"#existing_product_select_chzn\").mousedown()"
-        ::create-save               "commit"
+        ::new-product-name-text     "//input[@name='product_name']"
+        ::create-save               "//input[@value='Save']"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
-        ::repository-discovery      (ui/menu-link "repo_discovery")
+        ::repository-discovery      (ui/menu-link "repo_discovery") 
         ::details-link              (ui/menu-link "edit_custom_providers")}
 
        ;;products
@@ -44,7 +46,8 @@
 
 (sel/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
-  existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"})
+  new-product-radio-btn   "//input[@name='new_product' and @value='%s']"
+  existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"}) 
 
 ;; Nav
 
@@ -56,13 +59,14 @@
                                        (sleep 2000))
      [::named-product-page [product] (browser click (ui/editable (:name product)))]]
     [::details-page [] (browser click ::details-link)]
-    [::repo-discovery-page [] (browser click ::repository-discovery)]]])
+    [::repo-discovery-page [] (browser click ::repository-discovery)]]]) 
 
 ;; Tasks
 
 (defn create
   "Creates a custom provider with the given name and description."
   [{:keys [name description org]}]
+   {:pre [(instance? katello.Organization org)]} 
   (nav/go-to ::new-page {:org org})
   (sel/fill-ajax-form {::name-text name
                        ::provider-description-text description}
@@ -72,6 +76,8 @@
 (defn add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider name description]}]
+   {:pre [(instance? katello.Provider provider)
+          (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::products-page {:provider provider
                               :org (:org provider)})
   (browser click ::add-product)
@@ -95,7 +101,8 @@
 (defn delete-product
   "Deletes a product from the given provider."
   [{:keys [provider] :as product}]
-  {:pre [(not-empty provider)]}
+   {:pre [(not-empty provider)
+          (instance? katello.Product product)]}
   (nav/go-to product)
   (browser click ::remove-product)
   (browser click ::ui/confirmation-yes)
@@ -104,6 +111,7 @@
 (defn delete
   "Deletes the named custom provider."
   [provider]
+  {:pre [(instance? katello.Provider provider)]}
   (nav/go-to provider)
   (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
@@ -113,6 +121,8 @@
   "Edits the named custom provider. Takes an optional new name, and
   new description."
   [provider updated]
+  {:pre [(instance? katello.Provider provider)
+         (instance? katello.Provider updated)]}
   (nav/go-to ::details-page {:provider provider
                              :org (:org provider)})
   (common/in-place-edit {::name-text (:name updated)
@@ -121,36 +131,47 @@
 (defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
   selected repositories within the named product."
-  [provider product discoverable-url enabled-urls]
-  (nav/go-to ::repo-discovery-page {:provider provider
-                                    :org (:org provider)})
+  [product discoverable-url enabled-urls & [{:keys [new-prod]}]]
+  (nav/go-to ::repo-discovery-page {:provider (:provider product)
+                                    :org (:org (:provider product))})
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
   (browser waitForInvisible ::discover-spinner "120000")
   (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
   (browser click ::create-within-product)
-  (browser getEval ::existing-product-dropdown)
-  (browser mouseUp (existing-product-select (:name product)))
+  (if new-prod
+    (do
+      (browser click (new-product-radio-btn "true"))
+      (browser setText ::new-product-name-text (:name product)))
+    (do
+      (browser getEval ::existing-product-dropdown)
+      (browser mouseUp (existing-product-select (:name product)))))
   (browser click ::create-repositories)
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
+  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)})) 
 
 (extend katello.Provider
   ui/CRUD {:create create
            :delete delete
-           :update* edit}
+           :update edit}
 
   rest/CRUD (let [org-url (partial rest/url-maker [["api/organizations/%s/providers" [:org]]])
                  id-url (partial rest/url-maker [["api/providers/%s" [identity]]])]
              {:id rest/id-field
               :query (partial rest/query-by-name org-url)
               :create (fn [{:keys [name description org] :as prov}]
+                           {:pre [(instance? katello.Organization org)]} 
                         (merge prov
                                (rest/http-post (rest/api-url "api/providers")
                                           {:body {:organization_id (rest/get-id org)
                                                   :provider {:name name
                                                              :description description
                                                              :provider_type "Custom"}}})))
-              :read (partial rest/read-impl id-url)
-              :update* (fn [prov new-prov]
+              :read (fn [prov]
+                      {:pre [(or (nil? (kt/org prov))
+                                 (instance? katello.Organization (kt/org prov)))]}
+                      (rest/read-impl id-url prov))
+              :update (fn [prov new-prov]
+                         {:pre [(instance? katello.Provider prov)
+                                (instance? katello.Provider new-prov)]}
                         (merge new-prov (rest/http-put (id-url prov)
                                                  {:body {:provider
                                                          (select-keys new-prov [:repository_url])}})))
