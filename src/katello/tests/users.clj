@@ -14,7 +14,7 @@
                      [tasks :refer :all] 
                      [conf :refer [config *session-org* *session-user*]] 
                      [navigation :as nav]) 
-            [katello.tests.useful :refer [chained-env create-all-recursive]]
+            [katello.tests.useful :refer [create-all-recursive]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -132,10 +132,10 @@
       (let [save-method->env (into (array-map)
                                    (for [save-method saved-methods]
                                      (vector save-method
-                                             (chained-env {:name "Dev",
-                                                           :org (-> {:name (name save-method)}
-                                                                    kt/newOrganization
-                                                                    uniqueify)}))))
+                                             (kt/newEnvironment {:name "Dev",
+                                                                 :org (-> {:name (name save-method)}
+                                                                          kt/newOrganization
+                                                                          uniqueify)}))))
             user (new-unique-user)
             ways-to-set-default {:login (fn [user {:keys [org]}]
                                           (login user {:org org :default-org org}))

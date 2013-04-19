@@ -26,9 +26,29 @@
 
 (defrecord Organization [id name label description initial-env])
 
+(defn newOrganization [{:keys [initial-env] :as m}]
+  (map->Organization
+   (if initial-env (update-in m [:initial-env] assoc :org
+                              (map->Organization (dissoc m :initial-env)))
+       m)))
+
 (defrecord Environment [id name label description ^Organization org prior])
 
-(def library (newEnvironment {:name "Library"})) ;  Library is a special
+;; override the default constructor to chain in to previous env
+(def newEnvironment (comp first chain list map->Environment))
+
+(defn chain
+  "Sets the next and prior fields of successive envs to make a doubly
+  linked list."
+  [environments] {:pre [(apply = (map org environments))]} ; all in same org
+  (let [org (-> environments first org)
+        f (fn [envs latest-env]
+            (let [l (last envs)
+                  r (butlast envs)]
+              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
+    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))
+
+(def library (map->Environment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
 (defn mklibrary
@@ -113,15 +133,3 @@
 (doseq [[rec impls] relationships]
   (extend rec BelongsTo impls))
 
-
-
-(defn chain
-  "Sets the next and prior fields of successive envs to make a doubly
-  linked list."
-  [environments] {:pre [(apply = (map org environments))]} ; all in same org
-  (let [org (-> environments first org)
-        f (fn [envs latest-env]
-            (let [l (last envs)
-                  r (butlast envs)]
-              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
-    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))

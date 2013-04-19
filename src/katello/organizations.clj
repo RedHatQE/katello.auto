@@ -135,12 +135,17 @@
                                          {:body {:organization (select-keys new-org [:description])}}))
                :delete (fn [org]
                          (rest/http-delete (label-url org)))})
-  tasks/Uniqueable  {:uniques (fn [org]
+  tasks/Uniqueable  {:uniques (fn [{:keys [initial-env] :as org}]
                                 (for [ts (tasks/timestamps)]
-                                  (let [stamp-if-set (fn [s] (if (seq s) (tasks/stamp ts s) nil))]
-                                    (-> org
-                                        (update-in [:name] (partial tasks/stamp ts))
-                                        (update-in [:label] stamp-if-set)))))}
+                                  (let [stamp-if-set (fn [s] (if (seq s) (tasks/stamp ts s) nil))
+                                        updated-fields (-> org
+                                                           (update-in [:name] (partial tasks/stamp ts))
+                                                           (update-in [:label] stamp-if-set))]
+                                    (if initial-env
+                                      (update-in updated-fields [:initial-env :org :name]
+                                                 #(when %1
+                                                    (tasks/stamp ts %1)))
+                                      updated-fields))))}
 
   nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
                                                {:org org}))})
