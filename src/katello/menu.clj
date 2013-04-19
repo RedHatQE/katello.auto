@@ -34,7 +34,6 @@
                       ::sync-schedule-link               "sync_schedule"
                       ::sync-status-link                 "sync_status"
                       ::system-groups-link               "system_groups"
-                      ::system-templates-link            "system_templates"
                       ::systems-all-link                 "registered"
                       ::systems-link                     "systems"
                       ::users-link                       "users"
@@ -76,9 +75,7 @@
     
     [:katello.content-search/page [] (browser clickAndWait ::content-search-link)]
                 
-    [:katello.system-templates/page [] (browser clickAndWait ::system-templates-link)]
-
-     [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
+    [::changeset-management-menu [] (browser mouseOver ::changeset-management-link)
       [:katello.changesets/page [] (browser clickAndWait ::changesets-link)]
       [:katello.changesets/history-page [] (browser clickAndWait ::changeset-history-link)]]]]
 
