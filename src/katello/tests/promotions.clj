@@ -36,15 +36,7 @@
         setup-item {katello.Product (fn [prod] ; create a repo in the given product and sync it
                                       (let [repo (assoc (fresh-repo) :product prod)]
                                         (create-recursive repo)
-                                        (sync/perform-sync (list repo))))
-                    katello.Template (fn [t] ; create a repo and sync it, promote it and add it to template
-                                       (let [repo (fresh-repo)]
-                                         (create-recursive repo)
-                                         (sync/perform-sync (list repo))
-                                         (doseq [target-env envs]
-                                           (changeset/api-promote target-env (list (:product repo))))
-                                         (ui/create t)
-                                         (ui/update t assoc :content (list repo))))}]
+                                        (sync/perform-sync (list repo))))}]
     (rest/create-all envs)
     (doseq [item content-to-promote]
       ((setup-item (class item)) item))

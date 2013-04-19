@@ -101,7 +101,7 @@
     [(fn [] [:permissions [{:org global, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
              :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                      :katello.providers/custom-page :katello.system-templates/page
+                                                      :katello.providers/custom-page 
                                                       :katello.changesets/page])
                                        (fn [] (ui/create (uniqueify baseorg)))
                                        create-an-env)])
@@ -111,7 +111,7 @@
               [:permissions [{:org global, :resource-type "Organizations", :verbs ["Administer Organization"], :name "orgcreate"}]
                :allowed-actions [(fn [] (ui/create org)) (fn [] (ui/delete org)) create-an-env]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page :katello.system-templates/page
+                                                        :katello.providers/custom-page 
                                                         :katello.changesets/page]
                                                        org )
                                          (fn [] (ui/create prov))
@@ -146,26 +146,6 @@
                                         create-an-org)])
       assoc :blockers (open-bz-bugs "757817"))
 
-     (fn [] [:permissions [{:org global, :resource-type "System Templates", :verbs ["Read System Templates"], :name "stread"}]
-             :allowed-actions [(navigate-fn :katello.system-templates/page)]
-             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
-                                                      :katello.providers/custom-page :katello.sync-management/status-page
-                                                      :katello.changesets/page])
-                                       create-a-st
-                                       create-an-org
-                                       create-an-env)])
-
-     (fn [] [:permissions [{:org global
-                            :resource-type "System Templates"
-                            :verbs ["Administer System Templates"]
-                            :name "stmang"}]
-             :allowed-actions [create-a-st]
-             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page
-                                                      :katello.providers/custom-page :katello.sync-management/status-page
-                                                      :katello.changesets/page])
-                                       create-an-org
-                                       create-an-env)])
-
      (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
              :allowed-actions [(navigate-fn :katello.users/page)]
              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
@@ -197,7 +177,7 @@
                :setup (fn [] (rest/create org))
                :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page :katello.system-templates/page
+                                                        :katello.providers/custom-page 
                                                         :katello.changesets/page] )
                                          (fn [] (nav/go-to org)))]))
 
@@ -206,7 +186,7 @@
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
                :setup (fn [] (rest/create org))
                :allowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                     :katello.providers/custom-page :katello.system-templates/page
+                                                     :katello.providers/custom-page 
                                                      :katello.changesets/page]
                                                     org)
                                       (fn [] (nav/go-to org))
@@ -217,8 +197,7 @@
               [:permissions []
                :allowed-actions (map nav-fn ["users"])
                :disallowed-actions (map nav-fn ["subscriptions" "systems" "systems/environments" "system_groups"
-                                                "roles" "sync_management/index" "content_search" "system_templates"
-                                                "organizations" "providers"])]))
+                                                "roles" "sync_management/index" "content_search" "organizations" "providers"])]))
 
      (delete-system-data "Read Systems")
      (delete-system-data "Delete Systems")]))
