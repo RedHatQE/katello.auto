@@ -14,7 +14,6 @@
 (ui/deflocators {::new                     "new"
                  ::name-text               "activation_key[name]"
                  ::description-text        "activation_key[description]"
-                 ::template-select         "activation_key[system_template_id]"
                  ::content-view-select     "activation_key[content_view_id]"
                  ::save                    "save_key"
                  ::system-group-select     (ui/menu-link "activation_keys_menu_system_groups")
@@ -44,14 +43,13 @@
 ;; Tasks
 
 (defn create
-  "Creates an activation key with the given properties. Description
-  and system-template are optional."
-  [{:keys [name description env system-template] :as ak}]
+  "Creates an activation key with the given properties. Description is
+   optional."
+  [{:keys [name description env] :as ak}]
   (nav/go-to ::new-page {:org (kt/org ak)})
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
-                       ::description-text description
-                       ::template-select (:name system-template)}
+                       ::description-text description}
                       ::save)
   (notification/check-for-success))
 
@@ -97,12 +95,10 @@
                       description (:description add)] 
                      (common/in-place-edit {::name-text name
                                             ::description-text description}))
-      (when-some-let [st (:system-template add)
-                      cv (:content-view add)
+      (when-some-let [cv (:content-view add)
                       env (:env add)]
                      
-                     (sel/fill-ajax-form {::template-select st
-                                          ::content-view-select cv
+                     (sel/fill-ajax-form {::content-view-select cv
                                           nav/select-environment-widget env}
                                          ::save))
       (when-let [sg (:system-group add)]
