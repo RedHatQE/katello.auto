@@ -56,7 +56,9 @@
   tab                  "link=%s"
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
   default-star         "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
-  switcher-link        "//div[@id='orgbox']//a[.='%s']"})
+  switcher-link        "//div[@id='orgbox']//a[.='%s']"
+  custom-keyname-list  "xpath=(//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')])[%s]"
+  custom-value-list    "xpath=(//td/div[@class='editable edit_textfield'])[%s]"})
 
 ;;
 ;; Tells the clojure selenium client where to look up keywords to get
