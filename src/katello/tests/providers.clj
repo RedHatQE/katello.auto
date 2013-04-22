@@ -152,6 +152,7 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
+      :blockers (open-bz-bugs "953603")
       (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
