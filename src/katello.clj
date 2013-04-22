@@ -28,9 +28,12 @@
 
 (defn newOrganization [{:keys [initial-env] :as m}]
   (map->Organization
-   (if initial-env (update-in m [:initial-env] assoc :org
-                              (map->Organization (dissoc m :initial-env)))
-       m)))
+   (if initial-env
+     (let [thisorg (map->Organization (dissoc m :initial-env))]
+       (-> m
+           (update-in [:initial-env] assoc :org thisorg)
+           (update-in [:initial-env :prior] assoc :org thisorg)))
+     m)))
 
 (defrecord Environment [id name label description ^Organization org prior])
 

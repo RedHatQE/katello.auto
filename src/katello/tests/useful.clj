@@ -1,5 +1,6 @@
 (ns katello.tests.useful
-  (:require [katello :as kt]
+  (:require [clojure.zip :as zip]
+            [katello :as kt]
             (katello [rest :as rest]
                      [tasks :as tasks])))
 
@@ -7,15 +8,38 @@
   (when-not (rest/exists? ent)
     (rest/create ent)))
 
+(defn ent-zip "A zipper to traverse nested katello entites"
+  [ent]
+  (zip/zipper (constantly true)
+              #(seq (filter (partial satisfies? rest/CRUD) (vals %)))
+              #(throw (RuntimeException. "Editing entity zipper is not supported."))
+              ent))
+
 (defn create-recursive
   "Recursively create in katello, all the entites that satisfy
    katello.rest/CRUD (innermost first).  Example, an env that contains
    a field for its parent org, the org would be created first, then
-   the env." [ent & [{:keys [check-exist?] :or {check-exist? true}}]]
-   (doseq [field (vals ent) :when (satisfies? rest/CRUD field)]
-     (create-recursive field))
-   (if check-exist? (ensure-exists ent)
-       (rest/create ent)))
+   the env."
+  [ent & [{:keys [check-exist?]
+           :or {check-exist? true}
+           :as opts}]]
+  (let [match? (fn [e1 e2] (and (= (class e1) (class e2)
+                                   (:name e1) (:name e2))))
+        already-created? (fn [e s] (seq (filter (partial match? e) s)))]
+    ;; only create what hasn't been created already
+    (loop [ents (->> ent
+                     ent-zip
+                     (iterate zip/next)
+                     (take-while (complement zip/end?))
+                     (map zip/node)
+                     reverse)
+           already-created (list)]
+      (let [ent (first ents)]
+        (when (and ent (not (already-created? ent already-created)))
+          (if check-exist?
+            (ensure-exists ent)
+            (rest/create ent))
+          (recur (rest ents) (conj already-created ent)))))))
 
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]
