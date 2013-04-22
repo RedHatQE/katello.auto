@@ -26,6 +26,7 @@
         ::existing-product-dropdown "window.$(\"#existing_product_select_chzn\").mousedown()"
         ::new-product-name-text     "//input[@name='product_name']"
         ::create-save               "//input[@value='Save']"
+        ::cancel-discovery          "//input[@value='Cancel']"
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/menu-link "products_repos")
         ::repository-discovery      (ui/menu-link "repo_discovery") 
@@ -130,23 +131,30 @@
 
 (defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
-  selected repositories within the named product."
-  [product discoverable-url enabled-urls & [{:keys [new-prod]}]]
+  selected repositories within the named product. Optional keys:
+  cancel - cancels the repo discovery search shortly after starting it.
+  new-prod - creates a new product instead of adding repos to an existing one"
+  [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
   (nav/go-to ::repo-discovery-page {:provider (:provider product)
                                     :org (:org (:provider product))})
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
-  (browser waitForInvisible ::discover-spinner "120000")
-  (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
-  (browser click ::create-within-product)
-  (if new-prod
+  (if cancel
     (do
-      (browser click (new-product-radio-btn "true"))
-      (browser setText ::new-product-name-text (:name product)))
+      (Thread/sleep 3000)
+      (browser click ::cancel-discovery))
     (do
-      (browser getEval ::existing-product-dropdown)
-      (browser mouseUp (existing-product-select (:name product)))))
-  (browser click ::create-repositories)
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)})) 
+      (browser waitForInvisible ::discover-spinner "120000")
+      (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
+      (browser click ::create-within-product)
+      (if new-prod
+        (do
+          (browser click (new-product-radio-btn "true"))
+          (browser setText ::new-product-name-text (:name product)))
+        (do
+          (browser getEval ::existing-product-dropdown)
+          (browser mouseUp (existing-product-select (:name product)))))
+      (browser click ::create-repositories)
+      (notification/check-for-success {:match-pred (notification/request-type? :repo-create)})))) 
 
 (extend katello.Provider
   ui/CRUD {:create create
