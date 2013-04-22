@@ -156,10 +156,13 @@
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
                        uniqueify)
-            repo1 (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
-            repo2 (fresh-repo conf/*session-org* (-> fake/custom-provider first :products first :repos first :url))]
-        (ui/create gpgkey)
-        (ui/create-all (kt/provider repo1) (kt/provider repo2) (kt/product repo1) (kt/product repo2) repo1 repo2)
+            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2  (fresh-repo conf/*session-org* (-> fake/custom-provider first :products first :repos first :url))
+            prd1   (kt/product repo1)
+            prd2   (kt/product repo2)
+            prv1   (kt/provider repo1)
+            prv2   (kt/provider repo2)]
+        (ui/create-all (list gpgkey prv1 prv2 prd1 prd2 repo1 repo2))
         (when (rest/is-katello?)
           (changeset/sync-and-promote (list repo1) test-environment))
         (provision/with-client "consume-content"
@@ -169,17 +172,31 @@
                                      :org (kt/org repo1)
                                      :env test-environment
                                      :force true})
-          (let [mysys (client/my-hostname ssh-conn)
-                product-name (-> repo1 kt/product :name)]
-            (system/subscribe {:system-name mysys
-                               :add-products product-name})
+          (let [mysys              (client/my-hostname ssh-conn)
+                product-name       (-> repo1 kt/product :name)
+                deletion-changeset (-> {:name "deletion-cs"
+                                        :content (distinct (map :product repo1))
+                                        :env test-environment
+                                        :deletion? true}
+                                       katello/newChangeset
+                                       uniqueify)
+                promotion-changeset (-> {:name "re-promotion-cs"
+                                         :content (distinct (map :product repo1))
+                                         :env test-environment}
+                                        katello/newChangeset
+                                        uniqueify)]
+            (client/subscribe ssh-conn (system/pool-id mysys prd1))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=0")
                   result (client/run-cmd ssh-conn cmd)]
               (assert/is (->> result :exit-code (= 0))))
+            (client/sm-cmd ssh-conn :unsubscribe {:all true})
+            (when (rest/is-katello?)
+              (changeset/promote-delete-content deletion-changeset))
             (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
             (when (rest/is-katello?)
-              (changeset/sync-and-promote (list repo1) test-environment))
+              (changeset/promote-delete-content promotion-changeset))
+            (client/subscribe ssh-conn (system/pool-id mysys prd1))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=1")
                   result (client/run-cmd ssh-conn cmd)]
