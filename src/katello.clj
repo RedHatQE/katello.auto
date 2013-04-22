@@ -26,11 +26,37 @@
 
 (defrecord Organization [id name label description initial-env])
 
+(defn newOrganization [{:keys [initial-env] :as m}]
+  (map->Organization
+   (if initial-env
+     (let [thisorg (map->Organization (dissoc m :initial-env))]
+       (-> m
+           (update-in [:initial-env] assoc :org thisorg)
+           (update-in [:initial-env :prior] assoc :org thisorg)))
+     m)))
+
 (defrecord Environment [id name label description ^Organization org prior])
 
-(def library (newEnvironment {:name "Library"})) ;  Library is a special
+(def library (map->Environment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
+
+(declare org )
+
+;; override the default constructor to chain in to previous env
+(defn chain
+  "Sets the next and prior fields of successive envs to make a doubly
+  linked list."
+  [environments] {:pre [(apply = (map org environments))]} ; all in same org
+  (let [org (-> environments first org)
+        f (fn [envs latest-env]
+            (let [l (last envs)
+                  r (butlast envs)]
+              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
+    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))
+
+(def newEnvironment (comp first chain list map->Environment))
+
 (defn mklibrary
   "Creates a library record for a particular org and next
    environment (used for env selection in UI)"
@@ -49,8 +75,6 @@
 (defrecord Package [id name ^Product product])
 
 (defrecord Erratum [id name ^Product product])
-
-(defrecord Template [id name ^Product product ^Organization org content])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name ^Environment env service-level])
@@ -98,9 +122,6 @@
                :repository identity, :parent #'product} ; the org is the product's org
    Package {:org (comp #'org #'product), :product :product, :parent #'product}
    Erratum {:org (comp #'org #'product), :product :product, :parent #'product}
-   Template {:org (fn [t] (or (:org t)
-                              (-> t product org)))
-             :product :product}
    System {:org (comp #'org #'env), :env :env, :parent #'org}
    GPGKey {:org :org, :parent #'org}
    Permission {:org :org, :parent #'org}
@@ -113,15 +134,3 @@
 (doseq [[rec impls] relationships]
   (extend rec BelongsTo impls))
 
-
-
-(defn chain
-  "Sets the next and prior fields of successive envs to make a doubly
-  linked list."
-  [environments] {:pre [(apply = (map org environments))]} ; all in same org
-  (let [org (-> environments first org)
-        f (fn [envs latest-env]
-            (let [l (last envs)
-                  r (butlast envs)]
-              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
-    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))

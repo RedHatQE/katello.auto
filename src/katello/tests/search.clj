@@ -13,7 +13,7 @@
                      [systems :as system]
                      [conf :refer [*session-org* config]])
             
-            [katello.tests.useful :refer [ensure-exists chained-env]]
+            [katello.tests.useful :refer [ensure-exists]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -44,7 +44,7 @@
     :description "Search for a system based on criteria."
     :blockers rest/katello-only
     (fn [sysinfo searchterms & [groupinfo]]
-      (with-unique [env (chained-env {:name "dev", :org *session-org*})
+      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         ;; update hostname in facts to match uniquified system name
@@ -133,7 +133,7 @@
     :description "search activation keys by default criteria i.e. name"
     
     (fn [akinfo searchterms]
-      (with-unique [env (chained-env {:name "dev", :org *session-org*})
+      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
                     ak (kt/newActivationKey (assoc akinfo :env env))]
         (rest/create env)
         (ui/create ak)
@@ -168,7 +168,7 @@
     :blockers rest/katello-only
     
     (fn [groupinfo sysinfo searchterms]
-      (with-unique [env (chained-env {:name "dev", :org *session-org*})
+      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         (ensure-exists env)

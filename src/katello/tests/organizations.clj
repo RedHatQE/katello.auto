@@ -12,8 +12,7 @@
                      [environments :as environment]
                      [changesets :as changeset]
                      [fake-content :as fake]
-                     [conf :refer [config]])
-            [katello.tests.useful :refer [chained-env]]
+                     [conf :refer [config]]) 
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -137,7 +136,7 @@
 
 
         (with-unique [org (mkorg "delorg")
-                      env (chained-env {:name "env" :org org})
+                      env (kt/newEnvironment {:name "env" :org org})
                       repos (for [r fake/custom-repos]
                               (update-in r [:product :provider] assoc :org org))]
           (setup-custom-org-with-content env repos)
