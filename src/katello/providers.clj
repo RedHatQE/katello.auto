@@ -38,7 +38,7 @@
         ::product-label-text       "//*[@name='product[label]']"
         ::product-description-text "//*[@name='product[description]']"
         ::update-prd-gpg-keys      "//div[contains(@class,'edit_select_product_gpg')]"
-        ::update-prd-gpg-select    "//select[@name='product[gpg_key]']"
+        ::prd-gpg-select    "//select[@name='product[gpg_key]']"
         ::save-updated-gpg-key     "//div[@name='product[gpg_key]']//button[contains(.,'Save')]"
         ::confirm-gpg-update       "//span[@class='ui-button-text' and contains(.,'Yes')]"
         ::remove-product           (ui/remove-link "products")}
@@ -75,12 +75,13 @@
 
 (defn add-product
   "Adds a product to a provider, with the given name and description."
-  [{:keys [provider name description]}]
+  [{:keys [provider name description gpg-key]}]
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::products-page {:provider provider
                               :org (:org provider)})
   (browser click ::add-product)
+  (when gpg-key (browser select ::prd-gpg-select gpg-key))
   (sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}
                       ::create-product)
@@ -93,7 +94,7 @@
   (when (not= (:gpg-key product) gpg-key) 
     (nav/go-to product)
     (sel/->browser (click  ::update-prd-gpg-keys)
-                   (select ::update-prd-gpg-select gpg-key)
+                   (select ::prd-gpg-select gpg-key)
                    (click  ::save-updated-gpg-key)
                    (click  ::confirm-gpg-update))
     (notification/check-for-success {:match-pred (notification/request-type? :prod-update)})))
