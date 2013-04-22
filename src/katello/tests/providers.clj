@@ -192,11 +192,9 @@
                   result (client/run-cmd ssh-conn cmd)]
               (assert/is (->> result :exit-code (= 0))))
             (client/sm-cmd ssh-conn :unsubscribe {:all true})
-            (when (rest/is-katello?)
-              (changeset/promote-delete-content deletion-changeset))
+            (changeset/promote-delete-content deletion-changeset)
             (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
-            (when (rest/is-katello?)
-              (changeset/promote-delete-content promotion-changeset))
+            (changeset/promote-delete-content promotion-changeset)
             (client/subscribe ssh-conn (system/pool-id mysys prd1))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=1")
