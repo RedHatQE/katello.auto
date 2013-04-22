@@ -217,9 +217,9 @@
         (system/multi-delete systems)))
 
     (deftest "Remove systems and validate sys-count"
-      (with-unique [org (kt/newOrganization {:name "delsyscount"})
-                    env (kt/newEnvironment {:name "dev", :org org})]
-        (let [systems (->> {:name "delsys", :env env}
+      (with-unique [org (kt/newOrganization {:name "delsyscount"
+                                             :initial-env (kt/newEnvironment {:name "dev"})})]
+        (let [systems (->> {:name "delsys", :env (:initial-env org)}
                            kt/newSystem
                            uniques
                            (take 4))
@@ -267,13 +267,14 @@
         (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "Creates org adds new system then applies custom org default"
-      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
-                    env (kt/newEnvironment {:name "dev" :org org})
-                    system (kt/newSystem {:name (uniqueify "sys")
+      (with-unique [org (kt/newOrganization
+                         {:name "defaultsysinfo"
+                          :initial-env (kt/newEnvironment {:name "dev"})})
+                    system (kt/newSystem {:name "sys"
                                           :sockets "1"
                                           :system-arch "x86_64"
-                                          :env env})]
-        (ui/create-all (list org env system))
+                                          :env (:initial-env org)})]
+        (ui/create-all (list org system))
         (browser click :katello.systems/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
         (org/add-custom-keyname org "Manager" {:apply-default true})
@@ -295,9 +296,9 @@
           (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
     (deftest "Remove systems and validate sys-count"
-      (with-unique [org (kt/newOrganization {:name "delsyscount"})
-                    env (kt/newEnvironment {:name "dev", :org org})]
-        (let [systems (->> {:name "delsys", :env env}
+      (with-unique [org (kt/newOrganization {:name "delsyscount"
+                                             :initial-env (kt/newEnvironment {:name "dev"})})]
+        (let [systems (->> {:name "delsys", :env (:initial-env org)}
                            kt/newSystem
                            uniques
                            (take 4))
