@@ -136,14 +136,14 @@
 
 
         (with-unique [org (mkorg "delorg")
-                      env (kt/newEnvironment {:name "env" :org org})
-                      repos (for [r fake/custom-repos]
-                              (update-in r [:product :provider] assoc :org org))]
-          (setup-custom-org-with-content env repos)
-          ;; not allowed to delete the current org, so switch first.
-          (organization/switch)
-          (ui/delete org)
-          (setup-custom-org-with-content env repos))))
+                      env (kt/newEnvironment {:name "env" :org org})]
+          (let [repos (for [r fake/custom-repos]
+                        (update-in r [:product :provider] assoc :org org))]
+           (setup-custom-org-with-content env repos)
+           ;; not allowed to delete the current org, so switch first.
+           (organization/switch)
+           (ui/delete org)
+           (setup-custom-org-with-content env repos)))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :data-driven true
