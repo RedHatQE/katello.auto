@@ -14,14 +14,14 @@
 ;; Locators
 
 (ui/deflocators
-  {::name-text         "kt_environment_name"
-   ::label-text        "kt_environment_label"
-   ::description-text  "kt_environment_description"
-   ::prior             "kt_environment_prior"
+  {::name-text         "kt_environment[name]"
+   ::label-text        "kt_environment[label]"
+   ::description-text  "kt_environment[description]"
+   ::prior             "kt_environment[prior]"
    ::create            "commit"
    ::new               "//form[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
    ::remove-link       (ui/remove-link "environments")
-   ::prior-select-edit "kt_environment_prior" }
+   ::prior-select-edit "kt_environment[prior]" }
   ui/locators)
 
 ;; Nav
