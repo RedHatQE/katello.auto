@@ -55,7 +55,7 @@
 
 (defgroup promotion-tests
   
-  :blockers (open-bz-bugs "714297" "738054" "745315" "784853" "845096")
+  :blockers (open-bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
           
   (deftest "Promote content"
     :data-driven true
