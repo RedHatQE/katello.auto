@@ -30,7 +30,9 @@
 
 (sel/template-fns
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"})
+  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
+  gpgkey-under-repo-details "//div[@name='gpg_key' and contains(.,'%s')]"
+  select-repo "//li[@class='repo']//div[contains(@class,'grid') and contains(.,'%s')]"})
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
@@ -81,6 +83,12 @@
   (nav/go-to ::redhat-page)
   (doseq [repo repos]
     (browser check (repo-enable-checkbox (:name repo)))))
+
+(defn gpgkey-associated?
+  [product repo-name]
+  (nav/go-to product)
+  (browser click (select-repo repo-name))
+  (browser isElementPresent (gpgkey-under-repo-details (:gpg-key product))))
 
 
 (extend katello.Repository
