@@ -147,7 +147,7 @@
 
 ;; Tests
 
-(let [success [:type :success]]
+(let [success #(-> % :type (= :success))]
   
   (defgroup system-tests
     :group-setup create-test-environment
@@ -217,9 +217,9 @@
         (system/multi-delete systems)))
 
     (deftest "Remove systems and validate sys-count"
-      (with-unique [org (kt/newOrganization {:name "delsyscount"})
-                    env (kt/newEnvironment {:name "dev", :org org})]
-        (let [systems (->> {:name "delsys", :env env}
+      (with-unique [org (kt/newOrganization {:name "delsyscount"
+                                             :initial-env (kt/newEnvironment {:name "dev"})})]
+        (let [systems (->> {:name "delsys", :env (:initial-env org)}
                            kt/newSystem
                            uniques
                            (take 4))
@@ -252,27 +252,29 @@
        [true]])
 
     (deftest "Creates org with default custom key and adds new system"
-      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
-                    env (kt/newEnvironment {:name "dev" :org org})
-                    system (kt/newSystem {:name (uniqueify "sys")
+      (with-unique [org (kt/newOrganization
+                         {:name "defaultsysinfo"
+                          :initial-env (kt/newEnvironment {:name "dev"})})
+                     
+                    system (kt/newSystem {:name "sys"
                                           :sockets "1"
                                           :system-arch "x86_64"
-                                          :env env})]
-        (let [org (assoc org :initial-env env)]
-          (ui/create org)
-          (org/add-custom-keyname org "Manager")
-          (ui/create system)
-          (browser click :katello.systems/custom-info)
-          (assert/is (browser isTextPresent "Manager")))))
+                                          :env (:initial-env org)})]
+        (ui/create org)
+        (org/add-custom-keyname org "Manager")
+        (ui/create system)
+        (browser click :katello.systems/custom-info)
+        (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "Creates org adds new system then applies custom org default"
-      (with-unique [org (kt/newOrganization {:name (uniqueify "defaultsysinfo")})
-                    env (kt/newEnvironment {:name "dev" :org org})
-                    system (kt/newSystem {:name (uniqueify "sys")
+      (with-unique [org (kt/newOrganization
+                         {:name "defaultsysinfo"
+                          :initial-env (kt/newEnvironment {:name "dev"})})
+                    system (kt/newSystem {:name "sys"
                                           :sockets "1"
                                           :system-arch "x86_64"
-                                          :env env})]
-        (ui/create-all (list org env system))
+                                          :env (:initial-env org)})]
+        (ui/create-all (list org system))
         (browser click :katello.systems/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
         (org/add-custom-keyname org "Manager" {:apply-default true})
@@ -293,97 +295,97 @@
         (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
           (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
-  (deftest "Remove systems and validate sys-count"
-    (with-unique [org (kt/newOrganization {:name "delsyscount"})
-                  env (kt/newEnvironment {:name "dev", :org org})]
-      (let [systems (->> {:name "delsys", :env env}
-                         kt/newSystem
-                         uniques
-                         (take 4))
-            ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
-        (create-all-recursive systems)
-        (assert/is (= (count systems) (ui-count)))
-        (ui/delete (first systems))
-        (assert/is (= (dec (count systems)) (ui-count)))
-        (system/multi-delete (rest systems))
-        (assert/is (= 0 (ui-count))))))
+    (deftest "Remove systems and validate sys-count"
+      (with-unique [org (kt/newOrganization {:name "delsyscount"
+                                             :initial-env (kt/newEnvironment {:name "dev"})})]
+        (let [systems (->> {:name "delsys", :env (:initial-env org)}
+                           kt/newSystem
+                           uniques
+                           (take 4))
+              ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
+          (create-all-recursive systems)
+          (assert/is (= (count systems) (ui-count)))
+          (ui/delete (first systems))
+          (assert/is (= (dec (count systems)) (ui-count)))
+          (system/multi-delete (rest systems))
+          (assert/is (= 0 (ui-count))))))
 
-  (deftest "Remove System: with yes-no confirmation"
-    :data-driven true
+    (deftest "Remove System: with yes-no confirmation"
+      :data-driven true
 
-    (fn [confirm?]
-      (with-unique [system (kt/newSystem {:name "mysystem"
-                                          :sockets "1"
-                                          :system-arch "x86_64"})]
-        (ui/create system)
-        (nav/go-to system)
-        (browser click ::remove)
-        (if confirm?
-          (do (browser click ::ui/confirmation-yes)
-              (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
-              (assert (rest/not-exists? system)))
-          (do (browser click ::confirm-to-no)
-              (nav/go-to system)))))
-    [[false]
-     [true]])
+      (fn [confirm?]
+        (with-unique [system (kt/newSystem {:name "mysystem"
+                                            :sockets "1"
+                                            :system-arch "x86_64"})]
+          (ui/create system)
+          (nav/go-to system)
+          (browser click ::remove)
+          (if confirm?
+            (do (browser click ::ui/confirmation-yes)
+                (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
+                (assert (rest/not-exists? system)))
+            (do (browser click ::confirm-to-no)
+                (nav/go-to system)))))
+      [[false]
+       [true]])
 
-  (deftest "System Details: Add custom info"
-    :blockers (open-bz-bugs "919373" "951231" "951197")
-    :data-driven true
+    (deftest "System Details: Add custom info"
+      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :data-driven true
 
-    (fn [keyname custom-value success?]
-       (with-unique-system s
-         (ui/create s)
-         (ui/update s assoc :custom-info {keyname custom-value})
-         (assert/is (= (browser isTextPresent keyname) success?))))
+      (fn [keyname custom-value success?]
+        (with-unique-system s
+          (ui/create s)
+          (ui/update s assoc :custom-info {keyname custom-value})
+          (assert/is (= (browser isTextPresent keyname) success?))))
 
-    [["Hypervisor" "KVM" true]
-     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
-     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
-     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 256) false]
-     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
-     [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
-     ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
-     ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
+      [["Hypervisor" "KVM" true]
+       [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
+       [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
+       [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 256) false]
+       [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
+       [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
+       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+       ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
-  (deftest "System Details: Update custom info"
-    :blockers (open-bz-bugs "919373" "951231" "951197")
-    :data-driven true
+    (deftest "System Details: Update custom info"
+      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :data-driven true
 
-    (fn [keyname custom-value new-value success?]
+      (fn [keyname custom-value new-value success?]
+        (with-unique-system s
+          (ui/create s)
+          (let [s (ui/update s assoc :custom-info {keyname custom-value})]
+            (assert/is (browser isTextPresent custom-value))
+            (ui/update s assoc :custom-info {keyname new-value})
+            (assert/is (= (browser isTextPresent new-value) success?)))))
+
+      [["Hypervisor" "KVM" "Xen" true]
+       ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
+       ["Hypervisor" "KVM" (random-string (int \a) (int \z) 256) false]
+       ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
+       ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
+
+    (deftest "System Details: Delete custom info"
+      :blockers (open-bz-bugs "919373")
       (with-unique-system s
         (ui/create s)
-        (let [s (ui/update s assoc :custom-info {keyname custom-value})]
-          (assert/is (browser isTextPresent custom-value))
-          (ui/update s assoc :custom-info {keyname new-value})
-          (assert/is (= (browser isTextPresent new-value) success?)))))
+        (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
+          (assert/is (browser isTextPresent "Hypervisor"))
+          (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
-    [["Hypervisor" "KVM" "Xen" true]
-     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
-     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 256) false]
-     ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
-     ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
+    (deftest "System name is required when creating a system"
+      (expecting-error val/name-field-required
+                       (ui/create (kt/newSystem {:name ""
+                                                 :facts (system/random-facts)
+                                                 :env test-environment}))))
 
-  (deftest "System Details: Delete custom info"
-    :blockers (open-bz-bugs "919373")
-    (with-unique-system s
-      (ui/create s)
-      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
-        (assert/is (browser isTextPresent "Hypervisor"))
-        (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
-
-  (deftest "System name is required when creating a system"
-    (expecting-error val/name-field-required
-                     (ui/create (kt/newSystem {:name ""
-                                               :facts (system/random-facts)
-                                               :env test-environment}))))
-
-  (deftest "New System Form: tooltips pop-up with correct information"
-    :data-driven true
-    verify-new-system-tooltip
-    [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
-     [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
-  ;; FIXME - convert-to-records
+    (deftest "New System Form: tooltips pop-up with correct information"
+      :data-driven true
+      verify-new-system-tooltip
+      [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
+       [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
+    ;; FIXME - convert-to-records
 
   
 

@@ -38,7 +38,6 @@
   {::products-category           (content-category "products")
    ::errata-category             (content-category "errata")
    ::kickstart-trees-category    (content-category "kickstart trees")
-   ::templates-category          (content-category "templates")
    ::content-views-category      (content-category "content_views") 
    ::select-errata               (select-types "Errata")
    ::select-repos                (select-types "Repositories")
@@ -79,10 +78,6 @@
   katello.Product
   (go-to [prod]
     (browser click ::products-category))
-
-  katello.Template
-  (go-to [template]
-    (browser click ::templates-category))
   
   katello.ContentView
   (go-to [content-view]
@@ -251,8 +246,7 @@
   (nav/go-to ::named-environment-page {:env env
                                        :org (kt/org env)
                                        :next-env nil})
-  (let [categories {katello/newProduct ::products-category,
-                    katello/newTemplate ::templates-category}]
+  (let [categories {katello/newProduct ::products-category}]
     (apply concat (for [[f category] categories]
                     (do
                       (browser click category)
