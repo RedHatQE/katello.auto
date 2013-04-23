@@ -523,8 +523,7 @@
                                      :force true})
           (let [mysys (client/my-hostname ssh-conn)
                 product-name (-> repo kt/product :name)]
-            (system/subscribe {:system-name mysys
-                               :add-products product-name})
+            (ui/update mysys assoc :products product-name)
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
                   result (client/run-cmd ssh-conn cmd)]
