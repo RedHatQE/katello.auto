@@ -408,7 +408,7 @@
     (deftest "Add system link is disabled when org has no environments"
       (with-unique [org (kt/newOrganization {:name "addsys"})]
         (rest/create org)
-        (nav/go-to ::system/page)
+        (nav/go-to ::system/page {:org org})
         (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
           (assert (and (.contains class "disabled")
                        (.contains original-title "environment is required"))))))
