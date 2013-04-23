@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [fn])
   (:require [katello :as kt]
             [katello.client.provision :as provision]
-            [test.tree.script  :refer [deftest defgroup]]
+            (test.tree [script :refer [defgroup deftest]]
+                       [builder :refer [union]])
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
@@ -152,7 +153,7 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
-      :blockers (open-bz-bugs "953603")
+      :blockers (union (open-bz-bugs "953603") rest/katello-only)
       (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
@@ -164,8 +165,7 @@
             prv1   (kt/provider repo1)
             prv2   (kt/provider repo2)]
         (ui/create-all (list gpgkey prv1 prv2 prd1 prd2 repo1 repo2))
-        (when (rest/is-katello?)
-          (changeset/sync-and-promote (list repo1) test-environment))
+        (changeset/sync-and-promote (list repo1) test-environment)
         (provision/with-client "consume-content"
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
