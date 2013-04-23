@@ -145,6 +145,11 @@
             (throw+ {:type ::system/sys-description-edited-anyway
                      :msg "System description changed even after clicking cancel button."}))))))
 
+(defn ui-count-systems "Gets the total count of systems in the given org"
+  [org]
+  (nav/go-to ::system/page {:org org})
+  (Integer/parseInt (browser getText ::system/total-sys-count)))
+
 ;; Tests
 
 (let [success #(-> % :type (= :success))]
@@ -222,14 +227,13 @@
         (let [systems (->> {:name "delsys", :env (:initial-env org)}
                            kt/newSystem
                            uniques
-                           (take 4))
-              ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
+                           (take 4))]
           (create-all-recursive systems)
-          (assert/is (= (count systems) (ui-count)))
+          (assert/is (= (count systems) (ui-count-systems org)))
           (ui/delete (first systems))
-          (assert/is (= (dec (count systems)) (ui-count)))
+          (assert/is (= (dec (count systems)) (ui-count-systems org)))
           (system/multi-delete (rest systems))
-          (assert/is (= 0 (ui-count))))))
+          (assert/is (= 0 (ui-count-systems org))))))
 
     (deftest "Remove System: with yes-no confirmation"
       :data-driven true
@@ -301,16 +305,13 @@
         (let [systems (->> {:name "delsys", :env (:initial-env org)}
                            kt/newSystem
                            uniques
-                           (take 4))
-              ui-count (fn []
-                         (nav/go-to ::system/page {:org org})
-                         (Integer/parseInt (browser getText ::system/total-sys-count)))]
+                           (take 4))]
           (create-all-recursive systems)
-          (assert/is (= (count systems) (ui-count)))
+          (assert/is (= (count systems) (ui-count-systems org)))
           (ui/delete (first systems))
-          (assert/is (= (dec (count systems)) (ui-count)))
+          (assert/is (= (dec (count systems)) (ui-count-systems org)))
           (system/multi-delete (rest systems))
-          (assert/is (= 0 (ui-count))))))
+          (assert/is (= 0 (ui-count-systems org))))))
 
     (deftest "Remove System: with yes-no confirmation"
       :data-driven true
