@@ -27,7 +27,7 @@
 (defn- try-all [fs]
   (zipmap fs (doall (for [f fs]
                       (try (f)
-                           (catch Exception e e))))))
+                           (catch Throwable e e))))))
 
 (defn- navigate-fn [page & [org]]
   (fn [] (nav/go-to page {:org (or org conf/*session-org*)})))
@@ -35,6 +35,9 @@
 (defn- navigate-all [pages & [org]]
   (for [page pages]
     (navigate-fn page org)))
+
+(defn access-page-via-url [url]
+  (assert/is (not (nav/returns-403? url))))
 
 (defn verify-role-access
   [& {:keys [role allowed-actions disallowed-actions]}]
@@ -193,7 +196,7 @@
                                       (fn [] (ui/create env)))
                :disallowed-actions [(fn [] (nav/go-to conf/*session-org*))]]))
 
-     (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") nav/returns-403?)))]
+     (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]
               [:permissions []
                :allowed-actions (map nav-fn ["users"])
                :disallowed-actions (map nav-fn ["subscriptions" "systems" "systems/environments" "system_groups"
