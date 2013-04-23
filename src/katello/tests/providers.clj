@@ -1,12 +1,16 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
-  (:require [test.tree.script  :refer [deftest defgroup]]
+  (:require [katello :as kt]
+            [katello.client.provision :as provision]
+            (test.tree [script :refer [defgroup deftest]]
+                       [builder :refer [union]])
             [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
             [bugzilla.checker  :refer [open-bz-bugs]]
             [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
+                     [client :as client]
                      [tasks           :refer :all]
                      [ui-common       :as common]
                      [notifications   :refer [success?]]
@@ -15,6 +19,8 @@
                      [sync-management :as sync]
                      [repositories    :as repo]
                      [providers       :as provider]
+                     [changesets :as changeset]
+                     [systems :as system]
                      [gpg-keys        :as gpg-key]
                      [fake-content    :as fake]
                      [validation      :refer :all]
@@ -80,9 +86,14 @@
     (ui/create-all (list provider product1 product2 repo1 repo2))
     provider))
 
+(defn create-test-environment []
+  (def test-environment (first conf/*environments*))
+  (create-recursive test-environment))
+
 ;; Tests
 
 (defgroup gpg-key-tests
+  :group-setup create-test-environment
 
   (deftest "Create a new GPG key from text input"
     :blockers rest/katello-only
@@ -139,7 +150,56 @@
                   katello/newGPGKey
                   uniqueify)
           create-custom-provider-with-gpg-key
-          ui/delete)))))
+          ui/delete)))
+    
+    (deftest  "Add key after product has been synced/promoted"
+      :blockers (union (open-bz-bugs "953603") rest/katello-only)
+      (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
+                        :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
+                       kt/newGPGKey
+                       uniqueify)
+            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2  (fresh-repo conf/*session-org* (-> fake/custom-provider first :products first :repos first :url))
+            prd1   (kt/product repo1)
+            prd2   (kt/product repo2)
+            prv1   (kt/provider repo1)
+            prv2   (kt/provider repo2)]
+        (ui/create-all (list gpgkey prv1 prv2 prd1 prd2 repo1 repo2))
+        (changeset/sync-and-promote (list repo1) test-environment)
+        (provision/with-client "consume-content"
+          ssh-conn
+          (client/register ssh-conn {:username (:name conf/*session-user*)
+                                     :password (:password conf/*session-user*)
+                                     :org (kt/org repo1)
+                                     :env test-environment
+                                     :force true})
+          (let [mysys              (client/my-hostname ssh-conn)
+                product-name       (-> repo1 kt/product :name)
+                deletion-changeset (-> {:name "deletion-cs"
+                                        :content (distinct (map :product repo1))
+                                        :env test-environment
+                                        :deletion? true}
+                                       katello/newChangeset
+                                       uniqueify)
+                promotion-changeset (-> {:name "re-promotion-cs"
+                                         :content (distinct (map :product repo1))
+                                         :env test-environment}
+                                        katello/newChangeset
+                                        uniqueify)]
+            (client/subscribe ssh-conn (system/pool-id mysys prd1))
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=0")
+                  result (client/run-cmd ssh-conn cmd)]
+              (assert/is (->> result :exit-code (= 0))))
+            (client/sm-cmd ssh-conn :unsubscribe {:all true})
+            (changeset/promote-delete-content deletion-changeset)
+            (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
+            (changeset/promote-delete-content promotion-changeset)
+            (client/subscribe ssh-conn (system/pool-id mysys prd1))
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd (format "cat /etc/yum.repos.d/fedora.repo | grep -i gpgcheck=1")
+                  result (client/run-cmd ssh-conn cmd)]
+              (assert/is (->> result :exit-code (= 0))))))))))
 
 
 #_(defgroup package-filter-tests

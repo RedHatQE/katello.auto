@@ -90,6 +90,9 @@
 (defn subscribe [runner poolid]
   (sm-cmd runner :subscribe {:pool poolid}))
 
+(defn unsubscribe [runner opts]
+  (sm-cmd runner :unsubscribe opts))
+
 (defn register [runner opts]
   (sm-cmd runner :register opts))
 
