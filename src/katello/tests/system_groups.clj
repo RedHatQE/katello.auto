@@ -195,7 +195,7 @@
         (ui/update ak assoc :system-group g)
         (provision/with-client "sys-count" ssh-conn
           (client/register ssh-conn
-                           {:org (kt/org ak)
+                           {:org (-> ak kt/org :name)
                             :activationkey (:name ak)})
           (assert-system-count g 2))))
 

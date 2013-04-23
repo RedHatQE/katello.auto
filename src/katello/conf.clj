@@ -114,8 +114,11 @@
                'katello.tasks/timestamps
                'katello.tasks/date-string
                'katello.tasks/timestamped-seq
-               'katello.conf/client-defs})))
-
+               'katello.conf/client-defs
+               'katello.navigation/pages
+               'katello.menu/pages})
+     (filter (fn [sym] (->> sym str (re-find #"/pages$") not)))))  ;; don't trace eg katello.navigation/pages, katello.organizations/pages etc
+ 
 
 (declare ^:dynamic *session-user*
          ^:dynamic *session-org*
