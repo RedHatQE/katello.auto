@@ -314,18 +314,16 @@
       :data-driven true
 
       (fn [confirm?]
-        (with-unique [system (kt/newSystem {:name "mysystem"
-                                            :sockets "1"
-                                            :system-arch "x86_64"})]
-          (ui/create system)
-          (nav/go-to system)
+        (with-unique-system s
+          (ui/create s)
+          (nav/go-to s)
           (browser click ::remove)
           (if confirm?
             (do (browser click ::ui/confirmation-yes)
                 (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
-                (assert (rest/not-exists? system)))
+                (assert (rest/not-exists? s)))
             (do (browser click ::confirm-to-no)
-                (nav/go-to system)))))
+                (nav/go-to s)))))
       [[false]
        [true]])
 
