@@ -61,6 +61,7 @@
    :prod-destroy             "products___destroy"
 
    :distributor-create       "distributors___create"
+   :distributor-destroy      "distributors___destroy"
    
    :repo-create              "repositories___create"
    :repo-destroy             "repositories___destroy"

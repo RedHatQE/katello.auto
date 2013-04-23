@@ -14,11 +14,15 @@
 (ui/deflocators
   {::new                   "new"
    ::create                "commit"
-   ::distributor-name-text "distributor[name]"})
+   ::distributor-name-text "distributor[name]"
+   ::remove-link           (ui/remove-link "distributors")})
 
 ;; Nav
 
-(nav/defpages (common/pages))
+(nav/defpages (common/pages)
+  [::page
+   [::named-page [distributor] (nav/choose-left-pane distributor)]
+   [::new-page [] (browser click ::new)]])
 
 ;; Tasks
 
@@ -26,8 +30,7 @@
   "Creates a new distributor with the given name and environment."
   [{:keys [name env]}]
   {:pre [(instance? katello.Environment env)]}
-  (nav/go-to ::distributors-page {:org (:org env)})
-  (browser click ::new)
+  (nav/go-to ::new-page {:org (:org env)})
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::distributor-name-text name}
                       ::create)
@@ -37,10 +40,14 @@
   "Deletes the named distributor."
   [dist]
   {:pre [(instance? katello.Distributor dist)]}
-  (nav/go-to dist))
+  (nav/go-to dist)
+  (browser click ::remove-link)
+  (browser click ::ui/confirmation-yes)
+  (notification/check-for-success {:match-pred (notification/request-type? :distributor-destroy)}))
 
 (extend katello.Distributor
-  ui/CRUD {:create create-distributor}
+  ui/CRUD {:create create-distributor
+           :delete delete-distributor}
   rest/CRUD (let [id-url (partial rest/url-maker [["api/distributors/%s" [identity]]])
                   query-urls (partial rest/url-maker [["api/environments/%s/distributors" [:env]]
                                                       ["api/organizations/%s/distributors" [(comp :org :env)]]])]
@@ -57,8 +64,8 @@
 (defn new-distributor-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
   [org]
-  (nav/go-to ::distributors-page {:org org})
-  (-> (browser getAttributes ::new-distributor-disabled)
-      (get "original-title")
-      (= "At least one environment is required to create or register distributors in your current organization.")))
+  (nav/go-to ::new-page {:org org})
+  (let [{:strs [original-title class]} (browser getAttributes ::new)]
+          (assert (and (.contains class "disabled")
+                       (.contains original-title "environment is required")))))
 
