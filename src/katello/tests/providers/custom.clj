@@ -9,7 +9,8 @@
                      [conf :as conf])
             [test.tree.script :refer [defgroup deftest]]
             [bugzilla.checker :refer [open-bz-bugs]]
-            [katello.tests.useful :refer [create-recursive]]))
+            [katello.tests.useful :refer [create-recursive]]
+            [test.assert :as assert]))
 
 ;; Variables
 
@@ -118,6 +119,40 @@
       (ui/create-all (list org provider product))
       (provider/create-discovered-repos-within-product product
                                                        "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
+  
+  (deftest "Auto-discovered repositories should automatically use GPG keys from product, if associated"
+    :blockers (open-bz-bugs "927335")
+    (with-unique [org (katello/newOrganization {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  gpgkey (-> {:name "mykey", :org org,
+                              :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
+                             katello/newGPGKey
+                             uniqueify)
+                  product (katello/newProduct {:name "prod"
+                                                 :provider provider
+                                                 :gpg-key (:name gpgkey)})]
+      (let [repo-name "brew-repo"]
+        (ui/create-all (list org gpgkey provider product))
+        (provider/create-discovered-repos-within-product product
+                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "/%s/" repo-name)])
+        (assert/is (repo/gpgkey-associated? product repo-name)))))
+  
+  (deftest "Auto-discovered repositories should not use GPG keys from product, unless associated"
+    (with-unique [org (katello/newOrganization {:name "org"})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  gpgkey (-> {:name "mykey", :org org,
+                              :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
+                             katello/newGPGKey
+                             uniqueify)
+                  product (katello/newProduct {:name "prod"
+                                                 :provider provider})]
+      (let [repo-name "brew-repo"]
+        (ui/create-all (list org gpgkey provider product))
+        (provider/create-discovered-repos-within-product product
+                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "/%s/" repo-name)])
+        (assert/is (not (repo/gpgkey-associated? product repo-name))))))
   
   (deftest "Add the same autodiscovered repo to a product twice"
     :description "Adds the repositories to the selected product twice."
