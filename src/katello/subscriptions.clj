@@ -12,12 +12,14 @@
 ;; Locators
 
 (ui/deflocators
-  {::import-manifest     "new"
-   ::upload              "upload_form_button"
-   ::repository-url-text "provider[repository_url]"
+  {::new                      "new"
+   ::upload                   "upload_form_button"
+   ::create                   "commit"
+   ::repository-url-text      "provider[repository_url]"
+   ::distributor-name-text    "distributor[name]"
    ::new-distributor-disabled "//*[@id='new' and contains(@class,'disabled')]"
-   ::choose-file         "provider_contents"
-   ::fetch-history-info   "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
+   ::choose-file              "provider_contents"
+   ::fetch-history-info       "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
 
 ;; Nav
 
@@ -33,7 +35,7 @@
   [{:keys [file-path url provider]}]
   (nav/go-to ::page {:org (:org provider)})
   (when-not (browser isElementPresent ::choose-file)
-    (browser click ::import-manifest))
+    (browser click ::new))
   (when url
     (common/in-place-edit {::repository-url-text url})
     (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
@@ -57,7 +59,24 @@
   "Returns true if after an manifest import the history is updated."
   []
   (nav/go-to ::import-history-page)
-  (browser isElementPresent ::fetch-history-info))
+  (browser isElementPresent ::fetch-history-info))`
+
+(defn create-distributor
+  "Creates a new distributor with the given name and environment."
+  [{:keys [name env]}]
+  {:pre [(instance? katello.Environment env)]}
+  (nav/go-to ::distributors-page {:org (:org env)})
+  (browser click ::new)
+  (browser click (ui/environment-link (:name env)))
+  (sel/fill-ajax-form {::distributor-name-text name}
+                      ::create)
+  (notification/check-for-success {:match-pred (notification/request-type? :distributor-create)}))
+
+(defn delete-distributor
+  "Deletes the named distributor."
+  [dist]
+  {:pre [(instance? katello.Distributor dist)]}
+  (nav/go-to dist))
   
 (extend katello.Manifest
   ui/CRUD {:create upload-manifest}
@@ -75,6 +94,21 @@
                                (repeatedly (fn [] (let [newpath (manifest/new-tmp-loc)]
                                                     (manifest/clone (:file-path m) newpath)
                                                     (assoc m :file-path newpath)))))})
+
+(extend katello.Distributor
+  ui/CRUD {:create create-distributor}
+  rest/CRUD (let [id-url (partial rest/url-maker [["api/distributors/%s" [identity]]])
+                  query-urls (partial rest/url-maker [["api/environments/%s/distributors" [:env]]
+                                                      ["api/organizations/%s/distributors" [(comp :org :env)]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-urls)
+               :create (fn [dist]
+                         (merge dist
+                                (rest/http-post
+                                 (rest/url-maker [["api/environments/%s/distributors" [:env]]] dist)
+                                 {:body (assoc (select-keys dist [:name])
+                                          :type "distributor")})))
+               :read (partial rest/read-impl id-url)}))
 
 (defn new-distributor-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
