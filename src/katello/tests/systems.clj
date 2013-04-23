@@ -320,7 +320,7 @@
         (with-unique-system s
           (ui/create s)
           (nav/go-to s)
-          (browser click ::remove)
+          (browser click ::system/remove)
           (if confirm?
             (do (browser click ::ui/confirmation-yes)
                 (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
