@@ -160,7 +160,7 @@
 (extend katello.Provider
   ui/CRUD {:create create
            :delete delete
-           :update edit}
+           :update* edit}
 
   rest/CRUD (let [org-url (partial rest/url-maker [["api/organizations/%s/providers" [:org]]])
                  id-url (partial rest/url-maker [["api/providers/%s" [identity]]])]
