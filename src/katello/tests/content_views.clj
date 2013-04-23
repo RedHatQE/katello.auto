@@ -14,7 +14,7 @@
                      [validation :refer :all])
             [test.tree.script :refer :all]
             [katello :as kt]
-            [katello.tests.useful :refer [fresh-repo create-recursive chained-env]]
+            [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
             [bugzilla.checker :refer [open-bz-bugs]]))
@@ -33,7 +33,7 @@
   
   (deftest "Create a new content view definition using the same name"
     (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                       :org conf/*session-org*})]
+                                                  :org conf/*session-org*})]
       (ui/create content-def)
       (expecting-error (common/errtype ::notifications/name-taken-error)
                        (ui/create content-def))))
@@ -47,13 +47,13 @@
   
   (deftest "Clone content view definition"
      (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                         :org conf/*session-org*})]
+                                                   :org conf/*session-org*})]
         (ui/create content-def)
         (views/clone content-def (update-in content-def [:name] #(str % "-clone")))))
   
   (deftest "Publish content view definition"
     (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                       :org conf/*session-org*})]
+                                                  :org conf/*session-org*})]
       (ui/create content-def)
       (views/publish {:name content-def 
                       :published-name "pub-name" 
@@ -65,14 +65,22 @@
     
     (fn [composite?]
       (with-unique [org (newOrganization {:name "auto-org"})
-                    view-definition (kt/newContentView {:name "auto-view-definition" :org org})
+                    content-view (kt/newContentView {:name "auto-view-definition" 
+                                                     :org org})
                     published-name "pub-name"
-                    composite-view (kt/newContentView {:name "composite-view" :org org :description "Composite Content View" :composite 'yes' :composite-name published-name})]
-        (ui/create-all (list org view-definition))
+                    composite-view (kt/newContentView {:name "composite-view" 
+                                                       :org org 
+                                                       :description "Composite Content View" 
+                                                       :composite 'yes' 
+                                                       :composite-name published-name})]
+        (ui/create-all (list org content-view))
         (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
           (create-recursive repo)
-          (views/add-product {:name content-view :prod-name (kt/product repo)}))
-        (views/publish {:name content-view :published-name published-name :org *session-org*})
+          (views/add-product {:name content-view 
+                              :prod-name (kt/product repo)}))
+        (views/publish {:name content-view 
+                        :published-name published-name 
+                        :org *session-org*})
         (when composite?
           (ui/create composite-view))))
     
@@ -80,11 +88,13 @@
      [false]])
   
    (deftest "Edit a content view definition"
-    (with-unique [org (kt/newOrganization {:name "auto-org"})
-                  content-definition (kt/newContentView {:name "auto-view-definition" :description "new description" :org org})
-                  modified-name "mod-name"]
-      (ui/create-all (list org content-definition))
-      (ui/update content-definition assoc :name modified-name :description "modified description")))
+     (with-unique [org (kt/newOrganization {:name "auto-org"})
+                   content-definition (kt/newContentView {:name "auto-view-definition" 
+                                                          :description "new description" 
+                                                          :org org})
+                   modified-name "mod-name"]
+       (ui/create-all (list org content-definition))
+       (ui/update content-definition assoc :name modified-name :description "modified description")))
    
    
    (deftest "Remove complete product or a repo from content-view-defnition"
@@ -92,16 +102,19 @@
      
      (fn [repo?]
        (with-unique [org (kt/newOrganization {:name "auto-org"})
-                     content-defn (kt/newContentView {:name "auto-view-definition" :org org})
+                     content-defn (kt/newContentView {:name "auto-view-definition" 
+                                                      :org org})
                      published-name "pub-name"
                      composite-view (kt/newContentView {:name "composite-view"
-                                                     :org org 
-                                                     :description "Composite Content View" 
-                                                     :composite 'yes' :composite-name published-name})]
+                                                        :org org 
+                                                        :description "Composite Content View" 
+                                                        :composite 'yes' 
+                                                        :composite-name published-name})]
          (ui/create-all (list org content-defn))
          (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
            (create-recursive repo)                               
-           (views/add-product {:name content-defn :prod-name (kt/product repo)})
+           (views/add-product {:name content-defn 
+                               :prod-name (kt/product repo)})
            (views/remove-product content-defn)
            (when repo?
              (views/remove-repo content-defn {:repo-name (kt/repository repo)})))))
@@ -122,10 +135,43 @@
            (create-recursive repo))
          (doseq [[repo content-defns published-names] [[repo1  (first content-defns) (first published-names)]
                                                        [repo2  (last content-defns) (last published-names)]]]
-           (views/add-product {:name content-defns :prod-name (kt/product repo)})
-           (views/publish {:name content-defns :published-name published-names :org org}))
+           (views/add-product {:name content-defns 
+                               :prod-name (kt/product repo)})
+           (views/publish {:name content-defns 
+                           :published-name published-names 
+                           :org org}))
          (with-unique [composite-view (newContentView {:name "composite-view" 
                                                        :org org 
                                                        :description "Composite Content View" 
-                                                       :composite 'yes' :composite-names published-names})]
-           (ui/create composite-view))))))
+                                                       :composite 'yes' 
+                                                       :composite-names published-names})]
+           (ui/create composite-view)))))
+   
+   (deftest "Add published content-view to an activation-key"
+     (with-unique [org (kt/newOrganization {:name "cv-org"})
+                   repo (fresh-repo org
+                                    "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                   pub-name "publish-name"
+                   target-env (kt/newEnvironment {:name "dev" :org org})
+                   ak (kt/newActivationKey {:name "ak"
+                                            :env target-env
+                                            :description "auto activation key"
+                                            :content-view pub-name})
+                   cv (kt/newContentView {:name "content-view" 
+                                          :org org 
+                                          :published-name pub-name})
+                   cs (kt/newChangeset {:name "cs" 
+                                        :env target-env
+                                        :content (list cv)})]
+       (ui/create-all (list org target-env cv))
+       (create-recursive repo)
+       (sync/perform-sync (list repo) target-env)
+       (views/add-product {:name cv 
+                           :prod-name (kt/product repo)})
+       (views/publish {:name cv 
+                       :published-name pub-name 
+                       :description "test pub" 
+                       :org org})
+       (changeset/promote-delete-content cs)
+       (ui/create ak))))
+   
