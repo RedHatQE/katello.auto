@@ -302,7 +302,9 @@
                            kt/newSystem
                            uniques
                            (take 4))
-              ui-count #(Integer/parseInt (browser getText ::system/total-sys-count))]
+              ui-count (fn []
+                         (nav/go-to ::system/page {:org org})
+                         (Integer/parseInt (browser getText ::system/total-sys-count)))]
           (create-all-recursive systems)
           (assert/is (= (count systems) (ui-count)))
           (ui/delete (first systems))
