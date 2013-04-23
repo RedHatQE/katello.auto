@@ -33,6 +33,7 @@
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
 
    ;; System Default Info
+   ::system-default-info    (ui/menu-link "organization_default_info")
    ::keyname-text           "new_default_info_keyname"
    ::create-keyname         "add_default_info_button"
    ::apply-default-info     "apply_default_info_button"})
@@ -45,7 +46,8 @@
 (nav/defpages (common/pages)
   [::page 
    [::new-page [] (browser click ::new)]
-   [::named-page [org] (nav/choose-left-pane org)]])
+   [::named-page [org] (nav/choose-left-pane org)
+    [::system-default-info-page [] (browser click ::system-default-info)]]])
 
 ;; Tasks
 
@@ -61,7 +63,7 @@
 (defn add-custom-keyname
   "Adds a custom keyname field to an organization and optionally apply it to existing systems"
   [org keyname & [{:keys [apply-default]}]]
-  (nav/go-to org)
+  (nav/go-to ::system-default-info-page {:org org})
   ;; Make sure the 'Add' button is disabled
   (assert (= (get (browser getAttributes ::create-keyname) "disabled") ""))
   (->browser (setText ::keyname-text keyname)
@@ -76,7 +78,7 @@
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
   [org keyname]
-  (nav/go-to org)
+  (nav/go-to ::system-default-info-page {:org org})
   (browser click (remove-keyname-btn keyname)))
 
 (defn create
