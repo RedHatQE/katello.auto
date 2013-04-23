@@ -71,7 +71,7 @@
                                              :product product
                                              :gpg-key testkey})]
     (create-recursive target-env)
-    (ui/create-all testkey provider product repo)
+    (ui/create-all (list testkey provider product repo))
     (when (rest/is-katello?)
       (changeset/sync-and-promote (list repo) target-env))
     product))
@@ -241,12 +241,12 @@
                                             :env test-environment})]
           (ui/create system)
           (nav/go-to system)
-          (browser click ::remove)
+          (browser click ::system/remove)
           (if confirm?
             (do (browser click ::ui/confirmation-yes)
                 (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
                 (assert (rest/not-exists? system)))
-            (do (browser click ::confirm-to-no)
+            (do (browser click ::system/confirm-to-no)
                 (nav/go-to system)))))
       [[false]
        [true]])
@@ -263,7 +263,7 @@
         (ui/create org)
         (org/add-custom-keyname org "Manager")
         (ui/create system)
-        (browser click :katello.systems/custom-info)
+        (browser click ::system/custom-info)
         (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "Creates org adds new system then applies custom org default"
@@ -275,11 +275,11 @@
                                           :system-arch "x86_64"
                                           :env (:initial-env org)})]
         (ui/create-all (list org system))
-        (browser click :katello.systems/custom-info)
+        (browser click ::system/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
         (org/add-custom-keyname org "Manager" {:apply-default true})
         (nav/go-to system)
-        (browser click :katello.systems/custom-info)
+        (browser click ::system/custom-info)
         (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "System Details: Add custom info"
@@ -324,7 +324,7 @@
             (do (browser click ::ui/confirmation-yes)
                 (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
                 (assert (rest/not-exists? s)))
-            (do (browser click ::confirm-to-no)
+            (do (browser click ::system/confirm-to-no)
                 (nav/go-to s)))))
       [[false]
        [true]])
