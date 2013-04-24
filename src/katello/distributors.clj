@@ -59,7 +59,11 @@
                                  (rest/url-maker [["api/environments/%s/distributors" [:env]]] dist)
                                  {:body (assoc (select-keys dist [:name])
                                           :type "distributor")})))
-               :read (partial rest/read-impl id-url)}))
+               :read (partial rest/read-impl id-url)})
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl
+  nav/Destination {:go-to #(nav/go-to ::named-page {:distributor %1
+                                                    :org (:org (:env %1))})})
 
 (defn new-distributor-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
