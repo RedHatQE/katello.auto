@@ -121,7 +121,7 @@
                                          (fn [] (rest/create prov)))]))
 
      (vary-meta
-      (fn [] [:permissions [{:org global, :resource-type "Organizations", :verbs ["Register Systems"], :name "systemreg"}]
+      (fn [] [:permissions [{:org global, :resource-type "Environments", :verbs ["Register Systems in Environment"], :name "systemreg"}]
               :allowed-actions [(fn [] (-> {:name "system"
                                             :env (first conf/*environments*)
                                             :facts (system/random-facts)}
@@ -149,31 +149,37 @@
                                         create-an-org)])
       assoc :blockers (open-bz-bugs "757817"))
 
-     (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
-             :allowed-actions [(navigate-fn :katello.users/page)]
-             :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
-                                                      :katello.changesets/page])
-                                       create-an-org
-                                       create-an-env
-                                       create-a-user)])
+     (vary-meta
+      (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
+              :allowed-actions [(navigate-fn :katello.users/page)]
+              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                       :katello.changesets/page])
+                                        create-an-org
+                                        create-an-env
+                                        create-a-user)])
+      assoc :blockers (open-bz-bugs "953606"))
 
-     (fn [] (with-unique [user baseuser]
-              [:setup (fn [] (rest/create user))
-               :permissions [{:org global, :resource-type "Users", :verbs ["Modify Users"], :name "usermod"}]
-               :allowed-actions [(fn [] (ui/update user assoc :email "blah@me.com"))]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
-                                                        :katello.changesets/page])
-                                         (fn [] (with-unique [cannot-delete baseuser]
-                                                  (ui/create cannot-delete)
-                                                  (ui/delete cannot-delete))))]))
+     (vary-meta
+      (fn [] (with-unique [user baseuser]
+               [:setup (fn [] (rest/create user))
+                :permissions [{:org global, :resource-type "Users", :verbs ["Modify Users"], :name "usermod"}]
+                :allowed-actions [(fn [] (ui/update user assoc :email "blah@me.com"))]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                         :katello.changesets/page])
+                                          (fn [] (with-unique [cannot-delete baseuser]
+                                                   (ui/create cannot-delete)
+                                                   (ui/delete cannot-delete))))]))
+      assoc :blockers (open-bz-bugs "953606"))
 
-     (fn [] (with-unique [user baseuser]
-              [:permissions [{:org global, :resource-type "Users", :verbs ["Delete Users"], :name "userdel"}]
-               :setup (fn [] (rest/create user))
-               :allowed-actions [(fn [] (ui/delete user))]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
-                                                        :katello.changesets/page])
-                                         create-a-user)]))
+     (vary-meta
+      (fn [] (with-unique [user baseuser]
+               [:permissions [{:org global, :resource-type "Users", :verbs ["Delete Users"], :name "userdel"}]
+                :setup (fn [] (rest/create user))
+                :allowed-actions [(fn [] (ui/delete user))]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
+                                                         :katello.changesets/page])
+                                          create-a-user)]))
+      assoc :blockers (open-bz-bugs "953606"))
 
      (fn [] (with-unique [org baseorg]
               [:permissions [{:org conf/*session-org*, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
