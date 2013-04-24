@@ -67,6 +67,7 @@
       (with-unique [org (newOrganization {:name "auto-org"})
                     content-view (kt/newContentView {:name "auto-view-definition" 
                                                      :org org})
+                    repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
                     published-name "pub-name"
                     composite-view (kt/newContentView {:name "composite-view" 
                                                        :org org 
@@ -74,10 +75,8 @@
                                                        :composite 'yes' 
                                                        :composite-name published-name})]
         (ui/create-all (list org content-view))
-        (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
-          (create-recursive repo)
-          (views/add-product {:name content-view 
-                              :prod-name (kt/product repo)}))
+        (create-recursive repo)
+        (ui/update content-view assoc :products (list (kt/product repo)))
         (views/publish {:name content-view 
                         :published-name published-name 
                         :org *session-org*})
@@ -98,29 +97,16 @@
    
    
    (deftest "Remove complete product or a repo from content-view-defnition"
-     :data-driven "true"
-     
-     (fn [repo?]
        (with-unique [org (kt/newOrganization {:name "auto-org"})
                      content-defn (kt/newContentView {:name "auto-view-definition" 
                                                       :org org})
-                     published-name "pub-name"
-                     composite-view (kt/newContentView {:name "composite-view"
-                                                        :org org 
-                                                        :description "Composite Content View" 
-                                                        :composite 'yes' 
-                                                        :composite-name published-name})]
+                     repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
+                     content-defn1 (assoc content-defn :products (kt/product repo))]
          (ui/create-all (list org content-defn))
-         (let [repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
-           (create-recursive repo)                               
-           (views/add-product {:name content-defn 
-                               :prod-name (kt/product repo)})
-           (views/remove-product content-defn)
-           (when repo?
-             (views/remove-repo content-defn {:repo-name (kt/repository repo)})))))
-     
-     [[true]
-      [false]])
+         (create-recursive repo)                               
+         (ui/update content-defn assoc :products (list (kt/product repo)))
+         (ui/update content-defn1 dissoc :products)))
+
 
    (deftest "Create composite content-definition with two products"
      (with-unique [org (kt/newOrganization {:name "auto-org"})]
@@ -135,8 +121,7 @@
            (create-recursive repo))
          (doseq [[repo content-defns published-names] [[repo1  (first content-defns) (first published-names)]
                                                        [repo2  (last content-defns) (last published-names)]]]
-           (views/add-product {:name content-defns 
-                               :prod-name (kt/product repo)})
+           (ui/update content-defns assoc :products (list (kt/product repo)))
            (views/publish {:name content-defns 
                            :published-name published-names 
                            :org org}))
@@ -165,13 +150,11 @@
                                         :content (list cv)})]
        (ui/create-all (list org target-env cv))
        (create-recursive repo)
-       (sync/perform-sync (list repo) target-env)
-       (views/add-product {:name cv 
-                           :prod-name (kt/product repo)})
+       (sync/perform-sync (list repo))
+       (ui/update cv assoc :products (list (kt/product repo)))
        (views/publish {:name cv 
                        :published-name pub-name 
                        :description "test pub" 
                        :org org})
        (changeset/promote-delete-content cs)
        (ui/create ak))))
-   
