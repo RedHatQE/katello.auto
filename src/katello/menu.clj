@@ -57,7 +57,7 @@
    [::content-menu [] (browser mouseOver ::content-link)
     [:subscriptions [] (browser mouseOver ::subscriptions-link)
      [:katello.subscriptions/page [] (browser clickAndWait ::red-hat-subscriptions-link)]
-     [:katello.subscriptions/distributors-page [] (browser clickAndWait ::distributors-link)]
+     [:katello.distributors/page [] (browser clickAndWait ::distributors-link)]
      [:katello.activation-keys/page [] (browser clickAndWait ::activation-keys-link)]
      [:katello.subscriptions/import-history-page [] (browser clickAndWait ::import-history-link)]]
 
