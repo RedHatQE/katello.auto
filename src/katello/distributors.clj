@@ -65,7 +65,7 @@
   nav/Destination {:go-to #(nav/go-to ::named-page {:distributor %1
                                                     :org (:org (:env %1))})})
 
-(defn new-distributor-button-disabled?
+(defn new-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
   [org]
   (nav/go-to ::new-page {:org org})
