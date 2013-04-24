@@ -194,7 +194,6 @@
        ["foo   " :katello.notifications/validation-error]
        ["   foo   " :katello.notifications/validation-error]
        ["<a href='foo'>Click Here></a>" :katello.notifications/name-must-not-contain-html]
-       ["#$%^" :katello.notifications/validation-error]
        ["" :katello.notifications/username-cant-be-blank]])
 
     (deftest "Admin creates a user with a default organization"

@@ -457,7 +457,8 @@
                             :activationkey (:name ak)})
           (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
                 aklink (system/activation-key-link (:name ak))]
-            (nav/go-to ::system/details-page {:system system})
+            (nav/go-to ::system/details-page {:system system
+                                              :org (kt/org system)})
             (when (browser isElementPresent aklink)
               (browser clickAndWait aklink))))))
 
