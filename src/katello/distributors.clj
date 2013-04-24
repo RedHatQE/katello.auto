@@ -70,6 +70,6 @@
   [org]
   (nav/go-to ::new-page {:org org})
   (let [{:strs [original-title class]} (browser getAttributes ::new)]
-          (assert (and (.contains class "disabled")
-                       (.contains original-title "environment is required")))))
+    (and (.contains class "disabled")
+         (.contains original-title "environment is required"))))
 

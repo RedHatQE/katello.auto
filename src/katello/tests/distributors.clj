@@ -27,4 +27,4 @@
   (deftest "+New Distributor button is disabled for an organization with no environments"
     (with-unique [org (kt/newOrganization {:name "auto-org"})]
       (rest/create org)
-      (distributor/new-button-disabled? org))))
+      (assert (distributor/new-button-disabled? org)))))
