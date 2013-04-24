@@ -26,7 +26,7 @@
 
 ;; Tasks
 
-(defn create-distributor
+(defn create
   "Creates a new distributor with the given name and environment."
   [{:keys [name env]}]
   {:pre [(instance? katello.Environment env)]}
@@ -36,7 +36,7 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :distributor-create)}))
 
-(defn delete-distributor
+(defn delete
   "Deletes the named distributor."
   [dist]
   {:pre [(instance? katello.Distributor dist)]}
@@ -46,8 +46,8 @@
   (notification/check-for-success {:match-pred (notification/request-type? :distributor-destroy)}))
 
 (extend katello.Distributor
-  ui/CRUD {:create create-distributor
-           :delete delete-distributor}
+  ui/CRUD {:create create
+           :delete delete}
   rest/CRUD (let [id-url (partial rest/url-maker [["api/distributors/%s" [identity]]])
                   query-urls (partial rest/url-maker [["api/environments/%s/distributors" [:env]]
                                                       ["api/organizations/%s/distributors" [(comp :org :env)]]])]
