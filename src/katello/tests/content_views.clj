@@ -23,68 +23,100 @@
 
 ;; Tests
 
-(defgroup content-views-tests
+(let [success #(-> % :type (= :success))]
 
-  (deftest "Create a new content view definition"
-    (-> {:name "view-def" :org *session-org*}
-      katello/newContentView
-      uniqueify
-      ui/create))
+ (defgroup content-views-tests
+
+   (deftest "Create a new content view definition"
+     (-> {:name "view-def" :org *session-org*}
+         katello/newContentView
+         uniqueify
+         ui/create))
+
+   (deftest "Create a new content view definition w/ i18n characters"
+     :blockers (open-bz-bugs "953594")
+     :data-driven true
+
+     (fn [view-name]
+       (-> {:name view-name :org *session-org*}
+           katello/newContentView
+           uniqueify
+           ui/create))
+     i8n-chars)
+
+   (deftest "Create a new content view with a blank name"
+     :tcms "248517"
+    
+     (expecting-error (common/errtype ::notifications/name-cant-be-blank)
+                      (-> {:name "" :org *session-org*}
+                          katello/newContentView
+                          ui/create)))
+
+   (deftest "Create a new content view with a long name"
+     :data-driven true
+     :tcms "248518"
+
+     (fn [view-name expected-res]
+       (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
+         (expecting-error expected-res (ui/create content-view))))
+    
+     [[(random-string (int \a) (int \z) 128) (common/errtype ::notifications/name-128-char-limit)]
+      [(random-string (int \a) (int \z) 127) success]])
   
-  (deftest "Create a new content view definition using the same name"
-    (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                  :org conf/*session-org*})]
-      (ui/create content-def)
-      (expecting-error (common/errtype ::notifications/name-taken-error)
-                       (ui/create content-def))))
-  
-  (deftest "Delete a content view definition"
-    (doto (-> {:name "view-def" :org *session-org*}
-            kt/newContentView
-            uniqueify)
-      (ui/create)
-      (ui/delete)))
-  
-  (deftest "Clone content view definition"
+   (deftest "Create a new content view definition using the same name"
      (with-unique [content-def (kt/newContentView {:name "con-def"
                                                    :org conf/*session-org*})]
-        (ui/create content-def)
-        (views/clone content-def (update-in content-def [:name] #(str % "-clone")))))
+       (ui/create content-def)
+       (expecting-error (common/errtype ::notifications/name-taken-error)
+                        (ui/create content-def))))
   
-  (deftest "Publish content view definition"
-    (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                  :org conf/*session-org*})]
-      (ui/create content-def)
-      (views/publish {:name content-def 
-                      :published-name (uniqueify "pub-name") 
-                      :org *session-org*})))
+   (deftest "Delete a content view definition"
+     (doto (-> {:name "view-def" :org *session-org*}
+               kt/newContentView
+               uniqueify)
+       (ui/create)
+       (ui/delete)))
+  
+   (deftest "Clone content view definition"
+     (with-unique [content-def (kt/newContentView {:name "con-def"
+                                                   :org conf/*session-org*})]
+       (ui/create content-def)
+       (views/clone content-def (update-in content-def [:name] #(str % "-clone")))))
+  
+   (deftest "Publish content view definition"
+     (with-unique [content-def (kt/newContentView {:name "con-def"
+                                                   :org conf/*session-org*})]
+       (ui/create content-def)
+       (views/publish {:name content-def 
+                       :published-name (uniqueify "pub-name") 
+                       :org *session-org*})))
   
 
-  (deftest "Create a new content-view/composite definition and add a product"
-    :data-driven true
+   (deftest "Create a new content-view/composite definition and add a product"
+     :data-driven true
     
-    (fn [composite?]
-      (with-unique [org (newOrganization {:name "auto-org"})
-                    content-view (kt/newContentView {:name "auto-view-definition" 
-                                                     :org org})
-                    repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
-                    published-name "pub-name"
-                    composite-view (kt/newContentView {:name "composite-view" 
-                                                       :org org 
-                                                       :description "Composite Content View" 
-                                                       :composite 'yes' 
-                                                       :composite-name published-name})]
-        (ui/create-all (list org content-view))
-        (create-recursive repo)
-        (ui/update content-view assoc :products (list (kt/product repo)))
-        (views/publish {:name content-view 
-                        :published-name published-name 
-                        :org *session-org*})
-        (when composite?
-          (ui/create composite-view))))
+     (fn [composite?]
+       (with-unique [org (newOrganization {:name "auto-org"})
+                     content-view (kt/newContentView {:name "auto-view-definition" 
+                                                      :org org})
+                     repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
+                     published-name "pub-name"
+                     composite-view (kt/newContentView {:name "composite-view" 
+                                                        :org org 
+                                                        :description "Composite Content View" 
+                                                        :composite 'yes' 
+                                                        :composite-name published-name})]
+         (ui/create-all (list org content-view))
+         (create-recursive repo)
+         (ui/update content-view assoc :products (list (kt/product repo)))
+         (views/publish {:name content-view 
+                         :published-name published-name 
+                         :org *session-org*})
+         (when composite?
+           (ui/create composite-view))))
     
-    [[true]
-     [false]])
+     [[true]
+      [false]])
   
    (deftest "Edit a content view definition"
      (with-unique [org (kt/newOrganization {:name "auto-org"})
@@ -97,13 +129,13 @@
    
    
    (deftest "Remove complete product or a repo from content-view-defnition"
-       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                     content-defn (kt/newContentView {:name "auto-view-definition" 
-                                                      :org org})
-                     repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
-         (ui/create-all (list org content-defn))
-         (create-recursive repo)                               
-         (-> content-defn (ui/update assoc :products (list (kt/product repo)))
+     (with-unique [org (kt/newOrganization {:name "auto-org"})
+                   content-defn (kt/newContentView {:name "auto-view-definition" 
+                                                    :org org})
+                   repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
+       (ui/create-all (list org content-defn))
+       (create-recursive repo)                               
+       (-> content-defn (ui/update assoc :products (list (kt/product repo)))
            (ui/update dissoc :products))))
 
 
@@ -156,4 +188,4 @@
                        :description "test pub" 
                        :org org})
        (changeset/promote-delete-content cs)
-       (ui/create ak))))
+       (ui/create ak)))))
