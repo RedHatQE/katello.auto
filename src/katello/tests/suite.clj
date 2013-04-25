@@ -3,7 +3,8 @@
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
                            systems system-groups activation-keys
-                           users permissions e2e navigation search)
+                           users permissions e2e navigation search
+                           distributors)
             katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
