@@ -91,7 +91,7 @@
 
 (defrecord SystemGroup [id name systems  ^Organization org])
 
-(defrecord ContentView [id name description composite composite-name org])
+(defrecord ContentView [id name description composite composite-name org published-name])
 
 (defrecord Manifest [provider file-path url])
 
