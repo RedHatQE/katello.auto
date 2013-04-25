@@ -72,37 +72,58 @@
 
 (defprotocol Promotable
   "Interface for entities that are promotable"
-  (go-to [x] "Navigates to entity from a changeset's environment content view"))
+  (go-to [x] "Navigates to entity from a changeset's environment content view")
+  (add-remove [x loc] "Adds or removes entity to or from the changeset currently being edited"))
+
+(defn- add-rm [loc ent]
+  (go-to ent)
+  (browser click (-> ent :name loc)))
 
 (extend-protocol Promotable
   katello.Product
   (go-to [prod]
     (browser click ::products-category))
   
+  (add-remove [ent loc]
+    (add-rm loc ent))
+  
+  katello.ContentView
+  (go-to [content-view]
+    (browser click ::content-views-category))
+  
+  (add-remove [cv loc]
+    (go-to cv)
+    (browser click (-> cv :published-name loc)))
+    
   katello.Repository
   (go-to [repo] (go-to-item-in-product ::select-repos repo))
+  
+  (add-remove [ent loc]
+    (add-rm loc ent))
 
   katello.Package
   (go-to [package] (go-to-item-in-product ::select-packages package))
+  
+  (add-remove [ent loc]
+    (add-rm loc ent))
 
   katello.Erratum
   (go-to [erratum]
     (if (:product erratum)
       (go-to-item-in-product ::select-errata erratum)
       (do (browser click ::errata-category)
-          (browser click ::select-errata-all)))))
+          (browser click ::select-errata-all))))
+  
+  (add-remove [ent loc]
+    (add-rm loc ent)))
 
-(defn- add-rm [loc ent]
-  (go-to ent)
-  (browser click (-> ent :name loc)))
-
-(def ^{:doc "Adds ent to current changeset (assumes the ui is on that
+(defn ^{:doc "Adds ent to current changeset (assumes the ui is on that
              page already)"}
-  add (partial add-rm add-content-item))
+  add [ent] (add-remove ent add-content-item))
 
-(def ^{:doc "Removes ent from current changeset (assumes the ui is on
+(defn ^{:doc "Removes ent from current changeset (assumes the ui is on
              that page already)"}
-  remove (partial add-rm remove-content-item))
+  remove [ent] (add-remove ent remove-content-item))
 ;; Tasks
 
 (defn create

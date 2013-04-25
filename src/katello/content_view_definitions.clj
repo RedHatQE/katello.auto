@@ -59,8 +59,11 @@
 (nav/defpages (common/pages)
   [::page
    [::new-page [] (browser click ::new)]
-   [::named-page [definition-name] (nav/choose-left-pane definition-name)
-    [::details-page [] (browser click ::details-tab)]]])
+   [::named-page [content-view] (nav/choose-left-pane content-view)
+    [::details-page [] (browser click ::details-tab)]
+    [::content-page [] (browser click ::content-tab)]
+    [::filter-page [] (browser click ::filter-tab)]
+    [::views-page [] (browser click ::views-tab)]]])
 
 ;; Tasks
 
@@ -76,37 +79,6 @@
                            (doseq [composite-name composite-names]
                              (browser click (composite-view-name composite-name))))) [composite]}
                       ::save-new)
-  (notification/check-for-success))
-
-
-(defn add-product
-  "Adds the given product or repository to a content view definition"
-  [{:keys [ name prod-name composite composite-name]}]
-  (nav/go-to name)
-  (browser getEval ::sel-products)
-  (browser click ::content-tab)
-  ;; Composite Content Views are made up of other published views...
-  (if composite
-    (do
-      (sel/->browser
-       (click (composite-view-name composite-name))
-       (click ::update-component_view)))
-    ;; Non-composite Content Views are made up of products and/or repositories.
-    (do
-      (sel/->browser
-       (mouseUp (->  prod-name :name product-or-repository))
-       (click ::add-product-btn)
-       (click ::update-content))))
-  (notification/check-for-success))
-
-(defn remove-product
-  "Removes the given product from existing Content View"
-  [content-defn]
-  (nav/go-to content-defn)
-  (browser click ::content-tab)
-  (sel/->browser
-    (click ::remove-product)
-    (click ::update-content))
   (notification/check-for-success))
 
 (defn remove-repo
@@ -129,19 +101,48 @@
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name
-                  ::publish-description-text description}
-                 ::publish-new)
+                       ::publish-description-text description}
+                      ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
+
+(defn- edit-content-view-details [name description]
+  (browser click ::details-tab)
+  (common/in-place-edit {::details-name-text name
+                         ::details-description-text description}))
+
+(defn- add-to
+  "Adds the given product to a content view definition"
+  [products]
+  (browser click ::content-tab)
+  (doseq [product products]
+    (sel/->browser
+      (mouseUp (->  product :name product-or-repository))
+      (click ::add-product-btn)
+      (click ::update-content))
+    (notification/check-for-success)))
+  
+(defn- remove-from
+  "Removes the given product from existing Content View"
+  [products]
+  (browser click ::content-tab)
+  (doseq [product products]
+    (sel/->browser
+      (mouseUp (->  product :name product-or-repository))
+      (click ::remove-product)
+      (click ::update-content))
+    (notification/check-for-success)))
 
 (defn update
   "Edits an existing Content View Definition."
-  [content-definition  updated]
-  (let [[{:keys [name description]}] (data/diff content-definition updated)]
-    (nav/go-to ::details-page {:definition-name content-definition
-                               :org (:org content-definition)})
-    (common/in-place-edit {::details-name-text (:name updated)
-                           ::details-description-text (:description updated)})
-    (notification/check-for-success)))
+  [content-view updated]
+  (nav/go-to content-view)
+  (let [[remove add] (data/diff content-view updated)]
+    (when-some-let [{:keys [name description composite composite-name]} add]
+                   (edit-content-view-details name description))
+    (when-some-let [product-to-add (:products add)
+                    product-to-rm (:products remove)]
+                   (add-to product-to-add)
+                   (remove-from product-to-rm))))
 
 (defn delete
   "Deletes an existing View Definition."
@@ -168,6 +169,6 @@
            :update* update}
     
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to (fn [dn] (nav/go-to ::named-page {:definition-name dn
-                                                            :org (kt/org dn)}))})
+  nav/Destination {:go-to (fn [cv] (nav/go-to ::named-page {:content-view cv
+                                                            :org (kt/org cv)}))})
 
