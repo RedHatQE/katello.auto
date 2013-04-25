@@ -56,7 +56,7 @@
                                                   :org conf/*session-org*})]
       (ui/create content-def)
       (views/publish {:name content-def 
-                      :published-name "pub-name" 
+                      :published-name (uniqueify "pub-name") 
                       :org *session-org*})))
   
 
@@ -100,12 +100,11 @@
        (with-unique [org (kt/newOrganization {:name "auto-org"})
                      content-defn (kt/newContentView {:name "auto-view-definition" 
                                                       :org org})
-                     repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")
-                     content-defn1 (assoc content-defn :products (kt/product repo))]
+                     repo (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/")]
          (ui/create-all (list org content-defn))
          (create-recursive repo)                               
-         (ui/update content-defn assoc :products (list (kt/product repo)))
-         (ui/update content-defn1 dissoc :products)))
+         (-> content-defn (ui/update assoc :products (list (kt/product repo)))
+           (ui/update dissoc :products))))
 
 
    (deftest "Create composite content-definition with two products"

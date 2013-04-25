@@ -60,7 +60,10 @@
   [::page
    [::new-page [] (browser click ::new)]
    [::named-page [content-view] (nav/choose-left-pane content-view)
-    [::details-page [] (browser click ::details-tab)]]])
+    [::details-page [] (browser click ::details-tab)]
+    [::content-page [] (browser click ::content-tab)]
+    [::filter-page [] (browser click ::filter-tab)]
+    [::views-page [] (browser click ::views-tab)]]])
 
 ;; Tasks
 
@@ -115,8 +118,8 @@
     (sel/->browser
       (mouseUp (->  product :name product-or-repository))
       (click ::add-product-btn)
-      (click ::update-content)))
-  (notification/check-for-success))
+      (click ::update-content))
+    (notification/check-for-success)))
   
 (defn- remove-from
   "Removes the given product from existing Content View"
@@ -126,8 +129,8 @@
     (sel/->browser
       (mouseUp (->  product :name product-or-repository))
       (click ::remove-product)
-      (click ::update-content)))
-  (notification/check-for-success))
+      (click ::update-content))
+    (notification/check-for-success)))
 
 (defn update
   "Edits an existing Content View Definition."
