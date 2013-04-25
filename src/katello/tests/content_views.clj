@@ -45,7 +45,7 @@
      i8n-chars)
 
    (deftest "Create a new content view with a blank name"
-     :tcms "https://tcms.engineering.redhat.com/case/248517/?from_plan=9122"
+     :tcms "248517"
     
      (expecting-error (common/errtype ::notifications/name-cant-be-blank)
                       (-> {:name "" :org *session-org*}
@@ -54,7 +54,7 @@
 
    (deftest "Create a new content view with a long name"
      :data-driven true
-     :tcms "https://tcms.engineering.redhat.com/case/248518/?from_plan=9122"
+     :tcms "248518"
 
      (fn [view-name expected-res]
        (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
