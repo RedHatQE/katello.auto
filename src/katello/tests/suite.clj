@@ -3,7 +3,8 @@
   (:require (katello.tests organizations providers promotions
                            sync_management login environments
                            systems system-groups activation-keys
-                           users permissions e2e navigation search)
+                           users permissions e2e navigation search
+                           distributors)
             katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
@@ -21,6 +22,7 @@
   katello.tests.search/search-tests
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
+  katello.tests.distributors/distributor-tests
   katello.tests.promotions/promotion-tests
   ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
   katello.tests.permissions/permission-tests

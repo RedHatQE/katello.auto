@@ -103,6 +103,8 @@
 
 (defrecord Subscription [id ^System system pool quantity])
 
+(defrecord Distributor [id name ^Environment env])
+
 ;; Relationship protocol
 
 (defprotocol BelongsTo
@@ -117,6 +119,7 @@
   {Organization {:org identity, :parent (constantly nil)}
    Environment {:org :org, :env identity, :parent #'org}  ; the org is in the env's :org field
    Provider {:org :org, :provider identity, :parent #'org}
+   Distributor {:org (comp #'org #'env), :env :env, :parent #'env}
    Product {:org (comp #'org #'provider), :provider :provider, :product identity, :parent #'provider} ; the org is the provider's org
    Repository {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product)
                :repository identity, :parent #'product} ; the org is the product's org
