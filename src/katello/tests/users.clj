@@ -190,7 +190,7 @@
         (expecting-error (common/errtype expected-err)
                          (ui/create (assoc generic-user :name username ))))
       [[(random-string (int \a) (int \z) 2) :katello.notifications/username-must-contain-3-char]
-       [(random-string (int \a) (int \z) 129) :katello.notifications/username-128-char-limit]
+       [(random-string (int \a) (int \z) 129) :katello.notifications/name-128-char-limit]
        ["foo   " :katello.notifications/validation-error]
        ["   foo   " :katello.notifications/validation-error]
        ["<a href='foo'>Click Here></a>" :katello.notifications/name-must-not-contain-html]
