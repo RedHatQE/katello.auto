@@ -109,10 +109,10 @@
      zip/xml-zip))
 
 (defn node-content-as [empty-coll tree]
-(postwalk 
-   #(cond 
-     (and (map? %) (contains? % :content)) (into empty-coll (:content %))  
-     :else %)
+  (postwalk 
+    #(cond 
+       (and (map? %) (contains? % :content)) (into empty-coll (:content %))  
+       :else %)
     tree))
 
 (defn normalize-nodes [tree]

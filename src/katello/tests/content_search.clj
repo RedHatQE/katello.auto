@@ -7,6 +7,7 @@
                      [conf          :refer [config with-org]]
                      [changesets :refer [promote-delete-content]]
                      [rest     :as rest]
+                     [ui     :as ui]
                      [fake-content  :as fake]
             )
             [katello :as kt]
@@ -392,20 +393,21 @@
                  (rest/create  test-org-env)
                  (org/switch test-org-env)
                  (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
-                 (env/create {:name env-dev :org test-org-env :prior-env "Library"})
-                 (env/create {:name env-qa :org test-org-env :prior-env env-dev})
-                 (env/create {:name env-release :org test-org-env :prior-env env-qa})
-                 (promote-delete-content (kt/newChangeset  
-                                          {:env (kt/newEnvironment {:name env-dev :org test-org-env})
+                 (let [env-dev-r (kt/newEnvironment {:name env-dev :org test-org-env :prior-env "Library"})
+                       env-qa-r (kt/newEnvironment {:name env-qa :org test-org-env :prior-env env-dev})
+                       env-release-r (kt/newEnvironment {:name env-release :org test-org-env :prior-env env-qa})]
+                   (ui/create-all-recursive [env-dev-r env-qa-r  env-release-r])
+                   (promote-delete-content (kt/newChangeset  
+                                          {:env env-dev-r
                                            :name (uniqueify env-dev)
                                            :deletion? false 
                                            :content  [(kt/newProduct {:name "Com Errata Enterprise"})
                                                       (kt/newProduct {:name "Weird Enterprise"})]} ))
-                 (promote-delete-content (kt/newChangeset  
-                                          {:env (kt/newEnvironment {:name env-qa :org test-org-env})
-                                           :name (uniqueify env-dev)
+                   (promote-delete-content (kt/newChangeset  
+                                          {:env  env-qa-r
+                                           :name (uniqueify env-qa)
                                            :deletion? false 
-                                           :content  [(kt/newProduct {:name "Weird Enterprise"})]})))
+                                           :content  [(kt/newProduct {:name "Weird Enterprise"})]}))))
   
   (deftest "Content Browser: Shared content for selected environments"
     :data-driven true
