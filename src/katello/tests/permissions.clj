@@ -30,7 +30,7 @@
                            (catch Throwable e e))))))
 
 (defn- navigate-fn [page & [org]]
-  (fn [] (nav/go-to page {:org (or org conf/*session-org*)})))
+  (fn [] (nav/go-to page (or org conf/*session-org*))))
 
 (defn- navigate-all [pages & [org]]
   (for [page pages]

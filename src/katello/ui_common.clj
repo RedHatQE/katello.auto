@@ -109,7 +109,7 @@
                   katello.SystemGroup :katello.system-groups/page
                   katello.ActivationKey :katello.activation-keys/page
                   katello.Changeset :katello.changesets/history-page} ent-class)
-                {:org (or org *session-org*)})
+                (or org *session-org*))
      (if with-favorite
        (sel/->browser (click ::ui/search-menu)
                       (click (ui/search-favorite with-favorite)))

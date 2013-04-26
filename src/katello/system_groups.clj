@@ -41,10 +41,10 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [system-group] (nav/choose-left-pane system-group)
-    [::systems-page [] (browser click ::systems-link)]
-    [::details-page [] (browser click ::details-link)]]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [system-group] (nav/choose-left-pane system-group))
+    [::systems-page (nav/browser-fn (click ::systems-link))]
+    [::details-page (nav/browser-fn (click ::details-link))]]])
 
 
 ;; Tasks
@@ -52,7 +52,7 @@
 (defn create
   "Creates a system group"
   [{:keys [name description] :as sg}]
-  (nav/go-to ::new-page {:org (kt/org sg)})
+  (nav/go-to ::new-page sg)
   (sel/fill-ajax-form
    {::name-text name
     ::description-text description}
@@ -128,8 +128,7 @@
 (defn system-count
   "Get number of systems in system group according to the UI"
   [group]
-  (nav/go-to ::details-page {:system-group group
-                             :org (kt/org group)})
+  (nav/go-to ::details-page group)
   (Integer/parseInt (browser getText ::total)))
 
 (defn update [sg updated]
@@ -148,5 +147,4 @@
            :update* update}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to (fn [sg] (nav/go-to ::named-page {:system-group sg
-                                                            :org (kt/org sg)}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})

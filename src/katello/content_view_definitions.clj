@@ -57,13 +57,13 @@
 
 ;; Nav
 (nav/defpages (common/pages)
-  [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [content-view] (nav/choose-left-pane content-view)
-    [::details-page [] (browser click ::details-tab)]
-    [::content-page [] (browser click ::content-tab)]
-    [::filter-page [] (browser click ::filter-tab)]
-    [::views-page [] (browser click ::views-tab)]]])
+  [::new-page (nav/browser-fn (click ::new))]
+  [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
+   [::details-page (nav/browser-fn (click ::details-tab))]
+   [::content-page (nav/browser-fn (click ::content-tab))]
+   [::filter-page (nav/browser-fn (click ::filter-tab))]
+   [::views-page (nav/browser-fn (click ::views-tab))]])
+
 
 ;; Tasks
 
@@ -116,7 +116,7 @@
   (browser click ::content-tab)
   (doseq [product products]
     (sel/->browser
-      (mouseUp (->  product :name product-or-repository))
+      (mouseUp (-> product :name product-or-repository))
       (click ::add-product-btn)
       (click ::update-content))
     (notification/check-for-success)))
@@ -169,6 +169,5 @@
            :update* update}
     
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to (fn [cv] (nav/go-to ::named-page {:content-view cv
-                                                            :org (kt/org cv)}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 

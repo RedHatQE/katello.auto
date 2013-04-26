@@ -36,7 +36,7 @@
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
-   [::named-page [repo] (browser click (ui/editable (:name repo)))]])
+   [::named-page (fn [repo] (browser click (ui/editable (:name repo))))]])
 
 ;; Tasks
 
@@ -48,8 +48,7 @@
           (instance? katello.Provider (kt/provider product))
           (instance? katello.Organization (kt/org product))]} 
 
-  (nav/go-to ::provider/products-page {:org (kt/org product)
-                                       :provider (kt/provider product)})
+  (nav/go-to ::provider/products-page product)
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name
@@ -111,8 +110,4 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [repo]
-                            (nav/go-to ::named-page {:org (kt/org repo)
-                                                     :provider (kt/provider repo)
-                                                     :product (kt/product repo)
-                                                     :repo repo}))}) 
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}) 

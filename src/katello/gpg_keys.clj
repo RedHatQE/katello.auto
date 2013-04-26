@@ -28,8 +28,8 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [gpg-key] (nav/choose-left-pane gpg-key)]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [gpg-key] (nav/choose-left-pane gpg-key))]])
 
 ;;Tasks
 
@@ -37,7 +37,7 @@
   (assert (not (and url contents))
           "Must specify one one of :url or :contents.")
   (assert (string? name))
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (if url
     (sel/->browser (setText ::name-text name)
                    (attachFile ::file-upload-text url)
@@ -66,11 +66,11 @@
                :query (partial rest/query-by-name query-url)
                :read (partial rest/read-impl id-url)})
   
-  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
-                                                     :org (katello/org %1)})}
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}
+  
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
-(defn gpg-keys-prd-association?
+(defn gpg-keys-prd-association? ;;FIXME deprecated?  jweiss
   [gpg-key-name repo-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
   (browser isElementPresent (gpgkey-product-association repo-name)))
