@@ -1,7 +1,6 @@
 (ns katello.navigation
   (:require (katello [conf :as conf]
-                     [ui :as ui]
-                     [login :as login])
+                     [ui :as ui])
             [ui.navigate :as nav]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
@@ -63,10 +62,7 @@
   (nav/nav-tree
    [::top-level [] (cond (or (not (browser isElementPresent ::ui/log-out))
                              (browser isElementPresent ::ui/confirmation-dialog))
-                         (do
-                           (browser open (@conf/config :server-url))
-                           (if (login/logged-out?)
-                             (login/login)))
+                         (browser open (@conf/config :server-url))
 
                          (browser isElementPresent ::ui/back)
                          (browser clickAndWait ::ui/back))]))
