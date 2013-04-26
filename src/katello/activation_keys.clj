@@ -35,10 +35,10 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::named-page [activation-key] (nav/choose-left-pane activation-key)
-    [::system-group-menu [] (browser mouseOver ::system-groups)
-     [::system-group-page [] (browser click ::system-group-select)]]]
-   [::new-page [] (browser click ::new)]])
+   [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
+    [::system-group-menu (nav/browser-fn (mouseOver ::system-groups))
+     [::system-group-page (nav/browser-fn (click ::system-group-select))]]]
+   [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
 
@@ -121,5 +121,4 @@
                :read (partial rest/read-impl id-url)})
   
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to #(nav/go-to ::named-page {:activation-key %1
-                                                    :org (kt/org %1)})})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})

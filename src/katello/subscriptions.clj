@@ -31,7 +31,7 @@
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
   [{:keys [file-path url provider]}]
-  (nav/go-to ::page {:org (:org provider)})
+  (nav/go-to ::page provider)
   (when-not (browser isElementPresent ::choose-file)
     (browser click ::new))
   (when url

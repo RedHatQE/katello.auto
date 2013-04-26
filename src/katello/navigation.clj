@@ -49,7 +49,12 @@
               (do (search-here (format "\"%s\"" (:name entity)))
                   (browser click loc)))))))
 
-
+(defmacro browser-fn
+  "produces a function that ignores context args and passes body to
+  ->browser.  To be used in navigation tree as a shortcut to produce
+  functions that don't need arguments and only use the browser."
+  [& body]
+  `(fn [& _#] (->browser ~@body)))
 
 (defn pages []
   "The navigation layout of the UI. Each item in the tree is
@@ -60,12 +65,12 @@
   provider). Finally some code to navigate to the location from its
   parent location. Other namespaces can add their structure here."
   (nav/nav-tree
-   [::top-level [] (cond (or (not (browser isElementPresent ::ui/log-out))
-                             (browser isElementPresent ::ui/confirmation-dialog))
-                         (browser open (@conf/config :server-url))
+   [::top-level (fn [& _] (cond (or (not (browser isElementPresent ::ui/log-out))
+                                    (browser isElementPresent ::ui/confirmation-dialog))
+                                (browser open (@conf/config :server-url))
 
-                         (browser isElementPresent ::ui/back)
-                         (browser clickAndWait ::ui/back))]))
+                                (browser isElementPresent ::ui/back)
+                                (browser clickAndWait ::ui/back)))]))
 
 (defmulti page-tree (comp find-ns symbol namespace))
 
@@ -93,24 +98,25 @@
        (defmethod page-tree *ns* [k#] (~'pages))))
 
 (defprotocol Destination
-  (go-to [place] [place args] "Navigates to a given place"))
+  (go-to [dest] [dest arg] [dest start arg]
+    "Navigates to a given destination (with optional starting point"))
 
 (extend clojure.lang.Keyword
   Destination
   {:go-to (fn go-to*
-            ([location-kw argmap]
-               (nav/navigate location-kw (-> location-kw page-tree nav/page-zip) argmap))
-            ([location-kw] (go-to* location-kw {})))})
+            ([dest-kw start-kw arg]
+               (nav/navigate start-kw dest-kw (-> dest-kw page-tree nav/page-zip) (list arg)))
+            ([dest-kw arg]
+               (go-to* dest-kw nil arg))
+            ([dest-kw] (go-to* dest-kw nil nil)))})
 
 (defn returns-403? [url]
-  (=
-    (clojure.string/join "\n "
-     ["403 - Permission denied You are not authorised to perform this action."
-      "Please request the required privileges from an administrator."
-      "Back"])
-  (->browser 
-    (open url)
-    (getText "//article[@id='maincontent']"))))
+  (= (clojure.string/join "\n "
+                          ["403 - Permission denied You are not authorised to perform this action."
+                           "Please request the required privileges from an administrator."
+                           "Back"])
+     (->browser (open url)
+                (getText "//article[@id='maincontent']"))))
 
 (defn current-org
   "Return the currently active org (a string) shown in the org switcher."
