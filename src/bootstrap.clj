@@ -28,8 +28,8 @@
   (doseq [result @(second resulttree)]
     (println 
       (:name(first result)) 
-      (:parameters (:report (second result)))
-      (:result (:report (second result))))))
+      (:parameters (deref (:report (second result))))
+      (:result (deref (:report (second result)))))))
 
 (defn name-result [resulttree]
   (for [result @(second resulttree)]
