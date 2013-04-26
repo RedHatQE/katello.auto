@@ -46,7 +46,7 @@
 (nav/defpages (common/pages)
   [::page 
    [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [org] (nav/choose-left-pane org))
+   [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
     [::system-default-info-page (nav/browser-fn (click ::system-default-info))]]])
 
 ;; Tasks

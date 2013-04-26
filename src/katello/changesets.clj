@@ -131,9 +131,7 @@
   "Creates a changeset for promotion from env to next-env 
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
-  (nav/go-to ::named-environment-page {:org (kt/org env)
-                                       :env (:prior env)
-                                       :next-env env})
+  (nav/go-to ::named-environment-page env)
   (if deletion? (browser click ::deletion))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
