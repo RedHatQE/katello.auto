@@ -55,12 +55,12 @@
                                              :url "http://inecas.fedorapeople.org/fakerepos/"}
                                             {:name "ManyRepositoryA" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
-                                   {:name "WeirdLocalsUsing 標準語 Enterprise"
-                                    :i18n true
-                                    :repos [{:name "洪" 
-                                             :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                            {:name "Гесер" 
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
+                                   {:name "Weird Enterprise"
+                                            :i18n true
+                                            :repos [{:name "China" 
+                                                     :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
+                                                    {:name "Russia" 
+                                                     :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}
                                    {:name "ManyRepository Enterprise"
                                     :repos [{:name "ManyRepositoryA" 
                                              :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
@@ -94,11 +94,11 @@
                                             :repos [{:name "ErrataZoo" 
                                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
                            
-                                           {:name "WeirdLocalsUsing 標準語 Enterprise"
+                                           {:name "Weird Enterprise"
                                             :i18n true
-                                            :repos [{:name "洪" 
+                                            :repos [{:name "China" 
                                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}
-                                                    {:name "Гесер" 
+                                                    {:name "Russia" 
                                                      :url "http://inecas.fedorapeople.org/fakerepos/zoo/"}]}]}])
     
 (defn repo-list-from-tree [tree org]
