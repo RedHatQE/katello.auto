@@ -117,7 +117,7 @@
     (browser setText ::system/name-text-edit new-name)
     (if save?
       (do (browser click ::system/save-button)
-          (notification/check-for-success)
+          (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
           (when-not (= new-name (browser getText ::system/edit-sysname))
             (throw+ {:type ::system/sysname-not-edited
                      :msg "Still getting old system name."})))
@@ -136,7 +136,7 @@
     (browser setText ::system/description-text-edit new-description)
     (if save?
       (do (browser click ::system/save-button)
-          (notification/check-for-success)
+          (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
           (when-not (= new-description (browser getText ::system/edit-description))
             (throw+ {:type ::system/sys-description-not-edited
                      :msg "Still getting old description of selected system."})))
@@ -144,6 +144,25 @@
           (when-not (= original-description (browser getText ::system/edit-description))
             (throw+ {:type ::system/sys-description-edited-anyway
                      :msg "System description changed even after clicking cancel button."}))))))
+
+(defn edit-sys-location
+  "Edit location of selected system"
+  [system new-location save?]
+  (nav/go-to ::system/details-page {:system system
+                                    :org (kt/org system)})
+  (let [original-location (browser getText ::system/edit-location)]
+    (browser click ::system/edit-location)
+    (browser setText ::system/location-text-edit new-location)
+    (if save?
+      (do (browser click ::system/save-button)
+          (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
+          (when-not (= new-location (browser getText ::system/edit-location))
+            (throw+ {:type ::system/sys-location-not-edited
+                     :msg "Still getting old location of selected system."})))
+      (do (browser click ::system/cancel-button)
+          (when-not (= original-location (browser getText ::system/edit-location))
+            (throw+ {:type ::system/sys-location-edited-anyway
+                     :msg "System location changed even after clicking cancel button."}))))))
 
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
@@ -187,6 +206,19 @@
       [["cancel description" false success]
        ["System Registration Info" true success]
        [(random-string (int \a) (int \z) 256) true (common/errtype ::notification/sys-description-255-char-limit)]
+       [(random-string (int \a) (int \z) 255) true success]])
+    
+    (deftest "System-details: Edit Location"
+      :data-driven true
+
+      (fn [new-location save? expected-res]
+        (with-unique-system s
+          (ui/create s)
+          (expecting-error expected-res (edit-sys-location s new-location save?))))
+
+      [["Cancel Location" false success]
+       ["System Location Info" true success]
+       [(random-string (int \a) (int \z) 256) true (common/errtype ::notification/sys-location-255-char-limit)]
        [(random-string (int \a) (int \z) 255) true success]])
 
     (deftest "Verify system appears on Systems By Environment page in its proper environment"
@@ -404,6 +436,21 @@
 
       [[false]
        [true]])
+    
+    (deftest "Check whether all the envs of org can be selected for a system"
+      (let [arch "x86_64"
+            cpu "2"
+            org       (uniqueify (kt/newOrganization {:name "defaultsysinfo"}))
+            env-chain (take 3 (uniques (katello/newEnvironment {:name "envs", :org org})))
+            system    (uniqueify (kt/newSystem {:name "mysystem"
+                                               :env (first env-chain)
+                                               :sockets cpu
+                                               :system-arch arch
+                                               :virtual? false}))]
+        (ui/create-all (concat (list org) (kt/chain env-chain) (list system)))
+        (ui/update system assoc :env (second env-chain))
+        (ui/update system assoc :env (last env-chain))))
+
 
     (deftest "Add system link is disabled when org has no environments"
       (with-unique [org (kt/newOrganization {:name "addsys"})]

@@ -62,7 +62,7 @@
    ::packages-link               (ui/menu-link "systems_packages")
    ::software-link               (ui/menu-link "system_products")
    ::errata-link                 (ui/menu-link "errata")
-   ::add-content		      "add_content"
+   ::add-content                 "add_content"
    ::remove-content              "remove_content" 
    ::package-name                "content_input"
    ::select-package-group        "perform_action_package_groups"
@@ -82,6 +82,7 @@
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
    ::edit-description            "system_description"
+   ::edit-location               "system_location"
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
    
