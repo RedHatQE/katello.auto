@@ -5,6 +5,7 @@
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
             [clojure.string :refer [split trim]]
+            [clojure.walk :refer [postwalk] ]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
@@ -12,7 +13,7 @@
                      [ui-common     :as common]
                      [notifications :as notification]
                      [conf          :refer [config]]
-                     [api-tasks     :refer [when-katello when-headpin]])
+                     [rest     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
             [pl.danieljanus.tagsoup :refer [parse-xml]]
             [test.assert         :as assert]
@@ -41,7 +42,7 @@
    ::pkg-search                "//div[@id='package_search']/input[@id='search']"
    ::errata-search             "//div[@id='errata_search']//input[@id='search']"
    ::browse-button             "//input[@id='browse_button']"
-   ::repo-compare-button       "//a[@id='compare_repos_btn']"
+   ::repo-compare-button       "//a[@id='compare_btn']"
    ::load-more                 "//a[contains(@class,'load_row_link')]"
    ::column-selector           "//div[@id='column_selector']/span[contains(@class,'path_button')]"
    ::details-container         "//div[contains(@class,'details_container')]"
@@ -53,10 +54,10 @@
   result-item-n           "//ul[@id='grid_row_headers']/li[%s]"
   package-name            "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
   compare-checkbox        "//input[@type='checkbox' and @name='%s']"
-  result-repo-errata-link "//a[@data-type='repo_errata' and @data-repo_id='%s']"
+  result-repo-errata-link "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
   compare-checkbox-all    "//div[@id='grid_content']//input[%s]"
   repo-remove             "//div[@id='repo_autocomplete_list']/ul/li[@data-name='%s']/i[contains(@class,'remove')]"
-  repo-header-name        "//ul[@id='column_headers']/li[%s]/span[1]"
+  repo-header-name        "//ul[@id='column_headers']/li[%s]/span[3]"
   col-header-name         "//ul[@id='column_headers']/li[%s]"
   repo-column-name        "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][%s]"
   column                  "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='%s']"
@@ -65,7 +66,7 @@
   result-col-id           "//ul[@id='column_headers']//li[contains(.,'%s')]"
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
-  repo-link               "//div[@id='grid_row_repo_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
+  repo-link               "//div[@id='grid_row_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
 ;; Nav
 
@@ -107,72 +108,55 @@
      parse-xml
      zip/xml-zip))
 
-(defn tree-edit [tree filter-fn edit-fn edit-other & returning]
-  "Performs depth first search and applies edit function on each node, that conforms to filter (from bottom up)"
-  (if (and (not (nil? (zip/down tree)))
-           (empty? returning))
-    (tree-edit (zip/down tree) filter-fn edit-fn edit-other)
-    (let [e-tree (if (filter-fn tree)
-                   (zip/edit tree edit-fn)
-                   (zip/edit tree edit-other))]
-      (if (not (nil? (zip/right e-tree)))
-        (tree-edit (zip/right  e-tree) filter-fn edit-fn edit-other)
-        (if (not (nil? (zip/up  tree)))
-          (tree-edit (zip/up e-tree ) filter-fn edit-fn edit-other :returning)
-          e-tree )))))
+(defn node-content-as [empty-coll tree]
+(postwalk 
+   #(cond 
+     (and (map? %) (contains? % :content)) (into empty-coll (:content %))  
+     :else %)
+    tree))
 
-(defn tree-map [tree edit-fn]
-  (tree-edit tree
-             (fn [tree] true)
-             edit-fn
-             identity))
+(defn normalize-nodes [tree]
+  (postwalk 
+    #(if (and (not (map? %)) (= 1 (count %)))
+                (first %)
+                %)
+    tree))
 
-(defn subtree-to-top  [ziptree]
-  (if (nil? (zip/up ziptree))
-    0
-    (inc (subtree-to-top (zip/up ziptree)))))
-
-(defn normalize [tree]
-  (tree-map
-   tree
-   (fn [list]
-     (if (= 1 (count list))
-       (first list)
-       list))))
-
-(defn normalize2 [tree]
-  (tree-map tree
-            (fn [n]
-              (let [node (if (char? n) (str n) n)]
-                (cond
-                 (= "--" node) false
-                 (= "**" node) true
-                 (numeric-str? node) (read-string node)
-                 :else node)))))
+(defn remove-nil-and-empty [when? empty-col tree]
+  (postwalk #(if (when? %)
+             (->> %
+                (remove nil?)
+                (remove empty?)
+                (into empty-col))
+                %) 
+            tree))
 
 (defn get-search-page-result-list-of-lists [xml-zip]
-  (->  xml-zip
-      (tree-edit
-       (fn [tree] (or
-                  (contains? (zip/node tree) :content)
-                  (= (:class (:attrs (zip/node tree)))
-                     "dot_icon-black")))
-       (fn [node]
-         (into []
-               (remove empty?
-                       (remove nil?
-                                        ;converting non-displayable parts to nil
+  (->> xml-zip
+    zip/node    
+	  (node-content-as []) 
+    (remove-nil-and-empty vector? []) 
+    normalize-nodes
+    (postwalk #(if (= "--" %) false %))))
 
-                                        ; converting the black dot to ** to signify a presence of something
-                               (if (= (:class (:attrs node)) "dot_icon-black")
-                                 ["**"]
-                                 (:content node))))))
-       identity)
-      zip/node
-      zip/vector-zip
-      normalize
-      normalize2
-      zip/node))
+
+(defn get-grid-row-headers []
+  (->> "grid_row_headers"
+       get-string-of-html-element
+       get-zip-of-xml-string
+       zip/node
+(postwalk 
+   #(cond 
+     (vector? %) (reduce 
+                   (fn [acc n]
+                     (if (and (map? (last acc)) (map? n) (= :ul (:tag  n)))
+                       (into (into [] (butlast acc)) [{(last acc) n}] )
+                       (into acc [n])))
+                   [] %)
+     :else %))
+   (node-content-as #{}) 
+   (remove-nil-and-empty set? #{})
+    normalize-nodes))
 
 (defn get-search-page-result-list-of-lists-html [id]
      (-> id
@@ -185,25 +169,6 @@
        get-string-of-html-element
        get-zip-of-xml-string
        get-search-page-result-list-of-lists))
-
-(defn get-search-page-result-map-of-maps-of-sets-of-sets [depth]
-  (-> "grid_row_headers"
-     get-string-of-html-element
-     get-zip-of-xml-string
-     get-search-page-result-list-of-lists
-     zip/vector-zip
-     (tree-edit
-      (fn [tree] (>= depth (subtree-to-top tree)))
-      (fn [node]
-        (if (coll? node)
-          (apply hash-map node)
-          node))
-      (fn [node]
-        (if (coll? node)
-          (into #{} node)
-          node)))
-     zip/node))
-
 
 (def ^{:arglists '([locator attribute])}
   attr-loc (partial format  "%s@%s"))
@@ -244,9 +209,9 @@
                    (setText auto-comp-box cont-item)
                    ;; typeKeys is necessary to trigger drop-down list
                    (typeKeys auto-comp-box " ")
-                   (waitForElement elem "2000")
-                   (mouseOver elem)
-                   (click elem)
+                   ;(waitForElement elem "2000")
+                   ;(mouseOver elem)
+                   ;(click elem)
                    (click add-button))))
 
 (defn get-search-result-repositories []
@@ -287,18 +252,23 @@
       (remove-one-repository-from-browser removing))
     (browser click ::browse-button)))
 
-(defn get-repo-search-data-id-map [repositories]
-  (apply hash-map
-         (reduce
-          (fn [result name]
-            (conj result  name
-                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers
-                                     (browser getAttribute (attr-loc
-                                                            (result-repo-id name)
-                                                            "data-id"))))))
-          []
-          repositories)))
+(defn name-map-to-name [name-map]
+  (->> name-map
+    (into [])
+    flatten
+    (clojure.string/join "_")))
 
+(defn get-repo-search-data-name-map [repositories]
+  (->> repositories
+    (map (fn [name]
+              (->> name
+                result-repo-id
+                (#(attr-loc % "data-id"))
+                (browser getAttribute )
+                (#(split % #"_"))
+                (apply hash-map))) )          
+    (zipmap repositories)))
+    
 (defn get-repo-search-library-id-map [repositories]
   (apply hash-map 
          (reduce 
@@ -312,17 +282,18 @@
           repositories)))
 
 ;problem with two repos of a same name
-(defn get-repo-search-data-id [repo-name]
-  ((get-repo-search-data-id-map [repo-name]) repo-name))
+(defn get-repo-search-data-name [repo-name]
+  ((get-repo-search-data-name-map [repo-name]) repo-name))
 
 (defn check-repositories [repositories]
-  (let [repo-id-map (get-repo-search-data-id-map repositories)]
+  (let [repo-id-map (get-repo-search-data-name-map repositories)]
     (doseq [repository repositories]
-      (browser check (compare-checkbox (str "repo_" (repo-id-map repository)))))))
+      (browser check (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
 
+(defn go-to-content-search-page [with-org]
+  (nav/go-to ::page  {:org with-org}))
 
 (defn add-repositories [repositories]
-  (nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser check ::repo-auto-complete-radio)
   (doseq [repository repositories]
@@ -334,12 +305,11 @@
   (not (=  "" (browser getText ::repo-compare-button))))
 
 (defn click-repo-errata [repo]
-  (let [repo-id ((get-repo-search-data-id-map [repo]) repo) ]
-    (browser click (result-repo-errata-link  repo-id))))
+  (let [repo-id ((get-repo-search-data-name-map [repo]) repo) ]
+    (browser click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
 
 (defn compare-repositories [repositories]
-  ;(add-repositories repositories)
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser check ::repo-auto-complete-radio)
   (browser click ::browse-button)
@@ -354,8 +324,8 @@
 
 (defn select-view [set-type]
   (case set-type
-    :all (browser select ::repo-result-filter-select   "All")
-    :shared (browser select ::repo-result-filter-select   "Union")
+    :all (browser select ::repo-result-filter-select   "Union")
+    :shared (browser select ::repo-result-filter-select   "Intersection")
     :unique (browser select ::repo-result-filter-select   "Difference")))
 
 (defn get-repo-packages [repo & {:keys [view] :or {view :packages} }]
@@ -365,18 +335,18 @@
   (get-result-packages))
 
 (defn search-for-repositories [repo]
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Repositories")
   (browser setText ::repo-search repo)
   (submit-browse-button)
-  (get-search-page-result-map-of-maps-of-sets-of-sets 0))
+  (get-grid-row-headers))
 
 (defn search-for-packages [package]
-  (nav/go-to ::page)
+  ;(nav/go-to ::page)
   (browser select ::type-select "Packages")
   (browser setText ::pkg-search package)
   (submit-browse-button)
-  (get-search-page-result-map-of-maps-of-sets-of-sets 1))
+  (get-grid-row-headers))
 
 (defn select-content-type [content-type]
   ;; Navigate to content search page and select content type
@@ -385,7 +355,7 @@
                    :pkg-type    "Packages"
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
-    (nav/go-to ::page)
+    ;(nav/go-to ::page)
     (browser select ::type-select ctype-str)))
 
 (defn select-environments [envs]
@@ -443,7 +413,8 @@
 (defn test-errata-popup-click [name]
   (browser click (span-text name))
   (browser mouseOver  ::errata-search)
-  (assert/is (.contains (browser getText ::details-container) name))
+  ;DOESNT CONTAIN NAME ANYMORE
+  (assert/is (.contains (browser getText ::details-container) "Erratum"))
   (browser click (span-text name))
   (assert/is (= 0 (browser getXpathCount ::details-container))))
 
@@ -460,16 +431,17 @@
 
 (defn get-errata-set  [type]
   (search-for-content :errata-type {:errata type})
-  (get-search-page-result-map-of-maps-of-sets-of-sets 1))
+  (get-grid-row-headers))
 
 (defn get-repo-set  [search-string]
   (search-for-repositories search-string)
-  (get-search-page-result-map-of-maps-of-sets-of-sets 0))
+  (get-grid-row-headers))
 
 (defn get-result-repos []
-  (get-search-page-result-map-of-maps-of-sets-of-sets 0))
+  (get-grid-row-headers))
 
 (defn get-package-desc []
+  (load-all-results)
   (zipmap (get-search-page-result-list-of-lists-xml "grid_row_headers")
           (get-search-page-result-list-of-lists-html "grid_content_window")))
 
@@ -477,4 +449,4 @@
   (get-search-page-result-list-of-lists-html "grid_content_window"))
 
 (defn click-repo-desc [repo-name env-name]
-  (browser click (repo-link (get-repo-search-data-id repo-name) (get-col-id env-name))))
+  (browser click (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
