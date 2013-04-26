@@ -111,19 +111,19 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [system] (nav/choose-left-pane system)
-    [::details-page [] (browser click ::details)
-     [::facts-page [] (browser click ::facts)]
-     [::custom-info-page [] (browser click ::custom-info)]]
-    [::subscriptions-page [] (browser click ::subscriptions)]
-    [::content-menu [] (browser mouseOver ::content-link)
-     [::content-software-page [] (browser click ::software-link)]
-     [::content-packages-page [] (browser click ::packages-link)]
-     [::content-errata-page [] (browser click ::errata-link)]]]]
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [system] (nav/choose-left-pane system))
+    [::details-page (nav/browser-fn (click ::details))
+     [::facts-page (nav/browser-fn (click ::facts))]
+     [::custom-info-page (nav/browser-fn (click ::custom-info))]]
+    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
+    [::content-menu (nav/browser-fn (mouseOver ::content-link))
+     [::content-software-page (nav/browser-fn (click ::software-link))]
+     [::content-packages-page (nav/browser-fn (click ::packages-link))]
+     [::content-errata-page (nav/browser-fn (click ::errata-link))]]]]
   [::by-environments-page
-   [::environment-page [env] (nav/select-environment-widget env)
-    [::named-by-environment-page [system] (nav/choose-left-pane system)]]])
+   [::environment-page (fn [system] (nav/select-environment-widget (kt/env system)))
+    [::named-by-environment-page (fn [system] (nav/choose-left-pane system))]]])
 
 ;; Tasks
 
@@ -391,9 +391,7 @@
                                            f
                                            (random-facts))))}
   
-  nav/Destination {:go-to (fn [system]
-                            (nav/go-to ::named-page {:system system
-                                                     :org (kt/org system)}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 
 (defn api-pools

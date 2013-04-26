@@ -45,9 +45,9 @@
 
 (nav/defpages (common/pages)
   [::page 
-   [::new-page [] (browser click ::new)]
-   [::named-page [org] (nav/choose-left-pane org)
-    [::system-default-info-page [] (browser click ::system-default-info)]]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [org] (nav/choose-left-pane org))
+    [::system-default-info-page (nav/browser-fn (click ::system-default-info))]]])
 
 ;; Tasks
 
@@ -149,8 +149,7 @@
                                                     (tasks/stamp ts %1)))
                                       updated-fields))))}
 
-  nav/Destination {:go-to (fn [org] (nav/go-to ::named-page
-                                               {:org org}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 
 

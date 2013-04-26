@@ -21,8 +21,8 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::named-page [distributor] (nav/choose-left-pane distributor)]
-   [::new-page [] (browser click ::new)]])
+   [::named-page (fn [distributor] (nav/choose-left-pane distributor))]
+   [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
 

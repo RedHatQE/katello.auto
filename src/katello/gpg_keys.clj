@@ -28,8 +28,8 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [gpg-key] (nav/choose-left-pane gpg-key)]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [gpg-key] (nav/choose-left-pane gpg-key))]])
 
 ;;Tasks
 
@@ -66,8 +66,8 @@
                :query (partial rest/query-by-name query-url)
                :read (partial rest/read-impl id-url)})
   
-  nav/Destination {:go-to  #(nav/go-to ::named-page {:gpg-key %1
-                                                     :org (katello/org %1)})}
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}
+  
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
 (defn gpg-keys-prd-association?

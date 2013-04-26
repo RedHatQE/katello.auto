@@ -28,8 +28,8 @@
 
 (nav/defpages (org/pages)
   [:katello.organizations/named-page
-   [::new-page [] (browser click ::new)]
-   [::named-page [env] (browser click (ui/environment-link (:name env)))]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [env] (browser click (ui/environment-link (:name env))))]])
 
 ;; Tasks
 
@@ -93,8 +93,6 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [env]
-                            (nav/go-to ::named-page {:org (-> env :org)
-                                                     :env env}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 

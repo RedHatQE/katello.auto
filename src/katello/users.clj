@@ -51,9 +51,9 @@
 (nav/defpages
   (common/pages)
   [::page 
-   [::named-page [user] (nav/choose-left-pane user-list-item user)
-    [::environments-page [] (browser click ::environments-link)]
-    [::roles-permissions-page [] (browser click ::roles-link)]]])
+   [::named-page (fn [user] (nav/choose-left-pane user-list-item user))
+    [::environments-page (nav/browser-fn (click ::environments-link))]
+    [::roles-permissions-page (nav/browser-fn (click ::roles-link))]]])
 
 
 ;; Vars
@@ -175,7 +175,7 @@
                :delete (fn [user]
                          (rest/http-delete (url-by-id user)))})
   
-  nav/Destination {:go-to #(nav/go-to ::named-page {:user %})}
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 

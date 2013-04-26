@@ -34,9 +34,8 @@
 
 (nav/defpages (common/pages)
   [::plans-page
-   [::named-plan-page [sync-plan]
-    (nav/choose-left-pane sync-plan)]
-   [::new-plan-page [] (browser click ::new-plan)]])
+   [::named-plan-page (fn [sync-plan] (nav/choose-left-pane sync-plan))]
+   [::new-plan-page (nav/browser-fn (click ::new-plan))]])
 
 ;; Tasks
 
@@ -90,8 +89,7 @@
                                 (assoc (tasks/stamp-entity % s)
                                   :start-time (java.util.Date.)))}
   
-  nav/Destination {:go-to #(nav/go-to ::named-plan-page {:sync-plan %1
-                                                         :org (:org %1)})})
+  nav/Destination {:go-to (partial nav/go-to ::named-plan-page)})
 
 (defn schedule
   "Schedules the given list of products to be synced using the given

@@ -42,9 +42,9 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::named-page [role] (nav/choose-left-pane role)
-    [::named-users-page [] (browser click ::users)]
-    [::named-permissions-page [] (browser click ::permissions)]]])
+   [::named-page (fn [role] (nav/choose-left-pane role))
+    [::named-users-page (nav/browser-fn (click ::users))]
+    [::named-permissions-page (nav/browser-fn (click ::permissions))]]])
 
 
 ;; Vars
@@ -153,7 +153,7 @@
            :update* edit
            :delete delete}
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to #(nav/go-to ::named-page {:role %})})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 (defn validate-permissions-navigation
   "Validate Navigation of permissions page under Roles."

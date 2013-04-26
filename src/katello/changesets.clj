@@ -57,11 +57,12 @@
    
 (nav/defpages (common/pages)
   [::page
-   [::named-environment-page [env next-env]
-    (nav/select-environment-widget env {:next-env next-env :wait true})
-    [::named-page [changeset deletion?] (do (when deletion?
-                                              (browser click ::deletion))
-                                            (browser click (list-item (:name changeset))))]]])
+   [::named-environment-page (fn [cs]
+                               (let [env (kt/env cs)]
+                                 (nav/select-environment-widget (:prior env) {:next-env env :wait true})))
+    [::named-page (fn [cs] (when (:deletion? cs)
+                             (browser click ::deletion)
+                             (browser click (list-item (:name cs)))))]]])
 
 ;; Protocol
 
@@ -188,12 +189,7 @@
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
   
-  nav/Destination {:go-to (fn [{:keys [name deletion? env] :as cs}]
-                            (nav/go-to ::named-page {:org (kt/org env)
-                                                     :env (:prior env)
-                                                     :next-env env
-                                                     :changeset cs
-                                                     :deletion? deletion?}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 (defn promote-or-delete
   "Promotes the given changeset to its target environment and could also Delete

@@ -36,7 +36,7 @@
 
 (nav/defpages (provider/pages)
   [::provider/products-page 
-   [::named-page [repo] (browser click (ui/editable (:name repo)))]])
+   [::named-page (fn [repo] (browser click (ui/editable (:name repo))))]])
 
 ;; Tasks
 
@@ -111,8 +111,4 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [repo]
-                            (nav/go-to ::named-page {:org (kt/org repo)
-                                                     :provider (kt/provider repo)
-                                                     :product (kt/product repo)
-                                                     :repo repo}))}) 
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}) 

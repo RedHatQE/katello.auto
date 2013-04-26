@@ -41,10 +41,10 @@
 
 (nav/defpages (common/pages)
   [::page
-   [::new-page [] (browser click ::new)]
-   [::named-page [system-group] (nav/choose-left-pane system-group)
-    [::systems-page [] (browser click ::systems-link)]
-    [::details-page [] (browser click ::details-link)]]])
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [system-group] (nav/choose-left-pane system-group))
+    [::systems-page (nav/browser-fn (click ::systems-link))]
+    [::details-page (nav/browser-fn (click ::details-link))]]])
 
 
 ;; Tasks
@@ -148,5 +148,4 @@
            :update* update}
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to (fn [sg] (nav/go-to ::named-page {:system-group sg
-                                                            :org (kt/org sg)}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})

@@ -54,13 +54,13 @@
 
 (nav/defpages (common/pages)
   [::custom-page
-   [::new-page [] (browser click ::new)]
-   [::named-page [provider] (nav/choose-left-pane provider)
-    [::products-page [] (sel/->browser (click ::products-and-repositories)
-                                       (sleep 2000))
-     [::named-product-page [product] (browser click (ui/editable (:name product)))]]
-    [::details-page [] (browser click ::details-link)]
-    [::repo-discovery-page [] (browser click ::repository-discovery)]]]) 
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [ent] (nav/choose-left-pane (kt/provider ent)))
+    [::products-page (nav/browser-fn (click ::products-and-repositories)
+                                     (sleep 2000))
+     [::named-product-page (fn [ent] (->> ent kt/product :name ui/editable (browser click)))]]
+    [::details-page (nav/browser-fn (click ::details-link))]
+    [::repo-discovery-page (nav/browser-fn (click ::repository-discovery))]]]) 
 
 ;; Tasks
 
@@ -188,9 +188,7 @@
 
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [prov]
-                            (nav/go-to ::named-page {:org (:org prov)
-                                                     :provider prov }))})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 (extend katello.Product
   ui/CRUD {:create add-product
@@ -213,8 +211,5 @@
 
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (fn [product]
-                            (nav/go-to ::named-product-page {:org (kt/org product)
-                                                             :provider (kt/provider product)
-                                                             :product product}))})
+  nav/Destination {:go-to (partial nav/go-to ::named-product-page)})
 
