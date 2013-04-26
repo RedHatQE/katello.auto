@@ -51,10 +51,7 @@
 
 (defn verify-system-appears-on-env-page
   [system]
-  (nav/go-to ::system/named-by-environment-page
-             {:env (:env system)
-              :org (kt/org system)
-              :system system})
+  (nav/go-to ::system/named-by-environment-page system)
   (assert/is (= (:environment_id system)
                 (-> test-environment rest/query :id))))
 
@@ -79,7 +76,7 @@
 (defn verify-new-system-tooltip
   "Confirms that tooltips in the New System form appear and show the correct messages"
   [icon-locator expected-text]
-  (nav/go-to ::system/new-page {:org *session-org*})
+  (nav/go-to ::system/new-page *session-org*)
   (browser mouseOver icon-locator)
   (Thread/sleep 2000)
   (assert/is (browser isTextPresent expected-text))
@@ -90,8 +87,7 @@
 
 (defn validate-system-facts
   [system cpu arch virt? env]
-  (nav/go-to ::system/facts-page {:system system
-                                  :org (kt/org system)})
+  (nav/go-to ::system/facts-page system)
   (browser click ::system/cpu-expander)
   (assert/is (= cpu (browser getText ::system/cpu-socket)))
   (browser click ::system/network-expander)
@@ -110,8 +106,7 @@
 (defn edit-sysname
   "Edits system"
   [system new-name save?]
-  (nav/go-to ::system/details-page {:system system
-                                    :org (kt/org system)})
+  (nav/go-to ::system/details-page system)
   (let [old-name (browser getText ::system/edit-sysname)]
     (browser click ::system/edit-sysname)
     (browser setText ::system/name-text-edit new-name)
@@ -129,8 +124,7 @@
 (defn edit-sys-description
   "Edit description of selected system"
   [system new-description save?]
-  (nav/go-to ::system/details-page {:system system
-                                    :org (kt/org system)})
+  (nav/go-to ::system/details-page system)
   (let [original-description (browser getText ::system/edit-description)]
     (browser click ::system/edit-description)
     (browser setText ::system/description-text-edit new-description)
@@ -147,7 +141,7 @@
 
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
-  (nav/go-to ::system/page {:org org})
+  (nav/go-to ::system/page org)
   (Integer/parseInt (browser getText ::system/total-sys-count)))
 
 ;; Tests
@@ -408,7 +402,7 @@
     (deftest "Add system link is disabled when org has no environments"
       (with-unique [org (kt/newOrganization {:name "addsys"})]
         (rest/create org)
-        (nav/go-to ::system/page {:org org})
+        (nav/go-to ::system/page org)
         (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
           (assert (and (.contains class "disabled")
                        (.contains original-title "environment is required"))))))
@@ -457,8 +451,7 @@
                             :activationkey (:name ak)})
           (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
                 aklink (system/activation-key-link (:name ak))]
-            (nav/go-to ::system/details-page {:system system
-                                              :org (kt/org system)})
+            (nav/go-to ::system/details-page system)
             (when (browser isElementPresent aklink)
               (browser clickAndWait aklink))))))
 

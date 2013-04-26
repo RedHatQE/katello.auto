@@ -63,7 +63,7 @@
 (defn add-custom-keyname
   "Adds a custom keyname field to an organization and optionally apply it to existing systems"
   [org keyname & [{:keys [apply-default]}]]
-  (nav/go-to ::system-default-info-page {:org org})
+  (nav/go-to ::system-default-info-page org)
   ;; Make sure the 'Add' button is disabled
   (assert (= (get (browser getAttributes ::create-keyname) "disabled") ""))
   (->browser (setText ::keyname-text keyname)
@@ -78,7 +78,7 @@
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
   [org keyname]
-  (nav/go-to ::system-default-info-page {:org org})
+  (nav/go-to ::system-default-info-page org)
   (browser click (remove-keyname-btn keyname)))
 
 (defn create

@@ -67,8 +67,8 @@
 (defn create
   "Creates a custom provider with the given name and description."
   [{:keys [name description org]}]
-   {:pre [(instance? katello.Organization org)]} 
-  (nav/go-to ::new-page {:org org})
+  {:pre [(instance? katello.Organization org)]} 
+  (nav/go-to ::new-page org)
   (sel/fill-ajax-form {::name-text name
                        ::provider-description-text description}
                       ::create-save)
@@ -79,8 +79,7 @@
   [{:keys [provider name description gpg-key]}]
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
-  (nav/go-to ::products-page {:provider provider
-                              :org (:org provider)})
+  (nav/go-to ::products-page provider)
   (browser click ::add-product)
   (when gpg-key (browser select ::prd-gpg-select gpg-key))
   (sel/fill-ajax-form {::product-name-text name
@@ -125,8 +124,7 @@
   [provider updated]
   {:pre [(instance? katello.Provider provider)
          (instance? katello.Provider updated)]}
-  (nav/go-to ::details-page {:provider provider
-                             :org (:org provider)})
+  (nav/go-to ::details-page provider)
   (common/in-place-edit {::name-text (:name updated)
                          ::provider-description-text (:description updated)}))
 
@@ -136,8 +134,7 @@
   cancel - cancels the repo discovery search shortly after starting it.
   new-prod - creates a new product instead of adding repos to an existing one"
   [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
-  (nav/go-to ::repo-discovery-page {:provider (:provider product)
-                                    :org (:org (:provider product))})
+  (nav/go-to ::repo-discovery-page product)
   (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
   (if cancel
     (do

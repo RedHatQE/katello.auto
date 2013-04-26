@@ -155,7 +155,7 @@
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
-(defn validate-permissions-navigation
+(defn validate-permissions-navigation ;;FIXME  seems to be deprecated? jweiss
   "Validate Navigation of permissions page under Roles."
   [role-name perm-name org resource-type verbs tags]
   (nav/go-to ::named-permissions-page {:role-name role-name})

@@ -130,7 +130,7 @@
 (defn create
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
-  (nav/go-to ::new-page {:org (:org env)})
+  (nav/go-to ::new-page env)
   (sel/fill-ajax-form [::name-text name
                        ::arch-select (or system-arch "x86_64")
                        ::sockets-text sockets
@@ -167,7 +167,7 @@
 
 (defn- select-multisys-with-ctrl 
   [systems]
-  (nav/go-to ::page {:org (-> systems first :env :org)})
+  (nav/go-to ::page (first systems))
   (browser controlKeyDown)
   (doseq [system systems]
     (nav/scroll-to-left-pane-item system)
@@ -194,7 +194,7 @@
 (defn add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
   [system group-name]
-  (nav/go-to ::named-page {:system system})
+  (nav/go-to system)
   (browser click ::system-groups)
   (browser click ::add-group-form)
   (if (browser isElementPresent (select-sysgroup-checkbox group-name))
@@ -204,16 +204,6 @@
       (notification/check-for-success))
     (throw+ {:type ::selected-sys-group-is-unavailable 
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
-
-(defn edit
-  "Edits the properties of the given system. Optionally specify a new
-  name, a new description, and a new location."
-  [name {:keys [new-name description location release-version]}]
-  (nav/go-to ::details-page {:system name})
-  (common/in-place-edit {::name-text-edit new-name
-                         ::description-text-edit description
-                         ::location-text-edit location
-                         ::release-version-select release-version}))
 
 (defn- set-environment "select a new environment for a system"
   [new-environment]
@@ -281,8 +271,7 @@
              :as to-add} _] (data/diff system updated)]
     
     (when (some not-empty (list to-remove to-add))
-      (nav/go-to ::details-page {:system system
-                                 :org (-> system :env :org)})
+      (nav/go-to ::details-page system)
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -416,17 +405,16 @@
 
 (defn environment "Get name of current environment of the system"
   [system]
-  (nav/go-to ::details-page {:system system})
+  (nav/go-to ::details-page system)
   (browser getText ::environment))
 
 (defn get-ip-addr
   [system]
-  (nav/go-to ::details-page {:system system})
+  (nav/go-to ::details-page system)
   (browser getText ::interface-addr))
 
 (defn get-details [system]
-  (nav/go-to ::details-page {:system system
-                             :org (-> system :env :org)})
+  (nav/go-to ::details-page system)
   (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
                  "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
@@ -436,7 +424,7 @@
                      (browser getText (system-detail-textbox detail)))))))
 
 (defn get-facts [system]
-  (nav/go-to ::facts-page {:system system})
+  (nav/go-to ::facts-page system)
   (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
                "distribution.id" "distribution.name" "distribution.version"
                "memory.memtotal" "memory.swaptotal"
@@ -453,7 +441,7 @@
 (defn expand-collapse-facts-group
   [system]
   "Expand/collapse group of selected system's facts"
-  (nav/go-to ::facts-page {:system system})
+  (nav/go-to ::facts-page system)
   (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
     (doseq [group groups] ;;To expand
       (when (browser isElementPresent (system-fact-group-expand group))
@@ -464,7 +452,7 @@
 
 (defn add-package "Add a package or package group to a system."
   [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system system})
+  (nav/go-to ::content-packages-page system)
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
@@ -480,7 +468,7 @@
 
 (defn remove-package "Remove a package or package group from a system."
   [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page {:system system})
+  (nav/go-to ::content-packages-page system)
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items

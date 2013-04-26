@@ -37,7 +37,7 @@
   (assert (not (and url contents))
           "Must specify one one of :url or :contents.")
   (assert (string? name))
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (if url
     (sel/->browser (setText ::name-text name)
                    (attachFile ::file-upload-text url)
@@ -70,7 +70,7 @@
   
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
-(defn gpg-keys-prd-association?
+(defn gpg-keys-prd-association? ;;FIXME deprecated?  jweiss
   [gpg-key-name repo-name]
   (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
   (browser isElementPresent (gpgkey-product-association repo-name)))

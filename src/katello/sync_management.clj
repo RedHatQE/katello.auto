@@ -56,7 +56,7 @@
   tests."
   [{:keys [name description interval start-date
            start-date-literal start-time-literal org] :as plan}]
-  (nav/go-to ::new-plan-page {:org org})
+  (nav/go-to ::new-plan-page org)
   (let [[date time] (split-date plan)]
     (sel/fill-ajax-form {::plan-name-text name
                          ::plan-description-text description
@@ -95,7 +95,7 @@
   "Schedules the given list of products to be synced using the given
   sync plan name."
   [{:keys [products plan]}]
-  (nav/go-to ::schedule-page {:org (:org plan)})
+  (nav/go-to ::schedule-page plan)
   (doseq [product products]
     (browser click (schedule-item (:name product))))
   (browser click (plan-link (:name plan)))
@@ -107,7 +107,7 @@
   "Returns a map of what sync plan a product is currently scheduled
   for. nil if UI says 'None'"
   [products]
-  (nav/go-to ::schedule-page {:org (-> products first :provider :org)})
+  (nav/go-to ::schedule-page (first products))
   (->> (for [product products]
          (browser getText (product-schedule (:name product))))
        doall
@@ -133,7 +133,7 @@
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
-  (nav/go-to ::status-page {:org (-> repos first kt/org)})
+  (nav/go-to ::status-page (first repos))
   (doseq [repo repos]
     (browser check (provider-checkbox (:name repo))))
   (browser click ::synchronize-now)

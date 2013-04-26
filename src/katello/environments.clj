@@ -38,7 +38,7 @@
    the organization name to create the environment in, the prior
    environment, and an optional description."
   [{:keys [name label org description prior]}]
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (sel/fill-ajax-form {::name-text name
                        (fn [label] (when label
                                      (browser fireEvent ::name-text "blur")

@@ -30,7 +30,7 @@
   "Creates a new distributor with the given name and environment."
   [{:keys [name env]}]
   {:pre [(instance? katello.Environment env)]}
-  (nav/go-to ::new-page {:org (:org env)})
+  (nav/go-to ::new-page env)
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::distributor-name-text name}
                       ::create)
@@ -62,13 +62,12 @@
                :read (partial rest/read-impl id-url)})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  nav/Destination {:go-to #(nav/go-to ::named-page {:distributor %1
-                                                    :org (:org (:env %1))})})
+  nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 (defn new-button-disabled?
   "Returns true if the new distributor button is disabled and the correct message is shown"
   [org]
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (let [{:strs [original-title class]} (browser getAttributes ::new)]
     (and (.contains class "disabled")
          (.contains original-title "environment is required"))))

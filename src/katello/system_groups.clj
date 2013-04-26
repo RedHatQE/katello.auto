@@ -52,7 +52,7 @@
 (defn create
   "Creates a system group"
   [{:keys [name description] :as sg}]
-  (nav/go-to ::new-page {:org (kt/org sg)})
+  (nav/go-to ::new-page sg)
   (sel/fill-ajax-form
    {::name-text name
     ::description-text description}
@@ -128,8 +128,7 @@
 (defn system-count
   "Get number of systems in system group according to the UI"
   [group]
-  (nav/go-to ::details-page {:system-group group
-                             :org (kt/org group)})
+  (nav/go-to ::details-page group)
   (Integer/parseInt (browser getText ::total)))
 
 (defn update [sg updated]

@@ -22,7 +22,7 @@
 (defn verify-navigation
   "Navigates to a page"
   [page]
-  (nav/go-to page {:org *session-org*})
+  (nav/go-to page *session-org*)
   (verify-no-error {:timeout-ms 2000}))
 
 (def all-navigation-tabs

@@ -48,8 +48,7 @@
           (instance? katello.Provider (kt/provider product))
           (instance? katello.Organization (kt/org product))]} 
 
-  (nav/go-to ::provider/products-page {:org (kt/org product)
-                                       :provider (kt/provider product)})
+  (nav/go-to ::provider/products-page product)
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
   (sel/fill-ajax-form {::repo-name-text name

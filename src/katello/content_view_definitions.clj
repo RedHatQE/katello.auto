@@ -57,12 +57,12 @@
 
 ;; Nav
 (nav/defpages (common/pages)
-   [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
-    [::details-page (nav/browser-fn (click ::details-tab))]
-    [::content-page (nav/browser-fn (click ::content-tab))]
-    [::filter-page (nav/browser-fn (click ::filter-tab))]
-    [::views-page (nav/browser-fn (click ::views-tab))]]])
+  [::new-page (nav/browser-fn (click ::new))]
+  [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
+   [::details-page (nav/browser-fn (click ::details-tab))]
+   [::content-page (nav/browser-fn (click ::content-tab))]
+   [::filter-page (nav/browser-fn (click ::filter-tab))]
+   [::views-page (nav/browser-fn (click ::views-tab))]])
 
 
 ;; Tasks
@@ -116,7 +116,7 @@
   (browser click ::content-tab)
   (doseq [product products]
     (sel/->browser
-      (mouseUp (->  product :name product-or-repository))
+      (mouseUp (-> product :name product-or-repository))
       (click ::add-product-btn)
       (click ::update-content))
     (notification/check-for-success)))
