@@ -14,6 +14,8 @@
                      [validation :refer :all])
             [test.tree.script :refer :all]
             [katello :as kt]
+            [test.assert :as assert]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
@@ -188,4 +190,6 @@
                        :description "test pub" 
                        :org org})
        (changeset/promote-delete-content cs)
-       (ui/create ak)))))
+       (ui/create ak)
+       (assert/is (= (:name (kt/product repo))
+                     (browser getText ::views/product-in-cv)))))))

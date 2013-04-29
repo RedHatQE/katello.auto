@@ -46,6 +46,7 @@
    ::remove-product            "//a[@class='remove_product']"
    ::remove-repo               "//a[@class='remove_repo']"
    ::toggle-products           "//div[@class='small_col toggle collapsed']"
+   ::product-in-cv             "//div/ul/li[@class='la']"
 
    ;; Promotion
    ::publish-button            "//input[@type='button']"
@@ -71,7 +72,7 @@
 (defn create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
                        (fn [composite] 
