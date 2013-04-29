@@ -125,7 +125,7 @@
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
       (do (browser click ::account)
-          (browser waitForElement ::password-text "10000"))
+          (browser waitForElement ::password-text "60000")) ; normal ajax wait doesn't work here
       (nav/go-to user))
     
     (when-not (nil? inline-help)
