@@ -35,13 +35,13 @@
            (update-in [:initial-env :prior] assoc :org thisorg)))
      m)))
 
-(defrecord Environment [id name label description ^Organization org prior])
+(defrecord Environment [id name label description ^Organization org prior next])
 
 (def library (map->Environment {:name "Library"})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
 
-(declare org )
+(declare org)
 
 ;; override the default constructor to chain in to previous env
 (defn chain
