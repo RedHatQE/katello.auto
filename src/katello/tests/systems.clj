@@ -142,8 +142,7 @@
 (defn edit-sys-location
   "Edit location of selected system"
   [system new-location save?]
-  (nav/go-to ::system/details-page {:system system
-                                    :org (kt/org system)})
+  (nav/go-to ::system/details-page system)
   (let [original-location (browser getText ::system/edit-location)]
     (browser click ::system/edit-location)
     (browser setText ::system/location-text-edit new-location)
