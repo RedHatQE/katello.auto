@@ -42,7 +42,7 @@
 
 (defn setup-custom-org-with-content
   [env repos]
-  (ui/create-all (list (kt/org env) env))
+  (ui/create-all-recursive (concat (list (kt/org env) env) repos))
   (changeset/sync-and-promote repos env))
 
 
