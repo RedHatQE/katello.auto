@@ -43,7 +43,7 @@
 (defn setup-custom-org-with-content
   [env repos]
   (ui/create-all-recursive (concat (list (kt/org env) env) repos))
-  (changeset/sync-and-promote repos env))
+  (changeset/sync-and-promote (filter (complement :unsyncable) repos) env))
 
 
 ;; Data (Generated)
