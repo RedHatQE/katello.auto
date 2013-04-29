@@ -1,4 +1,4 @@
-(ns 'katello.repl
+(ns katello.repl
   (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [clojure.pprint :refer [pp pprint]]
             fn.trace
