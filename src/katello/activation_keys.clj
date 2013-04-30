@@ -46,7 +46,7 @@
   "Creates an activation key with the given properties. Description is
    optional."
   [{:keys [name description content-view env] :as ak}]
-  (nav/go-to ::new-page env)
+  (nav/go-to ::new-page ak)
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
@@ -83,8 +83,8 @@
              (click ::add-sys-group)))
 
 (defn get-subscriptions "Get applied susbscription info from activation key"
-  [name]
-  (nav/go-to ::named-page {:activation-key name})
+  [ak]
+  (nav/go-to ak)
   (browser click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))
 
