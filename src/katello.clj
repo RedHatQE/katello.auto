@@ -131,6 +131,7 @@
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
    ContentView {:org :org, :parent #'org}
+   Changeset {:org (comp #'org #'env), :env :env, :parent #'env}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
    SyncPlan {:org :org, :parent #'org}})
 

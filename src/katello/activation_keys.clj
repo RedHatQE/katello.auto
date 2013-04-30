@@ -46,7 +46,7 @@
   "Creates an activation key with the given properties. Description is
    optional."
   [{:keys [name description content-view env] :as ak}]
-  (nav/go-to ::new-page {:org (kt/org ak)})
+  (nav/go-to ::new-page env)
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description

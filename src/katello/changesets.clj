@@ -139,12 +139,12 @@
   (check-for-success))
 
 
-(defn update [{:keys [org env name deletion?] :as changeset} new-changeset]
+(defn update [{:keys [env name deletion?] :as changeset} new-changeset]
   (let [[to-remove to-add _] (data/diff changeset new-changeset)
         go-home (fn []
                   (browser sleep 5000)
                   (browser click ::promotion-eligible-home))]
-    (nav/go-to changeset org)
+    (nav/go-to changeset env)
     (doseq [item (:content to-add)]
       (add item)
       (go-home))
@@ -193,8 +193,8 @@
   "Promotes the given changeset to its target environment and could also Delete
    content from an environment. An optional timeout-ms key will specify how long to
    wait for the promotion or deletion to complete successfully."
-  [{:keys [name deletion? env org] :as changeset} & [timeout-ms]]
-  (nav/go-to changeset org)
+  [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
+  (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock
     (browser click ::review-for-promotion)
     ;;for the submission
