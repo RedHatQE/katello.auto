@@ -190,7 +190,7 @@
              (click (-> group :name sysgroup-checkbox))
              (click ::add-sysgrp)
              (click ::confirm-to-yes))
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :sys-add-bulk-sysgrps)}))
 
 (defn add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
@@ -202,7 +202,7 @@
     (do
       (browser click (select-sysgroup-checkbox group-name))
       (browser click ::add-group)
-      (notification/check-for-success))
+      (notification/check-for-success {:match-pred (notification/request-type? :sys-add-sysgrps)}))
     (throw+ {:type ::selected-sys-group-is-unavailable 
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
