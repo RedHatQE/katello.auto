@@ -30,6 +30,7 @@
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.3-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m"]
+  :repl-options {:init-ns katello.repl}
   :repositories ^:replace [["clojars" {:url "http://clojars.org/repo"
                                        :snapshots {:update :always}}]
                            ["central" {:url "http://repo1.maven.org/maven2"
