@@ -46,6 +46,7 @@
    ::remove-product            "//a[@class='remove_product']"
    ::remove-repo               "//a[@class='remove_repo']"
    ::toggle-products           "//div[@class='small_col toggle collapsed']"
+   ::product-in-cv             "//div/ul/li[@class='la']"
 
    ;; Promotion
    ::publish-button            "//input[@type='button']"
@@ -57,12 +58,13 @@
 
 ;; Nav
 (nav/defpages (common/pages)
-  [::new-page (nav/browser-fn (click ::new))]
-  [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
-   [::details-page (nav/browser-fn (click ::details-tab))]
-   [::content-page (nav/browser-fn (click ::content-tab))]
-   [::filter-page (nav/browser-fn (click ::filter-tab))]
-   [::views-page (nav/browser-fn (click ::views-tab))]])
+  [::page
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
+    [::details-page (nav/browser-fn (click ::details-tab))]
+    [::content-page (nav/browser-fn (click ::content-tab))]
+    [::filter-page (nav/browser-fn (click ::filter-tab))]
+    [::views-page (nav/browser-fn (click ::views-tab))]]])
 
 
 ;; Tasks
@@ -70,7 +72,7 @@
 (defn create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
-  (nav/go-to ::new-page {:org org})
+  (nav/go-to ::new-page org)
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
                        (fn [composite] 
