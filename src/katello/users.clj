@@ -105,7 +105,7 @@
   (when env
     (browser click (ui/environment-link (:name env))))
   (browser click ::save-environment)
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :users-update-env)}))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -141,7 +141,7 @@
       (when (browser isElementPresent ::password-conflict)
         (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
       (browser click ::save-edit) 
-      (notification/check-for-success))
+      (notification/check-for-success {:match-pred (notification/request-type? :users-update)}))
     (when email
       (common/in-place-edit {::email-text email}))
     (let [role-changes (map :roles (list to-add to-remove))]
