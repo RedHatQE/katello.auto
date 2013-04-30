@@ -31,7 +31,6 @@
          ]
     ;;client side
     (provision/with-client "e2e-custom" ssh-conn
-      (client/setup-client ssh-conn)
       (client/run-cmd ssh-conn (format "rpm -e %s" all-packages))
       (client/register ssh-conn {:username (:name *session-user*)
                                  :password (:password *session-user*)

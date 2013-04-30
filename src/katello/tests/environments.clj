@@ -206,7 +206,6 @@
                     env-test (katello/newEnvironment {:name "test"
                                                       :org @test-org})]
         (ui/create-all (list env-dev env-test))
-        (client/setup-client ssh-conn (uniqueify "envmovetest"))
         (client/register ssh-conn {:username (:name conf/*session-user*)
                                    :password (:password conf/*session-user*)
                                    :org (:name @test-org)
