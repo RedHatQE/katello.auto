@@ -52,7 +52,7 @@
                        ::description-text description
                        ::content-view-select content-view}
                       ::save)
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :ak-create)}))
 
 (defn delete
   "Deletes the given activation key."
@@ -60,7 +60,7 @@
   (nav/go-to ak)
   (browser click ::remove-link)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :ak-destroy)}))
 
 (defn- add-subscriptions
   "Add subscriptions to activation key."
@@ -69,7 +69,7 @@
   (doseq [subscription subscriptions]
     (browser click (subscription-checkbox subscription)))
   (browser click ::add-subscriptions)
-  (notification/check-for-success))
+  (notification/check-for-success {:match-pred (notification/request-type? :ak-add-subscriptions)}))
 
 (defn- remove-subscriptions [subscriptions]
   ;;TODO
@@ -80,7 +80,8 @@
   (->browser (click ::system-group-select)
              (click ::add-sys-group-form)
              (click (sysgroup-checkbox (:name sg)))
-             (click ::add-sys-group)))
+             (click ::add-sys-group))
+  (notification/check-for-success {:match-pred (notification/request-type? :ak-add-sysgrps)}))
 
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [ak]
