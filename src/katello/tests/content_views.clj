@@ -14,6 +14,8 @@
                      [validation :refer :all])
             [test.tree.script :refer :all]
             [katello :as kt]
+            [test.assert :as assert]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
@@ -188,4 +190,32 @@
                        :description "test pub" 
                        :org org})
        (changeset/promote-delete-content cs)
-       (ui/create ak)))))
+       (ui/create ak)
+       (assert/is (= (:name (kt/product repo))
+                     (browser getText ::views/product-in-cv)))))
+   
+   (deftest "Promote content-view containing two published-views"
+     (with-unique [org (kt/newOrganization {:name "cv-org"})
+                   env (kt/newEnvironment {:name  "dev" :org org})
+                   repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
+                   repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                   pub-name1 "publish-name1"
+                   pub-name2 "publish-name2"
+                   cv1 (kt/newContentView {:name "content-view1" 
+                                           :org org
+                                           :published-name pub-name1})
+                   cv2 (kt/newContentView {:name "content-view2" 
+                                           :org org
+                                           :published-name pub-name2})
+                   cs (kt/newChangeset {:name "cs" 
+                                        :env env
+                                        :content (list cv1 cv2)})]
+       (ui/create-all (list org env cv1 cv2))
+       (doseq [repo [repo1 repo2]]
+         (create-recursive repo)
+         (sync/perform-sync (list repo)))
+       (doseq [[repo cv published-names] [[repo1 cv1 pub-name1]
+                                          [repo2 cv2 pub-name2]]]
+         (ui/update cv assoc :products (list (kt/product repo)))
+         (views/publish {:name cv :published-name published-names :org org}))
+       (changeset/promote-delete-content cs)))))
