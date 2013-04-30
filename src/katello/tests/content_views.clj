@@ -107,7 +107,18 @@
                         :published-name (uniqueify "pub-name")
                         :org *session-org*})))
 
-
+    (deftest "Published content view name links to content search page"
+      (with-unique [content-def (kt/newContentView {:name "con-def"
+                                                    :org conf/*session-org*})
+                    pub-name "pub-view"]
+        (ui/create content-def)
+        (views/publish {:name content-def 
+                        :published-name pub-name 
+                        :org *session-org*})
+        (let [{:strs [href]} (browser getAttributes (views/publish-view-name pub-name))]
+          (assert (and (.startsWith href "/katello/content_search")
+                       (.contains href pub-name))))))
+    
     (deftest "Create a new content-view/composite definition and add a product"
       :data-driven true
 
