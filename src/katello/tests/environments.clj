@@ -60,7 +60,7 @@
   "Creates a new environment in the admin org, and promotes a
    product with a sync'd repo into it. Uses the API."
   [env]
-  (with-unique [prov (katello/newProvider {:name "prov"})
+  (with-unique [prov (katello/newProvider {:name "prov" :org conf/*session-org*})
                 prod (katello/newProduct {:name "prod" :provider prov})
                 repo (katello/newRepository {:name "repo" :product prod
                                              :url (@conf/config :sync-repo)})]
