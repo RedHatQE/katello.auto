@@ -38,7 +38,12 @@
    ::details-name-text         "view_definition[name]"
    ::details-description-text  "view_definition[description]"
 
-
+   ;; Filters tab
+   ::new-filter-button         "//input[@type='button' and @value='New Filter']"
+   ::filter-name-text          "//input[@id='filter_name' @class='name_input']"
+   ::filter-create             "//input[@class='create_button']"
+   
+   
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
    ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
