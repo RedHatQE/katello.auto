@@ -290,8 +290,8 @@
     (doseq [repository repositories]
       (browser check (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
 
-(defn go-to-content-search-page [with-org]
-  (nav/go-to ::page  {:org with-org}))
+(defn go-to-content-search-page [org]
+  (nav/go-to ::page org))
 
 (defn add-repositories [repositories]
   (browser select ::type-select "Repositories")
