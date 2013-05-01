@@ -104,8 +104,8 @@
   
 (defn publish
   "Publishes a Content View Definition"
-  [{:keys [name published-name description]}]
-  (nav/go-to name)
+  [{:keys [content-defn published-name description]}]
+  (nav/go-to content-defn)
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name

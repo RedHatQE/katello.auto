@@ -103,7 +103,7 @@
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :org conf/*session-org*})]
         (ui/create content-def)
-        (views/publish {:name content-def
+        (views/publish {:content-defn content-def
                         :published-name (uniqueify "pub-name")
                         :org *session-org*})))
 
@@ -112,7 +112,7 @@
                                                     :org conf/*session-org*})
                     pub-name "pub-view"]
         (ui/create content-def)
-        (views/publish {:name content-def 
+        (views/publish {:content-defn content-def 
                         :published-name pub-name 
                         :org *session-org*})
         (let [{:strs [href]} (browser getAttributes (views/publish-view-name pub-name))]
@@ -136,7 +136,7 @@
           (ui/create-all (list org content-view))
           (create-recursive repo)
           (ui/update content-view assoc :products (list (kt/product repo)))
-          (views/publish {:name content-view
+          (views/publish {:content-defn content-view
                           :published-name published-name
                           :org *session-org*})
           (when composite?
@@ -180,7 +180,7 @@
           (doseq [[repo content-defns published-names] [[repo1  (first content-defns) (first published-names)]
                                                         [repo2  (last content-defns) (last published-names)]]]
             (ui/update content-defns assoc :products (list (kt/product repo)))
-            (views/publish {:name content-defns
+            (views/publish {:content-defn content-defns
                             :published-name published-names
                             :org org}))
           (with-unique [composite-view (newContentView {:name "composite-view"
@@ -210,7 +210,7 @@
         (create-recursive repo)
         (sync/perform-sync (list repo))
         (ui/update cv assoc :products (list (kt/product repo)))
-        (views/publish {:name cv
+        (views/publish {:content-defn cv
                         :published-name pub-name
                         :description "test pub"
                         :org org})
@@ -242,5 +242,5 @@
         (doseq [[repo cv published-names] [[repo1 cv1 pub-name1]
                                            [repo2 cv2 pub-name2]]]
           (ui/update cv assoc :products (list (kt/product repo)))
-          (views/publish {:name cv :published-name published-names :org org}))
+          (views/publish {:content-defn cv :published-name published-names :org org}))
         (changeset/promote-delete-content cs)))))
