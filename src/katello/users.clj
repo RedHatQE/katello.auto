@@ -65,7 +65,7 @@
                                     :email "root@localhost"})))
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a user with the given name and properties."
   [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
@@ -81,7 +81,7 @@
                         ::save))
   (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
 
-(defn delete "Deletes the given user."
+(defn- delete "Deletes the given user."
   [user]
   (nav/go-to user)
   (browser click ::remove)
@@ -113,7 +113,7 @@
   (when (logged-in?)
     (katello/newUser {:name (browser getText ::account)})))
 
-(defn edit
+(defn- edit
   "Edits the given user, changing any of the given properties (can
   change more than one at once). Can add or remove roles, and change
   default org and env."
@@ -185,11 +185,14 @@
                :email "admin@katello.org"}))
 
 (defn delete-notifications
-  [delete-all?]
+  "Clears out the user's notifications. If confirm is false or nil,
+  the cancel button will be clicked and no notifications should be
+  deleted."
+  [confirm?]
   (browser clickAndWait ::user-notifications)
   (let [num-count (browser getText ::user-notifications)]
     (browser click ::delete-link)
-    (if delete-all?
+    (if confirm?
       (do
         (browser click ::ui/confirmation-yes)
         (browser clickAndWait ::user-notifications)

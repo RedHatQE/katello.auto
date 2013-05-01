@@ -49,7 +49,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a system group"
   [{:keys [name description] :as sg}]
   (nav/go-to ::new-page sg)
@@ -93,7 +93,7 @@
                       ::copy-submit)
   (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
 
-(defn remove
+(defn- remove
   "Removes a system group. Optionally, remove all the systems in the
    group as well."
   [{:keys [also-remove-systems?] :as group}]
@@ -131,7 +131,7 @@
   (nav/go-to ::details-page group)
   (Integer/parseInt (browser getText ::total)))
 
-(defn update [sg updated]
+(defn- update [sg updated]
   (nav/go-to sg)
   (let [[remove add] (data/diff sg updated)]
     (when-some-let [{:keys [name description limit]} add]

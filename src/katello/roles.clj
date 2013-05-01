@@ -55,7 +55,7 @@
 
 (def user-role-toggler (ui/toggler ui/add-remove role-action))
 
-(defn create
+(defn- create
   "Creates a role with the given name and optional description."
   [{:keys [name description]}]
   (nav/go-to ::page)
@@ -111,7 +111,7 @@
                                      (notification/request-type? :roles-destroy-permission)})
     (browser sleep 5000)))
 
-(defn edit
+(defn- edit
   "Edits a role to add new permissions, remove existing permissions,
   and assign users to the role. Example:
 
@@ -138,14 +138,13 @@
     (add-permissions (:permissions to-add))
     (remove-permissions (:permissions to-remove))))
 
-(defn delete
+(defn- delete
   "Deletes the given role."
   [role]
   (nav/go-to role)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
-
 
 
 (extend katello.Role
