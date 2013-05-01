@@ -64,7 +64,14 @@
                   id-url (partial rest/url-maker [["api/gpg_keys/%s" [identity]]])]
               {:id rest/id-field
                :query (partial rest/query-by-name query-url)
-               :read (partial rest/read-impl id-url)})
+               :read (partial rest/read-impl id-url)
+               :create (fn [{:keys [name contents url org] :as gpg-key}]
+                         {:pre [(instance? katello.Organization org)
+                                (not (and url contents))]}
+                         (merge gpg-key
+                                (rest/http-post (query-url gpg-key) 
+                                 {:body {:gpg_key {:name name
+                                                   :content (if url (slurp url) contents)}}})))})
   
   nav/Destination {:go-to (partial nav/go-to ::named-page)}
   
