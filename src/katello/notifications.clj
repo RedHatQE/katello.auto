@@ -54,13 +54,13 @@
 
 (def reqtypes
   {:ak-create                "activation_keys___create"
-   :ak-destroy                "activation_keys___destroy"
+   :ak-destroy               "activation_keys___destroy"
    :ak-add-subscriptions     "activation_keys___add_subscriptions" 
    :ak-remove-subscriptions  "activation_keys___remove_subscriptions"
    :ak-add-sysgrps           "activation_keys___add_system_groups"
    
    :cv-create                "content_view_definitions___create"
-   :cv-destroy                "content_view_definitions___destroy"
+   :cv-destroy               "content_view_definitions___destroy"
    :cv-clone                 "content_view_definitions___clone"
    :cv-update-cv             "content_view_definitions___update_component_views"
    :cv-update-content        "content_view_definitions___update_content"
@@ -116,7 +116,7 @@
    
    :users-create             "users___create"
    :users-destroy            "users___destroy"
-   :users-update             "users_update"
+   :users-update             "users___update"
    :users-update-roles       "users___update_roles"
    :users-update-env         "users___update_environment"
 

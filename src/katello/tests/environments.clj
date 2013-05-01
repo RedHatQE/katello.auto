@@ -60,7 +60,7 @@
   "Creates a new environment in the admin org, and promotes a
    product with a sync'd repo into it. Uses the API."
   [env]
-  (with-unique [prov (katello/newProvider {:name "prov"})
+  (with-unique [prov (katello/newProvider {:name "prov" :org conf/*session-org*})
                 prod (katello/newProduct {:name "prod" :provider prov})
                 repo (katello/newRepository {:name "repo" :product prod
                                              :url (@conf/config :sync-repo)})]
@@ -206,7 +206,6 @@
                     env-test (katello/newEnvironment {:name "test"
                                                       :org @test-org})]
         (ui/create-all (list env-dev env-test))
-        (client/setup-client ssh-conn (uniqueify "envmovetest"))
         (client/register ssh-conn {:username (:name conf/*session-user*)
                                    :password (:password conf/*session-user*)
                                    :org (:name @test-org)

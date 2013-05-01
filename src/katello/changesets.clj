@@ -254,9 +254,7 @@
 (defn environment-content
   "Returns the content that is available to promote, in the given environment."
   [env]
-  (nav/go-to ::named-environment-page {:env env
-                                       :org (kt/org env)
-                                       :next-env nil})
+  (nav/go-to ::named-environment-page env)
   (let [categories {katello/newProduct ::products-category}]
     (apply concat (for [[f category] categories]
                     (do
@@ -273,7 +271,7 @@
 (defn environment-has-content?
   "If all the content is present in the given environment, returns true."
   [env content]
-  (nav/go-to ::named-environment-page {:env env :next-env ""})
+  (nav/go-to ::named-environment-page env)
   (let [visible? #(try (do (browser isVisible (add-content-item %))
                            true)
                        (catch Exception e false))]
@@ -285,7 +283,7 @@
   "When the product is not promoted to next env and if there is no add-link 
    visible for repos/packages, it returns true."
   [env content]
-  (nav/go-to ::named-environment-page {:env env :next-env nil})
+  (nav/go-to ::named-environment-page env)
   (sel/->browser (click ::new)
                  (setText ::name-text (uniqueify "changeset1"))
                  (click ::save))

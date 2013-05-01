@@ -66,6 +66,7 @@
                                                        "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")})
                 repo (katello/newRepository {:name "zoo_repo"
                                              :product product
+                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
                                              :gpg-key testkey})]
     (create-recursive target-env)
     (ui/create-all (list testkey provider product repo))
