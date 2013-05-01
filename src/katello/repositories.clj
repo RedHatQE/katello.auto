@@ -40,7 +40,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
   [{:keys [product name url gpg-key]}]
@@ -56,7 +56,7 @@
                       ::save-repository)
   (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
 
-(defn update
+(defn- update
   "Edits a repository. Currently the only property of a repository that
    can be edited is the gpg-key associated."
   [repo {:keys [gpg-key]}]
@@ -68,7 +68,7 @@
     (notification/check-for-success {:match-pred (notification/request-type? :repo-update-gpg-key)})))
   
 
-(defn delete "Deletes a repository from the given provider and product."
+(defn- delete "Deletes a repository from the given provider and product."
   [repo]
   {:pre [(instance? katello.Repository repo)]}
   (nav/go-to repo)

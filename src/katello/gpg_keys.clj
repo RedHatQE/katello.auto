@@ -33,7 +33,7 @@
 
 ;;Tasks
 
-(defn create [{:keys [name url contents org]}]
+(defn- create [{:keys [name url contents org]}]
   (assert (not (and url contents))
           "Must specify one one of :url or :contents.")
   (assert (string? name))
@@ -48,7 +48,7 @@
   (notification/check-for-success {:match-pred (notification/request-type? :gpg-keys-create)}))
 
 
-(defn delete 
+(defn- delete 
   "Deletes existing GPG keys"
   [gpg-key]
   (nav/go-to gpg-key)
@@ -77,8 +77,4 @@
   
   tasks/Uniqueable tasks/entity-uniqueable-impl)
 
-(defn gpg-keys-prd-association? ;;FIXME deprecated?  jweiss
-  [gpg-key-name repo-name]
-  (nav/go-to ::named-page {:gpg-key-name gpg-key-name})
-  (browser isElementPresent (gpgkey-product-association repo-name)))
   

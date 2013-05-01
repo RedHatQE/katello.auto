@@ -128,7 +128,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page env)
@@ -143,23 +143,7 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
 
-(defn create-with-details
-  "Creates a system"
-  [name & [{:keys [sockets system-arch type-is-virtual? env]}]]
-  (nav/go-to ::new-page)
-  (when (not (nil? env))
-    (when (browser isElementPresent ::expand-env-widget)
-      (browser click ::expand-env-widget))
-    (browser click (env-select env)))
-  (when type-is-virtual?
-    (browser click ::system-virtual-type))
-  (sel/fill-ajax-form {::name-text name
-                       ::sockets-text sockets
-                       ::arch-select (or system-arch "x86_64")}
-                       ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
-
-(defn delete "Deletes the selected system."
+(defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
   (browser click ::remove)
@@ -192,7 +176,7 @@
              (click ::confirm-to-yes))
   (notification/check-for-success {:match-pred (notification/request-type? :sys-add-bulk-sysgrps)}))
 
-(defn add-sys-to-sysgrp
+(defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
   [system group-name]
   (nav/go-to system)
@@ -263,7 +247,7 @@
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
     (browser click (remove-custom-info-button k))))
 
-(defn update
+(defn- update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]

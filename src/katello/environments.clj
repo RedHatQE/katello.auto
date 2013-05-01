@@ -33,7 +33,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates an environment with the given name, and a map containing
    the organization name to create the environment in, the prior
    environment, and an optional description."
@@ -49,7 +49,7 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
 
-(defn delete
+(defn- delete
   "Deletes an environment from the given organization."
   [env]
   (nav/go-to env)
@@ -59,7 +59,7 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
 
-(defn edit
+(defn- edit
   "Edits an environment. Passes env through f (with extra args) to get
   the new env."
   [env {:keys [description]}]

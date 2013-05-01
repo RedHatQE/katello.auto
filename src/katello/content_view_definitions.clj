@@ -69,7 +69,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page org)
@@ -135,7 +135,7 @@
       (click ::update-content))
     (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
 
-(defn update
+(defn- update
   "Edits an existing Content View Definition."
   [content-view updated]
   (nav/go-to content-view)
@@ -147,7 +147,7 @@
                    (add-to product-to-add)
                    (remove-from product-to-rm))))
 
-(defn delete
+(defn- delete
   "Deletes an existing View Definition."
   [content-defn]
   (nav/go-to content-defn)

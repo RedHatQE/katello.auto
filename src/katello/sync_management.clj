@@ -48,7 +48,7 @@
   (list (if start-date (date-str start-date) start-date-literal)
         (if start-date (time-str start-date) start-time-literal)))
 
-(defn create-plan
+(defn- create-plan
   "Creates a sync plan with the given properties. Either specify a
   start-date (as a java.util.Date object) or a separate string for
   start-date-literal 'MM/dd/yyyy', and start-time-literal 'hh:mm aa'
@@ -66,7 +66,7 @@
                         ::save-plan)
     (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
 
-(defn edit-plan
+(defn- edit-plan
   "Edits the given sync plan with optional new properties. See also
   create-sync-plan for more details."
   [plan updated]
