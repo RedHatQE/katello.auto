@@ -64,7 +64,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a custom provider with the given name and description."
   [{:keys [name description org]}]
   {:pre [(instance? katello.Organization org)]} 
@@ -74,7 +74,7 @@
                       ::create-save)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-create)}))
 
-(defn add-product
+(defn- add-product
   "Adds a product to a provider, with the given name and description."
   [{:keys [provider name description gpg-key]}]
    {:pre [(instance? katello.Provider provider)
@@ -87,7 +87,7 @@
                       ::create-product)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-create)}))
 
-(defn update-product
+(defn- update-product
   "Updates product. Currently the properties of a product that
    can be edited are description and gpg-key"
   [product {:keys [gpg-key]}]
@@ -99,7 +99,7 @@
                    (click  ::confirm-gpg-update))
     (notification/check-for-success {:match-pred (notification/request-type? :prod-update)})))
 
-(defn delete-product
+(defn- delete-product
   "Deletes a product from the given provider."
   [{:keys [provider] :as product}]
    {:pre [(not-empty provider)
@@ -109,7 +109,7 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
 
-(defn delete
+(defn- delete
   "Deletes the named custom provider."
   [provider]
   {:pre [(instance? katello.Provider provider)]}
@@ -118,7 +118,7 @@
   (browser click ::ui/confirmation-yes)
   (notification/check-for-success {:match-pred (notification/request-type? :prov-destroy)}))
 
-(defn edit
+(defn- edit
   "Edits the named custom provider. Takes an optional new name, and
   new description."
   [provider updated]

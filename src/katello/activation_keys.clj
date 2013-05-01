@@ -42,7 +42,7 @@
 
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates an activation key with the given properties. Description is
    optional."
   [{:keys [name description content-view env] :as ak}]
@@ -54,7 +54,7 @@
                       ::save)
   (notification/check-for-success {:match-pred (notification/request-type? :ak-create)}))
 
-(defn delete
+(defn- delete
   "Deletes the given activation key."
   [ak]
   (nav/go-to ak)
@@ -89,7 +89,7 @@
   (browser click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))
 
-(defn update [ak updated]
+(defn- update [ak updated]
   (let [[remove add] (data/diff ak updated)]
     (when (some not-empty [remove add])
       (nav/go-to ak)

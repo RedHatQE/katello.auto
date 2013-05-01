@@ -81,7 +81,7 @@
   (nav/go-to ::system-default-info-page org)
   (browser click (remove-keyname-btn keyname)))
 
-(defn create
+(defn- create
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
@@ -94,7 +94,7 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
 
-(defn delete
+(defn- delete
   "Deletes an organization."
   [org]
   (nav/go-to org)
@@ -105,7 +105,7 @@
   (browser refresh)
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-destroy)})) ;for actual delete
 
-(defn update
+(defn- update
   "Edits an organization. Currently the only property of an org that
    can be edited is the org's description."
   [org {:keys [description]}]

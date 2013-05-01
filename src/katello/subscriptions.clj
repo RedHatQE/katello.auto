@@ -25,7 +25,7 @@
 
 ;; Tasks
 
-(defn upload-manifest
+(defn- upload-manifest
   "Uploads a subscription manifest from the filesystem local to the
    selenium browser. Optionally specify a new repository url for Red
    Hat content- if not specified, the default url is kept. Optionally

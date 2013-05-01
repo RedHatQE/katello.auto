@@ -118,16 +118,16 @@
   (add-remove [ent loc]
     (add-rm loc ent)))
 
-(defn ^{:doc "Adds ent to current changeset (assumes the ui is on that
+(defn- ^{:doc "Adds ent to current changeset (assumes the ui is on that
              page already)"}
   add [ent] (add-remove ent add-content-item))
 
-(defn ^{:doc "Removes ent from current changeset (assumes the ui is on
+(defn- ^{:doc "Removes ent from current changeset (assumes the ui is on
              that page already)"}
   remove [ent] (add-remove ent remove-content-item))
 ;; Tasks
 
-(defn create
+(defn- create
   "Creates a changeset for promotion from env to next-env 
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
@@ -139,7 +139,7 @@
   (check-for-success))
 
 
-(defn update [{:keys [env name deletion?] :as changeset} new-changeset]
+(defn- update [{:keys [env name deletion?] :as changeset} new-changeset]
   (let [[to-remove to-add _] (data/diff changeset new-changeset)
         go-home (fn []
                   (browser sleep 5000)
