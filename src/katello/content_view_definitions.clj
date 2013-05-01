@@ -15,6 +15,7 @@
 (sel/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
+  publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a"})
 
 (ui/deflocators
@@ -37,7 +38,12 @@
    ::details-name-text         "view_definition[name]"
    ::details-description-text  "view_definition[description]"
 
-
+   ;; Filters tab
+   ::new-filter-button         "//input[@type='button' and @value='New Filter']"
+   ::filter-name-text          "//input[@id='filter_name' @class='name_input']"
+   ::filter-create             "//input[@class='create_button']"
+   
+   
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
    ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
@@ -98,8 +104,8 @@
   
 (defn publish
   "Publishes a Content View Definition"
-  [{:keys [name published-name description]}]
-  (nav/go-to name)
+  [{:keys [content-defn published-name description]}]
+  (nav/go-to content-defn)
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name
