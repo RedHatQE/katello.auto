@@ -3,6 +3,7 @@
   (:require [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
+                     [notifications :as notification]
                      [ui-common :as common]
                      [login :refer [login logged-in?]]
                      [navigation :as nav]
@@ -15,6 +16,7 @@
             [test.tree.script :refer [deftest defgroup]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
             [bugzilla.checker :refer [open-bz-bugs]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
@@ -58,6 +60,30 @@
                           (every? has-access? (vals with-perm-results)))))
         (finally
           (login)))))) ;;as original session user
+
+(defn validate-permissions-navigation 
+  "Validate Navigation of permissions page under Roles."
+  [role {:keys [org resource-type verbs tags name]}]
+  (nav/go-to ::role/named-permissions-page role)
+  (->browser (click (role/permission-org (:name org)))
+             (sleep 1000)
+             (click ::role/add-permission)
+             (select ::role/permission-resource-type-select resource-type)
+             (click ::role/next))
+  (doseq [verb verbs]
+    (browser addSelection ::role/permission-verb-select verb))
+  (browser click ::role/next)
+  (doseq [tag tags]
+    (browser addSelection ::role/permission-tag-select tag))
+  (->browser (click ::role/next)
+             (setText ::role/permission-name-text name)
+             (setText ::role/permission-description-text "myperm descriptions"))
+  (while (browser isVisible ::role/previous)
+    (browser click ::role/previous))  
+  (while (not (browser isVisible ::role/save-permission))
+    (browser click ::role/next))
+  (browser click ::role/save-permission)
+  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
 
 (defn verify-access
   "Assigns a new user to a new role with the given permissions. That
@@ -253,15 +279,15 @@
   (deftest "Verify the Navigation of Roles, related to permissions"
     :data-driven true
     
-    (fn [resource-type verbs tags]
-      (let [role-name    (uniqueify "nav-roles")
-            perm-name    (uniqueify "perm-namess")
-            organization (@conf/config :admin-org)]
-       
-      (role/create role-name)  
-      (assert/is (role/validate-permissions-navigation role-name perm-name organization resource-type verbs tags))))
+    (fn [{:keys [resource-type verbs tags] :as perm}]
+      (with-unique [role  (kt/newRole {:name "myrole"})  
+                    perm  (-> perm
+                              (assoc :org conf/*session-org*)
+                              kt/newPermission)]
+        (ui/create role)  
+        (assert/is (validate-permissions-navigation role perm))))
     
-    [["Environments" ["Administer Changesets in Environment"] ["Dev"]]])
+    [[{:resource-type "Environments", :verbs #{"Administer Changesets in Environment"}, :tags #{"Dev"}}]])
      
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})

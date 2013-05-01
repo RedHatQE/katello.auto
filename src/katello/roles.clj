@@ -155,27 +155,6 @@
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
-(defn validate-permissions-navigation ;;FIXME  seems to be deprecated? jweiss
-  "Validate Navigation of permissions page under Roles."
-  [role-name perm-name org resource-type verbs tags]
-  (nav/go-to ::named-permissions-page {:role-name role-name})
-  (sel/->browser (click (permission-org org))
-                 (sleep 1000))
-  (browser click ::add-permission)
-  (browser select ::permission-resource-type-select resource-type)
-  (browser click ::next)
-  (doseq [verb verbs]
-    (browser addSelection ::permission-verb-select verb))
-  (browser click ::next)
-  (doseq [tag tags]
-    (browser addSelection ::permission-tag-select tag))
-  (sel/->browser (click ::next)
-                 (setText ::permission-name-text perm-name)
-                 (setText ::permission-description-text "myperm descriptions"))
-  (while (browser isVisible ::previous)
-    (browser click ::previous))  
-  (while (not (browser isVisible ::save-permission))
-    (browser click ::next))
-  (browser click ::save-permission)
-  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
+(extend katello.Permission
+  tasks/Uniqueable tasks/entity-uniqueable-impl)
 
