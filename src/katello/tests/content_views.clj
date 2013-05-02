@@ -243,4 +243,36 @@
                                            [repo2 cv2 pub-name2]]]
           (ui/update cv assoc :products (list (kt/product repo)))
           (views/publish {:content-defn cv :published-name published-names :org org}))
-        (changeset/promote-delete-content cs)))))
+        (changeset/promote-delete-content cs)))
+    
+    (deftest "Delete promoted content-view"
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    pub-name "publish-name"
+                    cv (kt/newContentView {:name "content-view" 
+                                           :org org 
+                                           :published-name pub-name})
+                    repo (fresh-repo org
+                                     "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                    ak (kt/newActivationKey {:name "ak"
+                                             :env target-env
+                                             :description "auto activation key"
+                                             :content-view pub-name})
+                    cs (kt/newChangeset {:name "cs" 
+                                         :env target-env
+                                         :content (list cv)})
+                    deletion-cs (kt/newChangeset {:name "deletion-cs"
+                                                  :content (list cv)
+                                                  :env target-env
+                                                  :deletion? true})]
+        (ui/create-all (list org target-env cv))
+        (create-recursive repo)
+        (sync/perform-sync (list repo))
+        (ui/update cv assoc :products (list (kt/product repo)))
+        (views/publish {:content-defn cv 
+                        :published-name pub-name 
+                        :description "test pub" 
+                        :org org})
+        (changeset/promote-delete-content cs)
+        (ui/create ak)
+        (changeset/promote-delete-content deletion-cs)))))
