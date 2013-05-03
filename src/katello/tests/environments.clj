@@ -133,7 +133,7 @@
         :blockers rest/katello-only
 
         (with-unique [env (katello/newEnvironment {:name "del-w-content"
-                                                   :org (@conf/config :admin-org)})]
+                                                   :org @test-org})]
           (setup-with-promoted-content env)
           (ui/delete env)))
 
