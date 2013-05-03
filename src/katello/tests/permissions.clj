@@ -119,7 +119,10 @@
 (def global (kt/newOrganization {:name "Global Permissions"}))
 
 (defn- delete-system-data [sysverb]
-  (fn [] (with-unique [system (kt/newSystem {:sockets "1", :system-arch "x86_64", :facts (system/random-facts)})]
+  (fn [] (with-unique [system (kt/newSystem {:env (first conf/*environments*),
+                                             :sockets "1",
+                                             :system-arch "x86_64",
+                                             :facts (system/random-facts)})]
            [:permissions [[{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]]
             :setup (fn [] (rest/create system))
             :allowed-actions [(fn [] (ui/delete system))]])))
