@@ -25,6 +25,7 @@
   content-category    "//div[@id='%s']"
   content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product      "//span[contains(.,'%s')]"
+  select-env          "//a[normalize-space(.)='%s' and contains(@class,'path_link')]"
   select-types        "//div[contains(@class,'simple_link') and contains(.,'%s')]"
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
@@ -132,7 +133,10 @@
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
   (nav/go-to ::named-environment-page env)
-  (if deletion? (browser click ::deletion))
+  (if deletion?
+    (do
+      (browser click (select-env (:name env)))
+      (browser sleep 5000)))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
                  (click ::save))
