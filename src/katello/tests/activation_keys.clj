@@ -38,6 +38,7 @@
     
     (deftest "Create an activation key with i18n characters"
       :data-driven true
+      :blockers (open-bz-bugs "956308")
       (fn [name]
         (with-unique [a (assoc (some-ak) :name name)]
           (ui/create a)))
