@@ -24,7 +24,7 @@
 (defn wait-for-login
   "Waits until logout is present."
   []
-  (browser waitForElement ::ui/log-out "2000"))
+  (browser waitForElement ::ui/log-out "60000"))
 
 (defn logged-out?
   "Returns true if the login page is displayed."
