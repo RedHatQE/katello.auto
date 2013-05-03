@@ -121,6 +121,8 @@
           (assert-system-count g 0))))
 
     (deftest "Unregister a system & check count under sys-group details is -1"
+      :blockers (open-bz-bugs "959211")
+
       (with-unique [s1 (some-system)
                     g (some-group)]
         (ui/create-all (list s1 g))
@@ -187,6 +189,7 @@
                          (system/add-bulk-sys-to-sysgrp systems g))))
 
     (deftest "Register a system using AK & sys count should increase by 1"
+      :blockers (open-bz-bugs "959211")
       (with-unique [g (some-group)
                     s (some-system)
                     ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]

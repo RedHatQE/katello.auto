@@ -18,6 +18,7 @@
             [katello.tests.useful :refer [create-all-recursive]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
+            [test.tree.builder :refer [union]]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [clojure.string :refer [capitalize upper-case lower-case trim]]
@@ -198,7 +199,8 @@
                                                          :description "env description"}))))
 
   (deftest "Move systems from one env to another"
-    :blockers conf/no-clients-defined
+    :blockers (union (open-bz-bugs "959211")
+                     conf/no-clients-defined)
     
     (provision/with-client "envmovetest" ssh-conn
       (with-unique [env-dev  (katello/newEnvironment {:name "dev"

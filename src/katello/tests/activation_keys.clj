@@ -65,6 +65,8 @@
                            (ak/get-subscriptions ak)))))))
 
   (deftest "Delete activation key after registering a system with it"
+    :blockers (open-bz-bugs "959211")
+
     (with-unique-ak ak
       (ui/create ak)
       (provision/with-client "ak-delete" ssh-conn
