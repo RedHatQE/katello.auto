@@ -17,7 +17,7 @@
 (ui/deflocators
   {::roles-link                  (ui/menu-link "user_roles")
    ::environments-link           (ui/menu-link "environment")
-   ::user-notifications          "unread_notices"
+   ::user-notifications          "unread_notices_count"
    ::delete-link                 (ui/link "Delete All")
    ::confirmation-no             "xpath=(//button[@type='button'])[2]"
    ::default-org-select          "org_id[org_id]"
