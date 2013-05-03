@@ -260,11 +260,7 @@
                                              :content-view pub-name})
                     cs (kt/newChangeset {:name "cs" 
                                          :env target-env
-                                         :content (list cv)})
-                    deletion-cs (kt/newChangeset {:name "deletion-cs"
-                                                  :content (list cv)
-                                                  :env target-env
-                                                  :deletion? true})]
+                                         :content (list cv)})]
         (ui/create-all (list org target-env cv))
         (create-recursive repo)
         (sync/perform-sync (list repo))
@@ -275,4 +271,22 @@
                         :org org})
         (changeset/promote-delete-content cs)
         (ui/create ak)
-        (changeset/promote-delete-content deletion-cs)))))
+        (provision/with-client "reg-sys-with-ak" ssh-conn
+          (client/register ssh-conn
+                           {:org (:name org)
+                            :activationkey (:name ak)})
+          (let [mysys (client/my-hostname ssh-conn)
+                deletion-cs (-> {:name "deletion-cs"
+                                 :content (list cv)
+                                 :env target-env
+                                 :deletion? true}
+                              katello/newChangeset
+                              uniqueify)]
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
+              (assert/is (->> cmd_result :exit-code (= 0))))
+            (changeset/promote-delete-content deletion-cs)
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
+              (assert/is (->> cmd_result :exit-code (= 1))))))))))
+    
