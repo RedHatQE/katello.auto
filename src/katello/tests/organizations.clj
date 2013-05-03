@@ -124,7 +124,7 @@
                          (ui/create (assoc org2 :label (:label org1))))))
 
     (deftest "Delete an organization"
-      :blockers (open-bz-bugs "716972")
+      :blockers (open-bz-bugs "716972" "959485")
 
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
