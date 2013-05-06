@@ -90,6 +90,7 @@
 (defgroup default-org-tests
   :test-teardown (fn [& _ ] (login))
   (deftest "Set default org for a user at login"
+    :tcms "201013"
     (-> (new-unique-user)
         create-org-and-user
         assign-admin
@@ -121,10 +122,12 @@
     
 
   (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
+    :tcms "201013"
     (-> (new-unique-user)
         create-org-and-user 
-        set-default-org-at-login-screen
-        verify-only-one-org))
+        set-default-org-at-login-screen)
+    (assert/is (= (set (organization/switcher-available-orgs)) 
+                #{})))
 
   (deftest "User's Favorite Organization"
     :data-driven true
