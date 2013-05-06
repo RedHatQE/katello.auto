@@ -122,7 +122,7 @@
     
 
   (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
-    :tcms "201013"
+    :tcms "201585"
     (-> (new-unique-user)
         create-org-and-user 
         set-default-org-at-login-screen)
