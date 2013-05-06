@@ -2,6 +2,7 @@
   (:require (katello [conf :refer [*session-org*] :as conf]
                      [ui :as ui]
                      [rest :as rest]
+                     [client :as client]
                      [content-view-definitions :as views]
                      [notifications :as notifications]
                      [organizations :as organization]
@@ -14,6 +15,7 @@
                      [validation :refer :all])
             [test.tree.script :refer :all]
             [katello :as kt]
+            [katello.client.provision :as provision]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
@@ -246,6 +248,7 @@
         (changeset/promote-delete-content cs)))
     
     (deftest "Delete promoted content-view"
+      :blockers (open-bz-bugs "947497")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})
                     pub-name "publish-name"
@@ -254,6 +257,7 @@
                                            :published-name pub-name})
                     repo (fresh-repo org
                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                    product (kt/product repo)
                     ak (kt/newActivationKey {:name "ak"
                                              :env target-env
                                              :description "auto activation key"
@@ -271,12 +275,12 @@
                         :org org})
         (changeset/promote-delete-content cs)
         (ui/create ak)
+        (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
         (provision/with-client "reg-sys-with-ak" ssh-conn
           (client/register ssh-conn
                            {:org (:name org)
                             :activationkey (:name ak)})
-          (let [mysys (client/my-hostname ssh-conn)
-                deletion-cs (-> {:name "deletion-cs"
+          (let [deletion-cs (-> {:name "deletion-cs"
                                  :content (list cv)
                                  :env target-env
                                  :deletion? true}
