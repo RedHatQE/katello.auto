@@ -14,6 +14,7 @@
                      [roles :as role]
                      [login :as login])
             [test.tree.script :refer [deftest defgroup]]
+            [katello.tests.useful :refer [ensure-exists]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
@@ -282,15 +283,20 @@
   (deftest "Verify the Navigation of Roles, related to permissions"
     :data-driven true
     
-    (fn [{:keys [resource-type verbs tags] :as perm}]
+    (fn [{:keys [resource-type verbs tags setup] :as perm} & [setup]]
+      (when setup (setup))
       (with-unique [role  (kt/newRole {:name "myrole"})  
                     perm  (-> perm
-                              (assoc :org conf/*session-org*)
+                              (assoc :org conf/*session-org*, :name "perm")
                               kt/newPermission)]
         (ui/create role)  
         (assert/is (validate-permissions-navigation role perm))))
     
-    [[{:resource-type "Environments", :verbs #{"Administer Changesets in Environment"}, :tags #{"Dev"}}]])
+    [(let [env (kt/newEnvironment {:name "Dev" :org conf/*session-org*})]
+       [{:resource-type "Environments",
+         :verbs #{"Administer Changesets in Environment"},
+         :tags #{(:name env)}}
+        #(ensure-exists env)])])
      
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
