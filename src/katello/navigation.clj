@@ -131,5 +131,5 @@
      {:pre [name]}
      (go-to ::top-level)
      (when-not (= name (current-org))
-       (browser click ::ui/switcher)
+       (browser fireEvent ::ui/switcher "click")
        (browser clickAndWait (ui/switcher-link name)))))
