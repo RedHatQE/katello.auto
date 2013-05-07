@@ -136,7 +136,7 @@
   (if deletion?
     (do
       (browser click (select-env (:name env)))
-      (browser sleep 5000)))
+      (browser sleep 1000)))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
                  (click ::save))
