@@ -58,6 +58,7 @@
   (when label-text
     (->browser (fireEvent name-loc "blur")
                (ajaxWait)
+               (setText label-loc "")
                (setText label-loc label-text))))
 
 (defn add-custom-keyname
