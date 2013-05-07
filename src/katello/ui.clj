@@ -50,13 +50,15 @@
   left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
   link                 "link=%s"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
-  menu-link            "//*[@id='%s']/a"
+  ;;menu-link            "//*[@id='%s']/a"
+  menu-link            "//a[contains(@class,'menu-item-link') and normalize-space(.)='%s']"
+  menu-dropdown-link   "//ul[contains(@class,'flyout')]//a[normalize-space(.)='%s']"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
-  default-star         "//div[@id='orgbox']//a[.='%s']/../span[starts-with(@id,'favorite')]"
-  switcher-link        "//div[@id='orgbox']//a[.='%s']"
+  default-star         "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']/../span"
+  switcher-link        "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']"
   custom-keyname-list  "xpath=(//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')])[%s]"
   custom-value-list    "xpath=(//td/div[@class='editable edit_textfield'])[%s]"})
 
@@ -84,9 +86,9 @@
    ;; use index, no other identifiable info in the DOM
    ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
 
-   ::switcher                "switcherButton"
-   ::active-org              "//*[@id='switcherButton']"
-   ::manage-orgs             "manage_orgs"
+   ::switcher                "organizationSwitcher"
+   ::active-org              "//a[contains(@class,'organization-name')]"
+   ::manage-orgs             "//li[@id='manage_orgs']//span[contains(.,'Manage Organizations')]"
    ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
    
    ::search-bar              "search"
