@@ -52,7 +52,7 @@
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   ;;menu-link            "//*[@id='%s']/a"
   menu-link            "//a[contains(@class,'menu-item-link') and normalize-space(.)='%s']"
-  menu-dropdown-link   "//a[contains(@class,'dropdown-menu-item-link']//a[normalize-space(.)='%s']"
+  menu-dropdown-link   "//ul[contains(@class,'flyout')]//a[normalize-space(.)='%s']"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
