@@ -80,8 +80,7 @@
       [:katello.changesets/page (browser-fn (clickAndWait ::changesets-link))]
       [:katello.changesets/history-page (browser-fn (clickAndWait ::changeset-history-link))]]]]
 
-   [::manage-orgs-menu (browser-fn (click ::ui/switcher)
-                                    (clickAndWait ::ui/manage-orgs))
+   [::administer-menu (browser-fn (mouseOver ::administer-link))
     [:katello.users/page (browser-fn (clickAndWait ::users-link))]
     [:katello.roles/page (browser-fn (clickAndWait ::roles-link))]
     [:katello.organizations/page (browser-fn (clickAndWait ::manage-organizations-link))]]])

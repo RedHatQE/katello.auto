@@ -65,12 +65,9 @@
   provider). Finally some code to navigate to the location from its
   parent location. Other namespaces can add their structure here."
   (nav/nav-tree
-   [::top-level (fn [& _] (cond (or (not (browser isElementPresent ::ui/log-out))
+   [::top-level (fn [& _] (when (or (not (browser isElementPresent ::ui/log-out))
                                     (browser isElementPresent ::ui/confirmation-dialog))
-                                (browser open (@conf/config :server-url))
-
-                                (browser isElementPresent ::ui/back)
-                                (browser clickAndWait ::ui/back)))]))
+                            (browser open (@conf/config :server-url))))]))
 
 (defmulti page-tree (comp find-ns symbol namespace))
 

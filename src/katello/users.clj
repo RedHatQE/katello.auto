@@ -35,7 +35,7 @@
    ::enable-inline-help-checkbox "user[helptips_enabled]"
    ::clear-disabled-helptips     "clear_helptips"
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
-   ::account                     "//a[@class='header-widget' and contains(@href,'users')]"
+   ::account                     "//nav[@class='right']//a"
    ::switcher-button             "//a[@id='switcherButton']"}
 
   ui/locators)
