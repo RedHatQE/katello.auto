@@ -131,7 +131,7 @@
 (defn- create
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
-  (nav/go-to ::new-page env)
+  (nav/go-to ::new-page (:org env))
   (sel/fill-ajax-form [::name-text name
                        ::arch-select (or system-arch "x86_64")
                        ::sockets-text sockets

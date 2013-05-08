@@ -291,7 +291,7 @@
                                           :system-arch "x86_64"
                                           :env (:initial-env org)})]
         (ui/create org)
-        (org/add-custom-keyname org "Manager")
+        (org/add-custom-keyname org ::org/system-default-info-page "Manager")
         (ui/create system)
         (browser click ::system/custom-info)
         (assert/is (browser isTextPresent "Manager"))))
@@ -307,7 +307,7 @@
         (ui/create-all (list org system))
         (browser click ::system/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
-        (org/add-custom-keyname org "Manager" {:apply-default true})
+        (org/add-custom-keyname org ::org/system-default-info-page "Manager" {:apply-default true})
         (nav/go-to system)
         (browser click ::system/custom-info)
         (assert/is (browser isTextPresent "Manager"))))
