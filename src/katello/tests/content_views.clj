@@ -25,9 +25,10 @@
 
 ;; Functions
 (defn promote-published-content-view
-  "Function to promote ublished content view"
-  [org target-env pub-name repo]
-  (with-unique [cv (kt/newContentView {:name "content-view"
+  "Function to promote published content view"
+  [org target-env repo]
+  (with-unique [pub-name "publish-name"
+                cv (kt/newContentView {:name "content-view"
                          :org org
                          :published-name pub-name})
                 cs (kt/newChangeset {:name "cs"
@@ -215,13 +216,12 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     repo (fresh-repo org
                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    pub-name "publish-name"
                     target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (promote-published-content-view org target-env repo)
                     ak (kt/newActivationKey {:name "ak"
                                              :env target-env
                                              :description "auto activation key"
-                                             :content-view pub-name})]
-        (promote-published-content-view org target-env pub-name repo)
+                                             :content-view (:published-name cv)})]  
         (ui/create ak)
         (assert/is (= (:name (kt/product repo))
                       (browser getText ::views/product-in-cv)))))
@@ -256,14 +256,13 @@
       :blockers (open-bz-bugs "960564")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})
-                    pub-name "publish-name"
                     repo (fresh-repo org
                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    cv (promote-published-content-view org target-env pub-name repo)
+                    cv (promote-published-content-view org target-env repo)
                     ak (kt/newActivationKey {:name "ak"
                                               :env target-env
                                               :description "auto activation key"
-                                              :content-view pub-name})
+                                              :content-view (:published-name cv)})
                     deletion-cs (kt/newChangeset {:name "deletion-cs"
                                                   :content (list cv)
                                                   :env target-env
@@ -275,15 +274,14 @@
        :blockers (open-bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev" :org org})
-                     pub-name "publish-name"
                      repo (fresh-repo org
                                       "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                     cv (promote-published-content-view org target-env pub-name repo)                
+                     cv (promote-published-content-view org target-env repo)                
                      product (kt/product repo)
                      ak (kt/newActivationKey {:name "ak"
                                               :env target-env
                                               :description "auto activation key"
-                                              :content-view pub-name})]
+                                              :content-view (:published-name cv)})]
          (ui/create ak)
          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
          (provision/with-client "consume-content" ssh-conn
@@ -299,15 +297,14 @@
        :blockers (open-bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev" :org org})
-                     pub-name "publish-name"
                      repo (fresh-repo org
                                       "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                     cv (promote-published-content-view org target-env pub-name repo)                
+                     cv (promote-published-content-view org target-env repo)                
                      product (kt/product repo)
                      ak (kt/newActivationKey {:name "ak"
                                               :env target-env
                                               :description "auto activation key"
-                                              :content-view pub-name})]
+                                              :content-view (:published-name cv)})]
          (ui/create ak)
          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
          (provision/with-client "reg-sys-with-ak" ssh-conn
@@ -327,5 +324,4 @@
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
                (assert/is (->> cmd_result :exit-code (= 1))))))))))
-     
      
