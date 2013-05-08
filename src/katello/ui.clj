@@ -50,7 +50,7 @@
   left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
   link                 "link=%s"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
-  ;;menu-link            "//*[@id='%s']/a"
+  third-level-link     "//*[@id='%s']/a"
   menu-link            "//a[contains(@class,'menu-item-link') and normalize-space(.)='%s']"
   menu-dropdown-link   "//ul[contains(@class,'flyout')]//a[normalize-space(.)='%s']"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"

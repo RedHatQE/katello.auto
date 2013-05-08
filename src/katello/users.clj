@@ -15,8 +15,8 @@
 ;; Locators
 
 (ui/deflocators
-  {::roles-link                  (ui/menu-link "user_roles")
-   ::environments-link           (ui/menu-link "environment")
+  {::roles-link                  (ui/third-level-link "user_roles")
+   ::environments-link           (ui/third-level-link "environment")
    ::user-notifications          "unread_notices_count"
    ::delete-link                 (ui/link "Delete All")
    ::confirmation-no             "xpath=(//button[@type='button'])[2]"

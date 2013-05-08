@@ -16,12 +16,12 @@
                  ::description-text        "activation_key[description]"
                  ::content-view-select     "activation_key[content_view_id]"
                  ::save                    "save_key"
-                 ::system-group-select     (ui/menu-link "activation_keys_menu_system_groups")
+                 ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
                  ::add-sys-group-form      "//form[@id='add_group_form']/button"
                  ::add-sys-group           "//input[@id='add_groups']"
-                 ::system-groups           (ui/menu-link "system_mgmt")
-                 ::applied-subscriptions   (ui/menu-link "applied_subscriptions")
-                 ::available-subscriptions (ui/menu-link "available_subscriptions")
+                 ::system-groups           (ui/third-level-link "system_mgmt")
+                 ::applied-subscriptions   (ui/third-level-link "applied_subscriptions")
+                 ::available-subscriptions (ui/third-level-link "available_subscriptions")
                  ::add-subscriptions       "//input[@id='subscription_submit_button']"            
                  ::remove-link             (ui/remove-link "activation_keys")
                  ::release-version-text    "system[releaseVer]"})
