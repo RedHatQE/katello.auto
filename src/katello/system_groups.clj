@@ -18,8 +18,8 @@
         ::create                "group_save"
         ::name-text             "system_group[name]"
         ::description-text      "system_group[description]"
-        ::systems-link          (ui/menu-link "system_groups_systems")
-        ::details-link          (ui/menu-link "system_group_details")
+        ::systems-link          (ui/third-level-link "system_groups_systems")
+        ::details-link          (ui/third-level-link "system_group_details")
         ::hostname-toadd        "add_system_input"
         ::add-system            "add_system"
         ::remove-system         "remove_systems"

@@ -33,7 +33,7 @@
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
 
    ;; System Default Info
-   ::system-default-info    (ui/menu-link "organization_default_info")
+   ::system-default-info    (ui/third-level-link "organization_default_info")
    ::keyname-text           "new_default_info_keyname"
    ::create-keyname         "add_default_info_button"
    ::apply-default-info     "apply_default_info_button"})

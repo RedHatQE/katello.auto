@@ -49,7 +49,7 @@
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
-   ::system-groups               (ui/menu-link "systems_system_groups")
+   ::system-groups               (ui/third-level-link "systems_system_groups")
    ::add-group-form              "//form[@id='add_group_form']/button"
    ::add-group                    "//input[@id='add_groups']"
 
@@ -58,10 +58,10 @@
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content
-   ::content-link                (ui/menu-link "system_content")
-   ::packages-link               (ui/menu-link "systems_packages")
-   ::software-link               (ui/menu-link "system_products")
-   ::errata-link                 (ui/menu-link "errata")
+   ::content-link                (ui/third-level-link "system_content")
+   ::packages-link               (ui/third-level-link "systems_packages")
+   ::software-link               (ui/third-level-link "system_products")
+   ::errata-link                 (ui/third-level-link "errata")
    ::add-content                 "add_content"
    ::remove-content              "remove_content" 
    ::package-name                "content_input"
@@ -72,7 +72,7 @@
    ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
 
    ;;system-edit details
-   ::details                     (ui/menu-link "general")
+   ::details                     (ui/third-level-link "general")
    ::name-text-edit              "system[name]"
    ::description-text-edit       "system[description]"
    ::location-text-edit          "system[location]"
@@ -104,7 +104,7 @@
    ::create-custom-info         "create_custom_info_button"
    
    ;;subscriptions pane
-   ::subscriptions               (ui/menu-link "systems_subscriptions")
+   ::subscriptions               (ui/third-level-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
    ::unsubscribe                 "unsub_submit"})
 

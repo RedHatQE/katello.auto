@@ -28,9 +28,9 @@
         ::create-save               "//input[@value='Save']"
         ::cancel-discovery          "//input[@value='Cancel']"
         ::remove-provider-link      (ui/remove-link "providers")
-        ::products-and-repositories (ui/menu-link "products_repos")
-        ::repository-discovery      (ui/menu-link "repo_discovery") 
-        ::details-link              (ui/menu-link "edit_custom_providers")}
+        ::products-and-repositories (ui/third-level-link "products_repos")
+        ::repository-discovery      (ui/third-level-link "repo_discovery") 
+        ::details-link              (ui/third-level-link "edit_custom_providers")}
 
        ;;products
        {::add-product              (ui/button-div "Add Product")
