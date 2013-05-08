@@ -281,7 +281,7 @@
       [[false]
        [true]])
 
-    (deftest "Creates org with default custom key and adds new system"
+    (deftest "Creates org with default custom system key and adds new system"
       (with-unique [org (kt/newOrganization
                          {:name "defaultsysinfo"
                           :initial-env (kt/newEnvironment {:name "dev"})})
