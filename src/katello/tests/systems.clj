@@ -455,7 +455,7 @@
                        (.contains original-title "environment is required"))))))
 
     (deftest "Check whether the details of registered system are correctly displayed in the UI"
-      ;;:blockers no-clients-defined
+      :blockers (open-bz-bugs "959211")
       (provision/with-client "sys-detail"
         ssh-conn
         (client/register ssh-conn
@@ -474,6 +474,7 @@
 
     (deftest "Review Facts of registered system"
       ;;:blockers no-clients-defined
+      :blockers (open-bz-bugs "959211")
       (provision/with-client "sys-facts"
         ssh-conn
         (client/register ssh-conn {:username (:name *session-user*)
@@ -489,6 +490,8 @@
 
 
     (deftest "System-Details: Validate Activation-key link"
+      :blockers (open-bz-bugs "959211")
+      
       (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                              :env test-environment})]
         (ui/create ak)
@@ -505,7 +508,7 @@
     (deftest "Install package group"
       :data-driven true
       :description "Add package and package group"
-      :blockers rest/katello-only
+      :blockers (union rest/katello-only (open-bz-bugs "959211"))
 
       (fn [package-name]
         (let [target-env test-environment
@@ -529,6 +532,8 @@
        [{:package-group "birds"}]])
 
     (deftest "Re-registering a system to different environment"
+      :blockers (open-bz-bugs "959211")
+      
       (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                              katello/newEnvironment
                                              create-series
@@ -550,6 +555,8 @@
                              (rest/get-id env-dev)))))))
 
     (deftest  "Registering a system from CLI and consuming contents from UI"
+      :blockers (open-bz-bugs "959211")
+      
       (let [gpgkey (-> {:name "mykey", :org *session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
                        kt/newGPGKey
@@ -574,6 +581,8 @@
               (assert/is (->> result :exit-code (= 0))))))))
 
     (deftest "Install package after moving a system from one env to other"
+      :blockers (open-bz-bugs "959211")
+      
       (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                              katello/newEnvironment
                                              create-series

@@ -38,6 +38,7 @@
     
     (deftest "Create an activation key with i18n characters"
       :data-driven true
+      :blockers (open-bz-bugs "956308")
       (fn [name]
         (with-unique [a (assoc (some-ak) :name name)]
           (ui/create a)))
@@ -64,6 +65,8 @@
                            (ak/get-subscriptions ak)))))))
 
   (deftest "Delete activation key after registering a system with it"
+    :blockers (open-bz-bugs "959211")
+
     (with-unique-ak ak
       (ui/create ak)
       (provision/with-client "ak-delete" ssh-conn

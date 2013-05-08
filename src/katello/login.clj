@@ -12,6 +12,7 @@
 (ui/deflocators {::username-text     "username"
                  ::password-text     "password"
                  ::log-in            "//input[@value='Log In' or @value='Login']"
+                 ::re-log-in-link    "//a[contains(@href, '/login')]"
                  ::interstitial      "//div[@id='interstitial' and contains(@style,'z-index')]"}
   ui/locators)
 
@@ -24,12 +25,13 @@
 (defn wait-for-login
   "Waits until logout is present."
   []
-  (browser waitForElement ::ui/log-out "2000"))
+  (browser waitForElement ::ui/log-out "60000"))
 
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
-  (browser isElementPresent ::log-in))
+  (or (browser isElementPresent ::re-log-in-link)
+      (browser isElementPresent ::log-in)))
 
 (defn logout
   "Logs out the current user from the UI."
@@ -50,6 +52,8 @@
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
+     (when (sel/browser isElementPresent ::re-log-in-link)
+       (sel/browser clickAndWait ::re-log-in-link))
      (sel/fill-ajax-form {::username-text name
                           ::password-text password}
                          ::log-in)
