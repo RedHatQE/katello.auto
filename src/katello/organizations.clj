@@ -28,7 +28,7 @@
    ::initial-env-label-text "environment_label"
    ::initial-env-desc-text  "environment_description"
    ::access-dashboard       ""
-   ::active                 "//*[@id='switcherButton']"
+   ::active                 "//a[contains(@class,'organization-name')]"
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
    ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
 
@@ -168,7 +168,8 @@
                login?
                default-org
                (not= (nav/current-org) name)) 
-       (browser click ::ui/switcher)
+       (browser fireEvent ::ui/switcher "click")
+       (browser sleep 1000)
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]

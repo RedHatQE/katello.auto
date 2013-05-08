@@ -2,7 +2,7 @@
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-org*]]
-                     [ui :as ui] 
+                     [ui :as ui]
                      [ui-common :as common]
                      [organizations :as organization]
                      [notifications :as notification])))
@@ -13,7 +13,7 @@
                  ::password-text     "password"
                  ::log-in            "//input[@value='Log In' or @value='Login']"
                  ::re-log-in-link    "//a[contains(@href, '/login')]"
-                 ::interstitial      "//div[@id='interstitial' and contains(@style,'z-index')]"}
+                 ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
   ui/locators)
 
 (defn logged-in?
