@@ -30,7 +30,7 @@
    ::access-dashboard       ""
    ::active                 "//a[contains(@class,'organization-name')]"
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
-   ::default                "//div[@id='orgbox']//input[@checked='checked' and @class='default_org']/../"
+   ::default                "//ul[@id='organizationSwitcher']//span[@title='This is your default organization.']/../a"
 
    ;; System Default Info
    ::system-default-info    (ui/third-level-link "organization_default_info")
