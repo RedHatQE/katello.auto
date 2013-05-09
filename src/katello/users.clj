@@ -112,7 +112,7 @@
   "Returns the name of the currently logged in user, or nil if logged out."
   []
   (when (logged-in?)
-    (katello/newUser {:name (browser getText ::account)})))
+    (katello/newUser {:name (browser getText ::user-account-dropdown)})))
 
 (defn- edit
   "Edits the given user, changing any of the given properties (can
