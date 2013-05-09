@@ -61,12 +61,10 @@
                (setText label-loc "")
                (setText label-loc label-text))))
 
-
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
-  [org section keyname]
-  (nav/go-to section org)
-  (browser isTextPresent keyname))
+  [keyname]
+  (boolean (get (common/extract-custom-keyname-list) keyname)))
 
 
 (defn add-custom-keyname
