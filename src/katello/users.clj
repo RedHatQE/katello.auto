@@ -126,7 +126,6 @@
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
       (do (browser mouseOver ::user-account-dropdown)
-          #_(browser sleep 1000)
           (browser click ::account)
           (browser waitForElement ::password-text "60000")) ; normal ajax wait doesn't work here
       (nav/go-to user))
