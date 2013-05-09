@@ -2,6 +2,7 @@
   (:require (katello [conf :refer [*session-org*] :as conf]
                      [ui :as ui]
                      [rest :as rest]
+                     [client :as client]
                      [content-view-definitions :as views]
                      [notifications :as notifications]
                      [organizations :as organization]
@@ -14,6 +15,7 @@
                      [validation :refer :all])
             [test.tree.script :refer :all]
             [katello :as kt]
+            [katello.client.provision :as provision]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
@@ -22,6 +24,26 @@
             [bugzilla.checker :refer [open-bz-bugs]]))
 
 ;; Functions
+(defn promote-published-content-view
+  "Function to promote published content view"
+  [org target-env repo]
+  (with-unique [pub-name "publish-name"
+                cv (kt/newContentView {:name "content-view"
+                         :org org
+                         :published-name pub-name})
+                cs (kt/newChangeset {:name "cs"
+                                     :env target-env
+                                     :content (list cv)})]
+    (ui/create-all (list org target-env cv))
+    (create-recursive repo)
+    (sync/perform-sync (list repo))
+    (ui/update cv assoc :products (list (kt/product repo)))
+    (views/publish {:content-defn cv
+                    :published-name pub-name
+                    :description "test pub"
+                    :org org})
+    (changeset/promote-delete-content cs)
+    cv))
 
 ;; Tests
 
@@ -194,27 +216,12 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     repo (fresh-repo org
                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    pub-name "publish-name"
                     target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (promote-published-content-view org target-env repo)
                     ak (kt/newActivationKey {:name "ak"
                                              :env target-env
                                              :description "auto activation key"
-                                             :content-view pub-name})
-                    cv (kt/newContentView {:name "content-view"
-                                           :org org
-                                           :published-name pub-name})
-                    cs (kt/newChangeset {:name "cs"
-                                         :env target-env
-                                         :content (list cv)})]
-        (ui/create-all (list org target-env cv))
-        (create-recursive repo)
-        (sync/perform-sync (list repo))
-        (ui/update cv assoc :products (list (kt/product repo)))
-        (views/publish {:content-defn cv
-                        :published-name pub-name
-                        :description "test pub"
-                        :org org})
-        (changeset/promote-delete-content cs)
+                                             :content-view (:published-name cv)})]  
         (ui/create ak)
         (assert/is (= (:name (kt/product repo))
                       (browser getText ::views/product-in-cv)))))
@@ -243,4 +250,78 @@
                                            [repo2 cv2 pub-name2]]]
           (ui/update cv assoc :products (list (kt/product repo)))
           (views/publish {:content-defn cv :published-name published-names :org org}))
-        (changeset/promote-delete-content cs)))))
+        (changeset/promote-delete-content cs)))
+    
+    (deftest "Delete promoted content-view"
+      :blockers (open-bz-bugs "960564")
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    repo (fresh-repo org
+                                     "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                    cv (promote-published-content-view org target-env repo)
+                    ak (kt/newActivationKey {:name "ak"
+                                              :env target-env
+                                              :description "auto activation key"
+                                              :content-view (:published-name cv)})
+                    deletion-cs (kt/newChangeset {:name "deletion-cs"
+                                                  :content (list cv)
+                                                  :env target-env
+                                                  :deletion? true})]
+        (ui/create ak)
+        (changeset/promote-delete-content deletion-cs)))
+    
+     (deftest "Consuming content-view contents on client"
+       :blockers (open-bz-bugs "947497")
+       (with-unique [org (kt/newOrganization {:name "cv-org"})
+                     target-env (kt/newEnvironment {:name "dev" :org org})
+                     repo (fresh-repo org
+                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                     cv (promote-published-content-view org target-env repo)                
+                     product (kt/product repo)
+                     ak (kt/newActivationKey {:name "ak"
+                                              :env target-env
+                                              :description "auto activation key"
+                                              :content-view (:published-name cv)})]
+         (ui/create ak)
+         (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+         (provision/with-client "consume-content" ssh-conn
+           (client/register ssh-conn
+                            {:org (:name org)
+                             :activationkey (:name ak)})
+           (client/sm-cmd ssh-conn :refresh)
+           (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
+             (assert/is (->> cmd_result :exit-code (= 0)))))))
+     
+     
+     (deftest "Validate: CV contents should not available on client after deleting it from selected env"
+       :blockers (open-bz-bugs "947497")
+       (with-unique [org (kt/newOrganization {:name "cv-org"})
+                     target-env (kt/newEnvironment {:name "dev" :org org})
+                     repo (fresh-repo org
+                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                     cv (promote-published-content-view org target-env repo)                
+                     product (kt/product repo)
+                     ak (kt/newActivationKey {:name "ak"
+                                              :env target-env
+                                              :description "auto activation key"
+                                              :content-view (:published-name cv)})]
+         (ui/create ak)
+         (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+         (provision/with-client "reg-sys-with-ak" ssh-conn
+           (client/register ssh-conn
+                            {:org (:name org)
+                             :activationkey (:name ak)})
+           (let [deletion-cs (-> {:name "deletion-cs"
+                                  :content (list cv)
+                                  :env target-env
+                                  :deletion? true}
+                               katello/newChangeset
+                               uniqueify)]
+             (client/sm-cmd ssh-conn :refresh)
+             (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
+               (assert/is (->> cmd_result :exit-code (= 0))))
+             (changeset/promote-delete-content deletion-cs)
+             (client/sm-cmd ssh-conn :refresh)
+             (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
+               (assert/is (->> cmd_result :exit-code (= 1))))))))))
+     
