@@ -35,7 +35,8 @@
    ::enable-inline-help-checkbox "user[helptips_enabled]"
    ::clear-disabled-helptips     "clear_helptips"
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
-   ::account                     "//nav[@class='right']//a"
+   ::account                     "//a[contains(@class,'dropdown-menu-item-link') and contains(.,'My Account')]"
+   ::user-account-dropdown       "//nav[contains(@class,'right')]//a"
    ::switcher-button             "//a[@id='switcherButton']"}
 
   ui/locators)
@@ -124,7 +125,9 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (browser click ::account)
+      (do (browser mouseOver ::user-account-dropdown)
+          #_(browser sleep 1000)
+          (browser click ::account)
           (browser waitForElement ::password-text "60000")) ; normal ajax wait doesn't work here
       (nav/go-to user))
     
