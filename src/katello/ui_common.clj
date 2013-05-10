@@ -25,7 +25,7 @@
   "Takes a locator for an active in-place edit field, returns the
   inactive version"
   [loc]
-  (format "//div[@name='%1s']" (sel/sel-locator loc)))
+  (format "//div[@name='%1$s']|//span[@name='%1$s']" (sel/sel-locator loc)))
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
