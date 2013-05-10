@@ -12,7 +12,7 @@
                      [environments :as environment]
                      [changesets :as changeset]
                      [fake-content :as fake]
-                     [conf :refer [config]]) 
+                     [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -170,7 +170,7 @@
           (ui/create org)
           (assert/is (not (organization/isKeynamePresent? keyname)))
           (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
-          (assert/is (organization/isKeynamePresent? keyname))))
+          (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
        [(random-string (int \a) (int \z) 255) true]
@@ -214,7 +214,7 @@
           (ui/create org)
           (assert/is (not (organization/isKeynamePresent? keyname)))
           (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
-          (assert/is (organization/isKeynamePresent? keyname))))
+          (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
        [(random-string (int \a) (int \z) 255) true]
@@ -224,8 +224,7 @@
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" false]])
 
-
-      (deftest "Create org with default distributor keyname and delete keyname"
+    (deftest "Create org with default distributor keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
                                              :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
