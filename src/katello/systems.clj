@@ -28,7 +28,7 @@
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
   system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
   system-fact-group-expand        "//tr[@id='%s']/td/span"
-  existing-key-value-field        "custom_info_%s"
+  existing-key-value-field        "custom_info[%s]"
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/deflocators
