@@ -80,10 +80,10 @@
   (extract-list ui/left-pane-field-list))
 
 (defn extract-custom-keyname-list []
-  (extract-list ui/custom-keyname-list))
+  (set (extract-list ui/custom-keyname-list)))
 
 (defn extract-custom-value-list []
-  (extract-list ui/custom-value-list))
+  (set (extract-list ui/custom-value-list)))
 
 (defn clear-search []
   (sel/->browser (click ::ui/search-menu)
