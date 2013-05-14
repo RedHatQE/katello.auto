@@ -13,6 +13,7 @@
                  ::password-text     "password"
                  ::log-in            "//input[@value='Log In' or @value='Login']"
                  ::re-log-in-link    "//a[contains(@href, '/login')]"
+                 ::error-message     "//ul[@class='error']"
                  ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
   ui/locators)
 
@@ -57,20 +58,19 @@
      (sel/fill-ajax-form {::username-text name
                           ::password-text password}
                          ::log-in)
-     ; throw errors
-     (notification/verify-no-error)
+     ;; throw errors
+     (notification/verify-no-error)     ; katello notifs
      (notification/flush)
-     ; if user only has access to one org, he will bypass org select
-     (if (browser isElementPresent ::interstitial) 
-       (do (Thread/sleep 3000)
-           (organization/switch (or org
-                                    (throw+ {:type ::login-org-required
-                                             :msg (format "User %s has no default org, cannot fully log in without specifying an org."
-                                                          name)}))
-                                {:default-org default-org
-                                 :login? true})))
-     (when (not (logged-in?))
-                (wait-for-login))))
+     (when (sel/browser isElementPresent ::error-message) ; signo notifs
+       (throw+ (list (ui/map->Notification {:level :error
+                                            :notices (list (browser getText ::error-message))}))))
+     ;; no interstitial for signo logins, if we go straight to default org, and that's the
+     ;; org we want, switch won't click anything
+     (organization/switch (or org
+                              (throw+ {:type ::login-org-required
+                                       :msg (format "User %s has no default org, cannot fully log in without specifying an org."
+                                                    name)}))
+                          {:default-org default-org})))
 
 (defmacro with-user-temporarily
   "Logs in as user, executes body with *session-user* bound to user,
