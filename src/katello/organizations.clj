@@ -177,7 +177,7 @@
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
-           (when (not= current-default default-org)
+           (when (not= current-default (:name default-org))
              (browser click (ui/default-star (if (= default-org :none)
                                                current-default
                                                (:name default-org))))
