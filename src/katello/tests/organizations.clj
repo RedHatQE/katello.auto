@@ -12,7 +12,7 @@
                      [environments :as environment]
                      [changesets :as changeset]
                      [fake-content :as fake]
-                     [conf :refer [config]]) 
+                     [conf :refer [config]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
@@ -159,7 +159,7 @@
        ["Library" (with-unique [env-lbl "env-label"] env-lbl) ::notification/env-name-lib-is-builtin]
        [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])
 
-    (deftest "Create org with default keyname field"
+    (deftest "Create org with default system keyname field"
       :blockers (open-bz-bugs "919373" "951231" "951197")
       :data-driven true
 
@@ -168,9 +168,9 @@
                                              :label (uniqueify "org-label")
                                              :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
           (ui/create org)
-          (assert/is (not (browser isTextPresent keyname)))
-          (organization/add-custom-keyname org keyname)
-          (assert/is (browser isTextPresent keyname))))
+          (assert/is (not (organization/isKeynamePresent? keyname)))
+          (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
+          (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
        [(random-string (int \a) (int \z) 255) true]
@@ -187,9 +187,9 @@
                                              :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
                     keyname "default-keyname"]
         (ui/create org)
-        (organization/add-custom-keyname org keyname)
-        (assert/is (browser isTextPresent keyname))
-        (organization/add-custom-keyname org keyname)))
+        (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
+        (assert/is (organization/isKeynamePresent? keyname))
+        (organization/add-custom-keyname org ::organization/system-default-info-page keyname)))
 
     (deftest "Create org with default keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
@@ -197,7 +197,40 @@
                                              :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
                     keyname "deleteme-keyname"]
         (ui/create org)
-        (organization/add-custom-keyname org keyname)
-        (assert/is (browser isTextPresent keyname))
-        (organization/remove-custom-keyname org keyname)
-        (assert/is (not (browser isTextPresent keyname)))))))
+        (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
+        (assert/is (organization/isKeynamePresent? keyname))
+        (organization/remove-custom-keyname org ::organization/system-default-info-page keyname)
+        (assert/is (not (organization/isKeynamePresent? keyname)))))
+
+
+      (deftest "Create org with default distributor keyname field"
+      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :data-driven true
+
+      (fn [keyname success?]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+          (ui/create org)
+          (assert/is (not (organization/isKeynamePresent? keyname)))
+          (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
+          (assert/is (= (organization/isKeynamePresent? keyname) success?))))
+
+      [["Color" true]
+       [(random-string (int \a) (int \z) 255) true]
+       [(random-string (int \a) (int \z) 256) false]
+       [(random-string 0x0080 0x5363 10) true]
+       [(random-string 0x0080 0x5363 256) false]
+       ["bar_+{}|\"?hi" true]
+       ["bar_+{}|\"?<blink>hi</blink>" false]])
+
+    (deftest "Create org with default distributor keyname and delete keyname"
+      (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                             :label (uniqueify "org-label")
+                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
+                    keyname "deleteme-keyname"]
+        (ui/create org)
+        (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
+        (assert/is (organization/isKeynamePresent? keyname))
+        (organization/remove-custom-keyname org ::organization/distributor-default-info-page keyname)
+        (assert/is (not (organization/isKeynamePresent? keyname)))))))

@@ -129,4 +129,5 @@
      (go-to ::top-level)
      (when-not (= name (current-org))
        (browser fireEvent ::ui/switcher "click")
+       (browser sleep 1000)
        (browser clickAndWait (ui/switcher-link name)))))
