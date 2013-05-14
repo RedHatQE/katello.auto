@@ -66,11 +66,8 @@
                                             :notices (list (browser getText ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
-     (organization/switch (or org
-                              (throw+ {:type ::login-org-required
-                                       :msg (format "User %s has no default org, cannot fully log in without specifying an org."
-                                                    name)}))
-                          {:default-org default-org})))
+     (when org
+       (organization/switch org {:default-org default-org}))))
 
 (defmacro with-user-temporarily
   "Logs in as user, executes body with *session-user* bound to user,
