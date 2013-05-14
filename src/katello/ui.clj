@@ -12,6 +12,8 @@
   (update* [x new-x] "Change an existing entity in UI, from x to new-x")
   (delete [x] "Delete an existing entity in the UI"))
 
+(defrecord Notification [validationErrors notices level])
+
 ;; because protocols don't support varargs
 (defn update [x f & args]
   (let [updated (apply f x args)]

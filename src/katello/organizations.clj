@@ -168,10 +168,8 @@
    org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
-  ([{:keys [name]} & [{:keys [force? default-org login?]}]]
-     (when-not login? (nav/go-to ::nav/top-level)) 
-     (when (or force?
-               login?
+  ([{:keys [name]} & [{:keys [force? default-org]}]] 
+     (when (or force? 
                default-org
                (not= (nav/current-org) name)) 
        (browser fireEvent ::ui/switcher "click")

@@ -1,7 +1,8 @@
 (ns katello.notifications
-  (:require [clojure.data.json :as json]
+  (:require [katello.ui :as ui]
+            [clojure.data.json :as json]
             [com.redhat.qe.auto.selenium.selenium 
-              :refer [browser loop-with-timeout]] 
+             :refer [browser loop-with-timeout]] 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert])
   (:refer-clojure :exclude [flush])
@@ -133,7 +134,7 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials                   #"incorrect username"
+  (let [errors {::invalid-credentials                   #"Authentication failed"
                 ::promotion-already-in-progress         #"Cannot promote.*while another changeset"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
@@ -148,9 +149,11 @@
 
 (defn matching-errors
   "Returns a set of matching known errors"
-  [notifSet]
+  [notifs]
   (->> known-errors
-     (filter (fn [[_ v]] (some not-empty (for [msg (map :msg notifSet)] (re-find v msg)))))
+       (filter (fn [[_ v]] (some not-empty (for [msg (concat (mapcat :notices notifs)
+                                                             (mapcat :validationErrors notifs))]
+                                             (re-find v msg)))))
      (map key)
      set))
 
@@ -160,7 +163,7 @@
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'success?}
   (fn [notif]
-    (and notif (-> notif :type (= :success)))))
+    (and notif (-> notif :level (= :success)))))
 
 (def error?
   "Returns a function that returns true if the given notification is an 'error'
@@ -168,7 +171,7 @@
   ^{:type :serializable.fn/serializable-fn
     :serializable.fn/source 'error?}
   (fn [notif]
-    (and notif (-> notif :type (= :error)))))
+    (and notif (-> notif :level (= :error)))))
 
 (defn request-type? [req-type]
   "Returns a function that returns true if the given notification contains the
@@ -181,30 +184,18 @@
   "Clears the javascript notice array."
   (browser runScript "window.notices.noticeArray = []"))
 
-(defn wait-for-notification-gone
-  "Waits for a notification to disappear within the timeout period. If no
-   notification is present, the function returns immediately. The default
-   timeout is 3 seconds."
-  [ & [max-wait-ms]]
-  (loop-with-timeout (or max-wait-ms 3000) []
-    (if ( browser isElementPresent :notification)
-      (do (Thread/sleep 100) (recur)))
-    (throw+ {:type :wait-for-notification-gone-timeout} 
-            "Notification did not disappear within the specified timeout")))
-
 (defn notifications
   "Gets all notifications from the page, returns a list of maps
    representing the notifications. Waits for timeout-ms for at least
    one notification to appear. Does not do any extra waiting after the
    first notification is detected. Default timeout is 15 seconds."
   []
-  (try (let [noticeArray (->> notice-array-js-var
-                            (format "JSON.stringify(%s)") 
-                            (browser getEval)
-                            json/read-json)]
-         (for [notice noticeArray] 
-           (assoc notice :type (keyword (:level notice)) 
-                  :msg (str (:validationErrors notice) (:notices notice)))))
+  (try (let [notices (->> notice-array-js-var
+                          (format "JSON.stringify(%s)") 
+                          (browser getEval)
+                          json/read-json)]
+         (for [notice notices] 
+           (ui/map->Notification (assoc notice :level (keyword (:level notice))))))
        (catch SeleniumException e '())))
 
 
@@ -218,15 +209,14 @@
    If any are errors, an exception is thrown containing all
    notifications."
   [ & [{:keys [timeout-ms match-pred]
-        :or {timeout-ms 2000 match-pred (constantly true)}}]]
+        :or {timeout-ms 2000, match-pred (constantly true)}}]]
   (loop-with-timeout timeout-ms []
     (let [notifs (->> (notifications)
-                    set
-                    (filter match-pred))]
-      (cond (some error? notifs) (throw+ {:types (matching-errors notifs) :notifications notifs})
-            (some success? notifs) notifs
-            :else (do (Thread/sleep 2000)
-                      (recur))))
+                      set
+                      (filter match-pred))]
+      (cond (empty? notifs)  (do (Thread/sleep 2000) (recur))
+            (some error? notifs) (throw+ notifs)
+            :else notifs))
     (throw+ {:type ::no-success-message-error} 
             "Expected a success notification, but none appeared within the timeout period.")))
 
@@ -234,16 +224,9 @@
 (defn verify-no-error
   "Waits for a notification up to the optional timeout (in ms), throws
   an exception if error notification appears."
-  [ & [{:keys [timeout-ms match-pred] 
-        :or {match-pred (constantly true)}
-        :as m}]]
+  [ & [{:keys [timeout-ms match-pred] :as m}]]
   (try+ (check-for-success m)
         (catch [:type ::no-success-message-error] _)))
 
-(defn verify-success
-  "Calls task-fn and checks for a success message afterwards. If none
-   is found, or error notifications appear, throws an exception."
-  [task-fn]
-  (let [notifications (task-fn)]
-    (assert/is (every? success? notifications))))
+
 
