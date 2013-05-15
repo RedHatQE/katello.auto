@@ -108,13 +108,14 @@
   "Edits system"
   [system new-name save?]
   (nav/go-to ::system/details-page system)
-  (let [old-name (browser getText ::system/edit-sysname)]
-    (browser click ::system/edit-sysname)
+  (let [name-edit-field (common/inactive-edit-field ::system/name-text-edit)
+        old-name (browser getText name-edit-field)]
+    (browser click name-edit-field)
     (browser setText ::system/name-text-edit new-name)
     (if save?
       (do (browser click ::system/save-button)
           (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
-          (when-not (= new-name (browser getText ::system/edit-sysname))
+          (when-not (= new-name (browser getText name-edit-field))
             (throw+ {:type ::system/sysname-not-edited
                      :msg "Still getting old system name."})))
       (do (browser click ::system/cancel-button)
@@ -126,17 +127,18 @@
   "Edit description of selected system"
   [system new-description save?]
   (nav/go-to ::system/details-page system)
-  (let [original-description (browser getText ::system/edit-description)]
-    (browser click ::system/edit-description)
+  (let [desc-edit-field (common/inactive-edit-field ::system/description-text-edit)
+        original-description (browser getText desc-edit-field)]
+    (browser click desc-edit-field)
     (browser setText ::system/description-text-edit new-description)
     (if save?
       (do (browser click ::system/save-button)
           (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
-          (when-not (= new-description (browser getText ::system/edit-description))
+          (when-not (= new-description (browser getText desc-edit-field))
             (throw+ {:type ::system/sys-description-not-edited
                      :msg "Still getting old description of selected system."})))
       (do (browser click ::system/cancel-button)
-          (when-not (= original-description (browser getText ::system/edit-description))
+          (when-not (= original-description (browser getText desc-edit-field))
             (throw+ {:type ::system/sys-description-edited-anyway
                      :msg "System description changed even after clicking cancel button."}))))))
 
@@ -144,17 +146,18 @@
   "Edit location of selected system"
   [system new-location save?]
   (nav/go-to ::system/details-page system)
-  (let [original-location (browser getText ::system/edit-location)]
-    (browser click ::system/edit-location)
+  (let [loc-edit-field (common/inactive-edit-field ::system/location-text-edit)
+        original-location (browser getText loc-edit-field)]
+    (browser click loc-edit-field)
     (browser setText ::system/location-text-edit new-location)
     (if save?
       (do (browser click ::system/save-button)
           (notification/check-for-success {:match-pred (notification/request-type? :sys-update)})
-          (when-not (= new-location (browser getText ::system/edit-location))
+          (when-not (= new-location (browser getText loc-edit-field))
             (throw+ {:type ::system/sys-location-not-edited
                      :msg "Still getting old location of selected system."})))
       (do (browser click ::system/cancel-button)
-          (when-not (= original-location (browser getText ::system/edit-location))
+          (when-not (= original-location (browser getText loc-edit-field))
             (throw+ {:type ::system/sys-location-edited-anyway
                      :msg "System location changed even after clicking cancel button."}))))))
 
