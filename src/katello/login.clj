@@ -61,9 +61,10 @@
      ;; throw errors
      (notification/verify-no-error)     ; katello notifs
      (notification/flush)
-     (when (sel/browser isElementPresent ::error-message) ; signo notifs
+     (if (sel/browser isElementPresent ::error-message) ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
-                                            :notices (list (browser getText ::error-message))}))))
+                                            :notices (list (browser getText ::error-message))})))
+       (browser waitForElement ::ui/switcher "60000"))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (when org
