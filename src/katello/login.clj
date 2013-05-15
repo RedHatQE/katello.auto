@@ -14,6 +14,7 @@
                  ::log-in            "//input[@value='Log In' or @value='Login']"
                  ::re-log-in-link    "//a[contains(@href, '/login')]"
                  ::error-message     "//ul[@class='error']"
+                 ::close-error       "//div[@id='notifications']//div[@class='control']"
                  ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
   ui/locators)
 
@@ -40,6 +41,13 @@
   (when-not (logged-out?)
     (browser clickAndWait ::ui/log-out)))
 
+(defn- signo-error? []
+  (and (sel/browser isElementPresent ::error-message)
+       (sel/browser isVisible ::error-message)))
+
+(defn- clear-signo-errors []
+  (browser click ::close-error))
+
 (defn login
   "Logs in a user to the UI with the given user and password. If none
    are given, the current value of katello.conf/*session-user* and
@@ -55,13 +63,17 @@
      (when (logged-in?) (logout))
      (when (sel/browser isElementPresent ::re-log-in-link)
        (sel/browser clickAndWait ::re-log-in-link))
+
+     (when (signo-error?)
+       (clear-signo-errors))
+     
      (sel/fill-ajax-form {::username-text name
                           ::password-text password}
                          ::log-in)
      ;; throw errors
      (notification/verify-no-error)     ; katello notifs
      (notification/flush)
-     (if (sel/browser isElementPresent ::error-message) ; signo notifs
+     (if (signo-error?)                             ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
                                             :notices (list (browser getText ::error-message))})))
        (browser waitForElement ::ui/switcher "60000"))
