@@ -38,7 +38,7 @@
    ::apply-default-info       "apply_default_info_button"})
 
 (sel/template-fns
- {org-switcher-row   "//div[@id='orgbox']//div[contains(@class, 'row') and position()=%s]"
+ {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
@@ -188,7 +188,8 @@
 (defn switcher-available-orgs
   "List of names of orgs currently selectable in the org dropdown."
   []
-  (browser click ::ui/switcher)
+  (browser fireEvent ::ui/switcher "click")
+  (browser sleep 1000)
   (doall (take-while identity
                      (for [i (iterate inc 1)]
                        (try (browser getText (org-switcher-row i))
