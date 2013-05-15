@@ -10,6 +10,7 @@
                      [environments :as env]
                      [client :as client]
                      [providers :as provider]
+                     [sync-management :as sync]
                      [repositories :as repo]
                      [ui-common :as common]
                      [changesets :as changeset]
@@ -54,6 +55,18 @@
   (nav/go-to ::system/named-by-environment-page system)
   (assert/is (= (:environment_id system)
                 (-> test-environment rest/query :id))))
+
+(defn validate-sys-subscription
+  "Validate subscription tab when no subscription are attached to selected system"
+  [system]
+  (nav/go-to ::system/subscriptions-page system)
+  (browser isElementPresent ::system/red-subs-icon)
+  (when-not (= "Subscriptions are not Current Details" (browser getText ::system/subs-text))
+    (throw+ {:type ::subscription-status :msg "Check if valid subscriptions are already assigned"}))
+  (when-not (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel))
+    (throw+ {:type ::service-level-statement :msg "Default service level is set to something else"}))
+  (when-not (= "disabled" (subs (browser getAttribute ::system/subs-attach-button) 20 28))
+    (throw+ {:type ::subscription-attach-button :msg "Subscription attach button is not disabled"})))
 
 (defn configure-product-for-pkg-install
   "Creates and promotes a product with fake content repo, returns the
@@ -553,6 +566,25 @@
               (assert/is (= {:name env} (system/environment mysys))))
             (assert/is (not= (:environment_id mysys)
                              (rest/get-id env-dev)))))))
+    
+    (deftest "Register a system and validate subscription tab" 
+      (with-unique [target-env (kt/newEnvironment {:name "dev" 
+                                                   :org *session-org*})
+                    repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+        (ui/create target-env)
+        (create-recursive repo)
+        (sync/perform-sync (list repo))
+        (provision/with-client "subs-tab"
+          ssh-conn
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (:name *session-org*)
+                            :env (:name target-env)
+                            :force true})
+          (let [hostname (client/my-hostname ssh-conn)
+                system (kt/newSystem {:name hostname :env target-env})]
+            (validate-sys-subscription system)))))
 
     (deftest  "Registering a system from CLI and consuming contents from UI"
       :blockers (open-bz-bugs "959211")
