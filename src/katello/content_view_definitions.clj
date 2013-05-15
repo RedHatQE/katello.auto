@@ -15,6 +15,7 @@
 (sel/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
+  composite-attrib            "//td[@class='view_checkbox' and contains(., '%s')]/input@disabled"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a"})
 

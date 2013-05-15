@@ -292,6 +292,41 @@
            (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
              (assert/is (->> cmd_result :exit-code (= 0)))))))
      
+     (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    env (kt/newEnvironment {:name  "dev" :org org})
+                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                    pub-name1 "publish-name1"
+                    pub-name2 "publish-name2"
+                    cv1 (kt/newContentView {:name "content-view1"
+                                            :org org
+                                            :published-name pub-name1})
+                    cv2 (kt/newContentView {:name "content-view2"
+                                            :org org
+                                            :published-name pub-name2})
+                    cs (kt/newChangeset {:name "cs"
+                                         :env env
+                                         :content (list cv1 cv2)})]
+        (ui/create-all (list org env cv1 cv2))
+        (doseq [repo [repo1 repo2]]
+          (create-recursive repo)
+          (sync/perform-sync (list repo)))
+          (doseq [[cv published-names] [[cv1 pub-name1]
+                                        [cv2 pub-name2]]]
+            (ui/update cv assoc :products (list (kt/product repo1)))
+            (ui/update cv assoc :products (list (kt/product repo2)))
+            (views/publish {:content-defn cv :published-name published-names :org org}))
+        (with-unique [composite-view (newContentView {:name "composite-view"
+                                                      :org org
+                                                      :description "Composite Content View"
+                                                      :composite 'yes'
+                                                      :composite-names pub-name1})]
+          (ui/create composite-view)
+          (browser click ::views/content-tab)
+          (assert/is (= false (browser isChecked (views/composite-view-name pub-name2))))
+          (assert/is (= "disabled" (browser getAttribute (views/composite-attrib pub-name2)))))))
+     
      
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
        :blockers (open-bz-bugs "947497")
