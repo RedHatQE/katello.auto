@@ -312,11 +312,10 @@
         (doseq [repo [repo1 repo2]]
           (create-recursive repo)
           (sync/perform-sync (list repo)))
-          (doseq [[cv published-names] [[cv1 pub-name1]
-                                        [cv2 pub-name2]]]
+          (doseq [{:keys [published-name] :as cv} [cv1 cv2]]
             (ui/update cv assoc :products (list (kt/product repo1)))
             (ui/update cv assoc :products (list (kt/product repo2)))
-            (views/publish {:content-defn cv :published-name published-names :org org}))
+            (views/publish {:content-defn cv :published-name (:published-name cv) :org org}))
         (with-unique [composite-view (newContentView {:name "composite-view"
                                                       :org org
                                                       :description "Composite Content View"
