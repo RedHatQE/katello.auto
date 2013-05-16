@@ -71,14 +71,16 @@
                           ::password-text password}
                          ::log-in)
      ;; throw errors
-     (notification/verify-no-error)     ; katello notifs
-     (notification/flush)
+     ;;(notification/verify-no-error)     ; katello notifs
+     ;;(notification/flush)
+     
      (if (signo-error?)                             ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
                                             :notices (list (browser getText ::error-message))})))
-       (browser waitForElement ::ui/switcher "60000"))
+       (browser waitForPageToLoad "60000"))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
+     (browser ajaxWait)
      (when org
        (organization/switch org {:default-org default-org}))))
 
