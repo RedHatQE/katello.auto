@@ -67,17 +67,16 @@
      (when (signo-error?)
        (clear-signo-errors))
      
-     (sel/fill-ajax-form {::username-text name
-                          ::password-text password}
-                         ::log-in)
+     (sel/fill-form {::username-text name
+                     ::password-text password}
+                    ::log-in)
      ;; throw errors
      ;;(notification/verify-no-error)     ; katello notifs
      ;;(notification/flush)
      
-     (if (signo-error?)                             ; signo notifs
+     (if (signo-error?)                 ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
-                                            :notices (list (browser getText ::error-message))})))
-       (browser waitForPageToLoad "60000"))
+                                            :notices (list (browser getText ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (browser ajaxWait)
