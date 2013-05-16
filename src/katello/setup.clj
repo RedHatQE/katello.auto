@@ -32,12 +32,19 @@
   ([browser-config locale]
      (.setProfile browser-config locale)))
 
+(def ^{:doc "custom snippet that checks both jQuery and angular"}
+  jquery+angular-ajax-finished
+  "var errfn = function(f,n) { try { return f(n) } catch(e) {return 0}};
+   errfn(function(n){ return selenium.browserbot.getCurrentWindow().jQuery.active }) +
+   errfn(function(n) { return selenium.browserbot.getCurrentWindow().angular.element('.ng-scope').injector().get('$http').pendingRequests.length })
+    == 0")
+
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
   (->browser
    (start (or browser-config-opts empty-browser-config))
    ;;workaround for http://code.google.com/p/selenium/issues/detail?id=3498
    (setTimeout "180000")
-   (setAjaxFinishedCondition jquery-ajax-finished)
+   (setAjaxFinishedCondition jquery+angular-ajax-finished) 
    (open (@config :server-url) false)
    (setTimeout "60000"))
   (login))
