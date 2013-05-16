@@ -173,7 +173,7 @@
                default-org
                (not= (nav/current-org) name)) 
        (browser fireEvent ::ui/switcher "click")
-       (browser sleep 1000)
+       (browser ajaxWait)
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
