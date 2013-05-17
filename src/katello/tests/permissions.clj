@@ -64,7 +64,7 @@
         (finally
           (login)))))) ;;as original session user
 
-(defn validate-permissions-navigation 
+(defn validate-permissions-navigation
   "Validate Navigation of permissions page under Roles."
   [role {:keys [org resource-type verbs tags name]}]
   (nav/go-to ::role/named-permissions-page role)
@@ -82,7 +82,7 @@
              (setText ::role/permission-name-text name)
              (setText ::role/permission-description-text "myperm descriptions"))
   (while (browser isVisible ::role/previous)
-    (browser click ::role/previous))  
+    (browser click ::role/previous))
   (while (not (browser isVisible ::role/save-permission))
     (browser click ::role/next))
   (browser click ::role/save-permission)
@@ -132,23 +132,23 @@
 
 (defn- get-cv-pub [org]
   {:cv1 (uniqueify (kt/newContentView {:name "con-def1"
-                            :org org
-                            :published-name "pub-name1"}))
+                                       :org org
+                                       :published-name "pub-name1"}))
    :cv2 (uniqueify (kt/newContentView {:name "con-def2"
-                            :org org
-                            :published-name "pub-name2"}))
+                                       :org org
+                                       :published-name "pub-name2"}))
    :cv3 (uniqueify (kt/newContentView {:name "con-def3"
-                            :org org
-                            :published-name "pub-name3"}))
-   :env (uniqueify (kt/newEnvironment {:name  "dev" 
-                            :org org}))})
+                                       :org org
+                                       :published-name "pub-name3"}))
+   :env (uniqueify (kt/newEnvironment {:name  "dev"
+                                       :org org}))})
 
 (defn- setup-cv-publish [org env cv1 cv2 cv3]
   (ui/create-all (list org env cv1 cv2))
   (views/publish {:content-defn cv1 :published-name (cv1 :published-name) :description "pub-name1 desc"})
   (views/publish {:content-defn cv2 :published-name (cv2 :published-name) :description "pub-name2 desc"})
-  (views/publish {:content-defn cv2 :published-name (cv3 :published-name) :description "pub-name3 desc"}))    
-  
+  (views/publish {:content-defn cv2 :published-name (cv3 :published-name) :description "pub-name3 desc"}))
+
 
 (def access-test-data
   (let [baseuser (kt/newUser {:name "user" :password "password" :email "me@me.com"})
@@ -156,7 +156,7 @@
     [(fn [] [:permissions [{:org global, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
              :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                      :katello.providers/custom-page 
+                                                      :katello.providers/custom-page
                                                       :katello.changesets/page])
                                        (fn [] (ui/create (uniqueify baseorg)))
                                        create-an-env)])
@@ -166,7 +166,7 @@
               [:permissions [{:org global, :resource-type "Organizations", :verbs ["Administer Organization"], :name "orgcreate"}]
                :allowed-actions [(fn [] (ui/create org)) (fn [] (ui/delete org)) create-an-env]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page]
                                                        org )
                                          (fn [] (ui/create prov))
@@ -238,10 +238,10 @@
                :setup (fn [] (rest/create org))
                :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (nav/go-to org)))]))
-     
+
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
@@ -251,93 +251,93 @@
                                  (fn [] (ui/create cv))
                                  (fn[] (views/clone cv (update-in cv [:name] #(str % "-clone"))))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/update cv assoc :description "cvaccess_create desc"))
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
                                          (fn [] (ui/delete cv)))]))
-     
+
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
-                                                       :org conf/*session-org*})]
+                                                        :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions"], :name "cvaccess_read"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (nav/go-to cv))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (views/clone cv (update-in cv [:name] #(str % "-clone"))))
                                          (fn [] (ui/update cv assoc :description "cvaccess_read desc"))
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
                                          (fn [] (ui/delete cv)))]))
-  
+
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
-                                                       :org conf/*session-org*})]
+                                                        :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Modify Content View Defintions" "Publish Content View Definitions" ], :name "cvaccess_publish"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_publish desc"))
                                  (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (ui/delete cv)))]))
-     
+
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
-                                                       :org conf/*session-org*})]
+                                                        :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Modify Content View Defintions"], :name "cvaccess_modify"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_modify desc"))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
-                                         (fn [] (ui/delete cv)))]))  
-     
+                                         (fn [] (ui/delete cv)))]))
+
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
-                                                       :org conf/*session-org*})]
+                                                        :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/delete cv))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page 
+                                                        :katello.providers/custom-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
-                                         (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))   
+                                         (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
      (vary-meta
-       (fn [] (let [org (uniqueify baseorg)
-                    {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
-                    cs (uniqueify (kt/newChangeset {:name "cs"
-                                                    :env env
-                                                    :content (list cv1 cv2 cv3)}))]
-                [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
-                               {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
-                               {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
-                 :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
-                 :allowed-actions [(navigate-fn :katello.changesets/page)]
-                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                          :katello.providers/custom-page])
-                                           (fn [] (changeset/promote-delete-content cs)))]))
-       assoc :blockers (open-bz-bugs "960620"))
-     
+      (fn [] (let [org (uniqueify baseorg)
+                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
+                   cs (uniqueify (kt/newChangeset {:name "cs"
+                                                   :env env
+                                                   :content (list cv1 cv2 cv3)}))]
+               [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                              {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
+                              {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
+                :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
+                :allowed-actions [(navigate-fn :katello.changesets/page)]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                         :katello.providers/custom-page])
+                                          (fn [] (changeset/promote-delete-content cs)))]))
+      assoc :blockers (open-bz-bugs "960620"))
+
      (fn [] (let [org (uniqueify baseorg)
                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
                   cs  (uniqueify (kt/newChangeset {:name "cs"
@@ -350,14 +350,14 @@
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
-     
- 
+
+
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
                :setup (fn [] (rest/create org))
                :allowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                     :katello.providers/custom-page 
+                                                     :katello.providers/custom-page
                                                      :katello.changesets/page]
                                                     org)
                                       (fn [] (nav/go-to org))
@@ -396,7 +396,7 @@
 
     (fn [rolename expected-err]
       (expecting-error (common/errtype expected-err)
-                       (create-role rolename)))
+        (create-role rolename)))
 
     [[(random-string (int \a) (int \z) 129)  :katello.notifications/name-too-long]
      ["  foo" :katello.notifications/name-no-leading-trailing-whitespace]
@@ -414,22 +414,22 @@
 
   (deftest "Verify the Navigation of Roles, related to permissions"
     :data-driven true
-    
+
     (fn [{:keys [resource-type verbs tags setup] :as perm} & [setup]]
       (when setup (setup))
-      (with-unique [role  (kt/newRole {:name "myrole"})  
+      (with-unique [role  (kt/newRole {:name "myrole"})
                     perm  (-> perm
                               (assoc :org conf/*session-org*, :name "perm")
                               kt/newPermission)]
-        (ui/create role)  
+        (ui/create role)
         (assert/is (validate-permissions-navigation role perm))))
-    
+
     [(let [env (kt/newEnvironment {:name "Dev" :org conf/*session-org*})]
        [{:resource-type "Environments",
          :verbs #{"Administer Changesets in Environment"},
          :tags #{(:name env)}}
         #(ensure-exists env)])])
-     
+
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
                   role (kt/newRole {:name "edit-role"})]
