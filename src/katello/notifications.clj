@@ -139,7 +139,7 @@
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
                 ::systems-exceeds-group-limit           #"System limit may not be less than the number of systems associated with the system group"
-                ::bulk-systems-exceeds-group-limit      #"System Group maximum number of systems exceeded"
+                ::bulk-systems-exceeds-group-limit      #"System Group maximum number of systems exceeded.*"
                 ::add-systems-greater-than-allowed      #"You cannot have more.*associated with system group.*"
                 ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"
                 ::deletion-already-in-progress          #"Cannot delete.*while another changeset"}]
