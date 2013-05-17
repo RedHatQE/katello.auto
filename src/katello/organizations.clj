@@ -31,13 +31,14 @@
    ::default                "//ul[@id='organizationSwitcher']//span[@title='This is your default organization.']/../a"
 
    ;; System Default Info
-   ::system-default-info    (ui/third-level-link "organization_default_info")
-   ::keyname-text           "new_default_info_keyname"
-   ::create-keyname         "add_default_info_button"
-   ::apply-default-info     "apply_default_info_button"})
+   ::system-default-info      (ui/third-level-link "org_system_default_info")
+   ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
+   ::keyname-text             "new_default_info_keyname"
+   ::create-keyname           "add_default_info_button"
+   ::apply-default-info       "apply_default_info_button"})
 
 (sel/template-fns
- {org-switcher-row   "//div[@id='orgbox']//div[contains(@class, 'row') and position()=%s]"
+ {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
@@ -45,7 +46,8 @@
   [::page 
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
-    [::system-default-info-page (nav/browser-fn (click ::system-default-info))]]])
+    [::system-default-info-page (nav/browser-fn (click ::system-default-info))]
+    [::distributor-default-info-page (nav/browser-fn (click ::distributor-default-info))]]])
 
 ;; Tasks
 
@@ -59,10 +61,16 @@
                (setText label-loc "")
                (setText label-loc label-text))))
 
+(defn isKeynamePresent?
+  "Checks whether a keyname is present in the organization's custom fields."
+  [keyname]
+  (boolean (get (common/extract-custom-keyname-list) keyname)))
+
+
 (defn add-custom-keyname
   "Adds a custom keyname field to an organization and optionally apply it to existing systems"
-  [org keyname & [{:keys [apply-default]}]]
-  (nav/go-to ::system-default-info-page org)
+  [org section keyname & [{:keys [apply-default]}]]
+  (nav/go-to section org)
   ;; Make sure the 'Add' button is disabled
   (assert (= (get (browser getAttributes ::create-keyname) "disabled") ""))
   (->browser (setText ::keyname-text keyname)
@@ -76,8 +84,8 @@
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
-  [org keyname]
-  (nav/go-to ::system-default-info-page org)
+  [org section keyname]
+  (nav/go-to section org)
   (browser click (remove-keyname-btn keyname)))
 
 (defn- create
@@ -160,18 +168,16 @@
    org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
-  ([{:keys [name]} & [{:keys [force? default-org login?]}]]
-     (when-not login? (nav/go-to ::nav/top-level)) 
-     (when (or force?
-               login?
+  ([{:keys [name]} & [{:keys [force? default-org]}]] 
+     (when (or force? 
                default-org
                (not= (nav/current-org) name)) 
        (browser fireEvent ::ui/switcher "click")
-       (browser sleep 1000)
+       (browser ajaxWait)
        (when default-org
          (let [current-default (try (browser getText ::default)
                                     (catch SeleniumException _ :none))]
-           (when (not= current-default default-org)
+           (when (not= current-default (:name default-org))
              (browser click (ui/default-star (if (= default-org :none)
                                                current-default
                                                (:name default-org))))
@@ -182,7 +188,8 @@
 (defn switcher-available-orgs
   "List of names of orgs currently selectable in the org dropdown."
   []
-  (browser click ::ui/switcher)
+  (browser fireEvent ::ui/switcher "click")
+  (browser sleep 1000)
   (doall (take-while identity
                      (for [i (iterate inc 1)]
                        (try (browser getText (org-switcher-row i))

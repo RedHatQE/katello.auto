@@ -25,10 +25,7 @@
   (try+
    (expecting-error (common/errtype :katello.notifications/invalid-credentials)
                     (login (kt/newUser {:name username, :password password})))
-                                        ; Notifications must be flushed so login can succeed in 'finally'
-     (katello.notifications/flush)
    (finally
-     (katello.notifications/flush)
      (login))))
 
 (defn login-admin []

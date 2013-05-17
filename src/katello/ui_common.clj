@@ -40,11 +40,13 @@
    validation errors), the predicate will return true. Uses isa? for
    comparison, so hierarchies will be checked.
    example (try+ (dothat) (catch (errtype ::validation-error) _ nil))"
-  [t]
+  [known-type]
   (with-meta
-    (fn [e] (some #(isa? % t) (:types e)))
+    (fn [notifs]
+      (boolean (some #(isa? % known-type)
+                     (notification/matching-errors notifs))))
     {:type :serializable.fn/serializable-fn
-     :serializable.fn/source `(errtype ~t)}))
+     :serializable.fn/source `(errtype ~known-type)}))
 
 (defn activate-in-place
   "For an in-place edit input, switch it from read-only to editing
@@ -80,10 +82,10 @@
   (extract-list ui/left-pane-field-list))
 
 (defn extract-custom-keyname-list []
-  (extract-list ui/custom-keyname-list))
+  (set (extract-list ui/custom-keyname-list)))
 
 (defn extract-custom-value-list []
-  (extract-list ui/custom-value-list))
+  (set (extract-list ui/custom-value-list)))
 
 (defn clear-search []
   (sel/->browser (click ::ui/search-menu)

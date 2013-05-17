@@ -12,6 +12,8 @@
   (update* [x new-x] "Change an existing entity in UI, from x to new-x")
   (delete [x] "Delete an existing entity in the UI"))
 
+(defrecord Notification [validationErrors notices level])
+
 ;; because protocols don't support varargs
 (defn update [x f & args]
   (let [updated (apply f x args)]
@@ -57,8 +59,8 @@
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
-  default-star         "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']/../span"
-  switcher-link        "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']"
+  default-star         "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']/../span[contains(@id,'favorite')]"
+  switcher-link        "//ul[@id='organizationSwitcher']//li//a[normalize-space(.)='%s' and contains(@class, 'dropdown-menu-item-link')]"
   custom-keyname-list  "xpath=(//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')])[%s]"
   custom-value-list    "xpath=(//td/div[@class='editable edit_textfield'])[%s]"})
 

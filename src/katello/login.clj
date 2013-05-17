@@ -13,6 +13,8 @@
                  ::password-text     "password"
                  ::log-in            "//input[@value='Log In' or @value='Login']"
                  ::re-log-in-link    "//a[contains(@href, '/login')]"
+                 ::error-message     "//ul[@class='error']"
+                 ::close-error       "//div[@id='notifications']//div[@class='control']"
                  ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
   ui/locators)
 
@@ -39,6 +41,13 @@
   (when-not (logged-out?)
     (browser clickAndWait ::ui/log-out)))
 
+(defn- signo-error? []
+  (and (sel/browser isElementPresent ::error-message)
+       (sel/browser isVisible ::error-message)))
+
+(defn- clear-signo-errors []
+  (browser click ::close-error))
+
 (defn login
   "Logs in a user to the UI with the given user and password. If none
    are given, the current value of katello.conf/*session-user* and
@@ -54,23 +63,25 @@
      (when (logged-in?) (logout))
      (when (sel/browser isElementPresent ::re-log-in-link)
        (sel/browser clickAndWait ::re-log-in-link))
-     (sel/fill-ajax-form {::username-text name
-                          ::password-text password}
-                         ::log-in)
-     ; throw errors
-     (notification/verify-no-error)
-     (notification/flush)
-     ; if user only has access to one org, he will bypass org select
-     (if (browser isElementPresent ::interstitial) 
-       (do (Thread/sleep 3000)
-           (organization/switch (or org
-                                    (throw+ {:type ::login-org-required
-                                             :msg (format "User %s has no default org, cannot fully log in without specifying an org."
-                                                          name)}))
-                                {:default-org default-org
-                                 :login? true})))
-     (when (not (logged-in?))
-                (wait-for-login))))
+
+     (when (signo-error?)
+       (clear-signo-errors))
+     
+     (sel/fill-form {::username-text name
+                     ::password-text password}
+                    ::log-in)
+     ;; throw errors
+     ;;(notification/verify-no-error)     ; katello notifs
+     ;;(notification/flush)
+     
+     (if (signo-error?)                 ; signo notifs
+       (throw+ (list (ui/map->Notification {:level :error
+                                            :notices (list (browser getText ::error-message))}))))
+     ;; no interstitial for signo logins, if we go straight to default org, and that's the
+     ;; org we want, switch won't click anything
+     (browser ajaxWait)
+     (when org
+       (organization/switch org {:default-org default-org}))))
 
 (defmacro with-user-temporarily
   "Logs in as user, executes body with *session-user* bound to user,
