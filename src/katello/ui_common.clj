@@ -42,9 +42,9 @@
    example (try+ (dothat) (catch (errtype ::validation-error) _ nil))"
   [known-type]
   (with-meta
-    (fn [notifs]
+    (fn [obj]
       (boolean (some #(isa? % known-type)
-                     (notification/matching-errors notifs))))
+                     (notification/matching-errors obj))))
     {:type :serializable.fn/serializable-fn
      :serializable.fn/source `(errtype ~known-type)}))
 

@@ -149,13 +149,16 @@
 
 (defn matching-errors
   "Returns a set of matching known errors"
-  [notifs]
-  (->> known-errors
-       (filter (fn [[_ v]] (some not-empty (for [msg (concat (mapcat :notices notifs)
-                                                             (mapcat :validationErrors notifs))]
-                                             (re-find v msg)))))
-     (map key)
-     set))
+  [obj]
+  (if (sequential? obj)
+    (let [notifs (filter (partial instance? katello.ui.Notification) obj)]
+      (->> known-errors
+           (filter (fn [[_ v]] (some not-empty (for [msg (concat (mapcat :notices notifs)
+                                                                 (mapcat :validationErrors notifs))]
+                                                 (re-find v msg)))))
+           (map key)
+           set))
+    (hash-set)))
 
 (def success?
   "Returns a function that returns true if the given notification is a 'success'
