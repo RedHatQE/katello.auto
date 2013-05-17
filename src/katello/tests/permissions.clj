@@ -328,14 +328,14 @@
                     cs (uniqueify (kt/newChangeset {:name "cs"
                                                     :env env
                                                     :content (list cv1 cv2 cv3)}))]
-              [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
-                             {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
-                             {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
-               :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
-               :allowed-actions [(navigate-fn :katello.changesets/page)]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page])
-                                         (fn [] (changeset/promote-delete-content cs)))]))
+                [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                               {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
+                               {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
+                 :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
+                 :allowed-actions [(navigate-fn :katello.changesets/page)]
+                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                          :katello.providers/custom-page])
+                                           (fn [] (changeset/promote-delete-content cs)))]))
        assoc :blockers (open-bz-bugs "960620"))
      
      (fn [] (let [org (uniqueify baseorg)
