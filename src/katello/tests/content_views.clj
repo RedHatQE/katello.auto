@@ -324,4 +324,3 @@
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
                (assert/is (->> cmd_result :exit-code (= 1))))))))))
-     
