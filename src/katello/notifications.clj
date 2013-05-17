@@ -139,7 +139,7 @@
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
                 ::systems-exceeds-group-limit           #"System limit may not be less than the number of systems associated with the system group"
-                ::bulk-systems-exceeds-group-limit      #"System Group maximum number of systems exceeded.*for more details."
+                ::bulk-systems-exceeds-group-limit      #"System Group maximum number of systems exceeded"
                 ::add-systems-greater-than-allowed      #"You cannot have more.*associated with system group.*"
                 ::distributor-has-already-been-imported #"This distributor has already been imported by another owner"
                 ::deletion-already-in-progress          #"Cannot delete.*while another changeset"}]
@@ -149,13 +149,16 @@
 
 (defn matching-errors
   "Returns a set of matching known errors"
-  [notifs]
-  (->> known-errors
-       (filter (fn [[_ v]] (some not-empty (for [msg (concat (mapcat :notices notifs)
-                                                             (mapcat :validationErrors notifs))]
-                                             (re-find v msg)))))
-     (map key)
-     set))
+  [obj]
+  (if (sequential? obj)
+    (let [notifs (filter (partial instance? katello.ui.Notification) obj)]
+      (->> known-errors
+           (filter (fn [[_ v]] (some not-empty (for [msg (concat (mapcat :notices notifs)
+                                                                 (mapcat :validationErrors notifs))]
+                                                 (re-find v msg)))))
+           (map key)
+           set))
+    (hash-set)))
 
 (def success?
   "Returns a function that returns true if the given notification is a 'success'
