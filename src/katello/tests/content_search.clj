@@ -188,7 +188,7 @@
   (deftest "Content Search: search package info"
     :data-driven true
     
-    (fn [pkg-search expected-pkgs lib-cp]
+    (fn [pkg-search expected-pkgs]
       (content-search/go-to-content-search-page test-org-compare)
       (do
         (assert/is (= expected-pkgs (content-search/search-for-packages pkg-search)))))     
@@ -196,14 +196,12 @@
                            #{{"Weird Enterprise" 
                               {"Russia" #{"4.1-1.noarch" "bear"}}} 
                              {"Com Nature Enterprise" 
-                              {"CompareZoo2" #{"4.1-1.noarch" "bear"}}}}}
-      
-      {:first "Library" :fpackages ["Nature" "Weird"]
-       :second "simple-env" :spackages ["Nature"]}]
+                              {"CompareZoo2" #{"4.1-1.noarch" "bear"}}}}}]
      
      ["s*" {"Default Organization View" 
 						 #{{"ManyRepository Enterprise" 
 						    #{{"ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}}
+ 						      {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
 						      {"ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}} 
 						      {"ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}} 
 						      {"ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}}}}
@@ -214,13 +212,9 @@
 						                  #{"shark" "0.1-1.noarch"}}}}} 
 						   {"Com Nature Enterprise" 
 						    #{{"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
 						      {"CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
 						                       #{"0.12-2.noarch" "stork"} 
-						                       #{"shark" "0.1-1.noarch"}}}}}}}
-						      
-						      {:first "Library" :fpackages ["Nature" "Weird" "Many"]
-       :second "simple-env" :spackages ["Nature"]}]]))
+						                       #{"shark" "0.1-1.noarch"}}}}}}}]]))
 
 (defn verify-errata [type expected-errata]
   (content-search/go-to-content-search-page test-org-errata)
