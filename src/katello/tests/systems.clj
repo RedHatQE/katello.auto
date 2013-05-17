@@ -448,15 +448,6 @@
         (ui/update system assoc :env (second env-chain))
         (ui/update system assoc :env (last env-chain))))
 
-
-    (deftest "Add system link is disabled when org has no environments"
-      (with-unique [org (kt/newOrganization {:name "addsys"})]
-        (rest/create org)
-        (nav/go-to ::system/page org)
-        (let [{:strs [original-title class]} (browser getAttributes ::system/new)]
-          (assert (and (.contains class "disabled")
-                       (.contains original-title "environment is required"))))))
-
     (deftest "Check whether the details of registered system are correctly displayed in the UI"
       :blockers (open-bz-bugs "959211")
       (provision/with-client "sys-detail"
