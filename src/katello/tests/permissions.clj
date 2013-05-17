@@ -130,6 +130,26 @@
             :setup (fn [] (rest/create system))
             :allowed-actions [(fn [] (ui/delete system))]])))
 
+(defn- get-cv-pub [org]
+  {:cv1 (uniqueify (kt/newContentView {:name "con-def1"
+                            :org org
+                            :published-name "pub-name1"}))
+   :cv2 (uniqueify (kt/newContentView {:name "con-def2"
+                            :org org
+                            :published-name "pub-name2"}))
+   :cv3 (uniqueify (kt/newContentView {:name "con-def3"
+                            :org org
+                            :published-name "pub-name3"}))
+   :env (uniqueify (kt/newEnvironment {:name  "dev" 
+                            :org org}))})
+
+(defn- setup-cv-publish [org env cv1 cv2 cv3]
+  (ui/create-all (list org env cv1 cv2))
+  (views/publish {:content-defn cv1 :published-name (cv1 :published-name) :description "pub-name1 desc"})
+  (views/publish {:content-defn cv2 :published-name (cv2 :published-name) :description "pub-name2 desc"})
+  (views/publish {:content-defn cv2 :published-name (cv3 :published-name) :description "pub-name3 desc"}))    
+  
+
 (def access-test-data
   (let [baseuser (kt/newUser {:name "user" :password "password" :email "me@me.com"})
         baseorg (kt/newOrganization {:name "org"})]
@@ -303,49 +323,29 @@
                                          (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))   
      
-     (fn [] (let [org        (uniqueify baseorg)
-                  pub-names  (take 3 (uniques "pub1"))
-                  cv1        (uniqueify (kt/newContentView {:name "con-def"
-                                                            :org org
-                                                            :published-name (first pub-names)}))
-                  cv2        (uniqueify (kt/newContentView {:name "con-def"
-                                                            :org org
-                                                            :published-name (first pub-names)}))
-                  env        (uniqueify (kt/newEnvironment {:name  "dev" :org org}))
-                  cs         (uniqueify (kt/newChangeset {:name "cs"
-                                         :env env
-                                         :content (list cv1 cv2)}))]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
-                             {:org global, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(first pub-names) (last pub-names)], :name "cvaccess_cvviews"}
-                             {:org global, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
-               :setup (fn [] (ui/create-all (list org env cv1 cv2))
-                             (views/publish {:content-defn cv1 :published-name (first pub-names) :description "pub-name1 desc"})
-                             (views/publish {:content-defn cv2 :published-name (second pub-names) :description "pub-name2 desc"})
-                             (views/publish {:content-defn cv2 :published-name (last pub-names) :description "pub-name3 desc"}))                             
+     (fn [] (let [org (uniqueify baseorg)
+                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
+                   cs (uniqueify (kt/newChangeset {:name "cs"
+                                                   :env env
+                                                   :content (list cv1 cv2 cv3)}))]
+              [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                             {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
+                             {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
+               :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
                :allowed-actions [(navigate-fn :katello.changesets/page)]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                         :katello.providers/custom-page])
                                          (fn [] (changeset/promote-delete-content cs)))]))
-        
-     (fn [] (let [org        (uniqueify baseorg)
-                  pub-names  (take 3 (uniques "pub2"))
-                  cv1        (uniqueify (kt/newContentView {:name "con-def"
-                                                            :org org
-                                                            :published-name (first pub-names)}))
-                  cv2        (uniqueify (kt/newContentView {:name "con-def"
-                                                            :org org
-                                                            :published-name (second pub-names)}))
-                  env        (uniqueify (kt/newEnvironment {:name  "dev" :org org}))
-                  cs         (uniqueify (kt/newChangeset {:name "cs"
-                                         :env env
-                                         :content (list cv1 cv2)}))]
+     
+     (fn [] (let [org (uniqueify baseorg)
+                  {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
+                  cs  (uniqueify (kt/newChangeset   {:name "cs"
+                                                     :env env
+                                                     :content (list cv1 cv2 cv3)}))]
               [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
-                             {:org org, :resource-type "Content View", :verbs ["Read Content Views" "Promote Content Views"], :tags [(first pub-names) (last pub-names)], :name "cvaccess_cvviews"}
+                             {:org org, :resource-type "Content View", :verbs ["Read Content Views" "Promote Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
                              {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
-               :setup (fn [] (ui/create-all (list org env cv1 cv2))
-                             (views/publish {:content-defn cv1 :published-name (first pub-names) :description "pub-name1 desc"})
-                             (views/publish {:content-defn cv2 :published-name (second pub-names) :description "pub-name2 desc"})
-                             (views/publish {:content-defn cv2 :published-name (last pub-names) :description "pub-name3 desc"}))
+               :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
@@ -371,7 +371,6 @@
 
      (delete-system-data "Read Systems")
      (delete-system-data "Delete Systems")]))
-        
 
 ;; Tests
 (defn- create-role* [f name]
