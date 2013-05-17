@@ -27,8 +27,7 @@
    registers the client to the Katello server, subscribes to the
    products, and then installs packages-to-install."
   [target-env products packages-to-install]
-  (let [all-packages (apply str (interpose " " packages-to-install))
-         ]
+  (let [all-packages (apply str (interpose " " packages-to-install))]
     ;;client side
     (provision/with-client "e2e-custom" ssh-conn
       (client/run-cmd ssh-conn (format "rpm -e %s" all-packages))
@@ -39,7 +38,10 @@
                                  :force true})
       
       (doseq [product products]
-        (if-let [matching-pool (system/pool-id (->> ssh-conn client/my-hostname (hash-map :name) kt/newSystem)
+        (if-let [matching-pool (system/pool-id (->> ssh-conn
+                                                    client/my-hostname
+                                                    (hash-map :env target-env, :name)
+                                                    kt/newSystem)
                                                product)]
           (client/subscribe ssh-conn matching-pool)
           (throw+ {:type :no-matching-pool :product product})))
