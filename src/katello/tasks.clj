@@ -133,18 +133,16 @@
      (java.io.File.)
      (.getCanonicalPath)))
 
-(defn rand-range [hi lo]
-   (+ (rand-int (- hi lo)) lo))
-
 (defn random-string
   "Create a random string with characters in the range lo to hi (of
    default encoding) with given length"
   [lo hi length]
-    (->> #(rand-range hi lo)
+  (let [rand-range #(+ (rand-int (- hi lo)) lo)]
+    (->> rand-range
        repeatedly
        (map char)
        (take length)
-       (apply str)))
+       (apply str))))
 
 (defmacro when-some-let
   "When any of the bindings evaluate to logical true, evaluate body."

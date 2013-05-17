@@ -41,11 +41,9 @@
                 ::sys-location-255-char-limit         #"Location is too long \(maximum is 255 characters\)"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
-                ::email-cant-be-blank                 #"Email can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
                 ::max-systems-may-not-be-zero         #"System limit may not be set to 0"
                 ::name-too-long                       #"Name is too long"
-                ::no-success                          #"Expected a success notification"
                 ::login-is-invalid                    #"Login is invalid"}]
     
     (doseq [e (keys errors)]
