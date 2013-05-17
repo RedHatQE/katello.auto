@@ -4,7 +4,7 @@
                            sync_management login environments
                            systems system-groups activation-keys
                            users permissions e2e navigation search
-                           distributors)
+                           distributors content-search)
             katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
