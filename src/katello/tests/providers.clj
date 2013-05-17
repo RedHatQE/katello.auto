@@ -13,7 +13,6 @@
                      [client :as client]
                      [tasks           :refer :all]
                      [ui-common       :as common]
-                     [notifications   :refer [success?]]
                      [organizations   :as organization]
                      [environments   :as env]
                      [sync-management :as sync]
@@ -45,29 +44,30 @@
 
 (defn get-validation-data
   []
-  (concat
-   [[{:name nil
-      :description "blah"
-      :url "http://sdf.com"} (common/errtype :katello.notifications/name-cant-be-blank)]
+  (let [success? #(= (:type %) :success)]
+    (concat
+     [[{:name nil
+        :description "blah"
+        :url "http://sdf.com"} (common/errtype :katello.notifications/name-cant-be-blank)]
 
-    [{:name (uniqueify "mytestcp4")
-      :description nil
-      :url "http://sdf.com"} success?]]
+      [{:name (uniqueify "mytestcp4")
+        :description nil
+        :url "http://sdf.com"} success?]]
 
-   (for [js-str javascript-strings]
-     [{:name (uniqueify "mytestcp5")
-       :description js-str
-       :url "http://sdf.com"}  success?])
+     (for [js-str javascript-strings]
+       [{:name (uniqueify "mytestcp5")
+         :description js-str
+         :url "http://sdf.com"}  success?])
 
-   (for [trailing-ws-str trailing-whitespace-strings]
-     [{:name trailing-ws-str
-       :description nil
-       :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
+     (for [trailing-ws-str trailing-whitespace-strings]
+       [{:name trailing-ws-str
+         :description nil
+         :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
 
-   (for [inv-char-str invalid-character-strings]
-     [{:name inv-char-str
-       :description nil
-       :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)])))
+     (for [inv-char-str invalid-character-strings]
+       [{:name inv-char-str
+         :description nil
+         :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)]))))
 
 (defn create-custom-provider-with-gpg-key
   "Creates a provider with products and repositories that use the provided gpg-key. returns the provider."
