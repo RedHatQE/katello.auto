@@ -73,7 +73,10 @@
           user (uniqueify (update-in *session-user* [:name] #(format "%s%s" % thread-number)))]
       (binding [sel (new-selenium (nth (cycle *browsers*)
                                        thread-number))]
-        (try 
+        (try
+          ;;staggered startup
+          (->> thread-number (* 10000) (- 10000) Thread/sleep)
+
           (start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
                                                   (config-with-profile locale))})
           (switch-new-admin-user user)
