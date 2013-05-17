@@ -55,19 +55,20 @@
   (nav/go-to ::system/named-by-environment-page system)
   (assert/is (= (:environment_id system)
                 (-> test-environment rest/query :id))))
+(defn disabled?
+  [string]
+  (some #{"disabled"} 
+        (clojure.string/split string #" ")))
 
 (defn validate-sys-subscription
   "Validate subscription tab when no subscription are attached to selected system"
   [system]
   (nav/go-to ::system/subscriptions-page system)
   (browser isElementPresent ::system/red-subs-icon)
-  (when-not (= "Subscriptions are not Current Details" (browser getText ::system/subs-text))
-    (throw+ {:type ::subscription-status :msg "Check if valid subscriptions are already assigned"}))
-  (when-not (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel))
-    (throw+ {:type ::service-level-statement :msg "Default service level is set to something else"}))
-  (when-not (= "disabled" (subs (browser getAttribute ::system/subs-attach-button) 20 28))
-    (throw+ {:type ::subscription-attach-button :msg "Subscription attach button is not disabled"})))
-
+  (assert/is (= "Subscriptions are not Current Details" (browser getText ::system/subs-text)))  
+  (assert/is (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel)))   
+  (assert/is (= "disabled" (disabled? (browser getAttribute ::system/subs-attach-button)))))
+    
 (defn configure-product-for-pkg-install
   "Creates and promotes a product with fake content repo, returns the
   product."
