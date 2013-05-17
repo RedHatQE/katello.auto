@@ -75,7 +75,7 @@
                                        thread-number))]
         (try
           ;;staggered startup
-          (->> thread-number (* 10000) (- 10000) Thread/sleep)
+          (Thread/sleep (* thread-number 10000))
 
           (start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
                                                   (config-with-profile locale))})
