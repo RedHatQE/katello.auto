@@ -72,8 +72,8 @@
   user)
 
 (defn verify-login-prompts-org [user]
-  (expecting-error [:type :katello.login/login-org-required]
-                   (login user))
+  (login user)
+  (assert/is (= "Select an Organization" (browser getText ::ui/switcher)))
   user)
 
 (defn verify-only-one-org [user]
@@ -298,6 +298,3 @@
         (assign-admin admin))))
 
   user-settings default-org-tests)
-
-
-

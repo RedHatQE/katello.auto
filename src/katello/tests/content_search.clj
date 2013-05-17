@@ -92,7 +92,7 @@
                  (rest/create test-org-compare)
                  (org/switch test-org-compare)
                  (fake/prepare-org-custom-provider test-org-compare fake/custom-providers)
-                 (env/create {:name (uniqueify "simple-env") :org test-org-compare :prior "Library"}))
+                 (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-compare :prior "Library"})))
   
   (deftest "Repo compare: Differences between repos can be qualified"
     :data-driven true
@@ -202,24 +202,24 @@
        :second "simple-env" :spackages ["Nature"]}]
      
      ["s*" {"Default Organization View" 
-            #{{"Com Nature Enterprise" 
-               #{{"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
-                                  #{"0.12-2.noarch" "stork"} 
-                                  #{"shark" "0.1-1.noarch"}}}}} 
-              {"ManyRepository Enterprise" 
-               #{{"ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}}}}
-              {"Weird Enterprise" 
-               #{{"China" #{"0.3-0.8.noarch" "squirrel"}} 
-                 {"Russia" #{#{"0.1-1.noarch" "squirrel"} 
-                             #{"0.12-2.noarch" "stork"} 
-                             #{"shark" "0.1-1.noarch"}}}}}}}
-      
-      {:first "Library" :fpackages ["Nature" "Weird" "Many"]
+						 #{{"ManyRepository Enterprise" 
+						    #{{"ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}}
+						      {"ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}} 
+						      {"ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}} 
+						      {"ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}}}}
+						   {"Weird Enterprise" 
+						    #{{"China" #{"0.3-0.8.noarch" "squirrel"}} 
+						      {"Russia" #{#{"0.1-1.noarch" "squirrel"} 
+						                  #{"0.12-2.noarch" "stork"} 
+						                  #{"shark" "0.1-1.noarch"}}}}} 
+						   {"Com Nature Enterprise" 
+						    #{{"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}} 
+						      {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
+						      {"CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
+						                       #{"0.12-2.noarch" "stork"} 
+						                       #{"shark" "0.1-1.noarch"}}}}}}}
+						      
+						      {:first "Library" :fpackages ["Nature" "Weird" "Many"]
        :second "simple-env" :spackages ["Nature"]}]]))
 
 (defn verify-errata [type expected-errata]
@@ -255,7 +255,7 @@
                  (rest/create test-org-errata)
                  (org/switch test-org-errata)
                  (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
-                 (env/create {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"}))
+                  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"})))
   
   (deftest "Content Browser: Errata information"
     (content-search/go-to-content-search-page test-org-errata)
@@ -542,7 +542,9 @@
     (content-search/select-environments [env-dev env-qa env-release])
     (assert/is  (= (content-search/get-table-headers) ["Library" env-dev env-qa env-release]))))
 
+
 (defgroup content-search-tests
   content-search-repo-compare
-  content-search-errata
-  content-search-env-compare)
+  content-search-errata)
+  ;work-in progress, converting setup to content view promotion
+  ;content-search-env-compare)

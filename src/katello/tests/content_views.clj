@@ -34,7 +34,8 @@
                 cs (kt/newChangeset {:name "cs"
                                      :env target-env
                                      :content (list cv)})]
-    (ui/create-all (list org target-env cv))
+    (ui/create-all-recursive (list org target-env))
+    (ui/create-all [cv])
     (create-recursive repo)
     (sync/perform-sync (list repo))
     (ui/update cv assoc :products (list (kt/product repo)))
