@@ -35,7 +35,7 @@
   ;; katello.tests.providers.redhat/manifest-tests  ;; do not work anyway due to manifest sig checking
   ;; katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
-  ;; katello.tests.content-search/content-search-tests ;; waiting on asaleh's PR
+  katello.tests.content-search/content-search-tests
   )
 
 
