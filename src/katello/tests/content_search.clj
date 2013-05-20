@@ -131,18 +131,17 @@
     [[:packages "CompareZoo1"]
      [:errata "CompareZoo1"]])
   
-(comment  
-  (deftest "Repo compare: Add and remove repos to compare"
-    :data-driven true
-    (fn [to-add to-remove result]
-      (content-search/go-to-content-search-page test-org-compare)
-      (content-search/add-repositories to-add)
-      (content-search/remove-repositories to-remove)
+  #_(deftest "Repo compare: Add and remove repos to compare"
+      :data-driven true
+      (fn [to-add to-remove result]
+        (content-search/go-to-content-search-page test-org-compare)
+        (content-search/add-repositories to-add)
+        (content-search/remove-repositories to-remove)
       
-      (assert/is (= (content-search/get-result-repos) result)))
+        (assert/is (= (content-search/get-result-repos) result)))
     
-    [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"] {"Com Nature Enterprise" "CompareZoo2"}]])
-)
+      [[["CompareZoo1" "CompareZoo2"] ["CompareZoo1"] {"Com Nature Enterprise" "CompareZoo2"}]])
+
 
   (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
     (content-search/go-to-content-search-page test-org-compare)
@@ -166,7 +165,7 @@
     (content-search/go-to-content-search-page test-org-compare)
     (let [repos (difference (set (fake/get-all-custom-repo-names)) (set (fake/get-i18n-repo-names)))]
       (assert/is (= repos
-                   (set (content-search/compare-repositories (into [] repos)))))))
+                    (set (content-search/compare-repositories (into [] repos)))))))
   
   (deftest "Content Search: search repo info"
     :data-driven true
@@ -193,28 +192,26 @@
       (do
         (assert/is (= expected-pkgs (content-search/search-for-packages pkg-search)))))     
     [["bear-4.1-1.noarch" {"Default Organization View" 
-                           #{{"Weird Enterprise" 
-                              {"Russia" #{"4.1-1.noarch" "bear"}}} 
-                             {"Com Nature Enterprise" 
-                              {"CompareZoo2" #{"4.1-1.noarch" "bear"}}}}}]
+                           #{{"Weird Enterprise" {"Russia" #{"4.1-1.noarch" "bear"}}} 
+                             {"Com Nature Enterprise" {"CompareZoo2" #{"4.1-1.noarch" "bear"}}}}}]
      
      ["s*" {"Default Organization View" 
-						 #{{"ManyRepository Enterprise" 
-						    #{{"ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}}
- 						      {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}}}}
-						   {"Weird Enterprise" 
-						    #{{"China" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"Russia" #{#{"0.1-1.noarch" "squirrel"} 
-						                  #{"0.12-2.noarch" "stork"} 
-						                  #{"shark" "0.1-1.noarch"}}}}} 
-						   {"Com Nature Enterprise" 
-						    #{{"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}} 
-						      {"CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
-						                       #{"0.12-2.noarch" "stork"} 
-						                       #{"shark" "0.1-1.noarch"}}}}}}}]]))
+            #{{"ManyRepository Enterprise" 
+               #{{"ManyRepositoryE" #{"0.3-0.8.noarch" "squirrel"}}
+                 {"ManyRepositoryA" #{"0.3-0.8.noarch" "squirrel"}} 
+                 {"ManyRepositoryB" #{"0.3-0.8.noarch" "squirrel"}} 
+                 {"ManyRepositoryC" #{"0.3-0.8.noarch" "squirrel"}} 
+                 {"ManyRepositoryD" #{"0.3-0.8.noarch" "squirrel"}}}}
+              {"Weird Enterprise" 
+               #{{"China" #{"0.3-0.8.noarch" "squirrel"}} 
+                 {"Russia" #{#{"0.1-1.noarch" "squirrel"} 
+                             #{"0.12-2.noarch" "stork"} 
+                             #{"shark" "0.1-1.noarch"}}}}} 
+              {"Com Nature Enterprise" 
+               #{{"CompareZoo1" #{"0.3-0.8.noarch" "squirrel"}} 
+                 {"CompareZoo2" #{#{"0.1-1.noarch" "squirrel"} 
+                                  #{"0.12-2.noarch" "stork"} 
+                                  #{"shark" "0.1-1.noarch"}}}}}}}]]))
 
 (defn verify-errata [type expected-errata]
   (content-search/go-to-content-search-page test-org-errata)
