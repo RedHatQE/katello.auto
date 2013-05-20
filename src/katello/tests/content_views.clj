@@ -323,7 +323,7 @@
                                                       :composite-names pub-name1})]
           (ui/create composite-view)
           (browser click ::views/content-tab)
-          (assert/is (= false (browser isChecked (views/composite-view-name pub-name2))))
+          (assert/is (not (browser isChecked (views/composite-view-name pub-name2))))
           (assert/is (= "disabled" (browser getAttribute (views/composite-disabled pub-name2)))))))
      
      
