@@ -106,6 +106,10 @@
    ;;subscriptions pane
    ::subscriptions               (ui/third-level-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
+   ::red-subs-icon               "//div[@class='red subs_image']"
+   ::subs-text                   "//div[@class='subs_text fl panel_link']"
+   ::subs-servicelevel	         "//div[@name='system[serviceLevel]']"
+   ::subs-attach-button          "fake_sub_submit@class"
    ::unsubscribe                 "unsub_submit"})
 
 ;; Nav

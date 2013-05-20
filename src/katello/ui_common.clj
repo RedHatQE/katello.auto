@@ -125,5 +125,7 @@
      (search (class proto-entity) (try (kt/org proto-entity)
                                        (catch IllegalArgumentException _ nil)) opts)))
 
-
-
+(defn disabled?
+  [locator]
+  (some #{"disabled"} 
+        (clojure.string/split locator #" ")))
