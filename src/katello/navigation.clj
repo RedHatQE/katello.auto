@@ -30,12 +30,21 @@
   left-pane-item
   (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
+(defn scroll-left-pane-more
+  "Loads another group of 25 items in the left pane, by scrolling down" []
+  (->browser (getEval (str "window.scrollTo(0,1000000);"))
+             (ajaxWait)))
+
 (defn scroll-to-left-pane-item [ent]
   (while (and (< (ui/current-items) (ui/total-items))
               (not (browser isElementPresent (left-pane-item (:name ent)))))
     ;;scroll to bottom of page to load more items
-    (->browser (getEval (str "window.scrollTo(0,1000000);"))
-               (ajaxWait))))
+    (scroll-left-pane-more)))
+
+(defn scroll-all-left-pane-items []
+  (while (and (< (ui/current-items) (ui/total-items)))
+    ;;scroll to bottom of page to load more items
+    (scroll-left-pane-more)))
 
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a
