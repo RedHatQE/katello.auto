@@ -82,7 +82,7 @@
                                           (ui/create p))))
 
     (deftest "Assign a sync plan to multiple products"
-      :blockers (open-bz-bugs "751876")
+      :blockers (open-bz-bugs "751876" "965200")
       (with-unique-plan p
         (let [prov (uniqueify (kt/newProvider {:name "multiplan", :org *session-org*}))
               repos (for [repo (take 3 (repeatedly #(fresh-repo)))]
