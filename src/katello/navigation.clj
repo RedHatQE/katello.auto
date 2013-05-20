@@ -35,16 +35,17 @@
   (->browser (getEval (str "window.scrollTo(0,1000000);"))
              (ajaxWait)))
 
-(defn scroll-to-left-pane-item [ent]
+(defn scroll-left-pane-until
+  "Scroll the left pane down until (side-effecty) no-arg function f
+   returns truthy, or the end of the list is hit."
+  [f]
   (while (and (< (ui/current-items) (ui/total-items))
-              (not (browser isElementPresent (left-pane-item (:name ent)))))
+              (not (f)))
     ;;scroll to bottom of page to load more items
     (scroll-left-pane-more)))
 
-(defn scroll-all-left-pane-items []
-  (while (and (< (ui/current-items) (ui/total-items)))
-    ;;scroll to bottom of page to load more items
-    (scroll-left-pane-more)))
+(defn scroll-to-left-pane-item [ent]
+  (scroll-left-pane-until #(browser isElementPresent (left-pane-item (:name ent)))))
 
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a

@@ -79,7 +79,7 @@
                                        (catch SeleniumException e nil)))))))
 
 (defn extract-left-pane-list []
-  (nav/scroll-all-left-pane-items)
+  (nav/scroll-left-pane-until (constantly false))
   (extract-list ui/left-pane-field-list))
 
 (defn extract-custom-keyname-list []
