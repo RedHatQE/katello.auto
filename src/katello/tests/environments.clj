@@ -61,15 +61,13 @@
   "Creates a new environment in the admin org, and promotes a
    product with a sync'd repo into it. Uses the API."
   [env]
-  (with-unique [prov (katello/newProvider {:name "prov" :org conf/*session-org*})
+  (with-unique [prov (katello/newProvider {:name "prov" :org (kt/org env)})
                 prod (katello/newProduct {:name "prod" :provider prov})
                 repo (katello/newRepository {:name "repo" :product prod
                                              :url (@conf/config :sync-repo)})]
-    (doseq [ent (list prov prod repo)]
-      (rest/create ent))
-    (let [content (list repo)]
-      (sync/perform-sync content)
-      (changeset/api-promote env content))))
+    (rest/create-all (list env prov prod repo))
+    (sync/perform-sync (list repo))
+    (changeset/api-promote env (list prod))))
 
 ;; Setup
 
