@@ -78,7 +78,7 @@
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
    ::release-version-select      "system[releaseVer]"
-   ::environment                 "//div[@id='environment_path_selector']"              
+   ::environment                 "//span[@id='environment_path_selector']"              
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
    ::edit-description            "system_description"

@@ -146,7 +146,7 @@
                                                              :org conf/*session-org*})))]
           (-> envs katello/chain ui/create-all)
           (expecting-error [:type ::environment/cant-be-deleted]
-                           (ui/delete (second envs)))
+            (ui/delete (second envs)))
           (ui/delete (last envs)))))
 
 
@@ -183,7 +183,7 @@
                                            :label env-label
                                            :org @test-org})]
           (expecting-error (errtype notif)
-                           (ui/create env))))
+            (ui/create env))))
 
       [["Library" "Library" ::notification/env-name-lib-is-builtin]
        ["Library" "Library" ::notification/env-label-lib-is-builtin]
@@ -192,19 +192,17 @@
 
   (deftest "Enviroment name is required"
     (expecting-error name-field-required
-                     (ui/create (katello/newEnvironment {:name ""
-                                                         :org @test-org
-                                                         :description "env description"}))))
+      (ui/create (katello/newEnvironment {:name ""
+                                          :org @test-org
+                                          :description "env description"}))))
 
   (deftest "Move systems from one env to another"
     :blockers (union (open-bz-bugs "959211")
                      conf/no-clients-defined)
     
     (provision/with-client "envmovetest" ssh-conn
-      (with-unique [env-dev  (katello/newEnvironment {:name "dev"
-                                                      :org @test-org})
-                    env-test (katello/newEnvironment {:name "test"
-                                                      :org @test-org})]
+      (let [[env-dev env-test] (uniques (katello/newEnvironment {:name "env"
+                                                                 :org @test-org}))]
         (ui/create-all (list env-dev env-test))
         (client/register ssh-conn {:username (:name conf/*session-user*)
                                    :password (:password conf/*session-user*)
@@ -214,7 +212,8 @@
         (let [system (katello/newSystem {:name (-> ssh-conn
                                                    (client/run-cmd "hostname")
                                                    :stdout
-                                                   trim)})
+                                                   trim)
+                                         :env env-dev})
               names= (fn [& args] (apply = (map :name args)))]
           (assert/is (names= env-dev (system/environment system)))
           (ui/update system assoc :env env-test)
