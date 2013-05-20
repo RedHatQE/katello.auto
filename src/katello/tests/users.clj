@@ -125,9 +125,10 @@
     :tcms "201585"
     (-> (new-unique-user)
         create-org-and-user 
-        set-default-org-at-login-screen)
+        login-user)
     (assert/is (= (set (organization/switcher-available-orgs)) 
-                #{})))
+                  #{}))
+    (login))
 
   (deftest "User's Favorite Organization"
     :data-driven true
