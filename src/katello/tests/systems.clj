@@ -585,10 +585,7 @@
     
     (deftest "Register a system using multiple activation keys"
       (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
-                    ak1 (kt/newActivationKey {:name "ak1"
-                                              :env target-env
-                                              :description "auto activation key"})
-                    ak2 (kt/newActivationKey {:name "ak2"
+                    [ak1 ak2] (kt/newActivationKey {:name "ak1"
                                               :env target-env
                                               :description "auto activation key"})]
         (ui/create-all (list target-env ak1 ak2))
