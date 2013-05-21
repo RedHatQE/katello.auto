@@ -25,6 +25,7 @@
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
+            [clojure.zip :as zip]
             [slingshot.slingshot :refer [throw+]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
@@ -370,7 +371,11 @@
        [true]])
 
     (deftest "System Details: Add custom info"
-      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :blockers (union (open-bz-bugs "919373")
+                       (fn [{:keys [test-zipper]}] ;; skip if this bug is open and we're expecting failure
+                         (or (and (-> test-zipper zip/node :parameters last not) ;; success? == false
+                                  ((open-bz-bugs "951197") nil))
+                             (list))))
       :data-driven true
 
       (fn [keyname custom-value success?]
@@ -385,7 +390,11 @@
        [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 256) false]
        [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
        [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
-       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+
+       (with-meta
+         ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+         {:blockers (open-bz-bugs "951231")})
+
        ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
     (deftest "System Details: Update custom info"
