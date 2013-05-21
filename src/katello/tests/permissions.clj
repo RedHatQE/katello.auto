@@ -4,6 +4,7 @@
             (katello [ui :as ui]
                      [rest :as rest]
                      [notifications :as notification]
+                     [sync-management :as sync]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
                      [ui-common :as common]
@@ -15,8 +16,9 @@
                      [users :as user]
                      [roles :as role]
                      [login :as login])
+            [katello.client.provision :as provision]
             [test.tree.script :refer [deftest defgroup]]
-            [katello.tests.useful :refer [ensure-exists]]
+            [katello.tests.useful :refer [ensure-exists fresh-repo]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
@@ -350,7 +352,55 @@
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
+     
+     (fn [] (with-unique [org (kt/newOrganization {:name "cv-org"})
+                          env (kt/newEnvironment {:name  "dev"
+                                                  :org org})                        
+                          cv (kt/newContentView {:name "con-def3"
+                                                 :org org
+                                                 :published-name "pub-name3"})
+                          cs (kt/newChangeset {:name "cs"
+                                                :env env
+                                                :content (list cv)})
+                          ak (kt/newActivationKey {:name "ak"
+                                                   :env env
+                                                   :description "auto activation key"
+                                                   :content-view (:published-name cv)})]  
 
+              [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                             {:org org, :resource-type "Content View", :name "cvaccess_cvviews"}
+                             {:org org, :resource-type "Environments", :name "cvaccess_cvenvs",
+                              :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment" "Modify Systems in Environment" "Read Systems in Environment" "Register Systems in Environment"]}
+                             {:org org, :resource-type "Activation Keys", :name "cvaccess_ak"}]
+               :setup (fn [] (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                                   prd   (kt/product repo)
+                                   prv   (kt/provider repo)]
+                               (ui/create-all (list org env prv prd repo cv))
+                               (sync/perform-sync (list repo))
+                               (ui/update cv assoc :products (list (kt/product repo)))
+                               (views/publish {:content-defn cv
+                                               :published-name (cv :published-name)
+                                               :description "test pub"
+                                               :org org})))
+               :allowed-actions [(fn [] (changeset/promote-delete-content cs)
+                                        (ui/create ak)
+                                        (provision/with-client "access-published-cv"
+                                          ssh-conn
+                                          (client/register ssh-conn {:username (:name *session-user*)
+                                                                     :password (:password *session-user*)
+                                                                     :org (kt/org repo)
+                                                                     :env test-environment
+                                                                     :force true})
+                                          (let [mysys (client/my-hostname ssh-conn)
+                                                product-name (-> repo kt/product :name)]
+                                            (ui/update mysys assoc :products product-name)
+                                            (client/sm-cmd ssh-conn :refresh)
+                                            (let [cmd (format "subscription-manager register --org %s --activationkey %s" (org :name) (ak :name))
+                                                  result (client/run-cmd ssh-conn cmd)]
+                                              (assert/is (->> result :exit-code (= 0)))))))]
+               :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                   :katello.providers/custom-page])]]))
+     
 
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
@@ -372,6 +422,8 @@
 
      (delete-system-data "Read Systems")
      (delete-system-data "Delete Systems")]))
+
+
 
 ;; Tests
 (defn- create-role* [f name]
