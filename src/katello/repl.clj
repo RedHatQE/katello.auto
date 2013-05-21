@@ -1,5 +1,5 @@
 (ns katello.repl
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser] :as sel]
             [clojure.pprint :refer [pp pprint]]
             fn.trace
             selenium-server
