@@ -219,6 +219,7 @@
         (ui/update user assoc :password "changedpwd")))
 
     (deftest "Admin deletes a user"
+      :blockers (open-bz-bugs "961122")
       (with-unique [user (assoc generic-user :name "deluser")]
         (ui/create user)
         (ui/delete user))
