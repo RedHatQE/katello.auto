@@ -424,11 +424,11 @@
         (ui/create role)
         (assert/is (validate-permissions-navigation role perm))))
 
-    [(let [env (kt/newEnvironment {:name "Dev" :org conf/*session-org*})]
-       [{:resource-type "Environments",
-         :verbs #{"Administer Changesets in Environment"},
-         :tags #{(:name env)}}
-        #(ensure-exists env)])])
+    [(fn [] (let [env (kt/newEnvironment {:name "Dev" :org conf/*session-org*})]
+              [{:resource-type "Environments",
+                :verbs #{"Administer Changesets in Environment"},
+                :tags #{(:name env)}}
+               #(ensure-exists env)]))])
 
   (deftest "Add a permission and user to a role"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
