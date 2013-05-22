@@ -92,8 +92,9 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (sel/fill-ajax-form [::name-text name
-                       label-filler [::name-text ::label-text label]
+  (browser setText ::name-text name)
+  (browser sleep 1000)
+  (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
                        ::description-text description
                        ::initial-env-name-text (:name initial-env)
                        label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
