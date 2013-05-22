@@ -13,6 +13,7 @@
                      [conf :as conf]
                      [tasks :refer [with-unique uniques uniqueify expecting-error random-string]]
                      [systems :as system]
+                     [client :as client]
                      [users :as user]
                      [roles :as role]
                      [login :as login])
@@ -355,7 +356,8 @@
      
      (fn [] (with-unique [org (kt/newOrganization {:name "cv-org"})
                           env (kt/newEnvironment {:name  "dev"
-                                                  :org org})                        
+                                                  :org org})
+                          repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
                           cv (kt/newContentView {:name "con-def3"
                                                  :org org
                                                  :published-name "pub-name3"})
@@ -372,8 +374,7 @@
                              {:org org, :resource-type "Environments", :name "cvaccess_cvenvs",
                               :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment" "Modify Systems in Environment" "Read Systems in Environment" "Register Systems in Environment"]}
                              {:org org, :resource-type "Activation Keys", :name "cvaccess_ak"}]
-               :setup (fn [] (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                                   prd   (kt/product repo)
+               :setup (fn [] (let [prd   (kt/product repo)
                                    prv   (kt/provider repo)]
                                (ui/create-all (list org env prv prd repo cv))
                                (sync/perform-sync (list repo))
@@ -386,10 +387,10 @@
                                         (ui/create ak)
                                         (provision/with-client "access-published-cv"
                                           ssh-conn
-                                          (client/register ssh-conn {:username (:name *session-user*)
-                                                                     :password (:password *session-user*)
+                                          (client/register ssh-conn {:username (:name conf/*session-user*)
+                                                                     :password (:password conf/*session-user*)
                                                                      :org (kt/org repo)
-                                                                     :env test-environment
+                                                                     :env env
                                                                      :force true})
                                           (let [mysys (client/my-hostname ssh-conn)
                                                 product-name (-> repo kt/product :name)]
@@ -422,8 +423,6 @@
 
      (delete-system-data "Read Systems")
      (delete-system-data "Delete Systems")]))
-
-
 
 ;; Tests
 (defn- create-role* [f name]
