@@ -505,14 +505,16 @@
     (deftest "System-Details: Validate Activation-key link"
       :blockers (open-bz-bugs "959211")
       
-      (with-unique [ak (kt/newActivationKey {:name "ak-link"
-                                             :env test-environment})]
-        (ui/create ak)
+      (with-unique [target-env (kt/newEnvironment {:name "dev" 
+                                                   :org *session-org*})
+                    ak (kt/newActivationKey {:name "ak-link"
+                                             :env target-env})]
+        (ui/create-all (list target-env ak))
         (provision/with-client "ak-link" ssh-conn
           (client/register ssh-conn
                            {:org (:name *session-org*)
                             :activationkey (:name ak)})
-          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
+          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env target-env})
                 aklink (system/activation-key-link (:name ak))]
             (nav/go-to ::system/details-page system)
             (when (browser isElementPresent aklink)
