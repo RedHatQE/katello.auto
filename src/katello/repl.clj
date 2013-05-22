@@ -1,5 +1,5 @@
 (ns katello.repl
-  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :refer [browser] :as sel]
             [clojure.pprint :refer [pp pprint]]
             fn.trace
             selenium-server
@@ -49,6 +49,12 @@
                                             locale)}))
     (new-browser)))
 
+(defmacro with-n-browsers [n & body]
+  `(map deref
+        (doall (for [_# (range ~n)]
+                 (future (binding [sel/sel (katello.setup/new-selenium "*firefox")]
+                           (katello.setup/start-selenium)
+                           ~@body))))))
 
 
 

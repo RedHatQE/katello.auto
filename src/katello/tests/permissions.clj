@@ -54,7 +54,7 @@
                                   :email "foo@my.org"})]
     (let [try-all-with-user (fn [actions]
                               (binding [conf/*session-user* user]
-                                (login)
+                                (login conf/*session-user*)
                                 (try-all actions)))]
       (rest/create user)
       (when role
@@ -129,7 +129,7 @@
                                              :sockets "1",
                                              :system-arch "x86_64",
                                              :facts (system/random-facts)})]
-           [:permissions [[{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]]
+           [:permissions [{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]
             :setup (fn [] (rest/create system))
             :allowed-actions [(fn [] (ui/delete system))]])))
 

@@ -21,7 +21,7 @@
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
-            [clojure.string :refer [blank?]]
+            [clojure.string :refer [blank? join]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer [defgroup deftest]]
                        [builder :refer [union]])
@@ -585,6 +585,26 @@
           (let [hostname (client/my-hostname ssh-conn)
                 system (kt/newSystem {:name hostname :env target-env})]
             (validate-sys-subscription system)))))
+    
+    (deftest "Register a system using multiple activation keys"
+      (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
+                    [ak1 ak2] (kt/newActivationKey {:name "ak1"
+                                              :env target-env
+                                              :description "auto activation key"})]
+        (ui/create-all (list target-env ak1 ak2))
+        (let [ak1-name (:name ak1)
+              ak2-name (:name ak2)
+              ak-name (join "," [ak1-name ak2-name])]
+          (provision/with-client "register-with-multi-ak" ssh-conn
+            (client/register ssh-conn
+                             {:org (:name *session-org*)
+                              :activationkey ak-name})
+            (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env target-env})]
+              (doseq [ak [ak1 ak2]]
+                (let [aklink (system/activation-key-link (:name ak))]
+                  (nav/go-to ::system/details-page system)
+                  (when (browser isElementPresent aklink)
+                    (browser clickAndWait aklink)))))))))
 
     (deftest  "Registering a system from CLI and consuming contents from UI"
       :blockers (open-bz-bugs "959211")
