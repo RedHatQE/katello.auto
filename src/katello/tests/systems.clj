@@ -624,12 +624,12 @@
           ssh-conn
           (client/register ssh-conn {:username (:name *session-user*)
                                      :password (:password *session-user*)
-                                     :org (kt/org repo)
-                                     :env test-environment
+                                     :org (:name *session-org*)
+                                     :env (:name test-environment)
                                      :force true})
-          (let [mysys (client/my-hostname ssh-conn)
+          (let [mysys (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
                 product-name (-> repo kt/product :name)]
-            (ui/update mysys assoc :products product-name)
+            (ui/update mysys assoc :products (list (kt/product repo)))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
                   result (client/run-cmd ssh-conn cmd)]
