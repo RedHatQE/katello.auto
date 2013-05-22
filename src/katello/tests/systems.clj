@@ -295,31 +295,6 @@
                 (nav/go-to system)))))
       [[false]
        [true]])
-
-    (deftest "System Event Auditing - Notifications updated when a system is registered"
-      (with-unique [system (kt/newSystem {:name "mysystem"
-                                            :sockets "1"
-                                            :system-arch "x86_64"
-                                            :env test-environment})]
-      (assert/is 
-        (not (empty?
-          (->>
-            (notices/from-action #(ui/create system))
-            (notices/only-level "success")
-            (notices/description-contains ["created" (system :name)])))))))
-      
-    (deftest "System Event Auditing - Notifications updated when a system is deleted"
-      (with-unique [system (kt/newSystem {:name "mysystem"
-                                            :sockets "1"
-                                            :system-arch "x86_64"
-                                            :env test-environment})]
-      (ui/create system)  
-      (assert/is 
-        (not (empty?
-          (->>
-            (notices/from-action #(ui/delete system))
-            (notices/only-level "success")
-            (notices/description-contains ["Removed" (system :name)])))))))  
     
     (deftest "Creates org with default custom system key and adds new system"
       (with-unique [org (kt/newOrganization
