@@ -478,12 +478,14 @@
                           :env (:name test-environment)
                           :force true})
         (let [hostname (client/my-hostname ssh-conn)
-              details (system/get-details hostname)]
+              system (kt/newSystem {:name hostname
+                                    :env test-environment})
+              details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
-                        (system/get-ip-addr hostname))))))
+                        (system/get-ip-addr system))))))
 
     (deftest "Review Facts of registered system"
       ;;:blockers no-clients-defined
@@ -496,11 +498,12 @@
                                    :env (:name test-environment)
                                    :force true})
         (let [hostname (client/my-hostname ssh-conn)
-              facts (system/get-facts hostname)
-              system (kt/newSystem {:name hostname})]
+              system (kt/newSystem {:name hostname
+                                    :env test-environment})
+              facts (system/get-facts system)]
           (system/expand-collapse-facts-group system)
           (assert/is (every? (complement empty?) (vals facts))))))
-
+    
 
     (deftest "System-Details: Validate Activation-key link"
       :blockers (open-bz-bugs "959211")
@@ -512,7 +515,7 @@
           (client/register ssh-conn
                            {:org (:name *session-org*)
                             :activationkey (:name ak)})
-          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn)})
+          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
                 aklink (system/activation-key-link (:name ak))]
             (nav/go-to ::system/details-page system)
             (when (browser isElementPresent aklink)
@@ -621,12 +624,12 @@
           ssh-conn
           (client/register ssh-conn {:username (:name *session-user*)
                                      :password (:password *session-user*)
-                                     :org (kt/org repo)
-                                     :env test-environment
+                                     :org (:name *session-org*)
+                                     :env (:name test-environment)
                                      :force true})
-          (let [mysys (client/my-hostname ssh-conn)
+          (let [mysys (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
                 product-name (-> repo kt/product :name)]
-            (ui/update mysys assoc :products product-name)
+            (ui/update mysys assoc :products (list (kt/product repo)))
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
                   result (client/run-cmd ssh-conn cmd)]
