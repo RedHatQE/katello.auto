@@ -10,6 +10,9 @@
 ;; Locators
 
 (ui/deflocators
+  
+  {::notifications-link          "//span[@id='unread_notices']" }
+  
   (fmap ui/menu-link {
                       ::administer-link                  "Administer"
                       ::by-environments-link             "By Environment"
@@ -49,6 +52,8 @@
 (nav/defpages (nav/pages)
   [::nav/top-level
 
+   [:katello.notices/page (browser-fn (clickAndWait ::notifications-link))]
+   
    [::org-context (fn [ent] (nav/switch-org (kt/org ent)))
     [::systems-menu (browser-fn (mouseOver ::systems-link))
      [:katello.systems/page (browser-fn (clickAndWait ::systems-all-link))]
@@ -79,7 +84,7 @@
      [::changeset-management-menu (browser-fn (mouseOver ::changeset-management-link))
       [:katello.changesets/page (browser-fn (clickAndWait ::changesets-link))]
       [:katello.changesets/history-page (browser-fn (clickAndWait ::changeset-history-link))]]]]
-
+   
    [::administer-menu (browser-fn (mouseOver ::administer-link))
     [:katello.users/page (browser-fn (clickAndWait ::users-link))]
     [:katello.roles/page (browser-fn (clickAndWait ::roles-link))]
