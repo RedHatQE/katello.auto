@@ -478,12 +478,14 @@
                           :env (:name test-environment)
                           :force true})
         (let [hostname (client/my-hostname ssh-conn)
-              details (system/get-details hostname)]
+              system (kt/newSystem {:name hostname
+                                    :env test-environment})
+              details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
-                        (system/get-ip-addr hostname))))))
+                        (system/get-ip-addr system))))))
 
     (deftest "Review Facts of registered system"
       ;;:blockers no-clients-defined
