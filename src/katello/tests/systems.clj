@@ -488,18 +488,22 @@
     (deftest "Review Facts of registered system"
       ;;:blockers no-clients-defined
       :blockers (open-bz-bugs "959211")
-      (provision/with-client "sys-facts"
-        ssh-conn
-        (client/register ssh-conn {:username (:name *session-user*)
-                                   :password (:password *session-user*)
-                                   :org (:name *session-org*)
-                                   :env (:name test-environment)
-                                   :force true})
-        (let [hostname (client/my-hostname ssh-conn)
-              facts (system/get-facts hostname)
-              system (kt/newSystem {:name hostname})]
-          (system/expand-collapse-facts-group system)
-          (assert/is (every? (complement empty?) (vals facts))))))
+      (with-unique [target-env (kt/newEnvironment {:name "dev" 
+                                                   :org *session-org*})]
+        (ui/create target-env)
+        (provision/with-client "sys-facts"
+          ssh-conn
+          (client/register ssh-conn {:username (:name *session-user*)
+                                     :password (:password *session-user*)
+                                     :org (:name *session-org*)
+                                     :env (:name target-env)
+                                     :force true})
+          (let [hostname (client/my-hostname ssh-conn)
+                system (kt/newSystem {:name hostname
+                                      :env target-env})
+                facts (system/get-facts system)]
+            (system/expand-collapse-facts-group system)
+            (assert/is (every? (complement empty?) (vals facts)))))))
 
 
     (deftest "System-Details: Validate Activation-key link"
