@@ -181,12 +181,15 @@
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-defn (kt/newContentView {:name "auto-view-definition"
                                                      :org org})
-                    repo (fresh-repo org pulp-repo)]
+                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
         (ui/create-all (list org content-defn))
-        (create-recursive repo)
-        (-> content-defn (ui/update assoc :products (list (kt/product repo)))
-            (ui/update dissoc :products))))
-
+        (doseq [repo [repo1 repo2]]
+          (create-recursive repo))
+        (-> content-defn (ui/update assoc :products (list (kt/product repo1)))
+          (ui/update dissoc :products))
+        (-> content-defn (ui/update assoc :repos (list (kt/repository repo2)))
+          (ui/update dissoc :repos))))
 
     (deftest "Create composite content-definition with two products"
       (with-unique [org (kt/newOrganization {:name "auto-org"})]
