@@ -79,8 +79,7 @@
   (if apply-default
     (do
       (browser click ::apply-default-info)
-      (browser click ::ui/confirmation-yes)
-      (notification/check-for-success))))
+      (browser click ::ui/confirmation-yes))))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
