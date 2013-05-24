@@ -556,9 +556,8 @@
                                              (take 2))]
         (provision/with-client "reg-with-env-change"
           ssh-conn
-          (let [mysys (-> {:name (client/my-hostname ssh-conn)}
-                          katello/newSystem
-                          rest/read)]
+          (let [hostname (client/my-hostname ssh-conn)
+                mysys (kt/newSystem {:name hostname :env env-dev})]
             (doseq [env [env-dev env-test]]
               (client/register ssh-conn
                                {:username (:name *session-user*)
@@ -566,7 +565,7 @@
                                 :org (-> env :org :name)
                                 :env (:name env)
                                 :force true})
-              (assert/is (= {:name env} (system/environment mysys))))
+              (assert/is (= (:name env) (system/environment mysys))))
             (assert/is (not= (:environment_id mysys)
                              (rest/get-id env-dev)))))))
     
