@@ -35,7 +35,8 @@
    ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
    ::keyname-text             "new_default_info_keyname"
    ::create-keyname           "add_default_info_button"
-   ::apply-default-info       "apply_default_info_button"})
+   ::apply-default-info       "apply_default_info_button"
+   ::disabled-apply-btn       "//input[@class='btn fullwidth']"})
 
 (sel/template-fns
  {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
@@ -79,7 +80,8 @@
   (if apply-default
     (do
       (browser click ::apply-default-info)
-      (browser click ::ui/confirmation-yes))))
+      (browser click ::ui/confirmation-yes)
+      (browser waitForElement ::disabled-apply-btn "120000"))))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
