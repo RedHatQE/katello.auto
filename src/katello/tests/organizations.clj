@@ -146,6 +146,7 @@
            (setup-custom-org-with-content env repos)))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
+      :blockers (open-bz-bugs "966670")
       :data-driven true
 
       (fn [env-name env-lbl notif]
