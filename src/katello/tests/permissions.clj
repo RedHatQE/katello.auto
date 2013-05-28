@@ -4,6 +4,7 @@
             (katello [ui :as ui]
                      [rest :as rest]
                      [notifications :as notification]
+                     [organizations :as org]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
                      [ui-common :as common]
@@ -13,8 +14,7 @@
                      [tasks :refer [with-unique uniques uniqueify expecting-error random-string]]
                      [systems :as system]
                      [users :as user]
-                     [roles :as role]
-                     [login :as login])
+                     [roles :as role])
             [test.tree.script :refer [deftest defgroup]]
             [katello.tests.useful :refer [ensure-exists]]
             [serializable.fn :refer [fn]]
@@ -350,8 +350,15 @@
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
-
-
+     
+     (fn [] (with-unique [org baseorg]
+              [:permissions [{:org org, :resource-type :all, :name "orgaccess"}]
+               :setup (fn [] (ui/create org))
+               :allowed-actions [(fn [] (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                       :katello.providers/custom-page
+                                                       :katello.changesets/page]))]
+               :disallowed-actions [(fn [] (org/switch))]]))
+     
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
