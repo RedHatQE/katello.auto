@@ -48,7 +48,7 @@
    ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
-   ::interface-addr              "xpath=id('interface_table')/x:tbody/x:tr[1]/x:td[2]"
+   ::interface-addr              "//td[@class='interface_name' and contains(., 'eth')]//following-sibling::td"
    ::system-groups               (ui/third-level-link "systems_system_groups")
    ::add-group-form              "//form[@id='add_group_form']/button"
    ::add-group                    "//input[@id='add_groups']"
