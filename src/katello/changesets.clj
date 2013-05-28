@@ -52,6 +52,7 @@
    ::save                        "save_changeset_button"
    ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
    ::type                        "changeset[action_type]"
+   ::promotion                   "//div[@data-cs_type='promotion']"
    ::deletion                    "//div[@data-cs_type='deletion']"
    ::remove-changeset            "//span[contains(.,'Remove')]"
    ::ui-box-confirm              "//span[@class='ui-button-text' and contains(.,'Yes')]"})  
@@ -136,7 +137,9 @@
   (if deletion?
     (do
       (browser click (select-env (:name env)))
-      (browser sleep 1000)))
+      (browser sleep 1000)
+      (if (browser isElementPresent ::promotion)
+        (browser click ::deletion))))
   (sel/->browser (click ::new)
                  (setText ::name-text name)
                  (click ::save))
