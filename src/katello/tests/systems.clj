@@ -17,6 +17,7 @@
                      [tasks :refer :all]
                      [systems :as system]
                      [gpg-keys :as gpg-key]
+                     [notices :as notices]
                      [conf :refer [*session-user* *session-org* config *environments*]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
@@ -294,7 +295,7 @@
                 (nav/go-to system)))))
       [[false]
        [true]])
-
+    
     (deftest "Creates org with default custom system key and adds new system"
       (with-unique [org (kt/newOrganization
                          {:name "defaultsysinfo"
@@ -331,7 +332,7 @@
       (with-unique-system s
         (ui/create s)
         (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
-
+    
     (deftest "System Details: Update custom info"
       :blockers (open-bz-bugs "919373")
       (with-unique-system s
