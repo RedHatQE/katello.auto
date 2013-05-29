@@ -16,7 +16,7 @@
                      [systems :as system]
                      [client :as client]
                      [users :as user]
-                     [roles :as role])
+                     [roles :as role]
                      [login :as login])
             [katello.client.provision :as provision]
             [test.tree.script :refer [deftest defgroup]]
