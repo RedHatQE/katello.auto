@@ -96,7 +96,7 @@
                                 (browser "screenCapture"
                                          "screenshots"
                                          (str 
-                                          (:name t)
+                                          (clojure.string/replace (:name t) #"[/\.,]" "-") 
                                           (if (:parameters t)
                                             (str "-" (System/currentTimeMillis))
                                             "")
