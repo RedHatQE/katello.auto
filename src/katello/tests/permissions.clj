@@ -4,6 +4,7 @@
             (katello [ui :as ui]
                      [rest :as rest]
                      [notifications :as notification]
+                     [organizations :as org]
                      [sync-management :as sync]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
@@ -354,6 +355,14 @@
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
      
+     (fn [] (with-unique [org baseorg]
+              [:permissions [{:org org, :resource-type :all, :name "orgaccess"}]
+               :setup (fn [] (ui/create org))
+               :allowed-actions [(fn [] (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                       :katello.providers/custom-page
+                                                       :katello.changesets/page]))]
+               :disallowed-actions [(fn [] (org/switch))]]))
+     
      (fn [] (with-unique [org (kt/newOrganization {:name "cv-org"})
                           env (kt/newEnvironment {:name  "dev"
                                                   :org org})
@@ -401,7 +410,6 @@
                  :disallowed-actions [(navigate-all [:katello.sync-management/status-page
                                                      :katello.providers/custom-page])]])))
      
-
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
