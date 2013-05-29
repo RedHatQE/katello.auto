@@ -201,8 +201,10 @@
                      conf/no-clients-defined)
     
     (provision/with-client "envmovetest" ssh-conn
-      (let [[env-dev env-test] (uniques (katello/newEnvironment {:name "env"
-                                                                 :org @test-org}))]
+      (let [[env-dev env-test] (->> {:name "env", :org @test-org}
+                                    katello/newEnvironment
+                                    uniques 
+                                    (take 2))]
         (ui/create-all (list env-dev env-test))
         (client/register ssh-conn {:username (:name conf/*session-user*)
                                    :password (:password conf/*session-user*)
@@ -213,11 +215,10 @@
                                                    (client/run-cmd "hostname")
                                                    :stdout
                                                    trim)
-                                         :env env-dev})
-              names= (fn [& args] (apply = (map :name args)))]
-          (assert/is (names= env-dev (system/environment system)))
+                                         :env env-dev})]
+          (assert/is (= (:name env-dev) (system/environment system)))
           (ui/update system assoc :env env-test)
-          (assert/is (= env-test (system/environment system)))
+          (assert/is (= (:name env-test) (system/environment system)))
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           ;;verify the env name is now in the urls in redhat.repo
