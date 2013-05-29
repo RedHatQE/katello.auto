@@ -27,10 +27,9 @@
 (defn promote-published-content-view
   "Function to promote published content view"
   [org target-env repo]
-  (with-unique [pub-name "publish-name"
-                cv (kt/newContentView {:name "content-view"
-                         :org org
-                         :published-name pub-name})
+  (with-unique [cv (kt/newContentView {:name "content-view"
+                                       :org org
+                                       :published-name "publish-name"})
                 cs (kt/newChangeset {:name "cs"
                                      :env target-env
                                      :content (list cv)})]
@@ -39,7 +38,7 @@
     (sync/perform-sync (list repo))
     (ui/update cv assoc :products (list (kt/product repo)))
     (views/publish {:content-defn cv
-                    :published-name pub-name
+                    :published-name (:published-name cv)
                     :description "test pub"
                     :org org})
     (changeset/promote-delete-content cs)
@@ -294,6 +293,39 @@
            (client/sm-cmd ssh-conn :refresh)
            (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
              (assert/is (->> cmd_result :exit-code (= 0)))))))
+     
+     (deftest "Clone content view definition and consume content from it"
+       (with-unique [org (kt/newOrganization {:name "cv-org"})
+                     target-env (kt/newEnvironment {:name "dev", :org org})]   
+         (let [repo (fresh-repo org
+                                "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+               cv (promote-published-content-view org target-env repo)
+               clone (update-in cv [:name] #(str % "-clone"))
+               cloned-cv (kt/newContentView {:name clone
+                                             :org org
+                                             :published-name "cloned-publish-name"})]
+           (views/clone cv clone)
+           (views/publish {:content-defn clone
+                           :published-name (:published-name cloned-cv)
+                           :description "test pub"
+                           :org org})
+           (let [cs (kt/newChangeset {:name (uniqueify "cs")
+                                      :env target-env
+                                      :content (list cloned-cv)})
+                 ak (kt/newActivationKey {:name (uniqueify "ak")
+                                          :env target-env
+                                          :description "auto activation key"
+                                          :content-view (:published-name cloned-cv)})]           
+             (changeset/promote-delete-content cs)
+             (ui/create ak)
+             (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
+             (provision/with-client "cloned-cv-content" ssh-conn
+               (client/register ssh-conn
+                                {:org (:name org)
+                                 :activationkey (:name ak)})
+               (client/sm-cmd ssh-conn :refresh)
+               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+                 (assert/is (->> cmd_result :exit-code (= 0)))))))))
      
      (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
