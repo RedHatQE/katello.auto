@@ -35,7 +35,7 @@
     (browser check (template item))))
 ;; Nav
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::products-category           (content-category "products")
    ::errata-category             (content-category "errata")
    ::kickstart-trees-category    (content-category "kickstart trees")
@@ -57,7 +57,7 @@
    ::remove-changeset            "//span[contains(.,'Remove')]"
    ::ui-box-confirm              "//span[@class='ui-button-text' and contains(.,'Yes')]"})  
    
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-environment-page (fn [cs]
                                (let [env (kt/env cs)]

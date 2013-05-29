@@ -11,7 +11,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                      "new"
    ::upload                   "upload_form_button"
    ::create                   "commit"
@@ -21,7 +21,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages))
+(nav/defpages :katello.deployment/any katello.menu)
 
 ;; Tasks
 

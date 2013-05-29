@@ -13,7 +13,7 @@
   (:refer-clojure :exclude [remove]))
 
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
        {::new                   "//a[@id='new']"
         ::create                "group_save"
         ::name-text             "system_group[name]"
@@ -35,11 +35,11 @@
         ::unlimited-checkbox    "//input[@class='unlimited_members']"
         ::save-new-limit        "//button[.='Save']"
         ::limit-value           "system_group[max_systems]"}
-       ui/locators)
+       )
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [system-group] (nav/choose-left-pane system-group))

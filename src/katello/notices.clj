@@ -9,8 +9,7 @@
                      [ui :as ui])))
 ;; Nav
 
-(nav/defpages (common/pages)
-  [::page])
+(nav/defpages :katello.deployment/any katello.menu)
 
 (defn page-content []
   "Goes to notices page and returns table of notifications"

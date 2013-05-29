@@ -11,29 +11,30 @@
 
 ;; Locators
 
-(ui/deflocators {::new                     "new"
-                 ::name-text               "activation_key[name]"
-                 ::description-text        "activation_key[description]"
-                 ::content-view-select     "activation_key[content_view_id]"
-                 ::save                    "save_key"
-                 ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
-                 ::add-sys-group-form      "//form[@id='add_group_form']/button"
-                 ::add-sys-group           "//input[@id='add_groups']"
-                 ::system-groups           (ui/third-level-link "system_mgmt")
-                 ::applied-subscriptions   (ui/third-level-link "applied_subscriptions")
-                 ::available-subscriptions (ui/third-level-link "available_subscriptions")
-                 ::add-subscriptions       "//input[@id='subscription_submit_button']"            
-                 ::remove-link             (ui/remove-link "activation_keys")
-                 ::release-version-text    "system[releaseVer]"})
+(ui/defelements :katello.deployment/any []
+  {::new                     "new"
+   ::name-text               "activation_key[name]"
+   ::description-text        "activation_key[description]"
+   ::content-view-select     "activation_key[content_view_id]"
+   ::save                    "save_key"
+   ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
+   ::add-sys-group-form      "//form[@id='add_group_form']/button"
+   ::add-sys-group           "//input[@id='add_groups']"
+   ::system-groups           (ui/third-level-link "system_mgmt")
+   ::applied-subscriptions   (ui/third-level-link "applied_subscriptions")
+   ::available-subscriptions (ui/third-level-link "available_subscriptions")
+   ::add-subscriptions       "//input[@id='subscription_submit_button']"            
+   ::remove-link             (ui/remove-link "activation_keys")
+   ::release-version-text    "system[releaseVer]"})
 
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
-   sysgroup-checkbox "//input[@title='%s']"
+  sysgroup-checkbox "//input[@title='%s']"
   applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
     [::system-group-menu (nav/browser-fn (mouseOver ::system-groups))

@@ -15,10 +15,6 @@
   (:import [com.thoughtworks.selenium SeleniumException]
            [java.text SimpleDateFormat]))
 
-;; Nav
-
-(def pages #'menu/pages) ; alias 
-
 ;; Nav fns
 
 (defn inactive-edit-field

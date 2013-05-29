@@ -15,7 +15,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
    ::create                 "commit"
    ::name-text              "organization[name]"
@@ -43,7 +43,7 @@
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page 
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))

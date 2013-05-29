@@ -11,7 +11,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
   {::new                             "//a[@id='new']"
    ::name-text                       "role[name]"
    ::description-text                "role[description]"
@@ -32,7 +32,7 @@
    ::slide-link-home                 "//span[@id='roles']"
    ::all-verbs                       "all_verbs"
    ::all-tags                        "all_tags"}
-  ui/locators)
+  )
 
 (sel/template-fns
  {permission-org "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
@@ -40,7 +40,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [role] (nav/choose-left-pane role))
     [::named-users-page (nav/browser-fn (click ::users))]

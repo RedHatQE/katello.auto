@@ -13,7 +13,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
   {::name-text         "kt_environment[name]"
    ::label-text        "kt_environment[label]"
    ::description-text  "kt_environment[description]"
@@ -21,12 +21,11 @@
    ::create            "commit"
    ::new               "//form[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
    ::remove-link       (ui/remove-link "environments")
-   ::prior-select-edit "kt_environment[prior]" }
-  ui/locators)
+   ::prior-select-edit "kt_environment[prior]" })
 
 ;; Nav
 
-(nav/defpages (org/pages)
+(nav/defpages :katello.deployment/any katello.organizations
   [:katello.organizations/named-page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [env] (browser click (ui/environment-link (:name env))))]])
