@@ -9,14 +9,15 @@
 
 ;; Locators
 
-(ui/deflocators {::username-text     "username"
-                 ::password-text     "password"
-                 ::log-in            "//input[@value='Log In' or @value='Login']"
-                 ::re-log-in-link    "//a[contains(@href, '/login')]"
-                 ::error-message     "//ul[@class='error']"
-                 ::close-error       "//div[@id='notifications']//div[@class='control']"
-                 ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
-  ui/locators)
+(ui/defelements :katello.deployment/any [katello.ui]
+  {::username-text     "username"
+   ::password-text     "password"
+   ::log-in            "//input[@value='Log In' or @value='Login']"
+   ::re-log-in-link    "//a[contains(@href, '/login')]"
+   ::error-message     "//ul[@class='error']"
+   ::close-error       "//div[@id='notifications']//div[@class='control']"
+   ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
+  )
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a

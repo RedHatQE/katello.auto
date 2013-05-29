@@ -11,7 +11,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
   {::repo-name-text         "repo[name]"
    ::repo-label-text        "repo[label]"
    ::repo-url-text          "repo[feed]"
@@ -26,7 +26,7 @@
    ::discover-url-text      "discover_url"
    ::discover-button        "//input[@type='submit']"
    ::discover-cancel-button "//*[@class='grid_2 la' and @style='display: none;']"}
-  ui/locators)
+  )
 
 (sel/template-fns
  {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
@@ -34,7 +34,7 @@
   gpgkey-under-repo-details "//div[@name='gpg_key' and contains(.,'%s')]"
   select-repo "//li[@class='repo']//div[contains(@class,'grid') and contains(.,'%s')]"})
 
-(nav/defpages (provider/pages)
+(nav/defpages :katello.deployment/any katello.providers
   [::provider/products-page 
    [::named-page (fn [repo] (browser click (ui/editable (:name repo))))]])
 

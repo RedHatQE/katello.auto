@@ -12,7 +12,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
        {::new                       "new"
         ::name-text                 "provider[name]"
         ::provider-description-text "provider[description]"
@@ -30,10 +30,10 @@
         ::remove-provider-link      (ui/remove-link "providers")
         ::products-and-repositories (ui/third-level-link "products_repos")
         ::repository-discovery      (ui/third-level-link "repo_discovery") 
-        ::details-link              (ui/third-level-link "edit_custom_providers")}
+        ::details-link              (ui/third-level-link "edit_custom_providers")
 
-       ;;products
-       {::add-product              (ui/button-div "Add Product")
+        ;; products 
+        ::add-product              (ui/button-div "Add Product")
         ::create-product           "//input[@value='Create']"
         ::product-name-text        "//*[@name='product[name]']"
         ::product-label-text       "//*[@name='product[label]']"
@@ -43,7 +43,7 @@
         ::save-updated-gpg-key     "//div[@name='product[gpg_key]']//button[contains(.,'Save')]"
         ::confirm-gpg-update       "//span[@class='ui-button-text' and contains(.,'Yes')]"
         ::remove-product           (ui/remove-link "products")}
-       ui/locators)
+       )
 
 (sel/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
@@ -52,7 +52,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::custom-page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (kt/provider ent)))

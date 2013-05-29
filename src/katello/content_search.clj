@@ -27,7 +27,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::type-select               "//select[@id='content']"
    ::add-prod                  "add_product"
    ::add-repo                  "add_repo"
@@ -70,7 +70,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages))
+(nav/defpages :katello.deployment/any katello.menu)
 
 ;; Tasks
 

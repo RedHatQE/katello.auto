@@ -12,7 +12,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::apply-schedule        "apply_button"
    ::new-plan              "new"
    ::plan-name-text        "sync_plan[name]"
@@ -32,7 +32,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::plans-page
    [::named-plan-page (fn [sync-plan] (nav/choose-left-pane sync-plan))]
    [::new-plan-page (nav/browser-fn (click ::new-plan))]])
