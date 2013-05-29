@@ -27,19 +27,18 @@
 (defn promote-published-content-view
   "Function to promote published content view"
   [org target-env repo]
-  (let [pub-name (uniqueify "publish-name")
-        cv (kt/newContentView {:name (uniqueify "content-view")
-                               :org org
-                               :published-name pub-name})
-        cs (kt/newChangeset {:name (uniqueify "cs")
-                             :env target-env
-                             :content (list cv)})]
+  (with-unique [cv (kt/newContentView {:name "content-view"
+                                       :org org
+                                       :published-name "publish-name"})
+                cs (kt/newChangeset {:name "cs"
+                                     :env target-env
+                                     :content (list cv)})]
     (ui/create-all (list org target-env cv))
     (create-recursive repo)
     (sync/perform-sync (list repo))
     (ui/update cv assoc :products (list (kt/product repo)))
     (views/publish {:content-defn cv
-                    :published-name pub-name
+                    :published-name (:published-name cv)
                     :description "test pub"
                     :org org})
     (changeset/promote-delete-content cs)
@@ -297,18 +296,17 @@
      
      (deftest "Clone content view definition and consume content from it"
        (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     target-env (kt/newEnvironment {:name "dev", :org org})            
-                     publish-clone-view "clone-pub"]   
+                     target-env (kt/newEnvironment {:name "dev", :org org})]   
          (let [repo (fresh-repo org
                                 "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
                cv (promote-published-content-view org target-env repo)
                clone (update-in cv [:name] #(str % "-clone"))
                cloned-cv (kt/newContentView {:name clone
                                              :org org
-                                             :published-name publish-clone-view})]
+                                             :published-name "cloned-publish-name"})]
            (views/clone cv clone)
            (views/publish {:content-defn clone
-                           :published-name publish-clone-view 
+                           :published-name (:published-name cloned-cv)
                            :description "test pub"
                            :org org})
            (let [cs (kt/newChangeset {:name (uniqueify "cs")
