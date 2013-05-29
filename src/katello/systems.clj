@@ -31,7 +31,7 @@
   existing-key-value-field        "custom_info[%s]"
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                         "new"
    ::create                      "commit"
    ::name-text                   "system[name]"
@@ -114,7 +114,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [system] (nav/choose-left-pane system))

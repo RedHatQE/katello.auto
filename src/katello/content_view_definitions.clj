@@ -20,7 +20,7 @@
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                      "new"
    ::name-text                "content_view_definition[name]"
    ::label-text               "katello/content_view_definition/default_label"
@@ -64,7 +64,7 @@
    })
 
 ;; Nav
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
