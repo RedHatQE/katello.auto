@@ -102,7 +102,8 @@
       (fn [group-fn & args]
         (with-unique [s (some-system)
                       g (apply group-fn (some-group) args)]
-          (ui/create-all (list s g))
+          (rest/create s)
+          (ui/create g)
           (ui/update g assoc :systems #{s})))
       [[identity]
        (with-meta
@@ -144,7 +145,8 @@
       (fn [data]
         (with-unique [g (merge (some-group) data)
                       s (some-system)]
-          (ui/create-all (list s g))
+          (rest/create s)
+          (ui/create g)
           (ui/update g assoc :systems #{s})
           (ui/delete g)
           (assert/is (= (:also-remove-systems? g) (rest/not-exists? s)))))
@@ -217,7 +219,8 @@
     (deftest "Copy a system group"
       (with-unique [g (some-group)
                     s (some-system)]
-        (ui/create-all (list g s))
+        (rest/create s)
+        (ui/create g)
         (ui/update g assoc :systems #{s})
         (group/copy g (update-in g [:name] #(str % "-clone"))))
         
