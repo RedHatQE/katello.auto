@@ -67,21 +67,40 @@
 ;;
 ;; Tells the clojure selenium client where to look up keywords to get
 ;; real selenium locators.
+;; Note, it's designed this way, rather than one big map, so that
+;; errors in one component namespace (eg activation keys) don't
+;; prevent others from being worked on.
 ;;
+(derive :katello.deployment/katello :katello.deployment/any)
+(derive :katello.deployment/headpin :katello.deployment/any)
 
-(defmulti locator (comp find-ns symbol namespace))
+(defn current-session-deployment []
+  (if (rest/is-katello?)
+    :katello.deployment/katello
+    :katello.deployment/headpin))
 
-(defmacro deflocators
-  "Define locators needed in this namespace and its dependent namespaces.
-   m is a map of locators.  Optionally, provide other maps containing
-   locators needed in this namespace, for m to be merged with.
-     Example, (deflocators {:foo 'bar'} other.ns/locators)"
-  [m & others]
-  `(do (def ~'locators ~m)
-       (defmethod locator *ns* [k#]
-         (k# (merge ~@others ~'locators)))))
+(defn component-deployment-dispatch
+  "Dispatches for a multimethod based on the namespace of a keyword
+  and a katello deployment name"
+  [dest-ns deployment]
+  (vector dest-ns deployment))
 
-(deflocators
+(defmulti elements component-deployment-dispatch)
+
+(defmacro defelements
+  "Define locators needed in this namespace and its dependent
+   namespaces.  deployment is a keyword specifying katello or
+   headpin (see katello.ui). others is a list of other namespace
+   symbols whose locators are also required. m is a map of keyword to
+   locators.  Optionally, provide other maps containing locators
+   needed in this namespace, for m to be merged with.
+   Example, (deflocators :katello.deployment/any [other.ns/locators] {:foo 'bar'})"
+  [deployment others m]
+  `(defmethod elements [(-> *ns* .getName symbol) ~deployment] [_# _#]
+     (apply merge ~m (for [other# (quote ~others)]
+                       (elements other# ~deployment)))))
+
+(defelements :katello.deployment/any []
   {::save-inplace-edit       "//div[contains(@class, 'editable')]//button[@type='submit']|//span[contains(@class, 'editable')]//button[@type='submit']"
    ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
 
@@ -105,7 +124,7 @@
 
 (extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword
-  (sel/sel-locator [k] (locator k))
+  (sel/sel-locator [k] (get (elements (-> k namespace symbol) (current-session-deployment)) k))
   String
   (sel/sel-locator [x] x))
 

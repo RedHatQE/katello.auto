@@ -11,7 +11,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                   "new"
    ::create                "commit"
    ::distributor-name-text "distributor[name]"
@@ -19,7 +19,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))]
    [::new-page (nav/browser-fn (click ::new))]])

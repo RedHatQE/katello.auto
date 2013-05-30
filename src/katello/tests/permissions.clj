@@ -4,6 +4,8 @@
             (katello [ui :as ui]
                      [rest :as rest]
                      [notifications :as notification]
+                     [organizations :as org]
+                     [sync-management :as sync]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
                      [ui-common :as common]
@@ -12,11 +14,13 @@
                      [conf :as conf]
                      [tasks :refer [with-unique uniques uniqueify expecting-error random-string]]
                      [systems :as system]
+                     [client :as client]
                      [users :as user]
                      [roles :as role]
                      [login :as login])
+            [katello.client.provision :as provision]
             [test.tree.script :refer [deftest defgroup]]
-            [katello.tests.useful :refer [ensure-exists]]
+            [katello.tests.useful :refer [ensure-exists fresh-repo]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
@@ -329,7 +333,7 @@
                                                    :env env
                                                    :content (list cv1 cv2 cv3)}))]
                [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
-                              {:org org, :resource-type "Content View", :verbs ["Read Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
+                              {:org org, :resource-type "Content View", :verbs ["Promote Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
                               {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
                 :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
                 :allowed-actions [(navigate-fn :katello.changesets/page)]
@@ -342,7 +346,7 @@
                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
                   cs  (uniqueify (kt/newChangeset {:name "cs"
                                                    :env env
-                                                   :content (list cv1 cv2 cv3)}))]
+                                                   :content (list cv1 cv3)}))]
               [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
                              {:org org, :resource-type "Content View", :verbs ["Read Content Views" "Promote Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
                              {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
@@ -350,8 +354,62 @@
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                    :katello.providers/custom-page])]]))
-
-
+     
+     (fn [] (with-unique [org baseorg]
+              [:permissions [{:org org, :resource-type :all, :name "orgaccess"}]
+               :setup (fn [] (ui/create org))
+               :allowed-actions [(fn [] (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                       :katello.providers/custom-page
+                                                       :katello.changesets/page]))]
+               :disallowed-actions [(fn [] (org/switch))]]))
+     
+     (fn [] (with-unique [org (kt/newOrganization {:name "cv-org"})
+                          env (kt/newEnvironment {:name  "dev"
+                                                  :org org})
+                          cv (kt/newContentView {:name "con-def3"
+                                                 :org org
+                                                 :published-name "pub-name3"})
+                          cs (kt/newChangeset {:name "cs"
+                                                :env env
+                                                :content (list cv)})
+                          ak (kt/newActivationKey {:name "ak"
+                                                   :env env
+                                                   :description "auto activation key"
+                                                   :content-view (:published-name cv)})]
+              (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                    prd   (kt/product repo)
+                    prv   (kt/provider repo)]
+                [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                               {:org org, :resource-type "Content View", :name "cvaccess_cvviews"}
+                               {:org org, :resource-type "Environments", :name "cvaccess_cvenvs",
+                                :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment" "Modify Systems in Environment" "Read Systems in Environment" "Register Systems in Environment"]}
+                               {:org org, :resource-type "Activation Keys", :name "cvaccess_ak"}]
+                 :setup (fn [] (ui/create-all (list org env prv prd repo cv))
+                               (sync/perform-sync (list repo))
+                               (ui/update cv assoc :products (list (kt/product repo)))
+                               (views/publish {:content-defn cv
+                                               :published-name (cv :published-name)
+                                               :description "test pub"
+                                               :org org}))
+                 :allowed-actions [(fn [] (changeset/promote-delete-content cs)
+                                          (ui/create ak)
+                                          (ui/update ak assoc :subscriptions (list (:name prd)))
+                                          (provision/with-client "access-published-cv"
+                                            ssh-conn
+                                            (client/register ssh-conn
+                                                             {:org (:name org)
+                                                              :activationkey (:name ak)})
+                                            (client/sm-cmd ssh-conn :refresh)
+                                            (client/run-cmd ssh-conn "yum repolist")
+                                            (let [cmd1 (format "yum install -y crow")
+                                                  cmd2 (format "rpm -qav crow")
+                                                  result1 (client/run-cmd ssh-conn cmd1)
+                                                  result2 (client/run-cmd ssh-conn cmd2)]
+                                              (assert/is (->> result1 :exit-code (= 0)))
+                                              (assert/is (->> result2 :exit-code (= 0))))))]
+                 :disallowed-actions [(navigate-all [:katello.sync-management/status-page
+                                                     :katello.providers/custom-page])]])))
+     
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]

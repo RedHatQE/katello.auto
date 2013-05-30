@@ -14,7 +14,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any [katello.ui]
   {::roles-link                  (ui/third-level-link "user_roles")
    ::environments-link           (ui/third-level-link "environment")
    ::user-notifications          "unread_notices_count"
@@ -38,8 +38,7 @@
    ::account                     "//a[contains(@class,'dropdown-menu-item-link') and contains(.,'My Account')]"
    ::user-account-dropdown       "//nav[contains(@class,'right')]//a"
    ::switcher-button             "//a[@id='switcherButton']"}
-
-  ui/locators)
+  )
 
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
@@ -49,8 +48,7 @@
 
 ;; Nav
 
-(nav/defpages
-  (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page 
    [::named-page (fn [user] (nav/choose-left-pane user-list-item user))
     [::environments-page (nav/browser-fn (click ::environments-link))]

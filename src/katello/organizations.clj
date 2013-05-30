@@ -15,7 +15,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
    ::create                 "commit"
    ::name-text              "organization[name]"
@@ -35,14 +35,15 @@
    ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
    ::keyname-text             "new_default_info_keyname"
    ::create-keyname           "add_default_info_button"
-   ::apply-default-info       "apply_default_info_button"})
+   ::apply-default-info       "apply_default_info_button"
+   ::disabled-apply-btn       "//input[@class='btn fullwidth']"})
 
 (sel/template-fns
  {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page 
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
@@ -80,7 +81,7 @@
     (do
       (browser click ::apply-default-info)
       (browser click ::ui/confirmation-yes)
-      (notification/check-for-success))))
+      (browser waitForElement ::disabled-apply-btn "120000"))))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
@@ -92,8 +93,9 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (sel/fill-ajax-form [::name-text name
-                       label-filler [::name-text ::label-text label]
+  (browser setText ::name-text name)
+  (browser sleep 1000)
+  (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
                        ::description-text description
                        ::initial-env-name-text (:name initial-env)
                        label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]

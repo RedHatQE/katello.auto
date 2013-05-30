@@ -66,43 +66,39 @@
   [& body]
   `(fn [& _#] (->browser ~@body)))
 
-(defn pages []
-  "The navigation layout of the UI. Each item in the tree is
-  a new page or tab, that you can drill down into from its parent
-  item. Each item contains a keyword to refer to the location in the
-  UI, a list of any arguments needed to navigate there (for example,
-  to navigate to a provider details page, you need the name of the
-  provider). Finally some code to navigate to the location from its
-  parent location. Other namespaces can add their structure here."
+;; Define navigation pages
+;; Note, it's designed this way, rather than one big tree, so that
+;; errors in one component namespace (eg activation keys) don't
+;; prevent others from being worked on.
+
+(defmulti pages
+  "The navigation layout of the UI. Each item in the tree is a new
+   page or tab, that you can drill down into from its parent
+   item. Each item contains a keyword to refer to the location in the
+   UI, and a function to navigate to the location from its parent
+   location. Other namespaces can add their structure here."
+   #'ui/component-deployment-dispatch)
+
+(defmethod pages [(-> *ns* .getName symbol) :katello.deployment/any] [& _]
   (nav/nav-tree
    [::top-level (fn [& _] (when (or (not (browser isElementPresent ::ui/log-out))
                                     (browser isElementPresent ::ui/confirmation-dialog))
                             (browser open (@conf/config :server-url))))]))
 
-(defmulti page-tree (comp find-ns symbol namespace))
-
-(defmethod page-tree *ns* [page] (pages))
-
-(defmacro add-subnavigation
-  [tree parent-graft-point & branches]
-  `(nav/add-subnav-multiple ~tree (list ~parent-graft-point
-                                        (list ~@(for [branch branches]
-                                                  `(nav/nav-tree ~branch))))))
-
 (defmacro defpages
   "Define the pages needed to navigate to in this namespace, and
-   dependent namespaces.  basenav is the page tree you want to graft
-   onto, branches is a list of branches you want to graft.  branch
-   should be formatted as [parent-graft-point child1 child2 ...]"
-   [basenav & branches]
-  `(do (defn ~'pages []
-         (reduce nav/add-subnav-multiple
-                 ~basenav
-                 (list ~@(for [[parent-graft-point# & children#] branches]
-                           `(list ~parent-graft-point#
-                                  (list ~@(for [child# children#]
-                                            `(nav/nav-tree ~child#))))))))
-       (defmethod page-tree *ns* [k#] (~'pages))))
+   dependent namespaces.  sym is a symbol for a function that returns
+   these pages, that can be referred to in other calls to
+   defpages. basenav is the page tree you want to graft onto, branches
+   is a list of branches you want to graft.  branch should be
+   formatted as [parent-graft-point child1 child2 ...]"
+  [deployment basens & branches]
+  `(defmethod pages [(-> *ns* .getName symbol) ~deployment] [_# cur-deployment#]
+     (reduce nav/add-subnav-multiple
+             (pages (quote ~basens) cur-deployment#)
+             (for [[parent-graft-point# & children#] ~(vec branches)]
+               (vector parent-graft-point#
+                       (map nav/nav-tree children#))))))
 
 (defprotocol Destination
   (go-to [dest] [dest arg] [dest start arg]
@@ -112,7 +108,12 @@
   Destination
   {:go-to (fn go-to*
             ([dest-kw start-kw arg]
-               (nav/navigate start-kw dest-kw (-> dest-kw page-tree nav/page-zip) (list arg)))
+               (nav/navigate start-kw dest-kw (-> dest-kw
+                                                  namespace
+                                                  symbol
+                                                  (pages (ui/current-session-deployment))
+                                                  nav/page-zip)
+                             (list arg)))
             ([dest-kw arg]
                (go-to* dest-kw nil arg))
             ([dest-kw] (go-to* dest-kw nil nil)))})

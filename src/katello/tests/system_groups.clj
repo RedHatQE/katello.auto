@@ -45,7 +45,7 @@
   (assert/is (= n (group/system-count g))))
 
 (defgroup sg-tests
-  :blockers rest/katello-only
+  ;:blockers rest/katello-only
   
   (deftest "Create a system group"
     (with-unique-group g (ui/create g))

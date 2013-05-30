@@ -26,7 +26,7 @@
                  [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure]]
                  [clj-http "0.6.4"]
 
-                 [ui.navigate "0.3.0-SNAPSHOT"]
+                 [ui.navigate "0.4.0-SNAPSHOT"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
                  [fn.trace "1.3.3-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m"]

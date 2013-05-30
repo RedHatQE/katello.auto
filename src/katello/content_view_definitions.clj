@@ -17,9 +17,10 @@
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
   composite-disabled          "//td[@class='view_checkbox' and contains(., '%s')]/input@disabled"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
-  remove-repository           "//div[@class='repo' and contains(., '%s')]/a"})
+  remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
+  remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::new                      "new"
    ::name-text                "content_view_definition[name]"
    ::label-text               "katello/content_view_definition/default_label"
@@ -50,7 +51,6 @@
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
-   ::remove-product            "//a[@class='remove_product']"
    ::remove-repo               "//a[@class='remove_repo']"
    ::toggle-products           "//div[@class='small_col toggle collapsed']"
    ::product-in-cv             "//div/ul/li[@class='la']"
@@ -64,7 +64,7 @@
    })
 
 ;; Nav
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
@@ -90,18 +90,28 @@
                       ::save-new)
   (notification/check-for-success {:match-pred (notification/request-type? :cv-create)}))
 
-(defn remove-repo
-  "Removes the given product from existing Content View"
-  [content-defn]
-  (nav/go-to content-defn)
+(defn- add-repo
+  "Add the given repository to content-view definition"
+  [repos]
   (browser click ::content-tab)
-  (sel/->browser
-    (click ::toggle-products)
-    (click ::sel-repo) 
-    (click ::add-repo)
-    (click ::remove-repo)
-    (click ::update-content))
-  (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)}))
+  (doseq [repo repos]
+    (sel/->browser
+      (mouseUp (-> repo :name product-or-repository))
+      (click ::add-product-btn)
+      (click ::update-content))
+    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
+
+(defn- remove-repo
+  "Removes the given repository from existing content-view"
+  [repos]
+  (browser click ::content-tab)
+  (doseq [repo repos]
+    (sel/->browser
+      (mouseUp (-> repo :name product-or-repository))
+      (click ::add-product-btn)
+      (click  (-> repo :name remove-repository))
+      (click ::update-content))
+    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -138,7 +148,7 @@
   (doseq [product products]
     (sel/->browser
       (mouseUp (->  product :name product-or-repository))
-      (click ::remove-product)
+      (click (-> product :name remove-product))
       (click ::update-content))
     (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
 
@@ -152,7 +162,11 @@
     (when-some-let [product-to-add (:products add)
                     product-to-rm (:products remove)]
                    (add-to product-to-add)
-                   (remove-from product-to-rm))))
+                   (remove-from product-to-rm))
+    (when-some-let [repo-to-add (:repos add)
+                    repo-to-remove (:repos remove)]
+                   (add-repo repo-to-add)
+                   (remove-repo repo-to-remove))))
 
 (defn- delete
   "Deletes an existing View Definition."

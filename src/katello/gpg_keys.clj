@@ -12,7 +12,7 @@
 
 ;; Locators
 
-(ui/deflocators
+(ui/defelements :katello.deployment/any []
   {::name-text        "gpg_key_name"
    ::file-upload-text "gpg_key_content_upload"
    ::upload-button    "upload_gpg_key"
@@ -26,7 +26,7 @@
 
 ;; Nav
 
-(nav/defpages (common/pages)
+(nav/defpages :katello.deployment/any katello.menu
   [::page
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [gpg-key] (nav/choose-left-pane gpg-key))]])
