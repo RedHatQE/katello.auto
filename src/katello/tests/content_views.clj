@@ -216,84 +216,81 @@
 
     (deftest "Add published content-view to an activation-key"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                    repo (fresh-repo org
-                                     "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    target-env (kt/newEnvironment {:name "dev" :org org})
-                    cv (promote-published-content-view org target-env repo)
-                    ak (kt/newActivationKey {:name "ak"
-                                             :env target-env
-                                             :description "auto activation key"
-                                             :content-view (:published-name cv)})]  
-        (ui/create ak)
-        (assert/is (= (:name (kt/product repo))
-                      (browser getText ::views/product-in-cv)))))
-
+                    target-env (kt/newEnvironment {:name "dev" :org org})]
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (promote-published-content-view org target-env repo)
+              ak (kt/newActivationKey {:name (uniqueify "ak")
+                                       :env target-env
+                                       :description "auto activation key"
+                                       :content-view cv})]
+          (ui/create ak)
+          (assert/is (= (:name (kt/product repo))
+                        (browser getText ::views/product-in-cv))))))
+    
     (deftest "Promote content-view containing two published-views"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
-                    repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
-                    repo2 (fresh-repo org zoo-repo)
-                    pub-name1 "publish-name1"
-                    pub-name2 "publish-name2"
                     cv1 (kt/newContentView {:name "content-view1"
                                             :org org
-                                            :published-name pub-name1})
+                                            :published-name "publish-name1"})
                     cv2 (kt/newContentView {:name "content-view2"
                                             :org org
-                                            :published-name pub-name2})
+                                            :published-name "publish-name2"})
                     cs (kt/newChangeset {:name "cs"
                                          :env env
                                          :content (list cv1 cv2)})]
         (ui/create-all (list org env cv1 cv2))
-        (doseq [repo [repo1 repo2]]
-          (create-recursive repo)
-          (sync/perform-sync (list repo)))
-        (doseq [[repo cv published-names] [[repo1 cv1 pub-name1]
-                                           [repo2 cv2 pub-name2]]]
-          (ui/update cv assoc :products (list (kt/product repo)))
-          (views/publish {:content-defn cv :published-name published-names :org org}))
-        (changeset/promote-delete-content cs)))
+        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+          (doseq [repo [repo1 repo2]]
+            (create-recursive repo)
+            (sync/perform-sync (list repo)))
+          (doseq [[repo cv published-names] [[repo1 cv1 (:published-name cv1)]
+                                             [repo2 cv2 (:published-name cv2)]]]
+            (ui/update cv assoc :products (list (kt/product repo)))
+            (views/publish {:content-defn cv :published-name published-names :org org}))
+          (changeset/promote-delete-content cs))))
     
     (deftest "Delete promoted content-view"
       :blockers (open-bz-bugs "960564")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                    target-env (kt/newEnvironment {:name "dev" :org org})
-                    repo (fresh-repo org
-                                     "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    cv (promote-published-content-view org target-env repo)
-                    ak (kt/newActivationKey {:name "ak"
-                                              :env target-env
-                                              :description "auto activation key"
-                                              :content-view (:published-name cv)})
-                    deletion-cs (kt/newChangeset {:name "deletion-cs"
-                                                  :content (list cv)
-                                                  :env target-env
-                                                  :deletion? true})]
-        (ui/create ak)
-        (changeset/promote-delete-content deletion-cs)))
-    
-     (deftest "Consuming content-view contents on client"
-       :blockers (open-bz-bugs "947497")
-       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     target-env (kt/newEnvironment {:name "dev" :org org})
-                     repo (fresh-repo org
-                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                     cv (promote-published-content-view org target-env repo)                
-                     product (kt/product repo)
-                     ak (kt/newActivationKey {:name "ak"
-                                              :env target-env
-                                              :description "auto activation key"
-                                              :content-view (:published-name cv)})]
-         (ui/create ak)
-         (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
-         (provision/with-client "consume-content" ssh-conn
-           (client/register ssh-conn
-                            {:org (:name org)
-                             :activationkey (:name ak)})
-           (client/sm-cmd ssh-conn :refresh)
-           (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
-             (assert/is (->> cmd_result :exit-code (= 0)))))))
-     
+                    target-env (kt/newEnvironment {:name "dev" :org org})]
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (promote-published-content-view org target-env repo)
+              ak (kt/newActivationKey {:name (uniqueify "ak")
+                                       :env target-env
+                                       :description "auto activation key"
+                                       :content-view (:published-name cv)})
+              deletion-cs (kt/newChangeset {:name (uniqueify "deletion-cs")
+                                            :content (list cv)
+                                            :env target-env
+                                            :deletion? true})]
+          (ui/create ak)
+          (changeset/promote-delete-content deletion-cs))))
+      
+    (deftest "Consuming content-view contents on client"
+      :blockers (open-bz-bugs "947497")
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})]
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (promote-published-content-view org target-env repo)                        
+              ak (kt/newActivationKey {:name (uniqueify "ak")
+                                       :env target-env
+                                       :description "auto activation key"
+                                       :content-view cv})]
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-client "consume-content" ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+              (assert/is (->> cmd_result :exit-code (= 0))))))))
+      
      (deftest "Clone content view definition and consume content from it"
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev", :org org})]   
@@ -315,7 +312,7 @@
                  ak (kt/newActivationKey {:name (uniqueify "ak")
                                           :env target-env
                                           :description "auto activation key"
-                                          :content-view (:published-name cloned-cv)})]           
+                                          :content-view cv})]           
              (changeset/promote-delete-content cs)
              (ui/create ak)
              (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
@@ -330,66 +327,63 @@
      (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
-                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-                    pub-name1 "publish-name1"
-                    pub-name2 "publish-name2"
                     cv1 (kt/newContentView {:name "content-view1"
                                             :org org
-                                            :published-name pub-name1})
+                                            :published-name "publish-name1"})
                     cv2 (kt/newContentView {:name "content-view2"
                                             :org org
-                                            :published-name pub-name2})
+                                            :published-name "publish-name2"})
                     cs (kt/newChangeset {:name "cs"
                                          :env env
                                          :content (list cv1 cv2)})]
         (ui/create-all (list org env cv1 cv2))
-        (doseq [repo [repo1 repo2]]
-          (create-recursive repo)
-          (sync/perform-sync (list repo)))
+        (let [repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+          (doseq [repo [repo1 repo2]]
+            (create-recursive repo)
+            (sync/perform-sync (list repo)))
           (doseq [{:keys [published-name] :as cv} [cv1 cv2]]
             (ui/update cv assoc :products (list (kt/product repo1)))
             (ui/update cv assoc :products (list (kt/product repo2)))
             (views/publish {:content-defn cv :published-name (:published-name cv) :org org}))
-        (with-unique [composite-view (newContentView {:name "composite-view"
-                                                      :org org
-                                                      :description "Composite Content View"
-                                                      :composite 'yes'
-                                                      :composite-names pub-name1})]
-          (ui/create composite-view)
-          (browser click ::views/content-tab)
-          (assert/is (not (browser isChecked (views/composite-view-name pub-name2))))
-          (assert/is (common/disabled? (browser getAttribute (views/composite-disabled pub-name2)))))))
-     
+          (with-unique [composite-view (newContentView {:name "composite-view"
+                                                        :org org
+                                                        :description "Composite Content View"
+                                                        :composite 'yes'
+                                                        :composite-names (:published-name cv1)})]
+            (ui/create composite-view)
+            (browser click ::views/content-tab)
+            (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
+            (assert/is (common/disabled? (browser getAttribute (views/composite-disabled (:published-name cv2)))))))))
+      
      
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
        :blockers (open-bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     target-env (kt/newEnvironment {:name "dev" :org org})
-                     repo (fresh-repo org
-                                      "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-                     cv (promote-published-content-view org target-env repo)                
-                     product (kt/product repo)
-                     ak (kt/newActivationKey {:name "ak"
-                                              :env target-env
-                                              :description "auto activation key"
-                                              :content-view (:published-name cv)})]
-         (ui/create ak)
-         (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
-         (provision/with-client "reg-sys-with-ak" ssh-conn
-           (client/register ssh-conn
-                            {:org (:name org)
-                             :activationkey (:name ak)})
-           (let [deletion-cs (-> {:name "deletion-cs"
-                                  :content (list cv)
-                                  :env target-env
-                                  :deletion? true}
-                               katello/newChangeset
-                               uniqueify)]
-             (client/sm-cmd ssh-conn :refresh)
-             (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
-               (assert/is (->> cmd_result :exit-code (= 0))))
-             (changeset/promote-delete-content deletion-cs)
-             (client/sm-cmd ssh-conn :refresh)
-             (let [cmd_result (client/run-cmd ssh-conn "yum install cow")]
-               (assert/is (->> cmd_result :exit-code (= 1))))))))))
+                     target-env (kt/newEnvironment {:name "dev" :org org})]
+         (let [repo (fresh-repo org
+                                "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+               cv (promote-published-content-view org target-env repo)                
+               ak (kt/newActivationKey {:name (uniqueify "ak")
+                                        :env target-env
+                                        :description "auto activation key"
+                                        :content-view cv})]
+           (ui/create ak)
+           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+           (provision/with-client "reg-sys-with-ak" ssh-conn
+             (client/register ssh-conn
+                              {:org (:name org)
+                               :activationkey (:name ak)})
+             (let [deletion-cs (-> {:name "deletion-cs"
+                                    :content (list cv)
+                                    :env target-env
+                                    :deletion? true}
+                                 katello/newChangeset
+                                 uniqueify)]
+               (client/sm-cmd ssh-conn :refresh)
+               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+                 (assert/is (->> cmd_result :exit-code (= 0))))
+               (changeset/promote-delete-content deletion-cs)
+               (client/sm-cmd ssh-conn :refresh)
+               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cat")]
+                 (assert/is (->> cmd_result :exit-code (not= 1)))))))))))
