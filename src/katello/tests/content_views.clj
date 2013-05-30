@@ -223,7 +223,7 @@
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
                                        :description "auto activation key"
-                                       :content-view (:published-name cv)})]  
+                                       :content-view cv})]
           (ui/create ak)
           (assert/is (= (:name (kt/product repo))
                         (browser getText ::views/product-in-cv))))))
@@ -280,7 +280,7 @@
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
                                        :description "auto activation key"
-                                       :content-view (:published-name cv)})]
+                                       :content-view cv})]
           (ui/create ak)
           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
           (provision/with-client "consume-content" ssh-conn
@@ -312,7 +312,7 @@
                  ak (kt/newActivationKey {:name (uniqueify "ak")
                                           :env target-env
                                           :description "auto activation key"
-                                          :content-view (:published-name cloned-cv)})]           
+                                          :content-view cv})]           
              (changeset/promote-delete-content cs)
              (ui/create ak)
              (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
@@ -367,7 +367,7 @@
                ak (kt/newActivationKey {:name (uniqueify "ak")
                                         :env target-env
                                         :description "auto activation key"
-                                        :content-view (:published-name cv)})]
+                                        :content-view cv})]
            (ui/create ak)
            (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
            (provision/with-client "reg-sys-with-ak" ssh-conn
@@ -386,4 +386,4 @@
                (changeset/promote-delete-content deletion-cs)
                (client/sm-cmd ssh-conn :refresh)
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cat")]
-                 (assert/is (->> cmd_result :exit-code (= 1)))))))))))
+                 (assert/is (->> cmd_result :exit-code (not= 1)))))))))))
