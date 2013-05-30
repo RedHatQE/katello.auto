@@ -17,6 +17,7 @@
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
+            [test.tree.builder :refer [union]]
             [clojure.string :refer [capitalize upper-case lower-case]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [bugzilla.checker :refer [open-bz-bugs]]))
@@ -82,6 +83,7 @@
                                 (partial random-string 0x0080 0x5363 1)))))
 
     (deftest "Create an organization with an initial environment"
+      :blockers rest/katello-only
       (-> (kt/newOrganization {:name "auto-org"
                                :initial-env (kt/newEnvironment {:name "environment"})})
           uniqueify
@@ -146,7 +148,7 @@
            (setup-custom-org-with-content env repos)))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
-      :blockers (open-bz-bugs "966670")
+      :blockers (union rest/katello-only (open-bz-bugs "966670"))
       :data-driven true
 
       (fn [env-name env-lbl notif]
@@ -194,8 +196,7 @@
 
     (deftest "Create org with default keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")
-                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
+                                             :label (uniqueify "org-label")})
                     keyname "deleteme-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
@@ -210,8 +211,7 @@
 
       (fn [keyname success?]
         (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")
-                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+                                             :label (uniqueify "org-label")})]
           (ui/create org)
           (assert/is (not (organization/isKeynamePresent? keyname)))
           (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
@@ -227,8 +227,7 @@
 
     (deftest "Create org with default distributor keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")
-                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
+                                             :label (uniqueify "org-label")})
                     keyname "deleteme-keyname"]
         (ui/create org)
         (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
