@@ -176,13 +176,13 @@
           (let [mysys              (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                                        katello/newSystem)
                 deletion-changeset (-> {:name "deletion-cs"
-                                        :content (distinct (map :product repo1))
+                                        :content (distinct (map :product (list repo1)))
                                         :env test-environment
                                         :deletion? true}
                                        katello/newChangeset
                                        uniqueify)
                 promotion-changeset (-> {:name "re-promotion-cs"
-                                         :content (distinct (map :product repo1))
+                                         :content (distinct (map :product (list repo1)))
                                          :env test-environment}
                                         katello/newChangeset
                                         uniqueify)]
@@ -198,6 +198,7 @@
             (changeset/promote-delete-content promotion-changeset)
             (client/subscribe ssh-conn (system/pool-id mysys prd1))
             (client/sm-cmd ssh-conn :refresh)
+            (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/redhat.repo")
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
                   result (client/run-cmd ssh-conn cmd)]
