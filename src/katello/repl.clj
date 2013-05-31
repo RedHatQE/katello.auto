@@ -20,7 +20,7 @@
      ~@body))
 
 (defn debug [tree]
-  (test.tree.debug/debug tree {:trace-list (katello.conf/trace-list)}))
+  (test.tree.debug/debug tree {:trace-depth-map (katello.conf/trace-list)}))
 
 (defn print-name-result [resulttree]
   (doseq [result @(second resulttree)]

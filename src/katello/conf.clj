@@ -90,34 +90,34 @@
 
 (def config (atom {}))
 
+;; Tracing setup
+
+(def ^{:doc "Some pre-set trace settings. Don't trace too deeply into some
+  functions (or not at all into others)"}
+  trace-depths
+  '{com.redhat.qe.auto.selenium.selenium/call-sel 1
+    katello.menu/fmap 0
+    katello.ui/component-deployment-dispatch 0
+    katello.ui/current-session-deployment 0
+    katello.notifications/success? 0
+    katello.tasks/uniqueify 0
+    katello.tasks/uniques 0 katello.conf/client-defs 0})
+
 (defn trace-list
   "Creates a list of functions to trace. Includes all katello
    namespaces (except a few functions), and some of the API and
    underlying lib namespaces."
   []
-  (->> (loaded-libs)
-     (filter (fn [sym] (-> sym str (.startsWith "katello"))))
-     (concat '(katello.client.provision))
-     all-fns
-     (concat '(com.redhat.qe.auto.selenium.selenium/call-sel
-               clj-http.client/get
-               clj-http.client/put
-               clj-http.client/post
-               clj-http.client/delete)) ;;extra fns to add
-     
-     (remove #{'katello.notifications/success? ;;fns to remove
-               'katello.tasks/uniqueify
-               'katello.tasks/unique-format
-               'katello.tasks/unique-names
-               'katello.tasks/uniques-formatted
-               'katello.tasks/uniqueify-vals
-               'katello.tasks/timestamps
-               'katello.tasks/date-string
-               'katello.tasks/timestamped-seq
-               'katello.conf/client-defs
-               'katello.navigation/pages
-               'katello.menu/pages})
-     (filter (fn [sym] (->> sym str (re-find #"/pages$") not)))))  ;; don't trace eg katello.navigation/pages, katello.organizations/pages etc
+  (-> (->> (loaded-libs)
+           (filter (fn [sym] (-> sym str (.startsWith "katello"))))
+           all-fns
+           (concat '(com.redhat.qe.auto.selenium.selenium/call-sel
+                     clj-http.client/get
+                     clj-http.client/put
+                     clj-http.client/post
+                     clj-http.client/delete)))
+      (zipmap (repeat nil)) ;; default no limit to trace depth
+      (merge trace-depths)))
  
 
 (declare ^:dynamic *session-user*
