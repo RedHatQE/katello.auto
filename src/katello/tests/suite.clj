@@ -76,6 +76,6 @@
         (jenkins/run-suite (make-suite suite)  
                            (merge setup/runner-config 
                                   {:threads (:num-threads opts)
-                                   :to-trace-fn conf/trace-list
+                                   :trace-depths-fn conf/trace-list
                                    :to-trace (@conf/config :trace)
                                    :do-not-trace (@conf/config :trace-excludes)}))))))
