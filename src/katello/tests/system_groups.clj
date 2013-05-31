@@ -115,14 +115,15 @@
 
       (with-unique [s (some-system)
                     g (some-group)]
-        (ui/create-all (list s g))
+        (rest/create s)
+        (ui/create g)
         (let [g (ui/update g assoc :systems #{s})]
           (assert-system-count g 1)
           (ui/update g update-in [:systems] disj s)
           (assert-system-count g 0))))
 
     (deftest "Unregister a system & check count under sys-group details is -1"
-      :blockers (open-bz-bugs "959211")
+      :blockers (union rest/katello-only (open-bz-bugs "959211"))
 
       (with-unique [s1 (some-system)
                     g (some-group)]
@@ -157,7 +158,8 @@
       :blockers (open-bz-bugs "857031")
       (with-unique [g (some-group)
                     s (some-system)]
-        (ui/create-all (list s g))
+        (rest/create s)
+        (ui/create g)
         (let [g (ui/update g assoc :systems #{s})
               clone (update-in g [:name] #(str % "-clone"))]
           (group/copy g clone)
@@ -228,7 +230,8 @@
         (fn [data]
           (with-unique [g (merge (some-group) data)
                         s (some-system)]
-            (ui/create-all (list s g))
+            (rest/create s)
+            (ui/create g)
             (ui/update g assoc :systems #{s})
             (let [clone (update-in g [:name] #(str % "-clone"))]
               (group/copy g clone)

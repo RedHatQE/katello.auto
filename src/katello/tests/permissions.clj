@@ -375,7 +375,7 @@
                           ak (kt/newActivationKey {:name "ak"
                                                    :env env
                                                    :description "auto activation key"
-                                                   :content-view (:published-name cv)})]
+                                                   :content-view cv})]
               (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
                     prd   (kt/product repo)
                     prv   (kt/provider repo)]

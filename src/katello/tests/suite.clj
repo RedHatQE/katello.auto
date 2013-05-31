@@ -4,7 +4,7 @@
                            sync_management login environments
                            systems system-groups activation-keys
                            users permissions e2e navigation search
-                           distributors content-search)
+                           distributors content-search content-views)
             katello.tests.providers.custom
             [katello.setup :as setup]
             [katello.conf :as conf] 
@@ -36,6 +36,7 @@
   ;; katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
   katello.tests.content-search/content-search-tests
+  katello.tests.content-views/content-views-tests
   )
 
 

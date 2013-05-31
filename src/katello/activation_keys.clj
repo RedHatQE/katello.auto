@@ -51,7 +51,7 @@
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       ::content-view-select content-view}
+                       ::content-view-select (:published-name content-view)}
                       ::save)
   (notification/check-for-success {:match-pred (notification/request-type? :ak-create)}))
 
