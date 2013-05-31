@@ -8,6 +8,7 @@
                      [systems :as system]
                      [notifications :as notification]
                      [ui :as ui]
+                     [rest :as rest]
                      [tasks :refer [when-some-let] :as tasks]
                      [ui-common :as common]))
   (:refer-clojure :exclude [remove]))
@@ -145,6 +146,17 @@
   ui/CRUD {:create create
            :delete remove
            :update* update}
+
+  rest/CRUD (let [query-url (partial rest/url-maker [["api/organizations/%s/system_groups" [#'kt/org]]])
+                  id-url (partial rest/url-maker [["api/organizations/%s/system_groups/%s" [:org identity]]])]
+              {:id rest/id-field
+               :query (partial rest/query-by-name query-url)
+               :create (fn [sg]
+                         (merge sg
+                                (rest/http-post
+                                 (rest/url-maker [["api/organizations/%s/system_groups" [:org]]] sg)
+                                 {:body {:system_group (select-keys sg [:name :description :max_systems])}})))
+               :read (partial rest/read-impl id-url)})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})

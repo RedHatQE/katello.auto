@@ -231,7 +231,7 @@
        [(random-string (int \a) (int \z) 255) true success]])
 
     (deftest "Verify system appears on Systems By Environment page in its proper environment"
-      :blockers (union :rest/katello-only (open-bz-bugs "738054"))
+      :blockers (union rest/katello-only (open-bz-bugs "738054"))
       (verify-system-appears-on-env-page (register-new-test-system)))
 
     (deftest "Subscribe a system to a custom product"
@@ -320,7 +320,9 @@
                                           :sockets "1"
                                           :system-arch "x86_64"
                                           :env (:initial-env org)})]
-        (ui/create-all (list org system))
+        (ui/create org)
+        (rest/create system)
+        (nav/go-to system)
         (browser click ::system/custom-info)
         (assert/is (not (browser isTextPresent "Manager")))
         (org/add-custom-keyname org ::org/system-default-info-page "Manager" {:apply-default true})
@@ -574,6 +576,7 @@
                              (rest/get-id env-dev)))))))
     
     (deftest "Register a system and validate subscription tab" 
+      :blockers rest/katello-only
       (with-unique [target-env (kt/newEnvironment {:name "dev" 
                                                    :org *session-org*})
                     repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
