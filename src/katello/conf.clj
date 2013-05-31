@@ -101,7 +101,8 @@
     katello.ui/current-session-deployment 0
     katello.notifications/success? 0
     katello.tasks/uniqueify 0
-    katello.tasks/uniques 0 katello.conf/client-defs 0})
+    katello.tasks/uniques 0
+    katello.conf/client-defs 0})
 
 (defn trace-list
   "Creates a list of functions to trace. Includes all katello
