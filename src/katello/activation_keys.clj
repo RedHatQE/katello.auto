@@ -120,7 +120,12 @@
                   query-url (partial rest/url-maker [["api/organizations/%s/activation_keys" [#'katello/org]]])]
               {:id rest/id-field
                :query (partial rest/query-by-name query-url)
-               :read (partial rest/read-impl id-url)})
+               :read (partial rest/read-impl id-url)
+               :create (fn [ak]
+                         (merge ak
+                                (rest/http-post
+                                 (rest/url-maker [["api/environments/%s/activation_keys" [#'katello/env]]] ak)
+                                 {:body {:activation_key (select-keys ak [:name :content-view :description])}})))})
   
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})

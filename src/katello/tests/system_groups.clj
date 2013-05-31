@@ -127,7 +127,7 @@
 
       (with-unique [s1 (some-system)
                     g (some-group)]
-        (ui/create-all (list s1 g))
+        (rest/create-all (list s1 g))
         (provision/with-client "check-sys-count" ssh-conn
           (client/register ssh-conn {:username (:name *session-user*)
                                      :password (:password *session-user*)
@@ -146,8 +146,7 @@
       (fn [data]
         (with-unique [g (merge (some-group) data)
                       s (some-system)]
-          (rest/create s)
-          (ui/create g)
+          (rest/create-all (list s g))
           (ui/update g assoc :systems #{s})
           (ui/delete g)
           (assert/is (= (:also-remove-systems? g) (rest/not-exists? s)))))
@@ -169,8 +168,7 @@
     (deftest "Systems removed from System Group can be re-added to a new group"
       (with-unique [[g1 g2] (some-group)
                     s (some-system)]
-        (rest/create s)
-        (ui/create-all (list g1 g2))
+        (rest/create-all (list g1 g2 s))
         (-> g1
             (ui/update assoc :systems #{s})
             (ui/update update-in [:systems] disj s))
@@ -179,8 +177,7 @@
     (deftest "Reduce the max-limit after associating systems to max allowed limit"
       (with-unique [g (some-group)
                     [s1 s2] (some-system)]
-        (rest/create-all (list s1 s2))
-        (ui/create g)
+        (rest/create-all (list g s1 s2))
         (ui/update g assoc :systems #{s1 s2})
         (expecting-error (common/errtype ::notif/systems-exceeds-group-limit)
                          (ui/update g assoc :limit 1))))
@@ -189,8 +186,7 @@
       (let [limit 2
             g (uniqueify (some-group))
             systems (take (inc limit) (uniques (some-system)))]
-        (rest/create-all systems)
-        (ui/create g)
+        (rest/create-all (conj systems g))
         (ui/update g assoc :limit limit)
         (expecting-error (common/errtype ::notif/bulk-systems-exceeds-group-limit)
                          (system/add-bulk-sys-to-sysgrp systems g))))
@@ -200,7 +196,7 @@
       (with-unique [g (some-group)
                     s (some-system)
                     ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]
-        (ui/create-all (list g s ak))
+        (rest/create-all (list g s ak))
         (ui/update g assoc :systems #{s})
         (ui/update ak assoc :system-group g)
         (provision/with-client "sys-count" ssh-conn
