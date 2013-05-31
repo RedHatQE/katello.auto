@@ -262,7 +262,7 @@
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
                                        :description "auto activation key"
-                                       :content-view (:published-name cv)})
+                                       :content-view cv})
               deletion-cs (kt/newChangeset {:name (uniqueify "deletion-cs")
                                             :content (list cv)
                                             :env target-env
