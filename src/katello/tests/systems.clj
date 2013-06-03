@@ -438,7 +438,7 @@
       :blockers rest/katello-only
       :data-driven true
       verify-new-system-tooltip
-      [[::system/ram-icon "The amount of RAM memory, in megabytes (MB), which this system has"]
+      [[::system/ram-icon "The amount of RAM memory, in gigabytes (GB), which this system has"]
        [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
     ;; FIXME - convert-to-records
 
