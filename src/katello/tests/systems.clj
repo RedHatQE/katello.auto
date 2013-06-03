@@ -534,7 +534,7 @@
       :description "Add package and package group"
       :blockers (union rest/katello-only (open-bz-bugs "959211"))
 
-      (fn [package-name]
+      (fn [package-opts]
         (let [target-env test-environment
               system (uniqueify (kt/newSystem {:name "pkg_install", :env target-env}))
               product (configure-product-for-pkg-install target-env)]
@@ -550,7 +550,7 @@
             (let [mysys (client/my-hostname ssh-conn)]
               (client/subscribe ssh-conn (system/pool-id system product))
               (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-              (system/add-package mysys package-name)))))
+              (system/add-package mysys package-opts)))))
 
       [[{:package "cow"}]
        [{:package-group "birds"}]])
