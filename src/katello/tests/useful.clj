@@ -64,5 +64,5 @@
 
 (defn fresh-repo "New repo in a new product in a new provider"
   [org url]
-  (first (fresh-repos)))
+  (first (fresh-repos org url)))
 
