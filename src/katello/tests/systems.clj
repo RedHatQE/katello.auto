@@ -483,6 +483,7 @@
                          {:username (:name *session-user*)
                           :password (:password *session-user*)
                           :org (:name *session-org*)
+                          :env (:name test-environment)
                           :force true})
         (let [hostname (client/my-hostname ssh-conn)
               system (kt/newSystem {:name hostname
@@ -502,6 +503,7 @@
         (client/register ssh-conn {:username (:name *session-user*)
                                    :password (:password *session-user*)
                                    :org (:name *session-org*)
+                                   :env (:name test-environment)
                                    :force true})
         (let [hostname (client/my-hostname ssh-conn)
               system (kt/newSystem {:name hostname
