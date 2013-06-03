@@ -337,7 +337,7 @@
         (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
     
     (deftest "System Details: Update custom info"
-      :blockers (open-bz-bugs "919373")
+      :blockers (open-bz-bugs "919373" "970079")
       (with-unique-system s
         (rest/create s)
         (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
@@ -402,7 +402,7 @@
        ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
     (deftest "System Details: Update custom info"
-      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :blockers (open-bz-bugs "919373" "951231" "951197" "970079")
       :data-driven true
 
       (fn [keyname custom-value new-value success?]
