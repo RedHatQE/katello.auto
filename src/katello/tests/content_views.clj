@@ -354,7 +354,7 @@
             (ui/create composite-view)
             (browser click ::views/content-tab)
             (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
-            (assert/is (common/disabled? (browser getAttribute (views/composite-disabled (:published-name cv2)))))))))
+            (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
       
      
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
