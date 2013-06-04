@@ -153,7 +153,7 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
-      :blockers rest/katello-only
+      :blockers (union rest/katello-only (open-bz-bugs "970570"))
       (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey

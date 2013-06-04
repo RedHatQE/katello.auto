@@ -497,7 +497,7 @@
 
     (deftest "Review Facts of registered system"
       ;;:blockers no-clients-defined
-      :blockers (open-bz-bugs "959211")
+      :blockers (open-bz-bugs "959211" "970570")
       (provision/with-client "sys-facts"
         ssh-conn
         (client/register ssh-conn {:username (:name *session-user*)
@@ -532,7 +532,7 @@
     (deftest "Install package group"
       :data-driven true
       :description "Add package and package group"
-      :blockers (union rest/katello-only (open-bz-bugs "959211"))
+      :blockers (union rest/katello-only (open-bz-bugs "959211" "970570"))
 
       (fn [package-opts]
         (let [target-env test-environment
@@ -644,7 +644,7 @@
               (assert/is (->> result :exit-code (= 0))))))))
 
     (deftest "Install package after moving a system from one env to other"
-      :blockers (union rest/katello-only (open-bz-bugs "959211"))
+      :blockers (union rest/katello-only (open-bz-bugs "959211" "970570"))
       
       (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                              katello/newEnvironment
