@@ -12,14 +12,16 @@
 (defgroup distributor-tests
 
   (deftest "Create a Distributor"
-    (with-unique [org  (kt/newOrganization {:name "test-org"
-                                            :initial-env (kt/newEnvironment {:name "dev"})})
-                  dist (kt/newDistributor {:name "test-dist" :env (:initial-env org)})]
-      (ui/create-all (list org dist))))
+    (with-unique [org  (kt/newOrganization {:name "test-org"})
+                  dist (kt/newDistributor {:name "test-dist"})]
+      (rest/create org)
+      (ui/create (assoc dist :env (kt/newEnvironment {:name "Library" :org org})))))
 
   (deftest "Delete a Distributor"
-    (with-unique [org  (kt/newOrganization {:name "test-org"
-                                            :initial-env (kt/newEnvironment {:name "dev"})})
-                  dist (kt/newDistributor {:name "test-dist" :env (:initial-env org)})]
-      (ui/create-all (list org dist))
-      (ui/delete dist))))
+    (with-unique [org  (kt/newOrganization {:name "test-org"})
+                  dist (kt/newDistributor {:name "test-dist"})]
+      (let
+          [dist1 (assoc dist :env (kt/newEnvironment {:name "Library" :org org}))]
+        (rest/create org)
+        (ui/create dist1)
+        (ui/delete dist1)))))

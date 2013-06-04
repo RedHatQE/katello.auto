@@ -10,8 +10,7 @@
 (def common-tabs '(:katello.roles/page
                      :katello.users/page 
                      :katello.systems/page
-                     :katello.activation-keys/page
-                     :katello.systems/by-environments-page))
+                     :katello.activation-keys/page))
 
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs
