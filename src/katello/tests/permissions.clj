@@ -3,6 +3,7 @@
   (:require [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
+                     [navigation :as nav]
                      [notifications :as notification]
                      [organizations :as org]
                      [sync-management :as sync]
@@ -421,6 +422,20 @@
                                       (fn [] (nav/go-to org))
                                       (fn [] (ui/create env)))
                :disallowed-actions [(fn [] (nav/go-to conf/*session-org*))]]))
+     
+     (fn [] (with-unique [org baseorg
+                          env (kt/newEnvironment {:name "blah" :org org})
+                          user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})]
+              [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
+               :setup (fn [] (rest/create org)
+                             (ui/create user))
+               :allowed-actions [(fn [] (browser mouseOver (user/user-account (:name user)))
+                                        (browser click ::user/account)
+                                        (nav/browser-fn (click ::user/roles-link)))]
+               :disallowed-actions [(fn [] (browser mouseOver (user/user-account (:name user)))
+                                           (browser click ::user/account)
+                                           (nav/browser-fn (click ::user/roles-link))
+                                           (browser click ::user/add-role))]]))
 
      (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]
               [:permissions []
