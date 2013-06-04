@@ -86,7 +86,7 @@
               [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
               (with-meta
                 [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
-                {:blockers (open-bz-bugs "852119")})]
+                {:blockers (union rest/katello-only (open-bz-bugs "852119"))})]
 
              ;;with latin-1/multibyte searches
      
