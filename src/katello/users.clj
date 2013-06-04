@@ -46,8 +46,7 @@
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
   plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   minus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-minus')]"
-  default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"
-  user-account   "//a[contains(@class,'menu-item-link') and contains(.,'%s')]"})
+  default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"})
 
 ;; Nav
 

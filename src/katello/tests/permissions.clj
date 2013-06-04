@@ -429,10 +429,10 @@
               [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
                :setup (fn [] (rest/create org)
                              (ui/create user))
-               :allowed-actions [(fn [] (browser mouseOver (user/user-account (:name user)))
+               :allowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
                                         (browser click ::user/account)
                                         (nav/browser-fn (click ::user/roles-link)))]
-               :disallowed-actions [(fn [] (browser mouseOver (user/user-account (:name user)))
+               :disallowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
                                            (browser click ::user/account)
                                            (nav/browser-fn (click ::user/roles-link))
                                            (browser click ::user/add-role))]]))
@@ -445,6 +445,7 @@
 
      (delete-system-data "Read Systems")
      (delete-system-data "Delete Systems")]))
+
 
 ;; Tests
 (defn- create-role* [f name]
