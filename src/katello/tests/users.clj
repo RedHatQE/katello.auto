@@ -2,6 +2,7 @@
   (:require [katello :as kt]
             (katello [validation :refer :all] 
                      [organizations :as organization]
+                     [notifications :as notification]
                      [ui :as ui]
                      [navigation :as nav]
                      [rest :as rest]
@@ -15,6 +16,7 @@
                      [conf :refer [config *session-org* *session-user* *environments*]] 
                      [navigation :as nav]) 
             [katello.tests.useful :refer [create-all-recursive create-recursive]]
+            [slingshot.slingshot :refer [throw+]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -84,6 +86,26 @@
 (defn set-default-org-at-dashboard [{:keys [default-org] :as user}]
   (organization/switch nil {:default-org default-org})
   user)
+
+(defn edit-user-email
+  "Edits user's email"
+  [user new-email save?]
+  (nav/go-to ::user/named-page user)
+  (let [email-edit-field (common/inactive-edit-field ::user/email-text)
+        old-email (browser getText email-edit-field)]
+    (browser click email-edit-field)
+    (browser setText ::user/email-text new-email)
+    (if save?
+      (do (browser click ::user/save-button)
+          (notification/check-for-success {:match-pred (notification/request-type? :users-update)})
+          (when-not (= new-email (browser getText email-edit-field))
+            (throw+ {:type ::user/email-not-edited
+                     :msg "Still getting old email name."})))
+      (do (browser click ::user/cancel-button)
+          (when-not (= (:email user) old-email)
+            (throw+ {:type ::user/email-edited-anyway
+                     :msg "Email changed even after clicking cancel button."}))))))
+
 
 ;;; Tests
 
@@ -226,7 +248,23 @@
           (ui/update user assoc :default-org *session-org* :default-env default-org-env)
           (assert/is (= (browser getText ::user/current-default-org) (:name *session-org*)))
           (assert/is (= (browser getText ::user/current-default-env) (:name default-org-env))))))
-      
+    
+    (deftest "Check whether the users email address get's updated"
+      :data-driven true
+      (fn [new-email save?]
+        (with-unique [org (kt/newOrganization {:name "auto-org"})
+                      env (kt/newEnvironment {:name "environment" :org org})
+                      user (assoc generic-user
+                             :name "autouser"
+                             :default-org org
+                             :default-env env)]
+        (let [expected-res #(-> % :type (= :success))]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (expecting-error expected-res (edit-user-email user new-email save?)))))
+
+      [["abc@redhat.com" false]
+       ["pnq@fedora.com" true]])    
       
 
     (deftest "Admin changes a user's password"
@@ -316,7 +354,5 @@
             (assert/is (every? not-showing? [::menu/systems-link ::menu/content-link ::menu/setup-link] ))))
         (assign-admin admin))))
 
-  user-settings default-org-tests)
-
-
+  user-settings default-org-tests)  
 
