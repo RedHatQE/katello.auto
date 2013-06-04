@@ -12,9 +12,9 @@
                      [menu :as menu]
                      [users :as user]
                      [tasks :refer :all] 
-                     [conf :refer [config *session-org* *session-user*]] 
+                     [conf :refer [config *session-org* *session-user* *environments*]] 
                      [navigation :as nav]) 
-            [katello.tests.useful :refer [create-all-recursive]]
+            [katello.tests.useful :refer [create-all-recursive create-recursive]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -211,6 +211,23 @@
                            :default-env env)]
         (rest/create-all (list org env))
         (ui/create user)))
+    
+    (deftest "Check whether the users default-org & default-env get's updated"
+      (with-unique [org (kt/newOrganization {:name "auto-org"})
+                    env (kt/newEnvironment {:name "environment" :org org})
+                    user (assoc generic-user
+                           :name "autouser"
+                           :default-org org
+                           :default-env env)]
+        (let [default-org-env (first *environments*)]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (create-recursive default-org-env)
+          (ui/update user assoc :default-org *session-org* :default-env default-org-env)
+          (assert/is (= (browser getText ::user/current-default-org) (:name *session-org*)))
+          (assert/is (= (browser getText ::user/current-default-env) (:name default-org-env))))))
+      
+      
 
     (deftest "Admin changes a user's password"
       :blockers (open-bz-bugs "720469")
