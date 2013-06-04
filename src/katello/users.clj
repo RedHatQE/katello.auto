@@ -40,7 +40,9 @@
    ::switcher-button             "//a[@id='switcherButton']"
    ::current-default-org         "//div[@id='org_name']"
    ::current-default-env         "//div[@id='env_name']"
-   ::add-role                    "//div[@class='available']/ul/li[@title='Read Everything']"})
+   ::add-role                    "//div[@class='available']/ul/li[@title='Read Everything']"
+   ::save-button                 "//button[@type='submit']"
+   ::cancel-button               "//button[@type='cancel']"})
 
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
