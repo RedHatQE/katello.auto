@@ -37,14 +37,17 @@
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
    ::account                     "//a[contains(@class,'dropdown-menu-item-link') and contains(.,'My Account')]"
    ::user-account-dropdown       "//nav[contains(@class,'right')]//a"
-   ::switcher-button             "//a[@id='switcherButton']"}
-  )
+   ::switcher-button             "//a[@id='switcherButton']"
+   ::current-default-org         "//div[@id='org_name']"
+   ::current-default-env         "//div[@id='env_name']"
+   ::add-role                    "//div[@class='available']/ul/li[@title='Read Everything']"})
 
 (sel/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
   plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   minus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-minus')]"
-  default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"})
+  default-org    "//div[@id='orgbox']//span[../a[contains(.,'ACME_Corporation')]]"
+  user-account   "//a[contains(@class,'menu-item-link') and contains(.,'%s')]"})
 
 ;; Nav
 
