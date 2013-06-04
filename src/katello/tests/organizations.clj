@@ -192,7 +192,7 @@
         (ui/create org)
         (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
         (assert/is (organization/isKeynamePresent? keyname))
-        (organization/add-custom-keyname org ::organization/system-default-info-page keyname)))
+        (expecting-error (common/errtype ::notification/already-contains-default-info) (organization/add-custom-keyname org ::organization/system-default-info-page keyname))))
 
     (deftest "Create org with default keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"

@@ -81,13 +81,15 @@
     (do
       (browser click ::apply-default-info)
       (browser click ::ui/confirmation-yes)
-      (browser waitForElement ::disabled-apply-btn "120000"))))
+      (browser waitForElement ::disabled-apply-btn "120000")))
+  (notification/check-for-success))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
   [org section keyname]
   (nav/go-to section org)
-  (browser click (remove-keyname-btn keyname)))
+  (browser click (remove-keyname-btn keyname))
+  (notification/check-for-success))
 
 (defn- create
   "Creates an organization with the given name and optional description."
