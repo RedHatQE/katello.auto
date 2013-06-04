@@ -71,7 +71,7 @@
     
     (fn [orginfo searchterms]
       (with-unique [org (kt/newOrganization orginfo)]
-        (ui/create org)
+        (rest/create org)
         (search org searchterms)
         (validate-search-results (list org))))
 
@@ -185,6 +185,7 @@
   (deftest "search GPG keys"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
+    :blockers rest/katello-only
     
     (fn [gpg-key-info searchterms]
       (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]
