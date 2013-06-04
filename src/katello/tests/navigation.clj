@@ -15,7 +15,9 @@
 
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs
-  '(:katello.repositories/redhat-page))
+  '(:katello.repositories/redhat-page
+    :katello.systems/by-environments-page
+    :katello.gpg-keys/page))
 
 ;;; Functions
 
