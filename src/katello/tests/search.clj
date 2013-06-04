@@ -14,7 +14,8 @@
                      [conf :refer [*session-org* config]])
             
             [katello.tests.useful :refer [ensure-exists]]
-            [test.tree.script :refer :all]
+            (test.tree [script :refer :all]
+                       [builder :refer [union]])
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer :all]))
