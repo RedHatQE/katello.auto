@@ -102,7 +102,20 @@
     katello.notifications/success? 0
     katello.tasks/uniqueify 0
     katello.tasks/uniques 0
-    katello.conf/client-defs 0})
+    katello.conf/client-defs 0
+    katello.rest/read-json-safe 0
+    katello.rest/get-id 1
+    katello/chain 1
+    katello/instance-or-nil? 0
+    })
+
+(defn record-contructor-depths
+  "Returns trace setting to not trace record constructors."
+  []
+  (zipmap (filter (fn [fsym]
+             (re-find #"/map->|/new" (str fsym)))
+                  (all-fns '(katello)))
+          (repeat 0)))
 
 (defn trace-list
   "Creates a list of functions to trace. Includes all katello
@@ -118,7 +131,7 @@
                      clj-http.client/post
                      clj-http.client/delete)))
       (zipmap (repeat nil)) ;; default no limit to trace depth
-      (merge trace-depths)))
+      (merge trace-depths (record-contructor-depths))))
  
 
 (declare ^:dynamic *session-user*
