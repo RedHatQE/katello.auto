@@ -318,15 +318,14 @@
                                           :sockets "1"
                                           :system-arch "x86_64"})]
         (let [sys1 (assoc system :env (kt/newEnvironment {:name "Library" :org org}))]
-          (ui/create org)
-          (rest/create sys1)
+          (rest/create-all (list org sys1))
           (nav/go-to sys1)
           (browser click ::system/custom-info)
-          (assert/is (not (browser isTextPresent "fizzbuzz")))
+          (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
           (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
           (nav/go-to sys1)
           (browser click ::system/custom-info)
-          (assert/is (browser isTextPresent "fizzbuzz")))))
+          (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
     (deftest "System Details: Add custom info"
       :blockers (open-bz-bugs "919373")
