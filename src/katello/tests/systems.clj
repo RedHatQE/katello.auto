@@ -291,7 +291,7 @@
             (do (browser click ::ui/confirmation-yes)
                 (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
                 (assert (rest/not-exists? system)))
-            (do (browser click ::system/confirm-to-no)
+            (do (browser click ::ui/confirmation-no)
                 (nav/go-to system)))))
       [[false]
        [true]])
@@ -313,22 +313,19 @@
         (assert/is (browser isTextPresent "Manager"))))
 
     (deftest "Creates org adds new system then applies custom org default"
-      (with-unique [org (kt/newOrganization
-                         {:name "defaultsysinfo"
-                          :initial-env (kt/newEnvironment {:name "dev"})})
+      (with-unique [org (kt/newOrganization {:name "defaultsysinfo"})
                     system (kt/newSystem {:name "sys"
                                           :sockets "1"
-                                          :system-arch "x86_64"
-                                          :env (:initial-env org)})]
-        (ui/create org)
-        (rest/create system)
-        (nav/go-to system)
-        (browser click ::system/custom-info)
-        (assert/is (not (browser isTextPresent "Manager")))
-        (org/add-custom-keyname org ::org/system-default-info-page "Manager" {:apply-default true})
-        (nav/go-to system)
-        (browser click ::system/custom-info)
-        (assert/is (browser isTextPresent "Manager"))))
+                                          :system-arch "x86_64"})]
+        (let [sys1 (assoc system :env (kt/newEnvironment {:name "Library" :org org}))]
+          (rest/create-all (list org sys1))
+          (nav/go-to sys1)
+          (browser click ::system/custom-info)
+          (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
+          (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
+          (nav/go-to sys1)
+          (browser click ::system/custom-info)
+          (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
     (deftest "System Details: Add custom info"
       :blockers (open-bz-bugs "919373")
