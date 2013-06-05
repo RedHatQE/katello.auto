@@ -282,7 +282,7 @@
       (fn [confirm?]
         (with-unique [system (kt/newSystem {:name "mysystem"
                                             :sockets "1"
-                                            :system-arnch "x86_64"
+                                            :system-arch "x86_64"
                                             :env test-environment})]
           (rest/create system)
           (nav/go-to system)
