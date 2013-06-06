@@ -354,23 +354,6 @@
           (system/multi-delete (rest systems))
           (assert/is (= 0 (ui-count-systems org))))))
 
-    (deftest "Remove System: with yes-no confirmation"
-      :data-driven true
-
-      (fn [confirm?]
-        (with-unique-system s
-          (rest/create s)
-          (nav/go-to s)
-          (browser click ::system/remove)
-          (if confirm?
-            (do (browser click ::ui/confirmation-yes)
-                (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
-                (assert (rest/not-exists? s)))
-            (do (browser click ::system/confirm-to-no)
-                (nav/go-to s)))))
-      [[false]
-       [true]])
-
     (deftest "System Details: Add custom info"
       :blockers (union (open-bz-bugs "919373")
                        (fn [{:keys [test-zipper]}] ;; skip if this bug is open and we're expecting failure
@@ -595,6 +578,7 @@
             (validate-sys-subscription system)))))
     
     (deftest "Register a system using multiple activation keys"
+      :blockers rest/katello-only
       (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
                     [ak1 ak2] (kt/newActivationKey {:name "ak1"
                                               :env target-env
@@ -615,7 +599,7 @@
                     (browser clickAndWait aklink)))))))))
 
     (deftest  "Registering a system from CLI and consuming contents from UI"
-      :blockers (open-bz-bugs "959211")
+      :blockers (union rest/katello-only (open-bz-bugs "959211"))
       
       (let [gpgkey (-> {:name "mykey", :org *session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
@@ -671,3 +655,8 @@
                              (ui/update mysys update-in [:packages] (fnil conj #{}) package))
             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
               (assert/is (->> cmd_result :exit-code (= 1))))))))))
+
+
+
+
+
