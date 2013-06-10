@@ -250,7 +250,7 @@
                           pub-name (uniqueify "pub1")
                           cv       (kt/newContentView {:name "con-def"
                                                        :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Administer Content View Definitions"], :name "cvaccess_create"}]
+              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Administer Content View Definitions"], :name "cvaccess_create"}]
                :allowed-actions [(navigate-fn :katello.content-view-definitions/page)
                                  (fn [] (ui/create cv))
                                  (fn[] (views/clone cv (update-in cv [:name] #(str % "-clone"))))]
@@ -267,7 +267,7 @@
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
                                                         :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions"], :name "cvaccess_read"}]
+              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions"], :name "cvaccess_read"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (nav/go-to cv))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
@@ -285,7 +285,7 @@
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
                                                         :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Modify Content View Defintions" "Publish Content View Definitions" ], :name "cvaccess_publish"}]
+              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Modify Content View Definitions" "Publish Content View Definitions" ], :name "cvaccess_publish"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_publish desc"))
                                  (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))]
@@ -301,7 +301,7 @@
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
                                                         :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Modify Content View Defintions"], :name "cvaccess_modify"}]
+              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Modify Content View Definitions"], :name "cvaccess_modify"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_modify desc"))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
@@ -317,7 +317,7 @@
                                                        :org conf/*session-org*})
                           cv1       (kt/newContentView {:name "con-def1"
                                                         :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Defintions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
+              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/delete cv))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
@@ -332,7 +332,7 @@
                    cs (uniqueify (kt/newChangeset {:name "cs"
                                                    :env env
                                                    :content (list cv1 cv3)}))]
-               [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+               [:permissions [{:org org, :resource-type "Content View Definitions", :name "cvaccess_cvdefs"}
                               {:org org, :resource-type "Content View", :verbs ["Promote Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
                               {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
                 :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
@@ -347,7 +347,7 @@
                   cs  (uniqueify (kt/newChangeset {:name "cs"
                                                    :env env
                                                    :content (list cv1 cv3)}))]
-              [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+              [:permissions [{:org org, :resource-type "Content View Definitions", :name "cvaccess_cvdefs"}
                              {:org org, :resource-type "Content View", :verbs ["Read Content Views" "Promote Content Views"], :tags [(cv1 :published-name) (cv3 :published-name)], :name "cvaccess_cvviews"}
                              {:org org, :resource-type "Environments", :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment"], :name "cvaccess_cvenvs"}]
                :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
@@ -380,7 +380,7 @@
                (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
                      prd   (kt/product repo)
                      prv   (kt/provider repo)]
-                 [:permissions [{:org org, :resource-type "Content View Defintions", :name "cvaccess_cvdefs"}
+                 [:permissions [{:org org, :resource-type "Content View Definitions", :name "cvaccess_cvdefs"}
                                 {:org org, :resource-type "Content View", :name "cvaccess_cvviews"}
                                 {:org org, :resource-type "Environments", :name "cvaccess_cvenvs",
                                  :verbs ["Read Environment Contents" "Read Changesets in Environment" "Administer Changesets in Environment" "Promote Content to Environment" "Modify Systems in Environment" "Read Systems in Environment" "Register Systems in Environment"]}
