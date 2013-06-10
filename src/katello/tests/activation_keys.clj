@@ -6,6 +6,7 @@
                      [client :as client]
                      [ui-common :as common]
                      [tasks :refer :all]
+                     [rest :as rest]
                      [environments :as env]
                      [validation :as val]
                      [fake-content  :as fake]
@@ -55,6 +56,7 @@
                                      (ui/create a))))
 
     (deftest "create activation keys with subscriptions"
+      :blockers rest/katello-only
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
         (fake/setup-org envz)

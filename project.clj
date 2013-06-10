@@ -7,13 +7,13 @@
                  [org.clojure/data.json "0.1.1"]
                  [org.clojure/data.zip "0.1.1"]
                  
-                 [org.seleniumhq.selenium/selenium-server "2.29.1"]
-                 [org.seleniumhq.selenium/selenium-java "2.29.1"]
+                 [org.seleniumhq.selenium/selenium-server "2.33.0"]
+                 [org.seleniumhq.selenium/selenium-java "2.33.0"]
 
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  
-                 [test.tree.jenkins "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree.jenkins "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  
                  
@@ -28,7 +28,7 @@
 
                  [ui.navigate "0.4.0-SNAPSHOT"]
                  [bugzilla.checker "0.1.2-SNAPSHOT"]
-                 [fn.trace "1.3.3-SNAPSHOT"]]
+                 [fn.trace "1.4.0-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m"]
   :repl-options {:init-ns katello.repl}
   :repositories ^:replace [["clojars" {:url "http://clojars.org/repo"

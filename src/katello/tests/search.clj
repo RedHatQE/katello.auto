@@ -14,7 +14,8 @@
                      [conf :refer [*session-org* config]])
             
             [katello.tests.useful :refer [ensure-exists]]
-            [test.tree.script :refer :all]
+            (test.tree [script :refer :all]
+                       [builder :refer [union]])
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer :all]))
@@ -71,7 +72,7 @@
     
     (fn [orginfo searchterms]
       (with-unique [org (kt/newOrganization orginfo)]
-        (ui/create org)
+        (rest/create org)
         (search org searchterms)
         (validate-search-results (list org))))
 
@@ -86,7 +87,7 @@
               [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
               (with-meta
                 [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
-                {:blockers (open-bz-bugs "852119")})]
+                {:blockers (union rest/katello-only (open-bz-bugs "852119"))})]
 
              ;;with latin-1/multibyte searches
      
@@ -185,6 +186,7 @@
   (deftest "search GPG keys"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
+    :blockers rest/katello-only
     
     (fn [gpg-key-info searchterms]
       (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]
