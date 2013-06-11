@@ -52,10 +52,7 @@
                                         :published-name "publish-name1"})
                 cv2 (kt/newContentView {:name "content-view2"
                                         :org org
-                                        :published-name "publish-name2"})
-                cs (kt/newChangeset {:name "cs"
-                                     :env env
-                                     :content (list cv1 cv2)})]
+                                        :published-name "publish-name2"})]
     (ui/create-all (list org env cv1 cv2))
     (doseq [repo [repo1 repo2]]
       (create-recursive repo)
@@ -64,7 +61,6 @@
                                        [repo2 cv2 (:published-name cv2)]]]
       (ui/update cv assoc :products (list (kt/product repo)))
       (views/publish {:content-defn cv :published-name published-names :org org}))
-    (changeset/promote-delete-content cs) 
     (with-unique [composite-view (newContentView {:name "composite-view"
                                                   :org org
                                                   :description "Composite Content View"
