@@ -2,6 +2,7 @@
   (:require [katello :as kt]
             (katello [validation :refer :all] 
                      [organizations :as organization]
+                     [notifications :as notification]
                      [ui :as ui]
                      [navigation :as nav]
                      [rest :as rest]
@@ -12,9 +13,10 @@
                      [menu :as menu]
                      [users :as user]
                      [tasks :refer :all] 
-                     [conf :refer [config *session-org* *session-user*]] 
+                     [conf :refer [config *session-org* *session-user* *environments*]] 
                      [navigation :as nav]) 
-            [katello.tests.useful :refer [create-all-recursive]]
+            [katello.tests.useful :refer [create-all-recursive create-recursive]]
+            [slingshot.slingshot :refer [throw+]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -84,6 +86,7 @@
 (defn set-default-org-at-dashboard [{:keys [default-org] :as user}]
   (organization/switch nil {:default-org default-org})
   user)
+
 
 ;;; Tests
 
@@ -211,6 +214,41 @@
                            :default-env env)]
         (rest/create-all (list org env))
         (ui/create user)))
+    
+    (deftest "Check whether the users default-org & default-env gets updated"
+      (with-unique [org (kt/newOrganization {:name "auto-org"})
+                    env (kt/newEnvironment {:name "environment" :org org})
+                    user (assoc generic-user
+                           :name "autouser"
+                           :default-org org
+                           :default-env env)]
+        (let [default-org-env (first *environments*)]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (create-recursive default-org-env)
+          (ui/update user assoc :default-org *session-org* :default-env default-org-env)
+          (assert/is (= (browser getText ::user/current-default-org) (:name *session-org*)))
+          (assert/is (= (browser getText ::user/current-default-env) (:name default-org-env))))))
+    
+    (deftest "Check whether the users email address gets updated"
+      :data-driven true
+      (fn [input-loc new-email save?]
+        (with-unique [org (kt/newOrganization {:name "auto-org"})
+                      env (kt/newEnvironment {:name "environment" :org org})
+                      user (assoc generic-user
+                             :name "autouser"
+                             :default-org org
+                             :default-env env)]
+        (let [expected-res #(-> % :type (= :success))]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (expecting-error expected-res
+            (nav/go-to ::user/named-page user)              
+            (common/save-cancel ::user/save-button ::user/cancel-button (notification/request-type? :users-update) input-loc new-email save?)))))
+
+      [[::user/email-text "abc@redhat.com" false]
+       [::user/email-text "pnq@fedora.com" true]])
+      
 
     (deftest "Admin changes a user's password"
       :blockers (open-bz-bugs "720469")
@@ -300,6 +338,4 @@
         (assign-admin admin))))
 
   user-settings default-org-tests)
-
-
 
