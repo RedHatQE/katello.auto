@@ -392,6 +392,7 @@
             (assert/is (common/disabled? (browser getAttribute (views/composite-disabled (:published-name cv2)))))))))
      
      (deftest "Consume content from composite content view definition"
+       :blockers (open-bz-bugs "961696")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      env (kt/newEnvironment {:name  "dev" :org org})]
          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
