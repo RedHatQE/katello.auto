@@ -88,7 +88,14 @@
                                :initial-env (kt/newEnvironment {:name "environment"})})
           uniqueify
           create-and-verify))
-
+    
+    (deftest "Create an organization with dot in name and query for provider"
+      :blockers rest/katello-only
+      (with-unique [org (kt/newOrganization {:name "auto.org"})
+                    provider (kt/newProvider {:name "custom_provider" :org org})]
+        (ui/create-all (list org provider))
+        (assert (rest/exists? provider))))
+        
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
 
