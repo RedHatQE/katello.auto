@@ -65,7 +65,7 @@
   (browser isElementPresent ::system/red-subs-icon)
   (assert/is (= "Subscriptions are not Current Details" (browser getText ::system/subs-text)))  
   (assert/is (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel)))   
-  (assert/is (common/disabled? (browser getAttribute ::system/subs-attach-button))))
+  (assert/is (common/disabled? ::system/subs-attach-button)))
     
 (defn configure-product-for-pkg-install
   "Creates and promotes a product with fake content repo, returns the

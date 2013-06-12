@@ -124,8 +124,12 @@
 
 (defn disabled?
   [locator]
-  (some #{"disabled"} 
-        (clojure.string/split locator #" ")))
+  (let [all-attribs (browser getAttributes locator)]
+    (some true?
+          (for [avail-attribs ["class" "disabled"]]      
+            (if (get all-attribs avail-attribs)    
+              (boolean (some #{"disabled"}
+                             (clojure.string/split (get all-attribs avail-attribs) #" "))))))))
 
 (defn save-cancel [save-locator cancel-locator match-pred input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
