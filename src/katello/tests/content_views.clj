@@ -85,8 +85,8 @@
         (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
           (expecting-error expected-res (ui/create content-view))))
 
-      [[(random-string (int \a) (int \z) 128) (common/errtype ::notifications/name-128-char-limit)]
-       [(random-string (int \a) (int \z) 127) success]])
+      [[(random-string (int \a) (int \z) 129) (common/errtype ::notifications/name-128-char-limit)]
+       [(random-string (int \a) (int \z) 128) success]])
 
     (deftest "Create a new content view definition using the same name"
       (with-unique [content-def (kt/newContentView {:name "con-def"

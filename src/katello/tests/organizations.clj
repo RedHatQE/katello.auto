@@ -88,7 +88,14 @@
                                :initial-env (kt/newEnvironment {:name "environment"})})
           uniqueify
           create-and-verify))
-
+    
+    (deftest "Create an organization with dot in name and query for provider"
+      :blockers rest/katello-only
+      (with-unique [org (kt/newOrganization {:name "auto.org"})
+                    provider (kt/newProvider {:name "custom_provider" :org org})]
+        (ui/create-all (list org provider))
+        (assert (rest/exists? provider))))
+        
     (deftest "Two organizations with the same name is disallowed"
       :blockers (open-bz-bugs "726724")
 
@@ -192,7 +199,7 @@
         (ui/create org)
         (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
         (assert/is (organization/isKeynamePresent? keyname))
-        (organization/add-custom-keyname org ::organization/system-default-info-page keyname)))
+        (expecting-error (common/errtype ::notification/already-contains-default-info) (organization/add-custom-keyname org ::organization/system-default-info-page keyname))))
 
     (deftest "Create org with default keyname and delete keyname"
       (with-unique [org (kt/newOrganization {:name "keyname-org"

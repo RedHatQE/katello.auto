@@ -56,7 +56,7 @@
 
   (deftest "Clients can access custom content"
     :blockers (union (blocking-tests "simple sync" "promote content")
-                     (open-bz-bugs "784853" "790246" "959211")
+                     (open-bz-bugs "784853" "790246" "959211" "970570")
                      no-clients-defined)
     (let [repo (fresh-repo *session-org*
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")

@@ -405,7 +405,7 @@
 (defn get-details [system]
   (nav/go-to ::details-page system)
   (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
-                 "Arch" "RAM (MB)" "Sockets" "Location" "Environment"
+                 "Arch" "RAM (GB)" "Sockets" "Location" "Environment"
                  "Checked In" "Registered" "Last Booted" "Activation Key"
                  "System Type" "Host"]]
     (zipmap details
