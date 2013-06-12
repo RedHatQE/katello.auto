@@ -81,6 +81,7 @@
 
    :distributor-create       "distributors___create"
    :distributor-destroy      "distributors___destroy"
+   :distributor-update-subs  "distributors___update_subscriptions"
    
    :repo-create              "repositories___create"
    :repo-destroy             "repositories___destroy"
