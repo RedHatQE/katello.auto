@@ -324,7 +324,7 @@
                               :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-              (assert/is (->> cmd_result :exit-code (= 0))))))))
+              (assert/is (client/ok? cmd_result)))))))
       
      (deftest "Clone content view definition and consume content from it"
        (with-unique [org (kt/newOrganization {:name "cv-org"})
@@ -357,7 +357,7 @@
                                  :activationkey (:name ak)})
                (client/sm-cmd ssh-conn :refresh)
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-                 (assert/is (->> cmd_result :exit-code (= 0)))))))))
+                 (assert/is (client/ok? cmd_result))))))))
      
      (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
@@ -412,7 +412,7 @@
                                :activationkey (:name ak)})
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-               (assert/is (->> cmd_result :exit-code (= 0))))))))
+               (assert/is (client/ok? cmd_result)))))))
                   
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
        :blockers (open-bz-bugs "947497")
