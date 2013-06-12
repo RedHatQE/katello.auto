@@ -76,8 +76,6 @@
         (keyUp ::keyname-text "z")
         (click ::custom-info-button)))))
         
-      
-      
 
 (extend katello.Distributor
   ui/CRUD {:create create
