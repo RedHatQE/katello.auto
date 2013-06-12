@@ -109,7 +109,7 @@
    ::red-subs-icon               "//div[@class='red subs_image']"
    ::subs-text                   "//div[@class='subs_text fl panel_link']"
    ::subs-servicelevel	         "//div[@name='system[serviceLevel]']"
-   ::subs-attach-button          "fake_sub_submit@class"
+   ::subs-attach-button          "fake_sub_submit"
    ::unsubscribe                 "unsub_submit"})
 
 ;; Nav
