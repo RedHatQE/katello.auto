@@ -205,11 +205,13 @@
 
 #_(defgroup package-filter-tests
 
-  (deftest "Create new Package Filter test"
+    (deftest "Create new Package Filter test"
+      :uuid "d547ee8a-e863-a4c4-4e83-8f7a5e21b142"
     (with-unique [test-package-filter "test-package-filter"]
       (filter/create test-package-filter {:description "Test filter"}))
 
     (deftest "Delete existing Package Filter test"
+      :uuid "fab190c6-0f61-37a4-3ca3-7fe40a65d579"
       (with-unique [test-package-filter "test-package-filter"]
         (filter/create test-package-filter {:description "Test filter"})
         (filter/remove test-package-filter)))))
@@ -217,18 +219,21 @@
 (defgroup provider-tests
 
   (deftest "Create a custom provider"
+    :uuid "34a037ee-8530-9204-639b-06006c5b1dd6"
     (-> {:name "auto-cp", :description "my description", :org conf/*session-org*}
         katello/newProvider
         uniqueify
         ui/create)
 
     (deftest "Cannot create two providers in the same org with the same name"
+      :uuid "b7edc321-6d63-6db4-20cb-6e254aca2a28"
       (with-unique [provider (katello/newProvider {:name "dupe"
                                                    :org conf/*session-org*})]
         (expecting-error-2nd-try duplicate-disallowed
                                  (ui/create provider))))
 
     (deftest "Provider validation"
+      :uuid "3a0b3082-1091-3cc4-ade3-cc968a82f278"
       :data-driven true
       :description "Creates a provider using invalid data, and
                     verifies that an error notification is shown in
@@ -237,6 +242,7 @@
       (get-validation-data))
 
     (deftest "Rename a custom provider"
+      :uuid "45ad01c6-34ba-7074-cdbb-df3667a4a217"
       (let [provider (-> {:name "rename", :description "my description", :org conf/*session-org*}
                          katello/newProvider
                          uniqueify)]
@@ -245,6 +251,7 @@
           (verify-provider-renamed provider updated))))
 
     (deftest "Delete a custom provider"
+      :uuid "9ed6ab33-58cc-46f4-0483-c0f86f1b5712"
       (doto (-> {:name "auto-provider-delete"
                  :org conf/*session-org*}
                 katello/newProvider
@@ -253,6 +260,7 @@
         (ui/delete)))
 
     (deftest "Create two providers with the same name, in two different orgs"
+      :uuid "939fb331-058e-e5e4-ebbb-543da0e3cc30"
       (with-unique [provider (katello/newProvider {:name "prov"})]
         (doseq [org (->> {:name "prov-org"}
                          katello/newOrganization
