@@ -36,8 +36,8 @@
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
     [::details-menu (nav/browser-fn (mouseOver ::details-link))
-     [::distributor-info-page (nav/browser-fn (click ::custom-info-link))]
-     [::events-history-page (nav/browser-fn (click ::custom-info-link))]
+     [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
+     [::events-history-page (nav/browser-fn (click ::events-history-link))]
      [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
