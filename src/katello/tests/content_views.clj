@@ -14,7 +14,7 @@
                      [ui-common :as common]
                      [validation :refer :all]
                      [blockers :refer [bz-bugs]])
-            [test.tree.script :refer :all]
+            [test.tree.script :refer [deftest defgroup]]
             [katello :as kt]
             [katello.client.provision :as provision]
             [test.assert :as assert]
@@ -393,7 +393,7 @@
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
      
      (deftest "Consume content from composite content view definition"
-       :blockers (open-bz-bugs "961696")
+       :blockers (bz-bugs "961696")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      env (kt/newEnvironment {:name  "dev" :org org})]
          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
