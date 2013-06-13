@@ -18,26 +18,20 @@
                      [systems :as system]
                      [gpg-keys :as gpg-key]
                      [notices :as notices]
-                     [conf :refer [*session-user* *session-org* config *environments*]])
+                     [conf :refer [*session-user* *session-org* config *environments*]]
+                     [blockers :refer [bz-bugs]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
             [clojure.string :refer [blank? join]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
+            [test.tree.script :refer [defgroup deftest]]
             [clojure.zip :as zip]
             [slingshot.slingshot :refer [throw+]]
             [serializable.fn :refer [fn]]
-            [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]))
-
-
-
+            [test.assert :as assert]))
 
 ;; Functions
-
-
 
 (defn create-test-environment []
   (def test-environment (first *environments*))
@@ -131,22 +125,22 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (open-bz-bugs "717408" "728357")
+  :blockers (bz-bugs "717408" "728357")
 
   (deftest "Rename an existing system"
-    :blockers (open-bz-bugs "729364")
+    :blockers (bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
 
   (deftest "System details: save or cancel editing field"
     :data-driven true
-    ;; blockers (open-bz-bugs "917033")
+    ;; blockers (bz-bugs "917033")
 
     (fn [input-loc new-value save? expected-res]
       (with-unique-system s
         (rest/create s)
         (expecting-error expected-res
-          (nav/go-to ::system/details-page s)
-          (save-cancel input-loc new-value save?))))
+                         (nav/go-to ::system/details-page s)
+                         (save-cancel input-loc new-value save?))))
 
     (let [rand-lc-str (partial random-string (int \a) (int \z))]
       [[::system/name-text-edit "yoursys" false success]
@@ -164,12 +158,11 @@
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
-    :blockers (union rest/katello-only (open-bz-bugs "738054"))
+    :blockers (conj (bz-bugs "738054") rest/katello-only)
     (verify-system-appears-on-env-page (register-new-test-system)))
 
   (deftest "Subscribe a system to a custom product"
-    :blockers (union (open-bz-bugs "733780" "736547" "784701")
-                     rest/katello-only)
+    :blockers (conj (bz-bugs "733780" "736547" "784701") rest/katello-only)
 
     (with-unique [provider (katello/newProvider {:name "subscr-prov" :org *session-org*})
                   product (katello/newProduct {:name "subscribe-me"
@@ -179,7 +172,7 @@
       (ui/update (register-new-test-system) assoc :products (list product))))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
-    :blockers (open-bz-bugs "845261")
+    :blockers (bz-bugs "845261")
     (ui/update (register-new-test-system) assoc
                :auto-attach true
                :service-level "No Service Level Preference"))
@@ -230,7 +223,7 @@
      [true]])
     
   (deftest "Creates org with default custom system key and adds new system"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (with-unique [org (kt/newOrganization
                        {:name "defaultsysinfo"
                         :initial-env (kt/newEnvironment {:name "dev"})})
@@ -261,13 +254,13 @@
         (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
-    :blockers (open-bz-bugs "919373")
+    :blockers (bz-bugs "919373")
     (with-unique-system s
       (rest/create s)
       (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
     
   (deftest "System Details: Update custom info"
-    :blockers (open-bz-bugs "919373" "970079")
+    :blockers (bz-bugs "919373" "970079")
     (with-unique-system s
       (rest/create s)
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
@@ -288,11 +281,7 @@
         (assert/is (= 0 (ui-count-systems org))))))
 
   (deftest "System Details: Add custom info"
-    :blockers (union (open-bz-bugs "919373")
-                     (fn [{:keys [test-zipper]}] ;; skip if this bug is open and we're expecting failure
-                       (or (and (-> test-zipper zip/node :parameters last not) ;; success? == false
-                                ((open-bz-bugs "951197") nil))
-                           (list))))
+    :blockers (bz-bugs "919373")
     :data-driven true
 
     (fn [keyname custom-value success?]
@@ -310,12 +299,12 @@
 
      (with-meta
        ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
-       {:blockers (open-bz-bugs "951231")})
+       {:blockers (bz-bugs "951231")})
 
      ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
   (deftest "System Details: Update custom info"
-    :blockers (open-bz-bugs "919373" "951231" "951197" "970079")
+    :blockers (bz-bugs "919373" "951231" "951197" "970079")
     :data-driven true
 
     (fn [keyname custom-value new-value success?]
@@ -333,7 +322,7 @@
      ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
 
   (deftest "System Details: Delete custom info"
-    :blockers (open-bz-bugs "919373")
+    :blockers (bz-bugs "919373")
     (with-unique-system s
       (rest/create s)
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
@@ -341,14 +330,14 @@
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "System name is required when creating a system"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (expecting-error val/name-field-required
-      (ui/create (kt/newSystem {:name ""
-                                :facts (system/random-facts)
-                                :env test-environment}))))
+                     (ui/create (kt/newSystem {:name ""
+                                               :facts (system/random-facts)
+                                               :env test-environment}))))
 
   (deftest "New System Form: tooltips pop-up with correct information"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     :data-driven true
     verify-new-system-tooltip
     [[::system/ram-icon "The amount of RAM memory, in gigabytes (GB), which this system has"]
@@ -358,7 +347,7 @@
   
 
   (deftest "Add system from UI"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     :data-driven true
     (fn [virt?]
       (let [arch "x86_64", cpu "2"]
@@ -374,7 +363,7 @@
      [true]])
     
   (deftest "Check whether all the envs of org can be selected for a system"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (let [arch "x86_64"
           cpu "2"
           org       (uniqueify (kt/newOrganization {:name "defaultsysinfo"}))
@@ -389,7 +378,7 @@
       (ui/update system assoc :env (last env-chain))))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
-    :blockers (open-bz-bugs "959211")
+    :blockers (bz-bugs "959211")
     (provision/with-client "sys-detail"
       ssh-conn
       (client/register ssh-conn
@@ -410,7 +399,7 @@
 
   (deftest "Review Facts of registered system"
     ;;:blockers no-clients-defined
-    :blockers (open-bz-bugs "959211" "970570")
+    :blockers (bz-bugs "959211" "970570")
     (provision/with-client "sys-facts"
       ssh-conn
       (client/register ssh-conn {:username (:name *session-user*)
@@ -427,7 +416,7 @@
     
 
   (deftest "System-Details: Validate Activation-key link"
-    :blockers (open-bz-bugs "959211")
+    :blockers (bz-bugs "959211")
       
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
@@ -445,7 +434,7 @@
   (deftest "Install package group"
     :data-driven true
     :description "Add package and package group"
-    :blockers (union rest/katello-only (open-bz-bugs "959211" "970570"))
+    :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
 
     (fn [package-opts]
       (let [target-env test-environment
@@ -469,7 +458,7 @@
      [{:package-group "birds"}]])
 
   (deftest "Re-registering a system to different environment"
-    :blockers (union rest/katello-only (open-bz-bugs "959211"))
+    :blockers (conj (bz-bugs "959211") rest/katello-only)
       
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
@@ -491,7 +480,7 @@
                            (rest/get-id env-dev)))))))
     
   (deftest "Register a system and validate subscription tab" 
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (with-unique [target-env (kt/newEnvironment {:name "dev" 
                                                  :org *session-org*})
                   repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
@@ -511,7 +500,7 @@
           (validate-sys-subscription system)))))
     
   (deftest "Register a system using multiple activation keys"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
                   [ak1 ak2] (kt/newActivationKey {:name "ak1"
                                                   :env target-env
@@ -532,7 +521,7 @@
                   (browser clickAndWait aklink)))))))))
 
   (deftest  "Registering a system from CLI and consuming contents from UI"
-    :blockers (union rest/katello-only (open-bz-bugs "959211"))
+    :blockers (conj (bz-bugs "959211") rest/katello-only)
       
     (let [gpgkey (-> {:name "mykey", :org *session-org*,
                       :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
@@ -558,7 +547,7 @@
             (assert/is (->> result :exit-code (= 0))))))))
 
   (deftest "Install package after moving a system from one env to other"
-    :blockers (union rest/katello-only (open-bz-bugs "959211" "970570"))
+    :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
       
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
@@ -585,7 +574,7 @@
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
           (expecting-error [:type :katello.systems/package-install-failed]
-            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
+                           (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (->> cmd_result :exit-code (= 1)))))))))
 

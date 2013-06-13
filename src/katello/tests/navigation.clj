@@ -29,7 +29,7 @@
 (def all-navigation-tabs
   (concat (map vector common-tabs)
           (for [t katello-only-tabs]
-            (with-meta (vector t) {:blockers katello-only}))))
+            (with-meta (vector t) {:blockers (list katello-only)}))))
 
 
 ;;; Tests

@@ -11,13 +11,11 @@
                      [system-groups :as sg]
                      [activation-keys :as ak]
                      [systems :as system]
-                     [conf :refer [*session-org* config]])
-            
+                     [conf :refer [*session-org* config]]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [ensure-exists]]
-            (test.tree [script :refer :all]
-                       [builder :refer [union]])
+            (test.tree [script :refer :all])
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer :all]))
 
 
@@ -43,7 +41,7 @@
   (deftest "Perform search operation on systems"
     :data-driven true
     :description "Search for a system based on criteria."
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (fn [sysinfo searchterms & [groupinfo]]
       (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
@@ -87,7 +85,7 @@
               [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
               (with-meta
                 [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
-                {:blockers (union rest/katello-only (open-bz-bugs "852119"))})]
+                {:blockers (conj (bz-bugs "852119") rest/katello-only)})]
 
              ;;with latin-1/multibyte searches
      
@@ -107,7 +105,7 @@
                ;;testing
        
                (with-meta row
-                 {:blockers (open-bz-bugs "832978")
+                 {:blockers (bz-bugs "832978")
                   :description "Search for organizations names including
                         latin-1/multi-byte characters in search
                         string."})))))
@@ -150,7 +148,7 @@
   (deftest "search sync plans"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [planinfo searchterms]
       (with-unique [plan (kt/newSyncPlan (assoc planinfo :org *session-org*))]
@@ -166,7 +164,7 @@
   (deftest "search system groups"
     :data-driven true
     :description "search for a system group based on criteria"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [groupinfo sysinfo searchterms]
       (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
@@ -186,7 +184,7 @@
   (deftest "search GPG keys"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [gpg-key-info searchterms]
       (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]

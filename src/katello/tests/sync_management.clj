@@ -10,10 +10,10 @@
                      [ui-common :as common]
                      [sync-management :as sync]
                      [changesets :as changeset]
-                     [conf :refer [config *environments* *session-org* *session-user*]])
+                     [conf :refer [config *environments* *session-org* *session-user*]]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :as testfns]
             [test.tree.script :refer :all]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]))
 
 
@@ -33,7 +33,7 @@
   [[(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily"}) :katello.notifications/name-cant-be-blank]
    (with-meta
      [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal ""}) :katello.notifications/start-date-time-cant-be-blank]
-     {:blockers (open-bz-bugs "853229")})])
+     {:blockers (bz-bugs "853229")})])
 
 (defn create-all-and-sync
   "Creates all the given repos, including their products and
@@ -52,7 +52,7 @@
     (->> (fresh-repo) list create-all-and-sync vals (every? complete?) assert/is))
 
   (deftest "Create a sync plan"
-    :blockers (open-bz-bugs "729364")
+    :blockers (bz-bugs "729364")
     (with-unique-plan p
       (ui/create p))
 
@@ -74,7 +74,7 @@
       [(fn [] [(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily", :org *session-org*}) :katello.notifications/name-cant-be-blank])
        (with-meta
          (fn [] [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal "", :org *session-org*}) :katello.notifications/start-date-time-cant-be-blank])
-         {:blockers (open-bz-bugs "853229")})])
+         {:blockers (bz-bugs "853229")})])
 
     (deftest "Cannot create two sync plans with the same name"
       (with-unique-plan p
@@ -82,7 +82,7 @@
                                           (ui/create p))))
 
     (deftest "Assign a sync plan to multiple products"
-      :blockers (open-bz-bugs "751876" "965200")
+      :blockers (bz-bugs "751876" "965200")
       (with-unique-plan p
         (let [prov (uniqueify (kt/newProvider {:name "multiplan", :org *session-org*}))
               repos (for [repo (take 3 (repeatedly #(fresh-repo)))]
