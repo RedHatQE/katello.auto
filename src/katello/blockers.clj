@@ -7,12 +7,12 @@
   github.checker.Issue
   (blockers [i _] (let [i (gh/get-issue i)]
                     (if (gh/closed? i) '()
-                        (list i))))
+                        (list (gh/link i)))))
 
   bugzilla.checker.Bug
   (blockers [b _] (let [b (bz/get-bug b)]
                     (if (bz/fixed? b) '()
-                        (list b)))))
+                        (list (bz/link b))))))
 
 ;; Github
 (def auto-issue #(github.checker.Issue. "RedHatQE" "katello.auto" %))

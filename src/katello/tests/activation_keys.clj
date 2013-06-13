@@ -14,7 +14,7 @@
                      [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive]]
             [katello.client.provision :as provision]            
-            (test.tree.script :refer [defgroup deftest])
+            [test.tree.script :refer [defgroup deftest]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
 

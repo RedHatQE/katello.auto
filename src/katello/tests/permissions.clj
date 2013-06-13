@@ -473,7 +473,7 @@
 
     (fn [rolename expected-err]
       (expecting-error (common/errtype expected-err)
-        (create-role rolename)))
+                       (create-role rolename)))
 
     [[(random-string (int \a) (int \z) 149)  :katello.notifications/name-too-long]
      ["  foo" :katello.notifications/name-no-leading-trailing-whitespace]
@@ -520,9 +520,6 @@
 
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true
-      :blockers (fn [_] (if (rest/is-headpin?)
-                          (blockers (bz-bug "868179") _)
-                          (list)))
-
+     
       verify-access
       access-test-data)))
