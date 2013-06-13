@@ -400,7 +400,7 @@
                product1 (-> repo1 kt/product :name)
                product2 (-> repo2 kt/product :name)
                composite-view (promote-published-composite-view org env repo1 repo2)
-               ak (kt/newActivationKey {:name "ak"
+               ak (kt/newActivationKey {:name (uniqueify "ak")
                                         :env env
                                         :description "auto activation key"
                                         :content-view composite-view})]
