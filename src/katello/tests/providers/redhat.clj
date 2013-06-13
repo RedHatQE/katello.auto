@@ -11,10 +11,9 @@
                      [changesets      :as changesets]
                      [systems         :as system]
                      [fake-content    :as fake-content]
-                     [conf            :refer [config no-clients-defined with-org]])
+                     [conf            :refer [config no-clients-defined with-org]]
+                     [blockers        :refer [bz-bugs]])
             [test.tree.script :refer [defgroup deftest]]
-            [test.tree.builder :refer [union]]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.e2e :as e2e]
             [test.assert :as assert]))
 
@@ -88,8 +87,7 @@
 ;; Tests
 (defgroup redhat-promoted-content-tests
   (deftest "Admin can set Release Version on system"
-    :blockers (union (open-bz-bugs "832192")
-                     api/katello-only)
+    :blockers (conj (bz-bugs "832192") api/katello-only)
 
     (do-steps (merge (uniqueify-vals {:system-name "system"
                                       :org-name "relver-test"})
@@ -109,7 +107,7 @@
     :description "Enable repositories, promote content into an
                   environment, register a system to that environment
                   and install some packages."
-    :blockers no-clients-defined
+    :blockers (list no-clients-defined)
       
     (do-steps (merge (new-fake-manifest)
                      {:org-name (uniqueify "rh-content-test")
@@ -124,7 +122,7 @@
               step-verify-client-access))) 
 
 (defgroup redhat-content-provider-tests 
-  :blockers    (open-bz-bugs "729364")
+  :blockers (bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
     (do-steps (merge (new-fake-manifest)
@@ -136,7 +134,7 @@
     
                
     (deftest "Enable Red Hat repositories"
-      :blockers api/katello-only
+      :blockers (list api/katello-only)
       (do-steps (merge (new-fake-manifest)
                        {:org-name (uniqueify "enablerepos")
                         :enable-repos ["Nature Enterprise x86_64 1.0"

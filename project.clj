@@ -14,6 +14,7 @@
                  [inflections "0.6.2"]
                  
                  [test.tree.jenkins "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  
                  
@@ -27,7 +28,8 @@
                  [clj-http "0.6.4"]
 
                  [ui.navigate "0.4.0-SNAPSHOT"]
-                 [bugzilla.checker "0.1.2-SNAPSHOT"]
+                 [bugzilla.checker "0.2.0-SNAPSHOT"]
+                 [github.checker "0.2.0-SNAPSHOT"]
                  [fn.trace "1.4.0-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m"]
   :repl-options {:init-ns katello.repl}
