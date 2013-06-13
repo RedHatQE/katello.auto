@@ -14,15 +14,14 @@
                      [validation :refer :all] 
                      [client :as client] 
                      [conf :as conf]
-                     [changesets :as changeset])
+                     [changesets :as changeset]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-all-recursive]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
-            [test.tree.builder :refer [union]]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
-            [clojure.string :refer [capitalize upper-case lower-case trim]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [clojure.string :refer [capitalize upper-case lower-case trim]]))
 
 ;; Variables
 
@@ -110,7 +109,7 @@
              ui/create-all)))
 
     (deftest "Delete an environment"
-      :blockers (open-bz-bugs "790246")
+      :blockers (bz-bugs "790246")
 
       (with-unique [env (katello/newEnvironment {:name "delete-env"
                                                  :org @test-org
@@ -128,7 +127,7 @@
 
 
       (deftest "Delete an environment that has had content promoted into it"
-        :blockers rest/katello-only
+        :blockers (list rest/katello-only)
 
         (with-unique [env (katello/newEnvironment {:name "del-w-content"
                                                    :org @test-org})]
@@ -140,7 +139,7 @@
                       to delete the middle one, which should fail.
                       Then tries to delete the last one, which should
                       succeed."
-        :blockers    (open-bz-bugs "794799")
+        :blockers    (bz-bugs "794799")
 
         (let [envs (take 3 (uniques (katello/newEnvironment {:name "env"
                                                              :org conf/*session-org*})))]
@@ -151,7 +150,7 @@
 
 
     (deftest "Cannot create two environments in the same org with the same name"
-      :blockers (open-bz-bugs "726724")
+      :blockers (bz-bugs "726724")
 
       (with-unique [env (katello/newEnvironment {:name "test-dup"
                                                  :org @test-org
@@ -197,7 +196,7 @@
                                           :description "env description"}))))
 
   (deftest "Move systems from one env to another"
-    :blockers (union (open-bz-bugs "959211")
+    :blockers (conj (bz-bugs "959211")
                      conf/no-clients-defined)
     
     (provision/with-client "envmovetest" ssh-conn

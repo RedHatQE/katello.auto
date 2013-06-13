@@ -10,14 +10,13 @@
                      [environments :as env]
                      [validation :as val]
                      [fake-content  :as fake]
-                     [conf :refer [*environments*]])
+                     [conf :refer [*environments*]]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive]]
             [katello.client.provision :as provision]            
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
+            (test.tree.script :refer [defgroup deftest])
             [serializable.fn :refer [fn]]
-            [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [test.assert :as assert]))
 
 ;; Tests
 
@@ -33,13 +32,13 @@
   :group-setup #(create-recursive (first *environments*))
   
   (deftest "Create an activation key"
-    :blockers (open-bz-bugs "750354")
+    :blockers (bz-bugs "750354")
     (with-unique-ak a
       (ui/create a))
     
     (deftest "Create an activation key with i18n characters"
       :data-driven true
-      :blockers (open-bz-bugs "956308")
+      :blockers (bz-bugs "956308")
       (fn [name]
         (with-unique [a (assoc (some-ak) :name name)]
           (ui/create a)))
@@ -56,7 +55,7 @@
                                      (ui/create a))))
 
     (deftest "create activation keys with subscriptions"
-      :blockers rest/katello-only
+      :blockers (list rest/katello-only)
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
         (fake/setup-org envz)
@@ -67,7 +66,7 @@
                            (ak/get-subscriptions ak)))))))
 
   (deftest "Delete activation key after registering a system with it"
-    :blockers (open-bz-bugs "959211")
+    :blockers (bz-bugs "959211")
 
     (with-unique-ak ak
       (ui/create ak)

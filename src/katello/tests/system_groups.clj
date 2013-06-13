@@ -10,14 +10,13 @@
                      [tasks :refer [uniqueify uniques expecting-error with-unique with-unique-ent]]
                      [systems :as system]
                      [system-groups :as group]
-                     [conf :refer [*session-user* *session-org* config *environments*]])
+                     [conf :refer [*session-user* *session-org* config *environments*]]
+                     [blockers :refer [bz-bugs]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-recursive]]
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
+            [test.tree.script :refer [defgroup deftest]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
 
 (alias 'notif 'katello.notifications)
@@ -86,14 +85,14 @@
 
         [(with-meta
            ["-1"   (common/errtype ::notif/max-systems-must-be-positive)]
-           {:blockers (open-bz-bugs "848564")})
+           {:blockers (bz-bugs "848564")})
          ["-100" (common/errtype ::notif/max-systems-must-be-positive)]
          [""     (common/errtype ::notif/max-systems-must-be-positive)]
          ["0"    (common/errtype ::notif/max-systems-may-not-be-zero)]]))
 
 
     (deftest "Add a system to a system group"
-      :blockers (open-bz-bugs "845668")
+      :blockers (bz-bugs "845668")
       :data-driven true
 
       ;; Create various groups, changing the original properties if necessary
@@ -111,7 +110,7 @@
          {:description "Add a system to a system group with a space in the group name"})])
 
     (deftest "Check that system count increments and decrements"
-      :blockers (open-bz-bugs "857031")
+      :blockers (bz-bugs "857031")
 
       (with-unique [s (some-system)
                     g (some-group)]
@@ -123,7 +122,7 @@
           (assert-system-count g 0))))
 
     (deftest "Unregister a system & check count under sys-group details is -1"
-      :blockers (union rest/katello-only (open-bz-bugs "959211"))
+      :blockers (conj (bz-bugs "959211") rest/katello-only)
 
       (with-unique [s1 (some-system)
                     g (some-group)]
@@ -155,7 +154,7 @@
        [{:also-remove-systems? false}]])
 
     (deftest "Remove a system from copied system group"
-      :blockers (open-bz-bugs "857031")
+      :blockers (bz-bugs "857031")
       (with-unique [g (some-group)
                     s (some-system)]
         (rest/create s)
@@ -192,7 +191,7 @@
                          (system/add-bulk-sys-to-sysgrp systems g))))
 
     (deftest "Register a system using AK & sys count should increase by 1"
-      :blockers (open-bz-bugs "959211")
+      :blockers (bz-bugs "959211")
       (with-unique [g (some-group)
                     s (some-system)
                     ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]

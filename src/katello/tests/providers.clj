@@ -1,12 +1,8 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
-  (:require [katello :as kt]
-            [katello.client.provision :as provision]
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
-            [serializable.fn   :refer [fn]]
+  (:require [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
-            [bugzilla.checker  :refer [open-bz-bugs]]
+            [test.tree.script :refer [defgroup deftest]]
             [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
@@ -23,8 +19,10 @@
                      [gpg-keys        :as gpg-key]
                      [fake-content    :as fake]
                      [validation      :refer :all]
-                     [conf            :as conf :refer [config]])
-            [katello.tests.useful :refer [fresh-repo create-series create-recursive]]))
+                     [conf            :as conf :refer [config]]
+                     [blockers :refer [bz-bugs]])
+            [katello.tests.useful :refer [fresh-repo create-series create-recursive]]
+            [katello.client.provision :as provision]))
 
 ;; Functions
 
@@ -96,7 +94,7 @@
   :group-setup create-test-environment
 
   (deftest "Create a new GPG key from text input"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
 
     (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
         katello/newGPGKey
@@ -104,7 +102,7 @@
         ui/create)
 
     (deftest "Create a new GPG key from text input and associate it with products/providers"
-      :blockers rest/katello-only
+      :blockers (list rest/katello-only)
 
       (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
           katello/newGPGKey
@@ -112,7 +110,7 @@
           create-custom-provider-with-gpg-key)))
 
   (deftest "Create a new GPG key from file"
-    :blockers (open-bz-bugs "835902" "846432")
+    :blockers (bz-bugs "835902" "846432")
 
     (-> {:name "test-key-file", :url (@config :gpg-key), :org conf/*session-org*}
         katello/newGPGKey
@@ -120,7 +118,7 @@
         ui/create)
 
     (deftest "Create a new GPG key from file and associate it with products/providers"
-      :blockers rest/katello-only
+      :blockers (list rest/katello-only)
 
       (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
           katello/newGPGKey
@@ -128,7 +126,7 @@
           create-custom-provider-with-gpg-key)
 
       (deftest "Associate same GPG key to multiple providers"
-        :blockers rest/katello-only
+        :blockers (list rest/katello-only)
         :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
 
         (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env (kt/newEnvironment {:name "DEV"})})
@@ -144,7 +142,7 @@
         ui/delete)
 
       (deftest "Delete existing GPG key, associated with products/providers"
-        :blockers rest/katello-only
+        :blockers (list rest/katello-only)
 
         (doto (-> {:name "test-key", :url (@config :gpg-key), :org conf/*session-org*}
                   katello/newGPGKey
@@ -153,7 +151,7 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
-      :blockers (union rest/katello-only (open-bz-bugs "970570"))
+      :blockers (conj (bz-bugs "970570") rest/katello-only)
       (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey

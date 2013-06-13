@@ -14,14 +14,14 @@
                      [users :as user]
                      [tasks :refer :all] 
                      [conf :refer [config *session-org* *session-user* *environments*]] 
-                     [navigation :as nav]) 
+                     [navigation :as nav]
+                     [blockers :refer [bz-bugs]]) 
             [katello.tests.useful :refer [create-all-recursive create-recursive]]
             [slingshot.slingshot :refer [throw+]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            [clojure.string :refer [capitalize upper-case lower-case]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [clojure.string :refer [capitalize upper-case lower-case]]))
 
 ;;; Constants
 
@@ -171,7 +171,7 @@
   :test-teardown (fn [& _ ] (login))
  
   (deftest "User changes his password"
-    :blockers (open-bz-bugs "915960")
+    :blockers (bz-bugs "915960")
     (-> (new-unique-user)
         create-user
         login-user
@@ -184,7 +184,7 @@
     
     (deftest "Admin creates a user with i18n characters"
       :data-driven true
-      :blockers (open-bz-bugs "868906")
+      :blockers (bz-bugs "868906")
       
       (fn [username]
         (ui/create (uniqueify (assoc generic-user :name username ))))
@@ -204,7 +204,7 @@
        ["" :katello.notifications/username-cant-be-blank]])
 
     (deftest "Admin creates a user with a default organization"
-      :blockers (open-bz-bugs "852119")
+      :blockers (bz-bugs "852119")
       
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     env (kt/newEnvironment {:name "environment" :org org})
@@ -251,19 +251,19 @@
       
 
     (deftest "Admin changes a user's password"
-      :blockers (open-bz-bugs "720469")
+      :blockers (bz-bugs "720469")
       (with-unique [user (assoc generic-user :name "edituser")]
         (ui/create user)
         (ui/update user assoc :password "changedpwd")))
 
     (deftest "Admin deletes a user"
-      :blockers (open-bz-bugs "961122")
+      :blockers (bz-bugs "961122")
       (with-unique [user (assoc generic-user :name "deluser")]
         (ui/create user)
         (ui/delete user))
 
       (deftest "Admin who deletes the original admin account can still do admin things"
-        :blockers (open-bz-bugs "868910")
+        :blockers (bz-bugs "868910")
         
         (let [admin @user/admin]
           (try
@@ -275,14 +275,14 @@
                      (assign-admin admin))))))
 
     (deftest "Two users with the same username is disallowed"
-      :blockers (open-bz-bugs "738425")
+      :blockers (bz-bugs "738425")
 
       (with-unique [user (assoc generic-user :name "dupeuser")]
         (expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
                                  (ui/create user))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
-      :blockers (open-bz-bugs "857876")
+      :blockers (bz-bugs "857876")
       :data-driven true
       (fn [orig-name modify-case-fn]
         (with-unique [user (assoc generic-user :name orig-name)]
@@ -325,7 +325,7 @@
 
   (deftest "Unassign admin rights to admin user and then login
                to find only dashboard menu"
-    :blockers (open-bz-bugs "916156")
+    :blockers (bz-bugs "916156")
     (let [user (-> (new-unique-user)
                    rest/create
                    assign-admin)

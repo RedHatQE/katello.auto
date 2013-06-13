@@ -7,11 +7,11 @@
                         [login :refer [login logout logged-in? logged-out?]]
                         [users :as user]
                         [ui-common :as common]
+                        [blockers :refer [bz-bugs]]
                         [organizations :as organization])
             [serializable.fn :refer [fn]]
             [test.tree.script :refer :all]
             [slingshot.slingshot :refer :all]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]))
 
 ;;; Functions
@@ -64,7 +64,7 @@
   
   (deftest "login as invalid user"
     :data-driven true
-    :blockers    (open-bz-bugs "730738")
+    :blockers (bz-bugs "730738")
     
     verify-invalid-login-rejected
 

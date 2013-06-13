@@ -6,9 +6,9 @@
                      [tasks :refer :all]
                      [validation :as val]
                      [organizations :as organization]
-                     [conf :as conf])
+                     [conf :as conf]
+                     [blockers :refer [bz-bugs]])
             [test.tree.script :refer [defgroup deftest]]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [katello.tests.useful :refer [create-recursive]]
             [test.assert :as assert]))
 
@@ -32,7 +32,7 @@
 
 (defgroup custom-product-tests
   :group-setup create-test-provider
-  :blockers (open-bz-bugs "751910")
+  :blockers (bz-bugs "751910")
   
   (deftest "Create a custom product"
     (ui/create (reset! test-product
@@ -42,7 +42,7 @@
 
     
   (deftest "Delete a custom product"
-    :blockers (open-bz-bugs "729364")
+    :blockers (bz-bugs "729364")
     
     (doto (uniqueify (katello/newProduct {:provider @test-provider
                                           :name "deleteme"
@@ -51,7 +51,7 @@
       (ui/delete)))
   
   (deftest "Create a repository"
-    :blockers (open-bz-bugs "729364")
+    :blockers (bz-bugs "729364")
     
     (-> {:name "repo"
          :url "http://test.com/myurl"
@@ -61,7 +61,7 @@
         ui/create))
   
   (deftest "Delete a repository"
-    :blockers (open-bz-bugs "745279")
+    :blockers (bz-bugs "745279")
     
     (doto (-> {:name "deleteme"
                :url "http://my.fake/url" 
@@ -72,7 +72,7 @@
       (ui/delete)))
   
   (deftest "Create two products with the same name, in different orgs"
-    :blockers (open-bz-bugs "784712" "802795")
+    :blockers (bz-bugs "784712" "802795")
     
     (with-unique [provider (katello/newProvider {:name "prov"})
                   product (katello/newProduct {:name "prod"
@@ -121,7 +121,7 @@
                                                        "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
   
   (deftest "Auto-discovered repositories should automatically use GPG keys from product, if associated"
-    :blockers (open-bz-bugs "927335")
+    :blockers (bz-bugs "927335")
     (with-unique [org (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})

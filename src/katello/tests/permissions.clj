@@ -18,14 +18,15 @@
                      [client :as client]
                      [users :as user]
                      [roles :as role]
-                     [login :as login])
+                     [login :as login]
+                     [blockers :refer [bz-bugs bz-bug]])
             [katello.client.provision :as provision]
-            [test.tree.script :refer [deftest defgroup]]
             [katello.tests.useful :refer [ensure-exists fresh-repo]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]]
-            [bugzilla.checker :refer [open-bz-bugs]])
+            [test.tree.script :refer [deftest defgroup]]
+            [test.tree :refer [blockers]]
+            [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;; Functions
@@ -186,7 +187,7 @@
                                 (navigate-fn :katello.systems/page)]
               :disallowed-actions (conj (navigate-all [:katello.providers/custom-page :katello.organizations/page])
                                         create-an-org)])
-      assoc :blockers (open-bz-bugs "757775"))
+      assoc :blockers (bz-bugs "757775"))
 
      (vary-meta
       (fn [] [:permissions [{:org global, :resource-type "Activation Keys", :verbs ["Read Activation Keys"], :name "akaccess"}]
@@ -195,7 +196,7 @@
                                                        :katello.systems/page :katello.systems/by-environments-page
                                                        :katello.repositories/redhat-page])
                                         create-an-ak)])
-      assoc :blockers (open-bz-bugs "757817"))
+      assoc :blockers (bz-bugs "757817"))
 
      (vary-meta
       (fn [] [:permissions [{:org global, :resource-type "Activation Keys", :verbs ["Administer Activation Keys"], :name "akmang"}]
@@ -204,7 +205,7 @@
                                                        :katello.systems/page :katello.systems/by-environments-page
                                                        :katello.repositories/redhat-page])
                                         create-an-org)])
-      assoc :blockers (open-bz-bugs "757817"))
+      assoc :blockers (bz-bugs "757817"))
 
      (vary-meta
       (fn [] [:permissions [{:org global, :resource-type "Users", :verbs ["Read Users"], :name "userread"}]
@@ -214,7 +215,7 @@
                                         create-an-org
                                         create-an-env
                                         create-a-user)])
-      assoc :blockers (open-bz-bugs "953606"))
+      assoc :blockers (bz-bugs "953606"))
 
      (vary-meta
       (fn [] (with-unique [user baseuser]
@@ -226,7 +227,7 @@
                                           (fn [] (with-unique [cannot-delete baseuser]
                                                    (ui/create cannot-delete)
                                                    (ui/delete cannot-delete))))]))
-      assoc :blockers (open-bz-bugs "953606"))
+      assoc :blockers (bz-bugs "953606"))
 
      (vary-meta
       (fn [] (with-unique [user baseuser]
@@ -236,7 +237,7 @@
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.organizations/page :katello.roles/page
                                                          :katello.changesets/page])
                                           create-a-user)]))
-      assoc :blockers (open-bz-bugs "953606"))
+      assoc :blockers (bz-bugs "953606"))
 
      (fn [] (with-unique [org baseorg]
               [:permissions [{:org conf/*session-org*, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
@@ -341,7 +342,7 @@
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                          :katello.providers/custom-page])
                                           (fn [] (changeset/promote-delete-content cs)))]))
-      assoc :blockers (open-bz-bugs "960620"))
+      assoc :blockers (bz-bugs "960620"))
 
      (fn [] (let [org (uniqueify baseorg)
                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
@@ -411,7 +412,7 @@
                                           (assert/is (->> result2 :exit-code (= 0))))))]
                   :disallowed-actions [(navigate-all [:katello.sync-management/status-page
                                                       :katello.providers/custom-page])]])))
-      assoc :blockers (open-bz-bugs "970570"))
+      assoc :blockers (bz-bugs "970570"))
      
      (fn [] (with-unique [org baseorg
                           env (kt/newEnvironment {:name "blah" :org org})]
@@ -480,7 +481,7 @@
      ["foo " :katello.notifications/name-no-leading-trailing-whitespace]
      ["" :katello.notifications/name-cant-be-blank]
      (with-meta ["<a href='http://malicious.url/'>Click Here</a>" :katello.notifications/katello-error]
-       {:blockers (open-bz-bugs "901657")}) ; TODO create more specific error after fix
+       {:blockers (bz-bugs "901657")}) ; TODO create more specific error after fix
      ])
 
   (deftest "Remove a role"
@@ -520,8 +521,8 @@
     (deftest "Verify user with specific permission has access only to what permission allows"
       :data-driven true
       :blockers (fn [_] (if (rest/is-headpin?)
-                          ((open-bz-bugs "868179") _)
-                          []))
+                          (blockers (bz-bug "868179") _)
+                          (list)))
 
       verify-access
       access-test-data)))

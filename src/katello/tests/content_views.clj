@@ -12,7 +12,8 @@
                      [changesets :as changeset]
                      [tasks :refer :all]
                      [ui-common :as common]
-                     [validation :refer :all])
+                     [validation :refer :all]
+                     [blockers :refer [bz-bugs]])
             [test.tree.script :refer :all]
             [katello :as kt]
             [katello.client.provision :as provision]
@@ -21,7 +22,7 @@
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            ))
 
 ;; Functions
 (defn promote-published-content-view
@@ -59,7 +60,7 @@
           ui/create))
 
     (deftest "Create a new content view definition w/ i18n characters"
-      :blockers (open-bz-bugs "953594")
+      :blockers (bz-bugs "953594")
       :data-driven true
 
       (fn [view-name]
@@ -253,7 +254,7 @@
           (changeset/promote-delete-content cs))))
     
     (deftest "Delete promoted content-view"
-      :blockers (open-bz-bugs "960564")
+      :blockers (bz-bugs "960564")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
@@ -271,7 +272,7 @@
           (changeset/promote-delete-content deletion-cs))))
       
     (deftest "Consuming content-view contents on client"
-      :blockers (open-bz-bugs "947497")
+      :blockers (bz-bugs "947497")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
@@ -358,7 +359,7 @@
       
      
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
-       :blockers (open-bz-bugs "947497")
+       :blockers (bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev" :org org})]
          (let [repo (fresh-repo org
