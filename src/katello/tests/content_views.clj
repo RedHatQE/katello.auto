@@ -45,6 +45,38 @@
     (changeset/promote-delete-content cs)
     cv))
 
+(defn promote-published-composite-view
+  "Function to promote composite content view that contains two published views"
+  [org env repo1 repo2]
+  (with-unique [cv1 (kt/newContentView {:name "content-view1"
+                                        :org org
+                                        :published-name "publish-name1"})
+                cv2 (kt/newContentView {:name "content-view2"
+                                        :org org
+                                        :published-name "publish-name2"})]
+    (ui/create-all (list org env cv1 cv2))
+    (doseq [repo [repo1 repo2]]
+      (create-recursive repo)
+      (sync/perform-sync (list repo)))
+    (doseq [[repo cv published-names] [[repo1 cv1 (:published-name cv1)]
+                                       [repo2 cv2 (:published-name cv2)]]]
+      (ui/update cv assoc :products (list (kt/product repo)))
+      (views/publish {:content-defn cv :published-name published-names :org org}))
+    (with-unique [composite-view (newContentView {:name "composite-view"
+                                                  :org org
+                                                  :description "Composite Content View"
+                                                  :published-name "publish-composite"
+                                                  :composite 'yes'
+                                                  :composite-names (list cv1 cv2)})]
+      (ui/create composite-view)
+      (views/publish {:content-defn composite-view :published-name (:published-name composite-view) :org org})
+      (with-unique [composite-cs (katello/newChangeset {:name "composite-cs"
+                                                        :content (list composite-view)
+                                                        :env env})]
+        (changeset/promote-delete-content composite-cs)
+        composite-view))))
+
+                      
 ;; Tests
 
 (let [success #(-> % :type (= :success))
@@ -123,23 +155,24 @@
 
     (deftest "Publish content view definition"
       (with-unique [content-def (kt/newContentView {:name "con-def"
+                                                    :published-name "publish-name"
                                                     :org conf/*session-org*})]
         (ui/create content-def)
         (views/publish {:content-defn content-def
-                        :published-name (uniqueify "pub-name")
+                        :published-name (:published-name content-def)
                         :org *session-org*})))
 
     (deftest "Published content view name links to content search page"
       (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                    :org conf/*session-org*})
-                    pub-name "pub-view"]
+                                                    :published-name "publish-name"
+                                                    :org conf/*session-org*})]
         (ui/create content-def)
         (views/publish {:content-defn content-def 
-                        :published-name pub-name 
+                        :published-name (:published-name content-def)
                         :org *session-org*})
-        (let [{:strs [href]} (browser getAttributes (views/publish-view-name pub-name))]
+        (let [{:strs [href]} (browser getAttributes (views/publish-view-name (:published-name content-def)))]
           (assert (and (.startsWith href "/katello/content_search")
-                       (.contains href pub-name))))))
+                       (.contains href (:published-name content-def)))))))
     
     (deftest "Create a new content-view/composite definition and add a product"
       :data-driven true
@@ -147,19 +180,19 @@
       (fn [composite?]
         (with-unique [org (newOrganization {:name "auto-org"})
                       content-view (kt/newContentView {:name "auto-view-definition"
+                                                       :published-name "publish-name"
                                                        :org org})
                       repo (fresh-repo org pulp-repo)
-                      published-name "pub-name"
                       composite-view (kt/newContentView {:name "composite-view"
                                                          :org org
                                                          :description "Composite Content View"
                                                          :composite 'yes'
-                                                         :composite-name published-name})]
+                                                         :composite-name content-view})]
           (ui/create-all (list org content-view))
           (create-recursive repo)
           (ui/update content-view assoc :products (list (kt/product repo)))
           (views/publish {:content-defn content-view
-                          :published-name published-name
+                          :published-name (:published-name content-view)
                           :org *session-org*})
           (when composite?
             (ui/create composite-view))))
@@ -192,27 +225,29 @@
           (ui/update dissoc :repos))))
 
     (deftest "Create composite content-definition with two products"
-      (with-unique [org (kt/newOrganization {:name "auto-org"})]
+      (with-unique [org (kt/newOrganization {:name "auto-org"})
+                    cv1 (kt/newContentView {:name "content-view1"
+                                            :org org
+                                            :published-name "publish-name1"})
+                    cv2 (kt/newContentView {:name "content-view2"
+                                            :org org
+                                            :published-name "publish-name2"})]
         (let [repo1 (fresh-repo org pulp-repo)
-              repo2 (fresh-repo org zoo-repo)
-              published-names (take 2 (uniques "publish-name"))
-              content-defns (->> {:name "view-definition"
-                                  :org org} kt/newContentView uniques (take 2))]
-          (ui/create org)
-          (ui/create-all content-defns)
+              repo2 (fresh-repo org zoo-repo)]
+          (ui/create-all (list org cv1 cv2))
           (doseq [repo [repo1 repo2]]
             (create-recursive repo))
-          (doseq [[repo content-defns published-names] [[repo1  (first content-defns) (first published-names)]
-                                                        [repo2  (last content-defns) (last published-names)]]]
-            (ui/update content-defns assoc :products (list (kt/product repo)))
-            (views/publish {:content-defn content-defns
+          (doseq [[repo cv published-names] [[repo1  cv1 (:published-name cv1)]
+                                             [repo2  cv2 (:published-name cv2)]]]
+            (ui/update cv assoc :products (list (kt/product repo)))
+            (views/publish {:content-defn cv
                             :published-name published-names
                             :org org}))
           (with-unique [composite-view (newContentView {:name "composite-view"
                                                         :org org
                                                         :description "Composite Content View"
                                                         :composite 'yes'
-                                                        :composite-names published-names})]
+                                                        :composite-names (list cv1 cv2)})]
             (ui/create composite-view)))))
 
     (deftest "Add published content-view to an activation-key"
@@ -290,7 +325,7 @@
                               :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-              (assert/is (->> cmd_result :exit-code (= 0))))))))
+              (assert/is (client/ok? cmd_result)))))))
       
      (deftest "Clone content view definition and consume content from it"
        (with-unique [org (kt/newOrganization {:name "cv-org"})
@@ -323,7 +358,7 @@
                                  :activationkey (:name ak)})
                (client/sm-cmd ssh-conn :refresh)
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-                 (assert/is (->> cmd_result :exit-code (= 0)))))))))
+                 (assert/is (client/ok? cmd_result))))))))
      
      (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
@@ -351,13 +386,35 @@
                                                         :org org
                                                         :description "Composite Content View"
                                                         :composite 'yes'
-                                                        :composite-names (:published-name cv1)})]
+                                                        :composite-names cv1})]
             (ui/create composite-view)
             (browser click ::views/content-tab)
             (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
-      
      
+     (deftest "Consume content from composite content view definition"
+       :blockers (open-bz-bugs "961696")
+       (with-unique [org (kt/newOrganization {:name "cv-org"})
+                     env (kt/newEnvironment {:name  "dev" :org org})]
+         (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
+               repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+               product1 (-> repo1 kt/product :name)
+               product2 (-> repo2 kt/product :name)
+               composite-view (promote-published-composite-view org env repo1 repo2)
+               ak (kt/newActivationKey {:name (uniqueify "ak")
+                                        :env env
+                                        :description "auto activation key"
+                                        :content-view composite-view})]
+           (ui/create ak)
+           (ui/update ak assoc :subscriptions (list product1 product2))
+           (provision/with-client "consume-composite-content" ssh-conn
+             (client/register ssh-conn
+                              {:org (:name org)
+                               :activationkey (:name ak)})
+             (client/sm-cmd ssh-conn :refresh)
+             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+               (assert/is (client/ok? cmd_result)))))))
+                  
      (deftest "Validate: CV contents should not available on client after deleting it from selected env"
        :blockers (bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})

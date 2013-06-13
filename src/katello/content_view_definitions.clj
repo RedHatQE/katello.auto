@@ -85,7 +85,7 @@
                          (when composite 
                            (browser click ::composite)
                            (doseq [composite-name composite-names]
-                             (browser click (composite-view-name composite-name))))) [composite]}
+                             (browser click (composite-view-name (:published-name composite-name)))))) [composite]}
                       ::save-new)
   (notification/check-for-success {:match-pred (notification/request-type? :cv-create)}))
 

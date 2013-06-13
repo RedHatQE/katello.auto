@@ -51,10 +51,18 @@
   [ent]
   (lazy-seq (map rest/create (tasks/uniques ent))))
 
+(defn fresh-repos
+  "Infite seq of unique repos (in new provider/product) in given org,
+   with given url."
+  [org url]
+  (for [[prov prod repo] (apply map list
+                                (map tasks/uniques
+                                     (list (kt/newProvider {:name "sync", :org org})
+                                           (kt/newProduct {:name "sync-test1"})
+                                           (kt/newRepository {:name "testrepo", :url url}))))]
+    (assoc repo :product (assoc prod :provider prov))))
+
 (defn fresh-repo "New repo in a new product in a new provider"
   [org url]
-  (tasks/with-unique [prov (kt/newProvider {:name "sync", :org org})
-                      prod (kt/newProduct {:name "sync-test1", :provider prov})
-                      repo (kt/newRepository {:name "testrepo", :product prod, :url url})]
-    repo))
+  (first (fresh-repos org url)))
 
