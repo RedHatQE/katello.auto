@@ -86,12 +86,14 @@
   (defgroup content-views-tests
 
     (deftest "Create a new content view definition"
+      :uuid "43016c01-3f46-b164-3ffb-4c31e0d3339d"
       (-> {:name "view-def" :org *session-org*}
           katello/newContentView
           uniqueify
           ui/create))
 
     (deftest "Create a new content view definition w/ i18n characters"
+      :uuid "79319b58-3934-80e4-7103-a307fc8eec70"
       :blockers (bz-bugs "953594")
       :data-driven true
 
@@ -103,6 +105,7 @@
       i8n-chars)
 
     (deftest "Create a new content view with a blank name"
+      :uuid "e6244ec7-6c90-3284-2e2b-e8e81d75f9fd"
       :tcms "248517"
 
       (expecting-error (common/errtype ::notifications/name-cant-be-blank)
@@ -111,6 +114,7 @@
                            ui/create)))
 
     (deftest "Create a new content view with a long name"
+      :uuid "ba7e1f58-bf60-2954-a8cb-5185c011b9f0"
       :data-driven true
       :tcms "248518"
 
@@ -122,6 +126,7 @@
        [(random-string (int \a) (int \z) 128) success]])
 
     (deftest "Create a new content view definition using the same name"
+      :uuid "32447769-82b4-1334-bdab-8d40d7012286"
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :org conf/*session-org*})]
         (ui/create content-def)
@@ -129,6 +134,7 @@
                          (ui/create content-def))))
 
     (deftest "Delete a content view definition"
+      :uuid "79c7d67f-5fca-dcc4-7e33-73c8bf413c67"
       (doto (-> {:name "view-def" :org *session-org*}
                 kt/newContentView
                 uniqueify)
@@ -136,12 +142,14 @@
         (ui/delete)))
 
     (deftest "Clone empty content view definition"
+      :uuid "2184af79-0ffb-3cf4-52bb-48b28eefe34c"
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :org conf/*session-org*})]
         (ui/create content-def)
         (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))
 
       (deftest "Clone content view definition with content"
+        :uuid "3a536c98-1829-6cb4-24e3-ff68de2e095d"
         :tcms "248743"
         
         (with-unique [content-def (kt/newContentView {:name "con-def"
@@ -154,6 +162,7 @@
 
 
     (deftest "Publish content view definition"
+      :uuid "b71674d7-0e86-fe04-39f3-f408cb2a95bc"
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :published-name "publish-name"
                                                     :org conf/*session-org*})]
@@ -163,6 +172,7 @@
                         :org *session-org*})))
 
     (deftest "Published content view name links to content search page"
+      :uuid "16fb0291-7312-6ab4-e92b-063d776f837b"
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :published-name "publish-name"
                                                     :org conf/*session-org*})]
@@ -175,6 +185,7 @@
                        (.contains href (:published-name content-def)))))))
     
     (deftest "Create a new content-view/composite definition and add a product"
+      :uuid "1f2416e4-ad73-49e4-dad3-6c529caeb0bb"
       :data-driven true
 
       (fn [composite?]
@@ -201,6 +212,7 @@
        [false]])
 
     (deftest "Edit a content view definition"
+      :uuid "f8de7fae-2cdf-4854-4793-50c33371e491"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-definition (kt/newContentView {:name "auto-view-definition"
                                                            :description "new description"
@@ -211,6 +223,7 @@
 
 
     (deftest "Remove complete product or a repo from content-view-defnition"
+      :uuid "5439b54f-e679-19b4-fd93-3fbc32c96b14"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-defn (kt/newContentView {:name "auto-view-definition"
                                                      :org org})
@@ -225,6 +238,7 @@
           (ui/update dissoc :repos))))
 
     (deftest "Create composite content-definition with two products"
+      :uuid "9463a161-8d9b-9cc4-f09b-c011b0cd6c53"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     cv1 (kt/newContentView {:name "content-view1"
                                             :org org
@@ -251,6 +265,7 @@
             (ui/create composite-view)))))
 
     (deftest "Add published content-view to an activation-key"
+      :uuid "fcf1634a-fa31-3664-fecb-25b181009147"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
@@ -265,6 +280,7 @@
                         (browser getText ::views/product-in-cv))))))
     
     (deftest "Promote content-view containing two published-views"
+      :uuid "0151b513-6248-7e04-97eb-1bb43c81b592"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
                     cv1 (kt/newContentView {:name "content-view1"
@@ -289,6 +305,7 @@
           (changeset/promote-delete-content cs))))
     
     (deftest "Delete promoted content-view"
+      :uuid "55371086-281b-5654-2853-f69f0216ef62"
       :blockers (bz-bugs "960564")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
@@ -307,6 +324,7 @@
           (changeset/promote-delete-content deletion-cs))))
       
     (deftest "Consuming content-view contents on client"
+      :uuid "87a73413-11a2-8434-2093-53c408be2b82"
       :blockers (bz-bugs "947497")
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
@@ -327,7 +345,8 @@
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))))))
       
-     (deftest "Clone content view definition and consume content from it"
+    (deftest "Clone content view definition and consume content from it"
+      :uuid "6a356ca9-d3e4-4184-89cb-b72940c480e3"
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev", :org org})]   
          (let [repo (fresh-repo org
@@ -360,7 +379,8 @@
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
                  (assert/is (client/ok? cmd_result))))))))
      
-     (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
+    (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
+      :uuid "7f698537-7525-2e74-8c4b-32445cf0140f"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
                     cv1 (kt/newContentView {:name "content-view1"
@@ -392,7 +412,8 @@
             (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
      
-     (deftest "Consume content from composite content view definition"
+    (deftest "Consume content from composite content view definition"
+      :uuid "a4b4fdf5-b38b-f634-5aeb-d09f02769acb"
        :blockers (bz-bugs "961696")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      env (kt/newEnvironment {:name  "dev" :org org})]
@@ -415,7 +436,8 @@
              (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
                (assert/is (client/ok? cmd_result)))))))
                   
-     (deftest "Validate: CV contents should not available on client after deleting it from selected env"
+    (deftest "Validate: CV contents should not available on client after deleting it from selected env"
+      :uuid "5f642606-bbe6-ec14-a4cb-14b97069ff09"
        :blockers (bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
                      target-env (kt/newEnvironment {:name "dev" :org org})]

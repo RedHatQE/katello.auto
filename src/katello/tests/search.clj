@@ -39,6 +39,7 @@
 (defgroup search-tests
   
   (deftest "Perform search operation on systems"
+    :uuid "98a8bcdc-5e66-6cb4-8683-f7a141fbce30"
     :data-driven true
     :description "Search for a system based on criteria."
     :blockers (list rest/katello-only)
@@ -65,6 +66,7 @@
 
 
   (deftest "Search organizations"
+    :uuid "f6b04936-b114-df74-c29b-d280a0fc3b2d"
     :data-driven true
     :description "Search for organizations based on criteria." 
     
@@ -112,6 +114,7 @@
   
   
   (deftest "search users"
+    :uuid "d999d3cb-7fc7-5524-610b-f7a03d5fa84c"
     :data-driven true
     :description "Search for a user based on criteria and with use of lucene-syntax" 
 
@@ -128,6 +131,7 @@
      [{:name "lucene6"   :password "password" :email "lucene6@my.org"} {:criteria "email:my.org"}]])
   
   (deftest "search activation keys"
+    :uuid "f7f0d6e8-88ae-c964-69eb-65fd0a3351e5"
     :data-driven true
     :description "search activation keys by default criteria i.e. name"
     
@@ -146,6 +150,7 @@
   
   
   (deftest "search sync plans"
+    :uuid "327872ef-0576-b5c4-eac3-d5b035e95b11"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
     :blockers (list rest/katello-only)
@@ -162,6 +167,7 @@
      [{:name "new_plan4" :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "name:new_plan?*"}]])
 
   (deftest "search system groups"
+    :uuid "0fe3467b-2861-08d4-11fb-66091adeede7"
     :data-driven true
     :description "search for a system group based on criteria"
     :blockers (list rest/katello-only)
@@ -182,6 +188,7 @@
      [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]])
 
   (deftest "search GPG keys"
+    :uuid "000d192b-068e-ca64-456b-207f87b14f52"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
     :blockers (list rest/katello-only)

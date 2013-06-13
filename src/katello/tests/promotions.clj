@@ -58,6 +58,7 @@
   :blockers (bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
           
   (deftest "Promote content"
+    :uuid "fa2796db-f82f-f564-aa13-8239f154154d"
     :data-driven true
     :description "Takes content and promotes it thru more
                    environments. Verifies that it shows up in the new
