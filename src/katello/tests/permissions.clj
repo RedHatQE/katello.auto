@@ -460,15 +460,18 @@
 (defgroup permission-tests
 
   (deftest "Create a role"
+    :uuid "25b56d86-5d5a-ff34-7a63-ceb1608b4881"
     (create-unique-role "testrole"))
 
   (deftest "Create a role with i18n characters"
+    :uuid "b53d9ae6-6d9c-f454-2b63-4e7edd78ebeb"
     :data-driven true
 
     create-unique-role
     [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
   (deftest "Role validation"
+    :uuid "599d0416-a8aa-1264-c96b-67e5136e45b2"
     :data-driven true
 
     (fn [rolename expected-err]
@@ -485,11 +488,13 @@
      ])
 
   (deftest "Remove a role"
+    :uuid "4676d07e-1b61-ae44-af9b-1dd01027bd37"
     (doto (uniqueify (kt/newRole {:name "deleteme-role"}))
       (ui/create)
       (ui/delete)))
 
   (deftest "Verify the Navigation of Roles, related to permissions"
+    :uuid "db588bc0-6f95-4534-7673-e612cd00d8f8"
     :data-driven true
 
     (fn [{:keys [resource-type verbs tags setup] :as perm} & [setup]]
@@ -508,6 +513,7 @@
                #(ensure-exists env)]))])
 
   (deftest "Add a permission and user to a role"
+    :uuid "14ecb28a-92fa-fc74-0ff3-ea142f08171c"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
                   role (kt/newRole {:name "edit-role"})]
       (ui/create-all (list user role))
@@ -519,6 +525,7 @@
                  :users [user]))
 
     (deftest "Verify user with specific permission has access only to what permission allows"
+      :uuid "6ea63d4f-49f1-8244-564b-79a265bebc2c"
       :data-driven true
      
       verify-access

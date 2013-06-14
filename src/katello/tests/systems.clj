@@ -128,10 +128,12 @@
   :blockers (bz-bugs "717408" "728357")
 
   (deftest "Rename an existing system"
+    :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
     :blockers (bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
 
   (deftest "System details: save or cancel editing field"
+    :uuid "b3f26238-b35c-aa84-3533-e3d3bb27bd8b"
     :data-driven true
     ;; blockers (bz-bugs "917033")
 
@@ -158,10 +160,12 @@
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
+    :uuid "f7d6189a-6033-f434-203b-dc6f700e3f15"
     :blockers (conj (bz-bugs "738054") rest/katello-only)
     (verify-system-appears-on-env-page (register-new-test-system)))
 
   (deftest "Subscribe a system to a custom product"
+    :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
     :blockers (conj (bz-bugs "733780" "736547" "784701") rest/katello-only)
 
     (with-unique [provider (katello/newProvider {:name "subscr-prov" :org *session-org*})
@@ -172,15 +176,18 @@
       (ui/update (register-new-test-system) assoc :products (list product))))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
+    :uuid "18ea0330-2d2a-7f14-054b-52c166070840"
     :blockers (bz-bugs "845261")
     (ui/update (register-new-test-system) assoc
                :auto-attach true
                :service-level "No Service Level Preference"))
 
   (deftest "Remove System"
+    :uuid "54887f50-0bb7-dea4-93ab-a326a61a3c80"
     (ui/delete (register-new-test-system)))
 
   (deftest "Remove multiple systems"
+    :uuid "3aaf62ed-c802-aa04-1503-d5c4de3939fb"
     (let [systems (->> {:name "mysys"
                         :sockets "1"
                         :system-arch "x86_64"
@@ -189,6 +196,7 @@
       (system/multi-delete systems)))
 
   (deftest "Remove systems and validate sys-count"
+    :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
     (with-unique [org (kt/newOrganization {:name "delsyscount"
                                            :initial-env (kt/newEnvironment {:name "dev"})})]
       (let [systems (->> {:name "delsys", :env (:initial-env org)}
@@ -203,6 +211,7 @@
         (assert/is (= 0 (ui-count-systems org))))))
 
   (deftest "Remove System: with yes-no confirmation"
+    :uuid "5773a3eb-3266-9ad4-ac4b-6a9fba143ba3"
     :data-driven true
 
     (fn [confirm?]
@@ -223,6 +232,7 @@
      [true]])
     
   (deftest "Creates org with default custom system key and adds new system"
+    :uuid "7d5ff301-b2eb-05a4-aee3-ab60d9583585"
     :blockers (list rest/katello-only)
     (with-unique [org (kt/newOrganization
                        {:name "defaultsysinfo"
@@ -239,6 +249,7 @@
       (assert/is (browser isTextPresent "Manager"))))
 
   (deftest "Creates org adds new system then applies custom org default"
+    :uuid "0825248e-3c30-5194-28b3-eeff22bb5806"
     (with-unique [org (kt/newOrganization {:name "defaultsysinfo"})
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
@@ -254,12 +265,14 @@
         (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
+    :uuid "d4543bef-3b65-87b4-de1b-791e634d494a"
     :blockers (bz-bugs "919373")
     (with-unique-system s
       (rest/create s)
       (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
     
   (deftest "System Details: Update custom info"
+    :uuid "24ea3405-34cc-0b84-20fb-5d4794c5b47b"
     :blockers (bz-bugs "919373" "970079")
     (with-unique-system s
       (rest/create s)
@@ -267,6 +280,7 @@
         (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
   (deftest "Remove systems and validate sys-count"
+    :uuid "0ddac55e-1b1d-7d94-8b9b-c819b4ea7936"
     (with-unique [org (kt/newOrganization {:name "delsyscount"
                                            :initial-env (kt/newEnvironment {:name "dev"})})]
       (let [systems (->> {:name "delsys", :env (:initial-env org)}
@@ -281,6 +295,7 @@
         (assert/is (= 0 (ui-count-systems org))))))
 
   (deftest "System Details: Add custom info"
+    :uuid "577a48a3-6a8e-1324-c8a3-71c959b7f373"
     :blockers (bz-bugs "919373")
     :data-driven true
 
@@ -304,6 +319,7 @@
      ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
 
   (deftest "System Details: Update custom info"
+    :uuid "fd2edd3a-3653-9544-c26b-1c9b4b9ef9d7"
     :blockers (bz-bugs "919373" "951231" "951197" "970079")
     :data-driven true
 
@@ -322,6 +338,7 @@
      ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
 
   (deftest "System Details: Delete custom info"
+    :uuid "b3b7de8e-cf55-1b24-346b-bab3bc209660"
     :blockers (bz-bugs "919373")
     (with-unique-system s
       (rest/create s)
@@ -330,6 +347,7 @@
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "System name is required when creating a system"
+    :uuid "025fd6c5-03c2-f704-61eb-11cfbfa8632e"
     :blockers (list rest/katello-only)
     (expecting-error val/name-field-required
                      (ui/create (kt/newSystem {:name ""
@@ -337,6 +355,7 @@
                                                :env test-environment}))))
 
   (deftest "New System Form: tooltips pop-up with correct information"
+    :uuid "198b7249-2f80-f6b4-ebd3-801bf3701e65"
     :blockers (list rest/katello-only)
     :data-driven true
     verify-new-system-tooltip
@@ -347,6 +366,7 @@
   
 
   (deftest "Add system from UI"
+    :uuid "b19d3d3b-ea1f-1bf4-61c3-19a46a26fb75"
     :blockers (list rest/katello-only)
     :data-driven true
     (fn [virt?]
@@ -363,6 +383,7 @@
      [true]])
     
   (deftest "Check whether all the envs of org can be selected for a system"
+    :uuid "8284f1df-c3d7-0b94-a583-bf702470b485"
     :blockers (list rest/katello-only)
     (let [arch "x86_64"
           cpu "2"
@@ -378,6 +399,7 @@
       (ui/update system assoc :env (last env-chain))))
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
+    :uuid "21db8829-8208-ff54-63eb-40e3ce4d39db"
     :blockers (bz-bugs "959211")
     (provision/with-client "sys-detail"
       ssh-conn
@@ -398,6 +420,7 @@
                       (system/get-ip-addr system))))))
 
   (deftest "Review Facts of registered system"
+    :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
     ;;:blockers no-clients-defined
     :blockers (bz-bugs "959211" "970570")
     (provision/with-client "sys-facts"
@@ -416,6 +439,7 @@
     
 
   (deftest "System-Details: Validate Activation-key link"
+    :uuid "0f8a619c-f2f1-44f4-4ad3-84379abbfa8c"
     :blockers (bz-bugs "959211")
       
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
@@ -432,6 +456,7 @@
             (browser clickAndWait aklink))))))
 
   (deftest "Install package group"
+    :uuid "869db0f1-3e41-b864-eecb-1acda7f6daf7"
     :data-driven true
     :description "Add package and package group"
     :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
@@ -458,6 +483,7 @@
      [{:package-group "birds"}]])
 
   (deftest "Re-registering a system to different environment"
+    :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
       
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
@@ -479,7 +505,8 @@
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
     
-  (deftest "Register a system and validate subscription tab" 
+  (deftest "Register a system and validate subscription tab"
+    :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
     :blockers (list rest/katello-only)
     (with-unique [target-env (kt/newEnvironment {:name "dev" 
                                                  :org *session-org*})
@@ -500,6 +527,7 @@
           (validate-sys-subscription system)))))
     
   (deftest "Register a system using multiple activation keys"
+    :uuid "a39bf0f7-7e7b-1e54-cdf3-d1442d6e6a6a"
     :blockers (list rest/katello-only)
     (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
                   [ak1 ak2] (kt/newActivationKey {:name "ak1"
@@ -521,6 +549,7 @@
                   (browser clickAndWait aklink)))))))))
 
   (deftest  "Registering a system from CLI and consuming contents from UI"
+    :uuid "867f7827-2ec2-48b4-d063-adc1e58dcfe5"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
       
     (let [gpgkey (-> {:name "mykey", :org *session-org*,
@@ -547,6 +576,7 @@
             (assert/is (->> result :exit-code (= 0))))))))
 
   (deftest "Install package after moving a system from one env to other"
+    :uuid "960cc577-e045-f9d4-7383-dec4e5eed00b"
     :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
       
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}

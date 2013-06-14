@@ -93,6 +93,7 @@
                  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-compare :prior "Library"})))
   
   (deftest "Repo compare: Differences between repos can be qualified"
+    :uuid "597698ba-2b7c-8274-e523-bf3c3a85124c"
     :data-driven true
     
     (fn [type repo1 repo2]
@@ -105,6 +106,7 @@
      [:errata "CompareZoo1" "CompareZoo2"]])
   
   (deftest "\"Compare\" UI - (SMOKE) Compare works for packages and errata"
+    :uuid "96d8196d-68a2-c8b4-bf2b-9f7325056936"
     :data-driven true
     
     (fn [type repo1 repo2]
@@ -117,6 +119,7 @@
      [:errata "CompareZoo1" "CompareZoo2"]])
   
   (deftest "Repo compare: Comparison against empty repository"
+    :uuid "6b84c9e0-2832-aeb4-847b-1b643c00cfec"
     :data-driven true
     
     (fn [type repo1]
@@ -130,6 +133,7 @@
      [:errata "CompareZoo1"]])
   
   #_(deftest "Repo compare: Add and remove repos to compare"
+      :uuid "8c7d782b-1682-ea44-7d9b-5247f8bf582e"
       :data-driven true
       (fn [to-add to-remove result]
         (content-search/go-to-content-search-page test-org-compare)
@@ -142,6 +146,7 @@
 
 
   (deftest "\"Compare\" UI - User cannot submit compare without adequate repos selected"
+    :uuid "ab999cde-3a94-c104-a883-e52c125f6a15"
     (content-search/go-to-content-search-page test-org-compare)
     (let [repositories ["CompareZoo1" "CompareZoo2"]]
       (content-search/add-repositories repositories)
@@ -151,6 +156,7 @@
   
   
   (deftest "\"Compare\" UI - Selecting repos for compare"
+    :uuid "27a2954d-a0cd-7544-479b-d495df6869c6"
     (content-search/go-to-content-search-page test-org-compare)
     (let [repositories ["CompareZoo1" "CompareZoo2"]]
       (content-search/add-repositories (fake/get-all-custom-repo-names))
@@ -160,12 +166,14 @@
                     (into #{} repositories)))))
   
   (deftest "Repo compare: Add many repos to compare"
+    :uuid "096be600-4d8c-cb64-9993-8d8fac51fce7"
     (content-search/go-to-content-search-page test-org-compare)
     (let [repos (difference (set (fake/get-all-custom-repo-names)) (set (fake/get-i18n-repo-names)))]
       (assert/is (= repos
                     (set (content-search/compare-repositories (into [] repos)))))))
   
   (deftest "Content Search: search repo info"
+    :uuid "05955468-e85c-1f74-8c9b-a1fd152cfb70"
     :data-driven true
     (fn [repo-search expected-repos]
       (content-search/go-to-content-search-page test-org-compare)
@@ -183,6 +191,7 @@
                 {"Weird Enterprise" "Russia"}}]])
 
   (deftest "Content Search: search package info"
+    :uuid "d96759d7-b13d-3554-a67b-5453ca05d3e3"
     :data-driven true
     
     (fn [pkg-search expected-pkgs]
@@ -219,11 +228,13 @@
                 (content-search/get-errata-set type))))
 
 (defmacro deftests-errata-search
+  :uuid "0225a251-c2b6-1764-dfe3-be5adb65c47c"
   "for a bunch of data driven tests that use the same function, but
    different name and data."
   [name-data-map]
   `(concat ~(vec (for [[name data] name-data-map]
                    `(deftest ~name
+                      :uuid "94dde824-e307-0db4-df13-10dba85d2db7"
                       :data-driven true
 
                       verify-errata
@@ -247,6 +258,7 @@
                   (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"})))
   
   (deftest "Content Browser: Errata information"
+    :uuid "f2a008f7-3219-1934-0c1b-82f47633be1c"
     (content-search/go-to-content-search-page test-org-errata)
     (content-search/get-errata-set "*")
     (content-search/test-errata-popup-click "RHEA-2012:2011")
@@ -258,6 +270,7 @@
     (content-search/test-errata-popup-click "RHEA-2012:2011"))
   
   (deftests-errata-search
+    :uuid "2ae5acbb-2765-8bf4-6753-6f36e83a0844"
     {"UI - Search Errata in Content Search by exact Errata"
      [["\"RHEA-2012:2013\"" "RHEA-2012:2013"] 
       ["\"RHEA-2012:2012\"" "RHEA-2012:2012"] 

@@ -87,6 +87,7 @@
 ;; Tests
 (defgroup redhat-promoted-content-tests
   (deftest "Admin can set Release Version on system"
+    :uuid "cf82309e-8348-c414-4a53-f5ba08648513"
     :blockers (conj (bz-bugs "832192") api/katello-only)
 
     (do-steps (merge (uniqueify-vals {:system-name "system"
@@ -104,6 +105,7 @@
               step-set-system-release-version))
 
   (deftest "Clients can access Red Hat content"
+    :uuid "9db638e6-05bb-d9a4-462b-5114cc970680"
     :description "Enable repositories, promote content into an
                   environment, register a system to that environment
                   and install some packages."
@@ -125,6 +127,7 @@
   :blockers (bz-bugs "729364")
 
   (deftest "Upload a subscription manifest"
+    :uuid "60b9676a-c421-3564-1513-b4e38b9bc135"
     (do-steps (merge (new-fake-manifest)
                      {:org-name (uniqueify "manifest-upload")
                       :manifest-loc (manifest/new-tmp-loc)})
@@ -134,6 +137,7 @@
     
                
     (deftest "Enable Red Hat repositories"
+      :uuid "b803c8d2-a9e9-8a14-4d63-bb03cfd11328"
       :blockers (list api/katello-only)
       (do-steps (merge (new-fake-manifest)
                        {:org-name (uniqueify "enablerepos")
@@ -152,7 +156,8 @@
 (defgroup manifest-tests
   :group-setup (partial fake-content/download-original manifest-tmp-loc)
   
-  (deftest "Upload the same manifest to an org, expecting an error message"	  	
+  (deftest "Upload the same manifest to an org, expecting an error message"
+    :uuid "7c3ef15d-1d7f-6f74-8b9b-ed4a239101a5"
     (let [org-name (uniqueify "dup-manifest")
           test-manifest (manifest/new-tmp-loc)]
       (api/create-organization org-name)
@@ -164,6 +169,7 @@
                          (upload-with-redhat-repo test-manifest)))))
 
   (deftest "Upload a previously used manifest into another org"
+    :uuid "83596726-1cda-fda4-40d3-e14e9e47ce99"
     (let [two-orgs (take 2 (unique-names "man-reuse"))
           test-manifest (manifest/new-tmp-loc)]
       (doseq [org two-orgs]
@@ -178,12 +184,14 @@
                          (upload-with-redhat-repo test-manifest)))))
   
   (deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
+    :uuid "0a48ed2d-9e15-d434-37d3-8dd78996ac2a"
     (do-steps {:org-name (uniqueify "bz786963")
                :manifest-loc bz786963-manifest}
               step-create-org
               step-upload-manifest))
  
   (deftest "Upload a manifest and check whether import manifest history gets updated"
+    :uuid "779235f4-94f3-fe14-4a6b-eafdbbdc44d3"
     (let [test-org (uniqueify "custom-org")]
       (organization/create test-org)
       (organization/switch test-org)
