@@ -64,7 +64,7 @@
                          ::plan-time-text time
                          ::plan-date-text date}
                         ::save-plan)
-    (notification/check-for-success {:match-pred (notification/request-type? :sync-create)})))
+    (notification/success-type :sync-create)))
 
 (defn- edit-plan
   "Edits the given sync plan with optional new properties. See also
@@ -79,7 +79,7 @@
                            ::plan-interval-select interval
                            ::plan-time-text time
                            ::plan-date-text date}))
-  (notification/check-for-success {:match-pred (notification/request-type? :sync-update)}))
+  (notification/success-type :sync-update))
 
 (extend katello.SyncPlan
   ui/CRUD {:create create-plan

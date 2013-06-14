@@ -82,14 +82,14 @@
                          ::default-org (:name default-org)
                          env-chooser [default-env]]
                         ::save))
-  (notification/check-for-success {:match-pred (notification/request-type? :users-create)}))
+  (notification/success-type :users-create))
 
 (defn- delete "Deletes the given user."
   [user]
   (nav/go-to user)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :users-destroy)}))
+  (notification/success-type :users-destroy))
 
 (defn- modify-roles [to-add to-remove]
   (doseq [role to-add]
@@ -97,8 +97,7 @@
   (doseq [role to-remove]
     (browser click (minus-icon (:name role))))
   (browser click ::save-roles)
-  (notification/check-for-success {:match-pred
-                                   (notification/request-type? :users-update-roles)}))
+  (notification/success-type :users-update-roles))
 
 (defn- assign-default-org-and-env 
   "Assigns a default organization and environment to a user"
@@ -108,7 +107,7 @@
   (when env
     (browser click (ui/environment-link (:name env))))
   (browser click ::save-environment)
-  (notification/check-for-success {:match-pred (notification/request-type? :users-update-env)}))
+  (notification/success-type :users-update-env))
 
 (defn current
   "Returns the name of the currently logged in user, or nil if logged out."
@@ -145,7 +144,7 @@
       (when (browser isElementPresent ::password-conflict)
         (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
       (browser click ::save-edit) 
-      (notification/check-for-success {:match-pred (notification/request-type? :users-update)}))
+      (notification/success-type :users-update))
     (when email
       (common/in-place-edit {::email-text email}))
     (let [role-changes (map :roles (list to-add to-remove))]
