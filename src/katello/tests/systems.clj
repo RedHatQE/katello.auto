@@ -112,7 +112,7 @@
 
 (def save-cancel
   (partial #'common/save-cancel
-           ::system/save-button ::system/cancel-button (notification/request-type? :sys-update)))
+           ::system/save-button ::system/cancel-button :sys-update))
 
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
@@ -215,7 +215,7 @@
         (browser click ::system/remove)
         (if confirm?
           (do (browser click ::ui/confirmation-yes)
-              (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)})
+              (notification/success-type :sys-destroy)
               (assert (rest/not-exists? system)))
           (do (browser click ::ui/confirmation-no)
               (nav/go-to system)))))

@@ -244,7 +244,7 @@
           (ui/create user)
           (expecting-error expected-res
             (nav/go-to ::user/named-page user)              
-            (common/save-cancel ::user/save-button ::user/cancel-button (notification/request-type? :users-update) input-loc new-email save?)))))
+            (common/save-cancel ::user/save-button ::user/cancel-button :users-update input-loc new-email save?)))))
 
       [[::user/email-text "abc@redhat.com" false]
        [::user/email-text "pnq@fedora.com" true]])
