@@ -28,7 +28,8 @@
    ::cancel-button         "//button[@type='cancel']"})
 
 (sel/template-fns
- {value-text             "custom_info[%s]"})
+ {value-text                   "custom_info[%s]"
+  remove-custom-info-button    "//input[@data-id='custom_info_%s']"})
 
 ;; Nav
 
@@ -53,6 +54,22 @@
                       ::create)
   (notification/check-for-success {:match-pred (notification/request-type? :distributor-create)}))
 
+(defn- update-dist-custom-info
+  "Updates distributor's custom info"
+  [to-add to-remove]
+  (doseq [[k v] to-add]
+    (if (and to-remove (to-remove k))
+      (do (common/in-place-edit {(value-text k) v}))
+      (do (sel/->browser 
+            (setText ::keyname-text k)
+            (setText ::value-text v)
+            (keyUp ::keyname-text "z")
+            (click ::custom-info-button))))) 
+  ;; below dissoc required while updating, else will rm the just updated key/value
+  (doseq [[k _] (apply dissoc to-remove (keys to-add))]
+    (browser click (remove-custom-info-button k))))
+  
+
 (defn- delete
   "Deletes the named distributor."
   [dist]
@@ -68,13 +85,10 @@
   {:pre [(instance? katello.Distributor dist)]}
   (let [[to-remove {:keys [name env keyname value]
                     :as to-add} _] (data/diff dist updated)]
-    (when (and keyname value)
+    
+    (when (or (:custom-info to-add) (:custom-info to-remove))
       (nav/go-to ::custom-info-page dist)
-      (sel/->browser 
-        (setText ::keyname-text keyname)
-        (setText ::value-text value)
-        (keyUp ::keyname-text "z")
-        (click ::custom-info-button)))))
+      (update-dist-custom-info (:custom-info to-add) (:custom-info to-remove)))))
         
 
 (extend katello.Distributor
