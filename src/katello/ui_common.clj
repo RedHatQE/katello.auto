@@ -127,14 +127,14 @@
   (some #{"disabled"} 
         (clojure.string/split locator #" ")))
 
-(defn save-cancel [save-locator cancel-locator input-locator requested-value save? & [match-pred]]
+(defn save-cancel [save-locator cancel-locator match-pred input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser getText inactive-elem)]
     (browser click inactive-elem)
     (browser setText input-locator requested-value)
     (if save?
       (do (browser click save-locator)
-          (if match-pred (notification/check-for-success {:match-pred match-pred}))
+          (notification/check-for-success {:match-pred match-pred}) 
           (let [new-text (browser getText inactive-elem)]
             (when (not= new-text requested-value)
               (throw+ {:type ::save-failed

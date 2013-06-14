@@ -118,7 +118,7 @@
 
 (def save-cancel
   (partial #'common/save-cancel
-           ::system/save-button ::system/cancel-button))
+           ::system/save-button ::system/cancel-button (notification/request-type? :sys-update)))
 
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
@@ -146,7 +146,7 @@
         (rest/create s)
         (expecting-error expected-res
           (nav/go-to ::system/details-page s)
-          (save-cancel input-loc new-value save? (notification/request-type? :sys-update)))))
+          (save-cancel input-loc new-value save?))))
 
     (let [rand-lc-str (partial random-string (int \a) (int \z))]
       [[::system/name-text-edit "yoursys" false success]
