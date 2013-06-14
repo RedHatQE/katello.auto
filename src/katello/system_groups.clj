@@ -58,7 +58,7 @@
    {::name-text name
     ::description-text description}
    ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-create)}))
+  (notification/success-type :sysgrps-create))
 
 (defn- add-to
   "Adds systems to a system group"
@@ -72,7 +72,7 @@
                          #(browser getEval %) ["window.$(\"#add_system_input\").autocomplete('search')"]
                          #(Thread/sleep 5000) []]
                         ::add-system)
-    (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-add-sys)})))
+    (notification/success-type :sysgrps-add-sys)))
 
 (defn- remove-from
   "Remove systems from a system group"
@@ -92,7 +92,7 @@
   (sel/fill-ajax-form {::copy-name-text (:name clone)
                        ::copy-description-text (:description clone)}
                       ::copy-submit)
-  (notification/check-for-success {:match-pred (notification/request-type? :sysgrps-copy)}))
+  (notification/success-type :sysgrps-copy))
 
 (defn- remove
   "Removes a system group. Optionally, remove all the systems in the
@@ -104,10 +104,9 @@
   (browser click (if also-remove-systems?
                    ::ui/confirmation-yes
                    ::confirm-only-group))
-  (notification/check-for-success
-   {:match-pred  (notification/request-type? (if also-remove-systems?
-                                               :sysgrps-destroy-sys
-                                               :sysgrps-destroy))}))
+  (notification/success-type (if also-remove-systems?
+                                 :sysgrps-destroy-sys
+                                 :sysgrps-destroy)))
 
 (defn- edit-details
   "Change the name, description and limit in system group"
@@ -121,8 +120,7 @@
           (sel/fill-ajax-form {::limit-value (str limit)}
                               ::save-new-limit ))
       (browser check ::unlimited-checkbox))
-    (when needed-flipping (notification/check-for-success
-                           {:match-pred (notification/request-type? :sysgrps-update)})))
+    (when needed-flipping (notification/success-type :sysgrps-update)))
   (common/in-place-edit {::name-text name
                          ::description-text description}))
 

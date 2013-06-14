@@ -54,7 +54,7 @@
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
                       ::save-repository)
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-create)}))
+  (notification/success-type :repo-create))
 
 (defn- update
   "Edits a repository. Currently the only property of a repository that
@@ -65,7 +65,7 @@
     (sel/->browser (click  ::update-gpg-key)
                    (select ::update-repo-gpg-select gpg-key)
                    (click  ::save-updated-gpg-key))
-    (notification/check-for-success {:match-pred (notification/request-type? :repo-update-gpg-key)})))
+    (notification/success-type :repo-update-gpg-key)))
   
 
 (defn- delete "Deletes a repository from the given provider and product."
@@ -74,7 +74,7 @@
   (nav/go-to repo)
   (browser click ::remove-repository)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :repo-destroy)}))
+  (notification/success-type :repo-destroy))
 
 (defn enable-redhat
   "Enable the given list of repos in the current org."
