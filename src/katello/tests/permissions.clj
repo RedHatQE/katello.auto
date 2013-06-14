@@ -92,7 +92,7 @@
   (while (not (browser isVisible ::role/save-permission))
     (browser click ::role/next))
   (browser click ::role/save-permission)
-  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
+  (notification/success-type :roles-create-permission))
 
 (defn verify-access
   "Assigns a new user to a new role with the given permissions. That

@@ -145,14 +145,14 @@
                        (fn [env]
                          (when env (nav/select-environment-widget env))) [env]]
                       ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-create)}))
+  (notification/success-type :sys-create))
 
 (defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-destroy)}))
+  (notification/success-type :sys-destroy))
 
 (defn- select-multisys-with-ctrl 
   [systems]
@@ -168,7 +168,7 @@
   (select-multisys-with-ctrl systems)
   (browser click ::multi-remove)
   (browser click ::confirm-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-bulk-destroy)}))
+  (notification/success-type :sys-bulk-destroy))
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
@@ -178,7 +178,7 @@
              (click (-> group :name sysgroup-checkbox))
              (click ::add-sysgrp)
              (click ::confirm-to-yes))
-  (notification/check-for-success {:match-pred (notification/request-type? :sys-add-bulk-sysgrps)}))
+  (notification/success-type :sys-add-bulk-sysgrps))
 
 (defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
@@ -190,7 +190,7 @@
     (do
       (browser click (select-sysgroup-checkbox group-name))
       (browser click ::add-group)
-      (notification/check-for-success {:match-pred (notification/request-type? :sys-add-sysgrps)}))
+      (notification/success-type :sys-add-sysgrps))
     (throw+ {:type ::selected-sys-group-is-unavailable 
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
@@ -213,8 +213,7 @@
                          (doseq [item content]
                            (browser check (checkbox-fn (:name item))))
                          (browser click submit)
-                         (notification/check-for-success
-                          {:match-pred (notification/request-type? :sys-update-subscriptions)})) )]
+                         (notification/success-type :sys-update-subscriptions)))]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 

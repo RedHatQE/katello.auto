@@ -103,7 +103,7 @@
                        label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
                        ::initial-env-desc-text (:description initial-env)]
                       ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :org-create)}))
+  (notification/success-type :org-create))
 
 (defn- delete
   "Deletes an organization."
@@ -111,8 +111,7 @@
   (nav/go-to org)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success
-   {:match-pred (notification/request-type? :org-destroy)}) ;queueing success
+  (notification/success-type :org-destroy) ;queueing success
   (browser refresh)
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-destroy)})) ;for actual delete
 
