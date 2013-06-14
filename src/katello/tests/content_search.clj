@@ -228,13 +228,12 @@
                 (content-search/get-errata-set type))))
 
 (defmacro deftests-errata-search
-  :uuid "0225a251-c2b6-1764-dfe3-be5adb65c47c"
   "for a bunch of data driven tests that use the same function, but
    different name and data."
-  [name-data-map]
-  `(concat ~(vec (for [[name data] name-data-map]
+  [& tests]
+  `(concat ~(vec (for [{:keys [name uuid data]} tests]
                    `(deftest ~name
-                      :uuid "94dde824-e307-0db4-df13-10dba85d2db7"
+                      :uuid ~uuid
                       :data-driven true
 
                       verify-errata
@@ -255,7 +254,7 @@
                  (rest/create test-org-errata)
                  (org/switch test-org-errata)
                  (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
-                  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"})))
+                 (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"})))
   
   (deftest "Content Browser: Errata information"
     :uuid "f2a008f7-3219-1934-0c1b-82f47633be1c"
@@ -270,49 +269,54 @@
     (content-search/test-errata-popup-click "RHEA-2012:2011"))
   
   (deftests-errata-search
-    :uuid "2ae5acbb-2765-8bf4-6753-6f36e83a0844"
-    {"UI - Search Errata in Content Search by exact Errata"
-     [["\"RHEA-2012:2013\"" "RHEA-2012:2013"] 
-      ["\"RHEA-2012:2012\"" "RHEA-2012:2012"] 
-      ["\"RHEA-2012:2011\"" "RHEA-2012:2011"] 
-      ["\"RHEA-2012:2010\"" "RHEA-2012:2010"]]
+    {:name "UI - Search Errata in Content Search by exact Errata"
+     :uuid "2ae5acbb-2765-8bf4-6753-6f36e83a0844"
+     :data [["\"RHEA-2012:2013\"" "RHEA-2012:2013"] 
+            ["\"RHEA-2012:2012\"" "RHEA-2012:2012"] 
+            ["\"RHEA-2012:2011\"" "RHEA-2012:2011"] 
+            ["\"RHEA-2012:2010\"" "RHEA-2012:2010"]]}
 
-     "UI - Search Errata in Content Search by exact title"
-     [["title:\"Squirrel_Erratum\"""RHEA-2012:2010"]
-      ["title:\"Camel_Erratum\"" "RHEA-2012:2011"]
-      ["title:\"Dog_Erratum\"" "RHEA-2012:2012"]
-      ["title:\"Cow_Erratum\"" "RHEA-2012:2013"]]
-     
-     "UI - Search Errata in Content Search by title regexp"
-     [["title:Squirrel_*" "RHEA-2012:2010"]
-      ["title:Cam*" "RHEA-2012:2011"]
-      ["title:Dog*" "RHEA-2012:2012"]
-      ["title:Co*" "RHEA-2012:2013"]
-      ["title:*o*" #{"RHEA-2012:2012" "RHEA-2012:2013"}]]
-     
-     "UI - Search Errata in Content Search by type regexp"
-     [["type:secur*" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
-      ["type:*ug*" "RHEA-2012:2013"]
-      ["type:*ement" "RHEA-2012:2010"]
-      ["type:ttt" #{}]
-      ["type:" #{}]]
-     
-     "UI - Search Errata in Content Search by type"
-     [["type:security" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
-      ["type:bugfix" "RHEA-2012:2013"]
-      ["type:enhancement" "RHEA-2012:2010"]]
-     
-     "UI - Search Errata in Content Search by severity"
-     [["severity:low" "RHEA-2012:2010"]
-      ["severity:important" "RHEA-2012:2011"]
-      ["severity:critical" "RHEA-2012:2012"]
-      ["severity:moderate" "RHEA-2012:2013"]
-      ["severity:l*" "RHEA-2012:2010"]
-      ["severity:*rtant" "RHEA-2012:2011"]
-      ["severity:*cal" "RHEA-2012:2012"]
-      ["severity:mod*" "RHEA-2012:2013"]
-      ["severity:ttt" #{}]
-      ["severity:" #{}]]}))
+    {:name "UI - Search Errata in Content Search by exact title"
+     :uuid "f726fc85-13df-a444-580b-421e56b314d3"
+     :data [["title:\"Squirrel_Erratum\"""RHEA-2012:2010"]
+            ["title:\"Camel_Erratum\"" "RHEA-2012:2011"]
+            ["title:\"Dog_Erratum\"" "RHEA-2012:2012"]
+            ["title:\"Cow_Erratum\"" "RHEA-2012:2013"]]}
+    
+    {:name "UI - Search Errata in Content Search by title regexp"
+     :uuid "644c9e0c-6cca-5104-82eb-0bf850170f09"
+     :data [["title:Squirrel_*" "RHEA-2012:2010"]
+            ["title:Cam*" "RHEA-2012:2011"]
+            ["title:Dog*" "RHEA-2012:2012"]
+            ["title:Co*" "RHEA-2012:2013"]
+            ["title:*o*" #{"RHEA-2012:2012" "RHEA-2012:2013"}]]}
+    
+    {:name "UI - Search Errata in Content Search by type regexp"
+     :uuid "fee0c389-ba8b-0ce4-66d3-8927301dd2c4"
+     :data [["type:secur*" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
+            ["type:*ug*" "RHEA-2012:2013"]
+            ["type:*ement" "RHEA-2012:2010"]
+            ["type:ttt" #{}]
+            ["type:" #{}]]}
+    
+    {:name "UI - Search Errata in Content Search by type"
+     :uuid "817bbd79-2e48-d0a4-1173-2afdfb28a8b2"
+     :data [["type:security" #{"RHEA-2012:2011" "RHEA-2012:2012"}]
+            ["type:bugfix" "RHEA-2012:2013"]
+            ["type:enhancement" "RHEA-2012:2010"]]}
+    
+    {:name "UI - Search Errata in Content Search by severity"
+     :uuid "a20b0c77-a707-f504-e53b-935314b460d6"
+     :data [["severity:low" "RHEA-2012:2010"]
+            ["severity:important" "RHEA-2012:2011"]
+            ["severity:critical" "RHEA-2012:2012"]
+            ["severity:moderate" "RHEA-2012:2013"]
+            ["severity:l*" "RHEA-2012:2010"]
+            ["severity:*rtant" "RHEA-2012:2011"]
+            ["severity:*cal" "RHEA-2012:2012"]
+            ["severity:mod*" "RHEA-2012:2013"]
+            ["severity:ttt" #{}]
+            ["severity:" #{}]]}))
 
 
 (defgroup content-search-tests
