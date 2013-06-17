@@ -17,12 +17,14 @@
 (defgroup distributor-tests
 
   (deftest "Create a Distributor"
+    :uuid "1b5985df-437a-40dc-aac8-d979a39131b7"
     (with-unique [org  (kt/newOrganization {:name "test-org"})
                   dist (kt/newDistributor {:name "test-dist"})]
       (rest/create org)
       (ui/create (assoc dist :env (kt/newEnvironment {:name "Library" :org org})))))
 
   (deftest "Delete a Distributor"
+    :uuid "e051b199-f3e0-4e04-aeb9-04b699653f9a"
     (with-unique [org  (kt/newOrganization {:name "test-org"})
                   dist (kt/newDistributor {:name "test-dist"})]
       (let [dist1 (assoc dist :env (kt/newEnvironment {:name "Library" :org org}))]
@@ -31,7 +33,8 @@
         (ui/delete dist1))))
   
   (deftest "Add custom info for a distributor"   
-    :data-driven true    
+    :data-driven true   
+    :uuid "9ff7fa88-6ee8-4425-9f5a-ff1896f4c6c5"
     (fn [keyname value success?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     env (kt/newEnvironment {:name "environment" :org org})
@@ -58,6 +61,7 @@
   (deftest "Update custom info for a distributor"   
     :data-driven true
     :blockers (bz-bugs "974166")
+    :uuid "8f15a0dd-d925-4bed-9729-31ff2074d495"
     
     (fn [input-loc new-value save?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
@@ -74,6 +78,7 @@
      [(distributor/value-text "fname") "Schrodinger's cat" true]])
   
   (deftest "Delete custom info for a distributor"
+    :uuid "6776a633-b0d2-4dec-9e71-07c9c352afcc"
     (with-unique [org (kt/newOrganization {:name "auto-org"})
                   env (kt/newEnvironment {:name "environment" :org org})
                   dist (kt/newDistributor {:name "test-dist" :env env})] 
