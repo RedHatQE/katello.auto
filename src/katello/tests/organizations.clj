@@ -80,9 +80,10 @@
 
       create-and-verify-with-name
 
-      ;;create 5 rows of data, 1 random 1-char utf8 string in each
-      (take 5 (repeatedly (comp vector
-                                (partial random-string 0x0080 0x5363 1)))))
+      ;;create rows of data, 1 random 1-char utf8 string in each
+      #_(take 10 (repeatedly (comp vector
+                                 (partial random-string 0x0080 0x5363 1))))
+      [["˗"] ["↽"] ["࣫"] ["ㅝ"] ["㼳"] ["䍿"] ["䘦"] ["⏤"] ["ᅈ"] ["䝐"]])
 
     (deftest "Create an organization with an initial environment"
       :uuid "8bd2ed1a-409a-62d4-7f8b-a9394bb16890"
