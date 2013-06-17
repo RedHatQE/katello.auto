@@ -10,7 +10,7 @@
                      [distributors :as distributor])
             (test.tree [script :refer [defgroup deftest]])
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            [bugzilla.checker :refer [open-bz-bugs]]
+            [bugzilla.checker :refer [bz-bugs]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
 
@@ -51,13 +51,13 @@
 
      (with-meta
        ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
-       {:blockers (open-bz-bugs "951231")})
+       {:blockers (bz-bugs "951231")})
 
      ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
   
   (deftest "Update custom info for a distributor"   
     :data-driven true
-    :blockers (open-bz-bugs "974166")
+    :blockers (bz-bugs "974166")
     
     (fn [input-loc new-value save?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
