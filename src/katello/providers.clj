@@ -72,7 +72,7 @@
   (sel/fill-ajax-form {::name-text name
                        ::provider-description-text description}
                       ::create-save)
-  (notification/check-for-success {:match-pred (notification/request-type? :prov-create)}))
+  (notification/success-type :prov-create))
 
 (defn- add-product
   "Adds a product to a provider, with the given name and description."
@@ -85,7 +85,7 @@
   (sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}
                       ::create-product)
-  (notification/check-for-success {:match-pred (notification/request-type? :prod-create)}))
+  (notification/success-type :prod-create))
 
 (defn- update-product
   "Updates product. Currently the properties of a product that
@@ -97,7 +97,7 @@
                    (select ::prd-gpg-select gpg-key)
                    (click  ::save-updated-gpg-key)
                    (click  ::confirm-gpg-update))
-    (notification/check-for-success {:match-pred (notification/request-type? :prod-update)})))
+    (notification/success-type :prod-update)))
 
 (defn- delete-product
   "Deletes a product from the given provider."
@@ -107,7 +107,7 @@
   (nav/go-to product)
   (browser click ::remove-product)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :prod-destroy)}))
+  (notification/success-type :prod-destroy))
 
 (defn- delete
   "Deletes the named custom provider."
@@ -116,7 +116,7 @@
   (nav/go-to provider)
   (browser click ::remove-provider-link)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :prov-destroy)}))
+  (notification/success-type :prov-destroy))
 
 (defn- edit
   "Edits the named custom provider. Takes an optional new name, and
@@ -152,7 +152,7 @@
           (browser getEval ::existing-product-dropdown)
           (browser mouseUp (existing-product-select (:name product)))))
       (browser click ::create-repositories)
-      (notification/check-for-success {:match-pred (notification/request-type? :repo-create)})))) 
+      (notification/success-type :repo-create)))) 
 
 (extend katello.Provider
   ui/CRUD {:create create

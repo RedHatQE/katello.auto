@@ -14,15 +14,14 @@
                      [validation :refer :all] 
                      [client :as client] 
                      [conf :as conf]
-                     [changesets :as changeset])
+                     [changesets :as changeset]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-all-recursive]]
             [katello.client.provision :as provision]
             [test.tree.script :refer :all]
-            [test.tree.builder :refer [union]]
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
-            [clojure.string :refer [capitalize upper-case lower-case trim]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [clojure.string :refer [capitalize upper-case lower-case trim]]))
 
 ;; Variables
 
@@ -88,6 +87,7 @@
   :group-setup create-test-org
 
   (deftest "Create an environment"
+    :uuid "19406c99-5491-e904-15ab-d505285bfaa9"
     (-> {:name "simple-env"
          :org @test-org}
         katello/newEnvironment
@@ -96,6 +96,7 @@
     
 
     (deftest "Create parallel sequential environments"
+      :uuid "77a07dff-273b-25e4-885b-b3b9bebe8559"
       :description "Creates two parallel environment paths: one with 5 environments and the
                       other with 2 environments, both off the Library."
 
@@ -110,7 +111,8 @@
              ui/create-all)))
 
     (deftest "Delete an environment"
-      :blockers (open-bz-bugs "790246")
+      :uuid "0d7e8529-398a-e944-9a8b-102dab5cd1b2"
+      :blockers (bz-bugs "790246")
 
       (with-unique [env (katello/newEnvironment {:name "delete-env"
                                                  :org @test-org
@@ -120,6 +122,7 @@
 
 
       (deftest "Deleting an environment does not affect another org with the same name environment"
+        :uuid "d346b091-d3b9-5944-65fb-ff0391b5cfd2"
         (let [orgs (take 2 (uniques (kt/newOrganization {:name "delete-env-other"})))]
           (verify-delete-env-restricted-to-this-org
            (for [org orgs]
@@ -128,7 +131,8 @@
 
 
       (deftest "Delete an environment that has had content promoted into it"
-        :blockers rest/katello-only
+        :uuid "116c33d8-f4f7-0c44-d9c3-018b5cf6dd2c"
+        :blockers (list rest/katello-only)
 
         (with-unique [env (katello/newEnvironment {:name "del-w-content"
                                                    :org @test-org})]
@@ -136,11 +140,12 @@
           (ui/delete env)))
 
       (deftest "Verify that only environments at the end of their path can be deleted"
+        :uuid "8d45afb5-0cf9-b9b4-127b-97ed99ebb3ab"
         :description "Creates 3 environments in a single path, tries
                       to delete the middle one, which should fail.
                       Then tries to delete the last one, which should
                       succeed."
-        :blockers    (open-bz-bugs "794799")
+        :blockers    (bz-bugs "794799")
 
         (let [envs (take 3 (uniques (katello/newEnvironment {:name "env"
                                                              :org conf/*session-org*})))]
@@ -151,7 +156,8 @@
 
 
     (deftest "Cannot create two environments in the same org with the same name"
-      :blockers (open-bz-bugs "726724")
+      :uuid "64a12a7f-302b-0d94-319b-28164506695f"
+      :blockers (bz-bugs "726724")
 
       (with-unique [env (katello/newEnvironment {:name "test-dup"
                                                  :org @test-org
@@ -160,6 +166,7 @@
                                  (ui/create env))))
       
     (deftest "Edit an environment description"
+      :uuid "c5dab785-c629-4b94-99d3-d2d4c1fa9e83"
      
       (with-unique [env  (katello/newEnvironment {:name "edit"
                                                   :org @test-org
@@ -168,6 +175,7 @@
         (ui/update env assoc :description "I changed it!")))
 
     (deftest "Create environments with the same name but in different orgs"
+      :uuid "aaa92fa2-eb13-5eb4-0d33-aed9efa5428f"
       (let [orgs (take 2 (uniques (kt/newOrganization {:name "delete-env-other"})))
             envs (for [org orgs]
                    (kt/newEnvironment {:name "same-name-diff-org"
@@ -175,6 +183,7 @@
         (ui/create-all (concat orgs envs))))
     
     (deftest "Adding environment named or labeled 'Library' is disallowed"
+      :uuid "c7572ec7-1203-5a44-0b7b-39103742423a"
       :data-driven true
 
       (fn [env-name env-label notif] 
@@ -191,13 +200,15 @@
 
 
   (deftest "Enviroment name is required"
+    :uuid "bb8d4bc0-695c-90f4-4753-e59f4099d3d3"
     (expecting-error name-field-required
       (ui/create (katello/newEnvironment {:name ""
                                           :org @test-org
                                           :description "env description"}))))
 
   (deftest "Move systems from one env to another"
-    :blockers (union (open-bz-bugs "959211")
+    :uuid "79ff3fec-2c0c-6594-6dab-b0ac0ef156ea"
+    :blockers (conj (bz-bugs "959211")
                      conf/no-clients-defined)
     
     (provision/with-client "envmovetest" ssh-conn

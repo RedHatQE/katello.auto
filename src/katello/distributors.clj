@@ -52,7 +52,7 @@
   (browser click (ui/environment-link (:name env)))
   (sel/fill-ajax-form {::distributor-name-text name}
                       ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :distributor-create)}))
+  (notification/success-type :distributor-create))
 
 (defn- update-dist-custom-info
   "Updates distributor's custom info"
@@ -77,7 +77,7 @@
   (nav/go-to dist)
   (browser click ::remove-link)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :distributor-destroy)}))
+  (notification/success-type :distributor-destroy))
 
 (defn- update
   "Updates the named distributor."

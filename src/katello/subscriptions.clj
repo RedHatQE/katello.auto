@@ -36,7 +36,7 @@
     (browser click ::new))
   (when url
     (common/in-place-edit {::repository-url-text url})
-    (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
+    (notification/success-type :prov-update))
   (sel/fill-ajax-form {::choose-file file-path}
                       ::upload)
   (browser refresh)

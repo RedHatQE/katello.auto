@@ -15,7 +15,6 @@
 (sel/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
-  composite-disabled          "//td[@class='view_checkbox' and contains(., '%s')]/input@disabled"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
@@ -86,9 +85,9 @@
                          (when composite 
                            (browser click ::composite)
                            (doseq [composite-name composite-names]
-                             (browser click (composite-view-name composite-name))))) [composite]}
+                             (browser click (composite-view-name (:published-name composite-name)))))) [composite]}
                       ::save-new)
-  (notification/check-for-success {:match-pred (notification/request-type? :cv-create)}))
+  (notification/success-type :cv-create))
 
 (defn- add-repo
   "Add the given repository to content-view definition"
@@ -99,7 +98,7 @@
       (mouseUp (-> repo :name product-or-repository))
       (click ::add-product-btn)
       (click ::update-content))
-    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
+    (notification/success-type :cv-update-content)))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
@@ -111,7 +110,7 @@
       (click ::add-product-btn)
       (click  (-> repo :name remove-repository))
       (click ::update-content))
-    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
+    (notification/success-type :cv-update-content)))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -128,7 +127,7 @@
   (browser click ::details-tab)
   (common/in-place-edit {::details-name-text name
                          ::details-description-text description})
-  (notification/check-for-success {:match-pred (notification/request-type? :cv-update)}))
+  (notification/success-type :cv-update))
 
 (defn- add-to
   "Adds the given product to a content view definition"
@@ -139,7 +138,7 @@
       (mouseUp (-> product :name product-or-repository))
       (click ::add-product-btn)
       (click ::update-content))
-    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
+    (notification/success-type :cv-update-content)))
   
 (defn- remove-from
   "Removes the given product from existing Content View"
@@ -150,7 +149,7 @@
       (mouseUp (->  product :name product-or-repository))
       (click (-> product :name remove-product))
       (click ::update-content))
-    (notification/check-for-success {:match-pred (notification/request-type? :cv-update-content)})))
+    (notification/success-type :cv-update-content)))
 
 (defn- update
   "Edits an existing Content View Definition."
@@ -174,7 +173,7 @@
   (nav/go-to content-defn)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :cv-destroy)}))
+  (notification/success-type :cv-destroy))
 
 (defn clone
   "Clones a content-view definition, given the name of the original definition
@@ -185,7 +184,7 @@
   (sel/fill-ajax-form {::sg/copy-name-text (:name clone)
                        ::sg/copy-description-text (:description clone)}
                       ::sg/copy-submit)
-  (notification/check-for-success {:match-pred (notification/request-type? :cv-clone)}))
+  (notification/success-type :cv-clone))
 
 (extend katello.ContentView
   ui/CRUD {:create create

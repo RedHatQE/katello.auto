@@ -63,8 +63,7 @@
   (sel/fill-ajax-form {::name-text name
                        ::description-text description}
                       ::save)
-  (notification/check-for-success {:match-pred
-                                   (notification/request-type? :roles-create)}))
+  (notification/success-type :roles-create))
 
 (defn- goto-org-perms [org]
   (browser click ::permissions)
@@ -98,8 +97,7 @@
     (sel/fill-ajax-form {::permission-name-text name
                          ::permission-description-text description}
                         ::save-permission)
-    (notification/check-for-success {:match-pred
-                                     (notification/request-type? :roles-create-permission)})))
+    (notification/success-type :roles-create-permission)))
     
 
 (defn- remove-permissions [permissions]
@@ -107,8 +105,7 @@
   (doseq [{:keys [name org]} permissions]
     (goto-org-perms org)
     (browser click (user-role-toggler name false))
-    (notification/check-for-success {:match-pred
-                                     (notification/request-type? :roles-destroy-permission)})
+    (notification/success-type :roles-destroy-permission)
     (browser sleep 5000)))
 
 (defn- edit
@@ -144,7 +141,7 @@
   (nav/go-to role)
   (browser click ::remove)
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :roles-destroy)}))
+  (notification/success-type :roles-destroy))
 
 
 (extend katello.Role

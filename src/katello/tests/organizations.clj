@@ -12,15 +12,14 @@
                      [environments :as environment]
                      [changesets :as changeset]
                      [fake-content :as fake]
-                     [conf :refer [config]])
+                     [conf :refer [config]]
+                     [blockers :refer [bz-bugs]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
-            [test.tree.builder :refer [union]]
             [clojure.string :refer [capitalize upper-case lower-case]]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
 
 ;; Functions
 
@@ -65,15 +64,18 @@
 (defgroup org-tests
 
   (deftest "Create an organization"
+    :uuid "bc848668-db91-6104-7493-0ea333e53744"
     (create-and-verify-with-basename "auto-org")
 
     (deftest "Create an organization with i18n characters"
+      :uuid "1abae899-440f-d254-15ab-81341908d0d2"
       :data-driven true
 
       create-and-verify-with-basename
       validation/i8n-chars)
 
     (deftest "Create an org with a 1 character UTF-8 name"
+      :uuid "b64a6748-c4c7-ef64-688b-59b85b4dcb55"
       :data-driven true
 
       create-and-verify-with-name
@@ -83,47 +85,54 @@
                                 (partial random-string 0x0080 0x5363 1)))))
 
     (deftest "Create an organization with an initial environment"
-      :blockers rest/katello-only
+      :uuid "8bd2ed1a-409a-62d4-7f8b-a9394bb16890"
+      :blockers (list rest/katello-only)
       (-> (kt/newOrganization {:name "auto-org"
                                :initial-env (kt/newEnvironment {:name "environment"})})
           uniqueify
           create-and-verify))
     
     (deftest "Create an organization with dot in name and query for provider"
-      :blockers rest/katello-only
+      :uuid "443a9bfa-edc0-4164-2bdb-75fddb37f062"
+      :blockers (list rest/katello-only)
       (with-unique [org (kt/newOrganization {:name "auto.org"})
                     provider (kt/newProvider {:name "custom_provider" :org org})]
         (ui/create-all (list org provider))
         (assert (rest/exists? provider))))
         
     (deftest "Two organizations with the same name is disallowed"
-      :blockers (open-bz-bugs "726724")
+      :uuid "b3d2d598-e72d-6974-73e3-786059ab64cf"
+      :blockers (bz-bugs "726724")
 
       (with-unique [org (kt/newOrganization {:name "test-dup"
                                              :description "org-description"})]
         (validation/expecting-error-2nd-try name-taken-error (ui/create org))))
 
     (deftest "Organization name is required when creating organization"
-      :blockers (open-bz-bugs "726724")
+      :uuid "ea841120-469b-9f54-f1f3-d3345b731055"
+      :blockers (bz-bugs "726724")
 
       (expecting-error validation/name-field-required
                        (ui/create (kt/newOrganization {:name ""
                                                        :description "org with empty name"}))))
 
     (deftest "Verify proper error message when invalid org name is used"
+      :uuid "87546a36-b27f-2354-e88b-bc63e62585ce"
       :data-driven true
-      :blockers (open-bz-bugs "726724")
+      :blockers (bz-bugs "726724")
 
       verify-bad-entity-create-gives-expected-error
       bad-org-names)
 
 
     (deftest "Edit an organization"
+      :uuid "68b51c16-9596-7804-4ba3-ddd1e8eb1dd9"
       (with-unique [org (mkorg "auto-edit")]
         (ui/create org)
         (ui/update org assoc :description "edited description")))
 
     (deftest "Organization names and labels are unique to all orgs"
+      :uuid "8813bfb2-b15b-64f4-f493-b73cd52a0e9a"
       (with-unique [org1 (kt/newOrganization {:name "myorg" :label "mylabel"})
                     org2 (kt/newOrganization {:name "yourorg" :label "yourlabel"})]
         (ui/create org1)
@@ -133,7 +142,8 @@
                          (ui/create (assoc org2 :label (:label org1))))))
 
     (deftest "Delete an organization"
-      :blockers (open-bz-bugs "716972" "959485")
+      :uuid "54ebb248-5171-2c44-7523-b9038ec732e1"
+      :blockers (bz-bugs "716972" "959485")
 
       (with-unique [org (mkorg "auto-del")]
         (ui/create org)
@@ -141,7 +151,8 @@
         (assert/is (rest/not-exists? org)))
 
       (deftest "Create an org with content, delete it and recreate it"
-        :blockers rest/katello-only
+        :uuid "4488bfc4-e4a4-6454-42eb-c41666af18bd"
+        :blockers (list rest/katello-only)
 
 
         (with-unique [org (mkorg "delorg")
@@ -155,7 +166,8 @@
            (setup-custom-org-with-content env repos)))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
-      :blockers (union rest/katello-only (open-bz-bugs "966670"))
+      :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"
+      :blockers (conj (bz-bugs "966670") rest/katello-only)
       :data-driven true
 
       (fn [env-name env-lbl notif]
@@ -170,7 +182,8 @@
        [(with-unique [env-name "env-name"] env-name) "Library" ::notification/env-label-lib-is-builtin]])
 
     (deftest "Create org with default system keyname field"
-      :blockers (open-bz-bugs "919373" "951231" "951197")
+      :uuid "cc36e593-19b9-9384-b6b3-fe30f9e85590"
+      :blockers (bz-bugs "919373" "951231" "951197")
       :data-driven true
 
       (fn [keyname success?]
@@ -191,7 +204,8 @@
        ["bar_+{}|\"?<blink>hi</blink>" false]])
 
     (deftest "Create org with default keyname value twice"
-      :blockers (open-bz-bugs "951197")
+      :uuid "7b451cdd-99e7-0d74-8a4b-605567b19b41"
+      :blockers (bz-bugs "951197")
       (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")
                                              :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})
@@ -202,6 +216,7 @@
         (expecting-error (common/errtype ::notification/already-contains-default-info) (organization/add-custom-keyname org ::organization/system-default-info-page keyname))))
 
     (deftest "Create org with default keyname and delete keyname"
+      :uuid "68170be0-4c51-c224-8e53-58cb4820f061"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")})
                     keyname "deleteme-keyname"]
@@ -212,8 +227,9 @@
         (assert/is (not (organization/isKeynamePresent? keyname)))))
 
 
-      (deftest "Create org with default distributor keyname field"
-      :blockers (open-bz-bugs "919373" "951231" "951197")
+    (deftest "Create org with default distributor keyname field"
+      :uuid "51f0c00b-166e-bed4-2523-16a32825a11a"
+      :blockers (bz-bugs "919373" "951231" "951197")
       :data-driven true
 
       (fn [keyname success?]
@@ -233,6 +249,7 @@
        ["bar_+{}|\"?<blink>hi</blink>" false]])
 
     (deftest "Create org with default distributor keyname and delete keyname"
+      :uuid "80a04f72-4194-5c54-e1db-0f2e43ee0c67"
       (with-unique [org (kt/newOrganization {:name "keyname-org"
                                              :label (uniqueify "org-label")})
                     keyname "deleteme-keyname"]

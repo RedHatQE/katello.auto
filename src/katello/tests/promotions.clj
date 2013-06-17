@@ -10,12 +10,12 @@
                      [fake-content :as fake]
                      [changesets :as changeset]
                      [sync-management :as sync]
-                     [conf :refer [config *session-org*]])
+                     [conf :refer [config *session-org*]]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive] :as testfns]
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]
             [clojure.set :refer [index]])
   (:refer-clojure :exclude [fn]))
@@ -55,9 +55,10 @@
 
 (defgroup promotion-tests
   
-  :blockers (open-bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
+  :blockers (bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
           
   (deftest "Promote content"
+    :uuid "fa2796db-f82f-f564-aa13-8239f154154d"
     :data-driven true
     :description "Takes content and promotes it thru more
                    environments. Verifies that it shows up in the new

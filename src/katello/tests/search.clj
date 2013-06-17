@@ -11,13 +11,11 @@
                      [system-groups :as sg]
                      [activation-keys :as ak]
                      [systems :as system]
-                     [conf :refer [*session-org* config]])
-            
+                     [conf :refer [*session-org* config]]
+                     [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [ensure-exists]]
-            (test.tree [script :refer :all]
-                       [builder :refer [union]])
+            (test.tree [script :refer :all])
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [slingshot.slingshot :refer :all]))
 
 
@@ -41,9 +39,10 @@
 (defgroup search-tests
   
   (deftest "Perform search operation on systems"
+    :uuid "98a8bcdc-5e66-6cb4-8683-f7a141fbce30"
     :data-driven true
     :description "Search for a system based on criteria."
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     (fn [sysinfo searchterms & [groupinfo]]
       (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
                     system (kt/newSystem (assoc sysinfo :env env))
@@ -67,6 +66,7 @@
 
 
   (deftest "Search organizations"
+    :uuid "f6b04936-b114-df74-c29b-d280a0fc3b2d"
     :data-driven true
     :description "Search for organizations based on criteria." 
     
@@ -87,7 +87,7 @@
               [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
               (with-meta
                 [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
-                {:blockers (union rest/katello-only (open-bz-bugs "852119"))})]
+                {:blockers (conj (bz-bugs "852119") rest/katello-only)})]
 
              ;;with latin-1/multibyte searches
      
@@ -107,13 +107,14 @@
                ;;testing
        
                (with-meta row
-                 {:blockers (open-bz-bugs "832978")
+                 {:blockers (bz-bugs "832978")
                   :description "Search for organizations names including
                         latin-1/multi-byte characters in search
                         string."})))))
   
   
   (deftest "search users"
+    :uuid "d999d3cb-7fc7-5524-610b-f7a03d5fa84c"
     :data-driven true
     :description "Search for a user based on criteria and with use of lucene-syntax" 
 
@@ -130,6 +131,7 @@
      [{:name "lucene6"   :password "password" :email "lucene6@my.org"} {:criteria "email:my.org"}]])
   
   (deftest "search activation keys"
+    :uuid "f7f0d6e8-88ae-c964-69eb-65fd0a3351e5"
     :data-driven true
     :description "search activation keys by default criteria i.e. name"
     
@@ -148,9 +150,10 @@
   
   
   (deftest "search sync plans"
+    :uuid "327872ef-0576-b5c4-eac3-d5b035e95b11"
     :data-driven true
     :description "search sync plans by default criteria i.e. name"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [planinfo searchterms]
       (with-unique [plan (kt/newSyncPlan (assoc planinfo :org *session-org*))]
@@ -164,9 +167,10 @@
      [{:name "new_plan4" :description "my sync plan" :interval "hourly" :start-date (java.util.Date.)} {:criteria "name:new_plan?*"}]])
 
   (deftest "search system groups"
+    :uuid "0fe3467b-2861-08d4-11fb-66091adeede7"
     :data-driven true
     :description "search for a system group based on criteria"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [groupinfo sysinfo searchterms]
       (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
@@ -184,9 +188,10 @@
      [{:name "sg-fed2" :description "the fedora system-group"} {:name "mysystem2" :sockets "1" :system-arch "i686"} {:criteria "system:mysystem2*"}]])
 
   (deftest "search GPG keys"
+    :uuid "000d192b-068e-ca64-456b-207f87b14f52"
     :data-driven true
     :description "search GPG keys by default criteria i.e. name"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
     
     (fn [gpg-key-info searchterms]
       (with-unique [key (kt/newGPGKey (assoc gpg-key-info :org *session-org*))]

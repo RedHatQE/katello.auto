@@ -225,6 +225,9 @@
     (throw+ {:type ::no-success-message-error} 
             "Expected a success notification, but none appeared within the timeout period.")))
 
+(defn success-type [request-type]
+ (check-for-success {:match-pred (request-type? request-type)}))
+
 
 (defn verify-no-error
   "Waits for a notification up to the optional timeout (in ms), throws
