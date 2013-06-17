@@ -177,7 +177,7 @@
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         (ensure-exists env)
-        (ui/create-all (list system sg))
+        (rest/create-all (list system sg))
         (ui/update sg assoc :systems (list system))
         (search sg searchterms)
         (let [strip-num  #(second (re-find #"(.*)\s+\(\d+\)$" %))
