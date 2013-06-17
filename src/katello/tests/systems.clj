@@ -80,18 +80,6 @@
       (changeset/sync-and-promote (list repo) target-env))
     product))
 
-(defn verify-new-system-tooltip
-  "Confirms that tooltips in the New System form appear and show the correct messages"
-  [icon-locator expected-text]
-  (nav/go-to ::system/new-page *session-org*)
-  (browser mouseOver icon-locator)
-  (Thread/sleep 2000)
-  (assert/is (browser isTextPresent expected-text))
-  (browser mouseOut icon-locator)
-  (Thread/sleep 2000)
-  (assert/is (not (browser isTextPresent expected-text))))
-
-
 (defn validate-system-facts
   [system cpu arch virt? env]
   (nav/go-to ::system/facts-page system)
@@ -244,7 +232,7 @@
                                         :env (:initial-env org)})]
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
-      (ui/create system)
+      (rest/create system)
       (browser click ::system/custom-info)
       (assert/is (browser isTextPresent "Manager"))))
 
@@ -345,43 +333,7 @@
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
         (assert/is (browser isTextPresent "Hypervisor"))
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
-
-  (deftest "System name is required when creating a system"
-    :uuid "025fd6c5-03c2-f704-61eb-11cfbfa8632e"
-    :blockers (list rest/katello-only)
-    (expecting-error val/name-field-required
-                     (ui/create (kt/newSystem {:name ""
-                                               :facts (system/random-facts)
-                                               :env test-environment}))))
-
-  (deftest "New System Form: tooltips pop-up with correct information"
-    :uuid "198b7249-2f80-f6b4-ebd3-801bf3701e65"
-    :blockers (list rest/katello-only)
-    :data-driven true
-    verify-new-system-tooltip
-    [[::system/ram-icon "The amount of RAM memory, in gigabytes (GB), which this system has"]
-     [::system/sockets-icon "The number of CPU Sockets or LPARs which this system uses"]])
-  ;; FIXME - convert-to-records
-
   
-
-  (deftest "Add system from UI"
-    :uuid "b19d3d3b-ea1f-1bf4-61c3-19a46a26fb75"
-    :blockers (list rest/katello-only)
-    :data-driven true
-    (fn [virt?]
-      (let [arch "x86_64", cpu "2"]
-        (with-unique [system (kt/newSystem {:name "mysystem"
-                                            :env test-environment
-                                            :sockets cpu
-                                            :system-arch arch
-                                            :virtual? virt?})]
-          (ui/create system)
-          (validate-system-facts system cpu arch virt? test-environment))))
-
-    [[false]
-     [true]])
-    
   (deftest "Check whether all the envs of org can be selected for a system"
     :uuid "8284f1df-c3d7-0b94-a583-bf702470b485"
     :blockers (list rest/katello-only)
@@ -394,7 +346,7 @@
                                               :sockets cpu
                                               :system-arch arch
                                               :virtual? false}))]
-      (ui/create-all (concat (list org) (kt/chain env-chain) (list system)))
+      (rest/create-all (concat (list org) (kt/chain env-chain) (list system)))
       (ui/update system assoc :env (second env-chain))
       (ui/update system assoc :env (last env-chain))))
 
