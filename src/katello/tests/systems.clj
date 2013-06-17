@@ -19,7 +19,7 @@
                      [gpg-keys :as gpg-key]
                      [notices :as notices]
                      [conf :refer [*session-user* *session-org* config *environments*]]
-                     [blockers :refer [bz-bugs]])
+                     [blockers :refer [bz-bugs auto-issue]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
@@ -459,7 +459,9 @@
     :uuid "869db0f1-3e41-b864-eecb-1acda7f6daf7"
     :data-driven true
     :description "Add package and package group"
-    :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
+    :blockers (conj (bz-bugs "959211" "970570")
+                    rest/katello-only
+                    (auto-issue "790"))
 
     (fn [package-opts]
       (let [target-env test-environment
@@ -577,7 +579,9 @@
 
   (deftest "Install package after moving a system from one env to other"
     :uuid "960cc577-e045-f9d4-7383-dec4e5eed00b"
-    :blockers (conj (bz-bugs "959211" "970570") rest/katello-only)
+    :blockers (conj (bz-bugs "959211" "970570")
+                    rest/katello-only
+                    (auto-issue "791"))
       
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment

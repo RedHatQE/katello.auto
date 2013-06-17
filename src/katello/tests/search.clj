@@ -12,7 +12,7 @@
                      [activation-keys :as ak]
                      [systems :as system]
                      [conf :refer [*session-org* config]]
-                     [blockers :refer [bz-bugs]])
+                     [blockers :refer [bz-bugs auto-issue]])
             [katello.tests.useful :refer [ensure-exists]]
             (test.tree [script :refer :all])
             [test.assert :as assert]
@@ -87,7 +87,7 @@
               [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "description:(+test+org)"}]
               (with-meta
                 [{:name "test" :initial-env dev-env :description "This is a test org"} {:criteria "environment:dev*"}]
-                {:blockers (conj (bz-bugs "852119") rest/katello-only)})]
+                {:blockers (conj (bz-bugs "852119") rest/katello-only (auto-issue "792"))})]
 
              ;;with latin-1/multibyte searches
      

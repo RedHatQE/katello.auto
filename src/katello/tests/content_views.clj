@@ -13,7 +13,7 @@
                      [tasks :refer :all]
                      [ui-common :as common]
                      [validation :refer :all]
-                     [blockers :refer [bz-bugs]])
+                     [blockers :refer [bz-bugs auto-issue]])
             [test.tree.script :refer [deftest defgroup]]
             [katello :as kt]
             [katello.client.provision :as provision]
@@ -381,6 +381,7 @@
      
     (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       :uuid "7f698537-7525-2e74-8c4b-32445cf0140f"
+      :blockers (list (auto-issue "788"))
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
                     cv1 (kt/newContentView {:name "content-view1"
