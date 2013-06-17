@@ -7,10 +7,10 @@
                      [navigation :as nav]
                      [ui-common :as common]
                      [notifications :as notification]
-                     [distributors :as distributor])
+                     [distributors :as distributor]
+                     [blockers :refer [bz-bugs]])
             (test.tree [script :refer [defgroup deftest]])
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            [bugzilla.checker :refer [bz-bugs]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
 
