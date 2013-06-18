@@ -5,6 +5,7 @@
                      [client :as client]
                      [content-view-definitions :as views]
                      [notifications :as notifications]
+                     [navigation :as nav]
                      [organizations :as organization]
                      [providers :as provider]
                      [repositories :as repo]
@@ -406,10 +407,10 @@
           (with-unique [composite-view (newContentView {:name "composite-view"
                                                         :org org
                                                         :description "Composite Content View"
-                                                        :composite 'yes'
-                                                        :composite-names cv1})]
+                                                        :composite true
+                                                        :composite-names (list cv1)})]
             (ui/create composite-view)
-            (browser click ::views/content-tab)
+            (nav/go-to ::views/content-page composite-view)
             (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
      
