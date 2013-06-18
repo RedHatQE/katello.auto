@@ -51,7 +51,7 @@
 (def bad-org-names
   (for [[name err] (concat
                     (for [inv-char-str validation/invalid-character-strings]
-                      [inv-char-str ::notification/org-name-must-not-contain-html])
+                      [inv-char-str ::notification/name-must-not-contain-characters])
                     (for [trailing-ws-str validation/trailing-whitespace-strings]
                       [trailing-ws-str ::notification/name-no-leading-trailing-whitespace]))]
     [(mkorg name) err]))
