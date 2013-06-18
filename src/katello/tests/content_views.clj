@@ -102,7 +102,7 @@
             katello/newContentView
             uniqueify
             ui/create))
-      i8n-chars)
+      (map list i18n-chars))
 
     (deftest "Create a new content view with a blank name"
       :uuid "e6244ec7-6c90-3284-2e2b-e8e81d75f9fd"

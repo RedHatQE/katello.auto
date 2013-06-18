@@ -67,23 +67,26 @@
     :uuid "bc848668-db91-6104-7493-0ea333e53744"
     (create-and-verify-with-basename "auto-org")
 
-    (deftest "Create an organization with i18n characters"
+    (deftest "Create an organization with valid name"
       :uuid "1abae899-440f-d254-15ab-81341908d0d2"
+      :blockers (bz-bugs "975593")
       :data-driven true
 
       create-and-verify-with-basename
-      validation/i8n-chars)
+      (map list validation/non-html-names))
 
     (deftest "Create an org with a 1 character UTF-8 name"
       :uuid "b64a6748-c4c7-ef64-688b-59b85b4dcb55"
+      :blockers (bz-bugs "975593")
       :data-driven true
 
       create-and-verify-with-name
 
-      ;;create rows of data, 1 random 1-char utf8 string in each
-      #_(take 10 (repeatedly (comp vector
-                                 (partial random-string 0x0080 0x5363 1))))
-      [["˗"] ["↽"] ["࣫"] ["ㅝ"] ["㼳"] ["䍿"] ["䘦"] ["⏤"] ["ᅈ"] ["䝐"]])
+      ;; create rows of data, 1 random 1-char utf8 string in each
+      ;; use random because otherwise rerunning the test will fail
+      ;; due to org already existing.
+      (take 10 (repeatedly (comp vector
+                                 (partial random-string 0x0080 0x5363 1)))))
 
     (deftest "Create an organization with an initial environment"
       :uuid "8bd2ed1a-409a-62d4-7f8b-a9394bb16890"

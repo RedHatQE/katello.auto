@@ -44,7 +44,7 @@
       (fn [name]
         (with-unique [a (assoc (some-ak) :name name)]
           (ui/create a)))
-      val/i8n-chars)
+      (map list val/i18n-chars))
 
     (deftest "Remove an activation key"
       :uuid "07ba1560-7e1c-2104-8eeb-2290b4a37a4d"
