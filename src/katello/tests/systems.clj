@@ -417,10 +417,8 @@
 
     (fn [package-opts]
       (let [target-env test-environment
-            system (uniqueify (kt/newSystem {:name "pkg_install", :env target-env}))
             product (configure-product-for-pkg-install target-env)]
-
-        (provision/with-client (:name system)
+        (provision/with-client "pkg_install"
           ssh-conn
           (client/register ssh-conn
                            {:username (:name *session-user*)
@@ -428,8 +426,9 @@
                             :org (-> product :provider :org :name)
                             :env (:name target-env)
                             :force true})
-          (let [mysys (client/my-hostname ssh-conn)]
-            (client/subscribe ssh-conn (system/pool-id system product))
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+                          katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (system/add-package mysys package-opts)))))
 
@@ -563,8 +562,3 @@
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (->> cmd_result :exit-code (= 1)))))))))
-
-
-
-
-
