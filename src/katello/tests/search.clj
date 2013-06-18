@@ -13,7 +13,7 @@
                      [systems :as system]
                      [conf :refer [*session-org* config]]
                      [blockers :refer [bz-bugs auto-issue]])
-            [katello.tests.useful :refer [ensure-exists]]
+            [katello.tests.useful :refer [ensure-exists create-recursive]]
             (test.tree [script :refer :all])
             [test.assert :as assert]
             [slingshot.slingshot :refer :all]))
@@ -72,7 +72,7 @@
     
     (fn [orginfo searchterms]
       (with-unique [org (kt/newOrganization orginfo)]
-        (rest/create org)
+        (create-recursive org)
         (search org searchterms)
         (validate-search-results (list org))))
 
