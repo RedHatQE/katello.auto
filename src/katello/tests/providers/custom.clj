@@ -44,7 +44,7 @@
     
   (deftest "Delete a custom product"
     :uuid "b9940780-8261-01a4-e83b-10ed847dae24"
-    :blockers (bz-bugs "729364")
+    :blockers (bz-bugs "975595")
     
     (doto (uniqueify (katello/newProduct {:provider @test-provider
                                           :name "deleteme"
