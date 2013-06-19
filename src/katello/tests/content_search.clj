@@ -10,6 +10,7 @@
                      [ui     :as ui]
                      [fake-content  :as fake]
             )
+            [katello.tests.content-views :refer [promote-published-content-view]]
             [katello :as kt]
             [test.assert :as assert]
             [bugzilla.checker :refer [open-bz-bugs]]
@@ -166,6 +167,20 @@
     (let [repos (difference (set (fake/get-all-custom-repo-names)) (set (fake/get-i18n-repo-names)))]
       (assert/is (= repos
                     (set (content-search/compare-repositories (into [] repos)))))))
+
+  
+  (deftest "Content Browser: Repositories grouped by product"
+    (content-search/go-to-content-search-page test-org-compare)
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (assert/is 
+        (= (content-search/get-grid-row-headers)
+           {"Default Organization View"
+            #{{"Weird Enterprise" #{"China" "Russia"}}
+              {"Com Nature Enterprise"
+               #{"CompareZooNosync" "ManyRepositoryA" "CompareZoo1" "CompareZoo2"}}
+              {"ManyRepository Enterprise"
+               #{"ManyRepositoryA" "ManyRepositoryB" "ManyRepositoryC" "ManyRepositoryD" "ManyRepositoryE"}}}})))
   
   (deftest "Content Search: search repo info"
     :data-driven true
@@ -303,8 +318,127 @@
       ["severity:ttt" #{}]
       ["severity:" #{}]]}))
 
+(declare test-org-env)
+(declare publish-dev)
+(declare publish-qa)
+
+(def env-dev "Development")
+(def env-qa "QA")
+(def env-release "Release")
+
+(defn test-env-shared-unique [environments view]
+      (content-search/go-to-content-search-page test-org-env)
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      (content-search/select-environments environments)
+      (content-search/select-view view)
+      (content-search/get-grid-row-headers))
+
+(defgroup content-search-env-compare
+  :group-setup (fn []
+                 (def ^:dynamic test-org-env  (uniqueify  (kt/newOrganization {:name "env-org"})))
+                 (rest/create  test-org-env)
+                 (org/switch test-org-env)
+                 (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
+                 (let [env-dev-r (kt/newEnvironment {:name env-dev :org test-org-env :prior-env "Library"})
+                       env-qa-r (kt/newEnvironment {:name env-qa :org test-org-env :prior-env env-dev})
+                       env-release-r (kt/newEnvironment {:name env-release :org test-org-env :prior-env env-qa})]
+                   (ui/create-all-recursive [env-dev-r env-qa-r  env-release-r])
+        (def ^:dynamic publish-dev (:published-name
+                   (promote-published-content-view 
+                     test-org-env 
+                     env-dev-r
+                     (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
+                          1))))
+        (def ^:dynamic publish-qa (:published-name
+                   (promote-published-content-view 
+                     test-org-env 
+                     env-qa-r
+                     (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
+                          2))))))
+
+  (deftest "Content Browser: Shared content for selected environments"
+    :data-driven true
+
+    (fn [environments result]
+      (assert/is (= result (test-env-shared-unique environments :shared))))
+    
+    [(fn [] [[env-dev] #{{"Default Organization View" 
+                   #{"Com Errata Inc" "Weird Enterprise" "Com Errata Enterprise"}} 
+                  {publish-dev {"Com Errata Inc" "ErrataZoo"}} 
+                  {publish-qa "Weird Enterprise"}}])
+     
+     (fn [] [[env-dev env-qa] #{{"Default Organization View" 
+                          #{"Com Errata Inc" "Weird Enterprise" "Com Errata Enterprise"}} 
+                         {publish-dev "Com Errata Inc"} 
+                         {publish-qa "Weird Enterprise"}}])
+      
+     (fn [] [[env-dev env-qa env-release] #{{"Default Organization View" 
+                                      #{"Com Errata Inc" "Weird Enterprise" "Com Errata Enterprise"}} 
+                                     {publish-dev  "Com Errata Inc"} 
+                                     {publish-qa "Weird Enterprise"}}])])
+  
+  (deftest "Content Browser: Unique content for selected environments"
+    :data-driven true
+
+    (fn [environments result]
+      (assert/is (= result (test-env-shared-unique environments :unique))))
+    
+    [(fn [] [[env-dev] 
+      #{{"Default Organization View" 
+         #{{"Weird Enterprise" #{"China" "Russia"}} 
+           {"Com Errata Enterprise" "ErrataZoo"} 
+           {"Com Errata Inc" "ErrataZoo"}}} 
+        {publish-dev "Com Errata Inc"}
+        {publish-qa {"Weird Enterprise" #{"China" "Russia"}}}}])
+     
+     (fn [] [[env-dev env-qa] 
+      #{{"Default Organization View" 
+         #{{"Weird Enterprise" #{"China" "Russia"}} 
+           {"Com Errata Enterprise" "ErrataZoo"} 
+           {"Com Errata Inc" "ErrataZoo"}}} 
+        {publish-qa {"Weird Enterprise" #{"China" "Russia"}}} 
+        {publish-dev {"Com Errata Inc" "ErrataZoo"}}}])
+     
+     (fn [] [[env-dev env-qa env-release] 
+      #{{"Default Organization View" 
+         #{{"Weird Enterprise" #{"China" "Russia"}} 
+           {"Com Errata Enterprise" "ErrataZoo"} {"Com Errata Inc" "ErrataZoo"}}} 
+        {publish-dev {"Com Errata Inc" "ErrataZoo"}}
+        {publish-qa {"Weird Enterprise" #{"China" "Russia"}}}}])])
+ 
+(deftest "Content Browser: Environment selector for content browser"
+        :data-driven true
+        
+    (fn [environments]
+      (content-search/go-to-content-search-page test-org-env)
+      (content-search/select-content-type :repo-type)
+      (content-search/submit-browse-button)
+      (content-search/select-environments environments)
+      (assert/is  (= (content-search/get-table-headers) (into [] (cons "Library" environments)))))
+  
+     [[[env-dev env-qa env-release]]
+      [[env-dev env-qa]]
+      [[env-qa]]])
+
+
+  (deftest "Content Search: search repo info"
+    (content-search/go-to-content-search-page test-org-env)
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (content-search/select-environments [env-dev env-qa env-release])
+    (assert/is (content-search/get-repo-desc)
+              [[[true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] [true "Packages (40)\nErrata (6)\n"] false]
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false]
+               [[true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] [true ["\nPackages (32)\n" "\nErrata (4)\n"]] false] 
+               [[true "Packages (8)\nErrata (2)\n"] [true "Packages (8)\nErrata (2)\n"] false false] 
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false] 
+               [[true "Packages (8)\nErrata (2)\n"] false false false] 
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false false]] ))
+
+  )
 
 (defgroup content-search-tests
   content-search-repo-compare
-  content-search-errata)
-
+  content-search-errata
+  content-search-env-compare)
