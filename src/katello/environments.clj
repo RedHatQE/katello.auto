@@ -46,7 +46,7 @@
                        ::description-text description
                        ::prior (:name prior)}
                       ::create)
-  (notification/check-for-success {:match-pred (notification/request-type? :env-create)}))
+  (notification/success-type :env-create))
 
 (defn- delete
   "Deletes an environment from the given organization."
@@ -56,7 +56,7 @@
     (browser click ::remove-link)
     (throw+ {:type ::cant-be-deleted :env env}))
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :env-destroy)}))
+  (notification/success-type :env-destroy))
 
 (defn- edit
   "Edits an environment. Passes env through f (with extra args) to get

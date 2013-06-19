@@ -45,7 +45,7 @@
     (sel/fill-ajax-form {::name-text name
                          ::content-text contents}
                         ::save))
-  (notification/check-for-success {:match-pred (notification/request-type? :gpg-keys-create)}))
+  (notification/success-type :gpg-keys-create))
 
 
 (defn- delete 
@@ -54,7 +54,7 @@
   (nav/go-to gpg-key)
   (browser click ::remove-link )
   (browser click ::ui/confirmation-yes)
-  (notification/check-for-success {:match-pred (notification/request-type? :gpg-keys-destroy)}))
+  (notification/success-type :gpg-keys-destroy))
 
 (extend katello.GPGKey
   ui/CRUD {:create create

@@ -14,8 +14,19 @@
 (def javascript-strings          ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
 (def invalid-character-strings   ["/", ">", "   <", "xyz/123", "123 abc 5 > b", "<abc123"])
 (def invalid-urls                ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
-(def i8n-chars                   [["صالح"] ["Гесер"] ["洪"] ["標準語"]])
-    ;;if i8n strings are rendered backwards in emacs, run M-: (setq bidi-display-reordering nil) 
+
+
+;; allowed data
+
+(def i18n-chars                   ["صالح" "Гесер" "洪" "標準語"])
+;;if i8n strings are rendered backwards in emacs, run M-: (setq bidi-display-reordering nil) 
+
+(def ^{:doc "names that fit katello's non-html name format - should be
+             any char but / < and >"}
+  non-html-names
+  (conj i18n-chars
+        "foo.bar" "--__" "--" "__" "@" "%" "&gt;" "\\" "..\\"))
+
 
 ;; Named types of validation errors 
 

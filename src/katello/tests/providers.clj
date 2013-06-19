@@ -1,12 +1,8 @@
 (ns katello.tests.providers
   (:refer-clojure :exclude [fn])
-  (:require [katello :as kt]
-            [katello.client.provision :as provision]
-            (test.tree [script :refer [defgroup deftest]]
-                       [builder :refer [union]])
-            [serializable.fn   :refer [fn]]
+  (:require [serializable.fn   :refer [fn]]
             [test.assert       :as assert]
-            [bugzilla.checker  :refer [open-bz-bugs]]
+            [test.tree.script :refer [defgroup deftest]]
             [katello :as kt]
             (katello [rest :as rest]
                      [ui :as ui]
@@ -23,8 +19,10 @@
                      [gpg-keys        :as gpg-key]
                      [fake-content    :as fake]
                      [validation      :refer :all]
-                     [conf            :as conf :refer [config]])
-            [katello.tests.useful :refer [fresh-repo create-series create-recursive]]))
+                     [conf            :as conf :refer [config]]
+                     [blockers :refer [bz-bugs]])
+            [katello.tests.useful :refer [fresh-repo create-series create-recursive]]
+            [katello.client.provision :as provision]))
 
 ;; Functions
 
@@ -96,7 +94,7 @@
   :group-setup create-test-environment
 
   (deftest "Create a new GPG key from text input"
-    :blockers rest/katello-only
+    :blockers (list rest/katello-only)
 
     (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
         katello/newGPGKey
@@ -104,7 +102,7 @@
         ui/create)
 
     (deftest "Create a new GPG key from text input and associate it with products/providers"
-      :blockers rest/katello-only
+      :blockers (list rest/katello-only)
 
       (-> {:name "test-key-text", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
           katello/newGPGKey
@@ -112,7 +110,7 @@
           create-custom-provider-with-gpg-key)))
 
   (deftest "Create a new GPG key from file"
-    :blockers (open-bz-bugs "835902" "846432")
+    :blockers (bz-bugs "835902" "846432")
 
     (-> {:name "test-key-file", :url (@config :gpg-key), :org conf/*session-org*}
         katello/newGPGKey
@@ -120,7 +118,7 @@
         ui/create)
 
     (deftest "Create a new GPG key from file and associate it with products/providers"
-      :blockers rest/katello-only
+      :blockers (list rest/katello-only)
 
       (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
           katello/newGPGKey
@@ -128,7 +126,7 @@
           create-custom-provider-with-gpg-key)
 
       (deftest "Associate same GPG key to multiple providers"
-        :blockers rest/katello-only
+        :blockers (list rest/katello-only)
         :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
 
         (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env (kt/newEnvironment {:name "DEV"})})
@@ -144,7 +142,7 @@
         ui/delete)
 
       (deftest "Delete existing GPG key, associated with products/providers"
-        :blockers rest/katello-only
+        :blockers (list rest/katello-only)
 
         (doto (-> {:name "test-key", :url (@config :gpg-key), :org conf/*session-org*}
                   katello/newGPGKey
@@ -153,7 +151,7 @@
           ui/delete)))
     
     (deftest  "Add key after product has been synced/promoted"
-      :blockers (union rest/katello-only (open-bz-bugs "970570"))
+      :blockers (conj (bz-bugs "970570") rest/katello-only)
       (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
@@ -207,11 +205,13 @@
 
 #_(defgroup package-filter-tests
 
-  (deftest "Create new Package Filter test"
+    (deftest "Create new Package Filter test"
+      :uuid "d547ee8a-e863-a4c4-4e83-8f7a5e21b142"
     (with-unique [test-package-filter "test-package-filter"]
       (filter/create test-package-filter {:description "Test filter"}))
 
     (deftest "Delete existing Package Filter test"
+      :uuid "fab190c6-0f61-37a4-3ca3-7fe40a65d579"
       (with-unique [test-package-filter "test-package-filter"]
         (filter/create test-package-filter {:description "Test filter"})
         (filter/remove test-package-filter)))))
@@ -219,18 +219,21 @@
 (defgroup provider-tests
 
   (deftest "Create a custom provider"
+    :uuid "34a037ee-8530-9204-639b-06006c5b1dd6"
     (-> {:name "auto-cp", :description "my description", :org conf/*session-org*}
         katello/newProvider
         uniqueify
         ui/create)
 
     (deftest "Cannot create two providers in the same org with the same name"
+      :uuid "b7edc321-6d63-6db4-20cb-6e254aca2a28"
       (with-unique [provider (katello/newProvider {:name "dupe"
                                                    :org conf/*session-org*})]
         (expecting-error-2nd-try duplicate-disallowed
                                  (ui/create provider))))
 
     (deftest "Provider validation"
+      :uuid "3a0b3082-1091-3cc4-ade3-cc968a82f278"
       :data-driven true
       :description "Creates a provider using invalid data, and
                     verifies that an error notification is shown in
@@ -239,6 +242,7 @@
       (get-validation-data))
 
     (deftest "Rename a custom provider"
+      :uuid "45ad01c6-34ba-7074-cdbb-df3667a4a217"
       (let [provider (-> {:name "rename", :description "my description", :org conf/*session-org*}
                          katello/newProvider
                          uniqueify)]
@@ -247,6 +251,7 @@
           (verify-provider-renamed provider updated))))
 
     (deftest "Delete a custom provider"
+      :uuid "9ed6ab33-58cc-46f4-0483-c0f86f1b5712"
       (doto (-> {:name "auto-provider-delete"
                  :org conf/*session-org*}
                 katello/newProvider
@@ -255,6 +260,7 @@
         (ui/delete)))
 
     (deftest "Create two providers with the same name, in two different orgs"
+      :uuid "939fb331-058e-e5e4-ebbb-543da0e3cc30"
       (with-unique [provider (katello/newProvider {:name "prov"})]
         (doseq [org (->> {:name "prov-org"}
                          katello/newOrganization

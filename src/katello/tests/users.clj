@@ -2,6 +2,7 @@
   (:require [katello :as kt]
             (katello [validation :refer :all] 
                      [organizations :as organization]
+                     [notifications :as notification]
                      [ui :as ui]
                      [navigation :as nav]
                      [rest :as rest]
@@ -12,14 +13,15 @@
                      [menu :as menu]
                      [users :as user]
                      [tasks :refer :all] 
-                     [conf :refer [config *session-org* *session-user*]] 
-                     [navigation :as nav]) 
-            [katello.tests.useful :refer [create-all-recursive]]
+                     [conf :refer [config *session-org* *session-user* *environments*]] 
+                     [navigation :as nav]
+                     [blockers :refer [bz-bugs]]) 
+            [katello.tests.useful :refer [create-all-recursive create-recursive]]
+            [slingshot.slingshot :refer [throw+]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
-            [clojure.string :refer [capitalize upper-case lower-case]]
-            [bugzilla.checker :refer [open-bz-bugs]]))
+            [clojure.string :refer [capitalize upper-case lower-case]]))
 
 ;;; Constants
 
@@ -85,11 +87,13 @@
   (organization/switch nil {:default-org default-org})
   user)
 
+
 ;;; Tests
 
 (defgroup default-org-tests
   :test-teardown (fn [& _ ] (login))
   (deftest "Set default org for a user at login"
+    :uuid "b5acedf5-f7d5-bb34-10c3-2d91caa3f9c8"
     :tcms "201013"
     (-> (new-unique-user)
         create-org-and-user
@@ -100,6 +104,7 @@
      
 
     (deftest "Unset default org for a user at login"
+      :uuid "1701cd3b-d842-96f4-5ec3-bd105cf406bf"
       (-> (new-unique-user)
           create-org-and-user
           assign-admin
@@ -110,6 +115,7 @@
           verify-login-prompts-org)))
   
   (deftest "Default Org - user can change default org (smoke test)"
+    :uuid "705938b1-bd37-d114-10d3-22202195d710"
     (-> (new-unique-user)
         create-org-and-user
         assign-admin
@@ -122,6 +128,7 @@
     
 
   (deftest "Default Org - user w/o rights cannot change default org (smoke test)"
+    :uuid "0a0da6f9-3a84-b4e4-27d3-119f7a43c141"
     :tcms "201585"
     (-> (new-unique-user)
         create-org-and-user 
@@ -131,6 +138,7 @@
     (login))
 
   (deftest "User's Favorite Organization"
+    :uuid "1608619a-68b2-0b54-57db-aaf30b298c43"
     :data-driven true
     (fn [saved-methods expected]
       (let [save-method->env (into (array-map)
@@ -168,7 +176,8 @@
   :test-teardown (fn [& _ ] (login))
  
   (deftest "User changes his password"
-    :blockers (open-bz-bugs "915960")
+    :uuid "19567fea-dc37-7974-9a6b-3e11e16fab47"
+    :blockers (bz-bugs "915960")
     (-> (new-unique-user)
         create-user
         login-user
@@ -177,17 +186,20 @@
 (defgroup user-tests
   
   (deftest "Admin creates a user"
+    :uuid "e502a331-b905-7c94-a8c3-d4bca1094d20"
     (ui/create (uniqueify (assoc generic-user :name "user")))
     
     (deftest "Admin creates a user with i18n characters"
+      :uuid "3d79f50b-f27b-4e44-fa4b-834568c214d7"
       :data-driven true
-      :blockers (open-bz-bugs "868906")
+      :blockers (bz-bugs "868906")
       
       (fn [username]
         (ui/create (uniqueify (assoc generic-user :name username ))))
       [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
     (deftest "User validation"
+      :uuid "99693586-885f-9124-6c9b-93490b1bb687"
       :data-driven true
 
       (fn [username expected-err]
@@ -201,7 +213,8 @@
        ["" :katello.notifications/username-cant-be-blank]])
 
     (deftest "Admin creates a user with a default organization"
-      :blockers (open-bz-bugs "852119")
+      :uuid "0ec513c6-d68e-fff4-3b6b-d7ee7a590308"
+      :blockers (bz-bugs "852119")
       
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     env (kt/newEnvironment {:name "environment" :org org})
@@ -211,21 +224,61 @@
                            :default-env env)]
         (rest/create-all (list org env))
         (ui/create user)))
+    
+    (deftest "Check whether the users default-org & default-env gets updated"
+      :uuid "52271ddb-7c65-0514-048b-cdaa334d4204"
+      (with-unique [org (kt/newOrganization {:name "auto-org"})
+                    env (kt/newEnvironment {:name "environment" :org org})
+                    user (assoc generic-user
+                           :name "autouser"
+                           :default-org org
+                           :default-env env)]
+        (let [default-org-env (first *environments*)]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (create-recursive default-org-env)
+          (ui/update user assoc :default-org *session-org* :default-env default-org-env)
+          (assert/is (= (browser getText ::user/current-default-org) (:name *session-org*)))
+          (assert/is (= (browser getText ::user/current-default-env) (:name default-org-env))))))
+    
+    (deftest "Check whether the users email address gets updated"
+      :uuid "23b69aad-209c-98d4-d993-c24c215a0e6a"
+      :data-driven true
+      (fn [input-loc new-email save?]
+        (with-unique [org (kt/newOrganization {:name "auto-org"})
+                      env (kt/newEnvironment {:name "environment" :org org})
+                      user (assoc generic-user
+                             :name "autouser"
+                             :default-org org
+                             :default-env env)]
+        (let [expected-res #(-> % :type (= :success))]
+          (rest/create-all (list org env))
+          (ui/create user)
+          (expecting-error expected-res
+            (nav/go-to ::user/named-page user)              
+            (common/save-cancel ::user/save-button ::user/cancel-button :users-update input-loc new-email save?)))))
+
+      [[::user/email-text "abc@redhat.com" false]
+       [::user/email-text "pnq@fedora.com" true]])
+      
 
     (deftest "Admin changes a user's password"
-      :blockers (open-bz-bugs "720469")
+      :uuid "f50a6ca1-8374-5f84-0e8b-92e886c4625c"
+      :blockers (bz-bugs "720469")
       (with-unique [user (assoc generic-user :name "edituser")]
         (ui/create user)
         (ui/update user assoc :password "changedpwd")))
 
     (deftest "Admin deletes a user"
-      :blockers (open-bz-bugs "961122")
+      :uuid "b0003693-bbee-00f4-8013-bd4197c99c0f"
+      :blockers (bz-bugs "961122")
       (with-unique [user (assoc generic-user :name "deluser")]
         (ui/create user)
         (ui/delete user))
 
       (deftest "Admin who deletes the original admin account can still do admin things"
-        :blockers (open-bz-bugs "868910")
+        :uuid "09ddafc9-a4cf-88f4-85f3-850d3ed3049c"
+        :blockers (bz-bugs "868910")
         
         (let [admin @user/admin]
           (try
@@ -237,14 +290,16 @@
                      (assign-admin admin))))))
 
     (deftest "Two users with the same username is disallowed"
-      :blockers (open-bz-bugs "738425")
+      :uuid "459f3f2d-af43-7364-161b-19593bd81005"
+      :blockers (bz-bugs "738425")
 
       (with-unique [user (assoc generic-user :name "dupeuser")]
         (expecting-error-2nd-try (common/errtype :katello.notifications/name-taken-error)
                                  (ui/create user))))
     
     (deftest "Two users with username that differs only in case are allowed (like unix)"
-      :blockers (open-bz-bugs "857876")
+      :uuid "09143923-ca60-0a04-8a23-ab562f72b67e"
+      :blockers (bz-bugs "857876")
       :data-driven true
       (fn [orig-name modify-case-fn]
         (with-unique [user (assoc generic-user :name orig-name)]
@@ -257,6 +312,7 @@
        ["YOURUsr" lower-case]])
     
     (deftest "Delete user-notifications"
+      :uuid "577e2d2d-1e6f-dc64-57eb-84d5b4358e4d"
       :data-driven true
       
       (fn [delete-all?]
@@ -272,6 +328,7 @@
     
     
     (deftest "User's minimum password length is enforced"
+      :uuid "bbb93943-2a82-ddd4-18c3-760192403e00"
       (expecting-error (common/errtype :katello.notifications/password-too-short)
                        (ui/create (uniqueify (assoc generic-user
                                                :name "insecure-user"
@@ -279,15 +336,18 @@
 
 
     (deftest "Admin assigns a role to user"
+      :uuid "2f2b1989-80b2-8ce4-b03b-b12fff438916"
       (-> (new-unique-user) create-user assign-admin))
   
 
     (deftest "Roles can be removed from user"
+      :uuid "01f94473-dbe4-80b4-3e5b-8b89145a814c"
       (-> (new-unique-user), create-user, assign-admin, (ui/update assoc :roles #{}))))
 
   (deftest "Unassign admin rights to admin user and then login
                to find only dashboard menu"
-    :blockers (open-bz-bugs "916156")
+    :uuid "07f27396-e2d8-39b4-47a3-9ffdb01d3a7e"
+    :blockers (bz-bugs "916156")
     (let [user (-> (new-unique-user)
                    rest/create
                    assign-admin)
@@ -300,6 +360,4 @@
         (assign-admin admin))))
 
   user-settings default-org-tests)
-
-
 

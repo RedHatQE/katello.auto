@@ -6,6 +6,7 @@
                      [providers :as provider]
                      repositories
                      environments
+                     [blockers :refer [bz-bugs]]
                      [systems :as system]
                      [changesets :refer [sync-and-promote]]                    
                      [tasks :refer :all]
@@ -16,7 +17,6 @@
             (test.tree [script :refer :all]
                        [builder :refer :all])
             [serializable.fn :refer [fn]]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [test.assert :as assert]
             [slingshot.slingshot :refer :all]))
 
@@ -55,9 +55,10 @@
 (defgroup end-to-end-tests 
 
   (deftest "Clients can access custom content"
-    :blockers (union (blocking-tests "simple sync" "promote content")
-                     (open-bz-bugs "784853" "790246" "959211" "970570")
-                     no-clients-defined)
+    :uuid "34fdfac4-7c7c-0c94-4173-c60711d2da24"
+    :blockers (conj (bz-bugs "784853" "790246" "959211" "970570")
+                    (blocking-tests "simple sync" "promote content")
+                    no-clients-defined)
     (let [repo (fresh-repo *session-org*
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
           target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment uniqueify)

@@ -105,7 +105,8 @@
    ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
 
    ;; use index, no other identifiable info in the DOM
-   ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]" 
+   ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]"
+   ::confirmation-no         "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[2]" 
 
    ::switcher                "organizationSwitcher"
    ::active-org              "//a[contains(@class,'organization-name')]"
