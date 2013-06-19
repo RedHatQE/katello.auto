@@ -8,12 +8,12 @@
                      [changesets :refer [promote-delete-content]]
                      [rest     :as rest]
                      [ui     :as ui]
+                     [blockers :refer [bz-bugs]]
                      [fake-content  :as fake]
             )
             [katello.tests.content-views :refer [promote-published-content-view]]
             [katello :as kt]
             [test.assert :as assert]
-            [bugzilla.checker :refer [open-bz-bugs]]
             [test.tree.script :refer [defgroup deftest]]
             [clojure.set :refer [intersection difference union project select]]))
 
