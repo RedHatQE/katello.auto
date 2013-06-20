@@ -76,6 +76,14 @@
 
 (defrecord Erratum [id name ^Product product])
 
+(def red-hat-provider (newProvider {:name "Red Hat"}))
+
+;; Below records are for Repos, RepoSet obtained from manifest import
+
+(defrecord RHRepoSet [id name ^Product product])
+
+(defrecord RHRepo [id name ^RHRepoSet reposet])
+
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name ^Environment env service-level])
 
@@ -95,8 +103,6 @@
 
 (defrecord Manifest [provider file-path url])
 
-(def red-hat-provider (newProvider {:name "Red Hat"}))
-
 (defrecord SyncPlan [id name ^Organization org interval])
 
 (defrecord Pool [id productId ^Organization org])
@@ -110,8 +116,9 @@
 (defprotocol BelongsTo
   (org [x])
   (env [x])
-  (product [x])
   (provider [x])
+  (product [x])
+  (reposet [x])
   (repository [x])
   (parent [x]))
 
@@ -121,10 +128,14 @@
    Provider {:org :org, :provider identity, :parent #'org}
    Distributor {:org (comp #'org #'env), :env :env, :parent #'env}
    Product {:org (comp #'org #'provider), :provider :provider, :product identity, :parent #'provider} ; the org is the provider's org
-   Repository {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product)
+   Repository {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product),
                :repository identity, :parent #'product} ; the org is the product's org
    Package {:org (comp #'org #'product), :product :product, :parent #'product}
    Erratum {:org (comp #'org #'product), :product :product, :parent #'product}
+   RHRepoSet {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product),
+              :reposet identity, :parent #'product}
+   RHRepo {:org (comp #'org #'reposet), :reposet :reposet, :product (comp #'product #'reposet), 
+           :provider (comp #'provider #'reposet), :repository identity, :parent #'reposet}
    System {:org (comp #'org #'env), :env :env, :parent #'org}
    GPGKey {:org :org, :parent #'org}
    Permission {:org :org, :parent #'org}
