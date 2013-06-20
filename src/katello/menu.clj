@@ -91,7 +91,7 @@
 
              [::repositories-menu (browser-fn (mouseOver ::repositories-link))
               [:katello.providers/custom-page (browser-fn (clickAndWait ::custom-content-repositories-link))]
-              [:katello.repositories/redhat-page (browser-fn (clickAndWait ::red-hat-repositories-link))]
+              [:katello.rh-repositories/redhat-page (browser-fn (clickAndWait ::red-hat-repositories-link))]
               [:katello.gpg-keys/page (browser-fn (clickAndWait ::gpg-keys-link))]]
 
              [::sync-management-menu (browser-fn (mouseOver ::sync-management-link))
