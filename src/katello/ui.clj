@@ -43,7 +43,14 @@
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]
     (create-recursive ent m)))
+
 ;; Locators
+(def menu-template
+  (partial format "//a[contains(@class,'%s') and normalize-space(.)='%s']"))
+
+(def menu-link (partial menu-template "menu-item-link"))
+(def menu-dropdown-link (partial menu-template "dropdown-item-link"))
+(def menu-flyout-link (partial menu-template "flyout-item-link"))
 
 (sel/template-fns
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
@@ -53,14 +60,13 @@
   link                 "link=%s"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
-  menu-link            "//a[contains(@class,'menu-item-link') and normalize-space(.)='%s']"
-  menu-dropdown-link   "//ul[contains(@class,'flyout')]//a[normalize-space(.)='%s']"
+  
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
   textbox              "xpath=//*[self::input[(@type='text' or @type='password' or @type='file') and @name='%s'] or self::textarea[@name='%<s']]"
-  default-star         "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']/../span[contains(@id,'favorite')]"
-  switcher-link        "//ul[@id='organizationSwitcher']//li//a[normalize-space(.)='%s' and contains(@class, 'dropdown-menu-item-link')]"
+  default-star         "//ul[@id='organizationSwitcher']//a[normalize-space(.)='%s']/../i[contains(@id,'favorite')]"
+  switcher-link        "//ul[@id='organizationSwitcher']//li//a[normalize-space(.)='%s' and contains(@class, 'org-link')]"
   custom-keyname-list  "xpath=(//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')])[%s]"
   custom-value-list    "xpath=(//td/div[@class='editable edit_textfield'])[%s]"})
 
