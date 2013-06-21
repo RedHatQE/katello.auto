@@ -57,10 +57,10 @@
   [system]
   (nav/go-to ::system/subscriptions-page system)
   (browser isElementPresent ::system/red-subs-icon)
-  (assert/is (= "Subscriptions are not Current Details" (browser getText ::system/subs-text)))  
-  (assert/is (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel)))   
+  (assert/is (= "Subscriptions are not Current Details" (browser getText ::system/subs-text)))
+  (assert/is (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel)))
   (assert/is (common/disabled? ::system/subs-attach-button)))
-    
+
 (defn configure-product-for-pkg-install
   "Creates and promotes a product with fake content repo, returns the
   product."
@@ -218,14 +218,14 @@
               (nav/go-to system)))))
     [[false]
      [true]])
-    
+
   (deftest "Creates org with default custom system key and adds new system"
     :uuid "7d5ff301-b2eb-05a4-aee3-ab60d9583585"
     :blockers (list rest/katello-only)
     (with-unique [org (kt/newOrganization
                        {:name "defaultsysinfo"
                         :initial-env (kt/newEnvironment {:name "dev"})})
-                     
+
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
@@ -258,7 +258,7 @@
     (with-unique-system s
       (rest/create s)
       (ui/update s assoc :custom-info {"Hypervisor" "KVM"})))
-    
+
   (deftest "System Details: Update custom info"
     :uuid "24ea3405-34cc-0b84-20fb-5d4794c5b47b"
     :blockers (bz-bugs "919373" "970079")
@@ -301,7 +301,7 @@
      [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
 
      (with-meta
-       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" true]
        {:blockers (bz-bugs "951231")})
 
      ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
@@ -323,7 +323,7 @@
      ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
      ["Hypervisor" "KVM" (random-string (int \a) (int \z) 256) false]
      ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
-     ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" false]])
+     ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" true]])
 
   (deftest "System Details: Delete custom info"
     :uuid "b3b7de8e-cf55-1b24-346b-bab3bc209660"
@@ -333,7 +333,7 @@
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
         (assert/is (browser isTextPresent "Hypervisor"))
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
-  
+
   (deftest "Check whether all the envs of org can be selected for a system"
     :uuid "8284f1df-c3d7-0b94-a583-bf702470b485"
     :blockers (list rest/katello-only)
@@ -388,12 +388,12 @@
             facts (system/get-facts system)]
         (system/expand-collapse-facts-group system)
         (assert/is (every? (complement empty?) (vals facts))))))
-    
+
 
   (deftest "System-Details: Validate Activation-key link"
     :uuid "0f8a619c-f2f1-44f4-4ad3-84379abbfa8c"
     :blockers (bz-bugs "959211")
-      
+
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
       (ui/create ak)
@@ -438,7 +438,7 @@
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
-      
+
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
                                            create-series
@@ -457,11 +457,11 @@
             (assert/is (= (:name env) (system/environment mysys))))
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
-    
+
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
     :blockers (list rest/katello-only)
-    (with-unique [target-env (kt/newEnvironment {:name "dev" 
+    (with-unique [target-env (kt/newEnvironment {:name "dev"
                                                  :org *session-org*})
                   repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (ui/create target-env)
@@ -478,7 +478,7 @@
         (let [hostname (client/my-hostname ssh-conn)
               system (kt/newSystem {:name hostname :env target-env})]
           (validate-sys-subscription system)))))
-    
+
   (deftest "Register a system using multiple activation keys"
     :uuid "a39bf0f7-7e7b-1e54-cdf3-d1442d6e6a6a"
     :blockers (list rest/katello-only)
@@ -504,7 +504,7 @@
   (deftest  "Registering a system from CLI and consuming contents from UI"
     :uuid "867f7827-2ec2-48b4-d063-adc1e58dcfe5"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
-      
+
     (let [gpgkey (-> {:name "mykey", :org *session-org*,
                       :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator" )}
                      kt/newGPGKey
@@ -533,7 +533,7 @@
     :blockers (conj (bz-bugs "959211" "970570")
                     rest/katello-only
                     (auto-issue "791"))
-      
+
     (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
                                            katello/newEnvironment
                                            create-series
