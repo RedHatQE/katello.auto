@@ -80,9 +80,9 @@
 
 ;; Below records are for Repos, RepoSet obtained from manifest import
 
-(defrecord RHRepoSet [id name ^Product product])
+(defrecord RedHatRepoSet [id name ^Product product type deselect?])
 
-(defrecord RHRepo [id name ^RHRepoSet reposet])
+(defrecord RedHatRepo [id name ^RedHatRepoSet reposet type deselect?])
 
 (ns-unmap *ns* 'System) ; collision w java.lang.System
 (defrecord System [id name ^Environment env service-level])
@@ -132,10 +132,10 @@
                :repository identity, :parent #'product} ; the org is the product's org
    Package {:org (comp #'org #'product), :product :product, :parent #'product}
    Erratum {:org (comp #'org #'product), :product :product, :parent #'product}
-   RHRepoSet {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product),
-              :reposet identity, :parent #'product}
-   RHRepo {:org (comp #'org #'reposet), :reposet :reposet, :product (comp #'product #'reposet), 
-           :provider (comp #'provider #'reposet), :repository identity, :parent #'reposet}
+   RedHatRepoSet {:org (comp #'org #'product), :product :product, :provider (comp #'provider #'product),
+                  :reposet identity, :parent #'product}
+   RedHatRepo {:org (comp #'org #'reposet), :reposet :reposet, :product (comp #'product #'reposet), 
+               :provider (comp #'provider #'reposet), :repository identity, :parent #'reposet}
    System {:org (comp #'org #'env), :env :env, :parent #'org}
    GPGKey {:org :org, :parent #'org}
    Permission {:org :org, :parent #'org}
