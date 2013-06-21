@@ -205,7 +205,7 @@
        [(random-string 0x0080 0x5363 10) true]
        [(random-string 0x0080 0x5363 256) false]
        ["bar_+{}|\"?hi" true]
-       ["bar_+{}|\"?<blink>hi</blink>" false]])
+       ["bar_+{}|\"?<blink>hi</blink>" true]])
 
     (deftest "Create org with default keyname value twice"
       :uuid "7b451cdd-99e7-0d74-8a4b-605567b19b41"
@@ -250,7 +250,7 @@
        [(random-string 0x0080 0x5363 10) true]
        [(random-string 0x0080 0x5363 256) false]
        ["bar_+{}|\"?hi" true]
-       ["bar_+{}|\"?<blink>hi</blink>" false]])
+       ["bar_+{}|\"?<blink>hi</blink>" true]])
 
     (deftest "Create org with default distributor keyname and delete keyname"
       :uuid "80a04f72-4194-5c54-e1db-0f2e43ee0c67"
