@@ -13,7 +13,7 @@
                      [login :refer [login logged-in?]]
                      [navigation :as nav]
                      [conf :as conf]
-                     [tasks :refer [with-unique uniques uniqueify expecting-error random-string]]
+                     [tasks :refer [with-unique uniques uniqueify expecting-error random-ascii-string]]
                      [systems :as system]
                      [client :as client]
                      [users :as user]
@@ -478,7 +478,7 @@
       (expecting-error (common/errtype expected-err)
                        (create-role rolename)))
 
-    [[(random-string (int \a) (int \z) 149)  :katello.notifications/name-too-long]
+    [[(random-ascii-string 149)  :katello.notifications/name-too-long]
      ["  foo" :katello.notifications/name-no-leading-trailing-whitespace]
      ["  foo   " :katello.notifications/name-no-leading-trailing-whitespace]
      ["foo " :katello.notifications/name-no-leading-trailing-whitespace]

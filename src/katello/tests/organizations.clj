@@ -86,7 +86,7 @@
       ;; use random because otherwise rerunning the test will fail
       ;; due to org already existing.
       (take 10 (repeatedly (comp vector
-                                 (partial random-string 0x0080 0x5363 1)))))
+                                 (partial random-unicode-string 1)))))
 
     (deftest "Create an organization with an initial environment"
       :uuid "8bd2ed1a-409a-62d4-7f8b-a9394bb16890"
@@ -200,10 +200,10 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-string (int \a) (int \z) 255) true]
-       [(random-string (int \a) (int \z) 256) false]
-       [(random-string 0x0080 0x5363 10) true]
-       [(random-string 0x0080 0x5363 256) false]
+       [(random-ascii-string 255) true]
+       [(random-ascii-string 256) false]
+       [(random-unicode-string 10) true]
+       [(random-unicode-string 256) false]
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 
@@ -245,10 +245,10 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-string (int \a) (int \z) 255) true]
-       [(random-string (int \a) (int \z) 256) false]
-       [(random-string 0x0080 0x5363 10) true]
-       [(random-string 0x0080 0x5363 256) false]
+       [(random-ascii-string 255) true]
+       [(random-ascii-string 256) false]
+       [(random-unicode-string 10) true]
+       [(random-unicode-string 256) false]
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 

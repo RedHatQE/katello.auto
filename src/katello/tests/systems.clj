@@ -132,19 +132,18 @@
                          (nav/go-to ::system/details-page s)
                          (save-cancel input-loc new-value save?))))
 
-    (let [rand-lc-str (partial random-string (int \a) (int \z))]
-      [[::system/name-text-edit "yoursys" false success]
-       [::system/name-text-edit "test.pnq.redhat.com" true success]
-       [::system/name-text-edit (rand-lc-str 251) true (common/errtype ::notification/system-name-char-limit)]
-       [::system/name-text-edit (rand-lc-str 250) true success]
-       [::system/description-text-edit "cancel description" false success]
-       [::system/description-text-edit "System Registration Info" true success]
-       [::system/description-text-edit (rand-lc-str 256) true (common/errtype ::notification/sys-description-255-char-limit)]
-       [::system/description-text-edit (rand-lc-str 255) true success]
-       [::system/location-text-edit "Cancel Location" false success]
-       [::system/location-text-edit "System Location Info" true success]
-       [::system/location-text-edit (rand-lc-str 256) true (common/errtype ::notification/sys-location-255-char-limit)]
-       [::system/location-text-edit (rand-lc-str 255) true success]]))
+    [[::system/name-text-edit "yoursys" false success]
+     [::system/name-text-edit "test.pnq.redhat.com" true success]
+     [::system/name-text-edit (random-ascii-string 251) true (common/errtype ::notification/system-name-char-limit)]
+     [::system/name-text-edit (random-ascii-string 250) true success]
+     [::system/description-text-edit "cancel description" false success]
+     [::system/description-text-edit "System Registration Info" true success]
+     [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
+     [::system/description-text-edit (random-ascii-string 255) true success]
+     [::system/location-text-edit "Cancel Location" false success]
+     [::system/location-text-edit "System Location Info" true success]
+     [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
+     [::system/location-text-edit (random-ascii-string 255) true success]])
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
@@ -294,11 +293,11 @@
         (assert/is (= (browser isTextPresent keyname) success?))))
 
     [["Hypervisor" "KVM" true]
-     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
-     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 255) true]
-     [(uniqueify "cust-keyname") (random-string (int \a) (int \z) 256) false]
-     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
-     [(uniqueify "cust-keyname") (random-string 0x0080 0x5363 10) true]
+     [(random-ascii-string 255) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-ascii-string 255) true]
+     [(uniqueify "cust-keyname") (random-ascii-string 256) false]
+     [(random-unicode-string 10) (uniqueify "cust-value") true]
+     [(uniqueify "cust-keyname") (random-unicode-string 10) true]
 
      (with-meta
        ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" true]
@@ -320,9 +319,9 @@
           (assert/is (= (browser isTextPresent new-value) success?)))))
 
     [["Hypervisor" "KVM" "Xen" true]
-     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 255) true]
-     ["Hypervisor" "KVM" (random-string (int \a) (int \z) 256) false]
-     ["Hypervisor" "KVM" (random-string 0x0080 0x5363 10) true]
+     ["Hypervisor" "KVM" (random-ascii-string 255) true]
+     ["Hypervisor" "KVM" (random-ascii-string 256) false]
+     ["Hypervisor" "KVM" (random-unicode-string 10) true]
      ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" true]])
 
   (deftest "System Details: Delete custom info"
