@@ -9,6 +9,7 @@
                      [sync-management :as sync]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
+                     [providers :as provider]  ; needs to navigate - no direct dep
                      [ui-common :as common]
                      [login :refer [login logged-in?]]
                      [navigation :as nav]
@@ -183,13 +184,16 @@
                                          (fn [] (rest/create prov)))]))
 
      (vary-meta
-      (fn [] [:permissions [{:org global, :resource-type "Environments", :verbs ["Register Systems in Environment"], :name "systemreg"}]
+      (fn [] [:permissions [{:org global, :resource-type "Environments",
+                             :verbs ["Register Systems in Environment"
+                                     "Read Environment Contents"], :name "systemreg"}
+                            {:org global, :resource-type "Organizations",
+                             :verbs ["Read Organization"], :name "readorg"}]
               :allowed-actions [(fn [] (-> {:name "system"
                                             :env (first conf/*environments*)
-                                            :facts (system/random-facts)}
-                                           kt/newSystem uniqueify rest/create))
+                                            :facts (system/random-facts)} kt/newSystem uniqueify rest/create))
                                 (navigate-fn :katello.systems/page)]
-              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page :katello.organizations/page])
+              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page])
                                         create-an-org)])
       assoc :blockers (bz-bugs "757775"))
 
