@@ -40,24 +40,40 @@
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page})
 
-(def red-hat-provider (kt/newProvider {:name "Red Hat" :org katello.conf/*session-org*}))
+#_(rh-repos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+               "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
+              ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
+               "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
+               "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
+               "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
+            '("Red Hat CloudForms System Engine" 
+             "Red Hat CloudForms Tools for RHEL 6") 
+            '("Red Hat CloudForms" 
+              "Red Hat Enterprise Linux Server") 
+            katello.conf/*session-org* "rpms" false)
+;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
-(def cloudforms (kt/newProduct {:name "Red Hat CloudForms" :provider red-hat-provider}))
-(def system-engine (kt/newRedHatRepoSet {:name "Red Hat CloudForms System Engine", :product cloudforms}))
+(defn combiner [items]
+     (if (empty? (first items))
+       () 
+       (cons
+         (map first items) 
+         (combiner (map rest items)))))
 
-(def rhel (kt/newProduct {:name "Red Hat Enterprise Linux Server" :provider red-hat-provider}))
-(def rhel-cftools (kt/newRedHatRepoSet {:name "Red Hat CloudForms Tools for RHEL 6" :product rhel}))
-                                    
-(def rh-repos (concat (for [reponame ["Red Hat CloudForms System Engine RPMs x86_64 6.4"
-                                      "Red Hat CloudForms System Engine RPMs x86_64 6Server"]]
-                        (kt/newRedHatRepo {:name reponame, :reposet system-engine, 
-                                           :type "rpms", :deselect? false}))
-                      (for [reponame ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
-                                      "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
-                                      "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
-                                      "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]]
-                        (kt/newRedHatRepo {:name reponame, :reposet rhel-cftools, 
-                                           :type "rpms", :deselect? false}))))
+
+(defn rh-repos
+  [rh-allrepos rh-allreposets rh-allprds org repo-type deselect?]
+  (let [red-hat-provider     (katello/newProvider {:name "Red Hat" :org org})
+        red-hat-items        (combiner (list rh-allprds rh-allreposets rh-allrepos))        
+        red-hat-repositories (concat (for [[rh-prd rh-reposet rh-repos]  red-hat-items]
+                                       (let [prd        (katello/newProduct {:name rh-prd :provider red-hat-provider})
+                                             reposet    (katello/newRedHatRepoSet {:name rh-reposet, :product prd})
+                                             repos      (for [reponame rh-repos]
+                                                          (katello/newRedHatRepo {:name reponame, :reposet reposet, 
+                                                                                  :type repo-type, :deselect? deselect?}))]
+                                         repos)))]
+    (flatten red-hat-repositories)))
+
 
 (defn enable-disable-redhat-repos
   "Enable the given list of rh-repos in the current org."
