@@ -258,9 +258,7 @@
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                         :katello.providers/custom-page
                                                         :katello.changesets/page])
-                                         (fn [] (ui/update cv assoc :description "cvaccess_create desc"))
-                                         (fn [] (views/publish {:content-defn cv :published-name "pub1" :description "pub name desc"}))
-                                         (fn [] (ui/delete cv)))]))
+                                         (fn [] (views/publish {:content-defn cv :published-name "pub1" :description "pub name desc"})))]))
 
      (fn [] (with-unique [org      baseorg
                           cv       (kt/newContentView {:name "con-def"
