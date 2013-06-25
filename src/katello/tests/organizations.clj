@@ -201,9 +201,17 @@
 
       [["Color" true]
        [(random-ascii-string 255) true]
-       [(random-ascii-string 256) false]
+
+       (vary-meta
+        [(random-ascii-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
        [(random-unicode-string 10) true]
-       [(random-unicode-string 256) false]
+
+       (vary-meta
+        [(random-unicode-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 
@@ -246,9 +254,17 @@
 
       [["Color" true]
        [(random-ascii-string 255) true]
-       [(random-ascii-string 256) false]
+
+       (vary-meta
+        [(random-ascii-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+
        [(random-unicode-string 10) true]
-       [(random-unicode-string 256) false]
+
+       (vary-meta
+        [(random-unicode-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 
