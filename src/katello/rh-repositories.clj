@@ -53,18 +53,10 @@
             katello.conf/*session-org* "rpms" false)
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
-(defn combiner [items]
-     (if (empty? (first items))
-       () 
-       (cons
-         (map first items) 
-         (combiner (map rest items)))))
-
-
 (defn rh-repos
   [rh-allrepos rh-allreposets rh-allprds org repo-type deselect?]
   (let [red-hat-provider     (katello/newProvider {:name "Red Hat" :org org})
-        red-hat-items        (combiner (list rh-allprds rh-allreposets rh-allrepos))        
+        red-hat-items        (map list rh-allprds rh-allreposets rh-allrepos)       
         red-hat-repositories (concat (for [[rh-prd rh-reposet rh-repos]  red-hat-items]
                                        (let [prd        (katello/newProduct {:name rh-prd :provider red-hat-provider})
                                              reposet    (katello/newRedHatRepoSet {:name rh-reposet, :product prd})
@@ -73,7 +65,6 @@
                                                                                   :type repo-type, :deselect? deselect?}))]
                                          repos)))]
     (flatten red-hat-repositories)))
-
 
 (defn enable-disable-redhat-repos
   "Enable the given list of rh-repos in the current org."
