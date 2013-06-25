@@ -35,7 +35,7 @@
    ::enable-inline-help-checkbox "user[helptips_enabled]"
    ::clear-disabled-helptips     "clear_helptips"
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
-   ::account                     "//a[contains(@class,'dropdown-menu-item-link') and contains(.,'My Account')]"
+   ::account                     "//a[contains(@class,'dropdown-item-link') and contains(.,'My Account')]"
    ::user-account-dropdown       "//nav[contains(@class,'right')]//a"
    ::switcher-button             "//a[@id='switcherButton']"
    ::current-default-org         "//div[@id='org_name']"

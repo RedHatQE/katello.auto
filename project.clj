@@ -24,7 +24,7 @@
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [com.redhat.qe/deltacloud.client "1.1.0-SNAPSHOT"]
                  
-                 [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure]]
+                 [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure org.clojure/data.xml]]
                  [clj-http "0.6.4"]
 
                  [ui.navigate "0.4.0-SNAPSHOT"]

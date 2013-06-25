@@ -31,9 +31,9 @@
         (rest/create org)
         (ui/create dist1)
         (ui/delete dist1))))
-  
-  (deftest "Add custom info for a distributor"   
-    :data-driven true   
+
+  (deftest "Add custom info for a distributor"
+    :data-driven true
     :uuid "9ff7fa88-6ee8-4425-9f5a-ff1896f4c6c5"
     (fn [keyname value success?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
@@ -44,25 +44,25 @@
           (ui/update dist assoc :custom-info {keyname value})
           (assert/is (= (browser isTextPresent keyname) success?))
           (assert/is (= (browser isTextPresent keyname) success?)))))
-    
+
     [["Platform" "RHEL6" true]
-     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
-     [(uniqueify "cust-key") (random-string (int \a) (int \z) 255) true]
-     [(uniqueify "cust-key") (random-string (int \a) (int \z) 256) false]
-     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
-     [(uniqueify "cust-key") (random-string 0x0080 0x5363 10) true]
+     [(random-ascii-string 255) (uniqueify "cust-value") true]
+     [(uniqueify "cust-key") (random-ascii-string 255) true]
+     [(uniqueify "cust-key") (random-ascii-string 256) false]
+     [(random-unicode-string 10) (uniqueify "cust-value") true]
+     [(uniqueify "cust-key") (random-unicode-string 10) true]
 
      (with-meta
-       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" false]
+       ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" true]
        {:blockers (bz-bugs "951231")})
 
      ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
-  
-  (deftest "Update custom info for a distributor"   
+
+  (deftest "Update custom info for a distributor"
     :data-driven true
     :blockers (bz-bugs "974166")
     :uuid "8f15a0dd-d925-4bed-9729-31ff2074d495"
-    
+
     (fn [input-loc new-value save?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     env (kt/newEnvironment {:name "environment" :org org})
@@ -71,17 +71,17 @@
           (ui/create-all (list org env dist))
           (ui/update dist assoc :custom-info {"fname" "redhat"})
           (expecting-error expected-res
-            (nav/go-to ::distributor/custom-info-page dist)              
+            (nav/go-to ::distributor/custom-info-page dist)
             (common/save-cancel ::distributor/save-button ::distributor/cancel-button input-loc new-value save?)))))
-    
+
     [[(distributor/value-text "fname") "fedora" false]
      [(distributor/value-text "fname") "Schrodinger's cat" true]])
-  
+
   (deftest "Delete custom info for a distributor"
     :uuid "6776a633-b0d2-4dec-9e71-07c9c352afcc"
     (with-unique [org (kt/newOrganization {:name "auto-org"})
                   env (kt/newEnvironment {:name "environment" :org org})
-                  dist (kt/newDistributor {:name "test-dist" :env env})] 
+                  dist (kt/newDistributor {:name "test-dist" :env env})]
       (ui/create-all (list org env dist))
       (let [dist (ui/update dist assoc :custom-info {"fname" "FEDORA"})]
         (assert/is (browser isTextPresent "fname"))

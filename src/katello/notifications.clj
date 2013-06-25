@@ -109,6 +109,7 @@
    
    :org-create               "organizations___create"
    :org-destroy              "organizations___destroy"
+   :org-delete               "organization__delete"
    
    :roles-create             "roles___create"
    :roles-destroy            "roles___destroy"

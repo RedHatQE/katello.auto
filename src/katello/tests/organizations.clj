@@ -86,7 +86,7 @@
       ;; use random because otherwise rerunning the test will fail
       ;; due to org already existing.
       (take 10 (repeatedly (comp vector
-                                 (partial random-string 0x0080 0x5363 1)))))
+                                 (partial random-unicode-string 1)))))
 
     (deftest "Create an organization with an initial environment"
       :uuid "8bd2ed1a-409a-62d4-7f8b-a9394bb16890"
@@ -200,12 +200,20 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-string (int \a) (int \z) 255) true]
-       [(random-string (int \a) (int \z) 256) false]
-       [(random-string 0x0080 0x5363 10) true]
-       [(random-string 0x0080 0x5363 256) false]
+       [(random-ascii-string 255) true]
+
+       (vary-meta
+        [(random-ascii-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
+       [(random-unicode-string 10) true]
+
+       (vary-meta
+        [(random-unicode-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
        ["bar_+{}|\"?hi" true]
-       ["bar_+{}|\"?<blink>hi</blink>" false]])
+       ["bar_+{}|\"?<blink>hi</blink>" true]])
 
     (deftest "Create org with default keyname value twice"
       :uuid "7b451cdd-99e7-0d74-8a4b-605567b19b41"
@@ -245,12 +253,20 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-string (int \a) (int \z) 255) true]
-       [(random-string (int \a) (int \z) 256) false]
-       [(random-string 0x0080 0x5363 10) true]
-       [(random-string 0x0080 0x5363 256) false]
+       [(random-ascii-string 255) true]
+
+       (vary-meta
+        [(random-ascii-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+
+       [(random-unicode-string 10) true]
+
+       (vary-meta
+        [(random-unicode-string 256) false]
+        assoc :blockers (bz-bugs "977925"))
+       
        ["bar_+{}|\"?hi" true]
-       ["bar_+{}|\"?<blink>hi</blink>" false]])
+       ["bar_+{}|\"?<blink>hi</blink>" true]])
 
     (deftest "Create org with default distributor keyname and delete keyname"
       :uuid "80a04f72-4194-5c54-e1db-0f2e43ee0c67"

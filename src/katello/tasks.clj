@@ -144,6 +144,9 @@
        (take length)
        (apply str))))
 
+(def random-ascii-string (partial random-string (int \a) (int \z)))
+(def random-unicode-string (partial random-string 0x0080 0x02ff))
+
 (defmacro when-some-let
   "When any of the bindings evaluate to logical true, evaluate body."
   [bindings & body]

@@ -32,10 +32,12 @@
   (with-unique [cv (kt/newContentView {:name "content-view"
                                        :org org
                                        :published-name "publish-name"})
+                
                 cs (kt/newChangeset {:name "cs"
                                      :env target-env
                                      :content (list cv)})]
-    (ui/create-all (list org target-env cv))
+    (ui/create-all-recursive (list org target-env))
+    (ui/create cv)
     (create-recursive repo)
     (sync/perform-sync (list repo))
     (ui/update cv assoc :products (list (kt/product repo)))
@@ -123,8 +125,8 @@
         (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
           (expecting-error expected-res (ui/create content-view))))
 
-      [[(random-string (int \a) (int \z) 129) (common/errtype ::notifications/name-128-char-limit)]
-       [(random-string (int \a) (int \z) 128) success]])
+      [[(random-ascii-string 129) (common/errtype ::notifications/name-128-char-limit)]
+       [(random-ascii-string 128) success]])
 
     (deftest "Create a new content view definition using the same name"
       :uuid "32447769-82b4-1334-bdab-8d40d7012286"
