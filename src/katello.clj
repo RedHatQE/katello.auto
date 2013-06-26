@@ -80,7 +80,7 @@
 
 ;; Below records are for Repos, RepoSet obtained from manifest import
 
-(defrecord RedHatRepoSet [id name ^Product product type deselect?])
+(defrecord RedHatRepoSet [id name ^Product product deselect?])
 
 (defrecord RedHatRepo [id name ^RedHatRepoSet reposet type deselect?])
 
