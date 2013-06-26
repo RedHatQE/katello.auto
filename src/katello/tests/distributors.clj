@@ -46,11 +46,11 @@
           (assert/is (= (browser isTextPresent keyname) success?)))))
 
     [["Platform" "RHEL6" true]
-     [(random-string (int \a) (int \z) 255) (uniqueify "cust-value") true]
-     [(uniqueify "cust-key") (random-string (int \a) (int \z) 255) true]
-     [(uniqueify "cust-key") (random-string (int \a) (int \z) 256) false]
-     [(random-string 0x0080 0x5363 10) (uniqueify "cust-value") true]
-     [(uniqueify "cust-key") (random-string 0x0080 0x5363 10) true]
+     [(random-ascii-string 255) (uniqueify "cust-value") true]
+     [(uniqueify "cust-key") (random-ascii-string 255) true]
+     [(uniqueify "cust-key") (random-ascii-string 256) false]
+     [(random-unicode-string 10) (uniqueify "cust-value") true]
+     [(uniqueify "cust-key") (random-unicode-string 10) true]
 
      (with-meta
        ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" true]

@@ -65,7 +65,7 @@
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
   [keyname]
-  (boolean (get (common/extract-custom-keyname-list) keyname)))
+  (contains? (common/extract-custom-keyname-list) keyname))
 
 
 (defn add-custom-keyname
@@ -113,7 +113,7 @@
   (browser click ::ui/confirmation-yes)
   (notification/success-type :org-destroy) ;queueing success
   (browser refresh)
-  (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-destroy)})) ;for actual delete
+  (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-delete)})) ;for actual delete
 
 (defn- update
   "Edits an organization. Currently the only property of an org that
