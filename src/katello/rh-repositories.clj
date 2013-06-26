@@ -40,7 +40,7 @@
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page})
 
-  #_(rh-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+  #_(describe-redhat-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
                                 "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
                                ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
                                 "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
@@ -55,7 +55,7 @@
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
-(defn rh-repos
+(defn describe-redhat-repos
   [{:keys [rh-allrepos rh-allreposets rh-allprds org repo-type deselect?]}]
   (let [red-hat-provider     (katello/newProvider {:name "Red Hat" :org org})
         red-hat-items        (map list rh-allprds rh-allreposets rh-allrepos)       
