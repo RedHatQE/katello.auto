@@ -40,7 +40,7 @@
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page})
 
-  (rh-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+  #_(rh-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
                                 "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
                                ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
                                 "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
@@ -67,20 +67,6 @@
                                                                                   :type repo-type, :deselect? deselect?}))]
                                          repos)))]
     (flatten red-hat-repositories)))
-
-  (rh-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
-                                "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
-                               ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
-             :rh-allreposets '("Red Hat CloudForms System Engine" 
-                               "Red Hat CloudForms Tools for RHEL 6") 
-             :rh-allprds     '("Red Hat CloudForms" 
-                               "Red Hat Enterprise Linux Server") 
-             :org            katello.conf/*session-org* 
-             :repo-type      "rpms" 
-             :deselect?      false})
 
 (defn enable-disable-redhat-repos
   "Enable the given list of rh-repos in the current org."
