@@ -193,8 +193,10 @@
     
   tasks/Uniqueable {:uniques (fn [t] (for [ts (tasks/timestamps)]
                                        (let [stamp-fn (partial tasks/stamp ts)]
-                                         (-> t
+                                         (if (t :published-name)
+                                           (-> t
                                              (update-in [:name] stamp-fn)
-                                             (update-in [:published-name] stamp-fn)))))}
+                                             (update-in [:published-name] stamp-fn))
+                                           (update-in t [:name] stamp-fn)))))}
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
