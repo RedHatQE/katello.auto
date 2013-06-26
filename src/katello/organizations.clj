@@ -65,7 +65,7 @@
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
   [keyname]
-  (boolean (get (common/extract-custom-keyname-list) keyname)))
+  (contains? (common/extract-custom-keyname-list) keyname))
 
 
 (defn add-custom-keyname
