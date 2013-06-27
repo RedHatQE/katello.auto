@@ -1,8 +1,8 @@
 (ns katello.rh-repositories
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello :as kt]
-            (katello [ui :as ui]                     
-                     [navigation :as nav]                    
+            (katello [ui :as ui]                   
+                     [navigation :as nav]
                      [notifications :as notification]
                      [ui-common :as common]
                      [manifest :as manifest])))
@@ -40,27 +40,26 @@
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page})
 
-  #_(describe-redhat-repos {:rh-allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
-                                "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
-                               ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
-                                "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
+  #_(def enable-redhat-repos 
+             {:rh-allrepos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+                              "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
+                             ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
+                              "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
+                              "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
+                              "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
              :rh-allreposets '("Red Hat CloudForms System Engine" 
                                "Red Hat CloudForms Tools for RHEL 6") 
              :rh-allprds     '("Red Hat CloudForms" 
-                               "Red Hat Enterprise Linux Server") 
-             :org            katello.conf/*session-org* 
+                               "Red Hat Enterprise Linux Server")
              :repo-type      "rpms" 
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
-(defn describe-redhat-repos
-  [{:keys [rh-allrepos rh-allreposets rh-allprds org repo-type deselect?]}]
-  (let [red-hat-provider     (katello/newProvider {:name "Red Hat" :org org})
-        red-hat-items        (map list rh-allprds rh-allreposets rh-allrepos)       
+(defn describe-rh-repos-to-enable-disable
+  [{:keys [rh-allrepos rh-allreposets rh-allprds repo-type deselect?]}]
+  (let [red-hat-items        (map list rh-allprds rh-allreposets rh-allrepos)       
         red-hat-repositories (concat (for [[rh-prd rh-reposet rh-repos]  red-hat-items]
-                                       (let [prd        (katello/newProduct {:name rh-prd :provider red-hat-provider})
+                                       (let [prd        (katello/newProduct {:name rh-prd :provider kt/red-hat-provider})
                                              reposet    (katello/newRedHatRepoSet {:name rh-reposet, :product prd})
                                              repos      (for [reponame rh-repos]
                                                           (katello/newRedHatRepo {:name reponame, :reposet reposet, 
