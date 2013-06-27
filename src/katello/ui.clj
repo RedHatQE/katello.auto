@@ -48,12 +48,9 @@
 (def menu-template
   (partial format "//a[contains(@class,'%s') and normalize-space(.)='%s']"))
 
-(def ng-menu-template
-  (partial format "//li[contains(@ng-repeat,'%s')]//a[normalize-space(.)='%s']"))
-
 (def menu-link (partial menu-template "menu-item-link"))
-(def menu-dropdown-link (partial menu-template "dropdown-menu-item-link"))
-(def menu-flyout-link (partial ng-menu-template "item in flyout"))
+(def menu-dropdown-link (partial menu-template "dropdown-item-link"))
+(def menu-flyout-link (partial menu-template "flyout-item-link"))
 
 (sel/template-fns
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
