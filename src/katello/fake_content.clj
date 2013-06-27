@@ -154,7 +154,7 @@
                                (download-original-once))
                              local-clone-source) ]
     (rest/create (assoc manifest :provider (-> repos first kt/provider )))
-    (when (kt/reposet (first repos))
+    (when (-> repos first :reposet)
       (rh-repos/enable-disable-redhat-repos repos))
     (sync/perform-sync repos)))
 
@@ -163,7 +163,7 @@
    chains"
   (let [org (-> envs first :org)
         repos (for [r repos]
-                (if (-> repos first kt/reposet)
+                (if (-> repos first :reposet)
                   (update-in r [:reposet :product :provider] assoc :org org)
                   (update-in r [:product :provider] assoc :org org)))]
     (rest/create org)
