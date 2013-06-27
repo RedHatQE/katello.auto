@@ -153,13 +153,14 @@
   (with-unique [manifest (do (when-not (bound? #'local-clone-source)
                                (download-original-once))
                              local-clone-source) ]
-    (rest/create (assoc manifest :provider (-> repos first :product :provider)))
+    (rest/create (assoc manifest :provider (->> repos first kt/provider )))
+    (rh-repos/enable-disable-redhat-repos repos)
     (sync/perform-sync repos)))
 
-(defn setup-org [envs]
+(defn setup-org [envs repos]
   (let [org (-> envs first :org)
-        repos (for [r some-repos]
-                (update-in r [:product :provider] assoc :org org))]
+        repos (for [r repos]
+                (update-in r [:provider] assoc :org org))]
     (rest/create org)
     (doseq [e (kt/chain envs)]
       (rest/create e))
