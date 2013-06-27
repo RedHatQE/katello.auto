@@ -5,6 +5,7 @@
             (katello [manifest :as manifest]
                      [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
+                     [rh-repositories :as rh-repos]
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
