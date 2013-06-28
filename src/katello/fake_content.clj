@@ -139,12 +139,16 @@
 
 (declare local-clone-source)
 
-(defn download-original-once []
-  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)]
-                                (io/copy (-> config deref :redhat-manifest-url java.net.URL. io/input-stream)
+(defn download-original-once [redhat-manifest?]
+  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)
+                                    manifest-details (if redhat-manifest? {:manifest-url (@config :redhat-manifest-url)
+                                                                           :repo-url     (@config :redhat-repo-url)}
+                                                                          {:manifest-url (@config :fake-manifest-url)
+                                                                           :repo-url     (@config :fake-repo-url)})]
+                                (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
                                          (java.io.File. dest))
                                 (kt/newManifest {:file-path dest
-                                                 :url (@config :redhat-repo-url)
+                                                 :url (manifest-details :repo-url)
                                                  :provider kt/red-hat-provider}))))
 
 (defn prepare-org
@@ -152,7 +156,7 @@
    enables and syncs the given repos"
   [repos]
   (with-unique [manifest (do (when-not (bound? #'local-clone-source)
-                               (download-original-once))
+                               (download-original-once (-> repos first :reposet)))
                              local-clone-source) ]
     (rest/create (assoc manifest :provider (-> repos first kt/provider )))
     (when (-> repos first :reposet)
