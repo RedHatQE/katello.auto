@@ -352,7 +352,7 @@
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                          :katello.providers/custom-page])
                                           (fn [] (changeset/promote-delete-content cs)))]))
-      assoc :blockers (bz-bugs "960620"))
+      assoc :blockers (conj (bz-bugs "960620") (auto-issue "800")))
 
      (fn [] (let [org (uniqueify baseorg)
                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
