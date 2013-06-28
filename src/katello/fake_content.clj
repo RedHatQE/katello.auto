@@ -5,6 +5,7 @@
             (katello [manifest :as manifest]
                      [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
+                     [rh-repositories :as rh-repos]
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
@@ -138,12 +139,16 @@
 
 (declare local-clone-source)
 
-(defn download-original-once []
-  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)]
-                                (io/copy (-> config deref :redhat-manifest-url java.net.URL. io/input-stream)
+(defn download-original-once [redhat-manifest?]
+  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)
+                                    manifest-details (if redhat-manifest? {:manifest-url (@config :redhat-manifest-url)
+                                                                           :repo-url     (@config :redhat-repo-url)}
+                                                                          {:manifest-url (@config :fake-manifest-url)
+                                                                           :repo-url     (@config :fake-repo-url)})]
+                                (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
                                          (java.io.File. dest))
                                 (kt/newManifest {:file-path dest
-                                                 :url (@config :redhat-repo-url)
+                                                 :url (manifest-details :repo-url)
                                                  :provider kt/red-hat-provider}))))
 
 (defn prepare-org
@@ -151,15 +156,21 @@
    enables and syncs the given repos"
   [repos]
   (with-unique [manifest (do (when-not (bound? #'local-clone-source)
-                               (download-original-once))
+                               (download-original-once (-> repos first :reposet)))
                              local-clone-source) ]
-    (rest/create (assoc manifest :provider (-> repos first :product :provider)))
+    (rest/create (assoc manifest :provider (-> repos first kt/provider )))
+    (when (-> repos first :reposet)
+      (rh-repos/enable-disable-redhat-repos repos))
     (sync/perform-sync repos)))
 
-(defn setup-org [envs]
+(defn setup-org [envs repos]
+  "Adds org to all the repos in the list, creates org and the envs
+   chains"
   (let [org (-> envs first :org)
-        repos (for [r some-repos]
-                (update-in r [:product :provider] assoc :org org))]
+        repos (for [r repos]
+                (if (-> repos first :reposet)
+                  (update-in r [:reposet :product :provider] assoc :org org)
+                  (update-in r [:product :provider] assoc :org org)))]
     (rest/create org)
     (doseq [e (kt/chain envs)]
       (rest/create e))
