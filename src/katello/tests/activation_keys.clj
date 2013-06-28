@@ -56,19 +56,19 @@
       :uuid "bfbf02a1-394e-1984-c9b3-79659706e8b9"
       (with-unique-ak a
         (val/expecting-error-2nd-try val/duplicate-disallowed
-                                     (ui/create a))))
+                                     (ui/create a)))))
 
-    (deftest "create activation keys with subscriptions"
+    #_(deftest "create activation keys with subscriptions"
       :uuid "e33bc129-6114-4de4-6a9b-b40334236c9c"
       :blockers (list rest/katello-only)
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
-        (fake/setup-org envz)
+        (fake/setup-org envz fake/some-repos)
         (with-unique [ak (assoc (some-ak) :env e1)]
           (ui/create ak)
           (ui/update ak assoc :subscriptions fake/subscription-names)
           (assert/is (some #{(first fake/subscription-names)}
-                           (ak/get-subscriptions ak)))))))
+                           (ak/get-subscriptions ak))))))
 
   (deftest "Delete activation key after registering a system with it"
     :uuid "b6a914fb-d3cf-0134-da73-4ea1ca367f71"
