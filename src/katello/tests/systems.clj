@@ -232,7 +232,7 @@
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
-      (browser click ::system/custom-info)
+      (nav/go-to ::system/custom-info-page system)
       (assert/is (browser isTextPresent "Manager"))))
 
   (deftest "Creates org adds new system then applies custom org default"
