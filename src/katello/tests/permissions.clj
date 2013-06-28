@@ -323,21 +323,24 @@
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
                                          (fn [] (ui/delete cv)))]))
 
-     (fn [] (with-unique [org      baseorg
-                          pub-name (uniqueify "pub1")
-                          cv       (kt/newContentView {:name "con-def"
-                                                       :org conf/*session-org*})
-                          cv1       (kt/newContentView {:name "con-def1"
-                                                        :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
-               :setup (fn [] (ui/create cv))
-               :allowed-actions [(fn [] (ui/delete cv))]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
-                                                        :katello.changesets/page])
-                                         (fn [] (ui/create cv1))
-                                         (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
-                                         (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
+     (vary-meta
+      (fn [] (with-unique [org      baseorg
+                           pub-name (uniqueify "pub1")
+                           cv       (kt/newContentView {:name "con-def"
+                                                        :org conf/*session-org*})
+                           cv1       (kt/newContentView {:name "con-def1"
+                                                         :org conf/*session-org*})]
+               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
+                :setup (fn [] (ui/create cv))
+                :allowed-actions [(fn [] (ui/delete cv))]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                         :katello.providers/custom-page
+                                                         :katello.changesets/page])
+                                          (fn [] (ui/create cv1))
+                                          (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
+                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
+      assoc :blockers (list (auto-issue "800")))
+     
      (vary-meta
       (fn [] (let [org (uniqueify baseorg)
                    {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
