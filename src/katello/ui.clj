@@ -49,8 +49,8 @@
   (partial format "//a[contains(@class,'%s') and normalize-space(.)='%s']"))
 
 (def menu-link (partial menu-template "menu-item-link"))
-(def menu-dropdown-link (partial menu-template "dropdown-menu-item-link"))
-(def menu-flyout-link (partial menu-template "flyout-menu-item-link"))
+(def menu-dropdown-link (partial menu-template "dropdown-item-link"))
+(def menu-flyout-link (partial menu-template "flyout-item-link"))
 
 (sel/template-fns
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
