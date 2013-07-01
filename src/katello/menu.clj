@@ -8,32 +8,34 @@
   (into {} (for [[k v] m] [k (f v)])))
 
 ;; Locators
-(def menu-items {::administer-link               "Administer"
-                 ::by-environments-link          "By Environment"
+(def top-level-items {::administer-link "Administer"
+                      ::dashboard-link  "Dashboard"
+                      ::systems-link    "Systems"
+                      ::content-link    "Content"})
+
+(def menu-items {::by-environments-link          "By Environment"
                  ::changeset-management-link     "Changeset Management"
-                 ::content-link                  "Content"
                  ::content-search-link           "Content Search"
                  ::content-view-definitions-link "Content View Definitions"
-                 ::dashboard-link                "Dashboard"
                  ::manage-organizations-link     "Organizations"
                  ::repositories-link             "Repositories"
                  ::roles-link                    "Roles"
-                 ::subscriptions-link            "Subscriptions"
                  ::sync-management-link          "Sync Management"
                  ::system-groups-link            "System Groups"
                  ::systems-all-link              "All"
-                 ::systems-link                  "Systems"
                  ::users-link                    "Users"
                  ::setup-link                    "setup"})
 
-(def dropdown-items {::custom-content-repositories-link "Custom Content Repositories"
-                     ::red-hat-repositories-link        "Red Hat Repositories"
-                     ::gpg-keys-link                    "GPG Keys" 
-                     ::sync-plans-link                  "Sync Plans"         
-                     ::sync-schedule-link               "Sync Schedule"
-                     ::sync-status-link                 "Sync Status"
-                     ::changeset-history-link           "Changesets History"
-                     ::changesets-link                  "Changesets"})
+(def subscriptions {::subscriptions-link "Subscriptions"})
+
+(def flyout-items {::custom-content-repositories-link "Custom Content Repositories"
+                   ::red-hat-repositories-link        "Red Hat Repositories"
+                   ::gpg-keys-link                    "GPG Keys"
+                   ::sync-plans-link                  "Sync Plans"
+                   ::sync-schedule-link               "Sync Schedule"
+                   ::sync-status-link                 "Sync Status"
+                   ::changeset-history-link           "Changesets History"
+                   ::changesets-link                  "Changesets"})
 
 (def subscriptions-menu-items {::red-hat-subscriptions-link "Red Hat Subscriptions"
                                ::distributors-link          "Subscription Manager Applications"
@@ -46,14 +48,15 @@
 ;; in katello it's under Content).
 
 (ui/defelements :katello.deployment/katello []
-  (merge (fmap ui/menu-link menu-items)
-         (fmap ui/menu-dropdown-link (merge dropdown-items subscriptions-menu-items))
+  (merge (fmap ui/menu-link top-level-items)
+         (fmap ui/menu-dropdown-link (merge menu-items subscriptions))
+         (fmap ui/menu-flyout-link (merge flyout-items subscriptions-menu-items))
          others))
 
-
 (ui/defelements :katello.deployment/headpin []
-  (merge (fmap ui/menu-link (merge menu-items subscriptions-menu-items))
-         (fmap ui/menu-dropdown-link dropdown-items)
+  (merge (fmap ui/menu-link (merge top-level-items subscriptions))
+         (fmap ui/menu-dropdown-link (merge menu-items subscriptions-menu-items))
+         (fmap ui/menu-flyout-link flyout-items)
          others))
 
 ;; Functions
@@ -74,7 +77,7 @@
 
 (def right-hand-menus
   (list [:katello.notices/page (browser-fn (clickAndWait ::notifications-link))]
-        
+
         [::administer-menu (browser-fn (mouseOver ::administer-link))
          [:katello.users/page (browser-fn (clickAndWait ::users-link))]
          [:katello.roles/page (browser-fn (clickAndWait ::roles-link))]
@@ -91,7 +94,7 @@
 
              [::repositories-menu (browser-fn (mouseOver ::repositories-link))
               [:katello.providers/custom-page (browser-fn (clickAndWait ::custom-content-repositories-link))]
-              [:katello.repositories/redhat-page (browser-fn (clickAndWait ::red-hat-repositories-link))]
+              [:katello.rh-repositories/redhat-page (browser-fn (clickAndWait ::red-hat-repositories-link))]
               [:katello.gpg-keys/page (browser-fn (clickAndWait ::gpg-keys-link))]]
 
              [::sync-management-menu (browser-fn (mouseOver ::sync-management-link))

@@ -53,9 +53,11 @@
 (defgroup login-tests
 
   (deftest "login as valid user"
+    :uuid "2295fbd9-e2f8-a3f4-9d13-7b68ac710e26"
     (login-admin))
   
   (deftest "User - Log out"
+    :uuid "aa824b75-1370-fe84-ca53-f9c9f3878e67"
     (login-admin)
     (logout-verify)
     (login)) 
@@ -63,6 +65,7 @@
   
   
   (deftest "login as invalid user"
+    :uuid "07be6cd9-235c-7094-eeeb-8de2b9f75ada"
     :data-driven true
     :blockers (bz-bugs "730738")
     
@@ -78,6 +81,7 @@
 
   
   (deftest "login case sensitivity"
+    :uuid "767cc796-be6b-ace4-b93b-ddd6d9915ba3"
     :data-driven true
     verify-invalid-login-rejected
 

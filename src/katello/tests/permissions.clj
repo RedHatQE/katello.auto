@@ -9,17 +9,18 @@
                      [sync-management :as sync]
                      [content-view-definitions :as views]
                      [changesets :as changeset]
+                     [providers :as provider]  ; needs to navigate - no direct dep
                      [ui-common :as common]
                      [login :refer [login logged-in?]]
                      [navigation :as nav]
                      [conf :as conf]
-                     [tasks :refer [with-unique uniques uniqueify expecting-error random-string]]
+                     [tasks :refer [with-unique uniques uniqueify expecting-error random-ascii-string]]
                      [systems :as system]
                      [client :as client]
                      [users :as user]
                      [roles :as role]
                      [login :as login]
-                     [blockers :refer [bz-bugs bz-bug]])
+                     [blockers :refer [bz-bugs bz-bug auto-issue]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [ensure-exists fresh-repo]]
             [serializable.fn :refer [fn]]
@@ -92,7 +93,7 @@
   (while (not (browser isVisible ::role/save-permission))
     (browser click ::role/next))
   (browser click ::role/save-permission)
-  (notification/check-for-success {:match-pred (notification/request-type? :roles-create-permission)}))
+  (notification/success-type :roles-create-permission))
 
 (defn verify-access
   "Assigns a new user to a new role with the given permissions. That
@@ -127,14 +128,18 @@
 
 (def global (kt/newOrganization {:name "Global Permissions"}))
 
-(defn- delete-system-data [sysverb]
+(defn- delete-system-data [sysverb delete-allowed?]
   (fn [] (with-unique [system (kt/newSystem {:env (first conf/*environments*),
                                              :sockets "1",
                                              :system-arch "x86_64",
                                              :facts (system/random-facts)})]
-           [:permissions [{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]
-            :setup (fn [] (rest/create system))
-            :allowed-actions [(fn [] (ui/delete system))]])))
+           (let [del-actions (list (fn [] (ui/delete system)))]
+             (concat
+              [:permissions [{:org global, :name "blah2", :resource-type "Organizations", :verbs [sysverb]}]
+               :setup (fn [] (rest/create system))]
+              (if delete-allowed?
+                [:allowed-actions del-actions]
+                [:disallowed-actions del-actions]))))))
 
 (defn- get-cv-pub [org]
   {:cv1 (uniqueify (kt/newContentView {:name "con-def1"
@@ -179,13 +184,16 @@
                                          (fn [] (rest/create prov)))]))
 
      (vary-meta
-      (fn [] [:permissions [{:org global, :resource-type "Environments", :verbs ["Register Systems in Environment"], :name "systemreg"}]
+      (fn [] [:permissions [{:org global, :resource-type "Environments",
+                             :verbs ["Register Systems in Environment"
+                                     "Read Environment Contents"], :name "systemreg"}
+                            {:org global, :resource-type "Organizations",
+                             :verbs ["Read Organization"], :name "readorg"}]
               :allowed-actions [(fn [] (-> {:name "system"
                                             :env (first conf/*environments*)
-                                            :facts (system/random-facts)}
-                                           kt/newSystem uniqueify rest/create))
+                                            :facts (system/random-facts)} kt/newSystem uniqueify rest/create))
                                 (navigate-fn :katello.systems/page)]
-              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page :katello.organizations/page])
+              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page])
                                         create-an-org)])
       assoc :blockers (bz-bugs "757775"))
 
@@ -248,20 +256,22 @@
                                                         :katello.changesets/page])
                                          (fn [] (nav/go-to org)))]))
 
-     (fn [] (with-unique [org      baseorg
-                          pub-name (uniqueify "pub1")
-                          cv       (kt/newContentView {:name "con-def"
-                                                       :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Administer Content View Definitions"], :name "cvaccess_create"}]
-               :allowed-actions [(navigate-fn :katello.content-view-definitions/page)
-                                 (fn [] (ui/create cv))
-                                 (fn[] (views/clone cv (update-in cv [:name] #(str % "-clone"))))]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
-                                                        :katello.changesets/page])
-                                         (fn [] (ui/update cv assoc :description "cvaccess_create desc"))
-                                         (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
-                                         (fn [] (ui/delete cv)))]))
+     (vary-meta
+      (fn [] (with-unique [org      baseorg
+                           pub-name (uniqueify "pub1")
+                           cv       (kt/newContentView {:name "con-def"
+                                                        :org conf/*session-org*})]
+               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Administer Content View Definitions"], :name "cvaccess_create"}]
+                :allowed-actions [(navigate-fn :katello.content-view-definitions/page)
+                                  (fn [] (ui/create cv))
+                                  (fn [] (views/clone cv (update-in cv [:name] #(str % "-clone"))))]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                         :katello.providers/custom-page
+                                                         :katello.changesets/page])
+                                          (fn [] (ui/update cv assoc :description "cvaccess_create desc"))
+                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
+                                          (fn [] (ui/delete cv)))]))
+      assoc :blockers (auto-issue "800"))
 
      (fn [] (with-unique [org      baseorg
                           pub-name (uniqueify "pub1")
@@ -313,21 +323,24 @@
                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))
                                          (fn [] (ui/delete cv)))]))
 
-     (fn [] (with-unique [org      baseorg
-                          pub-name (uniqueify "pub1")
-                          cv       (kt/newContentView {:name "con-def"
-                                                       :org conf/*session-org*})
-                          cv1       (kt/newContentView {:name "con-def1"
-                                                        :org conf/*session-org*})]
-              [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
-               :setup (fn [] (ui/create cv))
-               :allowed-actions [(fn [] (ui/delete cv))]
-               :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
-                                                        :katello.changesets/page])
-                                         (fn [] (ui/create cv1))
-                                         (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
-                                         (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
+     (vary-meta
+      (fn [] (with-unique [org      baseorg
+                           pub-name (uniqueify "pub1")
+                           cv       (kt/newContentView {:name "con-def"
+                                                        :org conf/*session-org*})
+                           cv1       (kt/newContentView {:name "con-def1"
+                                                         :org conf/*session-org*})]
+               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
+                :setup (fn [] (ui/create cv))
+                :allowed-actions [(fn [] (ui/delete cv))]
+                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
+                                                         :katello.providers/custom-page
+                                                         :katello.changesets/page])
+                                          (fn [] (ui/create cv1))
+                                          (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
+                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
+      assoc :blockers (list (auto-issue "800")))
+     
      (vary-meta
       (fn [] (let [org (uniqueify baseorg)
                    {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
@@ -342,7 +355,7 @@
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                          :katello.providers/custom-page])
                                           (fn [] (changeset/promote-delete-content cs)))]))
-      assoc :blockers (bz-bugs "960620"))
+      assoc :blockers (conj (bz-bugs "960620") (auto-issue "800")))
 
      (fn [] (let [org (uniqueify baseorg)
                   {:keys [cv1 cv2 cv3 env]}  (get-cv-pub org)
@@ -431,14 +444,14 @@
                           user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})]
               [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
                :setup (fn [] (rest/create org)
-                             (ui/create user))
+                        (ui/create user))
                :allowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
-                                        (browser click ::user/account)
-                                        (nav/browser-fn (click ::user/roles-link)))]
+                                   (browser click ::user/account)
+                                   (nav/browser-fn (click ::user/roles-link)))]
                :disallowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
-                                           (browser click ::user/account)
-                                           (nav/browser-fn (click ::user/roles-link))
-                                           (browser click ::user/add-role))]]))
+                                      (browser click ::user/account)
+                                      (nav/browser-fn (click ::user/roles-link))
+                                      (browser click ::user/add-role))]]))
 
      (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]
               [:permissions []
@@ -446,8 +459,8 @@
                :disallowed-actions (map nav-fn ["subscriptions" "systems" "systems/environments" "system_groups"
                                                 "roles" "sync_management/index" "content_search" "organizations" "providers"])]))
 
-     (delete-system-data "Read Systems")
-     (delete-system-data "Delete Systems")]))
+     (delete-system-data "Read Systems" false)
+     (delete-system-data "Delete Systems" true)]))
 
 
 ;; Tests
@@ -460,22 +473,25 @@
 (defgroup permission-tests
 
   (deftest "Create a role"
+    :uuid "25b56d86-5d5a-ff34-7a63-ceb1608b4881"
     (create-unique-role "testrole"))
 
   (deftest "Create a role with i18n characters"
+    :uuid "b53d9ae6-6d9c-f454-2b63-4e7edd78ebeb"
     :data-driven true
 
     create-unique-role
     [["صالح"] ["Гесер"] ["洪"]["標準語"]])
 
   (deftest "Role validation"
+    :uuid "599d0416-a8aa-1264-c96b-67e5136e45b2"
     :data-driven true
 
     (fn [rolename expected-err]
       (expecting-error (common/errtype expected-err)
                        (create-role rolename)))
 
-    [[(random-string (int \a) (int \z) 149)  :katello.notifications/name-too-long]
+    [[(random-ascii-string 149)  :katello.notifications/name-too-long]
      ["  foo" :katello.notifications/name-no-leading-trailing-whitespace]
      ["  foo   " :katello.notifications/name-no-leading-trailing-whitespace]
      ["foo " :katello.notifications/name-no-leading-trailing-whitespace]
@@ -485,11 +501,13 @@
      ])
 
   (deftest "Remove a role"
+    :uuid "4676d07e-1b61-ae44-af9b-1dd01027bd37"
     (doto (uniqueify (kt/newRole {:name "deleteme-role"}))
       (ui/create)
       (ui/delete)))
 
   (deftest "Verify the Navigation of Roles, related to permissions"
+    :uuid "db588bc0-6f95-4534-7673-e612cd00d8f8"
     :data-driven true
 
     (fn [{:keys [resource-type verbs tags setup] :as perm} & [setup]]
@@ -508,6 +526,7 @@
                #(ensure-exists env)]))])
 
   (deftest "Add a permission and user to a role"
+    :uuid "14ecb28a-92fa-fc74-0ff3-ea142f08171c"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
                   role (kt/newRole {:name "edit-role"})]
       (ui/create-all (list user role))
@@ -519,6 +538,7 @@
                  :users [user]))
 
     (deftest "Verify user with specific permission has access only to what permission allows"
+      :uuid "6ea63d4f-49f1-8244-564b-79a265bebc2c"
       :data-driven true
      
       verify-access

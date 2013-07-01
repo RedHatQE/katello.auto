@@ -55,6 +55,7 @@
 (defgroup end-to-end-tests 
 
   (deftest "Clients can access custom content"
+    :uuid "34fdfac4-7c7c-0c94-4173-c60711d2da24"
     :blockers (conj (bz-bugs "784853" "790246" "959211" "970570")
                     (blocking-tests "simple sync" "promote content")
                     no-clients-defined)

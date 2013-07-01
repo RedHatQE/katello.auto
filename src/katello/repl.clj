@@ -16,7 +16,7 @@
 ;;-------------
 
 (defmacro trace [& body]
-  `(fn.trace/dotrace (katello.conf/trace-list)
+  `(fn.trace/dotrace-depth (katello.conf/trace-list)
      ~@body))
 
 (defn debug [tree]

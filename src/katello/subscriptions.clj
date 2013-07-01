@@ -13,7 +13,8 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                      "new"
-   ::upload                   "upload_form_button"
+   ::upload-manifest          "upload_form_button"
+   ::refresh-manifest         "refresh_form_button"
    ::create                   "commit"
    ::repository-url-text      "provider[repository_url]"
    ::choose-file              "provider_contents"
@@ -21,7 +22,14 @@
 
 ;; Nav
 
-(nav/defpages :katello.deployment/any katello.menu)
+(nav/defpages :katello.deployment/any katello.menu
+  [::page
+   [::new-page (nav/browser-fn (click ::new))]
+   [::named-page (fn [subscription] (nav/choose-left-pane subscription))
+    [::details-page (nav/browser-fn (click ::details))]
+    [::products-page (nav/browser-fn (click ::products))]
+    [::units-page (nav/browser-fn (click ::products))]]]
+  [::import-history-page])  
 
 ;; Tasks
 
@@ -30,15 +38,16 @@
    selenium browser. Optionally specify a new repository url for Red
    Hat content- if not specified, the default url is kept. Optionally
    specify whether to force the upload."
-  [{:keys [file-path url provider]}]
-  (nav/go-to ::page provider)
+  [{:keys [file-path url org]}]
+  {:pre [(instance? katello.Organization org)]}
+  (nav/go-to ::new-page org)
   (when-not (browser isElementPresent ::choose-file)
     (browser click ::new))
   (when url
     (common/in-place-edit {::repository-url-text url})
-    (notification/check-for-success {:match-pred (notification/request-type? :prov-update)}))
+    (notification/success-type :prov-update))
   (sel/fill-ajax-form {::choose-file file-path}
-                      ::upload)
+                      ::upload-manifest)
   (browser refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 

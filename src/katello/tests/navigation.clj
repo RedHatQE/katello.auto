@@ -36,7 +36,8 @@
 
 (defgroup nav-tests
 
-  (deftest "Navigate to tab" 
+  (deftest "Navigate to tab"
+    :uuid "ce9c80d9-5323-9104-8e63-90d062d28b9b"
     :data-driven true
     verify-navigation
  
