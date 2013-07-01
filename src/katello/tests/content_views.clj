@@ -50,34 +50,28 @@
 
 (defn promote-published-composite-view
   "Function to promote composite content view that contains two published views"
-  [org env repo1 repo2]
-  (with-unique [cv1 (kt/newContentView {:name "content-view1"
-                                        :org org
-                                        :published-name "publish-name1"})
-                cv2 (kt/newContentView {:name "content-view2"
-                                        :org org
-                                        :published-name "publish-name2"})]
-    (ui/create-all (list org env cv1 cv2))
-    (doseq [repo [repo1 repo2]]
-      (create-recursive repo)
-      (sync/perform-sync (list repo)))
-    (doseq [[repo cv published-names] [[repo1 cv1 (:published-name cv1)]
-                                       [repo2 cv2 (:published-name cv2)]]]
-      (ui/update cv assoc :products (list (kt/product repo)))
-      (views/publish {:content-defn cv :published-name published-names :org org}))
-    (with-unique [composite-view (newContentView {:name "composite-view"
-                                                  :org org
-                                                  :description "Composite Content View"
-                                                  :published-name "publish-composite"
-                                                  :composite 'yes'
-                                                  :composite-names (list cv1 cv2)})]
-      (ui/create composite-view)
-      (views/publish {:content-defn composite-view :published-name (:published-name composite-view) :org org})
-      (with-unique [composite-cs (katello/newChangeset {:name "composite-cs"
-                                                        :content (list composite-view)
-                                                        :env env})]
-        (changeset/promote-delete-content composite-cs)
-        composite-view))))
+  [org env repo1 repo2 cv1 cv2]
+  (ui/create-all (list org env cv1 cv2))
+  (doseq [repo [repo1 repo2]]
+    (create-recursive repo)
+    (sync/perform-sync (list repo)))
+  (doseq [[repo cv published-names] [[repo1 cv1 (:published-name cv1)]
+                                     [repo2 cv2 (:published-name cv2)]]]
+    (ui/update cv assoc :products (list (kt/product repo)))
+    (views/publish {:content-defn cv :published-name published-names :org org}))
+  (with-unique [composite-view (newContentView {:name "composite-view"
+                                                :org org
+                                                :description "Composite Content View"
+                                                :published-name "publish-composite"
+                                                :composite true
+                                                :composite-names (list cv1 cv2)})]
+    (ui/create composite-view)
+    (views/publish {:content-defn composite-view :published-name (:published-name composite-view) :org org})
+    (with-unique [composite-cs (katello/newChangeset {:name "composite-cs"
+                                                      :content (list composite-view)
+                                                      :env env})]
+      (changeset/promote-delete-content composite-cs)
+      composite-view)))
 
                       
 ;; Tests
@@ -420,12 +414,18 @@
       :uuid "a4b4fdf5-b38b-f634-5aeb-d09f02769acb"
        :blockers (bz-bugs "961696")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     env (kt/newEnvironment {:name  "dev" :org org})]
+                     env (kt/newEnvironment {:name  "dev" :org org})
+                     cv1 (kt/newContentView {:name "content-view1"
+                                             :org org
+                                             :published-name "publish-name1"})
+                     cv2 (kt/newContentView {:name "content-view2"
+                                             :org org
+                                             :published-name "publish-name2"})]
          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
                repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
                product1 (-> repo1 kt/product :name)
                product2 (-> repo2 kt/product :name)
-               composite-view (promote-published-composite-view org env repo1 repo2)
+               composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
                ak (kt/newActivationKey {:name (uniqueify "ak")
                                         :env env
                                         :description "auto activation key"
@@ -439,8 +439,55 @@
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
                (assert/is (client/ok? cmd_result)))))))
-                  
-    (deftest "Validate: CV contents should not available on client after deleting it from selected env"
+    
+    (deftest "Delete part of the composite content view definition and re-promote it"
+      :uuid "9fe84637-a8d4-459f-aa63-99bc387a3121"
+      :data-driven true
+      
+      (fn [re-promote?]
+        (with-unique [org (kt/newOrganization {:name "cv-org"})
+                      env (kt/newEnvironment {:name  "dev" :org org})
+                      [cv1 cv2] (kt/newContentView {:name "content-view"
+                                                    :org org
+                                                    :published-name "publish-name"})
+                      deletion-cs (kt/newChangeset {:name "deletion-cs"
+                                                    :content (list cv1)
+                                                    :env env
+                                                    :deletion? true})
+                      repromote-cs (kt/newChangeset {:name "repromote-cs"
+                                                     :content (list cv1)
+                                                     :env env})]
+          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
+                repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                product1 (-> repo1 kt/product :name)
+                product2 (-> repo2 kt/product :name)
+                composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
+                ak (kt/newActivationKey {:name (uniqueify "ak")
+                                         :env env
+                                         :description "auto activation key"
+                                         :content-view composite-view})]
+            (ui/create ak)
+            (ui/update ak assoc :subscriptions (list product1 product2))
+            (changeset/promote-delete-content deletion-cs)
+            (provision/with-client "delete-from-composite" ssh-conn
+              (client/register ssh-conn
+                               {:org (:name org)
+                                :activationkey (:name ak)})
+              (client/sm-cmd ssh-conn :refresh)
+              (let [install_result (client/run-cmd ssh-conn "yum install -y cow")]
+                (assert/is (client/ok? install_result)))
+              (when re-promote?
+                (changeset/promote-delete-content repromote-cs)
+                (client/sm-cmd ssh-conn :refresh)
+                (let [remove_result (client/run-cmd ssh-conn "yum remove -y cow")
+                      install_result (client/run-cmd ssh-conn "yum install -y cow")]             
+                  (assert/is (client/ok? remove_result))
+                  (assert/is (client/ok? install_result))))))))
+       
+       [[true]
+        [false]])
+     
+     (deftest "Validate: CV contents should not available on client after deleting it from selected env"
       :uuid "5f642606-bbe6-ec14-a4cb-14b97069ff09"
        :blockers (bz-bugs "947497")
        (with-unique [org (kt/newOrganization {:name "cv-org"})
