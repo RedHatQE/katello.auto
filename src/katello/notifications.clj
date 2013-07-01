@@ -137,7 +137,7 @@
   taking UI error messages and mapping them to internal error types."}
   known-errors
   (let [errors {::invalid-credentials                   #"Authentication failed"
-                ::promotion-already-in-progress         #"Cannot promote the changeset.*while another colliding changeset.*"
+                ::promotion-already-in-progress         #"action is currently in progress"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #"Import is the same as existing data"
                 ::systems-exceeds-group-limit           #"System limit may not be less than the number of systems associated with the system group"

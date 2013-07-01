@@ -32,11 +32,17 @@
    ["-y" "--sync-repo" "The url for a test repo to sync"
     :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/content/nature/1.0/x86_64/rpms/"]
    
-   ["-m" "--redhat-manifest-url" "URL that points to a Red Hat test manifest"
+   ["-m" "--fake-manifest-url" "URL that points to a Red Hat test manifest"
     :default "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
 
-   ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
+   ["-r" "--fake-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
     :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/"]
+   
+   ["-m" "--redhat-manifest-url" "URL that points to a Red Hat test manifest"
+    :default "http://hudson.rhq.lab.eng.bos.redhat.com/manifest/redhat-manifest.zip"]
+
+   ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
+    :default "https://cdn.redhat.com/"]
 
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]

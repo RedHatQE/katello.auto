@@ -28,7 +28,7 @@
    ::initial-env-label-text "environment_label"
    ::initial-env-desc-text  "environment_description"
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
-   ::default                "//ul[@id='organizationSwitcher']//span[@title='This is your default organization.']/../a"
+   ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
    ;; System Default Info
    ::system-default-info      (ui/third-level-link "org_system_default_info")
@@ -65,7 +65,7 @@
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
   [keyname]
-  (boolean (get (common/extract-custom-keyname-list) keyname)))
+  (contains? (common/extract-custom-keyname-list) keyname))
 
 
 (defn add-custom-keyname
@@ -178,12 +178,16 @@
        (browser fireEvent ::ui/switcher "click")
        (browser ajaxWait)
        (when default-org
-         (let [current-default (try (browser getText ::default)
-                                    (catch SeleniumException _ :none))]
-           (when (not= current-default (:name default-org))
-             (browser click (ui/default-star (if (= default-org :none)
-                                               current-default
-                                               (:name default-org))))
+         (let [default-org-name (when (not= default-org :none)
+                                  (or (:name default-org)
+                                      (throw+ {:type ::nil-org-name
+                                               :msg "Can't set default org to an org with :name=nil"
+                                               :org default-org})))
+               current-default (try (browser getText ::default)
+                                    (catch SeleniumException _ nil))]
+           (when (not= current-default default-org-name)
+             (browser click (ui/default-star (or default-org-name
+                                                 current-default)))
              (notification/check-for-success))))
        (when name
          (browser clickAndWait (ui/switcher-link name))))))
