@@ -268,7 +268,7 @@
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
                                                          :katello.providers/custom-page
                                                          :katello.changesets/page])
-                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"}))))])
+                                          (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
       assoc :blockers (auto-issue "800"))
 
      (fn [] (with-unique [org      baseorg
