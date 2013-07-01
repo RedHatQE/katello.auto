@@ -40,7 +40,8 @@
 
 (defn navigate-toplevel [& _]
   ;;to be used as a :before-test for all tests
-  (if (logged-in?)
+  (if (and (logged-in?)
+           (apply = (map :name (list *session-user* (user/current)))))
     (do (nav/go-to ::nav/top-level)
         (if (= (nav/current-org) "Select an Organization:") ;;see bz 857173
           (try (organization/switch (@config :admin-org))
