@@ -9,7 +9,10 @@
                      [rest :as rest]
                      [environments :as env]
                      [validation :as val]
+                     [manifest :as manifest]
+                     [rh-repositories :as rh-repos]
                      [fake-content  :as fake]
+                     [subscriptions :as subs]
                      [conf :refer [*environments*]]
                      [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive]]
@@ -58,12 +61,12 @@
         (val/expecting-error-2nd-try val/duplicate-disallowed
                                      (ui/create a)))))
 
-    #_(deftest "create activation keys with subscriptions"
+    (deftest "create activation keys with subscriptions"
       :uuid "e33bc129-6114-4de4-6a9b-b40334236c9c"
       :blockers (list rest/katello-only)
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
-        (fake/setup-org envz fake/some-repos)
+        (manifest/setup-org envz (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos))
         (with-unique [ak (assoc (some-ak) :env e1)]
           (ui/create ak)
           (ui/update ak assoc :subscriptions fake/subscription-names)
@@ -82,3 +85,4 @@
                           :activationkey (:name ak)})
         (ui/delete ak)
         (client/sm-cmd ssh-conn :refresh)))))
+  
