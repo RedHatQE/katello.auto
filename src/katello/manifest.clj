@@ -4,7 +4,19 @@
   katello.manifest
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [katello.tasks :refer [unique-format tmpfile]])
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [katello :as kt]
+            (katello [ui :as ui]
+                     [rest :as rest]
+                     [navigation :as nav]
+                     [tasks :refer [with-unique unique-format tmpfile]]
+                     [conf :refer [config with-org]]
+                     [tasks :as tasks]
+                     [notifications :as notification]
+                     [ui-common :as common]
+                     [subscriptions :as subs]
+                     [sync-management :as sync]
+                     [rh-repositories :as rh-repos]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.bouncycastle.openssl PEMReader]
@@ -109,3 +121,93 @@
              (java.io.File. dest-path))))
 
 
+(declare local-clone-source)
+
+(defn download-original-once [redhat-manifest?]
+  (defonce local-clone-source (let [dest (new-tmp-loc)
+                                    manifest-details (if redhat-manifest? {:manifest-url (@config :redhat-manifest-url)
+                                                                           :repo-url     (@config :redhat-repo-url)}
+                                                                          {:manifest-url (@config :fake-manifest-url)
+                                                                           :repo-url     (@config :fake-repo-url)})]
+                                (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
+                                         (java.io.File. dest))
+                                (kt/newManifest {:file-path dest
+                                                 :url (manifest-details :repo-url)
+                                                 :provider kt/red-hat-provider}))))
+
+(defn prepare-org
+  "Clones a manifest, uploads it to the given org (via api), and then
+   enables and syncs the given repos"
+  [repos]
+  (with-unique [manifest (do (when-not (bound? #'local-clone-source)
+                               (download-original-once (-> repos first :reposet)))
+                             local-clone-source) ]
+    (rest/create (assoc manifest :provider (-> repos first kt/provider )))
+    (rh-repos/enable-disable-redhat-repos repos)
+    (sync/perform-sync repos)))
+
+(defn setup-org [envs repos]
+  "Adds org to all the repos in the list, creates org and the envs
+   chains"
+  (let [org (-> envs first :org)
+        repos (for [r repos]
+                (if (-> repos first :reposet)
+                  (update-in r [:reposet :product :provider] assoc :org org)
+                  (update-in r [:product :provider] assoc :org org)))]
+    (rest/create org)
+    (doseq [e (kt/chain envs)]
+      (rest/create e))
+    (prepare-org repos)))
+
+
+(defn- upload-manifest
+  "Uploads a subscription manifest from the filesystem local to the
+   selenium browser. Optionally specify a new repository url for Red
+   Hat content- if not specified, the default url is kept. Optionally
+   specify whether to force the upload."
+  [{:keys [file-path url provider]}]
+  (nav/go-to ::subs/new-page provider)
+  (when-not (browser isElementPresent ::subs/choose-file)
+    (browser click ::subs/new))
+  (when url
+    (common/in-place-edit {::subs/repository-url-text url})
+    (notification/success-type :subs/prov-update))
+  (sel/fill-ajax-form {::subs/choose-file file-path}
+                       ::subs/upload-manifest)
+  (browser refresh)
+  ;;now the page seems to refresh on its own, but sometimes the ajax count
+  ;; does not update. 
+  ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
+  (notification/check-for-success {:timeout-ms (* 30 60 1000)}))
+
+(defn upload-new-cloned-manifest
+  "Clones the manifest at orig-file-path and uploads it to the current org."
+  [{:keys [file-path url provider] :as m}]
+  (let [clone-loc (new-tmp-loc)
+        clone (assoc m :file-path clone-loc :provider provider)]
+    (clone file-path clone-loc)
+    (ui/create clone)))
+
+(defn upload-manifest-import-history?
+  "Returns true if after an manifest import the history is updated."
+  [ent]
+  (nav/go-to ::subs/import-history-page ent)
+  (browser isElementPresent ::subs/fetch-history-info))
+
+
+(extend katello.Manifest
+  ui/CRUD {:create upload-manifest}
+  rest/CRUD {:create (fn [{:keys [url file-path] :as m}]
+                       (merge m
+                              (let [provid (-> m :provider rest/get-id)]
+                                (do (rest/http-put (rest/api-url (format "/api/providers/%s" provid))
+                                                   {:body {:provider {:repository_url url}}})
+                                    (rest/http-post (rest/api-url (format "/api/providers/%s/import_manifest" provid))
+                                                    {:multipart [{:name "import"
+                                                                  :content (clojure.java.io/file file-path)
+                                                                  :mime-type "application/zip"
+                                                                  :encoding "UTF-8"}]})))))}
+  tasks/Uniqueable {:uniques (fn [m]
+                               (repeatedly (fn [] (let [newpath (new-tmp-loc)]
+                                                    (clone (:file-path m) newpath)
+                                                    (assoc m :file-path newpath)))))})
