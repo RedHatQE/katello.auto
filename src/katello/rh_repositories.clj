@@ -38,39 +38,40 @@
   {:rpms    ::rpms-page
    :srpms   ::source-rpms-page
    :debug   ::debug-rpms-page
-   :beta    ::beta-rpms-page})
+   :beta    ::beta-rpms-page
+   :others  ::others-page})
 
-  #_(def enable-redhat-repos 
-             {:rh-allrepos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
-                              "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
-                             ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
-                              "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
-                              "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
-                              "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
-             :rh-allreposets '("Red Hat CloudForms System Engine" 
+(def enable-redhat-repos 
+            {:allrepos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+                          "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
+                         ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
+                          "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
+                          "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
+                          "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
+             :allreposets '("Red Hat CloudForms System Engine" 
                                "Red Hat CloudForms Tools for RHEL 6") 
-             :rh-allprds     '("Red Hat CloudForms" 
+             :allprds     '("Red Hat CloudForms" 
                                "Red Hat Enterprise Linux Server")
              :repo-type      "rpms" 
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
-(defn describe-rh-repos-to-enable-disable
-  [{:keys [rh-allrepos rh-allreposets rh-allprds repo-type deselect?]}]
-  (let [red-hat-items        (map list rh-allprds rh-allreposets rh-allrepos)       
-        red-hat-repositories (concat (for [[rh-prd rh-reposet rh-repos]  red-hat-items]
-                                       (let [prd        (katello/newProduct {:name rh-prd :provider kt/red-hat-provider})
-                                             reposet    (katello/newRedHatRepoSet {:name rh-reposet, :product prd})
-                                             repos      (for [reponame rh-repos]
-                                                          (katello/newRedHatRepo {:name reponame, :reposet reposet, 
+(defn describe-repos-to-enable-disable
+  [{:keys [allrepos allreposets allprds repo-type deselect?]}]
+  (let [repo-items        (map list allprds allreposets allrepos)       
+        repositories      (concat (for [[prd reposet repos]  repo-items]
+                                       (let [prd-r        (katello/newProduct {:name prd :provider kt/red-hat-provider})
+                                             reposet-r    (katello/newRedHatRepoSet {:name reposet, :product prd-r})
+                                             repos-r      (for [reponame repos]
+                                                          (katello/newRedHatRepo {:name reponame, :reposet reposet-r, 
                                                                                   :type repo-type, :deselect? deselect?}))]
-                                         repos)))]
-    (flatten red-hat-repositories)))
+                                         repos-r)))]
+    (flatten repositories)))
 
-(defn enable-disable-redhat-repos
-  "Enable the given list of rh-repos in the current org."
-  [rh-repos]
-  (doseq [repo rh-repos]
+(defn enable-disable-repos
+  "Enables or Disables a given list of rh-repos in the current org."
+  [repos]
+  (doseq [repo repos]
     (nav/go-to (repo-map (keyword (repo :type))) (kt/org repo))
     (let [prd      (kt/product repo)
           reposet  (kt/reposet repo)
@@ -81,4 +82,4 @@
         (browser click (expand-repo-set (:type repo)(:name reposet))))
       (if (repo :deselect?)
         (browser uncheck (select-repo (:name repo)))
-        (browser check (select-repo (:name repo)))))))
+        (browser check (select-repo (:name repo)))))))  
