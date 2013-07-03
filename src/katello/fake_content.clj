@@ -1,34 +1,34 @@
 (ns katello.fake-content
-  (:require [clojure.java.io :as io]
-            [katello :as kt]
+  (:require [katello :as kt]
             [katello.tests.useful :refer [create-all-recursive]]
             (katello [manifest :as manifest]
                      [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
-                     [rh-repositories :as rh-repos]
                      [conf :refer [config with-org]]
                      [organizations :as org]
                      [environments :as env]
                      [repositories :as repo]
                      [providers :as providers]
-                     [rest :as rest]
                      [ui :as ui]
-                     [sync-management :as sync]
-                     )))
+                     [sync-management :as sync])))
 
-(def nature (kt/newProduct {:name "Nature Enterprise" :provider kt/red-hat-provider}))
-(def zoo (kt/newProduct {:name "Zoo Enterprise" :provider kt/red-hat-provider}))
-(def some-repos (concat (for [reponame ["Nature Enterprise x86_64 1.0"
-                                        "Nature Enterprise x86_64 1.1"
-                                        "Nature Enterprise x86_64 6Server"]]
-                          (kt/newRepository {:name reponame, :product nature}))
-                        (for [reponame ["Zoo Enterprise x86_64 6.2"
-                                        "Zoo Enterprise x86_64 6.3"
-                                        "Zoo Enterprise x86_64 6.4"
-                                        "Zoo Enterprise x86_64 5.8"
-                                        "Zoo Enterprise x86_64 5.7"
-                                        "Zoo Enterprise x86_64 6Server"]]
-                          (kt/newRepository {:name reponame, :product zoo}))))
+(def enable-fake-repos 
+            {:allrepos '(["Nature Enterprise x86_64 1.0"
+                          "Nature Enterprise x86_64 1.1"
+                          "Nature Enterprise x86_64 6Server"]
+                         ["Zoo Enterprise x86_64 6.2"
+                          "Zoo Enterprise x86_64 6.3"
+                          "Zoo Enterprise x86_64 6.4"
+                          "Zoo Enterprise x86_64 5.8"
+                          "Zoo Enterprise x86_64 5.7"
+                          "Zoo Enterprise x86_64 6Server"]) 
+             :allreposets '("Nature Enterprise" 
+                            "Zoo Enterprise") 
+             :allprds     '("Nature Enterprise" 
+                            "Zoo Enterprise")
+             :repo-type      "others" 
+             :deselect?      false})
+
 
 (def some-product-repos [{:name       "Nature Enterprise"
                           :repos      ["Nature Enterprise x86_64 1.0"
@@ -136,42 +136,3 @@
 
 (def errata #{"RHEA-2012:0001" "RHEA-2012:0002"
               "RHEA-2012:0003" "RHEA-2012:0004"})
-
-(declare local-clone-source)
-
-(defn download-original-once [redhat-manifest?]
-  (defonce local-clone-source (let [dest (manifest/new-tmp-loc)
-                                    manifest-details (if redhat-manifest? {:manifest-url (@config :redhat-manifest-url)
-                                                                           :repo-url     (@config :redhat-repo-url)}
-                                                                          {:manifest-url (@config :fake-manifest-url)
-                                                                           :repo-url     (@config :fake-repo-url)})]
-                                (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
-                                         (java.io.File. dest))
-                                (kt/newManifest {:file-path dest
-                                                 :url (manifest-details :repo-url)
-                                                 :provider kt/red-hat-provider}))))
-
-(defn prepare-org
-  "Clones a manifest, uploads it to the given org (via api), and then
-   enables and syncs the given repos"
-  [repos]
-  (with-unique [manifest (do (when-not (bound? #'local-clone-source)
-                               (download-original-once (-> repos first :reposet)))
-                             local-clone-source) ]
-    (rest/create (assoc manifest :provider (-> repos first kt/provider )))
-    (when (-> repos first :reposet)
-      (rh-repos/enable-disable-redhat-repos repos))
-    (sync/perform-sync repos)))
-
-(defn setup-org [envs repos]
-  "Adds org to all the repos in the list, creates org and the envs
-   chains"
-  (let [org (-> envs first :org)
-        repos (for [r repos]
-                (if (-> repos first :reposet)
-                  (update-in r [:reposet :product :provider] assoc :org org)
-                  (update-in r [:product :provider] assoc :org org)))]
-    (rest/create org)
-    (doseq [e (kt/chain envs)]
-      (rest/create e))
-    (prepare-org repos)))
