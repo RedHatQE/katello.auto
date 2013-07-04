@@ -4,8 +4,7 @@
             (katello [ui :as ui]                   
                      [navigation :as nav]
                      [notifications :as notification]
-                     [ui-common :as common]
-                     [manifest :as manifest])))
+                     [ui-common :as common])))
 
 ;; Locators
 
@@ -39,7 +38,7 @@
    :srpms   ::source-rpms-page
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page
-   :others  ::others-page})
+   :other  ::others-page})
 
 (def enable-redhat-repos 
             {:allrepos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
