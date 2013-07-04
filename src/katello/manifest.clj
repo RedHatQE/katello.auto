@@ -121,42 +121,39 @@
              (java.io.File. dest-path))))
 
 
-(declare local-clone-source)
-
-(defn download-original-once [redhat-manifest?]
-  (defonce local-clone-source (let [dest (new-tmp-loc)
-                                    manifest-details (if redhat-manifest? {:manifest-url (@config :redhat-manifest-url)
-                                                                           :repo-url     (@config :redhat-repo-url)}
-                                                                          {:manifest-url (@config :fake-manifest-url)
-                                                                           :repo-url     (@config :fake-repo-url)})]
-                                (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
-                                         (java.io.File. dest))
-                                (kt/newManifest {:file-path dest
-                                                 :url (manifest-details :repo-url)
-                                                 :provider kt/red-hat-provider}))))
+(defn download-original-manifest [redhat-manifest?]
+  (let [dest (new-tmp-loc)
+        manifest-details (if redhat-manifest? 
+                           {:manifest-url (@config :redhat-manifest-url)
+                            :repo-url     (@config :redhat-repo-url)}
+                           {:manifest-url (@config :fake-manifest-url)
+                            :repo-url     (@config :fake-repo-url)})]
+    (io/copy (-> manifest-details :manifest-url java.net.URL. io/input-stream)
+             (java.io.File. dest))
+    (kt/newManifest {:file-path dest
+                     :url (manifest-details :repo-url)})))
 
 (defn prepare-org
   "Clones a manifest, uploads it to the given org (via api), and then
    enables and syncs the given repos"
   [repos]
-  (with-unique [manifest (do (when-not (bound? #'local-clone-source)
-                               (download-original-once (-> repos first :reposet)))
-                             local-clone-source) ]
-    (rest/create (assoc manifest :provider (-> repos first kt/provider )))
-    (rh-repos/enable-disable-redhat-repos repos)
-    (sync/perform-sync repos)))
+  (let [reposet (-> repos first kt/reposet :name)
+        product (-> repos first kt/product :name)]
+    (with-unique [manifest (download-original-manifest (not= product reposet))]
+      (ui/create (assoc manifest :provider (-> repos first kt/provider)))
+      #_(Thread/sleep 10000)
+      (rh-repos/enable-disable-repos repos)
+      (sync/perform-sync repos))))
 
 (defn setup-org [envs repos]
   "Adds org to all the repos in the list, creates org and the envs
    chains"
   (let [org (-> envs first :org)
         repos (for [r repos]
-                (if (-> repos first :reposet)
-                  (update-in r [:reposet :product :provider] assoc :org org)
-                  (update-in r [:product :provider] assoc :org org)))]
-    (rest/create org)
+                (update-in r [:reposet :product :provider] assoc :org org))]
+    (ui/create org)
     (doseq [e (kt/chain envs)]
-      (rest/create e))
+      (ui/create e))
     (prepare-org repos)))
 
 
@@ -171,7 +168,7 @@
     (browser click ::subs/new))
   (when url
     (common/in-place-edit {::subs/repository-url-text url})
-    (notification/success-type :subs/prov-update))
+    (notification/success-type :prov-update))
   (sel/fill-ajax-form {::subs/choose-file file-path}
                        ::subs/upload-manifest)
   (browser refresh)
@@ -179,14 +176,6 @@
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
   (notification/check-for-success {:timeout-ms (* 30 60 1000)}))
-
-(defn upload-new-cloned-manifest
-  "Clones the manifest at orig-file-path and uploads it to the current org."
-  [{:keys [file-path url provider] :as m}]
-  (let [clone-loc (new-tmp-loc)
-        clone (assoc m :file-path clone-loc :provider provider)]
-    (clone file-path clone-loc)
-    (ui/create clone)))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."
@@ -209,5 +198,5 @@
                                                                   :encoding "UTF-8"}]})))))}
   tasks/Uniqueable {:uniques (fn [m]
                                (repeatedly (fn [] (let [newpath (new-tmp-loc)]
-                                                    (clone (:file-path m) newpath)
+                                                    (clone (:file-path m) newpath (@config :key-url))
                                                     (assoc m :file-path newpath)))))})

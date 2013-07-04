@@ -6,6 +6,7 @@
                            users permissions e2e navigation search
                            distributors content-search content-views)
             katello.tests.providers.custom
+            katello.tests.providers.redhat
             [katello.setup :as setup]
             [katello.conf :as conf] 
             [clojure.tools.cli :as cli]
@@ -33,12 +34,10 @@
   katello.tests.users/user-tests
   katello.tests.e2e/end-to-end-tests
   ;; katello.tests.providers.redhat/manifest-tests  ;; do not work anyway due to manifest sig checking
-  ;; katello.tests.providers.redhat/redhat-content-provider-tests
+  katello.tests.providers.redhat/redhat-content-provider-tests
   katello.tests.providers.custom/custom-product-tests
   katello.tests.content-search/content-search-tests
-  katello.tests.content-views/content-views-tests
-  )
-
+  katello.tests.content-views/content-views-tests)
 
 
 (defgroup headpin-tests

@@ -12,7 +12,7 @@
                      [ui :as ui]
                      [sync-management :as sync])))
 
-(def enable-fake-repos 
+(def enable-repos 
             {:allrepos '(["Nature Enterprise x86_64 1.0"
                           "Nature Enterprise x86_64 1.1"
                           "Nature Enterprise x86_64 6Server"]
@@ -26,7 +26,16 @@
                             "Zoo Enterprise") 
              :allprds     '("Nature Enterprise" 
                             "Zoo Enterprise")
-             :repo-type      "others" 
+             :repo-type      "other" 
+             :deselect?      false})
+
+(def enable-nature-repos 
+            {:allrepos '(["Nature Enterprise x86_64 1.0"
+                          "Nature Enterprise x86_64 1.1"
+                          "Nature Enterprise x86_64 6Server"]) 
+             :allreposets '("Nature Enterprise") 
+             :allprds     '("Nature Enterprise")
+             :repo-type      "other" 
              :deselect?      false})
 
 
