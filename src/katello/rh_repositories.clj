@@ -38,20 +38,20 @@
    :srpms   ::source-rpms-page
    :debug   ::debug-rpms-page
    :beta    ::beta-rpms-page
-   :other  ::others-page})
+   :other   ::others-page})
 
 (def enable-redhat-repos 
-            {:allrepos '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
-                          "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
-                         ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
-                          "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
-                          "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
-                          "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
+            {:allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
+                             "Red Hat CloudForms System Engine RPMs x86_64 6Server"] 
+                            ["Red Hat CloudForms Tools for RHEL 6 RPMs i386 6.4"
+                             "Red Hat CloudForms Tools for RHEL 6 RPMs i386 6Server"
+                             "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6.4"
+                             "Red Hat CloudForms Tools for RHEL 6 RPMs x86_64 6Server"]) 
              :allreposets '("Red Hat CloudForms System Engine" 
-                               "Red Hat CloudForms Tools for RHEL 6") 
+                            "Red Hat CloudForms Tools for RHEL 6") 
              :allprds     '("Red Hat CloudForms" 
-                               "Red Hat Enterprise Linux Server")
-             :repo-type      "rpms" 
+                            "Red Hat Enterprise Linux Server")
+             :repo-type     "rpms" 
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
@@ -70,8 +70,8 @@
 (defn enable-disable-repos
   "Enables or Disables a given list of rh-repos in the current org."
   [repos]
+  (nav/go-to (-> repos first :type keyword repo-map) (first repos))
   (doseq [repo repos]
-    (nav/go-to (repo-map (keyword (repo :type))) (kt/org repo))
     (let [prd      (kt/product repo)
           reposet  (kt/reposet repo)
           checked? (common/disabled? (select-repo-set (:type repo) (:name reposet)))]
