@@ -139,12 +139,15 @@
   "Clones a manifest, uploads it to the given org (via api), and then
    enables and syncs the given repos"
   [repos]
-  (with-unique [manifest (do (when-not (bound? #'local-clone-source)
-                               (download-original-once (-> repos first :reposet)))
-                             local-clone-source) ]
-    (rest/create (assoc manifest :provider (-> repos first kt/provider )))
-    (rh-repos/enable-disable-redhat-repos repos)
-    (sync/perform-sync repos)))
+  (let [reposet (-> repos first kt/reposet :name)
+        product (-> repos first kt/product :name)]
+    (with-unique [manifest (do (when-not (bound? #'local-clone-source)
+                               (download-original-once (not= product reposet))
+                             local-clone-source))]
+      (rest/create (assoc manifest :provider (-> repos first kt/provider)))
+      (Thread/sleep 3000)
+      (rh-repos/enable-disable-repos repos)
+      (sync/perform-sync repos))))
 
 (defn setup-org [envs repos]
   "Adds org to all the repos in the list, creates org and the envs
@@ -209,5 +212,5 @@
                                                                   :encoding "UTF-8"}]})))))}
   tasks/Uniqueable {:uniques (fn [m]
                                (repeatedly (fn [] (let [newpath (new-tmp-loc)]
-                                                    (clone (:file-path m) newpath)
+                                                    (clone (:file-path m) newpath (@config :key-url))
                                                     (assoc m :file-path newpath)))))})
