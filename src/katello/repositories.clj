@@ -76,13 +76,6 @@
   (browser click ::ui/confirmation-yes)
   (notification/success-type :repo-destroy))
 
-(defn enable-redhat
-  "Enable the given list of repos in the current org."
-  [repos]
-  (nav/go-to ::redhat-page)
-  (doseq [repo repos]
-    (browser check (repo-enable-checkbox (:name repo)))))
-
 (defn gpgkey-associated?
   [product repo-name]
   (nav/go-to product)
