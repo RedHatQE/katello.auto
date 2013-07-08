@@ -32,17 +32,22 @@
    ["-y" "--sync-repo" "The url for a test repo to sync"
     :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/content/nature/1.0/x86_64/rpms/"]
    
-   ["-m" "--fake-manifest-url" "URL that points to a Red Hat test manifest"
-    :default "http://inecas.fedorapeople.org/fakerepos/cds/fake-manifest-syncable.zip"]
+   ["-m" "--fake-manifest-url" "URL that points to a fake test manifest"
+    ;;:default "http://github.com/iNecas/katello-cli/raw/fake-manifests-signed/system-test/fake-manifest-syncable.zip"]
+    :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/fake-manifest-syncable.zip"]
 
-   ["-r" "--fake-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
+   ["-r" "--fake-repo-url" "A Fake content delivery url to be used with --fake-manifest-url"
     :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/"]
    
-   ["-m" "--redhat-manifest-url" "URL that points to a Red Hat test manifest"
-    :default "http://hudson.rhq.lab.eng.bos.redhat.com/manifest/redhat-manifest.zip"]
+   ["--redhat-manifest-url" "URL that points to a Red Hat test manifest"
+    :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/redhat-manifest.zip"]
 
-   ["-r" "--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
+   ["--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
     :default "https://cdn.redhat.com/"]
+   
+   ["--key-url" "A private key used to sign the cloned manifests"
+    ;;:default "https://raw.github.com/iNecas/katello-misc/sign_manifest.sh/scripts/test/manifest_generation/fake_key.pem"]
+    :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/fake_key.pem"]
 
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]
