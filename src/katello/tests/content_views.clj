@@ -156,8 +156,105 @@
           (create-recursive repo)
           (ui/update content-def assoc :products (list (kt/product repo)))
           (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))))
+    
+    (deftest "Create a filter"
+      :uuid "da277945-9bad-468f-8460-c0149d4ee806"
+      (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (ui/create-all (list cv cv-filter))))
+    
+    (deftest "Create a new filter with blank name and long name"
+      :uuid "fda6c1a6-7e70-4cc2-8f0f-0089698e1572"
+      :data-driven true
+      
+      (fn [name expected-res]
+        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+                      cv-filter (katello/newFilter {:name name :cv cv})]
+          (ui/create cv)
+          (expecting-error expected-res (ui/create cv-filter))))
 
-
+      [[(random-ascii-string 256) (common/errtype ::notifications/filter-name-too-long)]
+       [(random-ascii-string 255) #(-> % :type (= :success))]
+       ["" (common/errtype ::notifications/name-cant-be-blank)]])
+        
+    (deftest "Create a package filter"
+      :uuid "fa108531-870b-49df-a1c9-5ae2b203362e"
+      :data-driven true
+      
+      (fn [packages version-type & [value1 value2]]
+        (with-unique [cv (kt/newContentView {:name "con-def"
+                                             :org conf/*session-org*})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+          (ui/create-all (list cv cv-filter))
+          (views/add-package-rule packages version-type value1 value2)))
+      
+      [["cow" "all"]
+       ["cat" "only-version" "0.5"]
+       ["crow" "newer-than" "2.7"]
+       ["bird" "older-than" "2.3"]
+       ["bear"  "range"  "2.3"  "2.7"]])
+    
+    (deftest "create a package-group filter"
+      :uuid "fb3f9627-50cf-4dcc-8094-d389240c9e2a"
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (kt/newContentView {:name "con-def"
+                                           :org org})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :exclude? true})]
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              pkg-groups (list "birds" "cow")]        
+          (ui/create-all-recursive (list org target-env))
+          (ui/create cv)
+          (create-recursive repo)
+          (sync/perform-sync (list repo))
+          (ui/update cv assoc :products (list (kt/product repo)))
+          (ui/create cv-filter)
+          (views/add-pkg-group-rule pkg-groups (:exclude? cv-filter)))))
+    
+    (deftest "create 'Include' filter by errata-id"
+      :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                           :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (let [erratums (list "RHBA" "RHSA")]
+          (ui/create-all (list cv cv-filter))
+          (views/filter-errata-by-id erratums))))
+    
+    (deftest "Create filter by errata-type"
+      :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
+      :data-driven true 
+      (fn [errata-type]
+        (with-unique [cv (kt/newContentView {:name "con-def"
+                                             :org conf/*session-org*})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+          (ui/create-all (list cv cv-filter))
+          (views/filter-errata-by-type errata-type)))
+      
+     [["bugfix"]
+      ["enhancement"]
+      ["security"]])
+         
+    (deftest "Remove a content filter"
+      :uuid "1b4197f9-3e2a-41b0-b63c-ffdf8ba9ca3a"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                           :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (ui/create-all (list cv cv-filter))
+        (views/remove-filter cv-filter)))
+    
+    (deftest "Remove a rule from content filter"
+      :uuid "18cb30b9-8f4c-4e69-875a-80a66a030d6a"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                                    :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (let [packages "cow"]
+          (ui/create-all (list cv cv-filter))
+          (views/add-package-rule packages)
+          (views/remove-rule cv-filter packages))))
+        
+    
+    
     (deftest "Publish content view definition"
       :uuid "b71674d7-0e86-fe04-39f3-f408cb2a95bc"
       (with-unique [content-def (kt/newContentView {:name "con-def"
