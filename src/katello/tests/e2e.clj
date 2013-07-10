@@ -29,7 +29,7 @@
   [target-env products packages-to-install]
   (let [all-packages (apply str (interpose " " packages-to-install))]
     ;;client side
-    (provision/with-client "e2e-custom" ssh-conn
+    (provision/with-queued-client ssh-conn
       (client/run-cmd ssh-conn (format "rpm -e %s" all-packages))
       (client/register ssh-conn {:username (:name *session-user*)
                                  :password (:password *session-user*)

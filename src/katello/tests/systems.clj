@@ -352,7 +352,7 @@
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     :uuid "21db8829-8208-ff54-63eb-40e3ce4d39db"
     :blockers (bz-bugs "959211")
-    (provision/with-client "sys-detail"
+    (provision/with-queued-client
       ssh-conn
       (client/register ssh-conn
                        {:username (:name *session-user*)
@@ -374,7 +374,7 @@
     :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
     ;;:blockers no-clients-defined
     :blockers (bz-bugs "959211" "970570")
-    (provision/with-client "sys-facts"
+    (provision/with-queued-client
       ssh-conn
       (client/register ssh-conn {:username (:name *session-user*)
                                  :password (:password *session-user*)
@@ -396,7 +396,7 @@
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
       (ui/create ak)
-      (provision/with-client "ak-link" ssh-conn
+      (provision/with-queued-client ssh-conn
         (client/register ssh-conn
                          {:org (:name *session-org*)
                           :activationkey (:name ak)})
@@ -417,7 +417,7 @@
     (fn [package-opts]
       (let [target-env test-environment
             product (configure-product-for-pkg-install target-env)]
-        (provision/with-client "pkg_install"
+        (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn
                            {:username (:name *session-user*)
@@ -442,7 +442,7 @@
                                            katello/newEnvironment
                                            create-series
                                            (take 2))]
-      (provision/with-client "reg-with-env-change"
+      (provision/with-queued-client
         ssh-conn
         (let [hostname (client/my-hostname ssh-conn)
               mysys (kt/newSystem {:name hostname :env env-dev})]
@@ -466,7 +466,7 @@
       (ui/create target-env)
       (create-recursive repo)
       (sync/perform-sync (list repo))
-      (provision/with-client "subs-tab"
+      (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn
                          {:username (:name *session-user*)
@@ -489,7 +489,7 @@
       (let [ak1-name (:name ak1)
             ak2-name (:name ak2)
             ak-name (join "," [ak1-name ak2-name])]
-        (provision/with-client "register-with-multi-ak" ssh-conn
+        (provision/with-queued-client ssh-conn
           (client/register ssh-conn
                            {:org (:name *session-org*)
                             :activationkey ak-name})
@@ -512,7 +512,7 @@
       (create-recursive repo)
       (when (rest/is-katello?)
         (changeset/sync-and-promote (list repo) test-environment))
-      (provision/with-client "consume-content"
+      (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn {:username (:name *session-user*)
                                    :password (:password *session-user*)
@@ -539,7 +539,7 @@
                                            (take 2))
           product (configure-product-for-pkg-install env-dev)
           package (katello/newPackage {:name "cow" :product product})]
-      (provision/with-client "env_change"
+      (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn
                          {:username (:name *session-user*)

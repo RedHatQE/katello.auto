@@ -404,7 +404,7 @@
                   :allowed-actions [(fn [] (changeset/promote-delete-content cs)
                                       (ui/create ak)
                                       (ui/update ak assoc :subscriptions (list (:name prd)))
-                                      (provision/with-client "access-published-cv"
+                                      (provision/with-queued-client
                                         ssh-conn
                                         (client/register ssh-conn
                                                          {:org (:name org)

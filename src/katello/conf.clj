@@ -190,9 +190,9 @@
                                                   :email "admin@katello.org"}))
   (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
   (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
-                                (cloud/connection dc-url           
-                                                  (@config :deltacloud-user)
-                                                  (@config :deltacloud-password))))
+                                (deltacloud.Connection. dc-url           
+                                                        (@config :deltacloud-user)
+                                                        (@config :deltacloud-password))))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (for [e (@config :environments)]
                                   (katello/newEnvironment {:name e
