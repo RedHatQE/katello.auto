@@ -1,6 +1,7 @@
 (ns katello.subscriptions
   (:require (katello [ui :as ui]                    
-                     [navigation :as nav])))
+                     [navigation :as nav])
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
 
 ;; Locators
 
@@ -12,6 +13,9 @@
    ::repository-url-text      "provider[repository_url]"
    ::choose-file              "provider_contents"
    ::fetch-history-info       "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
+
+(sel/template-fns
+ {subs-exists "//div[@class='one-line-ellipsis' and contains(.,'%s')]"})
 
 ;; Nav
 
