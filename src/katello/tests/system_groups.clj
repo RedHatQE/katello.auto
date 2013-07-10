@@ -135,7 +135,7 @@
       (with-unique [s1 (some-system)
                     g (some-group)]
         (rest/create-all (list s1 g))
-        (provision/with-client "check-sys-count" ssh-conn
+        (provision/with-queued-client ssh-conn
           (client/register ssh-conn {:username (:name *session-user*)
                                      :password (:password *session-user*)
                                      :org "ACME_Corporation"

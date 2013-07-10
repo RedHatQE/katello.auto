@@ -211,7 +211,7 @@
     :blockers (conj (bz-bugs "959211")
                      conf/no-clients-defined)
     
-    (provision/with-client "envmovetest" ssh-conn
+    (provision/with-queued-client ssh-conn
       (let [[env-dev env-test] (->> {:name "env", :org @test-org}
                                     katello/newEnvironment
                                     uniques 

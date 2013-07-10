@@ -164,7 +164,7 @@
             prv2   (kt/provider repo2)]
         (ui/create-all (list gpgkey prv1 prv2 prd1 prd2 repo1 repo2))
         (changeset/sync-and-promote (list repo1) test-environment)
-        (provision/with-client "consume-content"
+        (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
                                      :password (:password conf/*session-user*)

@@ -368,7 +368,7 @@
              (changeset/promote-delete-content cs)
              (ui/create ak)
              (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
-             (provision/with-client "cloned-cv-content" ssh-conn
+             (provision/with-queued-client ssh-conn
                (client/register ssh-conn
                                 {:org (:name org)
                                  :activationkey (:name ak)})
@@ -432,7 +432,7 @@
                                         :content-view composite-view})]
            (ui/create ak)
            (ui/update ak assoc :subscriptions (list product1 product2))
-           (provision/with-client "consume-composite-content" ssh-conn
+           (provision/with-queued-client ssh-conn
              (client/register ssh-conn
                               {:org (:name org)
                                :activationkey (:name ak)})
@@ -469,7 +469,7 @@
             (ui/create ak)
             (ui/update ak assoc :subscriptions (list product1 product2))
             (changeset/promote-delete-content deletion-cs)
-            (provision/with-client "delete-from-composite" ssh-conn
+            (provision/with-queued-client ssh-conn
               (client/register ssh-conn
                                {:org (:name org)
                                 :activationkey (:name ak)})

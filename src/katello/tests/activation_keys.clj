@@ -79,7 +79,7 @@
 
     (with-unique-ak ak
       (ui/create ak)
-      (provision/with-client "ak-delete" ssh-conn
+      (provision/with-queued-client ssh-conn
         (client/register ssh-conn
                          {:org (-> ak :env :org :name)
                           :activationkey (:name ak)})
