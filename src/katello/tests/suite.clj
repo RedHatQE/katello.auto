@@ -7,6 +7,7 @@
                            distributors content-search content-views)
             katello.tests.providers.custom
             katello.tests.providers.redhat
+            [katello.client.provision :as provision]
             [katello.setup :as setup]
             [katello.conf :as conf] 
             [clojure.tools.cli :as cli]
@@ -72,9 +73,11 @@
         (conf/init opts)
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
         (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
-        (jenkins/run-suite (make-suite suite)  
-                           (merge setup/runner-config 
-                                  {:threads (:num-threads opts)
-                                   :trace-depths-fn conf/trace-list
-                                   :to-trace (@conf/config :trace)
-                                   :do-not-trace (@conf/config :trace-excludes)}))))))
+        (let [client-queue (provision/init 3)]
+          (try (jenkins/run-suite (make-suite suite)  
+                              (merge setup/runner-config 
+                                     {:threads (:num-threads opts)
+                                      :trace-depths-fn conf/trace-list
+                                      :to-trace (@conf/config :trace)
+                                      :do-not-trace (@conf/config :trace-excludes)}))
+               (finally (provision/shutdown client-queue))))))))

@@ -69,7 +69,7 @@
       (verify-all-repos-synced repos)
       (-> {:name "cs-manifest" :content products :env target-env} 
           katello/newChangeset uniqueify changesets/promote-delete-content)
-      (provision/with-client "set-release-ver"
+      (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
                                      :password (:password conf/*session-user*)

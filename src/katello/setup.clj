@@ -85,6 +85,8 @@
           (finally 
             (stop-selenium)))))))
 
+
+
 (def runner-config 
   {:teardown (fn []
                  (when selenium-server/selenium-server 
