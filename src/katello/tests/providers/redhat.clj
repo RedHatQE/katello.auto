@@ -19,6 +19,7 @@
                                               enable-redhat-repos]]
                      [conf :as conf]
                      [blockers        :refer [bz-bugs]])
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.client.provision :as provision]
             [test.tree.script :refer [defgroup deftest]]
             [katello.tests.e2e :as e2e]
@@ -32,6 +33,17 @@
 (def fake-repos fake/enable-nature-repos)
 
 (def redhat-repos enable-redhat-repos)
+
+(def subscription-map
+  {:rhel            "Red Hat Employee Subscription"
+   :hpn             "90 Day Supported High Performance Network (4 sockets) Evaluation"
+   :cloud-forms     "CloudForms Employee Subscription"
+   :open-shift      "OpenShift Employee Subscription"
+   :cloud-providers "Red Hat Enterprise Linux for Cloud Providers, Partner Enablement, Premium"
+   :hcn             "Red Hat Enterprise Linux Server for HPC Compute Node, Self-support (8 sockets) (Up to 1 guest)"
+   :rhev            "Red Hat Enterprise Virtualization for Desktops (25 concurrent desktops), Premium"
+   :jboss           "Red Hat JBoss Enterprise Application Platform ELS Program, 64 Core Standard"
+   :scalable-hcn    "Scalable File System for HPC Compute Node (1-2 sockets)"})
 
 ;; Functions
 
@@ -52,6 +64,15 @@
         fetch-manifest  (uniqueify (manifest/download-original-manifest redhat-manifest?))
         manifest  (assoc fetch-manifest :provider provider)]
     manifest))
+
+(defn check-for-allsubs?
+  [map manifest]
+  (nav/go-to ::subscriptions/page (kt/provider manifest))
+  (every? true? (for [subscription [:rhel :hpn :cloud-forms :hcn
+                                    :open-shift :cloud-providers
+                                    :rhev :jboss :scalable-hcn]]
+                  (browser isElementPresent (subscriptions/subs-exists (map subscription))))))
+  
 
 ;; Tests
 (defgroup redhat-promoted-content-tests
@@ -141,15 +162,6 @@
                          (ui/create manifest))))
   ;; The above testcases passes, because :level shows :message instead of :error or :success,
   ;;when trying to check notifications.
-
-  (deftest "Upload a previously used manifest into another org"
-    :uuid "83596726-1cda-fda4-40d3-e14e9e47ce99"
-    (let [manifest      (new-manifest false)
-          org2          (prepare-org-fetch-org)
-          org2-manifest (update-in manifest [:provider] assoc :org org2) ]
-      (ui/create manifest)
-      (expecting-error (common/errtype :katello.notifications/distributor-has-already-been-imported)
-                       (ui/create org2-manifest))))
   
   #_(deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
     :uuid "0a48ed2d-9e15-d434-37d3-8dd78996ac2a"
@@ -160,9 +172,45 @@
   ;;Less idea about this bug and what the above testcase is all about at this stage, 
   ;;need to investigate this bug further.
   
+  (deftest " Upload of Subscription Manifest, Empty/Invalid manifest file"
+    :uuid "7c3ad15d-1d7f-6f74-8b9b-ed4a239111a6"
+    (let [manifest       (new-manifest false)
+          file-path      "/tmp/manifest_empty.zip"
+          empty-manifest (assoc manifest :file-path file-path)]
+      (spit "/tmp/manifest_empty.zip" "")
+      (expecting-error (common/errtype :katello.notifications/distributor-invalid-or-empty)
+                         (ui/create empty-manifest))
+      (ui/create manifest)))
+
+  (deftest "Upload a previously used manifest into another org"
+    :uuid "83596726-1cda-fda4-40d3-e14e9e47ce99"
+    (let [manifest      (new-manifest false)
+          org2          (prepare-org-fetch-org)
+          org2-manifest (update-in manifest [:provider] assoc :org org2) ]
+      (ui/create manifest)
+      (expecting-error (common/errtype :katello.notifications/distributor-has-already-been-imported)
+                       (ui/create org2-manifest))))
+  
   (deftest "Upload a manifest and check whether import manifest history gets updated"
     :uuid "779235f4-94f3-fe14-4a6b-eafdbbdc44d3"
     (let [manifest  (new-manifest false)]
       (ui/create manifest)
-    (assert/is (manifest/upload-manifest-import-history? manifest)))))
+      (assert/is (manifest/upload-manifest-import-history? manifest))))
+  
+  (deftest "Upload two different manifests and 
+            check whether import manifest history gets updated for both"
+    :uuid "779235f4-94f3-fe14-4a6b-eafddddd44d4"
+    (let [manifest   (new-manifest false)
+          manifest-2 (new-manifest true)]
+      (ui/create manifest)
+      (assert/is (manifest/upload-manifest-import-history? manifest))
+      (ui/create manifest-2)
+      (assert/is (manifest/upload-manifest-import-history? manifest-2))))
+  
+  (deftest "Upload a non standard manifest and 
+            check whether all subscriptions are visible"
+    :uuid "779235f6-94f3-fe14-4a6b-eafdbbdc4555"
+    (let [manifest  (new-manifest true)]
+      (ui/create manifest)
+      (assert/is (check-for-allsubs? subscription-map manifest)))))
 
