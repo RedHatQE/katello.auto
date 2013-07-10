@@ -105,6 +105,9 @@
   {:name "fake",
    :type {:manifest true, :label "candlepin", :id "ff808081335fdf3d01335fdf48e90004"}})
 
+;; add bouncycastle provider at compile time
+(java.security.Security/addProvider (org.bouncycastle.jce.provider.BouncyCastleProvider.))
+
 (defn clone
   "Takes a manifest file location, copies it,and updates it internally
    so that it will be accepted by katello as a new manifest. Also
