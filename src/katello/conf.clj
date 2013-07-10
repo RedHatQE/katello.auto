@@ -40,7 +40,7 @@
     :default "http://hudson.rhq.lab.eng.bos.redhat.com/cds/"]
    
    ["--redhat-manifest-url" "URL that points to a Red Hat test manifest"
-    :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/redhat-manifest.zip"]
+    :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/redhat-manifest-all.zip"]
 
    ["--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
     :default "https://cdn.redhat.com/"]

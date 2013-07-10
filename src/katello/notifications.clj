@@ -144,7 +144,8 @@
                 ::bulk-systems-exceeds-group-limit      #"System Group maximum number of systems exceeded.*"
                 ::already-contains-default-info         #".*already contains default info.*"
                 ::add-systems-greater-than-allowed      #"You cannot have more.*associated with system group.*"
-                ::distributor-has-already-been-imported #"This.*has already been imported by another owner"}]
+                ::distributor-has-already-been-imported #"This.*has already been imported by another owner"
+                ::distributor-invalid-or-empty          #"The archive.*is not a properly compressed file or is empty"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))
