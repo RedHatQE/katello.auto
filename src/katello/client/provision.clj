@@ -14,13 +14,8 @@
 
 (defn- clean-up-queue [q]
   (let [leftovers (java.util.ArrayList.)]
-    (-> q (.drainTo leftovers))
-    (let [agents (map deref leftovers)]
-      (doseq [agnt agents]
-        (send agnt cloud/unprovision))
-      (when-not (apply await-for 600000 agents)
-        (throw+ {:type ::cleanup-timeout
-                 ::leftover-instance-agents agents})))))
+    (.drainTo q leftovers)
+    (cloud/unprovision-all (map deref leftovers))))
 
 (defn fill-queue
   [qa]
@@ -33,7 +28,6 @@
                                     (->> defs
                                          first
                                          (cloud/provision conf/*cloud-conn*)
-                                         agent
                                          (deliver p))
                                     (catch Exception e
                                       (deliver p e))))
@@ -45,10 +39,10 @@
   "Takes a Queue and returns the next instance from it, checking for
   errors and throwing them if they occurred."
   [q]
-  (let [agnt (-> q :queue .poll deref)]
-    (if (instance? Throwable agnt)
-      (throw+ agnt)
-      agnt)))
+  (let [inst (-> q :queue .poll deref)]
+    (if (instance? Throwable inst)
+      (throw+ inst)
+      inst)))
 
 (defn add-ssh [inst]
   (try
@@ -100,15 +94,15 @@
 
 (defmacro with-queued-client
   [ssh-conn-bind & body]
-  `(let [agnt# (-> queue
+  `(let [inst# (-> queue
                    deref                ; the atom
                    dequeue) 
-         ~ssh-conn-bind (client/new-runner (cloud/ip-address (deref agnt#)))]
-     (client/setup-client ~ssh-conn-bind (-> agnt# deref :name))
+         ~ssh-conn-bind (client/new-runner (cloud/ip-address inst#))]
+     (client/setup-client ~ssh-conn-bind (:name inst#))
      (try ~@body
           (finally
             (when cloud/*kill-instance-when-finished*
-              (send agnt# cloud/unprovision))))))
+              (future cloud/unprovision inst#))))))
 
 (defn init "Initialize the queue to n items" [n]
   (reset! queue (new-queue n))
