@@ -1,6 +1,6 @@
 (ns katello.client.provision
   (:require [deltacloud :as cloud]
-            [slingshot.slingshot :refer [throw+]]
+            [slingshot.slingshot :refer [throw+ try+]]
             (katello [client :as client]
                      [conf :as conf]))
   (:import [java.util.concurrent ArrayBlockingQueue TimeUnit]))
