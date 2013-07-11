@@ -178,7 +178,7 @@
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  (notification/check-for-success {:timeout-ms (* 30 60 1000)}))
+  (notification/check-for-success {:timeout-ms (* 10 60 1000)}))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."
