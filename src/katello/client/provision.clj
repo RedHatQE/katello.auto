@@ -21,7 +21,7 @@
                                 (map deref)
                                 (take-while #(not= :end %))))))
 
-(defn- add-ssh "Add ssh command runner field to the given instance."
+(defn add-ssh "Add ssh command runner field to the given instance."
   [inst]
   (try
     (assoc inst :ssh-connection

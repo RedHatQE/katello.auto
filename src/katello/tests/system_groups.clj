@@ -212,7 +212,7 @@
         (rest/create-all (list g s ak))
         (ui/update g assoc :systems #{s})
         (ui/update ak assoc :system-group g)
-        (provision/with-client "sys-count" ssh-conn
+        (provision/with-queued-client ssh-conn
           (client/register ssh-conn
                            {:org (-> ak kt/org :name)
                             :activationkey (:name ak)})
