@@ -80,4 +80,5 @@
                                       :trace-depths-fn conf/trace-list
                                       :to-trace (@conf/config :trace)
                                       :do-not-trace (@conf/config :trace-excludes)}))
-               (finally (provision/shutdown client-queue))))))))
+               (finally (provision/shutdown client-queue)
+                        (shutdown-agents))))))))
