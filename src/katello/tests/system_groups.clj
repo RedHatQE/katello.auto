@@ -195,6 +195,7 @@
 
     (deftest "Add systems to sys group greater than the max allowed limit"
       :uuid "51f57a35-2d83-0974-78d3-a0e11230a5ca"
+      :blockers (bz-bugs "984105")
       (let [limit 2
             g (uniqueify (some-group))
             systems (take (inc limit) (uniques (some-system)))]

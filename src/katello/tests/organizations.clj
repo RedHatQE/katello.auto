@@ -171,7 +171,7 @@
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"
-      :blockers (conj (bz-bugs "966670") rest/katello-only)
+      :blockers (conj (bz-bugs "966670" "983994") rest/katello-only)
       :data-driven true
 
       (fn [env-name env-lbl notif]
