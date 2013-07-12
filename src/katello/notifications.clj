@@ -129,7 +129,9 @@
    
    :changeset-create         "changesets___create"
    :changeset-apply          "changesets___apply"
-   :changeset-promoted       "changesets___promote"})
+   :changeset-promoted       "changesets___promote"
+   
+   :manifest-crud            "providers__update_redhat_provider"})
 
 
 (def ^{:doc "A mapping of known errors in Katello. This helps

@@ -19,6 +19,7 @@
                                               enable-redhat-repos]]
                      [conf :as conf]
                      [blockers        :refer [bz-bugs]])
+            [slingshot.slingshot :refer [try+]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.client.provision :as provision]
             [test.tree.script :refer [defgroup deftest]]
@@ -27,7 +28,7 @@
 
 ;; Constants
 
-#_(def bz786963-manifest
+(def bz786963-manifest
   (str (System/getProperty "user.dir") "/manifests/manifest_bz786963.zip"))
 
 (def fake-repos fake/enable-nature-repos)
@@ -65,12 +66,10 @@
         manifest  (assoc fetch-manifest :provider provider)]
     manifest))
 
-(defn check-for-allsubs?
+(defn all-subs-exist?
   [map manifest]
   (nav/go-to ::subscriptions/page (kt/provider manifest))
-  (every? true? (for [subscription [:rhel :hpn :cloud-forms :hcn
-                                    :open-shift :cloud-providers
-                                    :rhev :jboss :scalable-hcn]]
+  (every? true? (for [subscription (keys map)]
                   (browser isElementPresent (subscriptions/subs-exists (map subscription))))))
   
 
@@ -158,19 +157,20 @@
     :uuid "7c3ef15d-1d7f-6f74-8b9b-ed4a239101a5"
     (let [manifest  (new-manifest false)]
       (ui/create manifest)
-      (expecting-error (common/errtype :katello.notifications/import-same-as-existing-data)
-                         (ui/create manifest))))
+      (try+ (ui/create manifest)
+            (catch (common/errtype :katello.notifications/import-same-as-existing-data) _ nil))))
   ;; The above testcases passes, because :level shows :message instead of :error or :success,
   ;;when trying to check notifications.
   
   #_(deftest "Upload manifest tests, testing for number-format-exception-for-inputstring"
     :uuid "0a48ed2d-9e15-d434-37d3-8dd78996ac2a"
-    (do-steps {:org-name (uniqueify "bz786963")
-               :manifest-loc bz786963-manifest}
-              step-create-org
-              step-upload-manifest))
-  ;;Less idea about this bug and what the above testcase is all about at this stage, 
-  ;;need to investigate this bug further.
+    (let [org      (prepare-org-fetch-org)
+          provider (assoc kt/red-hat-provider :org org)
+          manifest (kt/newManifest {:file-path bz786963-manifest
+                                    :url (@conf/config :fake-repo-url)
+                                    :provider provider})]
+      (manifest/sign bz786963-manifest (@conf/config :key-url))
+      (ui/create manifest)))
   
   (deftest " Upload of Subscription Manifest, Empty/Invalid manifest file"
     :uuid "7c3ad15d-1d7f-6f74-8b9b-ed4a239111a6"
@@ -212,5 +212,19 @@
     :uuid "779235f6-94f3-fe14-4a6b-eafdbbdc4555"
     (let [manifest  (new-manifest true)]
       (ui/create manifest)
-      (assert/is (check-for-allsubs? subscription-map manifest)))))
+      (assert/is (all-subs-exist? subscription-map manifest))))
+  
+  (deftest "Delete a manifest"
+    :uuid "60b9676a-d420-3564-1666-b4e3ff9b3885"
+    (let [manifest  (new-manifest false)]
+      (ui/create manifest)
+      (ui/delete manifest)))
+  
+  (deftest "Upload a fake manifest, delete it and upload real manifest"
+    :uuid "60b9676a-d420-3564-1555-b4e38b9b3335"
+    (let [manifest-1  (new-manifest false)
+          manifest-2  (new-manifest true)]
+      (ui/create manifest-1)
+      (ui/delete manifest-1)
+      (ui/create manifest-2))))
 
