@@ -202,7 +202,7 @@
               :allowed-actions [(navigate-fn :katello.activation-keys/page)]
               :disallowed-actions (conj (navigate-all [:katello.organizations/page
                                                        :katello.systems/page :katello.systems/by-environments-page
-                                                       :katello.repositories/redhat-page])
+                                                       :katello.redhat-repositories/page])
                                         create-an-ak)])
       assoc :blockers (bz-bugs "757817"))
 
@@ -211,7 +211,7 @@
               :allowed-actions [create-an-ak]
               :disallowed-actions (conj (navigate-all [:katello.organizations/page
                                                        :katello.systems/page :katello.systems/by-environments-page
-                                                       :katello.repositories/redhat-page])
+                                                       :katello.redhat-repositories/page])
                                         create-an-org)])
       assoc :blockers (bz-bugs "757817"))
 

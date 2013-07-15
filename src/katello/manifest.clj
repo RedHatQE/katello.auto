@@ -16,7 +16,7 @@
                      [ui-common :as common]
                      [subscriptions :as subs]
                      [sync-management :as sync]
-                     [rh-repositories :as rh-repos]))
+                     [redhat-repositories :as rh-repos]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.bouncycastle.openssl PEMReader]

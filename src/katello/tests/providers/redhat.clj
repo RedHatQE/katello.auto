@@ -14,7 +14,7 @@
                      [changesets      :as changesets]
                      [systems         :as system]
                      [fake-content    :as fake]
-                     [rh-repositories :refer [describe-repos-to-enable-disable 
+                     [redhat-repositories :refer [describe-repos-to-enable-disable 
                                               enable-disable-repos
                                               enable-redhat-repos]]
                      [conf :as conf]

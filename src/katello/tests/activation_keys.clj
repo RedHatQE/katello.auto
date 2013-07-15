@@ -10,7 +10,7 @@
                      [environments :as env]
                      [validation :as val]
                      [manifest :as manifest]
-                     [rh-repositories :as rh-repos]
+                     [redhat-repositories :as rh-repos]
                      [fake-content  :as fake]
                      [subscriptions :as subs]
                      [conf :refer [*environments*]]
