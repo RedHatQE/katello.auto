@@ -358,6 +358,19 @@
           (let [not-showing? #(not (browser isElementPresent %))]
             (assert/is (every? not-showing? [::menu/systems-link ::menu/content-link ::menu/setup-link] ))))
         (assign-admin admin))))
+  
+  (deftest "Assure left pane updates when users/roles are added/deleted"
+    :uuid "05f27396-e1d8-33b4-44a3-9ffdb01d227e"
+    (with-unique [user (assoc generic-user :name "user1")
+                  role  (kt/newRole {:name "myrole"})]
+      (ui/create-all (list user role))
+      (nav/go-to ::user/page)
+      (assert/is (some #(= (user :name) %) (common/extract-left-pane-list)))
+      (ui/delete user)
+      (assert/is (some #(not= (user :name) %) (common/extract-left-pane-list)))
+      (nav/go-to ::role/page)
+      (assert/is (some #(= (role :name) %) (common/extract-left-pane-list)))
+      (ui/delete role)
+      (assert/is (some #(not= (role :name) %) (common/extract-left-pane-list)))))
 
   user-settings default-org-tests)
-
