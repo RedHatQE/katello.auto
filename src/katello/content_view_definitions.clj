@@ -169,7 +169,7 @@
     (click ::remove-button))
   (notification/success-type :filters-destroy))
 
-(defn select-exclude-filter []
+(defn- select-exclude-filter []
   "Function to enable exclusion type filter"
   (browser click ::edit-inclusion-link)
   (browser click ::filter-rule-exclusion)
@@ -189,71 +189,68 @@
   "Select package version and set values: 
    versions are: 'All Versions' 'Only version' 'Newer Than' 'Older Than' 'Range'"
   [{:keys [version-type value1 value2]}]
-  (case version-type
-    "all"          (browser select ::select-package-version "All Versions")
-    "only-version" (browser select ::select-package-version "Only Version")
-    "newer-than"   (browser select ::select-package-version "Newer Than")
-    "older-than"   (browser select ::select-package-version "Older Than")
-    "range"        (browser select ::select-package-version "Range"))
-  (when (some #{version-type} ["only-version" "newer-than" "older-than"])   
+  (browser select ::select-package-version
+           (case version-type
+             :all           "All Versions"
+             :only-version  "Only Version"
+             :newer-than    "Newer Than"
+             :older-than    "Older Than"
+             :range         "Range"))
+  (when (some #{version-type} [:only-version :newer-than :older-than])   
     (browser setText ::version-value value1)
     (browser click ::save-version))
-  (when (= "range" version-type)
+  (when (= :range version-type)
     (browser setText ::range-value1 value1)
     (browser setText ::range-value2 value2)
     (browser click ::save-version)))
 
-(defn add-package-rule 
-  "Define rule to add packages to content filter"
-  [cv-filter {:keys [packages version-type value1 value2 exclude?]}]
+(defn- add-rule
+  "Define inclusion or exclusion rule of type Package, Package Group and Errata"
+  [cv-filter]
   (sel/->browser
     (click ::add-rule)
-    (select ::select-filter-type "Packages")
+    (select ::select-filter-type (:type cv-filter))
     (click ::create-rule))
-  (when exclude?
-    (select-exclude-filter))
-  (doseq [package packages]
-    (browser setText ::rule-input package)
-    (browser click ::submit-rule))
+  (when (:exclude? cv-filter)
+    (select-exclude-filter)))
+
+(defn- input-rule-items
+  "Function to input rule items like: name of package, package-group or errata-id"
+  [items]
+  (doseq [item items]
+    (browser setText ::rule-input item)
+    (browser click ::submit-rule)))
+  
+(defn add-package-rule 
+  "Define rule to add packages to content filter"
+  [cv-filter & [{:keys [packages version-type value1 value2]}]]
+  (add-rule cv-filter)
+  (input-rule-items packages)
   (when-not (= "all" version-type)
     (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
   (browser click (filter-link (:name cv-filter))))
 
 (defn add-pkg-group-rule 
   "Define rule to add package groups to content filter"
-  [cv-filter {:keys [pkg-groups exclude?]}]
-  (sel/->browser
-    (click ::add-rule)
-    (select ::select-filter-type "Package Groups")
-    (click ::create-rule))
-  (when exclude?
-    (select-exclude-filter))
-  (doseq [pkg-group pkg-groups]
-    (browser setText ::rule-input pkg-group)
-    (browser click ::submit-rule))
+  [cv-filter {:keys [pkg-groups]}]
+  (add-rule cv-filter)
+  (input-rule-items pkg-groups)
   (browser click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-id 
   "Define rule to add errata by erratum name to content filter"
-  [erratum-names]
-  (sel/->browser
-    (click ::add-rule)
-    (select ::select-filter-type "Errata")
-    (click ::create-rule)
-    (click ::select-errata-id))
-  (doseq [erratum-name erratum-names]
-    (browser setText ::rule-input erratum-name)
-    (browser click ::submit-rule))
+  [cv-filter erratum-names]
+  (add-rule cv-filter)
+  (browser click ::select-errata-id)
+  (input-rule-items erratum-names)
   (notification/check-for-success))
 
 (defn filter-errata-by-type
   "Define rule to add errata by type to content filter"
-  [errata-type]
+  [cv-filter errata-type]
+  (add-rule cv-filter)
   (sel/->browser
-    (click ::add-rule)
-    (select ::select-filter-type "Errata")   
-    (click ::create-rule)
     (click ::select-errata-date-type)
     (click ::errata-type)
     (addSelection ::select-errata-label errata-type)
@@ -262,11 +259,9 @@
 
 (defn filter-errata-by-date
   "Define rule to filter errata by date to content filter"
-  [{:keys [from-date to-date]}]
+  [cv-filter & [{:keys [from-date to-date]}]]
+  (add-rule cv-filter)
   (sel/->browser
-    (click ::add-rule)
-    (select ::select-filter-type "Errata")   
-    (click ::create-rule)
     (click ::select-errata-date-type)
     (setText ::filter-errata-from-date from-date)
     (setText ::filter-errata-to-date to-date)
