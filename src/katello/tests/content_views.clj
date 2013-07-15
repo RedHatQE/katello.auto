@@ -22,7 +22,7 @@
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
-            [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
+            [katello :refer [newOrganization newProvider newProduct newRepository newContentView newFilter]]
             ))
 
 ;; Functions
@@ -73,6 +73,17 @@
       (changeset/promote-delete-content composite-cs)
       composite-view)))
 
+(defn add-product-to-cv
+  [org repo]
+  (with-unique [target-env (kt/newEnvironment {:name "dev" :org org})
+                cv (kt/newContentView {:name "con-def"
+                                       :org org})]
+      (ui/create-all-recursive (list org target-env))
+      (create-recursive repo)
+      (sync/perform-sync (list repo))
+      (ui/create cv)
+      (ui/update cv assoc :products (list (kt/product repo)))
+      cv))
                       
 ;; Tests
 
@@ -156,8 +167,141 @@
           (create-recursive repo)
           (ui/update content-def assoc :products (list (kt/product repo)))
           (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))))
-
-
+    
+    (deftest "Create a filter"
+      :uuid "da277945-9bad-468f-8460-c0149d4ee806"
+      (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (ui/create-all (list cv cv-filter))))
+ 
+    (deftest "Create a new filter with blank name and long name"
+      :uuid "fda6c1a6-7e70-4cc2-8f0f-0089698e1572"
+      :data-driven true
+      
+      (fn [name expected-res]
+        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+                      cv-filter (katello/newFilter {:name name :cv cv})]
+          (ui/create cv)
+          (expecting-error expected-res (ui/create cv-filter))))
+      
+      [[(random-ascii-string 256) (common/errtype ::notifications/filter-name-too-long)]
+       [(random-ascii-string 255) #(-> % :type (= :success))]
+       ["" (common/errtype ::notifications/name-cant-be-blank)]])
+    
+    (deftest  "create a package filter"
+      :uuid "d7b20c71-5027-49db-ab7b-ee96bcaf1bd6"
+      :data-driven true
+      
+      (fn [packages version-type &[value1 value2]]
+        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+          (ui/create-all (list cv cv-filter))
+          (views/add-package-rule cv-filter {:packages (list packages)
+                                             :version-type version-type
+                                             :value1 value1
+                                             :value2 value2})))  
+      [["cow" :all]
+       ["cat" :only-version "0.5"]
+       ["crow" :newer-than "2.7"]
+       ["bird" :older-than "2.3"]
+       ["bear" :range "2.3" "2.7"]])
+    
+    
+    (deftest "Create 'Include/Exclude' type filter for packages"
+      :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
+      :data-driven true
+      
+      (fn [exclude?]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
+              packages (list "cow" "cat")
+              packages1 (list "crow")
+              version-type "all"]
+          (ui/create cv-filter)
+          (doall (for [rule [{:packages packages 
+                              :version-type version-type}
+                             {:packages packages1 
+                              :version-type version-type}
+                             {:packages ""
+                              :version-type version-type}]]
+                   (views/add-package-rule cv-filter rule)))
+          (views/remove-rule packages1)
+          (if (:exclude? cv-filter)
+            (do 
+              (assert/is (browser isTextPresent "Exclude Packages: No details specified"))
+              (assert/is (browser isTextPresent "Exclude Packages: cow, cat")))
+            (do 
+              (assert/is (browser isTextPresent "Include Packages: No details specified"))
+              (assert/is (browser isTextPresent "Include Packages: cow, cat"))))
+          (views/add-repo-from-filters (list (kt/repository repo)))))
+      
+      [[true]
+       [false]])
+      
+    (deftest "Create 'Include/Exclude' type package-group filter"
+      :uuid "fb3f9627-50cf-4dcc-8094-d389240c9e2a"
+      :data-driven true
+      
+      (fn [exclude?]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
+              pkg-groups (list "birds" "crow")
+              pkg-groups2 (list "cow")]        
+          (ui/create cv-filter)
+          (doall (for [rule [{:pkg-groups pkg-groups}
+                             {:pkg-groups pkg-groups2}
+                             {:pkg-groups "" }]]
+                   (views/add-pkg-group-rule cv-filter rule)))
+          (views/remove-rule pkg-groups2)
+          (if (:exclude? cv-filter)
+            (do
+              (assert/is (browser isTextPresent "Exclude Package Groups: No details specified"))
+              (assert/is (browser isTextPresent "Exclude Package Groups: birds, crow")))
+            (do
+              (assert/is (browser isTextPresent "Include Package Groups: No details specified"))
+              (assert/is (browser isTextPresent "Include Package Groups: birds, crow"))))
+          (views/add-repo-from-filters (list (kt/repository repo)))))
+      
+      [[true]
+       [false]])
+    
+      (deftest "Create 'Include' filter by errata-id"
+      :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                           :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
+        (let [erratums (list "RHBA" "RHSA")]
+          (ui/create-all (list cv cv-filter))
+          (views/filter-errata-by-id cv-filter erratums))))
+    
+    (deftest "Create filter by errata-type"
+      :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
+      :data-driven true
+      (fn [errata-type]
+        (with-unique [cv (kt/newContentView {:name "con-def"
+                                             :org conf/*session-org*})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
+          (ui/create-all (list cv cv-filter))
+          (views/filter-errata-by-type cv-filter errata-type)))
+      
+      [["Bug Fix"]
+       ["Enhancement"]
+       ["Security"]])
+    
+    (deftest "Remove a content filter"
+      :uuid "1b4197f9-3e2a-41b0-b63c-ffdf8ba9ca3a"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                           :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+        (ui/create-all (list cv cv-filter))
+        (views/remove-filter cv-filter)))
+    
     (deftest "Publish content view definition"
       :uuid "b71674d7-0e86-fe04-39f3-f408cb2a95bc"
       (with-unique [content-def (kt/newContentView {:name "con-def"
@@ -167,7 +311,7 @@
         (views/publish {:content-defn content-def
                         :published-name (:published-name content-def)
                         :org *session-org*})))
-
+    
     (deftest "Published content view name links to content search page"
       :uuid "16fb0291-7312-6ab4-e92b-063d776f837b"
       (with-unique [content-def (kt/newContentView {:name "con-def"

@@ -14,6 +14,11 @@
 
 (sel/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
+  filter-link                 "//a[contains(text(), 'Filter: %s')]"
+  filter-name-link            "//a[contains(text(), '%s')]"
+  select-filter               "//input[@value='%s']"
+  select-filter-name          "//div[@class='panel_link']/a[contains(text(), '%s')]"       
+  select-rule                 "//a[contains(text(), '%s')]/../input[@type='checkbox']"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
@@ -41,9 +46,30 @@
 
    ;; Filters tab
    ::new-filter-button         "//input[@type='button' and @value='New Filter']"
-   ::filter-name-text          "//input[@id='filter_name' @class='name_input']"
+   ::filter-name-text          "//input[@id='filter_name']"
    ::filter-create             "//input[@class='create_button']"
-   
+   ::add-rule                  "//input[@value='Add New Rule']"
+   ::create-rule               "//input[@class='create_button']"
+   ::rule-input                "//input[@id='rule_input']"
+   ::submit-rule               "//a[@id='add_rule']"
+   ::remove-button             "//input[@id='remove_button']"
+   ::select-filter-type        "//select[@id='filter_rule_content_type']"
+   ::select-package-version    "//select[@id='units_version_type']"
+   ::version-value             "//input[@id='units_version_value']"
+   ::save-version              "//a[contains(text(),'Save')]"
+   ::range-value1              "//input[@id='units_version_value1']"
+   ::range-value2              "//input[@id='units_version_value2']"
+   ::select-errata-id          "//input[@id='errata_specify']"
+   ::select-errata-date-type   "//input[@id='errata_date_type']"
+   ::save-errata               "//button[@type='submit']"
+   ::filter-errata-from-date   "//div[@id='from_date']"
+   ::filter-errata-to-date     "//div[@id='to_date']"
+   ::edit-inclusion-link       "//a[contains(text(),'(Edit)')]"
+   ::filter-rule-exclusion     "filter_rule_inclusion_false"
+   ::errata-type               "//div[@name='parameter[errata_type]']"
+   ::select-errata-label       "//select[@name='parameter[errata_type]']"
+   ::repo-tab                  "//a[contains(@href, '##repos')]"
+   ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
    
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
    ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
@@ -69,7 +95,8 @@
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
     [::details-page (nav/browser-fn (click ::details-tab))]
     [::content-page (nav/browser-fn (click ::content-tab))]
-    [::filter-page (nav/browser-fn (click ::filter-tab))]
+    [::filter-page (nav/browser-fn (click ::filter-tab))
+     [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser click)))]]
     [::views-page (nav/browser-fn (click ::views-tab))]]])
 
 
@@ -123,6 +150,132 @@
                       ::publish-new)
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :cv-publish)}))
 
+(defn add-filter
+  "Create a new content filter"
+  [{:keys [name]}]
+  (sel/->browser
+    (click ::filter-tab)
+    (click ::new-filter-button)
+    (setText ::filter-name-text name)
+    (click ::filter-create))
+  (notification/success-type :filters-create))
+
+(defn remove-filter
+  "Remove the selected filter from content-view-def"
+  [{:keys [name]}]
+  (sel/->browser
+    (click ::filter-tab)
+    (click (select-filter name))
+    (click ::remove-button))
+  (notification/success-type :filters-destroy))
+
+(defn- select-exclude-filter []
+  "Function to enable exclusion type filter"
+  (browser click ::edit-inclusion-link)
+  (browser click ::filter-rule-exclusion)
+  (browser click ::close-edit-inclusion))
+
+(defn add-repo-from-filters
+  "Selects repo tab under CV filters"
+  [repos]
+  (browser click ::repo-tab)
+  (doseq [repo repos]
+    (sel/->browser
+      (mouseUp (-> repo :name product-or-repository))
+      (click ::add-product-btn)
+      (click ::update-content))))
+
+(defn select-package-version-value
+  "Select package version and set values: 
+   versions are: 'All Versions' 'Only version' 'Newer Than' 'Older Than' 'Range'"
+  [{:keys [version-type value1 value2]}]
+  (browser select ::select-package-version
+           (case version-type
+             :all           "All Versions"
+             :only-version  "Only Version"
+             :newer-than    "Newer Than"
+             :older-than    "Older Than"
+             :range         "Range"))
+  (when (some #{version-type} [:only-version :newer-than :older-than])   
+    (browser setText ::version-value value1)
+    (browser click ::save-version))
+  (when (= :range version-type)
+    (browser setText ::range-value1 value1)
+    (browser setText ::range-value2 value2)
+    (browser click ::save-version)))
+
+(defn- add-rule
+  "Define inclusion or exclusion rule of type Package, Package Group and Errata"
+  [cv-filter]
+  (sel/->browser
+    (click ::add-rule)
+    (select ::select-filter-type (:type cv-filter))
+    (click ::create-rule))
+  (when (:exclude? cv-filter)
+    (select-exclude-filter)))
+
+(defn- input-rule-items
+  "Function to input rule items like: name of package, package-group or errata-id"
+  [items]
+  (doseq [item items]
+    (browser setText ::rule-input item)
+    (browser click ::submit-rule)))
+  
+(defn add-package-rule 
+  "Define rule to add packages to content filter"
+  [cv-filter & [{:keys [packages version-type value1 value2]}]]
+  (add-rule cv-filter)
+  (input-rule-items packages)
+  (when-not (= "all" version-type)
+    (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
+  (browser click (filter-link (:name cv-filter))))
+
+(defn add-pkg-group-rule 
+  "Define rule to add package groups to content filter"
+  [cv-filter {:keys [pkg-groups]}]
+  (add-rule cv-filter)
+  (input-rule-items pkg-groups)
+  (browser click (filter-link (:name cv-filter)))
+  (notification/check-for-success))
+
+(defn filter-errata-by-id 
+  "Define rule to add errata by erratum name to content filter"
+  [cv-filter erratum-names]
+  (add-rule cv-filter)
+  (browser click ::select-errata-id)
+  (input-rule-items erratum-names)
+  (notification/check-for-success))
+
+(defn filter-errata-by-type
+  "Define rule to add errata by type to content filter"
+  [cv-filter errata-type]
+  (add-rule cv-filter)
+  (sel/->browser
+    (click ::select-errata-date-type)
+    (click ::errata-type)
+    (addSelection ::select-errata-label errata-type)
+    (click ::save-errata))
+  (notification/check-for-success))
+
+(defn filter-errata-by-date
+  "Define rule to filter errata by date to content filter"
+  [cv-filter & [{:keys [from-date to-date]}]]
+  (add-rule cv-filter)
+  (sel/->browser
+    (click ::select-errata-date-type)
+    (setText ::filter-errata-from-date from-date)
+    (setText ::filter-errata-to-date to-date)
+    (click ::submit-rule))
+  (notification/check-for-success))
+
+(defn remove-rule
+  "Remove a rule from selected filter"
+  [rule-names]
+  (doseq [rule-name rule-names]
+    (browser click (select-rule rule-name))
+    (browser click ::remove-button)
+    (notification/success-type :filter-rules-destroy)))
+
 (defn- edit-content-view-details [name description]
   (browser click ::details-tab)
   (common/in-place-edit {::details-name-text name
@@ -167,6 +320,10 @@
                    (add-repo repo-to-add)
                    (remove-repo repo-to-remove))))
 
+(defn update-filter
+[]
+"Todo")
+
 (defn- delete
   "Deletes an existing View Definition."
   [content-defn]
@@ -198,3 +355,11 @@
                                            (update-in [:published-name] #(when %1 (stamp-fn %1)))))))}
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
+(extend katello.Filter
+  ui/CRUD {:create add-filter
+           :delete remove-filter
+           :update* update-filter}
+  
+  tasks/Uniqueable  tasks/entity-uniqueable-impl
+  
+  nav/Destination {:go-to (partial nav/go-to ::filter-page)})
