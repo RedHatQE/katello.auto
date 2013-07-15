@@ -14,6 +14,7 @@
                      [users :as user])
             [fn.trace :as trace]
             [clj-webdriver.taxi :as taxi]
+            [webdriver :as wd]
             [com.redhat.qe.auto.selenium.selenium :refer :all])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
 
@@ -42,7 +43,8 @@
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
   (taxi/set-driver! (or browser-config-opts empty-browser-config))
-  (taxi/implicit-wait 60000)
+  (taxi/set-finder! wd/locator-finder-fn)
+  (taxi/implicit-wait 1000)
   (taxi/to (@config :server-url))
   ;;TODO: re-enable login function.
   #_(login))
