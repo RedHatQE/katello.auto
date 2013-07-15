@@ -179,11 +179,12 @@
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
   (notification/check-for-success {:timeout-ms (* 10 60 1000) :match-pred (notification/request-type? :manifest-crud)}))
 
-#_(defn refresh-manifest
+(defn refresh-manifest
   "Refreshes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (browser click ::subs/refresh-manifest))
+  (browser click ::subs/refresh-manifest)
+  (browser click ::ui/confirmation-yes))
 
 (defn- delete-manifest
   "Deletes a subscription manifest uploaded"
