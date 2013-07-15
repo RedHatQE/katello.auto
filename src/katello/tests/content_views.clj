@@ -72,6 +72,18 @@
                                                       :env env})]
       (changeset/promote-delete-content composite-cs)
       composite-view)))
+
+(defn add-product-to-cv
+  [org repo]
+  (with-unique [target-env (kt/newEnvironment {:name "dev" :org org})
+                cv (kt/newContentView {:name "con-def"
+                                       :org org})]
+      (ui/create-all-recursive (list org target-env))
+      (create-recursive repo)
+      (sync/perform-sync (list repo))
+      (ui/create cv)
+      (ui/update cv assoc :products (list (kt/product repo)))
+      cv))
                       
 ;; Tests
 
@@ -188,74 +200,85 @@
                                              :version-type version-type
                                              :value1 value1
                                              :value2 value2})))  
-      [["cow" "all"]
-       ["cat" "only-version" "0.5"]
-       ["crow" "newer-than" "2.7"]
-       ["bird" "older-than" "2.3"]
-       ["bear" "range" "2.3" "2.7"]])
+      [["cow" :all]
+       ["cat" :only-version "0.5"]
+       ["crow" :newer-than "2.7"]
+       ["bird" :older-than "2.3"]
+       ["bear" :range "2.3" "2.7"]])
     
-    (deftest "create 'Include' type filter for packages"
+    
+    (deftest "Create 'Include/Exclude' type filter for packages"
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
-      (with-unique [org (kt/newOrganization {:name "cv-org"})
-                    target-env (kt/newEnvironment {:name "dev" :org org})
-                    cv (kt/newContentView {:name "con-def"
-                                           :org org})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
-        (let [repo (fresh-repo org
+      :data-driven true
+      
+      (fn [exclude?]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
-          (ui/create-all-recursive (list org target-env))
-          (create-recursive repo)
-          (sync/perform-sync (list repo))
-          (ui/create cv)
-          (ui/update cv assoc :products (list (kt/product repo)))
           (ui/create cv-filter)
-          (views/add-package-rule cv-filter {:packages packages 
-                                             :version-type version-type})
-          (views/add-package-rule cv-filter {:packages packages1 
-                                             :version-type version-type})
-          (views/add-package-rule cv-filter {:packages ""
-                                             :version-type version-type})
+          (doall (for [rule [{:packages packages 
+                              :version-type version-type}
+                             {:packages packages1 
+                              :version-type version-type}
+                             {:packages ""
+                              :version-type version-type}]]
+                   (views/add-package-rule cv-filter rule)))
           (views/remove-rule packages1)
-          (assert/is (browser isTextPresent "Include Packages: No details specified"))
-          (assert/is (browser isTextPresent "Include Packages: cow, cat"))
-          (views/add-repo-from-filters (list (kt/repository repo))))))
+          (if (:exclude? cv-filter)
+            (do 
+              (assert/is (browser isTextPresent "Exclude Packages: No details specified"))
+              (assert/is (browser isTextPresent "Exclude Packages: cow, cat")))
+            (do 
+              (assert/is (browser isTextPresent "Include Packages: No details specified"))
+              (assert/is (browser isTextPresent "Include Packages: cow, cat"))))
+          (views/add-repo-from-filters (list (kt/repository repo)))))
       
-    (deftest "Create 'Exclude' type package-group filter"
+      [[true]
+       [false]])
+      
+    (deftest "Create 'Include/Exclude' type package-group filter"
       :uuid "fb3f9627-50cf-4dcc-8094-d389240c9e2a"
-      (with-unique [org (kt/newOrganization {:name "cv-org"})
-                    target-env (kt/newEnvironment {:name "dev" :org org})
-                    cv (kt/newContentView {:name "con-def"
-                                           :org org})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :exclude? true})]
-        (let [repo (fresh-repo org
+      :data-driven true
+      
+      (fn [exclude?]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
               pkg-groups (list "birds" "crow")
               pkg-groups2 (list "cow")]        
-          (ui/create-all-recursive (list org target-env))
-          (create-recursive repo)
-          (sync/perform-sync (list repo))
-          (ui/create cv)
-          (ui/update cv assoc :products (list (kt/product repo)))
           (ui/create cv-filter)
-          (views/add-pkg-group-rule cv-filter {:pkg-groups pkg-groups :exclude? (:exclude? cv-filter)})
-          (views/add-pkg-group-rule cv-filter {:pkg-groups pkg-groups2 :exclude? (:exclude? cv-filter)})
-          (views/add-pkg-group-rule cv-filter {:pkg-groups "" :exclude? (:exclude? cv-filter)})
+          (doall (for [rule [{:pkg-groups pkg-groups}
+                             {:pkg-groups pkg-groups2}
+                             {:pkg-groups "" }]]
+                   (views/add-pkg-group-rule cv-filter rule)))
           (views/remove-rule pkg-groups2)
-          (assert/is (browser isTextPresent "Exclude Package Groups: No details specified"))
-          (assert/is (browser isTextPresent "Exclude Package Groups: birds, crow"))
-          (views/add-repo-from-filters (list (kt/repository repo))))))
+          (if (:exclude? cv-filter)
+            (do
+              (assert/is (browser isTextPresent "Exclude Package Groups: No details specified"))
+              (assert/is (browser isTextPresent "Exclude Package Groups: birds, crow")))
+            (do
+              (assert/is (browser isTextPresent "Include Package Groups: No details specified"))
+              (assert/is (browser isTextPresent "Include Package Groups: birds, crow"))))
+          (views/add-repo-from-filters (list (kt/repository repo)))))
+      
+      [[true]
+       [false]])
     
-    (deftest "Create 'Include' filter by errata-id"
+      (deftest "Create 'Include' filter by errata-id"
       :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
       (with-unique [cv (kt/newContentView {:name "con-def"
                                            :org conf/*session-org*})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
         (let [erratums (list "RHBA" "RHSA")]
           (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-id erratums))))
+          (views/filter-errata-by-id cv-filter erratums))))
     
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
@@ -263,9 +286,9 @@
       (fn [errata-type]
         (with-unique [cv (kt/newContentView {:name "con-def"
                                              :org conf/*session-org*})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
           (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-type errata-type)))
+          (views/filter-errata-by-type cv-filter errata-type)))
       
       [["Bug Fix"]
        ["Enhancement"]
