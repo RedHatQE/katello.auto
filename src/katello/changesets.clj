@@ -54,8 +54,7 @@
    ::type                        "changeset[action_type]"
    ::promotion                   "//div[@data-cs_type='promotion']"
    ::deletion                    "//div[@data-cs_type='deletion']"
-   ::remove-changeset            "//span[contains(.,'Remove')]"
-   ::ui-box-confirm              "//span[@class='ui-button-text' and contains(.,'Yes')]"})  
+   ::remove-changeset            "//span[contains(.,'Remove')]"})  
    
 (nav/defpages :katello.deployment/any katello.menu
   [::page
@@ -310,7 +309,7 @@
                                 (for [item (map :name data)]
                                   (browser isVisible (add-content-item item))))]
                   (sel/->browser (click ::remove-changeset)
-                                 (click ::ui-box-confirm)
+                                 (click ::ui/confirmation-yes)
                                  (click ::promotion-eligible-home)
                                  (refresh))
                   visible))))))

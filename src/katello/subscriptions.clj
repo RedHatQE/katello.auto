@@ -9,6 +9,7 @@
   {::new                      "new"
    ::upload-manifest          "upload_form_button"
    ::refresh-manifest         "refresh_form_button"
+   ::delete-manifest          "delete_form_button"
    ::create                   "commit"
    ::repository-url-text      "provider[repository_url]"
    ::choose-file              "provider_contents"
