@@ -44,6 +44,7 @@
                 ::max-systems-must-be-positive        #"System limit must be a positive"
                 ::max-systems-may-not-be-zero         #"System limit may not be set to 0"
                 ::name-too-long                       #"Name cannot contain more than"
+                ::filter-name-too-long                #"Name is too long.*maximum is 255"
                 ::login-is-invalid                    #"Login is invalid"}]
     
     (doseq [e (keys errors)]
@@ -67,6 +68,10 @@
    :cv-update-content        "content_view_definitions___update_content"
    :cv-update                "content_view_definitions___update"
    :cv-publish               "content_view_definitions___publish"
+   
+   :filters-create           "filters___create"
+   :filters-destroy          "filters___destroy_filters"
+   :filter-rules-destroy     "filter_rules___destroy_rules"
    
    :gpg-keys-create           "gpg_keys___create"
    :gpg-keys-destroy          "gpg_keys___destroy"
