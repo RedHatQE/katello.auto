@@ -306,23 +306,6 @@
        [false]])
     
     
-    (deftest "Create 'Include' filter by errata-date"
-      :uuid "f218c4e0-904b-4ae3-90cc-03969bf29326"
-      (with-unique [cv (kt/newContentView {:name "con-def"
-                                           :org conf/*session-org*})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
-        (ui/create-all (list cv cv-filter))
-        (views/filter-errata-by-date-type cv-filter {:from-date "07/02/2013" :to-date "07/03/2013" :errata-type "Enhancement"})))
-    
-      (deftest "Create 'Include' filter by errata-id"
-      :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
-      (with-unique [cv (kt/newContentView {:name "con-def"
-                                           :org conf/*session-org*})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
-        (let [erratums (list "RHBA" "RHSA")]
-          (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-id cv-filter erratums))))
-    
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
       :data-driven true
@@ -331,7 +314,7 @@
                                              :org conf/*session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
           (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-date-type cv-filter :errata-type errata-type)))
+          (views/filter-errata-by-date-type cv-filter {:errata-type errata-type})))
       
       [["Bug Fix"]
        ["Enhancement"]
