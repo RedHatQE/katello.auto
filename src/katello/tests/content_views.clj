@@ -271,6 +271,49 @@
       [[true]
        [false]])
     
+    (deftest "Create 'Include/Exclude' type filter for errata"
+      :uuid "be7b6182-065b-4a4b-8a6b-0642f4283336"
+      :data-driven true
+      
+      (fn [exclude?]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})
+              erratums (list "RHBA" "RHSA")
+              erratums2 (list "RHSA")]        
+          (ui/create cv-filter)
+          (doall (for [rule [erratums
+                             erratums2]]
+                   (views/filter-errata-by-id cv-filter rule)))
+          (views/remove-rule erratums2)
+          (doall (for [rule [{:from-date "07/02/2013", :to-date   "07/03/2013", :errata-type "Enhancement"}
+                             { }]]
+                   (views/filter-errata-by-date-type cv-filter rule))) 
+          (if (:exclude? cv-filter)
+            (do
+              (assert/is (browser isTextPresent "Exclude Errata: No details specified"))
+              (assert/is (browser isTextPresent "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"))
+              (assert/is (browser isTextPresent "Exclude Errata: RHBA, RHSA")))
+            (do
+              (assert/is (browser isTextPresent "Include Errata: No details specified"))
+              (assert/is (browser isTextPresent "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"))
+              (assert/is (browser isTextPresent "Exclude Errata: RHBA, RHSA"))))
+          (views/add-repo-from-filters (list (kt/repository repo)))))
+      
+      [[true]
+       [false]])
+    
+    
+    (deftest "Create 'Include' filter by errata-date"
+      :uuid "f218c4e0-904b-4ae3-90cc-03969bf29326"
+      (with-unique [cv (kt/newContentView {:name "con-def"
+                                           :org conf/*session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
+        (ui/create-all (list cv cv-filter))
+        (views/filter-errata-by-date-type cv-filter {:from-date "07/02/2013" :to-date "07/03/2013" :errata-type "Enhancement"})))
+    
       (deftest "Create 'Include' filter by errata-id"
       :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
       (with-unique [cv (kt/newContentView {:name "con-def"
@@ -288,7 +331,7 @@
                                              :org conf/*session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
           (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-type cv-filter errata-type)))
+          (views/filter-errata-by-date-type cv-filter :errata-type errata-type)))
       
       [["Bug Fix"]
        ["Enhancement"]

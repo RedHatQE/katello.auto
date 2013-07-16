@@ -8,7 +8,8 @@
                      [system-groups :as sg]
                      [tasks :refer [when-some-let] :as tasks]
                      [ui-common :as common]
-                     [ui :as ui])))
+                     [ui :as ui]))
+  (:import java.util.Date))
 
 ;; Locators
 
@@ -62,8 +63,10 @@
    ::select-errata-id          "//input[@id='errata_specify']"
    ::select-errata-date-type   "//input[@id='errata_date_type']"
    ::save-errata               "//button[@type='submit']"
-   ::filter-errata-from-date   "//div[@id='from_date']"
-   ::filter-errata-to-date     "//div[@id='to_date']"
+   ::edit-errata-from-date     "//div[@id='from_date']"
+   ::input-from-date           "//input[@name='parameter[date_range][start]']"
+   ::edit-errata-to-date       "//div[@id='to_date']"
+   ::input-to-date             "//input[@name='parameter[date_range][end]']"  
    ::edit-inclusion-link       "//a[contains(text(),'(Edit)')]"
    ::filter-rule-exclusion     "filter_rule_inclusion_false"
    ::errata-type               "//div[@name='parameter[errata_type]']"
@@ -101,6 +104,10 @@
 
 
 ;; Tasks
+
+(def dateformat (java.text.SimpleDateFormat. "MM/dd/yyyy"))
+(defn- date [d] (.format dateformat (.parse dateformat d)))
+
 
 (defn- create
   "Creates a new Content View Definition."
@@ -166,6 +173,7 @@
   (sel/->browser
     (click ::filter-tab)
     (click (select-filter name))
+    (waitForElement ::remove-button "2000")
     (click ::remove-button))
   (notification/success-type :filters-destroy))
 
@@ -244,6 +252,7 @@
   (add-rule cv-filter)
   (browser click ::select-errata-id)
   (input-rule-items erratum-names)
+  (browser click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-type
@@ -255,17 +264,27 @@
     (click ::errata-type)
     (addSelection ::select-errata-label errata-type)
     (click ::save-errata))
+  (browser click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
-(defn filter-errata-by-date
-  "Define rule to filter errata by date to content filter"
-  [cv-filter & [{:keys [from-date to-date]}]]
+(defn filter-errata-by-date-type
+  "Define rule to filter errata by date to conten t filter"
+  [cv-filter & [{:keys [from-date to-date errata-type]}]]
   (add-rule cv-filter)
-  (sel/->browser
-    (click ::select-errata-date-type)
-    (setText ::filter-errata-from-date from-date)
-    (setText ::filter-errata-to-date to-date)
-    (click ::submit-rule))
+  (browser click ::select-errata-date-type)
+  (when from-date
+    (browser click ::edit-errata-from-date)
+    (browser setText ::input-from-date (date from-date))
+    (browser click ::save-errata))
+  (when to-date
+    (browser click ::edit-errata-to-date)
+    (browser setText ::input-to-date (date to-date))
+    (browser click ::save-errata))
+  (when errata-type
+    (browser click ::errata-type)
+    (browser addSelection ::select-errata-label errata-type)
+    (browser click ::save-errata))
+  (browser click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn remove-rule
