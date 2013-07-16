@@ -108,7 +108,6 @@
 (def dateformat (java.text.SimpleDateFormat. "MM/dd/yyyy"))
 (defn- date [d] (.format dateformat (.parse dateformat d)))
 
-
 (defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
@@ -252,18 +251,6 @@
   (add-rule cv-filter)
   (browser click ::select-errata-id)
   (input-rule-items erratum-names)
-  (browser click (filter-link (:name cv-filter)))
-  (notification/check-for-success))
-
-(defn filter-errata-by-type
-  "Define rule to add errata by type to content filter"
-  [cv-filter errata-type]
-  (add-rule cv-filter)
-  (sel/->browser
-    (click ::select-errata-date-type)
-    (click ::errata-type)
-    (addSelection ::select-errata-label errata-type)
-    (click ::save-errata))
   (browser click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 

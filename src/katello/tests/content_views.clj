@@ -288,7 +288,7 @@
                              erratums2]]
                    (views/filter-errata-by-id cv-filter rule)))
           (views/remove-rule erratums2)
-          (doall (for [rule [{:from-date "07/02/2013", :to-date   "07/03/2013", :errata-type "Enhancement"}
+          (doall (for [rule [{:from-date "07/02/2013", :to-date "07/03/2013", :errata-type "Enhancement"}
                              { }]]
                    (views/filter-errata-by-date-type cv-filter rule))) 
           (if (:exclude? cv-filter)
