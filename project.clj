@@ -14,7 +14,7 @@
                  [inflections "0.6.2"]
                  
                  [test.tree.jenkins "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
-                 [test.tree "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree "1.0.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  
                  
