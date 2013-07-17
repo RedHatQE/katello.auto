@@ -152,7 +152,9 @@
                 ::already-contains-default-info         #".*already contains default info.*"
                 ::add-systems-greater-than-allowed      #"You cannot have more.*associated with system group.*"
                 ::distributor-has-already-been-imported #"This.*has already been imported by another owner"
-                ::distributor-invalid-or-empty          #"The archive.*is not a properly compressed file or is empty"}]
+                ::distributor-invalid-or-empty          #"The archive.*is not a properly compressed file or is empty"
+                ::failed-signature-check                #"Archive failed signature check"
+                ::already-imported-another-manifest     #"Owner has already imported from another.*"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))
