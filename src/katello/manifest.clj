@@ -123,6 +123,12 @@
     (io/copy (update-in-nested-zip (zis tmp), (list "signature"), (sign tmp key-url))
              (java.io.File. dest-path))))
 
+(defn fetch-manifest [manifest-url]
+  "Downloads a manifest and fetches it's location"
+  (let [dest (new-tmp-loc)]
+    (io/copy (-> manifest-url java.net.URL. io/input-stream)
+      (java.io.File. dest))
+    dest))
 
 (defn download-original-manifest [redhat-manifest?]
   (let [dest (new-tmp-loc)
