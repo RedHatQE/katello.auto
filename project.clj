@@ -31,7 +31,7 @@
                  [bugzilla.checker "0.2.0-SNAPSHOT"]
                  [github.checker "0.2.0-SNAPSHOT"]
                  [fn.trace "1.4.0-SNAPSHOT"]]
-  :jvm-opts ["-Xmx640m" "-Xms48m"]
+  :jvm-opts ["-Xmx640m" "-Xms48m" "-XX:-OmitStackTraceInFastThrow"]
   :repl-options {:init-ns katello.repl}
   :repositories ^:replace [["clojars" {:url "http://clojars.org/repo"
                                        :snapshots {:update :always}}]
