@@ -172,7 +172,7 @@
   (sel/->browser
     (click ::filter-tab)
     (click (select-filter name))
-    (waitForElement ::remove-button "2000")
+    (waitForElement ::remove-button "5000")
     (click ::remove-button))
   (notification/success-type :filters-destroy))
 

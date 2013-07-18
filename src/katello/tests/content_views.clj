@@ -84,6 +84,14 @@
       (ui/create cv)
       (ui/update cv assoc :products (list (kt/product repo)))
       cv))
+
+(defn re-order-date
+  "Re-order from-date and to-date from MM-dd-yyyy to yyyy-MM-dd format"
+  [date]
+  (let [month (first (clojure.string/split date #"/"))
+        day (second (clojure.string/split date #"/"))
+        year (last (clojure.string/split date #"/"))]
+    (clojure.string/join "-" [year month day])))
                       
 ;; Tests
 
@@ -194,7 +202,7 @@
       
       (fn [packages version-type &[value1 value2]]
         (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (ui/create-all (list cv cv-filter))
           (views/add-package-rule cv-filter {:packages (list packages)
                                              :version-type version-type
@@ -290,20 +298,27 @@
           (views/remove-rule erratums2)
           (doall (for [rule [{:from-date "07/02/2013", :to-date "07/03/2013", :errata-type "Enhancement"}
                              { }]]
-                   (views/filter-errata-by-date-type cv-filter rule))) 
-          (if (:exclude? cv-filter)
-            (do
-              (assert/is (browser isTextPresent "Exclude Errata: No details specified"))
-              (assert/is (browser isTextPresent "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"))
-              (assert/is (browser isTextPresent "Exclude Errata: RHBA, RHSA")))
-            (do
-              (assert/is (browser isTextPresent "Include Errata: No details specified"))
-              (assert/is (browser isTextPresent "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"))
-              (assert/is (browser isTextPresent "Exclude Errata: RHBA, RHSA"))))
-          (views/add-repo-from-filters (list (kt/repository repo)))))
+                   (views/filter-errata-by-date-type cv-filter rule)))
+          (let [exclude-msg "Exclude Errata: %s"
+                include-msg "Include Errata: %s"
+                new-erratum (apply str (interpose ", " erratums))
+                mymap {:new-from-date (re-order-date (apply str (map rule [:from-date]))) 
+                       :new-to-date (re-order-date (apply str (map rule [:to-date])))} 
+                new-date-type (apply str (concat (map rule [:errata-type]) ": " 
+                                                 (apply str (interpose  " - " (map mymap [:new-from-date :new-to-date])))))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format exclude-msg new-erratum) "Exclude Errata: RHBA, RHSA"))
+                (assert/is (= (format exclude-msg new-date-type) "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"))
+                (assert/is (browser isTextPresent "Exclude Errata: No details specified")))
+              (do
+                (assert/is (= (format include-msg new-erratum) "Include Errata: RHBA, RHSA"))
+                (assert/is (= (format include-msg new-date-type) "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"))
+                (assert/is (browser isTextPresent "Include Errata: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
       
-      [[true]
-       [false]])
+        [[true]
+         [false]])
     
     
     (deftest "Create filter by errata-type"
