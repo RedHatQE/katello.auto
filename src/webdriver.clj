@@ -1,6 +1,6 @@
 (ns webdriver
   (:use [clj-webdriver.element :only [element-like?]]
-   :require [clj-webdriver.taxi :as taxi]))
+   :require [clj-webdriver.taxi :as browser]))
 
 (declare my-driver)
 
@@ -21,12 +21,16 @@ keywords."
       arg)))
 
 (defn locator-finder-fn 
-  ([q] (locator-finder-fn taxi/*driver* q))
+  ([q] (locator-finder-fn browser/*driver* q))
   ([driver q]
      (println (str "Q: " q))
-     (if (keyword? q)
-                (taxi/xpath-finder (first (locator-args q)))
-                (taxi/xpath-finder q))))
+     (let [loc (if (keyword? q)
+                 (first (locator-args q))
+                 q)]
+       (cond  (map? loc) (browser/find-elements driver loc)
+              (= "//" (subs loc 0 2)) (browser/xpath-finder loc)
+              (re-matches #"xpath.*" loc) (browser/xpath-finder loc)
+              :else (browser/find-elements driver {:id loc})))))
 
 (def ^{:doc "A function to format locators out of a template. Example:
               ((template \"//div[.='%s']\") \"foo\") =>
@@ -47,11 +51,11 @@ keywords."
   "returns a local selenium webdriver instance.
 Default browser-spec: firefox"
   ([] (new-local-driver {:browser :firefox}))
-  ([browser-spec] (taxi/new-driver browser-spec)))
+  ([browser-spec] (browser/new-driver browser-spec)))
 
 (defn connect "Create a new selenium instance." [driver url]
   ([url] (connect (new-local-driver) url))
   ([driver url] )
   (def ^:dynamic my-driver driver)
-  (taxi/set-driver! my-driver)
-  (taxi/set-finder! locator-finder-fn))
+  (browser/set-driver! my-driver)
+  (browser/set-finder! locator-finder-fn))

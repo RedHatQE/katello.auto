@@ -2,6 +2,8 @@
   (:require (katello [conf :as conf]
                      [ui :as ui])
             [ui.navigate :as nav]
+            [clj-webdriver.taxi :as taxi]
+            [webdriver :as wd]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
 (defn environment-breadcrumb
@@ -129,7 +131,7 @@
 (defn current-org
   "Return the currently active org (a string) shown in the org switcher."
   []
-  (let [org-text ((->> ::ui/active-org (browser getAttributes) (into {})) "title")]
+  (let [org-text (taxi/attribute ::ui/active-org :title)]
     (if (empty? org-text) nil org-text)))
 
 (defn switch-org

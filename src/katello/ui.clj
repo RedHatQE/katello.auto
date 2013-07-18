@@ -1,7 +1,8 @@
 (ns katello.ui
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [katello.rest :as rest]
-            [webdriver :as wd])
+            [webdriver :as wd]
+            [clj-webdriver.taxi :as browser])
   (:refer-clojure :exclude [read]))
 
 ;; Protocols

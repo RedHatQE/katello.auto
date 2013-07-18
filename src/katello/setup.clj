@@ -13,7 +13,8 @@
                      [tasks :refer :all] 
                      [users :as user])
             [fn.trace :as trace]
-            [clj-webdriver.taxi :as taxi]
+            [clj-webdriver.taxi :as browser]
+            [clj-webdriver.firefox :as ff]
             [webdriver :as wd]
             [com.redhat.qe.auto.selenium.selenium :refer :all])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
@@ -26,7 +27,9 @@
         sel-fn (if single-thread connect new-sel)] 
     (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
 
-(def empty-browser-config {:browser :firefox})
+(def empty-browser-config {:browser :firefox
+                           :profile (doto (ff/new-profile)
+                                      (ff/enable-native-events true))})
 
 (defn config-with-profile
   ([locale]
@@ -42,12 +45,12 @@
     == 0")
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (taxi/set-driver! (or browser-config-opts empty-browser-config))
-  (taxi/set-finder! wd/locator-finder-fn)
-  (taxi/implicit-wait 1000)
-  (taxi/to (@config :server-url))
+  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-finder! wd/locator-finder-fn)
+  (browser/implicit-wait 1000)
+  (browser/to (@config :server-url))
   ;;TODO: re-enable login function.
-  #_(login))
+  (login))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
@@ -61,7 +64,7 @@
                :org *session-org*}))
 
 (defn stop-selenium []
-   (taxi/quit))
+   (browser/quit))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for

@@ -1,6 +1,8 @@
 (ns katello.organizations
   (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
             [ui.navigate :as navlib :refer [nav-tree]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [slingshot.slingshot :refer [try+ throw+]]
             katello
             (katello [navigation :as nav]
@@ -11,7 +13,7 @@
                      [notifications :as notification]
                      [conf :refer [*session-org*]])
             [test.assert :as assert])
-  (:import [com.thoughtworks.selenium SeleniumException]))
+  (:import [org.openqa.selenium NoSuchElementException]))
 
 ;; Locators
 
@@ -175,29 +177,29 @@
      (when (or force? 
                default-org
                (not= (nav/current-org) name)) 
-       (browser fireEvent ::ui/switcher "click")
-       (browser ajaxWait)
+       (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       #_(browser ajaxWait)
        (when default-org
          (let [default-org-name (when (not= default-org :none)
                                   (or (:name default-org)
                                       (throw+ {:type ::nil-org-name
                                                :msg "Can't set default org to an org with :name=nil"
                                                :org default-org})))
-               current-default (try (browser getText ::default)
+               current-default (try (browser/text ::default)
                                     (catch SeleniumException _ nil))]
            (when (not= current-default default-org-name)
-             (browser click (ui/default-star (or default-org-name
+             (browser/click (ui/default-star (or default-org-name
                                                  current-default)))
              (notification/check-for-success))))
        (when name
-         (browser clickAndWait (ui/switcher-link name))))))
+         (browser/click (ui/switcher-link name))))))
 
 (defn switcher-available-orgs
   "List of names of orgs currently selectable in the org dropdown."
   []
-  (browser fireEvent ::ui/switcher "click")
+  (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
   (browser sleep 1000)
   (doall (take-while identity
                      (for [i (iterate inc 1)]
-                       (try (browser getText (org-switcher-row i))
-                            (catch SeleniumException _ nil))))))
+                       (try (browser/text (org-switcher-row i))
+                            (catch NoSuchElementException _ nil))))))

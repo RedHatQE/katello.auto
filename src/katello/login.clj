@@ -1,6 +1,5 @@
 (ns katello.login
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [clj-webdriver.taxi :as taxi]
+  (:require [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-org*]]
@@ -25,31 +24,31 @@
   "Returns true if the browser is currently showing a page where a
   user is logged in."
   []
-  (taxi/exists? ::ui/log-out))
+  (browser/exists? ::ui/log-out))
 
 (defn wait-for-login
   "Waits until logout is present."
   []
-  (taxi/wait-until (taxi/exists? ::ui/log-out) 60000))
+  (browser/wait-until (browser/exists? ::ui/log-out) 60000))
 
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
-  (or (taxi/exists? ::re-log-in-link)
-      (taxi/exists? ::log-in)))
+  (or (browser/exists? ::re-log-in-link)
+      (browser/exists? ::log-in)))
 
 (defn logout
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (taxi/click ::ui/log-out)))
+    (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
-  (and (taxi/exists? ::error-message)
-       (taxi/visible? ::error-message)))
+  (and (browser/exists? ::error-message)
+       (browser/visible? ::error-message)))
 
 (defn- clear-signo-errors []
-  (taxi/click ::close-error))
+  (browser/click ::close-error))
 
 (defn login
   "Logs in a user to the UI with the given user and password. If none
@@ -64,26 +63,26 @@
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
-     (when (taxi/exists? ::re-log-in-link)
-       (taxi/click ::re-log-in-link))
+     (when (browser/exists? ::re-log-in-link)
+       (browser/click ::re-log-in-link))
 
      (when (signo-error?)
        (clear-signo-errors))
      
-     (taxi/quick-fill-submit {::username-text name}
+     (browser/quick-fill-submit {::username-text name}
                              {::password-text password}
-                             {::log-in taxi/click})
+                             {::log-in browser/click})
      ;; throw errors
      ;;(notification/verify-no-error)     ; katello notifs
      ;;(notification/flush)
      
      (if (signo-error?)                 ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
-                                            :notices (list (taxi/text ::error-message))}))))
+                                            :notices (list (browser/text ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      #_(browser ajaxWait)
-     #_(when org
+     (when org
        (organization/switch org {:default-org default-org}))))
 
 (defmacro with-user-temporarily
