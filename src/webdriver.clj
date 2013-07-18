@@ -1,6 +1,6 @@
 (ns webdriver
-  (:use [clj-webdriver.element :only [element-like?]]
-   :require [clj-webdriver.taxi :as browser]))
+  (:use [clj-webdriver.element :only [element-like?]])
+  (:require [clj-webdriver.taxi :as browser]))
 
 (declare my-driver)
 
@@ -59,3 +59,11 @@ Default browser-spec: firefox"
   (def ^:dynamic my-driver driver)
   (browser/set-driver! my-driver)
   (browser/set-finder! locator-finder-fn))
+
+(defmacro brow
+  [action & args]
+  `(~(symbol (str "browser/" action)) ~@args))
+
+(defmacro ->browser
+  [ & forms]
+  `(do ~@(for [form forms] `(brow ~@form))))

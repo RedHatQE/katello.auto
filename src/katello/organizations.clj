@@ -186,7 +186,7 @@
                                                :msg "Can't set default org to an org with :name=nil"
                                                :org default-org})))
                current-default (try (browser/text ::default)
-                                    (catch SeleniumException _ nil))]
+                                    (catch NoSuchElementException _ nil))]
            (when (not= current-default default-org-name)
              (browser/click (ui/default-star (or default-org-name
                                                  current-default)))
@@ -198,8 +198,6 @@
   "List of names of orgs currently selectable in the org dropdown."
   []
   (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
-  (browser sleep 1000)
-  (doall (take-while identity
-                     (for [i (iterate inc 1)]
-                       (try (browser/text (org-switcher-row i))
-                            (catch NoSuchElementException _ nil))))))
+  (Thread/sleep 1000)
+  (->> (browser/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
+       (map browser/text)))
