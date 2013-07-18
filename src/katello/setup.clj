@@ -13,6 +13,9 @@
                      [tasks :refer :all] 
                      [users :as user])
             [fn.trace :as trace]
+            [clj-webdriver.taxi :as browser]
+            [clj-webdriver.firefox :as ff]
+            [webdriver :as wd]
             [com.redhat.qe.auto.selenium.selenium :refer :all])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
 
@@ -24,7 +27,9 @@
         sel-fn (if single-thread connect new-sel)] 
     (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
 
-(def empty-browser-config (BrowserConfigurationOptions.))
+(def empty-browser-config {:browser :firefox
+                           :profile (doto (ff/new-profile)
+                                      (ff/enable-native-events true))})
 
 (defn config-with-profile
   ([locale]
@@ -40,13 +45,11 @@
     == 0")
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (->browser
-   (start (or browser-config-opts empty-browser-config))
-   ;;workaround for http://code.google.com/p/selenium/issues/detail?id=3498
-   (setTimeout "180000")
-   (setAjaxFinishedCondition jquery+angular-ajax-finished) 
-   (open (@config :server-url) false)
-   (setTimeout "60000"))
+  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-finder! wd/locator-finder-fn)
+  (browser/implicit-wait 1000)
+  (browser/to (@config :server-url))
+  ;;TODO: re-enable login function.
   (login))
 
 (defn switch-new-admin-user
@@ -61,7 +64,7 @@
                :org *session-org*}))
 
 (defn stop-selenium []
-   (browser stop))
+   (browser/quit))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for

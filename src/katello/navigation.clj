@@ -2,7 +2,10 @@
   (:require (katello [conf :as conf]
                      [ui :as ui])
             [ui.navigate :as nav]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
+  (:import [org.openqa.selenium NoSuchElementException]))
 
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
@@ -54,17 +57,17 @@
      (choose-left-pane left-pane-item entity))
   ([templ entity]
      (let [loc (templ (:name entity))]
-       (try (browser click loc)
-            (catch com.thoughtworks.selenium.SeleniumException se
+       (try (browser/click loc)
+            (catch NoSuchElementException se
               (do (search-here (format "\"%s\"" (:name entity)))
-                  (browser click loc)))))))
+                  (browser/click loc)))))))
 
 (defmacro browser-fn
   "produces a function that ignores context args and passes body to
   ->browser.  To be used in navigation tree as a shortcut to produce
   functions that don't need arguments and only use the browser."
   [& body]
-  `(fn [& _#] (->browser ~@body)))
+  `(fn [& _#] (wd/->browser ~@body)))
 
 ;; Define navigation pages
 ;; Note, it's designed this way, rather than one big tree, so that
@@ -81,9 +84,9 @@
 
 (defmethod pages [(-> *ns* .getName symbol) :katello.deployment/any] [& _]
   (nav/nav-tree
-   [::top-level (fn [& _] (when (or (not (browser isElementPresent ::ui/log-out))
-                                    (browser isElementPresent ::ui/confirmation-dialog))
-                            (browser open (@conf/config :server-url))))]))
+   [::top-level (fn [& _] (when (or (not (browser/exists? ::ui/log-out))
+                                    (browser/exists? ::ui/confirmation-dialog))
+                            (browser/to (@conf/config :server-url))))]))
 
 (defmacro defpages
   "Define the pages needed to navigate to in this namespace, and
@@ -123,13 +126,13 @@
                           ["403 - Permission denied You are not authorised to perform this action."
                            "Please request the required privileges from an administrator."
                            "Back"])
-     (->browser (open url)
-                (getText "//article[@id='maincontent']"))))
+     ((browser/to url)
+      (browser/text "//article[@id='maincontent']"))))
 
 (defn current-org
   "Return the currently active org (a string) shown in the org switcher."
   []
-  (let [org-text ((->> ::ui/active-org (browser getAttributes) (into {})) "title")]
+  (let [org-text (browser/attribute ::ui/active-org :title)]
     (if (empty? org-text) nil org-text)))
 
 (defn switch-org
@@ -139,6 +142,5 @@
      {:pre [name]}
      (go-to ::top-level)
      (when-not (= name (current-org))
-       (browser fireEvent ::ui/switcher "click")
-       (browser ajaxWait)
-       (browser clickAndWait (ui/switcher-link name)))))
+       (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       (browser/click (ui/switcher-link name)))))

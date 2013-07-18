@@ -1,7 +1,9 @@
 (ns katello.users
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
             [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello :as kt]
             (katello [navigation :as nav]
                      [tasks :as tasks]
@@ -113,7 +115,7 @@
   "Returns the name of the currently logged in user, or nil if logged out."
   []
   (when (logged-in?)
-    (katello/newUser {:name (browser getText ::user-account-dropdown)})))
+    (katello/newUser {:name (browser/text ::user-account-dropdown)})))
 
 (defn- edit
   "Edits the given user, changing any of the given properties (can

@@ -1,6 +1,8 @@
 (ns katello.ui
   (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [katello.rest :as rest])
+            [katello.rest :as rest]
+            [webdriver :as wd]
+            [clj-webdriver.taxi :as browser])
   (:refer-clojure :exclude [read]))
 
 ;; Protocols
@@ -129,11 +131,11 @@
    ::current-items-count     "current_items_count"
    ::log-out                 "//div[@ng-controller='MenuController']//a[contains(@href,'logout')]"})
 
-(extend-protocol sel/SeleniumLocatable
+(extend-protocol wd/SeleniumLocatable
   clojure.lang.Keyword
-  (sel/sel-locator [k] (get (elements (-> k namespace symbol) (current-session-deployment)) k))
+  (wd/sel-locator [k] (get (elements (-> k namespace symbol) (current-session-deployment)) k))
   String
-  (sel/sel-locator [x] x))
+  (wd/sel-locator [x] x))
 
 (defn toggler
   "Returns a function that returns a locator for the given on/off text
