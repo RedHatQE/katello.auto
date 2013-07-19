@@ -3,10 +3,11 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [clojure.data.zip.xml :as zfx]
             [clojure.string :refer [split trim]]
             [clojure.walk :refer [postwalk] ]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
                      [tasks         :refer :all]
                      [ui            :as ui]
@@ -49,7 +50,7 @@
    ::switcher-button           "//a[@id='switcherButton']"
    })
 
-(sel/template-fns
+(wd/template-fns
  {auto-complete-item      "//ul[@role='listbox']//a[contains(.,'%s')]"
   result-item-n           "//ul[@id='grid_row_headers']/li[%s]"
   package-name            "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"

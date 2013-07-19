@@ -1,5 +1,6 @@
 (ns katello.sync-management
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [clojure.data :as data]
             [katello :as kt]
             (katello [navigation :as nav] 
@@ -23,7 +24,7 @@
    ::save-plan             "plan_save"
    ::synchronize-now       "sync_button"})
 
-(sel/template-fns
+(wd/template-fns
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
@@ -58,12 +59,11 @@
            start-date-literal start-time-literal org] :as plan}]
   (nav/go-to ::new-plan-page org)
   (let [[date time] (split-date plan)]
-    (sel/fill-ajax-form {::plan-name-text name
-                         ::plan-description-text description
-                         ::plan-interval-select interval
-                         ::plan-time-text time
-                         ::plan-date-text date}
-                        ::save-plan)
+    (browser/quick-fill-submit {::plan-name-text name}
+                               {::plan-description-text description}
+                               {::plan-interval-select interval}
+                               {::plan-time-text time}
+                               {::plan-date-text date})
     (notification/success-type :sync-create)))
 
 (defn- edit-plan
@@ -97,9 +97,9 @@
   [{:keys [products plan]}]
   (nav/go-to ::schedule-page plan)
   (doseq [product products]
-    (browser click (schedule-item (:name product))))
-  (browser click (plan-link (:name plan)))
-  (browser clickAndWait ::apply-schedule)
+    (browser/click (schedule-item (:name product))))
+  (browser/click (plan-link (:name plan)))
+  (browser/click ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
                                         ;don't match 
 
@@ -109,7 +109,7 @@
   [products]
   (nav/go-to ::schedule-page (first products))
   (->> (for [product products]
-         (browser getText (product-schedule (:name product))))
+         (browser/text (product-schedule (:name product))))
        doall
        (replace {"None" nil})
        (zipmap products)))
@@ -121,23 +121,24 @@
   "Returns final status if complete. If sync is still in progress, not
   synced, or queued, returns nil."
   [product-or-repo]
-  (some #{(browser getText (provider-progress (:name product-or-repo)))}
+  (some #{(browser/text (provider-progress (:name product-or-repo)))}
         (vals messages)))
 
 (defn success? "Returns true if given sync result is a success."
   [res]
   (= res (:ok messages)))
 
-(defn perform-sync
+;; TODO: Figure out what loop-with-timeout is doing and migrate to webdriver
+#_(defn perform-sync
   "Syncs the given list of repositories. Also takes an optional
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
   (nav/go-to ::status-page (first repos))
   (doseq [repo repos]
-    (browser check (provider-checkbox (:name repo))))
-  (browser click ::synchronize-now)
-  (browser sleep 10000)
+    (browser/click (provider-checkbox (:name repo))))
+  (browser/click ::synchronize-now)
+  (Thread/sleep 10000)
   (zipmap repos (for [repo repos]
                   (sel/loop-with-timeout (or timeout 120000) []
                     (or (complete-status repo)

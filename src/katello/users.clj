@@ -74,7 +74,7 @@
   "Creates a user with the given name and properties."
   [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
-  (browser click ::new)
+  (browser/click ::new)
   (let [env-chooser (fn [env] (when env
                                (nav/select-environment-widget env)))]
     (sel/fill-ajax-form [::username-text name
@@ -89,26 +89,26 @@
 (defn- delete "Deletes the given user."
   [user]
   (nav/go-to user)
-  (browser click ::remove)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :users-destroy))
 
 (defn- modify-roles [to-add to-remove]
   (doseq [role to-add]
-    (browser click (plus-icon (:name role))))
+    (browser/click (plus-icon (:name role))))
   (doseq [role to-remove]
-    (browser click (minus-icon (:name role))))
-  (browser click ::save-roles)
+    (browser/click (minus-icon (:name role))))
+  (browser/click ::save-roles)
   (notification/success-type :users-update-roles))
 
 (defn- assign-default-org-and-env 
   "Assigns a default organization and environment to a user"
   [org env]
   (when org
-    (browser select ::default-org-select (:name org)))
+    (browser/select ::default-org-select (:name org)))
   (when env
-    (browser click (ui/environment-link (:name env))))
-  (browser click ::save-environment)
+    (browser/click (ui/environment-link (:name env))))
+  (browser/click ::save-environment)
   (notification/success-type :users-update-env))
 
 (defn current
@@ -128,33 +128,33 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (browser mouseOver ::user-account-dropdown)
-          (browser click ::account)
-          (browser waitForElement ::password-text "60000")) ; normal ajax wait doesn't work here
+      (do #_(browser mouseOver ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
+          (browser/click ::account)
+          (browser/wait-until (browser/exists? ::password-text) 60000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
     
     (when-not (nil? inline-help)
-      (browser checkUncheck ::enable-inline-help-checkbox inline-help))
+      (browser/select ::enable-inline-help-checkbox))
     (when password
-      (browser setText ::password-text password)
-      (browser setText ::confirm-text (or password-confirm password))
+      (browser/input-text ::password-text password)
+      (browser/input-text ::confirm-text (or password-confirm password))
 
       ;;hack alert - force the page to check the passwords (selenium
       ;;doesn't fire the event by itself
-      (browser getEval "window.KT.user_page.verifyPassword();")
+      (browser/execute-script "window.KT.user_page.verifyPassword();")
 
-      (when (browser isElementPresent ::password-conflict)
+      (when (browser/exists? ::password-conflict)
         (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
-      (browser click ::save-edit) 
+      (browser/click ::save-edit) 
       (notification/success-type :users-update))
     (when email
       (common/in-place-edit {::email-text email}))
     (let [role-changes (map :roles (list to-add to-remove))]
       (when (some seq role-changes)
-        (browser click ::roles-link)
+        (browser/click ::roles-link)
         (apply modify-roles role-changes)))
     (when (or default-org default-env)
-      (browser click ::environments-link)
+      (browser/click ::environments-link)
       (assign-default-org-and-env default-org default-env))))
 
 (extend katello.User
@@ -194,19 +194,19 @@
   the cancel button will be clicked and no notifications should be
   deleted."
   [confirm?]
-  (browser clickAndWait ::user-notifications)
-  (let [num-count (browser getText ::user-notifications)]
-    (browser click ::delete-link)
+  (browser/click  ::user-notifications)
+  (let [num-count (browser/text ::user-notifications)]
+    (browser/click ::delete-link)
     (if confirm?
       (do
-        (browser click ::ui/confirmation-yes)
-        (browser clickAndWait ::user-notifications)
-        (when (not= "0" (browser getText ::user-notifications))
+        (browser/click ::ui/confirmation-yes)
+        (browser/click  ::user-notifications)
+        (when (not= "0" (browser/text  ::user-notifications))
           (throw+ {:type ::not-all-notifications-deleted
                    :msg "Still some notifications remained after trying to delete all"})))
       (do
-        (browser click ::confirmation-no)
-        (when (not= num-count (browser getText ::user-notifications))
+        (browser/click ::confirmation-no)
+        (when (not= num-count (browser/text ::user-notifications))
           (throw+ {:type ::notifications-deleted-anyway
                    :msg "Notifications were deleted even after clicking 'no' on confirm."}))))))
 

@@ -1,6 +1,5 @@
 (ns katello.organizations
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
-            [ui.navigate :as navlib :refer [nav-tree]]
+  (:require [ui.navigate :as navlib :refer [nav-tree]]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [slingshot.slingshot :refer [try+ throw+]]
@@ -20,9 +19,9 @@
 (ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
    ::create                 "commit"
-   ::name-text              "organization[name]"
-   ::label-text             "organization[label]"
-   ::description-text       "organization[description]"
+   ::name-text              "organization_name"
+   ::label-text             "organization_label"
+   ::description-text       "organization_description"
    ::environments           (ui/link "Environments")
    ::edit                   (ui/link "Edit")
    ::remove                 (ui/link "Remove Organization")
@@ -40,7 +39,7 @@
    ::apply-default-info       "apply_default_info_button"
    ::disabled-apply-btn       "//input[@class='btn fullwidth']"})
 
-(sel/template-fns
+(wd/template-fns
  {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
@@ -54,15 +53,16 @@
 
 ;; Tasks
 
-(defn label-filler
+;; TODO: figure out how label-filling works with webdriver
+#_(defn label-filler
   "Fills in the label field which has special js sauce that prevents
    it from being writable unless the name field has been blurred."
   [name-loc label-loc label-text]
   (when label-text
-    (->browser (fireEvent name-loc "blur")
-               (ajaxWait)
-               (setText label-loc "")
-               (setText label-loc label-text))))
+    (wd/->browser (fireEvent name-loc "blur")
+                  (ajaxWait)
+                  (setText label-loc "")
+                  (setText label-loc label-text))))
 
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
@@ -75,46 +75,47 @@
   [org section keyname & [{:keys [apply-default]}]]
   (nav/go-to section org)
   ;; Make sure the 'Add' button is disabled
-  (assert (= (get (browser getAttributes ::create-keyname) "disabled") ""))
-  (->browser (setText ::keyname-text keyname)
-             (keyUp ::keyname-text "w")
-             (click ::create-keyname))
+  (assert (= (browser/attribute ::create-keyname "disabled") ""))
+  (wd/->browser (input-text ::keyname-text keyname)
+                #_(keyUp ::keyname-text "w") ;;TODO : fix this, find equivalent in webdriver
+                (click ::create-keyname))
   (if apply-default
     (do
-      (browser click ::apply-default-info)
-      (browser click ::ui/confirmation-yes)
-      (browser waitForElement ::disabled-apply-btn "120000")))
+      (wd/->browser
+       (click ::apply-default-info)
+       (click ::ui/confirmation-yes)
+       (wait-until (browser/exists? ::disabled-apply-btn) "120000"))))
   (notification/check-for-success))
 
 (defn remove-custom-keyname
   "Removes custom keyname field from an organization"
   [org section keyname]
   (nav/go-to section org)
-  (browser click (remove-keyname-btn keyname))
+  (browser/click (remove-keyname-btn keyname))
   (notification/check-for-success))
 
 (defn- create
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (browser setText ::name-text name)
-  (browser sleep 1000)
-  (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
-                       ::description-text description
-                       ::initial-env-name-text (:name initial-env)
-                       label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
-                       ::initial-env-desc-text (:description initial-env)]
-                      ::create)
+  (browser/input-text ::name-text name)
+  (Thread/sleep 1000)
+  ;; TODO: figure out form-filling with label-filler. taxi/quick-fill-submit may work
+  (browser/quick-fill-submit {::label-text label}
+                             {::description-text description}
+                             {::initial-env-name-text (:name initial-env)}
+                             {::initial-env-label-text (:label initial-env)}
+                             {::initial-env-desc-text (:description initial-env)})
   (notification/success-type :org-create))
 
 (defn- delete
   "Deletes an organization."
   [org]
   (nav/go-to org)
-  (browser click ::remove)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :org-destroy) ;queueing success
-  (browser refresh)
+  (browser/refresh)
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-delete)})) ;for actual delete
 
 (defn- update

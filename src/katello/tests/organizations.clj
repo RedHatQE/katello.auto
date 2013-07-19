@@ -18,8 +18,7 @@
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
-            [clojure.string :refer [capitalize upper-case lower-case]]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
+            [clojure.string :refer [capitalize upper-case lower-case]]))
 
 ;; Functions
 

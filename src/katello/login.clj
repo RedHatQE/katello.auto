@@ -41,6 +41,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
+    (browser/click ::ui/user-menu)
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
@@ -68,7 +69,9 @@
 
      (when (signo-error?)
        (clear-signo-errors))
-     
+
+     (wd/->browser (clear ::username-text)
+                   (clear ::password-text))
      (browser/quick-fill-submit {::username-text name}
                              {::password-text password}
                              {::log-in browser/click})

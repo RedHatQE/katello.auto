@@ -1,7 +1,7 @@
 (ns katello.providers
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            katello
-            [katello :as kt]
+  (:require [katello :as kt]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             (katello [navigation :as nav]
                      [notifications :as notification] 
                      [ui :as ui]
@@ -45,7 +45,7 @@
         ::remove-product           (ui/remove-link "products")}
        )
 
-(sel/template-fns
+(wd/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
   new-product-radio-btn   "//input[@name='new_product' and @value='%s']"
   existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"}) 
@@ -57,8 +57,8 @@
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (kt/provider ent)))
     [::products-page (nav/browser-fn (click ::products-and-repositories)
-                                     (sleep 2000))
-     [::named-product-page (fn [ent] (->> ent kt/product :name ui/editable (browser click)))]]
+                                     #_(sleep 2000))
+     [::named-product-page (fn [ent] (->> ent kt/product :name ui/editable (browser/click)))]]
     [::details-page (nav/browser-fn (click ::details-link))]
     [::repo-discovery-page (nav/browser-fn (click ::repository-discovery))]]]) 
 
@@ -69,7 +69,8 @@
   [{:keys [name description org]}]
   {:pre [(instance? katello.Organization org)]} 
   (nav/go-to ::new-page org)
-  (sel/fill-ajax-form {::name-text name
+  ;;TODO: fix fill form
+  #_(sel/fill-ajax-form {::name-text name
                        ::provider-description-text description}
                       ::create-save)
   (notification/success-type :prov-create))
@@ -80,9 +81,10 @@
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::products-page provider)
-  (browser click ::add-product)
-  (when gpg-key (browser select ::prd-gpg-select gpg-key))
-  (sel/fill-ajax-form {::product-name-text name
+  (browser/click ::add-product)
+  (when gpg-key (browser/select ::prd-gpg-select gpg-key))
+  ;;TODO: fix fill form
+  #_(sel/fill-ajax-form {::product-name-text name
                        ::product-description-text description}
                       ::create-product)
   (notification/success-type :prod-create))
@@ -93,7 +95,7 @@
   [product {:keys [gpg-key]}]
   (when (not= (:gpg-key product) gpg-key) 
     (nav/go-to product)
-    (sel/->browser (click  ::update-prd-gpg-keys)
+    (wd/->browser (click  ::update-prd-gpg-keys)
                    (select ::prd-gpg-select gpg-key)
                    (click  ::save-updated-gpg-key)
                    (click  ::confirm-gpg-update))
@@ -105,8 +107,8 @@
    {:pre [(not-empty provider)
           (instance? katello.Product product)]}
   (nav/go-to product)
-  (browser click ::remove-product)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove-product)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :prod-destroy))
 
 (defn- delete
@@ -114,8 +116,8 @@
   [provider]
   {:pre [(instance? katello.Provider provider)]}
   (nav/go-to provider)
-  (browser click ::remove-provider-link)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove-provider-link)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :prov-destroy))
 
 (defn- edit
@@ -135,23 +137,25 @@
   new-prod - creates a new product instead of adding repos to an existing one"
   [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
   (nav/go-to ::repo-discovery-page product)
-  (sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
+  ;; TODO: fix fill form
+  #_(sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
   (if cancel
     (do
       (Thread/sleep 3000)
-      (browser click ::cancel-discovery))
+      (browser/click ::cancel-discovery))
     (do
-      (browser waitForInvisible ::discover-spinner "120000")
-      (doseq [url enabled-urls] (browser click (repo-create-checkbox url)))
-      (browser click ::create-within-product)
+      (browser/wait-until  (not (browser/visible? ::discover-spinner)) 120000)
+      (doseq [url enabled-urls] (browser/click (repo-create-checkbox url)))
+      (browser/click ::create-within-product)
       (if new-prod
         (do
-          (browser click (new-product-radio-btn "true"))
-          (browser setText ::new-product-name-text (:name product)))
+          (browser/click (new-product-radio-btn "true"))
+          (browser/input-text ::new-product-name-text (:name product)))
         (do
-          (browser getEval ::existing-product-dropdown)
-          (browser mouseUp (existing-product-select (:name product)))))
-      (browser click ::create-repositories)
+          (browser/execute-script ::existing-product-dropdown)
+          ;; TODO: fix mouseUp event
+          #_(browser mouseUp (existing-product-select (:name product)))))
+      (browser/click ::create-repositories)
       (notification/success-type :repo-create)))) 
 
 (extend katello.Provider

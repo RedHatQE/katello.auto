@@ -3,8 +3,7 @@
                      [ui :as ui])
             [ui.navigate :as nav]
             [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
+            [webdriver :as wd])
   (:import [org.openqa.selenium NoSuchElementException]))
 
 (defn environment-breadcrumb
@@ -18,25 +17,25 @@
      name next)))
 
 (defn select-environment-widget [env & [{:keys [next-env wait]}]]
-  (do (when (browser isElementPresent ::ui/expand-path)
-        (browser click ::ui/expand-path))
-      (browser click (environment-breadcrumb (:name env) (:name next-env)))
-      (when wait (browser waitForPageToLoad))))
+  (do (when (browser/exists? ::ui/expand-path)
+        (browser/click ::ui/expand-path))
+      (browser/click (environment-breadcrumb (:name env) (:name next-env)))
+      #_(when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]
-  (sel/fill-form {::ui/search-bar search-term}
-                 ::ui/search-submit (constantly nil)))
+  (browser/quick-fill {::ui/search-bar search-term}
+                      {::ui/search-submit (constantly nil)}))
 
 (def ^{:doc "Returns a selenium locator for an item in a left pane
              list (by the name of the item) - truncate to 32 chars to
              match ellipsis behavior."}
   left-pane-item
-  (sel/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
+  (wd/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
 (defn scroll-left-pane-more
   "Loads another group of 25 items in the left pane, by scrolling down" []
-  (->browser (getEval (str "window.scrollTo(0,1000000);"))
-             (ajaxWait)))
+  (wd/->browser (execute-script (str "window.scrollTo(0,1000000);"))
+                #_(ajaxWait)))
 
 (defn scroll-left-pane-until
   "Scroll the left pane down until (side-effecty) no-arg function f
@@ -48,7 +47,7 @@
     (scroll-left-pane-more)))
 
 (defn scroll-to-left-pane-item [ent]
-  (scroll-left-pane-until #(browser isElementPresent (left-pane-item (:name ent)))))
+  (scroll-left-pane-until #(browser/exists? (left-pane-item (:name ent)))))
 
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a

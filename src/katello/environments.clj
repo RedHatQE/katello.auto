@@ -1,6 +1,6 @@
 (ns katello.environments
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+  (:require [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [slingshot.slingshot :refer [throw+ try+]]
             [katello :as kt]
             (katello [navigation :as nav]
@@ -28,7 +28,7 @@
 (nav/defpages :katello.deployment/any katello.organizations
   [:katello.organizations/named-page
    [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [env] (browser click (ui/environment-link (:name env))))]])
+   [::named-page (fn [env] (browser/click (ui/environment-link (:name env))))]])
 
 ;; Tasks
 
@@ -38,7 +38,8 @@
    environment, and an optional description."
   [{:keys [name label org description prior]}]
   (nav/go-to ::new-page org)
-  (sel/fill-ajax-form {::name-text name
+  ;; TODO: fix form here after figuring out label-filler
+  #_(sel/fill-ajax-form {::name-text name
                        (fn [label] (when label
                                      (browser fireEvent ::name-text "blur")
                                      (browser ajaxWait)
@@ -52,10 +53,10 @@
   "Deletes an environment from the given organization."
   [env]
   (nav/go-to env)
-  (if (browser isElementPresent ::remove-link)
-    (browser click ::remove-link)
+  (if (browser/exists? ::remove-link)
+    (browser/click ::remove-link)
     (throw+ {:type ::cant-be-deleted :env env}))
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :env-destroy))
 
 (defn- edit

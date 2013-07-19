@@ -1,6 +1,7 @@
 (ns webdriver
   (:use [clj-webdriver.element :only [element-like?]])
-  (:require [clj-webdriver.taxi :as browser]))
+  (:require [clj-webdriver.taxi :as browser]
+            [clj-webdriver.core :as clj-web]))
 
 (declare my-driver)
 
@@ -67,3 +68,5 @@ Default browser-spec: firefox"
 (defmacro ->browser
   [ & forms]
   `(do ~@(for [form forms] `(brow ~@form))))
+
+

@@ -1,7 +1,8 @@
 (ns katello.subscriptions
   (:require (katello [ui :as ui]                    
                      [navigation :as nav])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]))
 
 ;; Locators
 
@@ -14,7 +15,7 @@
    ::choose-file              "provider_contents"
    ::fetch-history-info       "//td/span/span[contains(@class,'check_icon') or contains(@class, 'shield_icon')]"})
 
-(sel/template-fns
+(wd/template-fns
  {subs-exists "//div[@class='one-line-ellipsis' and contains(.,'%s')]"})
 
 ;; Nav

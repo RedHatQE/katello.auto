@@ -1,5 +1,6 @@
 (ns katello.rh-repositories
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello :as kt]
             (katello [ui :as ui]                   
                      [navigation :as nav]
@@ -8,7 +9,7 @@
 
 ;; Locators
 
-(sel/template-fns
+(wd/template-fns
  {expand-product  "//div[@id='%s']//td[contains(@style,'cursor') and contains(.,'%s')]/span"
   select-repo-set "//div[@id='%s']//span[@class='expander_area' and contains(.,'%s')]/../../td/input[@type='checkbox']"
   expand-repo-set  "//div[@id='%s']//span[@class='expander_area' and contains(.,'%s')]/span"
@@ -75,10 +76,10 @@
     (let [prd      (kt/product repo)
           reposet  (kt/reposet repo)
           checked? (common/disabled? (select-repo-set (:type repo) (:name reposet)))]
-      (browser click (expand-product (:type repo) (:name prd)))
+      (browser/click (expand-product (:type repo) (:name prd)))
       (if-not checked?
-        (browser check (select-repo-set (:type repo)(:name reposet)))
-        (browser click (expand-repo-set (:type repo)(:name reposet))))
+        (browser/click (select-repo-set (:type repo)(:name reposet)))
+        (browser/click (expand-repo-set (:type repo)(:name reposet))))
       (if (repo :deselect?)
-        (browser uncheck (select-repo (:name repo)))
-        (browser check (select-repo (:name repo)))))))  
+        (browser/deselect (select-repo (:name repo)))
+        (browser/click (select-repo (:name repo)))))))  
