@@ -283,42 +283,43 @@
       :uuid "be7b6182-065b-4a4b-8a6b-0642f4283336"
       :data-driven true
       
-      (fn [exclude?]
+      (fn [exclude? msg-format expect-msg-errata expect-msg-date]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
               cv (add-product-to-cv org repo)
-              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})
-              erratums (list "RHBA" "RHSA")
-              erratums2 (list "RHSA")]        
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})]        
           (ui/create cv-filter)
-          (doall (for [rule [erratums
-                             erratums2]]
-                   (views/filter-errata-by-id cv-filter rule)))
-          (views/remove-rule erratums2)
-          (doall (for [rule [{:from-date "07/02/2013", :to-date "07/03/2013", :errata-type "Enhancement"}
-                             { }]]
-                   (views/filter-errata-by-date-type cv-filter rule)))
-          (let [exclude-msg "Exclude Errata: %s"
-                include-msg "Include Errata: %s"
-                new-erratum (apply str (interpose ", " erratums))
-                mymap {:new-from-date (re-order-date (apply str (map rule [:from-date]))) 
-                       :new-to-date (re-order-date (apply str (map rule [:to-date])))} 
-                new-date-type (apply str (concat (map rule [:errata-type]) ": " 
-                                                 (apply str (interpose  " - " (map mymap [:new-from-date :new-to-date])))))]
-            (if (:exclude? cv-filter)
-              (do
-                (assert/is (= (format exclude-msg new-erratum) "Exclude Errata: RHBA, RHSA"))
-                (assert/is (= (format exclude-msg new-date-type) "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"))
-                (assert/is (browser isTextPresent "Exclude Errata: No details specified")))
-              (do
-                (assert/is (= (format include-msg new-erratum) "Include Errata: RHBA, RHSA"))
-                (assert/is (= (format include-msg new-date-type) "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"))
-                (assert/is (browser isTextPresent "Include Errata: No details specified"))))
-            (views/add-repo-from-filters (list (kt/repository repo))))))
-      
-        [[true]
-         [false]])
+          (let [erratums (list "RHBA" "RHSA")
+                erratums2 (list "RHSA")
+                start-date "07/02/2013"
+                end-date "07/03/2013"
+                errata-type "Enhancement"]    
+            (doall (for [rule [erratums
+                               erratums2]]
+                     (views/filter-errata-by-id cv-filter rule)))
+            (views/remove-rule erratums2)
+            (doall (for [rule [{:from-date start-date, :to-date end-date, :errata-type errata-type}
+                               { }]]
+                     (views/filter-errata-by-date-type cv-filter rule)))
+            (let [new-erratum (apply str (interpose ", " erratums))
+                  mymap {:new-from-date (re-order-date start-date) 
+                         :new-to-date (re-order-date end-date)} 
+                  new-date-type (apply str (concat errata-type ": " 
+                                                   (apply str (interpose  " - " (map mymap [:new-from-date :new-to-date])))))]
+              (if (:exclude? cv-filter)
+                (do
+                  (assert/is (= (format msg-format new-erratum) expect-msg-errata))
+                  (assert/is (= (format msg-format new-date-type) expect-msg-date))
+                  (assert/is (browser isTextPresent "Exclude Errata: No details specified")))
+                (do
+                  (assert/is (= (format msg-format new-erratum) expect-msg-errata))
+                  (assert/is (= (format msg-format new-date-type) expect-msg-date))
+                  (assert/is (browser isTextPresent "Include Errata: No details specified"))))
+              (views/add-repo-from-filters (list (kt/repository repo)))))))
+        
+        [[true "Exclude Errata: %s" "Exclude Errata: RHBA, RHSA" "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"]
+         [false "Include Errata: %s"  "Include Errata: RHBA, RHSA" "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"]])
     
     
     (deftest "Create filter by errata-type"

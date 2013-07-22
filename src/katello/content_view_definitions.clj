@@ -172,7 +172,6 @@
   (sel/->browser
     (click ::filter-tab)
     (click (select-filter name))
-    (waitForElement ::remove-button "5000")
     (click ::remove-button))
   (notification/success-type :filters-destroy))
 
@@ -279,6 +278,7 @@
   [rule-names]
   (doseq [rule-name rule-names]
     (browser click (select-rule rule-name))
+    (browser sleep 1000)
     (browser click ::remove-button)
     (notification/success-type :filter-rules-destroy)))
 
