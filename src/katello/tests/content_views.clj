@@ -93,6 +93,7 @@
         year (last (clojure.string/split date #"/"))]
     (clojure.string/join "-" [year month day])))
 
+;; Data (Generated)
 
 (def gen-errata-test-data
   (for [exp-result [[true "Exclude Errata: %s" "Exclude Errata: RHBA, RHSA" "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"] 
@@ -319,12 +320,9 @@
                 (assert/is (= (format msg-format new-date-type) expect-msg-date))
                 (assert/is (browser isTextPresent "Include Errata: No details specified"))))
             (views/add-repo-from-filters (list (kt/repository repo))))))
-    
+      
       gen-errata-test-data)
-        
-   
-    
-    
+           
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
       :data-driven true
