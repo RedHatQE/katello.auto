@@ -85,14 +85,6 @@
       (ui/update cv assoc :products (list (kt/product repo)))
       cv))
 
-(defn re-order-date
-  "Re-order from-date and to-date from MM-dd-yyyy to yyyy-MM-dd format"
-  [date]
-  (let [month (first (clojure.string/split date #"/"))
-        day (second (clojure.string/split date #"/"))
-        year (last (clojure.string/split date #"/"))]
-    (clojure.string/join "-" [year month day])))
-
 ;; Data (Generated)
 
 (def gen-errata-test-data
@@ -306,8 +298,8 @@
                              { }]]
                    (views/filter-errata-by-date-type cv-filter rule)))
           (let [new-erratum (apply str (interpose ", " erratums))
-                mymap {:new-from-date (re-order-date start-date) 
-                       :new-to-date (re-order-date end-date)} 
+                mymap {:new-from-date (views/msg-date start-date) 
+                       :new-to-date (views/msg-date end-date)} 
                 new-date-type (apply str (concat errata-type ": " 
                                                  (apply str (interpose  " - " (map mymap [:new-from-date :new-to-date])))))]
             (if (:exclude? cv-filter)

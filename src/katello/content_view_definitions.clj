@@ -105,8 +105,10 @@
 
 ;; Tasks
 
-(def dateformat (java.text.SimpleDateFormat. "MM/dd/yyyy"))
-(defn- date [d] (.format dateformat (.parse dateformat d)))
+(def inputformat (java.text.SimpleDateFormat. "MM/dd/yyyy"))
+(def outputformat (java.text.SimpleDateFormat. "yyyy-MM-dd"))
+(defn- date [d] (.format inputformat (.parse inputformat d)))
+(defn msg-date [d] (.format outputformat (.parse inputformat d)))
 
 (defn- create
   "Creates a new Content View Definition."
