@@ -1,6 +1,5 @@
 (ns katello.users
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [slingshot.slingshot :refer [throw+]]
+  (:require [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
@@ -46,7 +45,7 @@
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"})
 
-(sel/template-fns
+(wd/template-fns
  {user-list-item "//div[@id='list']//div[contains(@class,'column_1') and normalize-space(.)='%s']"
   plus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-plus')]"
   minus-icon      "//li[.='%s']//span[contains(@class,'ui-icon-minus')]"
@@ -77,13 +76,13 @@
   (browser/click ::new)
   (let [env-chooser (fn [env] (when env
                                (nav/select-environment-widget env)))]
-    (sel/fill-ajax-form [::username-text name
-                         ::password-text password
-                         ::confirm-text (or password-confirm password)
-                         ::email-text email
-                         ::default-org (:name default-org)
-                         env-chooser [default-env]]
-                        ::save))
+    (browser/quick-fill-submit {::username-text name}
+                               {::password-text password}
+                               {::confirm-text (or password-confirm password)}
+                               {::email-text email}
+                               {::default-org (:name default-org)}
+                               {env-chooser [default-env]}
+                               {::save browser/click}))
   (notification/success-type :users-create))
 
 (defn- delete "Deletes the given user."
@@ -128,9 +127,9 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do #_(browser mouseOver ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
+      (do (browser/click ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
-          (browser/wait-until (browser/exists? ::password-text) 60000)) ; normal ajax wait doesn't work here
+          (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
     
     (when-not (nil? inline-help)

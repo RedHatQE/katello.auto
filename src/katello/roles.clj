@@ -1,5 +1,6 @@
 (ns katello.roles
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [webdriver :as wd]
+            [clj-webdriver.taxi :as browser]
             [clojure.data :as data]
             katello
             (katello [navigation :as nav]
@@ -34,7 +35,7 @@
    ::all-tags                        "all_tags"}
   )
 
-(sel/template-fns
+(wd/template-fns
  {permission-org "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
   role-action    "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
@@ -59,54 +60,54 @@
   "Creates a role with the given name and optional description."
   [{:keys [name description]}]
   (nav/go-to ::page)
-  (browser click ::new)
-  (sel/fill-ajax-form {::name-text name
-                       ::description-text description}
-                      ::save)
+  (browser/click ::new)
+  (browser/quick-fill-submit {::name-text name}
+                             {::description-text description}
+                             {::save browser/click})
   (notification/success-type :roles-create))
 
 (defn- goto-org-perms [org]
-  (browser click ::permissions)
-  (sel/->browser (click (permission-org (:name org)))
-                 (sleep 1000)))
+  (browser/click ::permissions)
+  (wd/->browser (click (permission-org (:name org))))
+  (Thread/sleep 1000))
 
 (defn- add-permissions [permissions]
-  (browser click ::slide-link-home)
+  (browser/click ::slide-link-home)
   (doseq [{:keys [name org description resource-type verbs tags]} permissions]
     (goto-org-perms org)
-    (browser click ::add-permission)
+    (browser/click ::add-permission)
     (if (= resource-type :all)
-      (browser click ::all-types)
-      (do (browser select ::permission-resource-type-select resource-type)
-          (browser click ::next)
+      (browser/click ::all-types)
+      (do (browser/select ::permission-resource-type-select resource-type)
+          (browser/click ::next)
           (cond 
-           (and (not verbs) (browser isVisible ::all-verbs)) 
-           (browser click ::all-verbs)
+           (and (not verbs) (browser/visible? ::all-verbs)) 
+           (browser/click ::all-verbs)
                           
            (not (nil? verbs))
            (doseq [verb verbs]
-             (browser addSelection ::permission-verb-select verb)))
-          (browser click ::next)
+             (browser/select  ::permission-verb-select verb)))
+          (browser/click ::next)
           (cond 
-           (and (not tags) (browser isVisible ::all-tags)) 
-           (browser click ::all-tags)
+           (and (not tags) (browser/visible? ::all-tags)) 
+           (browser/click ::all-tags)
                           
            (not (nil? tags))
            (doseq [tag tags]
-             (browser addSelection ::permission-tag-select tag)))))
-    (sel/fill-ajax-form {::permission-name-text name
-                         ::permission-description-text description}
-                        ::save-permission)
+             (browser/select  ::permission-tag-select tag)))))
+    (browser/quick-fill-submit {::permission-name-text name}
+                               {::permission-description-text description}
+                               {::save-permission browser/click})
     (notification/success-type :roles-create-permission)))
     
 
 (defn- remove-permissions [permissions]
-  (browser click ::slide-link-home)
+  (browser/click ::slide-link-home)
   (doseq [{:keys [name org]} permissions]
     (goto-org-perms org)
-    (browser click (user-role-toggler name false))
+    (browser/click (user-role-toggler name false))
     (notification/success-type :roles-destroy-permission)
-    (browser sleep 5000)))
+    (Thread/sleep 5000)))
 
 (defn- edit
   "Edits a role to add new permissions, remove existing permissions,
@@ -126,7 +127,7 @@
     (when (some not-empty (list to-remove to-add))
       (nav/go-to role))
     (when (or users-to-add users-to-remove)
-      (browser click ::users)
+      (browser/click ::users)
       (doseq [user users-to-add]
         (common/toggle user-role-toggler (:name user) true))
       (doseq [user users-to-remove]
@@ -139,8 +140,8 @@
   "Deletes the given role."
   [role]
   (nav/go-to role)
-  (browser click ::remove)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :roles-destroy))
 
 

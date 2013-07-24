@@ -18,9 +18,10 @@
                      [blockers :refer [bz-bugs]]) 
             [katello.tests.useful :refer [create-all-recursive create-recursive]]
             [slingshot.slingshot :refer [throw+]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [test.tree.script :refer :all]
             [test.assert :as assert]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
             [clojure.string :refer [capitalize upper-case lower-case]]))
 
 ;;; Constants
@@ -75,7 +76,7 @@
 
 (defn verify-login-prompts-org [user]
   (login user)
-  (assert/is (= "Select an Organization" (browser getText ::ui/switcher)))
+  (assert/is (= "Select an Organization" (browser/text  ::ui/switcher)))
   user)
 
 (defn verify-only-one-org [user]
@@ -238,8 +239,8 @@
           (ui/create user)
           (create-recursive default-org-env)
           (ui/update user assoc :default-org *session-org* :default-env default-org-env)
-          (assert/is (= (browser getText ::user/current-default-org) (:name *session-org*)))
-          (assert/is (= (browser getText ::user/current-default-env) (:name default-org-env))))))
+          (assert/is (= (browser/text  ::user/current-default-org) (:name *session-org*)))
+          (assert/is (= (browser/text  ::user/current-default-env) (:name default-org-env))))))
     
     (deftest "Check whether the users email address gets updated"
       :uuid "23b69aad-209c-98d4-d993-c24c215a0e6a"
@@ -355,7 +356,7 @@
       (with-user-temporarily user
         (ui/update admin assoc :roles #{})
         (with-user-temporarily admin
-          (let [not-showing? #(not (browser isElementPresent %))]
+          (let [not-showing? #(not (browser/exists?  %))]
             (assert/is (every? not-showing? [::menu/systems-link ::menu/content-link ::menu/setup-link] ))))
         (assign-admin admin))))
 

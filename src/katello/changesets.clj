@@ -10,7 +10,8 @@
                      [organizations :as organization]
                      [sync-management :as sync]
                      [notifications :as notification :refer [check-for-success request-type?]])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]
             [clojure.data :as data]
@@ -19,7 +20,7 @@
 
 ;; Locators
 
-(sel/template-fns
+(wd/template-fns
  {add-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Add')]"
   remove-content-item "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Undo')]"
   content-category    "//div[@id='%s']"
@@ -32,7 +33,7 @@
 
 (defn check-all [template coll]
   (doseq [item coll]
-    (browser check (template item))))
+    (browser/click (template item))))
 ;; Nav
 
 (ui/defelements :katello.deployment/any []
@@ -63,15 +64,15 @@
                                (let [env (kt/env cs)]
                                  (nav/select-environment-widget (:prior env) {:next-env env :wait true})))
     [::named-page (fn [cs] (when (:deletion? cs)
-                             (browser click ::deletion)
-                             (browser click (list-item (:name cs)))))]]])
+                             (browser/click ::deletion)
+                             (browser/click (list-item (:name cs)))))]]])
 
 ;; Protocol
 
 (defn go-to-item-in-product [category-loc item]
-  (browser click ::products-category)
-  (browser click (select-product (-> item :product :name)))
-  (browser click category-loc))
+  (browser/click ::products-category)
+  (browser/click (select-product (-> item :product :name)))
+  (browser/click category-loc))
 
 (defprotocol Promotable
   "Interface for entities that are promotable"
@@ -80,23 +81,23 @@
 
 (defn- add-rm [loc ent]
   (go-to ent)
-  (browser click (-> ent :name loc)))
+  (browser/click (-> ent :name loc)))
 
 (extend-protocol Promotable
   katello.Product
   (go-to [prod]
-    (browser click ::products-category))
+    (browser/click ::products-category))
   
   (add-remove [ent loc]
     (add-rm loc ent))
   
   katello.ContentView
   (go-to [content-view]
-    (browser click ::content-views-category))
+    (browser/click ::content-views-category))
   
   (add-remove [cv loc]
     (go-to cv)
-    (browser click (-> cv :published-name loc)))
+    (browser/click (-> cv :published-name loc)))
     
   katello.Repository
   (go-to [repo] (go-to-item-in-product ::select-repos repo))
@@ -114,8 +115,8 @@
   (go-to [erratum]
     (if (:product erratum)
       (go-to-item-in-product ::select-errata erratum)
-      (do (browser click ::errata-category)
-          (browser click ::select-errata-all))))
+      (do (browser/click ::errata-category)
+          (browser/click ::select-errata-all))))
   
   (add-remove [ent loc]
     (add-rm loc ent)))
@@ -136,12 +137,12 @@
   (nav/go-to ::named-environment-page env)
   (if deletion?
     (do
-      (browser click (select-env (:name env)))
-      (browser sleep 3000)
-      (if (browser isElementPresent ::promotion)
-        (browser click ::deletion))))
-  (sel/->browser (click ::new)
-                 (setText ::name-text name)
+      (browser/click (select-env (:name env)))
+      (Thread/sleep 3000)
+      (if (browser/exists? ::promotion)
+        (browser/click ::deletion))))
+  (wd/->browser (click ::new)
+                 (input-text ::name-text name)
                  (click ::save))
   (check-for-success))
 
@@ -149,8 +150,8 @@
 (defn- update [{:keys [env name deletion?] :as changeset} new-changeset]
   (let [[to-remove to-add _] (data/diff changeset new-changeset)
         go-home (fn []
-                  (browser sleep 5000)
-                  (browser click ::promotion-eligible-home))]
+                  (Thread/sleep 5000)
+                  (browser/click ::promotion-eligible-home))]
     (nav/go-to changeset env)
     (doseq [item (:content to-add)]
       (add item)
@@ -203,17 +204,17 @@
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock
-    (browser click ::review-for-promotion)
+    (browser/click ::review-for-promotion)
     ;;for the submission
-    (sel/loop-with-timeout (* 10 60 1000) []
-      (when-not (try+ (browser click ::promote-to-next-environment)
+    (wd/loop-with-timeout (* 10 60 1000) []
+      (when-not (try+ (browser/click ::promote-to-next-environment)
                       (check-for-success)
                       (catch (common/errtype ::notification/promotion-already-in-progress) _
                         (nav/go-to changeset)))
         (Thread/sleep 30000)
         (recur)))
     ;;for confirmation
-    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+    (wd/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
       (case current-status
         "Applied" current-status
         "Apply Failed" (throw+ {:type :promotion-failed
@@ -221,7 +222,7 @@
                                 :from-env (:name env)
                                 :to-env (-> env :next :name)})
         (do (Thread/sleep 2000)
-            (recur (browser getText (status name))))))
+            (recur (browser/text (status name))))))
     ;;wait for async success notif
     (check-for-success {:timeout-ms (* 20 60 1000)})))
 
@@ -252,7 +253,7 @@
   (let [elems (for [index (iterate inc 1)]
                 (content-item-n (str index)))
         retrieve (fn [elem]
-                   (try (browser getText elem)
+                   (try (browser/text elem)
                         (catch Exception e nil)))]
     (->> (map retrieve elems) (take-while identity) set)))
 
@@ -263,11 +264,11 @@
   (let [categories {katello/newProduct ::products-category}]
     (apply concat (for [[f category] categories]
                     (do
-                      (browser click category)
-                      (browser sleep 2000)
+                      (browser/click category)
+                      (Thread/sleep 2000)
                       (let [result (for [item (extract-content)]
                                      (f {:name item}))]
-                        (browser click ::promotion-eligible-home)
+                        (browser/click ::promotion-eligible-home)
                         result))))))
 
 (defn ^{:TODO "finish me"} change-set-content [env]
@@ -277,7 +278,7 @@
   "If all the content is present in the given environment, returns true."
   [env content]
   (nav/go-to ::named-environment-page env)
-  (let [visible? #(try (do (browser isVisible (add-content-item %))
+  (let [visible? #(try (do (browser/exists? (add-content-item %))
                            true)
                        (catch Exception e false))]
     (every? true? (doall (for [item content]
@@ -289,8 +290,8 @@
    visible for repos/packages, it returns true."
   [env content]
   (nav/go-to ::named-environment-page env)
-  (sel/->browser (click ::new)
-                 (setText ::name-text (uniqueify "changeset1"))
+  (wd/->browser (click ::new)
+                 (input-text ::name-text (uniqueify "changeset1"))
                  (click ::save))
   (every? false? 
           (flatten
@@ -299,17 +300,17 @@
                     prod-item (:product-name (first data))]
                 (if (some #{category} [:repos :packages :errata])
                   (do
-                    (sel/->browser (click ::products-category)
+                    (wd/->browser (click ::products-category)
                                    (click (select-product prod-item))
                                    (refresh)
                                    (click (->> category name (format "katello.changesets/select-%s") keyword)))
-                  (if (= category :errata) (browser click ::select-errata-all)))
-                  (sel/->browser (click ::errata-category)
+                  (if (= category :errata) (browser/click ::select-errata-all)))
+                  (wd/->browser (click ::errata-category)
                                  (click ::select-errata-all)))
                 (let [visible (doall
                                 (for [item (map :name data)]
-                                  (browser isVisible (add-content-item item))))]
-                  (sel/->browser (click ::remove-changeset)
+                                  (browser/exists? (add-content-item item))))]
+                  (wd/->browser (click ::remove-changeset)
                                  (click ::ui-box-confirm)
                                  (click ::promotion-eligible-home)
                                  (refresh))
@@ -322,7 +323,7 @@
   [changeset]
   (locking #'conf/promotion-deletion-lock
     (rest/http-post (rest/url-maker [["api/changesets/%s/promote" [identity]]] changeset))
-    (loop-with-timeout (* 20 60 1000) [cs {}]
+    (wd/loop-with-timeout (* 20 60 1000) [cs {}]
       (let [state (:state cs)]
         (case state
           "promoted" cs

@@ -18,16 +18,16 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
-   ::create                 "commit"
-   ::name-text              "organization_name"
-   ::label-text             "organization_label"
-   ::description-text       "organization_description"
+   ::create                 {:name "commit"}
+   ::name-text              {:name "organization[name]"}
+   ::label-text             {:name "organization[label]"}
+   ::description-text       {:name "organization[description]"}
    ::environments           (ui/link "Environments")
    ::edit                   (ui/link "Edit")
    ::remove                 (ui/link "Remove Organization")
-   ::initial-env-name-text  "environment_name"
-   ::initial-env-label-text "environment_label"
-   ::initial-env-desc-text  "environment_description"
+   ::initial-env-name-text  {:name "environment[name]"}
+   ::initial-env-label-text {:name "environment[label]"}
+   ::initial-env-desc-text  {:name "environment[description]"}
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
@@ -98,14 +98,16 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (browser/input-text ::name-text name)
   (Thread/sleep 1000)
-  ;; TODO: figure out form-filling with label-filler. taxi/quick-fill-submit may work
-  (browser/quick-fill-submit {::label-text label}
-                             {::description-text description}
-                             {::initial-env-name-text (:name initial-env)}
-                             {::initial-env-label-text (:label initial-env)}
-                             {::initial-env-desc-text (:description initial-env)})
+  (browser/quick-fill-submit {::name-text name}
+                             {::description-text browser/click}
+                             {::description-text (or description "")}
+                             {::label-text (or label "")}
+                             {::initial-env-name-text (or (:name initial-env) "")}
+                             {::initial-env-desc-text browser/click}
+                             {::initial-env-desc-text (or (:description initial-env) "")}
+                             {::initial-env-label-text (or (:label initial-env) "")}
+                             {::create browser/click})
   (notification/success-type :org-create))
 
 (defn- delete
@@ -123,7 +125,7 @@
    can be edited is the org's description."
   [org {:keys [description]}]
   (nav/go-to org)
-  (common/in-place-edit {::description-text (:description description)}))
+  (common/in-place-edit {::description-text  description}))
 
 (extend katello.Organization
   ui/CRUD {:create create

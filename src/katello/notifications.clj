@@ -1,12 +1,12 @@
 (ns katello.notifications
   (:require [katello.ui :as ui]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [clojure.data.json :as json]
-            [com.redhat.qe.auto.selenium.selenium 
-             :refer [browser loop-with-timeout]] 
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert])
   (:refer-clojure :exclude [flush])
-  (:import [com.thoughtworks.selenium SeleniumException]))
+  (:import [org.openqa.selenium NoSuchElementException]))
 
 ;;
 ;; Notifications
@@ -188,7 +188,7 @@
 
 (defn flush []
   "Clears the javascript notice array."
-  (browser runScript "window.notices.noticeArray = []"))
+  (browser/execute-script "window.notices.noticeArray = []"))
 
 (defn notifications
   "Gets all notifications from the page, returns a list of maps
@@ -197,12 +197,12 @@
    first notification is detected. Default timeout is 15 seconds."
   []
   (try (let [notices (->> notice-array-js-var
-                          (format "JSON.stringify(%s)") 
-                          (browser getEval)
+                          (format "return JSON.stringify(%s)") 
+                          browser/execute-script
                           json/read-json)]
          (for [notice notices] 
            (ui/map->Notification (assoc notice :level (keyword (:level notice))))))
-       (catch SeleniumException e '())))
+       (catch NoSuchElementException e '())))
 
 
 (defn check-for-success
@@ -215,8 +215,8 @@
    If any are errors, an exception is thrown containing all
    notifications."
   [ & [{:keys [timeout-ms match-pred]
-        :or {timeout-ms 2000, match-pred (constantly true)}}]]
-  (loop-with-timeout timeout-ms []
+        :or {timeout-ms 3000, match-pred (constantly true)}}]]
+  (wd/loop-with-timeout timeout-ms []
     (let [notifs (->> (notifications)
                       set
                       (filter match-pred))]

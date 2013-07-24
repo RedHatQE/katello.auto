@@ -54,12 +54,12 @@
 (def menu-dropdown-link (partial menu-template "dropdown-item-link"))
 (def menu-flyout-link (partial menu-template "flyout-item-link"))
 
-(sel/template-fns
+(wd/template-fns
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
   editable             "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
   environment-link     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
   left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
-  link                 "link=%s"
+  link                 "//a[normalize-space(.)='%s']"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
   
@@ -113,8 +113,8 @@
    ::confirmation-dialog     "//div[contains(@class, 'confirmation')]"
 
    ;; use index, no other identifiable info in the DOM
-   ::confirmation-yes        "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[1]"
-   ::confirmation-no         "xpath=(//div[contains(@class, 'confirmation')]//span[@class='ui-button-text'])[2]" 
+   ::confirmation-yes        "//button/span[normalize-space(.)='Yes']"
+   ::confirmation-no         "//button/span[normalize-space(.)='No']"
 
    ::switcher                "organizationSwitcher"
    ::active-org              "//a[contains(@class,'organization-name')]"
@@ -150,7 +150,7 @@
 
 (defn- item-count [loc]
   (->> loc
-     (sel/browser getText)
+     (browser/text)
      Integer/parseInt))
 
 (def current-items

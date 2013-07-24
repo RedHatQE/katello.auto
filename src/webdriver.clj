@@ -69,4 +69,25 @@ Default browser-spec: firefox"
   [ & forms]
   `(do ~@(for [form forms] `(brow ~@form))))
 
+(defn quick-fill-submit
+  [& query-action-maps]
+  (doseq [entry query-action-maps
+          [k v] entry]
+    (if-not (nil? v)
+      (do (println k)
+          (println v)
+          (browser/quick-fill entry)))))
 
+(defmacro loop-with-timeout
+  "Similar to clojure.core/loop, but adds a timeout to break out of
+  the loop if it takes too long. timeout is in ms. bindings are the
+  bindings that would be provided to clojure.core/loop. body is the
+  loop body to execute if the timeout has not been reached. timeout-body
+  is the body to execute if the timeout has been reached. timeout-body
+  defaults to throwing a RuntimeException."
+  [timeout bindings body & [timeout-body]]
+  `(let [starttime# (System/currentTimeMillis)]
+     (loop ~bindings
+       (if  (> (- (System/currentTimeMillis) starttime#) ~timeout)
+         ~(or timeout-body `(throw (RuntimeException. (str "Hit timeout of " ~timeout "ms."))))
+         ~body))))

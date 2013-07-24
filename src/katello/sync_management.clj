@@ -129,7 +129,7 @@
   (= res (:ok messages)))
 
 ;; TODO: Figure out what loop-with-timeout is doing and migrate to webdriver
-#_(defn perform-sync
+(defn perform-sync
   "Syncs the given list of repositories. Also takes an optional
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
@@ -140,7 +140,7 @@
   (browser/click ::synchronize-now)
   (Thread/sleep 10000)
   (zipmap repos (for [repo repos]
-                  (sel/loop-with-timeout (or timeout 120000) []
+                  (wd/loop-with-timeout (or timeout 120000) []
                     (or (complete-status repo)
                         (do (Thread/sleep 10000)
                             (recur)))))))
