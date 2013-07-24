@@ -60,12 +60,7 @@
      (for [trailing-ws-str trailing-whitespace-strings]
        [{:name trailing-ws-str
          :description nil
-         :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)])
-
-     (for [inv-char-str invalid-character-strings]
-       [{:name inv-char-str
-         :description nil
-         :url "http://sdf.com"} (common/errtype :katello.notifications/name-must-not-contain-characters)]))))
+         :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)]))))
 
 (defn create-custom-provider-with-gpg-key
   "Creates a provider with products and repositories that use the provided gpg-key. returns the provider."
