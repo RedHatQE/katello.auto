@@ -187,8 +187,8 @@
       :data-driven true
       
       (fn [name expected-res]
-        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
-                      cv-filter (katello/newFilter {:name name :cv cv})]
+        (let [cv (katello/newContentView {:name (uniqueify "con-def") :org *session-org*})
+              cv-filter (katello/newFilter {:name name :cv cv})]
           (ui/create cv)
           (expecting-error expected-res (ui/create cv-filter))))
       
