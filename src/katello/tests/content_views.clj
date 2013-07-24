@@ -219,7 +219,7 @@
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
       :data-driven true
       
-      (fn [exclude?]
+      (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
@@ -237,29 +237,30 @@
                               :version-type version-type}]]
                    (views/add-package-rule cv-filter rule)))
           (views/remove-rule packages1)
-          (if (:exclude? cv-filter)
-            (do 
-              (assert/is (browser isTextPresent "Exclude Packages: No details specified"))
-              (assert/is (browser isTextPresent "Exclude Packages: cow, cat")))
-            (do 
-              (assert/is (browser isTextPresent "Include Packages: No details specified"))
-              (assert/is (browser isTextPresent "Include Packages: cow, cat"))))
-          (views/add-repo-from-filters (list (kt/repository repo)))))
+          (let [packages-in-msg (apply str (interpose ", " packages))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format msg-format packages-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Exclude Packages: No details specified")))
+              (do 
+                (assert/is (= (format msg-format packages-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Include Packages: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
       
-      [[true]
-       [false]])
-      
+      [[true "Exclude Packages: %s" "Exclude Packages: cow, cat"]
+       [false "Include Packages: %s" "Include Packages: cow, cat"]])
+    
     (deftest "Create 'Include/Exclude' type package-group filter"
       :uuid "fb3f9627-50cf-4dcc-8094-d389240c9e2a"
       :data-driven true
       
-      (fn [exclude?]
+      (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
               cv (add-product-to-cv org repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
-              pkg-groups (list "birds" "crow")
+              pkg-groups (list "birds" "mammals")
               pkg-groups2 (list "cow")]        
           (ui/create cv-filter)
           (doall (for [rule [{:pkg-groups pkg-groups}
@@ -267,18 +268,19 @@
                              {:pkg-groups "" }]]
                    (views/add-pkg-group-rule cv-filter rule)))
           (views/remove-rule pkg-groups2)
-          (if (:exclude? cv-filter)
-            (do
-              (assert/is (browser isTextPresent "Exclude Package Groups: No details specified"))
-              (assert/is (browser isTextPresent "Exclude Package Groups: birds, crow")))
-            (do
-              (assert/is (browser isTextPresent "Include Package Groups: No details specified"))
-              (assert/is (browser isTextPresent "Include Package Groups: birds, crow"))))
-          (views/add-repo-from-filters (list (kt/repository repo)))))
+          (let [pkg-groups-in-msg (apply str (interpose ", " pkg-groups))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Exclude Package Groups: No details specified")))
+              (do
+                (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Include Package Groups: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
+        
+        [[true "Exclude Package Groups: %s" "Exclude Package Groups: birds, mammals"]
+         [false "Include Package Groups: %s" "Include Package Groups: birds, mammals"]])
       
-      [[true]
-       [false]])
-    
     (deftest "Create 'Include/Exclude' type filter for errata"
       :uuid "be7b6182-065b-4a4b-8a6b-0642f4283336"
       :data-driven true
