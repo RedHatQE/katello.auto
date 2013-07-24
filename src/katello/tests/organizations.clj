@@ -7,17 +7,23 @@
                      [validation :as validation]
                      [repositories :as repo]
                      [tasks :refer :all]
+                     [client :as client]
+                     [manifest :as manifest]
                      [notifications :as notification]
                      [organizations :as organization]
                      [environments :as environment]
+                     [sync-management :as sync]
+                     [redhat-repositories :as rh-repos]
                      [changesets :as changeset]
+                     [systems         :as system]
                      [fake-content :as fake]
-                     [conf :refer [config]]
+                     [conf :as conf]
                      [blockers :refer [bz-bugs]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
+            [katello.client.provision :as provision]
             [clojure.string :refer [capitalize upper-case lower-case]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]))
 
@@ -167,7 +173,35 @@
            ;; not allowed to delete the current org, so switch first.
            (organization/switch)
            (ui/delete org)
-           (setup-custom-org-with-content env repos)))))
+           (setup-custom-org-with-content env repos))))
+      
+      (deftest "Delete Organization with systems"
+        :uuid "b1b638ec-9341-4498-9a54-7397895d5bad"       
+        (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+              envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+              repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
+              products (->> (map :reposet repos) (map :product) distinct)
+              target-env (first envz)]
+          (manifest/setup-org envz repos)
+          (sync/verify-all-repos-synced repos)
+          (-> {:name "cs-manifest" :content products :env target-env} 
+              katello/newChangeset uniqueify changeset/promote-delete-content)
+          (provision/with-queued-client
+            ssh-conn
+            (client/register ssh-conn {:username (:name conf/*session-user*)
+                                       :password (:password conf/*session-user*)
+                                       :org (:name org)
+                                       :env (:name (first envz))
+                                       :force true})
+            (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (first envz)}
+                             katello/newSystem)]
+              (doseq [prd1 products]
+                (client/subscribe ssh-conn (system/pool-id mysys prd1)))
+              (client/sm-cmd ssh-conn :refresh)
+              (client/run-cmd ssh-conn "yum repolist")
+              (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
+              (organization/switch conf/*session-org*)
+              (ui/delete org))))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"

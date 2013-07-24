@@ -5,7 +5,9 @@
                      [notifications :as notification]
                      [ui :as ui]
                      [rest :as rest]
+                     [manifest :as manifest]
                      [validation :as val]
+                     [fake-content    :as fake]
                      [organizations :as org]
                      [environments :as env]
                      [client :as client]
@@ -14,6 +16,7 @@
                      [repositories :as repo]
                      [ui-common :as common]
                      [changesets :as changeset]
+                     [redhat-repositories :as rh-repos]
                      [tasks :refer :all]
                      [systems :as system]
                      [gpg-keys :as gpg-key]
@@ -560,4 +563,46 @@
           (expecting-error [:type :katello.systems/package-install-failed]
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit-code (= 1)))))))))
+            (assert/is (->> cmd_result :exit-code (= 1))))))))
+  
+      (deftest  "Systems cannot retrieve content from environment 
+                 after a remove changeset has been applied"
+        :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"  
+        :blockers (list rest/katello-only)
+        (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+              envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+              repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
+              products (->> (map :reposet repos) (map :product) distinct)
+              target-env (first envz)]
+          (manifest/setup-org envz repos)
+          (sync/verify-all-repos-synced repos)
+          (-> {:name "cs-manifest" :content products :env target-env} 
+              katello/newChangeset uniqueify changeset/promote-delete-content)
+          (provision/with-queued-client
+            ssh-conn
+             (client/register ssh-conn {:username (:name *session-user*)
+                                        :password (:password *session-user*)
+                                        :org (:name org)
+                                        :env (:name (first envz))
+                                        :force true})
+             (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+                             katello/newSystem)
+                   deletion-changeset (-> {:name "deletion-cs"
+                                           :content (distinct (map :product (list repos)))
+                                           :env target-env
+                                           :deletion? true}
+                                          katello/newChangeset
+                                          uniqueify)]
+               (doseq [prd1 products]
+                 (client/subscribe ssh-conn (system/pool-id mysys prd1)))
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist") 
+               (let [cmd    (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
+                     result (client/run-cmd ssh-conn cmd)]
+                 (assert/is (->> result :exit-code (= 0))))
+               (changeset/promote-delete-content deletion-changeset)
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist") 
+               (let [cmd    (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
+                     result (client/run-cmd ssh-conn cmd)]
+                 (assert/is (->> result :exit-code (= 1)))))))))
