@@ -391,6 +391,7 @@
 
     (deftest "Edit a content view definition"
       :uuid "f8de7fae-2cdf-4854-4793-50c33371e491"
+      :blockers (bz-bugs "988359")
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-definition (kt/newContentView {:name "auto-view-definition"
                                                            :description "new description"
