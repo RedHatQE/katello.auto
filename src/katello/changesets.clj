@@ -30,21 +30,10 @@
   status              "//span[.='%s']/..//span[@class='changeset_status']"
   list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
-(defn check-all [template coll]
-  (doseq [item coll]
-    (browser check (template item))))
 ;; Nav
 
 (ui/defelements :katello.deployment/any []
-  {::products-category           (content-category "products")
-   ::errata-category             (content-category "errata")
-   ::kickstart-trees-category    (content-category "kickstart trees")
-   ::content-views-category      (content-category "content_views") 
-   ::select-errata               (select-types "Errata")
-   ::select-repos                (select-types "Repositories")
-   ::select-packages             (select-types "Packages")
-   ::select-errata-all           (select-types "All")
-   ::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
+  {::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    ::review-for-promotion        "review_changeset"
    ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
    ::new                         "new"
@@ -65,67 +54,6 @@
                              (browser click ::deletion)
                              (browser click (list-item (:name cs)))))]]])
 
-;; Protocol
-
-(defn go-to-item-in-product [category-loc item]
-  (browser click ::products-category)
-  (browser click (select-product (-> item :product :name)))
-  (browser click category-loc))
-
-(defprotocol Promotable
-  "Interface for entities that are promotable"
-  (go-to [x] "Navigates to entity from a changeset's environment content view")
-  (add-remove [x loc] "Adds or removes entity to or from the changeset currently being edited"))
-
-(defn- add-rm [loc ent]
-  (go-to ent)
-  (browser click (-> ent :name loc)))
-
-(extend-protocol Promotable
-  katello.Product
-  (go-to [prod]
-    (browser click ::products-category))
-  
-  (add-remove [ent loc]
-    (add-rm loc ent))
-  
-  katello.ContentView
-  (go-to [content-view]
-    (browser click ::content-views-category))
-  
-  (add-remove [cv loc]
-    (go-to cv)
-    (browser click (-> cv :published-name loc)))
-    
-  katello.Repository
-  (go-to [repo] (go-to-item-in-product ::select-repos repo))
-  
-  (add-remove [ent loc]
-    (add-rm loc ent))
-
-  katello.Package
-  (go-to [package] (go-to-item-in-product ::select-packages package))
-  
-  (add-remove [ent loc]
-    (add-rm loc ent))
-
-  katello.Erratum
-  (go-to [erratum]
-    (if (:product erratum)
-      (go-to-item-in-product ::select-errata erratum)
-      (do (browser click ::errata-category)
-          (browser click ::select-errata-all))))
-  
-  (add-remove [ent loc]
-    (add-rm loc ent)))
-
-(defn- ^{:doc "Adds ent to current changeset (assumes the ui is on that
-             page already)"}
-  add [ent] (add-remove ent add-content-item))
-
-(defn- ^{:doc "Removes ent from current changeset (assumes the ui is on
-             that page already)"}
-  remove [ent] (add-remove ent remove-content-item))
 ;; Tasks
 
 (defn- create
@@ -152,11 +80,9 @@
                   (browser click ::promotion-eligible-home))]
     (nav/go-to changeset env)
     (doseq [item (:content to-add)]
-      (add item)
-      (go-home))
+      (browser click (-> item :published-name add-content-item)))
     (doseq [item (:content to-remove)]
-      (remove item)
-      (go-home))))
+      (browser click (-> item :published-name remove-content-item)))))
 
 (extend katello.Changeset
   ui/CRUD {:create create
@@ -201,8 +127,10 @@
    wait for the promotion or deletion to complete successfully."
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset env)
-  (locking #'conf/promotion-deletion-lock
+  (locking #'conf/promotion-deletion-lock  
     (browser click ::review-for-promotion)
+    (browser sleep 5000)
+    (browser refresh)
     ;;for the submission
     (sel/loop-with-timeout (* 10 60 1000) []
       (when-not (try+ (browser click ::promote-to-next-environment)
@@ -246,73 +174,6 @@
         katello/newChangeset
         uniqueify
         promote-delete-content)))
-
-(defn- extract-content [] 
-  (let [elems (for [index (iterate inc 1)]
-                (content-item-n (str index)))
-        retrieve (fn [elem]
-                   (try (browser getText elem)
-                        (catch Exception e nil)))]
-    (->> (map retrieve elems) (take-while identity) set)))
-
-(defn environment-content
-  "Returns the content that is available to promote, in the given environment."
-  [env]
-  (nav/go-to ::named-environment-page env)
-  (let [categories {katello/newProduct ::products-category}]
-    (apply concat (for [[f category] categories]
-                    (do
-                      (browser click category)
-                      (browser sleep 2000)
-                      (let [result (for [item (extract-content)]
-                                     (f {:name item}))]
-                        (browser click ::promotion-eligible-home)
-                        result))))))
-
-(defn ^{:TODO "finish me"} change-set-content [env]
-  (nav/go-to ::named-environment-page {:env env}))
-
-(defn environment-has-content?
-  "If all the content is present in the given environment, returns true."
-  [env content]
-  (nav/go-to ::named-environment-page env)
-  (let [visible? #(try (do (browser isVisible (add-content-item %))
-                           true)
-                       (catch Exception e false))]
-    (every? true? (doall (for [item content]
-                           (do (go-to item)
-                               (visible? (:name item))))))))
-
-(defn add-link-exists?
-  "When the product is not promoted to next env and if there is no add-link 
-   visible for repos/packages, it returns true."
-  [env content]
-  (nav/go-to ::named-environment-page env)
-  (sel/->browser (click ::new)
-                 (setText ::name-text (uniqueify "changeset1"))
-                 (click ::save))
-  (every? false? 
-          (flatten
-            (for [category (keys content)]
-              (let [data (content category)
-                    prod-item (:product-name (first data))]
-                (if (some #{category} [:repos :packages :errata])
-                  (do
-                    (sel/->browser (click ::products-category)
-                                   (click (select-product prod-item))
-                                   (refresh)
-                                   (click (->> category name (format "katello.changesets/select-%s") keyword)))
-                  (if (= category :errata) (browser click ::select-errata-all)))
-                  (sel/->browser (click ::errata-category)
-                                 (click ::select-errata-all)))
-                (let [visible (doall
-                                (for [item (map :name data)]
-                                  (browser isVisible (add-content-item item))))]
-                  (sel/->browser (click ::remove-changeset)
-                                 (click ::ui/confirmation-yes)
-                                 (click ::promotion-eligible-home)
-                                 (refresh))
-                  visible))))))
 
 (defn api-promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,

@@ -26,7 +26,7 @@
 (def promo-data
   (runtime-data [2 (list (:product (fresh-repo)))]))
 
-(defn verify-promote-content [num-envs content-to-promote]
+#_(defn verify-promote-content [num-envs content-to-promote]
   ;;create envs
   (let [envs (->> {:name "promo-env", :org *session-org*}
                   kt/newEnvironment
@@ -53,7 +53,7 @@
       (assert/is (every? (partial ui-member (changeset/environment-content (last envs)))
                          (set content-to-promote))))))
 
-(defgroup promotion-tests
+#_(defgroup promotion-tests
   
   :blockers (bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
           
