@@ -192,7 +192,7 @@
           (ui/create cv)
           (expecting-error expected-res (ui/create cv-filter))))
       
-      [[(random-ascii-string 256) (common/errtype ::notifications/filter-name-too-long)]
+      [[(random-ascii-string 256) (common/errtype ::notifications/name-too-long)]
        [(random-ascii-string 255) #(-> % :type (= :success))]
        ["" (common/errtype ::notifications/name-cant-be-blank)]])
     
