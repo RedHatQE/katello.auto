@@ -133,6 +133,7 @@
       :uuid "ba7e1f58-bf60-2954-a8cb-5185c011b9f0"
       :data-driven true
       :tcms "248518"
+      :blockers (bz-bugs "987670")
 
       (fn [view-name expected-res]
         (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
