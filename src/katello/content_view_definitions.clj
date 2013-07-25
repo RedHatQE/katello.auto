@@ -317,7 +317,8 @@
   [content-view updated]
   (nav/go-to content-view)
   (let [[remove add] (data/diff content-view updated)]
-    (when-some-let [{:keys [name description composite composite-name]} add]
+    (when-some-let [name (:name add)
+                    description (:description add)]
                    (edit-content-view-details name description))
     (when-some-let [product-to-add (:products add)
                     product-to-rm (:products remove)]
