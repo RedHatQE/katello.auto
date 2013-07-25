@@ -84,6 +84,14 @@
       (ui/create cv)
       (ui/update cv assoc :products (list (kt/product repo)))
       cv))
+
+;; Data (Generated)
+
+(def gen-errata-test-data
+  (for [exp-result [[true "Exclude Errata: %s" "Exclude Errata: RHBA, RHSA" "Exclude Errata: Enhancement: 2013-07-02 - 2013-07-03"] 
+                    [false "Include Errata: %s"  "Include Errata: RHBA, RHSA" "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"]]
+        errata-details [[(list "RHBA" "RHSA") (list "RHSA") "07/02/2013" "07/03/2013" "Enhancement"]]]
+    (conj errata-details exp-result)))
                       
 ;; Tests
 
@@ -194,7 +202,7 @@
       
       (fn [packages version-type &[value1 value2]]
         (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (ui/create-all (list cv cv-filter))
           (views/add-package-rule cv-filter {:packages (list packages)
                                              :version-type version-type
@@ -211,7 +219,7 @@
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
       :data-driven true
       
-      (fn [exclude?]
+      (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
@@ -229,29 +237,30 @@
                               :version-type version-type}]]
                    (views/add-package-rule cv-filter rule)))
           (views/remove-rule packages1)
-          (if (:exclude? cv-filter)
-            (do 
-              (assert/is (browser isTextPresent "Exclude Packages: No details specified"))
-              (assert/is (browser isTextPresent "Exclude Packages: cow, cat")))
-            (do 
-              (assert/is (browser isTextPresent "Include Packages: No details specified"))
-              (assert/is (browser isTextPresent "Include Packages: cow, cat"))))
-          (views/add-repo-from-filters (list (kt/repository repo)))))
+          (let [packages-in-msg (apply str (interpose ", " packages))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format msg-format packages-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Exclude Packages: No details specified")))
+              (do 
+                (assert/is (= (format msg-format packages-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Include Packages: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
       
-      [[true]
-       [false]])
-      
+      [[true "Exclude Packages: %s" "Exclude Packages: cow, cat"]
+       [false "Include Packages: %s" "Include Packages: cow, cat"]])
+    
     (deftest "Create 'Include/Exclude' type package-group filter"
       :uuid "fb3f9627-50cf-4dcc-8094-d389240c9e2a"
       :data-driven true
       
-      (fn [exclude?]
+      (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
               cv (add-product-to-cv org repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
-              pkg-groups (list "birds" "crow")
+              pkg-groups (list "birds" "mammals")
               pkg-groups2 (list "cow")]        
           (ui/create cv-filter)
           (doall (for [rule [{:pkg-groups pkg-groups}
@@ -259,27 +268,55 @@
                              {:pkg-groups "" }]]
                    (views/add-pkg-group-rule cv-filter rule)))
           (views/remove-rule pkg-groups2)
-          (if (:exclude? cv-filter)
-            (do
-              (assert/is (browser isTextPresent "Exclude Package Groups: No details specified"))
-              (assert/is (browser isTextPresent "Exclude Package Groups: birds, crow")))
-            (do
-              (assert/is (browser isTextPresent "Include Package Groups: No details specified"))
-              (assert/is (browser isTextPresent "Include Package Groups: birds, crow"))))
-          (views/add-repo-from-filters (list (kt/repository repo)))))
+          (let [pkg-groups-in-msg (apply str (interpose ", " pkg-groups))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Exclude Package Groups: No details specified")))
+              (do
+                (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
+                (assert/is (browser isTextPresent "Include Package Groups: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
+        
+        [[true "Exclude Package Groups: %s" "Exclude Package Groups: birds, mammals"]
+         [false "Include Package Groups: %s" "Include Package Groups: birds, mammals"]])
       
-      [[true]
-       [false]])
-    
-      (deftest "Create 'Include' filter by errata-id"
-      :uuid "60c77f45-5a4e-4325-9b66-9856230cda3b"
-      (with-unique [cv (kt/newContentView {:name "con-def"
-                                           :org conf/*session-org*})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
-        (let [erratums (list "RHBA" "RHSA")]
-          (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-id cv-filter erratums))))
-    
+    (deftest "Create 'Include/Exclude' type filter for errata"
+      :uuid "be7b6182-065b-4a4b-8a6b-0642f4283336"
+      :data-driven true
+      
+      (fn [erratums erratums2 start-date end-date errata-type [exclude? msg-format expect-msg-errata expect-msg-date]]
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              cv (add-product-to-cv org repo)
+              cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})]        
+          (ui/create cv-filter)
+          (doall (for [rule [erratums
+                             erratums2]]
+                   (views/filter-errata-by-id cv-filter rule)))
+          (views/remove-rule erratums2)
+          (doall (for [rule [{:from-date start-date, :to-date end-date, :errata-type errata-type}
+                             { }]]
+                   (views/filter-errata-by-date-type cv-filter rule)))
+          (let [new-erratum (apply str (interpose ", " erratums))
+                mymap {:new-from-date (views/msg-date start-date) 
+                       :new-to-date (views/msg-date end-date)} 
+                new-date-type (apply str (concat errata-type ": " 
+                                                 (apply str (interpose  " - " (map mymap [:new-from-date :new-to-date])))))]
+            (if (:exclude? cv-filter)
+              (do
+                (assert/is (= (format msg-format new-erratum) expect-msg-errata))
+                (assert/is (= (format msg-format new-date-type) expect-msg-date))
+                (assert/is (browser isTextPresent "Exclude Errata: No details specified")))
+              (do
+                (assert/is (= (format msg-format new-erratum) expect-msg-errata))
+                (assert/is (= (format msg-format new-date-type) expect-msg-date))
+                (assert/is (browser isTextPresent "Include Errata: No details specified"))))
+            (views/add-repo-from-filters (list (kt/repository repo))))))
+      
+      gen-errata-test-data)
+           
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
       :data-driven true
@@ -288,7 +325,7 @@
                                              :org conf/*session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
           (ui/create-all (list cv cv-filter))
-          (views/filter-errata-by-type cv-filter errata-type)))
+          (views/filter-errata-by-date-type cv-filter {:errata-type errata-type})))
       
       [["Bug Fix"]
        ["Enhancement"]

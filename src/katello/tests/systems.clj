@@ -116,7 +116,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (bz-bugs "717408" "728357")
+  :blockers (bz-bugs "717408" "728357" "987925")
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"

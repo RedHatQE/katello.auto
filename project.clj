@@ -14,7 +14,7 @@
                  [inflections "0.6.2"]
                  
                  [test.tree.jenkins "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
-                 [test.tree "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree "1.0.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  
                  
@@ -31,7 +31,7 @@
                  [bugzilla.checker "0.2.0-SNAPSHOT"]
                  [github.checker "0.2.0-SNAPSHOT"]
                  [fn.trace "1.4.0-SNAPSHOT"]]
-  :jvm-opts ["-Xmx640m" "-Xms48m"]
+  :jvm-opts ["-Xmx640m" "-Xms48m" "-XX:-OmitStackTraceInFastThrow"]
   :repl-options {:init-ns katello.repl}
   :repositories ^:replace [["clojars" {:url "http://clojars.org/repo"
                                        :snapshots {:update :always}}]

@@ -91,7 +91,7 @@
   {:teardown (fn []
                  (when selenium-server/selenium-server 
                  (selenium-server/stop)))
-   :thread-runner thread-runner
+   :thread-wrapper thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
               :screencapture (watch/on-fail
                               (fn [t _] 
