@@ -133,6 +133,7 @@
       :uuid "ba7e1f58-bf60-2954-a8cb-5185c011b9f0"
       :data-driven true
       :tcms "248518"
+      :blockers (bz-bugs "987670")
 
       (fn [view-name expected-res]
         (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
@@ -187,12 +188,12 @@
       :data-driven true
       
       (fn [name expected-res]
-        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
-                      cv-filter (katello/newFilter {:name name :cv cv})]
+        (let [cv (katello/newContentView {:name (uniqueify "con-def") :org *session-org*})
+              cv-filter (katello/newFilter {:name name :cv cv})]
           (ui/create cv)
           (expecting-error expected-res (ui/create cv-filter))))
       
-      [[(random-ascii-string 256) (common/errtype ::notifications/filter-name-too-long)]
+      [[(random-ascii-string 256) (common/errtype ::notifications/name-too-long)]
        [(random-ascii-string 255) #(-> % :type (= :success))]
        ["" (common/errtype ::notifications/name-cant-be-blank)]])
     
@@ -391,6 +392,7 @@
 
     (deftest "Edit a content view definition"
       :uuid "f8de7fae-2cdf-4854-4793-50c33371e491"
+      :blockers (bz-bugs "988359")
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-definition (kt/newContentView {:name "auto-view-definition"
                                                            :description "new description"
