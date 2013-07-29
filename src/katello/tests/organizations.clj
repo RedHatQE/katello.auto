@@ -11,6 +11,7 @@
                      [manifest :as manifest]
                      [notifications :as notification]
                      [organizations :as organization]
+                     [content-view-definitions :as views]
                      [environments :as environment]
                      [sync-management :as sync]
                      [redhat-repositories :as rh-repos]
@@ -197,19 +198,28 @@
               envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
               repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
               products (->> (map :reposet repos) (map :product) distinct)
-              target-env (first envz)]
+              target-env (first envz)
+              cv         (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentView uniqueify)
+              cs         (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
           (manifest/setup-org envz repos)
           (sync/verify-all-repos-synced repos)
-          (-> {:name "cs-manifest" :content products :env target-env} 
-              katello/newChangeset uniqueify changeset/promote-delete-content)
+          (ui/create cv)
+          (ui/update cv assoc :products products)
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org}) 
+          (changeset/promote-delete-content cs)
           (provision/with-queued-client
             ssh-conn
             (client/register ssh-conn {:username (:name conf/*session-user*)
                                        :password (:password conf/*session-user*)
                                        :org (:name org)
-                                       :env (:name (first envz))
+                                       :env (:name target-env)
                                        :force true})
-            (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (first envz)}
+            (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
                              katello/newSystem)]
               (doseq [prd1 products]
                 (client/subscribe ssh-conn (system/pool-id mysys prd1)))

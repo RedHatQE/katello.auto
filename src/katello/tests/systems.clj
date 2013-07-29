@@ -17,6 +17,7 @@
                      [ui-common :as common]
                      [changesets :as changeset]
                      [redhat-repositories :as rh-repos]
+                     [content-view-definitions :as views]
                      [tasks :refer :all]
                      [systems :as system]
                      [gpg-keys :as gpg-key]
@@ -573,36 +574,41 @@
               envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
               repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
               products (->> (map :reposet repos) (map :product) distinct)
-              target-env (first envz)]
+              target-env (first envz)
+              cv         (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentView uniqueify)
+              cs         (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
           (manifest/setup-org envz repos)
           (sync/verify-all-repos-synced repos)
-          (-> {:name "cs-manifest" :content products :env target-env} 
-              katello/newChangeset uniqueify changeset/promote-delete-content)
+          (ui/create cv)
+          (ui/update cv assoc :products products)
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org}) 
+          (changeset/promote-delete-content cs)
           (provision/with-queued-client
             ssh-conn
              (client/register ssh-conn {:username (:name *session-user*)
                                         :password (:password *session-user*)
                                         :org (:name org)
-                                        :env (:name (first envz))
+                                        :env (:name target-env)
                                         :force true})
              (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
                              katello/newSystem)
-                   deletion-changeset (-> {:name "deletion-cs"
-                                           :content (distinct (map :product (list repos)))
-                                           :env target-env
-                                           :deletion? true}
+                   deletion-changeset (-> {:name "deletion-cs" :content (list cv)
+                                           :env target-env :deletion? true}
                                           katello/newChangeset
                                           uniqueify)]
                (doseq [prd1 products]
                  (client/subscribe ssh-conn (system/pool-id mysys prd1)))
                (client/sm-cmd ssh-conn :refresh)
                (client/run-cmd ssh-conn "yum repolist") 
-               (let [cmd    (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
-                     result (client/run-cmd ssh-conn cmd)]
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
                  (assert/is (->> result :exit-code (= 0))))
                (changeset/promote-delete-content deletion-changeset)
                (client/sm-cmd ssh-conn :refresh)
                (client/run-cmd ssh-conn "yum repolist") 
-               (let [cmd    (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
-                     result (client/run-cmd ssh-conn cmd)]
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
                  (assert/is (->> result :exit-code (= 1)))))))))
