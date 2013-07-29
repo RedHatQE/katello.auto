@@ -159,12 +159,13 @@
                        ::publish-description-text description}
                       ::publish-new)
   (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
-     (case current-status
-       "" current-status 
-       "Refresh Failed" (throw+ {:type :publish-failed
-                                 :published-name published-name})
-       (do
-         (recur (browser getText (status published-name))))))
+                         (case current-status
+                           "" current-status 
+                           "Refresh Failed" (throw+ {:type :publish-failed
+                                                     :published-name published-name})
+                           (do
+                             (Thread/sleep 2000)
+                             (recur (browser getText (status published-name))))))
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
 (defn add-filter
