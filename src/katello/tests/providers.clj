@@ -10,6 +10,7 @@
                      [tasks           :refer :all]
                      [ui-common       :as common]
                      [organizations   :as organization]
+                     [content-view-definitions :as views]
                      [environments   :as env]
                      [sync-management :as sync]
                      [repositories    :as repo]
@@ -151,14 +152,22 @@
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
                        uniqueify)
-            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
-            repo2  (fresh-repo conf/*session-org* (-> fake/custom-provider first :products first :repos first :url))
-            prd1   (kt/product repo1)
-            prd2   (kt/product repo2)
+            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")           
+            prd1   (kt/product repo1)         
             prv1   (kt/provider repo1)
-            prv2   (kt/provider repo2)]
-        (ui/create-all (list gpgkey prv1 prv2 prd1 prd2 repo1 repo2))
-        (changeset/sync-and-promote (list repo1) test-environment)
+            cv (-> {:name "content-view" :org conf/*session-org* :published-name "publish-name"}
+                             kt/newContentView uniqueify)
+            cs (-> {:name "cs" :env test-environment :content (list cv)}
+                             kt/newChangeset uniqueify)]
+        (ui/create-all (list gpgkey prv1 prd1 repo1 cv))       
+        (ui/update cv assoc :products (list prd1)
+        (views/publish {:content-defn cv
+                        :published-name (:published-name cv)
+                        :description "test pub"
+                        :org conf/*session-org*})
+        (sync/perform-sync (list repo1))
+        (sync/verify-all-repos-synced (list repo1))
+        (changeset/promote-delete-content cs)
         (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
@@ -169,13 +178,13 @@
           (let [mysys              (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                                        katello/newSystem)
                 deletion-changeset (-> {:name "deletion-cs"
-                                        :content (distinct (map :product (list repo1)))
+                                        :content (list cv)
                                         :env test-environment
                                         :deletion? true}
                                        katello/newChangeset
                                        uniqueify)
                 promotion-changeset (-> {:name "re-promotion-cs"
-                                         :content (distinct (map :product (list repo1)))
+                                         :content (list cv)
                                          :env test-environment}
                                         katello/newChangeset
                                         uniqueify)]
@@ -195,7 +204,7 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0))))))))))
+              (assert/is (->> result :exit-code (= 0)))))))))))
 
 
 #_(defgroup package-filter-tests

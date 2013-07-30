@@ -10,6 +10,7 @@
                      [organizations   :as organization]
                      [manifest        :as manifest]
                      [subscriptions   :as subscriptions]
+                     [content-view-definitions :as views]
                      [repositories    :as repo]
                      [changesets      :as changesets]
                      [systems         :as system]
@@ -93,19 +94,28 @@
           repos (describe-repos-to-enable-disable fake-repos)
           products (->> (map :reposet repos) (map :product) distinct)
           target-env (first envz)
-          rel-ver "1.1"]
+          rel-ver "1.1"
+          cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentView uniqueify)
+          cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
       (sync/verify-all-repos-synced repos)
-      (-> {:name "cs-manifest" :content products :env target-env} 
-          katello/newChangeset uniqueify changesets/promote-delete-content)
+      (ui/create cv)
+      (ui/update cv assoc :products products)
+      (views/publish {:content-defn cv
+                      :published-name (:published-name cv)
+                      :description "test pub"
+                      :org org})
+      (changesets/promote-delete-content cs)
       (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
                                      :password (:password conf/*session-user*)
                                      :org (:name org)
-                                     :env (:name (first envz))
+                                     :env (:name target-env)
                                      :force true})
-          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (first envz)}
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
                           katello/newSystem)]
             (doseq [prd1 products]
               (client/subscribe ssh-conn (system/pool-id mysys prd1)))
@@ -124,11 +134,20 @@
           repos (describe-repos-to-enable-disable fake-repos)
           products (->> (map :reposet repos) (map :product) distinct)
           package-to-install "cow"
-          target-env (first envz)]
+          target-env (first envz)
+          cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentView uniqueify)
+          cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
       (sync/verify-all-repos-synced repos)
-      (-> {:name "cs-manifest" :content products :env target-env} 
-          katello/newChangeset uniqueify changesets/promote-delete-content)
+      (ui/create cv)
+      (ui/update cv assoc :products products)
+      (views/publish {:content-defn cv
+                      :published-name (:published-name cv)
+                      :description "test pub"
+                      :org org})
+      (changesets/promote-delete-content cs)
       (e2e/test-client-access target-env products [package-to-install])))) 
     
 (defgroup redhat-content-provider-tests 
