@@ -2,6 +2,7 @@
   (:require (katello [conf :as conf]
                      [ui :as ui])
             [ui.navigate :as nav]
+            [slingshot.slingshot :refer [throw+ try+]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
 (defn environment-breadcrumb
