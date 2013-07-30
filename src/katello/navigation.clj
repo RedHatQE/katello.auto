@@ -2,6 +2,7 @@
   (:require (katello [conf :as conf]
                      [ui :as ui])
             [ui.navigate :as nav]
+            [slingshot.slingshot :refer [throw+ try+]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
 
 (defn environment-breadcrumb
@@ -39,10 +40,18 @@
   "Scroll the left pane down until (side-effecty) no-arg function f
    returns truthy, or the end of the list is hit."
   [f]
-  (while (and (< (ui/current-items) (ui/total-items))
-              (not (f)))
-    ;;scroll to bottom of page to load more items
-    (scroll-left-pane-more)))
+  (loop [prev-current -1]
+    (let [current-items (ui/current-items)]
+      (cond (= current-items prev-current)
+            (throw+ {:type ::infinite-scroll-failed
+                     :msg "Infinite scroll failed to load more items"})
+
+            (and (< current-items (ui/total-items))
+                 (not (f)))
+            (do (scroll-left-pane-more)
+                (recur current-items))
+
+            :else nil))))
 
 (defn scroll-to-left-pane-item [ent]
   (scroll-left-pane-until #(browser isElementPresent (left-pane-item (:name ent)))))
