@@ -13,10 +13,11 @@
 ;; Locators
 
 (ui/defelements :katello.deployment/any [katello.ui]
-  {::repo-name-text         "repo[name]"
-   ::repo-label-text        "repo[label]"
-   ::repo-url-text          "repo[feed]"
+  {::repo-name-text         {:name "repo[name]"}
+   ::repo-label-text        {:name "repo[label]"}
+   ::repo-url-text          {:name "repo[feed]"}
    ::save-repository        "//input[@value='Create']"
+   ::create                 {:name "commit"}
    ::remove-repository      (ui/link "Remove Repository")
    ::repo-gpg-select        "//select[@id='repo_gpg_key']"
    ::update-repo-gpg-select "//select[@name='gpg_key']"
@@ -53,7 +54,9 @@
   (browser/click (add-repo-link (:name product)))
   (when gpg-key (browser/select ::repo-gpg-select (:name gpg-key)))
   (browser/quick-fill-submit {::repo-name-text name}
-                             {::repo-url-text url})
+                             {::repo-name-text "\t"}
+                             {::repo-url-text url}
+                             {::save-repository browser/click})
   (notification/success-type :repo-create))
 
 (defn- update

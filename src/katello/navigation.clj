@@ -23,8 +23,8 @@
       #_(when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]
-  (browser/quick-fill {::ui/search-bar search-term}
-                      {::ui/search-submit (constantly nil)}))
+  (browser/quick-fill-submit {::ui/search-bar search-term}
+                             {::ui/search-submit browser/click}))
 
 (def ^{:doc "Returns a selenium locator for an item in a left pane
              list (by the name of the item) - truncate to 32 chars to
@@ -48,6 +48,10 @@
 
 (defn scroll-to-left-pane-item [ent]
   (scroll-left-pane-until #(browser/exists? (left-pane-item (:name ent)))))
+
+(defn scroll-org-switcher
+  []
+  (browser/execute-script "$('#allowed-orgs').data('jsp').scrollByY(200);"))
 
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a
@@ -142,4 +146,6 @@
      (go-to ::top-level)
      (when-not (= name (current-org))
        (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       (while (not (browser/visible? (ui/switcher-link name)))
+         (scroll-org-switcher))
        (browser/click (ui/switcher-link name)))))

@@ -1,6 +1,5 @@
 (ns katello.ui
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel]
-            [katello.rest :as rest]
+  (:require [katello.rest :as rest]
             [webdriver :as wd]
             [clj-webdriver.taxi :as browser])
   (:refer-clojure :exclude [read]))
@@ -115,7 +114,8 @@
    ;; use index, no other identifiable info in the DOM
    ::confirmation-yes        "//button/span[normalize-space(.)='Yes']"
    ::confirmation-no         "//button/span[normalize-space(.)='No']"
-
+   ::commit                  {:name "commit"}
+   
    ::switcher                "organizationSwitcher"
    ::active-org              "//a[contains(@class,'organization-name')]"
    ::manage-orgs             "//li[@id='manage_orgs']//span[contains(.,'Manage Organizations')]"

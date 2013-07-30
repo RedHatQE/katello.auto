@@ -7,7 +7,8 @@
                      [notifications :as notification]
                      [conf :refer [config]]
                      [tasks :as tasks])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]])
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd])
   (:refer-clojure :exclude [remove]))
 
 ;; Locators
@@ -21,7 +22,7 @@
    ::new              "new"
    ::remove-link      (ui/remove-link "gpg_keys")})
 
-(sel/template-fns
+(wd/template-fns
  {gpgkey-product-association  "//ul[contains (@class,'bordered-table')]/div[contains (.,'%s')]"})
 
 ;; Nav
@@ -39,12 +40,12 @@
   (assert (string? name))
   (nav/go-to ::new-page org)
   (if url
-    (sel/->browser (setText ::name-text name)
-                   (attachFile ::file-upload-text url)
+    (wd/->browser (input-text ::name-text name)
+                   #_(attachFile ::file-upload-text url) ;;TODO: uh oh. need to figure out how to do with with webdriver
                    (click ::upload-button))
-    (sel/fill-ajax-form {::name-text name
-                         ::content-text contents}
-                        ::save))
+    (browser/quick-fill-submit {::name-text name}
+                               {::content-text contents}
+                               {::save browser/click}))
   (notification/success-type :gpg-keys-create))
 
 
@@ -52,8 +53,8 @@
   "Deletes existing GPG keys"
   [gpg-key]
   (nav/go-to gpg-key)
-  (browser click ::remove-link )
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove-link )
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :gpg-keys-destroy))
 
 (extend katello.GPGKey

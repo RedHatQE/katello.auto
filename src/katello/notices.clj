@@ -1,5 +1,5 @@
 (ns katello.notices
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]] 
+  (:require [clj-webdriver.taxi :as browser]
             [katello :as kt]
             [clojure.zip :as zip]
             (katello [navigation  :refer [browser-fn] :as nav]

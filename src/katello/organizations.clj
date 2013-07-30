@@ -32,6 +32,7 @@
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
    ;; System Default Info
+   ::default-custom-info      (ui/third-level-link "organization_default")
    ::system-default-info      (ui/third-level-link "org_system_default_info")
    ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
    ::keyname-text             "new_default_info_keyname"
@@ -52,17 +53,6 @@
     [::distributor-default-info-page (nav/browser-fn (click ::distributor-default-info))]]])
 
 ;; Tasks
-
-;; TODO: figure out how label-filling works with webdriver
-#_(defn label-filler
-  "Fills in the label field which has special js sauce that prevents
-   it from being writable unless the name field has been blurred."
-  [name-loc label-loc label-text]
-  (when label-text
-    (wd/->browser (fireEvent name-loc "blur")
-                  (ajaxWait)
-                  (setText label-loc "")
-                  (setText label-loc label-text))))
 
 (defn isKeynamePresent?
   "Checks whether a keyname is present in the organization's custom fields."
@@ -98,16 +88,23 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (Thread/sleep 1000)
-  (browser/quick-fill-submit {::name-text name}
-                             {::description-text browser/click}
-                             {::description-text (or description "")}
-                             {::label-text (or label "")}
+  (browser/quick-fill-submit {::name-text browser/focus}
+                             {::name-text name}
+                             {::name-text "\t"} ;; tab to trigger the label-filling ajax call
+                             {::description-text (or description "")})
+  (if ::label-text
+    (do
+      (browser/clear ::label-text)
+      (browser/input-text ::label-text label)))
+  (browser/quick-fill-submit {::initial-env-name-text browser/focus}
                              {::initial-env-name-text (or (:name initial-env) "")}
-                             {::initial-env-desc-text browser/click}
-                             {::initial-env-desc-text (or (:description initial-env) "")}
-                             {::initial-env-label-text (or (:label initial-env) "")}
-                             {::create browser/click})
+                             {::initial-env-name-text "\t"}
+                             {::initial-env-desc-text (or (:description initial-env) "")})
+  (if ::initial-env-label-text
+    (do
+      (browser/clear ::initial-env-label-text)
+      (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
+  (browser/click ::create)
   (notification/success-type :org-create))
 
 (defn- delete
@@ -181,7 +178,6 @@
                default-org
                (not= (nav/current-org) name)) 
        (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
-       #_(browser ajaxWait)
        (when default-org
          (let [default-org-name (when (not= default-org :none)
                                   (or (:name default-org)

@@ -19,7 +19,8 @@
                                               enable-redhat-repos]]
                      [conf :as conf]
                      [blockers        :refer [bz-bugs]])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello.client.provision :as provision]
             [test.tree.script :refer [defgroup deftest]]
             [katello.tests.e2e :as e2e]
@@ -71,7 +72,7 @@
   (every? true? (for [subscription [:rhel :hpn :cloud-forms :hcn
                                     :open-shift :cloud-providers
                                     :rhev :jboss :scalable-hcn]]
-                  (browser isElementPresent (subscriptions/subs-exists (map subscription))))))
+                  (browser/exists? (subscriptions/subs-exists (map subscription))))))
   
 
 ;; Tests

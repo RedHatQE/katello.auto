@@ -14,9 +14,9 @@
 
 (ui/defelements :katello.deployment/any [katello.ui]
        {::new                       "new"
-        ::name-text                 "provider[name]"
-        ::provider-description-text "provider[description]"
-        ::repository-url-text       "provider[repository_url]"
+        ::name-text                 {:name "provider[name]"}
+        ::provider-description-text {:name "provider[description]"}
+        ::repository-url-text       {:name "provider[repository_url]"}
         ::discovery-url-text        "discover_url"
         ::discover-button           "//input[@value='Discover']"
 
@@ -69,10 +69,9 @@
   [{:keys [name description org]}]
   {:pre [(instance? katello.Organization org)]} 
   (nav/go-to ::new-page org)
-  ;;TODO: fix fill form
-  #_(sel/fill-ajax-form {::name-text name
-                       ::provider-description-text description}
-                      ::create-save)
+  (browser/quick-fill-submit {::name-text (or name "")}
+                             {::provider-description-text (or description "")}
+                             {::create-save browser/click})
   (notification/success-type :prov-create))
 
 (defn- add-product
@@ -83,10 +82,9 @@
   (nav/go-to ::products-page provider)
   (browser/click ::add-product)
   (when gpg-key (browser/select ::prd-gpg-select gpg-key))
-  ;;TODO: fix fill form
-  #_(sel/fill-ajax-form {::product-name-text name
-                       ::product-description-text description}
-                      ::create-product)
+  (browser/quick-fill-submit {::product-name-text (or name "")}
+                             {::product-description-text (or description "")}
+                             {::create-product browser/click})
   (notification/success-type :prod-create))
 
 (defn- update-product
@@ -137,8 +135,8 @@
   new-prod - creates a new product instead of adding repos to an existing one"
   [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
   (nav/go-to ::repo-discovery-page product)
-  ;; TODO: fix fill form
-  #_(sel/fill-ajax-form {::discovery-url-text discoverable-url} ::discover-button)
+  (browser/quick-fill-submit {::discovery-url-text discoverable-url}
+                             {::discover-button browser/click})
   (if cancel
     (do
       (Thread/sleep 3000)

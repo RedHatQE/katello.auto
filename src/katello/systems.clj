@@ -1,5 +1,7 @@
 (ns katello.systems
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]
+  (:require [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
+            [clj-webdriver.core :as action]
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
             [slingshot.slingshot :refer [throw+]]
@@ -16,7 +18,7 @@
 
 ;; Locators
 
-(sel/template-fns
+(wd/template-fns
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
@@ -33,12 +35,12 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                         "new"
-   ::create                      "commit"
-   ::name-text                   "system[name]"
-   ::sockets-text                "system[sockets]"
-   ::arch-select                 "arch[arch_id]"
+   ::create                      {:name "commit"}
+   ::name-text                   {:name "system[name]"}
+   ::sockets-text                {:name "system[sockets]"}
+   ::arch-select                 {:name "arch[arch_id]"}
    ::system-virtual-type         "system_type_virtualized_virtual"
-   ::content-view-select         "system[content_view_id]"
+   ::content-view-select         {:name "system[content_view_id]"}
    ::expand-env-widget           "path-collapsed"
    ::remove                      (ui/link "Remove System")
    ::multi-remove                (ui/link "Remove System(s)")
@@ -49,7 +51,7 @@
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    ::interface-addr              "//td[@class='interface_name' and contains(., 'eth')]//following-sibling::td"
-   ::system-groups               (ui/third-level-link "systems_system_groups")
+   ::system-groups               {:xpath (ui/third-level-link "systems_system_groups")}
    ::add-group-form              "//form[@id='add_group_form']/button"
    ::add-group                    "//input[@id='add_groups']"
 
@@ -72,8 +74,8 @@
    ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
 
    ;;system-edit details
-   ::details                     (ui/third-level-link "general")
-   ::name-text-edit              "system[name]"
+   ::details                     {:xpath (ui/third-level-link "general")}
+   ::name-text-edit              {:name "system[name]"}
    ::description-text-edit       "system[description]"
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
@@ -122,7 +124,7 @@
      [::facts-page (nav/browser-fn (click ::facts))]
      [::custom-info-page (nav/browser-fn (click ::custom-info))]]
     [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
-    [::content-menu (nav/browser-fn (mouseOver ::content-link))
+    [::content-menu (nav/browser-fn (click ::content-link))
      [::content-software-page (nav/browser-fn (click ::software-link))]
      [::content-packages-page (nav/browser-fn (click ::packages-link))]
      [::content-errata-page (nav/browser-fn (click ::errata-link))]]]]
@@ -136,45 +138,43 @@
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page (:org env))
-  (sel/fill-ajax-form [::name-text name
-                       ::arch-select (or system-arch "x86_64")
-                       ::sockets-text sockets
-                       ::ram-mb-text ram-mb
-                       (fn [v] (when v
-                                 (browser click ::system-virtual-type))) [virtual?]
-                       (fn [env]
-                         (when env (nav/select-environment-widget env))) [env]]
-                      ::create)
+  (browser/quick-fill-submit {::name-text name}
+                             {::arch-select (or system-arch "x86_64")}
+                             {::sockets-text sockets}
+                             {::ram-mb-text ram-mb}
+                             {::system-virtual-type (when virtual? browser/click)}) 
+  (when env (nav/select-environment-widget env))
+  (browser/click ::create)
   (notification/success-type :sys-create))
 
 (defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
-  (browser click ::remove)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :sys-destroy))
 
 (defn- select-multisys-with-ctrl 
   [systems]
   (nav/go-to ::page (first systems))
-  (browser controlKeyDown)
+  (action/key-down browser/*driver* :ctrl)
   (doseq [system systems]
     (nav/scroll-to-left-pane-item system)
     (nav/choose-left-pane system))
-  (browser controlKeyUp))
+  (action/key-up browser/*driver* :ctrl))  
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
   (select-multisys-with-ctrl systems)
-  (browser click ::multi-remove)
-  (browser click ::confirm-yes)
+  (browser/click ::multi-remove)
+  (browser/click ::confirm-yes)
   (notification/success-type :sys-bulk-destroy))
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
   [systems group] 
   (select-multisys-with-ctrl systems)
-  (->browser (click ::select-sysgrp)
+  (wd/->browser (click ::select-sysgrp)
              (click (-> group :name sysgroup-checkbox))
              (click ::add-sysgrp)
              (click ::confirm-to-yes))
@@ -184,12 +184,12 @@
   "Adding sys to sysgroup from right pane"
   [system group-name]
   (nav/go-to system)
-  (browser click ::system-groups)
-  (browser click ::add-group-form)
-  (if (browser isElementPresent (select-sysgroup-checkbox group-name))
+  (browser/click ::system-groups)
+  (browser/click ::add-group-form)
+  (if (browser/exists?  (select-sysgroup-checkbox group-name))
     (do
-      (browser click (select-sysgroup-checkbox group-name))
-      (browser click ::add-group)
+      (browser/click (select-sysgroup-checkbox group-name))
+      (browser/click ::add-group)
       (notification/success-type :sys-add-sysgrps))
     (throw+ {:type ::selected-sys-group-is-unavailable 
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
@@ -197,9 +197,9 @@
 (defn- set-environment "select a new environment for a system"
   [new-environment]
   {:pre [(not-empty new-environment)]} 
-  (sel/->browser (click ::environment)
-                 (check (environment-checkbox new-environment))
-                 (click ::save-environment)))
+  (wd/->browser (click ::environment)
+                (click (environment-checkbox new-environment))
+                (click ::save-environment)))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -211,8 +211,8 @@
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
-                           (browser check (checkbox-fn (:name item))))
-                         (browser click submit)
+                           (browser/click (checkbox-fn (:name item))))
+                         (browser/click submit)
                          (notification/success-type :sys-update-subscriptions)))]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
@@ -225,11 +225,11 @@
         groups-to-add (:package-groups to-add)
         groups-to-remove (:package-groups to-remove)]
     (when (or packages-to-add packages-to-remove)
-      (let [x {}] (browser click ::packages-link))
+      (let [x {}] (browser/click ::packages-link))
       ))
   (let [ks (list :packages :package-groups)]
     (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (browser click ::packages-link))))
+      (browser/click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
@@ -238,17 +238,17 @@
                          ::release-version-select release-version}))
 
 (defn- update-custom-info [to-add to-remove]
-  (browser click ::custom-info)
+  (browser/click ::custom-info)
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (common/in-place-edit {(existing-key-value-field k) v}))
-      (do (browser setText ::key-name k)
-          (browser setText ::key-value v)
-          (browser keyUp ::key-name "w")
-          (browser click ::create-custom-info))))
+      (do (browser/input-text ::key-name k)
+          (browser/input-text ::key-value v)
+          #_(browser keyUp ::key-name "w") ;; TODO: composite actions fixme
+          (browser/click ::create-custom-info))))
   ;; process removes
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (browser click (remove-custom-info-button k))))
+    (browser/click (remove-custom-info-button k))))
 
 (defn- update
   "Edits the properties of the given system. Optionally specify a new
@@ -260,6 +260,7 @@
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
+      (wd/move-to browser/*driver* (browser/element ::name-text))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -272,7 +273,7 @@
             removed-products (:products to-remove) ]
         (when (some #(not (nil? %)) (list added-products removed-products
                                           service-level auto-attach))
-          (browser click ::subscriptions)
+          (browser/click ::subscriptions)
           (subscribe added-products removed-products)
           (when (some #(not (nil? %)) (list service-level auto-attach))
             (common/in-place-edit {::service-level-select (format "Auto-attach %s, %s"
@@ -394,12 +395,12 @@
 (defn environment "Get name of current environment of the system"
   [system]
   (nav/go-to ::details-page system)
-  (browser getText ::environment))
+  (browser/text ::environment))
 
 (defn get-ip-addr
   [system]
   (nav/go-to ::details-page system)
-  (browser getText ::interface-addr))
+  (browser/text ::interface-addr))
 
 (defn get-details [system]
   (nav/go-to ::details-page system)
@@ -409,7 +410,7 @@
                  "System Type" "Host"]]
     (zipmap details
             (doall (for [detail details]
-                     (browser getText (system-detail-textbox detail)))))))
+                     (browser/text (system-detail-textbox detail)))))))
 
 (defn get-facts [system]
   (nav/go-to ::facts-page system)
@@ -424,7 +425,7 @@
                "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
     (zipmap facts
             (doall (for [fact facts]
-                     (browser getText (system-fact-textbox fact)))))))
+                     (browser/text (system-fact-textbox fact)))))))
 
 (defn expand-collapse-facts-group
   [system]
@@ -432,10 +433,10 @@
   (nav/go-to ::facts-page system)
   (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
     (doseq [group groups] ;;To expand
-      (when (browser isElementPresent (system-fact-group-expand group))
-        (browser click (system-fact-group-expand group))))
+      (when (browser/exists?  (system-fact-group-expand group))
+        (browser/click (system-fact-group-expand group))))
     (doseq [group groups] ;;To collapse
-      (browser click (system-fact-group-expand group)))))
+      (browser/click (system-fact-group-expand group)))))
 
 
 (defn add-package "Add a package or package group to a system."
@@ -444,13 +445,13 @@
   (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
                                         [package-group "Add Package Group Complete" true]]]
     (when items
-      (when is-group? (browser click ::select-package-group))
-      (sel/->browser (setText ::package-name items)
-                     (typeKeys ::package-name items)
-                     (click ::add-content))
+      (when is-group? (browser/click ::select-package-group))
+      (wd/->browser (input-text ::package-name items)
+                    (send-keys ::package-name items)
+                    (click ::add-content))
       (Thread/sleep 50000)
       (when-not (= exp-status
-                   (browser getText ::pkg-install-status))
+                   (browser/text ::pkg-install-status))
         (throw+ {:type ::package-install-failed :msg "Add Package Error"})))))
 
 
@@ -460,13 +461,13 @@
   (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
                                         [package-group "Remove Package Group Complete" true]]]
     (when items
-      (when is-group? (browser click ::select-package-group))
-      (sel/->browser (setText ::package-name items)
-                     (typeKeys ::package-name items)
-                     (click ::remove-content))
+      (when is-group? (browser/click ::select-package-group))
+      (wd/->browser (input-text ::package-name items)
+                    (send-keys ::package-name items)
+                    (click ::remove-content))
       (Thread/sleep 50000)
       (assert/is (= exp-status
-                    (browser getText ::pkg-install-status))))))
+                    (browser/text ::pkg-install-status))))))
 
 
 

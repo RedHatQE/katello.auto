@@ -19,7 +19,8 @@
             [katello :as kt]
             [katello.client.provision :as provision]
             [test.assert :as assert]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
             [katello :refer [newOrganization newProvider newProduct newRepository newContentView]]
@@ -177,7 +178,7 @@
         (views/publish {:content-defn content-def 
                         :published-name (:published-name content-def)
                         :org *session-org*})
-        (let [{:strs [href]} (browser getAttributes (views/publish-view-name (:published-name content-def)))]
+        (let [href (browser/attribute (views/publish-view-name (:published-name content-def)) :href)]
           (assert (and (.startsWith href "/katello/content_search")
                        (.contains href (:published-name content-def)))))))
     
@@ -274,7 +275,7 @@
                                        :content-view cv})]
           (ui/create ak)
           (assert/is (= (:name (kt/product repo))
-                        (browser getText ::views/product-in-cv))))))
+                        (browser/text ::views/product-in-cv))))))
     
     (deftest "Promote content-view containing two published-views"
       :uuid "0151b513-6248-7e04-97eb-1bb43c81b592"
@@ -407,7 +408,7 @@
                                                         :composite-names (list cv1)})]
             (ui/create composite-view)
             (nav/go-to ::views/content-page composite-view)
-            (assert/is (not (browser isChecked (views/composite-view-name (:published-name cv2)))))
+            (assert/is (not (browser/selected? (views/composite-view-name (:published-name cv2)))))
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
      
     (deftest "Consume content from composite content view definition"

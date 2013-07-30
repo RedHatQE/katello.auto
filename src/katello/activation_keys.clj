@@ -7,16 +7,18 @@
                      [rest :as rest]
                      [tasks :refer [when-some-let] :as tasks])
             [clojure.data :as data]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]))
 
 ;; Locators
 
 (ui/defelements :katello.deployment/any []
   {::new                     "new"
-   ::name-text               "activation_key[name]"
-   ::description-text        "activation_key[description]"
-   ::content-view-select     "activation_key[content_view_id]"
+   ::name-text               {:name "activation_key[name]"}
+   ::description-text        {:name "activation_key[description]"}
+   ::content-view-select     {:name "activation_key[content_view_id]"}
    ::save                    "save_key"
+   ::create                  {:name "commit"}
    ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
    ::add-sys-group-form      "//form[@id='add_group_form']/button"
    ::add-sys-group           "//input[@id='add_groups']"
@@ -25,9 +27,9 @@
    ::available-subscriptions (ui/third-level-link "available_subscriptions")
    ::add-subscriptions       "//input[@id='subscription_submit_button']"            
    ::remove-link             (ui/remove-link "activation_keys")
-   ::release-version-text    "system[releaseVer]"})
+   ::release-version-text    {:name "system[releaseVer]"}})
 
-(sel/template-fns
+(wd/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   sysgroup-checkbox "//input[@title='%s']"
   applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
@@ -37,7 +39,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
-    [::system-group-menu (nav/browser-fn (mouseOver ::system-groups))
+    [::system-group-menu (nav/browser-fn (click ::system-groups)) ;; change this back to mouseover when possible
      [::system-group-page (nav/browser-fn (click ::system-group-select))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
@@ -48,28 +50,28 @@
    optional."
   [{:keys [name description content-view env] :as ak}]
   (nav/go-to ::new-page ak)
-  (browser click (ui/environment-link (:name env)))
-  (sel/fill-ajax-form {::name-text name
-                       ::description-text description
-                       ::content-view-select (:published-name content-view)}
-                      ::save)
+  (browser/click (ui/environment-link (:name env)))
+  (browser/quick-fill-submit {::name-text (or name "")}
+                             {::description-text (or description "")}
+                             {::content-view-select (or (:published-name content-view) "")}
+                             {::create browser/click})
   (notification/success-type :ak-create))
 
 (defn- delete
   "Deletes the given activation key."
   [ak]
   (nav/go-to ak)
-  (browser click ::remove-link)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove-link)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :ak-destroy))
 
 (defn- add-subscriptions
   "Add subscriptions to activation key."
   [subscriptions]
-  (browser click ::available-subscriptions)
+  (browser/click ::available-subscriptions)
   (doseq [subscription subscriptions]
-    (browser click (subscription-checkbox subscription)))
-  (browser click ::add-subscriptions)
+    (browser/click (subscription-checkbox subscription)))
+  (browser/click ::add-subscriptions)
   (notification/success-type :ak-add-subscriptions))
 
 (defn- remove-subscriptions [subscriptions]
@@ -78,16 +80,16 @@
 (defn- associate-system-group
   "Asscociate activation key to selected sytem group"
   [sg]
-  (->browser (click ::system-group-select)
-             (click ::add-sys-group-form)
-             (click (sysgroup-checkbox (:name sg)))
-             (click ::add-sys-group))
+  (wd/->browser (click ::system-group-select)
+                (click ::add-sys-group-form)
+                (click (sysgroup-checkbox (:name sg)))
+                (click ::add-sys-group))
   (notification/success-type :ak-add-sysgrps))
 
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [ak]
   (nav/go-to ak)
-  (browser click ::applied-subscriptions)
+  (browser/click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))
 
 (defn- update [ak updated]
@@ -101,9 +103,9 @@
       (when-some-let [cv (:content-view add)
                       env (:env add)]
                      
-                     (sel/fill-ajax-form {::content-view-select cv
-                                          nav/select-environment-widget env}
-                                         ::save))
+                     (browser/quick-fill-submit {::content-view-select cv}
+                                                {nav/select-environment-widget env}
+                                                {::save browser/click}))
       (when-let [sg (:system-group add)]
         (associate-system-group sg))
       (when-let [subs (:subscriptions add)]

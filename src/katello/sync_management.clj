@@ -22,11 +22,13 @@
    ::plan-date-text        "sync_plan[plan_date]"
    ::plan-time-text        "sync_plan[plan_time]"
    ::save-plan             "plan_save"
+   ::expand-all-products   {:css "a#expand_all"}
    ::synchronize-now       "sync_button"})
 
 (wd/template-fns
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
+  provider-expander "//table[@id='products_table']//td[normalize-space(.)='%s']"
   provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
   plan-link         "//div[@id='plans']//div[normalize-space(.)='%s']"
   schedule-item     "//div[@panel_id='products' and child::div[normalize-space(.)='%s']]"})
@@ -135,6 +137,7 @@
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
   (nav/go-to ::status-page (first repos))
+  (browser/click ::expand-all-products)
   (doseq [repo repos]
     (browser/click (provider-checkbox (:name repo))))
   (browser/click ::synchronize-now)

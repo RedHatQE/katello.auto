@@ -1,5 +1,6 @@
 (ns katello.distributors
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+  (:require [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello :as kt]
             [clojure.data :as data]
             (katello [ui :as ui]
@@ -14,8 +15,8 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                   "new"
-   ::create                "commit"
-   ::distributor-name-text "distributor[name]"
+   ::create                {:name "commit"}
+   ::distributor-name-text {:name "distributor[name]"}
    ::details-link          "distributor_details"
    ::keyname-text          "new_custom_info_keyname"
    ::value-text            "new_custom_info_value"
@@ -27,7 +28,7 @@
    ::save-button           "//button[@type='submit']"
    ::cancel-button         "//button[@type='cancel']"})
 
-(sel/template-fns
+(wd/template-fns
  {value-text                   "custom_info[%s]"
   remove-custom-info-button    "//input[@data-id='custom_info_%s']"})
 
@@ -36,7 +37,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (nav/browser-fn (mouseOver ::details-link))
+    [::details-menu (nav/browser-fn (click ::details-link)) ;; TODO: make me a mouseover
      [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
      [::events-history-page (nav/browser-fn (click ::events-history-link))]
      [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
@@ -49,9 +50,9 @@
   [{:keys [name env]}]
   {:pre [(instance? katello.Environment env)]}
   (nav/go-to ::new-page env)
-  (browser click (ui/environment-link (:name env)))
-  (sel/fill-ajax-form {::distributor-name-text name}
-                      ::create)
+  (browser/click (ui/environment-link (:name env)))
+  (browser/quick-fill-submit {::distributor-name-text name}
+                             {::create browser/click})
   (notification/success-type :distributor-create))
 
 (defn- update-dist-custom-info
@@ -60,14 +61,14 @@
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k))
       (do (common/in-place-edit {(value-text k) v}))
-      (do (sel/->browser 
-            (setText ::keyname-text k)
-            (setText ::value-text v)
-            (keyUp ::keyname-text "z")
-            (click ::custom-info-button))))) 
+      (do (wd/->browser 
+           (input-text ::keyname-text k)
+           (input-text ::value-text v)
+           #_(keyUp ::keyname-text "z") ;; TODO: replace with composite actions
+           (click ::custom-info-button))))) 
   ;; below dissoc required while updating, else will rm the just updated key/value
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (browser click (remove-custom-info-button k))))
+    (browser/click (remove-custom-info-button k))))
   
 
 (defn- delete
@@ -75,8 +76,8 @@
   [dist]
   {:pre [(instance? katello.Distributor dist)]}
   (nav/go-to dist)
-  (browser click ::remove-link)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove-link)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :distributor-destroy))
 
 (defn- update
@@ -115,7 +116,6 @@
   "Returns true if the new distributor button is disabled and the correct message is shown"
   [org]
   (nav/go-to ::new-page org)
-  (let [{:strs [original-title class]} (browser getAttributes ::new)]
-    (and (.contains class "disabled")
-         (.contains original-title "environment is required"))))
+  (and (.contains (browser/attribute ::new :class) "disabled")
+       (.contains (browser/attribute ::new "original-title") "environment is required")))
 

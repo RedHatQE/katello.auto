@@ -15,11 +15,10 @@
             [fn.trace :as trace]
             [clj-webdriver.taxi :as browser]
             [clj-webdriver.firefox :as ff]
-            [webdriver :as wd]
-            [com.redhat.qe.auto.selenium.selenium :refer :all])
+            [webdriver :as wd])
   (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
 
-(defn new-selenium
+#_(defn new-selenium
   "Returns a new selenium client. If running in a REPL or other
    single-session environment, set single-thread to true."
   [browser-string & [single-thread]]
@@ -47,9 +46,8 @@
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
   (browser/set-driver! (or browser-config-opts empty-browser-config))
   (browser/set-finder! wd/locator-finder-fn)
-  (browser/implicit-wait 1000)
+  (browser/implicit-wait 5000)
   (browser/to (@config :server-url))
-  ;;TODO: re-enable login function.
   (login))
 
 (defn switch-new-admin-user
@@ -66,7 +64,7 @@
 (defn stop-selenium []
    (browser/quit))
 
-(defn thread-runner
+#_(defn thread-runner
   "A test.tree thread runner function that binds some variables for
    each thread. Starts selenium client for each thread before kicking
    off tests, and stops it after all tests are done."
@@ -96,14 +94,15 @@
                  (selenium-server/stop)))
    :thread-runner thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
-              :screencapture (watch/on-fail
-                              (fn [t _] 
-                                (browser "screenCapture"
-                                         "screenshots"
-                                         (str 
-                                          (clojure.string/replace (:name t) #"[/\.,]" "-") 
-                                          (if (:parameters t)
-                                            (str "-" (System/currentTimeMillis))
-                                            "")
-                                          ".png")
-                                         false)))}})
+              ;; :screencapture
+              #_(watch/on-fail
+               (fn [t _] 
+                 (browser "screenCapture"
+                          "screenshots"
+                          (str 
+                           (clojure.string/replace (:name t) #"[/\.,]" "-") 
+                           (if (:parameters t)
+                             (str "-" (System/currentTimeMillis))
+                             "")
+                           ".png")
+                          false)))}})

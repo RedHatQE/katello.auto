@@ -10,7 +10,7 @@
                      [distributors :as distributor]
                      [blockers :refer [bz-bugs]])
             (test.tree [script :refer [defgroup deftest]])
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]
+            [clj-webdriver.taxi :as browser]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
 

@@ -4,7 +4,8 @@
   katello.manifest
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
@@ -167,14 +168,14 @@
    specify whether to force the upload."
   [{:keys [file-path url provider]}]
   (nav/go-to ::subs/new-page provider)
-  (when-not (browser isElementPresent ::subs/choose-file)
-    (browser click ::subs/new))
+  (when-not (browser/exists? ::subs/choose-file)
+    (browser/click ::subs/new))
   (when url
     (common/in-place-edit {::subs/repository-url-text url})
     (notification/success-type :prov-update))
-  (sel/fill-ajax-form {::subs/choose-file file-path}
-                       ::subs/upload-manifest)
-  (browser refresh)
+  (browser/quick-fill-submit {::subs/choose-file file-path}
+                             {::subs/upload-manifest browser/click})
+  (browser/refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
@@ -184,7 +185,7 @@
   "Returns true if after an manifest import the history is updated."
   [ent]
   (nav/go-to ::subs/import-history-page ent)
-  (browser isElementPresent ::subs/fetch-history-info))
+  (browser/exists? ::subs/fetch-history-info))
 
 
 (extend katello.Manifest

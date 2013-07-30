@@ -1,6 +1,7 @@
 (ns katello.content-view-definitions
   (:require [katello :as kt]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [clojure.data :as data]
             (katello [navigation :as nav]
                      [rest :as rest]
@@ -12,7 +13,7 @@
 
 ;; Locators
 
-(sel/template-fns
+(wd/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
@@ -79,52 +80,52 @@
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page org)
-  (sel/fill-ajax-form {::name-text name
-                       ::description-text description
-                       (fn [composite] 
-                         (when composite 
-                           (browser click ::composite)
-                           (doseq [composite-name composite-names]
-                             (browser click (composite-view-name (:published-name composite-name)))))) [composite]}
-                      ::save-new)
+  (browser/quick-fill-submit {::name-text name}
+                             {::description-text description}
+                             {(fn [composite] 
+                                 (when composite 
+                                   (browser/click ::composite)
+                                   (doseq [composite-name composite-names]
+                                     (browser/click (composite-view-name (:published-name composite-name)))))) [composite]}
+                             {::save-new browser/click})
   (notification/success-type :cv-create))
 
 (defn- add-repo
   "Add the given repository to content-view definition"
   [repos]
-  (browser click ::content-tab)
+  (browser/click ::content-tab)
   (doseq [repo repos]
-    (sel/->browser
-      (mouseUp (-> repo :name product-or-repository))
-      (click ::add-product-btn)
-      (click ::update-content))
+    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (wd/->browser
+     (click ::add-product-btn)
+     (click ::update-content))
     (notification/success-type :cv-update-content)))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
   [repos]
-  (browser click ::content-tab)
+  (browser/click ::content-tab)
   (doseq [repo repos]
-    (sel/->browser
-      (mouseUp (-> repo :name product-or-repository))
-      (click ::add-product-btn)
-      (click  (-> repo :name remove-repository))
-      (click ::update-content))
+    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (wd/->browser
+     (click ::add-product-btn)
+     (click  (-> repo :name remove-repository))
+     (click ::update-content))
     (notification/success-type :cv-update-content)))
   
 (defn publish
   "Publishes a Content View Definition"
   [{:keys [content-defn published-name description]}]
   (nav/go-to content-defn)
-  (browser click ::views-tab)
-  (browser click ::publish-button)
-  (sel/fill-ajax-form {::publish-name-text published-name
-                       ::publish-description-text description}
-                      ::publish-new)
+  (browser/click ::views-tab)
+  (browser/click ::publish-button)
+  (browser/quick-fill-submit {::publish-name-text published-name}
+                             {::publish-description-text description}
+                             {::publish-new browser/click})
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :cv-publish)}))
 
 (defn- edit-content-view-details [name description]
-  (browser click ::details-tab)
+  (browser/click ::details-tab)
   (common/in-place-edit {::details-name-text name
                          ::details-description-text description})
   (notification/success-type :cv-update))
@@ -132,23 +133,23 @@
 (defn- add-to
   "Adds the given product to a content view definition"
   [products]
-  (browser click ::content-tab)
+  (browser/click ::content-tab)
   (doseq [product products]
-    (sel/->browser
-      (mouseUp (-> product :name product-or-repository))
-      (click ::add-product-btn)
-      (click ::update-content))
+    (wd/move-to browser/*driver* (-> product :name product-or-repository))
+    (wd/->browser
+     (click ::add-product-btn)
+     (click ::update-content))
     (notification/success-type :cv-update-content)))
   
 (defn- remove-from
   "Removes the given product from existing Content View"
   [products]
-  (browser click ::content-tab)
+  (browser/click ::content-tab)
   (doseq [product products]
-    (sel/->browser
-      (mouseUp (->  product :name product-or-repository))
-      (click (-> product :name remove-product))
-      (click ::update-content))
+    (wd/move-to browser/*driver* (->  product :name product-or-repository))
+    (wd/->browser
+     (click (-> product :name remove-product))
+     (click ::update-content))
     (notification/success-type :cv-update-content)))
 
 (defn- update
@@ -171,8 +172,8 @@
   "Deletes an existing View Definition."
   [content-defn]
   (nav/go-to content-defn)
-  (browser click ::remove)
-  (browser click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :cv-destroy))
 
 (defn clone
@@ -180,10 +181,10 @@
    to clone, and the new name and description."
   [orig clone]
   (nav/go-to orig)
-  (browser click ::clone)
-  (sel/fill-ajax-form {::sg/copy-name-text (:name clone)
-                       ::sg/copy-description-text (:description clone)}
-                      ::sg/copy-submit)
+  (browser/click ::clone)
+  (browser/quick-fill-submit {::sg/copy-name-text (:name clone)}
+                             {::sg/copy-description-text (:description clone)}
+                             {::sg/copy-submit browser/click})
   (notification/success-type :cv-clone))
 
 (extend katello.ContentView

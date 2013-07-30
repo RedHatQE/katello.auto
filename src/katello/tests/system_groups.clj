@@ -17,7 +17,8 @@
             [test.tree.script :refer [defgroup deftest]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser]]))
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]))
 
 (alias 'notif 'katello.notifications)
 
@@ -31,8 +32,8 @@
    OR closing system-group widget should also close copy widget"
   [group {:keys [close-widget?]}]
   (nav/go-to group)
-  (browser click ::group/copy)
-  (browser click (if close-widget?
+  (browser/click ::group/copy)
+  (browser/click (if close-widget?
                    ::group/close
                    ::group/cancel-copy)))
 

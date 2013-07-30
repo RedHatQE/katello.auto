@@ -14,14 +14,14 @@
 ;; Locators
 
 (ui/defelements :katello.deployment/any [katello.ui]
-  {::name-text         "kt_environment[name]"
-   ::label-text        "kt_environment[label]"
-   ::description-text  "kt_environment[description]"
-   ::prior             "kt_environment[prior]"
-   ::create            "commit"
+  {::name-text         {:name "kt_environment[name]"}
+   ::label-text        {:name "kt_environment[label]"}
+   ::description-text  {:name "kt_environment[description]"}
+   ::prior             {:name "kt_environment[prior]"}
+   ::create            {:name "commit"}
    ::new               "//form[@id='organization_edit']//div[contains(@data-url, '/environments/new')]"
    ::remove-link       (ui/remove-link "environments")
-   ::prior-select-edit "kt_environment[prior]" })
+   ::prior-select-edit {:name "kt_environment[prior]"} })
 
 ;; Nav
 
@@ -38,15 +38,14 @@
    environment, and an optional description."
   [{:keys [name label org description prior]}]
   (nav/go-to ::new-page org)
+  (Thread/sleep 3000)
   ;; TODO: fix form here after figuring out label-filler
-  #_(sel/fill-ajax-form {::name-text name
-                       (fn [label] (when label
-                                     (browser fireEvent ::name-text "blur")
-                                     (browser ajaxWait)
-                                     (browser setText ::label-text label))) [label]
-                       ::description-text description
-                       ::prior (:name prior)}
-                      ::create)
+  (browser/quick-fill-submit {::name-text browser/focus}
+                             {::name-text (or name "")}
+                             {::description-text (or description "")}
+                             {::label-text (or label "")}
+                             {::prior (or (:name prior) "")}
+                             {::create browser/click})
   (notification/success-type :env-create))
 
 (defn- delete

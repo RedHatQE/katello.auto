@@ -27,7 +27,8 @@
             [test.assert :as assert]
             [test.tree.script :refer [deftest defgroup]]
             [test.tree :refer [blockers]]
-            [com.redhat.qe.auto.selenium.selenium :refer [browser ->browser]])
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
 ;; Functions
@@ -75,24 +76,24 @@
   "Validate Navigation of permissions page under Roles."
   [role {:keys [org resource-type verbs tags name]}]
   (nav/go-to ::role/named-permissions-page role)
-  (->browser (click (role/permission-org (:name org)))
-             (sleep 1000)
-             (click ::role/add-permission)
-             (select ::role/permission-resource-type-select resource-type)
-             (click ::role/next))
+  (wd/->browser (click (role/permission-org (:name org)))
+                #_(sleep 1000)
+                (click ::role/add-permission)
+                (select ::role/permission-resource-type-select resource-type)
+                (click ::role/next))
   (doseq [verb verbs]
-    (browser addSelection ::role/permission-verb-select verb))
-  (browser click ::role/next)
+    (browser/click  ::role/permission-verb-select verb))
+  (browser/click ::role/next)
   (doseq [tag tags]
-    (browser addSelection ::role/permission-tag-select tag))
-  (->browser (click ::role/next)
-             (setText ::role/permission-name-text name)
-             (setText ::role/permission-description-text "myperm descriptions"))
-  (while (browser isVisible ::role/previous)
-    (browser click ::role/previous))
-  (while (not (browser isVisible ::role/save-permission))
-    (browser click ::role/next))
-  (browser click ::role/save-permission)
+    (browser/click  ::role/permission-tag-select tag))
+  (wd/->browser (click ::role/next)
+                (input-text ::role/permission-name-text name)
+                (input-text ::role/permission-description-text "myperm descriptions"))
+  (while (browser/visible?  ::role/previous)
+    (browser/click ::role/previous))
+  (while (not (browser/visible?  ::role/save-permission))
+    (browser/click ::role/next))
+  (browser/click ::role/save-permission)
   (notification/success-type :roles-create-permission))
 
 (defn verify-access
@@ -439,13 +440,13 @@
               [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
                :setup (fn [] (rest/create org)
                         (ui/create user))
-               :allowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
-                                   (browser click ::user/account)
+               :allowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+                                   (browser/click ::user/account)
                                    (nav/browser-fn (click ::user/roles-link)))]
-               :disallowed-actions [(fn [] (browser mouseOver ::user/user-account-dropdown)
-                                      (browser click ::user/account)
+               :disallowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+                                      (browser/click ::user/account)
                                       (nav/browser-fn (click ::user/roles-link))
-                                      (browser click ::user/add-role))]]))
+                                      (browser/click ::user/add-role))]]))
 
      (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]
               [:permissions []
