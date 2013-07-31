@@ -44,7 +44,6 @@
                           :published-name (:published-name cv)
                           :description "test pub"
                           :org org})
-          (browser sleep 60000)
           (changeset/promote-delete-content cs)
           (assert/is (changeset/environment-has-content? cs))))))
               
