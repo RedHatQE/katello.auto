@@ -74,9 +74,9 @@
       composite-view)))
 
 (defn add-product-to-cv
-  [org repo]
-  (with-unique [target-env (kt/newEnvironment {:name "dev" :org org})
-                cv (kt/newContentView {:name "con-def"
+  [org target-env repo]
+  (with-unique [cv (kt/newContentView {:name "con-def"
+                                       :published-name "publish-name"
                                        :org org})]
       (ui/create-all-recursive (list org target-env))
       (create-recursive repo)
@@ -222,9 +222,10 @@
       
       (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
-              cv (add-product-to-cv org repo)
+              cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
               packages1 (list "crow")
@@ -257,9 +258,10 @@
       
       (fn [exclude? msg-format expect-msg]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
-              cv (add-product-to-cv org repo)
+              cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
               pkg-groups (list "birds" "mammals")
               pkg-groups2 (list "cow")]        
@@ -288,9 +290,10 @@
       
       (fn [erratums erratums2 start-date end-date errata-type [exclude? msg-format expect-msg-errata expect-msg-date]]
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
-              cv (add-product-to-cv org repo)
+              cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})]        
           (ui/create cv-filter)
           (doall (for [rule [erratums
@@ -317,6 +320,126 @@
             (views/add-repo-from-filters (list (kt/repository repo))))))
       
       gen-errata-test-data)
+    
+    (deftest "Consume content after applying package-group filter"
+      :uuid "e3dc11ef-5cd1-4d93-89ac-585c6faaa86c"
+      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+            repo (fresh-repo org
+                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            cv (add-product-to-cv org target-env repo)]
+        (with-unique [cs (kt/newChangeset {:name "cs"
+                                           :env target-env
+                                           :content (list cv)})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups" :exclude? false})
+                      ak (kt/newActivationKey {:name "ak"
+                                               :env target-env
+                                               :description "auto activation key"
+                                               :content-view cv})]
+          (ui/create cv-filter)
+          (views/add-pkg-group-rule cv-filter {:pkg-groups (list "mammals")})
+          (-> cv-filter (update-in [:exclude?] (constantly true))
+            (views/add-pkg-group-rule {:pkg-groups (list "birds")}))
+          (views/add-repo-from-filters (list (kt/repository repo)))
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd1 (client/run-cmd ssh-conn "yum install -y lion zebra")]
+              (assert/is (client/ok? cmd1)))
+            (let [cmd2 (client/run-cmd ssh-conn "yum install -y stark")]
+              (assert/is (->> cmd2 :exit-code (not= 0))))))))
+    
+    (deftest "Consume content after applying package filter"
+      :uuid "556f66ed-b3bc-4262-840d-520c77225465"
+      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+            repo (fresh-repo org
+                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            cv (add-product-to-cv org target-env repo)]
+        (with-unique [cs (kt/newChangeset {:name "cs"
+                                           :env target-env
+                                           :content (list cv)})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})
+                      ak (kt/newActivationKey {:name "ak"
+                                               :env target-env
+                                               :description "auto activation key"
+                                               :content-view cv})]
+          (ui/create cv-filter)
+          (doall (for [rule [{:packages (list "fox"), :version-type :all}
+                             {:packages (list "cow"), :version-type :only-version, :value1 "2.2-3"}
+                             {:packages (list "dog"), :version-type :newer-than, :value1 "4.20"}
+                             {:packages (list "dolphin"), :version-type :older-than, :value1 "3.11"}
+                             {:packages (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
+                   (views/add-package-rule cv-filter rule)))
+          (doall (for [rule1 [{:packages (list "elephant"), :version-type :all}
+                              {:packages (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
+                              {:packages (list "horse"), :version-type :newer-than, :value1 "0.21"}
+                              {:packages (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
+                              {:packages (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
+                   (-> cv-filter (update-in [:exclude?] (constantly true))
+                     (views/add-package-rule rule1))))
+          (views/add-repo-from-filters (list (kt/repository repo)))
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox cow-2.2-3 dog-4.23-1 dolphin-3.10.232-1 duck-0.6-1 walrus-0.71-1")]
+              (assert/is (client/ok? cmd1)))
+            (let [cmd2 (client/run-cmd ssh-conn "yum install -y elephant-8.3-1 walrus-5.21-1 horse-0.22-2 kangaroo-0.2-1 pike-2.2-1")]
+              (assert/is (->> cmd2 :exit-code (not= 0))))))))
+    
+     (deftest "Consume content after applying package and package-group filters"
+       :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
+       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+             repo (fresh-repo org
+                              "http://inecas.fedorapeople.org/fakerepos/zoo/")
+             cv (add-product-to-cv org target-env repo)]
+         (with-unique [cs (kt/newChangeset {:name "cs"
+                                            :env target-env
+                                            :content (list cv)})
+                       cv-filter-pkg (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
+                       cv-filter-pkggroup (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
+                       ak (kt/newActivationKey {:name "ak"
+                                               :env target-env
+                                               :description "auto activation key"
+                                               :content-view cv})]
+        (ui/create cv-filter-pkg)
+        (views/add-package-rule cv-filter-pkg {:packages (list "fox"), :version-type :all})
+        (views/add-repo-from-filters (list (kt/repository repo)))
+        (ui/create cv-filter-pkggroup)
+        (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
+        (views/add-repo-from-filters (list (kt/repository repo)))
+        (views/publish {:content-defn cv
+                        :published-name (:published-name cv)
+                        :org org})
+        (changeset/promote-delete-content cs)
+        (ui/create ak)
+        (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+        (provision/with-queued-client ssh-conn
+          (client/register ssh-conn
+                           {:org (:name org)
+                            :activationkey (:name ak)})
+          (client/sm-cmd ssh-conn :refresh)
+          (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox cow dog dolphin duck")]
+            (assert/is (client/ok? cmd1)))
+          (let [cmd2 (client/run-cmd ssh-conn "yum install -y elephan walrus")]
+            (assert/is (->> cmd2 :exit-code (not= 0))))))))
            
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
