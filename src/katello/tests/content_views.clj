@@ -440,6 +440,35 @@
             (assert/is (client/ok? cmd1)))
           (let [cmd2 (client/run-cmd ssh-conn "yum install -y elephan walrus")]
             (assert/is (->> cmd2 :exit-code (not= 0))))))))
+     
+     (deftest "Consume content on client after applying errata filters"
+       :uuid "5868c984-7e78-4271-8969-c43a68df55e3"
+        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+              repo (fresh-repo org
+                               "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+              cv (add-product-to-cv org target-env repo)]
+          (with-unique [cs (kt/newChangeset {:name "cs"
+                                             :env target-env
+                                             :content (list cv)})
+                        cv-filter (katello/newFilter {:name "auto-filter", :cv cv, :type "Errata", :exclude? false})
+                        ak (kt/newActivationKey {:name "ak"
+                                                 :env target-env
+                                                 :description "auto activation key"
+                                                 :content-view cv})]        
+            (ui/create cv-filter)
+            (views/filter-errata-by-id cv-filter (list "RHEA-2012:3642")) ;;for including package pig
+            (views/filter-errata-by-date-type cv-filter {:from-date "07/24/2012", :errata-type "Security"}) ;;for including package cow
+            (doto (-> cv-filter (update-in [:exclude?] (constantly true)))
+              (views/filter-errata-by-id (list "RHEA-2012:3234"));; for excluding package kangaroo
+              (views/filter-errata-by-date-type {:from-date "04/06/2012", :errata-type "Enhancement"})) ;;for including package eagle
+            (views/add-repo-from-filters (list (kt/repository repo)))
+            (views/publish {:content-defn cv
+                            :published-name (:published-name cv)
+                            :org org})
+            (changeset/promote-delete-content cs)
+            (ui/create ak)
+            (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name))))))     
            
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
