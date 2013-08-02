@@ -517,7 +517,7 @@
                                        :content-view cv})]
           (ui/create ak)
           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
-          (provision/with-client "consume-content" ssh-conn
+          (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
                               :activationkey (:name ak)})
