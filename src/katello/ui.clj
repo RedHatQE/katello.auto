@@ -23,7 +23,9 @@
 ;;convenience
 (defn create-all [ents]
   (doseq [ent ents]
-    (create ent)))
+    (when-not (and (rest/is-headpin?) 
+                   (instance? katello.Environment ent))
+      (create ent))))
 
 (defn ensure-exists [ent]
   {:pre [(satisfies? CRUD ent)]}
@@ -37,8 +39,10 @@
    the env." [ent & [{:keys [check-exist?] :or {check-exist? true}}]]
    (doseq [field (vals ent) :when (satisfies? CRUD field)]
      (create-recursive field))
-   (if check-exist? (ensure-exists ent)
-       (create ent)))
+   (if check-exist? 
+     (ensure-exists ent)
+     (when-not (and (rest/is-headpin?) (instance? katello.Environment ent))
+       (create ent))))
 
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]

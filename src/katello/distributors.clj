@@ -49,7 +49,8 @@
   [{:keys [name env]}]
   {:pre [(instance? katello.Environment env)]}
   (nav/go-to ::new-page env)
-  (browser click (ui/environment-link (:name env)))
+  (rest/when-katello 
+    (browser click (ui/environment-link (:name env))))
   (sel/fill-ajax-form {::distributor-name-text name}
                       ::create)
   (notification/success-type :distributor-create))
@@ -96,16 +97,17 @@
            :delete delete
            :update* update}
   rest/CRUD (let [id-url (partial rest/url-maker [["api/distributors/%s" [identity]]])
-                  query-urls (partial rest/url-maker [["api/environments/%s/distributors" [:env]]
-                                                      ["api/organizations/%s/distributors" [(comp :org :env)]]])]
+                  headpin-url (partial rest/url-maker [["api/organizations/%s/distributors" [#'kt/org]]])
+                  katello-url (partial rest/url-maker [["api/environments/%s/distributors" [#'kt/env]]])
+                  query-urls (if (rest/is-katello?) katello-url headpin-url)]                                                      
               {:id rest/id-field
                :query (partial rest/query-by-name query-urls)
                :create (fn [dist]
                          (merge dist
-                                (rest/http-post
-                                 (rest/url-maker [["api/environments/%s/distributors" [:env]]] dist)
-                                 {:body (assoc (select-keys dist [:name])
-                                          :type "distributor")})))
+                                (rest/http-post 
+                                  (query-urls dist)                                 
+                                  {:body (assoc (select-keys dist [:name])
+                                   :type "distributor")})))
                :read (partial rest/read-impl id-url)})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl

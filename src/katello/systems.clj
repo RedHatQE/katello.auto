@@ -143,7 +143,8 @@
                        (fn [v] (when v
                                  (browser click ::system-virtual-type))) [virtual?]
                        (fn [env]
-                         (when env (nav/select-environment-widget env))) [env]]
+                         (when (and env rest/is-katello?) 
+                           (nav/select-environment-widget env))) [env]]
                       ::create)
   (notification/success-type :sys-create))
 
@@ -351,16 +352,18 @@
            :delete delete
            :update* update}
 
-  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]
-                                                     ["api/organizations/%s/systems" [#'kt/org]]])
+  rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+                  katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
+                  query-url (if (rest/is-katello?) katello-url headpin-url)
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
                :query (partial rest/query-by-name query-url)
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
-                         (merge sys (rest/http-post (query-url sys)
-                                               {:body (assoc (select-keys sys [:name :facts])
-                                                        :type "system")})))})
+                         (merge sys (rest/http-post 
+                                      (query-url sys)
+                                      {:body (assoc (select-keys sys [:name :facts])
+                                       :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity %1 s)

@@ -71,7 +71,7 @@
            :delete delete}
   
   rest/CRUD
-  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/" [:org]]])
+  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments" [#'katello/org]]])
         id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
     {:id rest/id-field
      :query (partial rest/query-by-name org-url)
