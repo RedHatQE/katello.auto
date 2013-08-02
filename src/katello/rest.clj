@@ -101,6 +101,23 @@
   (or (id ent)
       (id (merge ent (query ent)))))
 
+(def get-version-from-server
+  (memoize
+    (fn [url]
+      (try
+        (http-get url)
+        (catch Exception e {:name "unknown"
+                            :version "unknown"
+                            :exception e})))))
+
+(def get-version
+  (fn [] (get-version-from-server (api-url "/api/version"))))
+
+(defn is-headpin? []
+  (-> (get-version) :name (= "Headpin")))
+
+(def is-katello? (complement is-headpin?))
+
 (defn url-maker [coll ent]
   "Creates a fn that when given an entity will call fs on the entity
    to get deps and look up the ids on those deps.  Then fill in the
@@ -143,23 +160,6 @@
   (merge ent (if (id ent)
                (http-get (read-url-fn ent))
                (query ent))))
-
-(def get-version-from-server
-  (memoize
-    (fn [url]
-      (try
-        (http-get url)
-        (catch Exception e {:name "unknown"
-                            :version "unknown"
-                            :exception e})))))
-
-(def get-version
-  (fn [] (get-version-from-server (api-url "/api/version"))))
-
-(defn is-headpin? []
-  (-> (get-version) :name (= "Headpin")))
-
-(def is-katello? (complement is-headpin?))
 
 (defmacro when-katello [& body]
   `(when (is-katello?) ~@body))
