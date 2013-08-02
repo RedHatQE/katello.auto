@@ -64,7 +64,7 @@
       (fn [f & args]
         (with-unique-group g 
           (ui/create g)
-          (apply ui/update g f args)) )
+          (apply ui/update g f args)))
 
       [[assoc :limit 4]
        [assoc :limit 8, :description "updated description"]
@@ -210,7 +210,8 @@
       (with-unique [g (some-group)
                     s (some-system)
                     ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]
-        (rest/create-all (list g s ak))
+        (rest/create-all (list g s))
+        (ui/create ak) ;; Temp fix, looks like (rest/create ak) is buggy, need to raise a bug.
         (ui/update g assoc :systems #{s})
         (ui/update ak assoc :system-group g)
         (provision/with-queued-client ssh-conn
@@ -269,4 +270,3 @@
 
         [[{:close-widget? true}]
          [{:close-widget? false}]]))))
-
