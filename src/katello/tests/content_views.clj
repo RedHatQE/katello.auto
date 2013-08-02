@@ -85,6 +85,14 @@
       (ui/update cv assoc :products (list (kt/product repo)))
       cv))
 
+(defn- refresh-published-cv
+  "Refresh published-view and increment the version by 1"
+  [cv]
+  (let [current-version (Integer/parseInt (browser getText (views/refresh-version (:published-name cv))))]
+    (browser click (views/refresh-cv (:published-name cv)))
+    (views/check-published-view-status cv)
+    (assert/is (= (Integer/parseInt (browser getText (views/refresh-version (:published-name cv)))) (inc current-version)))))
+
 ;; Data (Generated)
 
 (def gen-errata-test-data
@@ -492,7 +500,7 @@
         (ui/create-all (list cv cv-filter))
         (views/remove-filter cv-filter)))
     
-    (deftest "Publish content view definition"
+    (deftest "Publish content view definition and refresh it once"
       :uuid "b71674d7-0e86-fe04-39f3-f408cb2a95bc"
       (with-unique [content-def (kt/newContentView {:name "con-def"
                                                     :published-name "publish-name"
@@ -500,7 +508,8 @@
         (ui/create content-def)
         (views/publish {:content-defn content-def
                         :published-name (:published-name content-def)
-                        :org *session-org*})))
+                        :org *session-org*})
+        (refresh-published-cv content-def)))
     
     (deftest "Published content view name links to content search page"
       :uuid "16fb0291-7312-6ab4-e92b-063d776f837b"
