@@ -167,6 +167,11 @@
 (defmacro when-headpin [& body]
   `(when (is-headpin?) ~@body))
 
+(defn only-when-katello [f]
+ (fn [& args] 
+   (when (is-katello?)
+     (apply f args))))
+
 (defn katello-only
   "A function you can call from :blockers of any test so it will skip
    if run against a non-katello (eg SAM or headpin) deployment"

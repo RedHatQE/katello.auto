@@ -66,14 +66,10 @@
   (common/in-place-edit {::description-text description}))
 
 
-(defn only-when-katello [env]
-  (if (rest/is-katello?)
-        (create env)))
-
 (extend katello.Environment
-  ui/CRUD {:create only-when-katello
-           :update* edit
-           :delete delete}
+  ui/CRUD {:create (rest/only-when-katello create)
+           :update* (rest/only-when-katello edit)
+           :delete (rest/only-when-katello delete)}
   
   rest/CRUD
   (let [org-url (partial rest/url-maker [["api/organizations/%s/environments" [#'katello/org]]])
