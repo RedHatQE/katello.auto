@@ -65,8 +65,13 @@
   (nav/go-to env)
   (common/in-place-edit {::description-text description}))
 
+
+(defn only-when-katello [env]
+  (if (rest/is-katello?)
+        (create env)))
+
 (extend katello.Environment
-  ui/CRUD {:create create
+  ui/CRUD {:create only-when-katello
            :update* edit
            :delete delete}
   
@@ -75,15 +80,16 @@
         id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
     {:id rest/id-field
      :query (partial rest/query-by-name org-url)
-     :create (fn [env] 
-               (merge env
-                      (rest/http-post (org-url env)
+     :create (fn [env]
+               (if (rest/is-katello?)
+                 (merge env
+                   (rest/http-post (org-url env)
                                  {:body
                                   {:environment
                                    {:name (:name env)
                                     :description (:description env)
                                     :prior (rest/get-id (or (:prior env)
-                                                        (katello/mklibrary env)))}}})))
+                                                        (katello/mklibrary env)))}}}))))
      :read (partial rest/read-impl id-url)
      
      :update* (fn [env new-env]
