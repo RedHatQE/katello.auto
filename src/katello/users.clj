@@ -73,7 +73,7 @@
   [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
   (browser click ::new)
-  (let [env-chooser (fn [env] (when env
+  (let [env-chooser (fn [env] (when (and env (rest/is-katello?))
                                (nav/select-environment-widget env)))]
     (sel/fill-ajax-form [::username-text name
                          ::password-text password
@@ -104,7 +104,7 @@
   [org env]
   (when org
     (browser select ::default-org-select (:name org)))
-  (when env
+  (when (and env (rest/is-katello?))
     (browser click (ui/environment-link (:name env))))
   (browser click ::save-environment)
   (notification/success-type :users-update-env))
