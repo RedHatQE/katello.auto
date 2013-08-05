@@ -38,10 +38,7 @@
         (when (and ent (not (already-created? ent already-created)))
           (if check-exist?
             (ensure-exists ent)
-            (when-not (and (rest/is-headpin?) 
-                           (instance? katello.Environment ent))
-             (ensure-exists ent) 
-             (rest/create ent)))
+            (rest/create ent))
           (recur (rest ents) (conj already-created ent)))))))
 
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
