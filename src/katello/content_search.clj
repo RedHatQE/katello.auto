@@ -63,9 +63,12 @@
   column                  "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='%s']"
   span-text               "//article[@id='comparison_grid']//span[text()='%s']"
   result-repo-id          "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'%s')]"
+  result-view-id          "//ul[@id='grid_row_headers']//li[contains(@id,'row_header_view') and contains(.,'%s')]"
   result-col-id           "//ul[@id='column_headers']//li[contains(.,'%s')]"
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
+  repo-errata-count               "//div[@id='grid_row_%s']" 
+  errata-link               "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']" 
   repo-link               "//div[@id='grid_row_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
 ;; Nav
@@ -257,16 +260,20 @@
     (into [])
     flatten
     (clojure.string/join "_")))
-
-(defn get-repo-search-data-name-map [repositories]
-  (->> repositories
-    (map (fn [name]
+(defn get-data-id-from [locator-fn name] 
               (->> name
-                result-repo-id
+                locator-fn   
                 (#(attr-loc % "data-id"))
                 (browser getAttribute )
                 (#(split % #"_"))
-                (apply hash-map))) )          
+                (apply hash-map)))           
+
+(defn get-view-id [view-name]
+  (get-data-id-from result-view-id view-name))
+
+(defn get-repo-search-data-name-map [repositories]
+  (->> repositories
+    (map (partial get-data-id-from result-repo-id)) 
     (zipmap repositories)))
     
 (defn get-repo-search-library-id-map [repositories]
@@ -282,8 +289,12 @@
           repositories)))
 
 ;problem with two repos of a same name
-(defn get-repo-search-data-name [repo-name]
-  ((get-repo-search-data-name-map [repo-name]) repo-name))
+(defn get-repo-search-data-name 
+  ([repo-name]
+    ((get-repo-search-data-name-map [repo-name]) repo-name))
+  ([repo-name view]
+   (merge (get-repo-search-data-name repo-name)  
+          (get-view-id view))))
 
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-name-map repositories)]
@@ -447,6 +458,31 @@
 
 (defn get-repo-desc []
   (get-search-page-result-list-of-lists-html "grid_content_window"))
+
+(defn index-of [item coll]
+    (count (take-while (partial not= item) coll)))
+
+(def re-newline (re-pattern "\n"))
+(def erase #(clojure.string/replace %2 %1 ""))
+
+(defn get-repo-errata-count [repo-name view-name  env-name]
+  (->>
+    (get-repo-search-data-name repo-name view-name)
+    name-map-to-name 
+    (str "grid_row_") 
+    get-search-page-result-list-of-lists-html
+    (#(nth % (index-of env-name (get-table-headers))))  
+    (#(if (coll? %)
+      (map (partial erase re-newline) %)
+      (clojure.string/split % re-newline)))
+    (into [])
+    ))
+
+(defn get-errata-desc-button [repo-name env-name]
+  (browser getText (errata-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
+
+(defn get-repo-desc-button [repo-name env-name]
+  (browser getText (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
 
 (defn click-repo-desc [repo-name env-name]
   (browser click (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
