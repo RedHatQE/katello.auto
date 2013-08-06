@@ -346,22 +346,26 @@
     "dmi.bios.relase_date" "12/01/2006"
     "lscpu.numa_node0_cpu(s)" "0"
     }))
-
+        
 (extend katello.System
   ui/CRUD {:create create
            :delete delete
            :update* update}
 
-  rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+   rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
                   katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
-                  query-url (if (rest/is-katello?) katello-url headpin-url)
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
-               :query (partial rest/query-by-name query-url)
+               :query (fn [sys]
+                        (rest/query-by-name 
+                          (if (rest/is-katello?) 
+                           katello-url headpin-url) sys))
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
                          (merge sys (rest/http-post 
-                                      (query-url sys)
+                                      (if (rest/is-katello?) 
+                                        (katello-url sys) 
+                                        (headpin-url sys))
                                       {:body (assoc (select-keys sys [:name :facts])
                                        :type "system")})))})
   
