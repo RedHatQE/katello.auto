@@ -877,8 +877,8 @@
                                  uniqueify)]
                (client/sm-cmd ssh-conn :refresh)
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-                 (assert/is (->> cmd_result :exit-code (= 0))))
+                 (assert/is (client/ok? cmd_result)))
                (changeset/promote-delete-content deletion-cs)
                (client/sm-cmd ssh-conn :refresh)
                (let [cmd_result (client/run-cmd ssh-conn "yum install -y cat")]
-                 (assert/is (->> cmd_result :exit-code (not= 1)))))))))))
+                 (assert/is (->> cmd_result :exit (not= 1)))))))))))

@@ -48,7 +48,7 @@
       (let [cmd-results [(client/run-cmd ssh-conn "yum repolist")
                          (client/run-cmd ssh-conn (format "yum install -y --nogpg %s" all-packages))
                          (client/run-cmd ssh-conn (format "rpm -q %s" all-packages))]]
-        (->> cmd-results (map :exit-code) (every? zero?) assert/is)))))
+        (->> cmd-results (map :exit) (every? client/ok?) assert/is)))))
 
 ;; Tests
 

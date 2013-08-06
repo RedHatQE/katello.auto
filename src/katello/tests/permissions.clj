@@ -415,8 +415,7 @@
                                               cmd2 (format "rpm -qav crow")
                                               result1 (client/run-cmd ssh-conn cmd1)
                                               result2 (client/run-cmd ssh-conn cmd2)]
-                                          (assert/is (->> result1 :exit-code (= 0)))
-                                          (assert/is (->> result2 :exit-code (= 0))))))]
+                                          (assert/is (every? client/ok? (list result1 result2))))))]
                   :disallowed-actions [(navigate-all [:katello.sync-management/status-page
                                                       :katello.providers/custom-page])]])))
       assoc :blockers (bz-bugs "970570"))
