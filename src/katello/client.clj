@@ -1,9 +1,9 @@
 (ns katello.client
-  (:require [katello.conf :refer [config]]
+  (:require [clj-ssh.ssh :as ssh]
+            [katello.conf :refer [config]]
             [slingshot.slingshot :refer [try+ throw+]]
             [clojure.string :refer [split trim]])
-  (:import [com.redhat.qe.tools SSHCommandRunner]
-           [java.io File]))
+  (:import [java.io File]))
 
 ;;some functions to control RHSM on a remote machine via ssh
 
@@ -16,55 +16,45 @@
                          (format "--%s" (name opt))
                          (format "--%s='%s'" (name opt) v)))))))
 
-(defn run-cmd [runner cmd]
-  (let [result (.runCommandAndWait runner cmd ^long (* 20 60 1000))]
-    {:stdout (.getStdout result)
-     :stderr (.getStderr result)
-     :exit-code (.getExitCode result)}))
+(defn run-cmd [session cmd]
+  (ssh/ssh session {:cmd cmd}))
 
 (defn sm-cmd
   "Runs a subscription manager command with the given options."
-  [runner cmd & [optmap]]
-  (let [res (run-cmd runner (build-sm-cmd cmd optmap))]
-    (if (-> res :exit-code (not= 0))
+  [session cmd & [optmap]]
+  (let [res (run-cmd session (build-sm-cmd cmd optmap))]
+    (if (-> res :exit (not= 0))
       (throw+ (assoc res :type ::rhsm-error)
-              "RHSM Error '%s'" (if (-> res :stderr count (> 0))
-                                  (:stderr res)
-                                  (:stdout res)))
+              "RHSM Error '%s'" (or (:err res) (:out res)))
       res)))
 
 (defn ok? [res]
-  (= 0 (:exit-code res)))
+  (= 0 (:exit res)))
 
-(defn hostname [runner]
-  (-> runner .getConnection .getHostname))
+(defn hostname [session]
+  (-> session .getSession .getHost))
 
 (defn my-hostname "hostname according to the client itself"
-  [runner]
-  (-> runner (run-cmd "hostname") :stdout trim))
+  [session]
+  (-> session (run-cmd "hostname") :out trim))
 
 (defn server-hostname []
   (-> (@config :server-url) (java.net.URL.) .getHost))
 
-(defn new-runner
+(defn new-session
   ([hostname]
-     (SSHCommandRunner. hostname "root"
-                        (File. ^String (@config :client-ssh-key))
-                        (@config :client-ssh-key-passphrase) nil))
-  ([hostname user password keyfile keypassphrase]
-     (SSHCommandRunner. hostname user (File. ^String keyfile) keypassphrase nil)))
+     (ssh/session (ssh/ssh-agent {})
+                  hostname
+                  {:username "root", :strict-host-key-checking :no})))
 
-(defn configure-client [runner m]
+(defn configure-client [session m]
   (doall (for [[heading settings] m
                [k v] settings]
            (sm-cmd :config {(keyword (str heading "." k)) v}))))
 
-(defn setup-client [runner name]
+(defn setup-client [session name]
   (let [rpm-name-prefix "candlepin-cert-consumer"
         cmds [ ;; set the hostname so not all clients register with the same name
-              ;["wget -O /tmp/sethostname.sh --no-check-certificate %s" (@config :sethostname)]
-              ;["source /tmp/sethostname.sh"]
-              ;["subscription-manager clean"] 
               ["echo 'HOSTNAME=%s' >> /etc/sysconfig/network" name]
               ["hostname %s" name]
               ["echo 'search `hostname -d`' >> /etc/resolv.conf"]
@@ -86,22 +76,22 @@
               ["yum install -y katello-agent"]
               ["service goferd restart"]]]
 
-    (doall (for [cmd cmds] (run-cmd runner (apply format cmd))))))
+    (doall (for [cmd cmds] (run-cmd session (apply format cmd))))))
 
-(defn subscribe [runner poolid]
-  (sm-cmd runner :subscribe {:pool poolid}))
+(defn subscribe [session poolid]
+  (sm-cmd session :subscribe {:pool poolid}))
 
-(defn unsubscribe [runner opts]
-  (sm-cmd runner :unsubscribe opts))
+(defn unsubscribe [session opts]
+  (sm-cmd session :unsubscribe opts))
 
-(defn register [runner opts]
-  (sm-cmd runner :register opts))
+(defn register [session opts]
+  (sm-cmd session :register opts))
 
-(defn get-client-facts [runner]
-  (apply hash-map (split (:stdout (run-cmd runner "subscription-manager facts --list")) #"\n|: ")))
+(defn get-client-facts [session]
+  (apply hash-map (split (:out (run-cmd session "subscription-manager facts --list")) #"\n|: ")))
 
-(defn get-distro [runner]
-  ((get-client-facts runner) "distribution.name"))
+(defn get-distro [session]
+  ((get-client-facts session) "distribution.name"))
 
-(defn get-ip-address [runner]
-  ((get-client-facts runner) "net.interface.eth0.ipv4_address"))
+(defn get-ip-address [session]
+  ((get-client-facts session) "net.interface.eth0.ipv4_address"))

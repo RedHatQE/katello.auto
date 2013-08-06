@@ -19,13 +19,13 @@
                                   
                  [com.redhat.qe/test.assert "1.0.0-SNAPSHOT"]
                  [com.redhat.qe/extended-selenium "1.1.1-SNAPSHOT" :exclusions [org.seleniumhq.selenium.client-drivers/selenium-java-client-driver]]
-                 [com.redhat.qe/ssh-tools "1.0.0"]
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [com.redhat.qe/ovirt.client "0.1.0-SNAPSHOT"]
                  
                  [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure org.clojure/data.xml]]
                  [clj-http "0.6.4"]
-
+                 [clj-ssh "0.5.6"]
+                 
                  [ui.navigate "0.4.0-SNAPSHOT"]
                  [bugzilla.checker "0.2.0-SNAPSHOT"]
                  [github.checker "0.2.0-SNAPSHOT"]

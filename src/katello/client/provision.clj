@@ -1,5 +1,6 @@
 (ns katello.client.provision
-  (:require [ovirt.client :as ovirt]
+  (:require [clj-ssh.ssh :as ssh]
+            [ovirt.client :as ovirt]
             [slingshot.slingshot :refer [throw+ try+]]
             (katello [client :as client]
                      [conf :as conf]))
@@ -26,10 +27,10 @@
                                 (map :vm)))))
 
 (defn add-ssh
-  "Add ssh command runner field to the given instance,returning a
-  Client record."
+  "Add ssh session field to the given instance,returning a Client
+  record."
   [vm]
-  (->Client vm (-> vm ovirt/ip-address client/new-runner)))
+  (->Client vm (-> vm ovirt/ip-address client/new-session)))
 
 (defn- provision
   "Provision a client from ovirt and set it up as a
@@ -43,7 +44,8 @@
             client)
           (catch Object o
             (throw+ {:type ::setup-failed
-                     :vm vm})))))
+                     :vm vm
+                     :cause o})))))
 
 (defn- get-client
   "Deliver a working client to promise p. If provisioning fails, try
@@ -53,10 +55,9 @@
   (if (> tries-remaining 0)
     (try+ (provision vm-def)
           (catch Object _
-            (println _)
             (let [tries-dec (dec tries-remaining)]
-              #(get-client (update-in vm-def [:name] (str "-retry" (- *max-retries* tries-dec)))
-                           tries-dec))))
+              #(get-client tries-dec
+                           (update-in vm-def [:name] str "-retry" (- *max-retries* tries-dec))))))
     (throw+ {:type ::max-retries-exceeded
              :vm-def vm-def})))
 
@@ -100,7 +101,8 @@
                      deref            ; the atom
                      dequeue) 
          ~ssh-conn-bind (:ssh-connection client#)]
-     (try ~@body
+     (try (ssh/with-connection ~ssh-conn-bind
+            ~@body)
           (finally
             (when ovirt/*kill-instance-when-finished*
               (future (ovirt/unprovision (:vm client#))))))))

@@ -525,7 +525,7 @@
           (client/sm-cmd ssh-conn :refresh)
           (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
                 result (client/run-cmd ssh-conn cmd)]
-            (assert/is (->> result :exit-code (= 0))))))))
+            (assert/is (client/ok? result)))))))
 
   (deftest "Install package after moving a system from one env to other"
     :uuid "960cc577-e045-f9d4-7383-dec4e5eed00b"
@@ -560,4 +560,4 @@
           (expecting-error [:type :katello.systems/package-install-failed]
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit-code (= 1)))))))))
+            (assert/is (->> cmd_result :exit (= 1)))))))))

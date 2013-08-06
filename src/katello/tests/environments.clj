@@ -222,10 +222,7 @@
                                    :org (:name @test-org)
                                    :env (:name env-dev)
                                    :force true})
-        (let [system (katello/newSystem {:name (-> ssh-conn
-                                                   (client/run-cmd "hostname")
-                                                   :stdout
-                                                   trim)
+        (let [system (katello/newSystem {:name (client/my-hostname ssh-conn)
                                          :env env-dev})]
           (assert/is (= (:name env-dev) (system/environment system)))
           (ui/update system assoc :env env-test)
@@ -237,4 +234,4 @@
           ;;verification doesn't work - repo file will be empty
           #_(let [cmd (format "grep %s /etc/yum.repos.d/redhat.repo" env-test)
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0)))))))))
+              (assert/is (->> result :exit client/ok?))))))))
