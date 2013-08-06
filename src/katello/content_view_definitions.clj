@@ -24,6 +24,8 @@
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
   status                      "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/div[@class='fl']"
+  refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
+  refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
@@ -112,6 +114,18 @@
 (defn- date [d] (.format inputformat (.parse inputformat d)))
 (defn msg-date [d] (.format outputformat (.parse inputformat d)))
 
+(defn check-published-view-status
+  "Function to monitor the published view status from 'Generating version' to 'Refresh' "
+  [cv & [timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
+                         (case current-status
+                           "" current-status 
+                           "Refresh Failed" (throw+ {:type :publish-failed
+                                                     :published-name (:published-name cv)})
+                           (do
+                             (Thread/sleep 2000)
+                             (recur (browser getText (status (:published-name cv))))))))
+
 (defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
@@ -158,14 +172,7 @@
   (sel/fill-ajax-form {::publish-name-text published-name
                        ::publish-description-text description}
                       ::publish-new)
-  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
-                         (case current-status
-                           "" current-status 
-                           "Refresh Failed" (throw+ {:type :publish-failed
-                                                     :published-name published-name})
-                           (do
-                             (Thread/sleep 2000)
-                             (recur (browser getText (status published-name))))))
+  (check-published-view-status content-defn)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
 (defn add-filter
