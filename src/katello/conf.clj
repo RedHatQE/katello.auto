@@ -186,11 +186,12 @@
                                                   :password (@config :admin-password)
                                                   :email "admin@katello.org"}))
   (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
-  (def ^:dynamic *cloud-conn* (when-let [ovirt-url (@config :ovirt-url)]
-                                {:api (org.ovirt.engine.sdk.Api. ovirt-url           
-                                                                 (@config :ovirt-user)
-                                                                 (@config :ovirt-password))
-                                 :cluster (@config :ovirt-cluster)}))
+  (def ^:dynamic *cloud-conn* (try (when-let [ovirt-url (@config :ovirt-url)]
+                                     {:api (org.ovirt.engine.sdk.Api. ovirt-url           
+                                                                      (@config :ovirt-user)
+                                                                      (@config :ovirt-password))
+                                      :cluster (@config :ovirt-cluster)})
+                                   (catch Exception e (.printStackTrace e))))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (for [e (@config :environments)]
                                   (katello/newEnvironment {:name e
