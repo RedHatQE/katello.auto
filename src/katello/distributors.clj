@@ -98,14 +98,18 @@
            :update* update}
   rest/CRUD (let [id-url (partial rest/url-maker [["api/distributors/%s" [identity]]])
                   headpin-url (partial rest/url-maker [["api/organizations/%s/distributors" [#'kt/org]]])
-                  katello-url (partial rest/url-maker [["api/environments/%s/distributors" [#'kt/env]]])
-                  query-urls (if (rest/is-katello?) katello-url headpin-url)]                                                      
+                  katello-url (partial rest/url-maker [["api/environments/%s/distributors" [#'kt/env]]])]                                                      
               {:id rest/id-field
-               :query (partial rest/query-by-name query-urls)
+               :query (fn [dist]
+                        (rest/query-by-name 
+                          (if (rest/is-katello?) 
+                           katello-url headpin-url) dist))
                :create (fn [dist]
                          (merge dist
-                                (rest/http-post 
-                                  (query-urls dist)                                 
+                                (rest/http-post
+                                  (if (rest/is-katello?) 
+                                        (katello-url dist) 
+                                        (headpin-url dist))                                 
                                   {:body (assoc (select-keys dist [:name])
                                    :type "distributor")})))
                :read (partial rest/read-impl id-url)})
