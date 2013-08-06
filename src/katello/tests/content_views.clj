@@ -360,10 +360,12 @@
                              {:org (:name org)
                               :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
-            (let [cmd1 (client/run-cmd ssh-conn "yum install -y lion zebra")]
-              (assert/is (client/ok? cmd1)))
-            (let [cmd2 (client/run-cmd ssh-conn "yum install -y stark")]
-              (assert/is (->> cmd2 :exit-code (not= 0))))))))
+            (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
+                  cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie lion -ie zebra")]
+              (assert/is (client/ok? cmd2)))                          
+            (let [cmd3 (client/run-cmd ssh-conn "yum groupinstall -y birds")
+                  cmd4 (client/run-cmd ssh-conn "rpm -qa | grep stark")]
+              (assert/is (->> cmd4 :exit-code (not= 0))))))))
     
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
@@ -375,14 +377,14 @@
         (with-unique [cs (kt/newChangeset {:name "cs"
                                            :env target-env
                                            :content (list cv)})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})
+                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages" :exclude? false})
                       ak (kt/newActivationKey {:name "ak"
                                                :env target-env
                                                :description "auto activation key"
                                                :content-view cv})]
           (ui/create cv-filter)
-          (doall (for [rule [{:packages (list "fox"), :version-type :all}
-                             {:packages (list "cow"), :version-type :only-version, :value1 "2.2-3"}
+          (doall (for [rule [{:packages (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
+                             {:packages (list "camel"), :version-type :only-version, :value1 "0.1-1"}
                              {:packages (list "dog"), :version-type :newer-than, :value1 "4.20"}
                              {:packages (list "dolphin"), :version-type :older-than, :value1 "3.11"}
                              {:packages (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
@@ -406,78 +408,96 @@
                              {:org (:name org)
                               :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
-            (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox cow-2.2-3 dog-4.23-1 dolphin-3.10.232-1 duck-0.6-1 walrus-0.71-1")]
-              (assert/is (client/ok? cmd1)))
-            (let [cmd2 (client/run-cmd ssh-conn "yum install -y elephant-8.3-1 walrus-5.21-1 horse-0.22-2 kangaroo-0.2-1 pike-2.2-1")]
-              (assert/is (->> cmd2 :exit-code (not= 0))))))))
+            (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox camel-0.1-1 dog-4.23-1 dolphin-3.10.232-1 duck-0.6-1")
+                  cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie fox -ie dog -ie dolphin")]
+              (assert/is (client/ok? cmd1))
+              (assert/is (client/ok? cmd2)))
+            (let [cmd3 (client/run-cmd ssh-conn "yum install -y elephant-8.3-1 walrus-5.21-1 horse-0.22-2 kangaroo-0.2-1 pike-2.2-1")
+                  cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie elephant -ie walrus -ie horse -ie kangaroo -ie pike")]
+              (assert/is (->> cmd4 :exit-code (not= 0))))))))
     
-     (deftest "Consume content after applying package and package-group filters"
-       :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
-       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+    (deftest "Consume content after applying package and package-group filters"
+      :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
+      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
              repo (fresh-repo org
                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
              cv (add-product-to-cv org target-env repo)]
-         (with-unique [cs (kt/newChangeset {:name "cs"
-                                            :env target-env
-                                            :content (list cv)})
-                       cv-filter-pkg (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
-                       cv-filter-pkggroup (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
-                       ak (kt/newActivationKey {:name "ak"
+        (with-unique [cs (kt/newChangeset {:name "cs"
+                                           :env target-env
+                                           :content (list cv)})
+                      cv-filter-pkg (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
+                      cv-filter-pkggroup (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
+                      ak (kt/newActivationKey {:name "ak"
                                                :env target-env
                                                :description "auto activation key"
                                                :content-view cv})]
-        (ui/create cv-filter-pkg)
-        (views/add-package-rule cv-filter-pkg {:packages (list "fox"), :version-type :all})
-        (views/add-repo-from-filters (list (kt/repository repo)))
-        (ui/create cv-filter-pkggroup)
-        (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
-        (views/add-repo-from-filters (list (kt/repository repo)))
-        (views/publish {:content-defn cv
-                        :published-name (:published-name cv)
-                        :org org})
-        (changeset/promote-delete-content cs)
-        (ui/create ak)
-        (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
-        (provision/with-queued-client ssh-conn
-          (client/register ssh-conn
-                           {:org (:name org)
-                            :activationkey (:name ak)})
-          (client/sm-cmd ssh-conn :refresh)
-          (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox cow dog dolphin duck")]
-            (assert/is (client/ok? cmd1)))
-          (let [cmd2 (client/run-cmd ssh-conn "yum install -y elephan walrus")]
-            (assert/is (->> cmd2 :exit-code (not= 0))))))))
+          (ui/create cv-filter-pkg)
+          (views/add-package-rule cv-filter-pkg {:packages (list "frog"), :version-type :all})
+          (views/add-repo-from-filters (list (kt/repository repo)))
+          (ui/create cv-filter-pkggroup)
+          (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
+          (views/add-repo-from-filters (list (kt/repository repo)))
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
+                  cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie fox -ie cow -ie dog -ie dolphin -ie duck")]
+              (assert/is (client/ok? cmd2)))
+            (let [cmd3 (client/run-cmd ssh-conn "yum install -y frog")
+                  cmd4 (client/run-cmd ssh-conn "rpm -qa | grep frog")]
+              (assert/is (->> cmd4 :exit-code (not= 0))))))))
      
+  
      (deftest "Consume content on client after applying errata filters"
        :uuid "5868c984-7e78-4271-8969-c43a68df55e3"
-        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
-              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
-              repo (fresh-repo org
-                               "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
-              cv (add-product-to-cv org target-env repo)]
-          (with-unique [cs (kt/newChangeset {:name "cs"
-                                             :env target-env
-                                             :content (list cv)})
-                        cv-filter (katello/newFilter {:name "auto-filter", :cv cv, :type "Errata", :exclude? false})
-                        ak (kt/newActivationKey {:name "ak"
-                                                 :env target-env
-                                                 :description "auto activation key"
-                                                 :content-view cv})]        
-            (ui/create cv-filter)
-            (views/filter-errata-by-id cv-filter (list "RHEA-2012:3642")) ;;for including package pig
-            (views/filter-errata-by-date-type cv-filter {:from-date "07/24/2012", :errata-type "Security"}) ;;for including package cow
-            (doto (-> cv-filter (update-in [:exclude?] (constantly true)))
-              (views/filter-errata-by-id (list "RHEA-2012:3234"));; for excluding package kangaroo
-              (views/filter-errata-by-date-type {:from-date "04/06/2012", :errata-type "Enhancement"})) ;;for including package eagle
-            (views/add-repo-from-filters (list (kt/repository repo)))
-            (views/publish {:content-defn cv
-                            :published-name (:published-name cv)
-                            :org org})
-            (changeset/promote-delete-content cs)
-            (ui/create ak)
-            (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name))))))     
-           
+       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+             repo (fresh-repo org
+                              "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+             cv (add-product-to-cv org target-env repo)]
+         (with-unique [cs (kt/newChangeset {:name "cs"
+                                            :env target-env
+                                            :content (list cv)})
+                       cv-filter (katello/newFilter {:name "auto-filter", :cv cv, :type "Errata", :exclude? false})
+                       ak (kt/newActivationKey {:name "ak"
+                                                :env target-env
+                                                :description "auto activation key"
+                                                :content-view cv})]        
+           (ui/create cv-filter)
+           (views/filter-errata-by-id cv-filter (list "RHEA-2012:3642")) ;;for including pig_erratum (pig-3.7.7-1)
+           (views/filter-errata-by-date-type cv-filter {:from-date "07/24/2012", :errata-type "Security"}) ;;for including cow_erratum (cow-5.3.2-1)
+           (doto (-> cv-filter (update-in [:exclude?] (constantly true)))
+             (views/filter-errata-by-id (list "RHEA-2012:3693"));; for excluding package zebra_erratum (zebra-10.0.8-1)
+             (views/filter-errata-by-date-type {:from-date "12/11/2012", :errata-type "Security"})) ;;for excluding package seal_erratum (seal-3.10.1-1)
+           (views/add-repo-from-filters (list (kt/repository repo)))
+           (views/publish {:content-defn cv
+                           :published-name (:published-name cv)
+                           :org org})
+           (changeset/promote-delete-content cs)
+           (ui/create ak)
+           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+           (provision/with-queued-client ssh-conn
+             (client/register ssh-conn
+                              {:org (:name org)
+                               :activationkey (:name ak)})
+             (client/sm-cmd ssh-conn :refresh)
+             (let [cmd1 (client/run-cmd ssh-conn "yum install -y pig-3.7.7-1 cow-5.3.2-1")
+                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie pig-3.7.7-1 -ie cow-5.3.2-1")]
+               (assert/is (client/ok? cmd1))
+               (assert/is (client/ok? cmd2)))
+             (let [cmd3 (client/run-cmd ssh-conn "yum install -y zebra-10.0.8-1 seal-3.10.1-1")
+                   cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]                    
+               (assert/is (->> cmd3 :exit-code (not= 0))))))))
+     
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
       :data-driven true
