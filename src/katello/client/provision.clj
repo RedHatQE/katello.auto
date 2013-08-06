@@ -24,7 +24,8 @@
     (ovirt/unprovision-all (->> leftovers
                                 (map deref)
                                 (take-while #(not= :end %))
-                                (map :vm)))))
+                                (map :vm)
+                                (filter identity)))))
 
 (defn add-ssh
   "Add ssh session field to the given instance,returning a Client

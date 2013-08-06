@@ -81,4 +81,5 @@
                                       :to-trace (@conf/config :trace)
                                       :do-not-trace (@conf/config :trace-excludes)}))
                (finally (provision/shutdown client-queue)
+                        (-> conf/*cloud-conn* :api .shutdown)
                         (shutdown-agents))))))))
