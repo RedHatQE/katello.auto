@@ -67,8 +67,10 @@
           (apply ui/update g f args)))
 
       [[assoc :limit 4]
-       [assoc :limit 8, :description "updated description"]
-       [assoc :description "updated description"]])
+       (with-meta
+         [assoc :limit 8, :description "updated description"]
+         [assoc :description "updated description"]
+         {:blockers (bz-bugs "988359")})])
 
 
     (deftest "Edit system limit of a system group, then set back to unlimited"
