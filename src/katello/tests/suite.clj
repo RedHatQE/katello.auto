@@ -53,7 +53,8 @@
   katello.tests.systems/system-tests
   katello.tests.system-groups/sg-tests
   katello.tests.activation-keys/ak-tests
-  katello.tests.users/user-tests)
+  katello.tests.users/user-tests
+  katello.tests.providers.redhat/manifest-tests)
 
 (defn make-suite
   ([] (make-suite nil))
