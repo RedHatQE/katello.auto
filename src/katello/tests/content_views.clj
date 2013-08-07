@@ -851,34 +851,33 @@
        [[true]
         [false]])
      
-     (deftest "Validate: CV contents should not available on client after deleting it from selected env"
+    (deftest "Deleting a CV from selected env and when a system is subscribed to it, should fail the promotion"
       :uuid "5f642606-bbe6-ec14-a4cb-14b97069ff09"
-       :blockers (bz-bugs "947497")
-       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     target-env (kt/newEnvironment {:name "dev" :org org})]
-         (let [repo (fresh-repo org
-                                "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-               cv (promote-published-content-view org target-env repo)                
-               ak (kt/newActivationKey {:name (uniqueify "ak")
-                                        :env target-env
-                                        :description "auto activation key"
-                                        :content-view cv})]
-           (ui/create ak)
-           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
-           (provision/with-queued-client ssh-conn
-             (client/register ssh-conn
-                              {:org (:name org)
-                               :activationkey (:name ak)})
-             (let [deletion-cs (-> {:name "deletion-cs"
-                                    :content (list cv)
-                                    :env target-env
-                                    :deletion? true}
-                                 katello/newChangeset
-                                 uniqueify)]
-               (client/sm-cmd ssh-conn :refresh)
-               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-                 (assert/is (client/ok? cmd_result)))
-               (changeset/promote-delete-content deletion-cs)
-               (client/sm-cmd ssh-conn :refresh)
-               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cat")]
-                 (assert/is (->> cmd_result :exit (not= 1)))))))))))
+      :blockers (bz-bugs "947497")
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})]
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (promote-published-content-view org target-env repo)                
+              ak (kt/newActivationKey {:name (uniqueify "ak")
+                                       :env target-env
+                                       :description "auto activation key"
+                                       :content-view cv})
+              deletion-cs (-> {:name "deletion-cs"
+                               :content (list cv)
+                               :env target-env
+                               :deletion? true}
+                            katello/newChangeset
+                            uniqueify)]
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+              (assert/is (client/ok? cmd_result)))
+            (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
+                             (changeset/promote-delete-content deletion-cs)))))))) 
+               
