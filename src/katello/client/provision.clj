@@ -11,7 +11,7 @@
 (defrecord Client [vm ssh-connection])
 
 (defonce queue (atom nil))
-(def ^:dynamic *max-retries* 3)
+(def ^:dynamic *max-retries* 2)
 
 (defn new-queue
   "Create a new instance queue with given capacity."
@@ -21,11 +21,15 @@
 (defn- clean-up-queue [q]
   (let [leftovers (java.util.ArrayList.)]
     (.drainTo q leftovers)
-    (ovirt/unprovision-all (->> leftovers
-                                (map deref)
-                                (take-while #(not= :end %))
-                                (map :vm)
-                                (filter identity)))))
+    (let [clients (->> leftovers
+                       (map deref)
+                       (take-while #(not= :end %)))
+          active #(->> %2 (map %1) (filter identity))
+          active-ssh-conns (active :ssh-connection clients)
+          active-vms (active :vm clients)]
+      (doseq [conn active-ssh-conns]
+        (ssh/disconnect conn))
+      (ovirt/unprovision-all active-vms))))
 
 (defn add-ssh
   "Add ssh session field to the given instance,returning a Client
@@ -44,6 +48,7 @@
             (client/setup-client (:ssh-connection client) (-> client :vm .getName))
             client)
           (catch Object o
+            (.printStackTrace o)
             (throw+ {:type ::setup-failed
                      :vm vm
                      :cause o})))))
@@ -56,9 +61,8 @@
   (if (> tries-remaining 0)
     (try+ (provision vm-def)
           (catch Object _
-            (let [tries-dec (dec tries-remaining)]
-              #(get-client tries-dec
-                           (update-in vm-def [:name] str "-retry" (- *max-retries* tries-dec))))))
+            #(get-client (dec tries-remaining)
+                         (update-in vm-def [:name] str "-retry"))))
     (throw+ {:type ::max-retries-exceeded
              :vm-def vm-def})))
 
