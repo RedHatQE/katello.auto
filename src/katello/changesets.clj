@@ -143,7 +143,7 @@
     (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
       (case current-status
         "Applied" current-status
-        "Apply Failed" (throw+ {:type :promotion-failed
+        "Apply Failed" (throw+ {:type ::promotion-failed
                                 :changeset name
                                 :from-env (:name env)
                                 :to-env (-> env :next :name)})

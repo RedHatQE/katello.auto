@@ -127,8 +127,7 @@
     
     (fn [type repo1]
       (content-search/go-to-content-search-page test-org-compare)
-      (assert/is (repo-compare-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
-                                     "CompareZooNosync" #{}))
+      (assert/is (repo-compare-test  type repo1 (into #{} (content-search/get-repo-packages repo1 :view type)) "CompareZooNosync" #{}))
       (assert/is (repo-all-shared-different-test type repo1 (into #{} (content-search/get-repo-packages repo1 :view type))
                                                  "CompareZooNosync" #{})))
     
@@ -248,13 +247,15 @@
   "for a bunch of data driven tests that use the same function, but
    different name and data."
   [& tests]
-  `(concat ~(vec (for [{:keys [name uuid data]} tests]
-                   `(deftest ~name
-                      :uuid ~uuid
+  `(concat ~(vec (for [
+                      ; {:keys [name uuid data]} 
+                      test tests]
+                   `(deftest ~(test :name)
+                      :uuid ~(test :uuid)
                       :data-driven true
-
+                      :blockers ~(test :blockers) 
                       verify-errata
-                      ~data)))))
+                      ~(test :data))))))
 
 
 (def errata-search-table
@@ -324,6 +325,7 @@
     
     {:name "UI - Search Errata in Content Search by severity"
      :uuid "a20b0c77-a707-f504-e53b-935314b460d6"
+     :blockers (bz-bugs "994917")
      :data [["severity:low" "RHEA-2012:2010"]
             ["severity:important" "RHEA-2012:2011"]
             ["severity:critical" "RHEA-2012:2012"]
@@ -343,16 +345,22 @@
 (def env-qa "QA")
 (def env-release "Release")
 
-(defn test-env-shared-unique [environments view]
-      (content-search/go-to-content-search-page test-org-env)
-      (content-search/select-content-type :repo-type)
-      (content-search/submit-browse-button)
-      (content-search/select-environments environments)
-      (content-search/select-view view)
-      (content-search/get-grid-row-headers))
+(defn test-repo-errata-count [repo view env]
+    (content-search/go-to-content-search-page test-org-env)
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (content-search/select-environments [env-dev env-qa env-release])
+    (content-search/get-repo-errata-count repo view env))
 
-(defgroup content-search-env-compare
-  :group-setup (fn []
+(defn test-env-shared-unique [environments view]
+    (content-search/go-to-content-search-page test-org-env)
+    (content-search/select-content-type :repo-type)
+    (content-search/submit-browse-button)
+    (content-search/select-environments environments)
+    (content-search/select-view view)
+    (content-search/get-grid-row-headers))
+
+  (defn cs-envcomp-setup []
                  (def ^:dynamic test-org-env  (uniqueify  (kt/newOrganization {:name "env-org"})))
                  (rest/create  test-org-env)
                  (org/switch test-org-env)
@@ -373,6 +381,8 @@
                      env-qa-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
                           2))))))
+(defgroup content-search-env-compare
+  :group-setup cs-envcomp-setup 
 
   (deftest "Content Browser: Shared content for selected environments"
     :data-driven true
@@ -382,7 +392,7 @@
     
     [(fn [] [[env-dev] #{{"Default Organization View" 
                    #{"Com Errata Inc" "Weird Enterprise" "Com Errata Enterprise"}} 
-                  {publish-dev {"Com Errata Inc" "ErrataZoo"}} 
+                  {publish-dev {"Com Errata Inc" "ErrataZoo2"}} 
                   {publish-qa "Weird Enterprise"}}])
      
      (fn [] [[env-dev env-qa] #{{"Default Organization View" 
@@ -405,7 +415,7 @@
       #{{"Default Organization View" 
          #{{"Weird Enterprise" #{"China" "Russia"}} 
            {"Com Errata Enterprise" "ErrataZoo"} 
-           {"Com Errata Inc" "ErrataZoo"}}} 
+           {"Com Errata Inc" "ErrataZoo2"}}} 
         {publish-dev "Com Errata Inc"}
         {publish-qa {"Weird Enterprise" #{"China" "Russia"}}}}])
      
@@ -413,15 +423,15 @@
       #{{"Default Organization View" 
          #{{"Weird Enterprise" #{"China" "Russia"}} 
            {"Com Errata Enterprise" "ErrataZoo"} 
-           {"Com Errata Inc" "ErrataZoo"}}} 
+           {"Com Errata Inc" "ErrataZoo2"}}} 
         {publish-qa {"Weird Enterprise" #{"China" "Russia"}}} 
-        {publish-dev {"Com Errata Inc" "ErrataZoo"}}}])
+        {publish-dev {"Com Errata Inc" "ErrataZoo2"}}}])
      
      (fn [] [[env-dev env-qa env-release] 
       #{{"Default Organization View" 
          #{{"Weird Enterprise" #{"China" "Russia"}} 
-           {"Com Errata Enterprise" "ErrataZoo"} {"Com Errata Inc" "ErrataZoo"}}} 
-        {publish-dev {"Com Errata Inc" "ErrataZoo"}}
+           {"Com Errata Enterprise" "ErrataZoo"} {"Com Errata Inc" "ErrataZoo2"}}} 
+        {publish-dev {"Com Errata Inc" "ErrataZoo2"}}
         {publish-qa {"Weird Enterprise" #{"China" "Russia"}}}}])])
  
 (deftest "Content Browser: Environment selector for content browser"
@@ -438,6 +448,75 @@
       [[env-dev env-qa]]
       [[env-qa]]])
 
+
+  (deftest "Content Browser - Hover over a synced repository should show the correct number of packages and errata"
+    (assert/is (= ["Packages (8)" "Errata (2)"]
+                  (test-repo-errata-count "China" "Default Organization View" "Library"))))
+
+  (deftest "Content Browser - Validate hover-over shows correct package/errata count with links after promoting the repo from Library to next env"
+    (assert/is (= ["Packages (8)" "Errata (2)"]
+                  (test-repo-errata-count "China" publish-qa "QA"))))
+
+  (deftest "Content Browser - Validate hover-over correctly showing package/errata count for empty repo" 
+    (assert/is (= ["Packages (0)" "Errata (0)"]
+                  (test-repo-errata-count "ErrataZoo2" "Default Organization View" "Library"))))
+
+  (deftest "Content Search: search package info"
+        :data-driven true
+        
+        (fn [repo env view result]
+                (content-search/go-to-content-search-page test-org-env)
+                (content-search/select-content-type :repo-type)
+                (content-search/submit-browse-button)
+                (content-search/select-environments [env-dev env-qa env-release])
+                (content-search/click-repo-desc repo env view)
+                (assert/is (content-search/get-package-desc) result))
+        
+        [["China" "Library" "Default Organization View"
+                         {["walrus" "0.3-0.8.noarch"] "A dummy package of walrus",
+                          ["squirrel" "0.3-0.8.noarch"] "A dummy package of squirrel",
+                          ["penguin" "0.3-0.8.noarch"] "A dummy package of penguin",
+                          ["monkey" "0.3-0.8.noarch"] "A dummy package of monkey",
+                          ["lion" "0.3-0.8.noarch"] "A dummy package of lion",
+                          ["giraffe" "0.3-0.8.noarch"] "A dummy package of giraffe",
+                          ["elephant" "0.3-0.8.noarch"] "A dummy package of elephant",
+                          ["cheetah" "0.3-0.8.noarch"] "A dummy package of cheetah"}]
+              ["Russia" "QA" publish-qa 
+
+{["mouse" "0.1.12-1.noarch"] "A dummy package of mouse",
+  ["cheetah" "1.25.3-5.noarch"] "A dummy package of cheetah",
+  ["whale" "0.2-1.noarch"] "A dummy package of whale",
+  ["horse" "0.22-2.noarch"] "A dummy package of horse",
+  ["gorilla" "0.62-1.noarch"] "A dummy package of gorilla",
+  ["dolphin" "3.10.232-1.noarch"] "A dummy package of dolphin",
+  ["cockateel" "3.1-1.noarch"] "A dummy package of cockateel",
+  ["zebra" "0.1-2.noarch"] "A dummy package of zebra",
+  ["shark" "0.1-1.noarch"] "A dummy package of shark",
+  ["frog" "0.1-1.noarch"] "A dummy package of frog",
+  ["dog" "4.23-1.noarch"] "A dummy package of dog",
+  ["tiger" "1.0-4.noarch"] "A dummy package of tiger",
+  ["kangaroo" "0.2-1.noarch"] "A dummy package of kangaroo",
+  ["giraffe" "0.67-2.noarch"] "A dummy package of giraffe",
+  ["wolf" "9.4-2.noarch"] "A dummy package of wolf",
+  ["lion" "0.4-1.noarch"] "A dummy package of lion",
+  ["duck" "0.6-1.noarch"] "A dummy package of duck",
+  ["crow" "0.8-1.noarch"] "A dummy package of crow",
+  ["trout" "0.12-1.noarch"] "A dummy package of trout",
+  ["elephant" "8.3-1.noarch"] "A dummy package of elephant",
+  ["squirrel" "0.1-1.noarch"] "A dummy package of squirrel",
+  ["bear" "4.1-1.noarch"] "A dummy package of bear",
+  ["penguin" "0.9.1-1.noarch"] "A dummy package of penguin",
+  ["pike" "2.2-1.noarch"] "A dummy package of pike",
+  ["camel" "0.1-1.noarch"] "A dummy package of camel",
+  ["cat" "1.0-1.noarch"] "A dummy package of cat",
+  ["stork" "0.12-2.noarch"] "A dummy package of stork",
+  ["walrus" "5.21-1.noarch"] "A dummy package of walrus",
+  ["walrus" "0.71-1.noarch"] "A dummy package of walrus",
+  ["fox" "1.1-2.noarch"] "A dummy package of fox",
+  ["cow" "2.2-3.noarch"] "A dummy package of cow",
+  ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}
+
+                          ]])
 
   (deftest "Content Search: search repo info"
     (content-search/go-to-content-search-page test-org-env)
