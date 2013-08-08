@@ -39,6 +39,7 @@
                 ::system-name-char-limit              #"Name is too long.*maximum is 250"
                 ::sys-description-255-char-limit      #"Description cannot contain more than 255 characters"
                 ::sys-location-255-char-limit         #"Location is too long \(maximum is 255 characters\)"
+                ::default-org-info-255-char-limit     #"Default info must be less than 256 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
