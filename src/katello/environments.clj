@@ -86,8 +86,11 @@
                                     :description (:description env)
                                     :prior (rest/get-id (or (:prior env)
                                                         (katello/mklibrary env)))}}}))))
-     :read (partial rest/read-impl id-url)
-     
+     :read (fn [env]
+             (if (rest/is-katello?)
+               (rest/read-impl id-url env)
+               true)) ;; hack to make rest/exists? think that env's in a record exists for headpin.
+                   
      :update* (fn [env new-env]
                (merge new-env (rest/http-put (id-url env)
                                              {:environment (select-keys new-env [:description])})))})
