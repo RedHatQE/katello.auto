@@ -35,7 +35,7 @@
 
 (defn create-test-environment []
   (def test-environment (first *environments*))
-  (create-recursive test-environment))
+    (rest/when-katello (create-recursive test-environment)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
