@@ -216,18 +216,8 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-ascii-string 255) true]
-
-       (vary-meta
-        [(random-ascii-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
-       [(random-unicode-string 10) true]
-
-       (vary-meta
-        [(random-unicode-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
+       [(random-ascii-string 255) true]      
+       [(random-unicode-string 10) true]      
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 
@@ -269,20 +259,39 @@
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-ascii-string 255) true]
-
-       (vary-meta
-        [(random-ascii-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-
-       [(random-unicode-string 10) true]
-
-       (vary-meta
-        [(random-unicode-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
+       [(random-ascii-string 255) true]     
+       [(random-unicode-string 10) true]     
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
+    
+    (deftest "Org: Default distributor keyname char limit validation"
+      :uuid "3301fae9-282e-4a05-8903-dad35a516e15"
+      :data-driven true
+
+      (fn [keyname expected-error]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                               :label (uniqueify "org-label")})]
+          (ui/create org)
+          (expecting-error (common/errtype expected-error)
+            (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname))))
+ 
+      [[(random-ascii-string 256) :katello.notifications/default-org-info-255-char-limit]
+       [(random-unicode-string 256) :katello.notifications/default-org-info-255-char-limit]])
+    
+    (deftest "Org: Default System keyname char limit validation"
+      :uuid "6a357b3f-515c-48d6-a2ea-57112e8e813e"
+      :data-driven true
+      
+      (fn [keyname expected-error]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                               :label (uniqueify "org-label")
+                                               :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+          (ui/create org)
+          (expecting-error (common/errtype expected-error)
+            (organization/add-custom-keyname org ::organization/system-default-info-page keyname))))
+ 
+      [[(random-ascii-string 256) :katello.notifications/default-org-info-255-char-limit]
+       [(random-unicode-string 256) :katello.notifications/default-org-info-255-char-limit]])
 
     (deftest "Create org with default distributor keyname and delete keyname"
       :uuid "80a04f72-4194-5c54-e1db-0f2e43ee0c67"
