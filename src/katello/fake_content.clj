@@ -101,7 +101,8 @@
                                             :repos [{:name "ErrataZoo" 
                                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
                                            {:name "Com Errata Inc"
-                                            :repos [{:name "ErrataZoo" 
+                                            :repos [{:name "ErrataZoo2" 
+                                                     :nosync true
                                                      :url "http://fedorapeople.org/groups/katello/fakerepos/zoo/"}]}
                            
                                            {:name "Weird Enterprise"
@@ -118,6 +119,7 @@
         (for [repo (product :repos)]
           (kt/newRepository 
              {:name (repo :name) 
+              :nosync (repo :nosync)
              :url (repo :url)
              :product (kt/newProduct 
                         {:name (product :name) 
@@ -131,7 +133,7 @@
 (defn prepare-org-custom-provider [org tree]
   (let [repolist (repo-list-from-tree tree org)]
     (ui/create-all-recursive repolist)
-    (sync/perform-sync repolist)))
+    (sync/perform-sync (remove :nosync repolist))))
 
 
 (defn get-all-custom-repo-names []

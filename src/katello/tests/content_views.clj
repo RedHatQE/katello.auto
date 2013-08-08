@@ -39,7 +39,8 @@
     (ui/create-all-recursive (list org target-env))
     (ui/create cv)
     (create-recursive repo)
-    (sync/perform-sync (list repo))
+    (when (not (:nosync repo))
+      (sync/perform-sync (list repo)))
     (ui/update cv assoc :products (list (kt/product repo)))
     (views/publish {:content-defn cv
                     :published-name (:published-name cv)
