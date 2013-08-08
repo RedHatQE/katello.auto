@@ -43,9 +43,10 @@
 
 (defn new-session
   ([hostname]
-     (ssh/session (ssh/ssh-agent {})
-                  hostname
-                  {:username "root", :strict-host-key-checking :no})))
+     (doto (ssh/session (ssh/ssh-agent {})
+                        hostname
+                        {:username "root", :strict-host-key-checking :no})
+       (.setDaemonThread true)))) ; so jvm can exit even if connection not closed properly
 
 (defn configure-client [session m]
   (doall (for [[heading settings] m
