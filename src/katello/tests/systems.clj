@@ -19,7 +19,7 @@
                      [gpg-keys :as gpg-key]
                      [notices :as notices]
                      [conf :refer [*session-user* *session-org* config *environments*]]
-                     [blockers :refer [bz-bugs auto-issue]])
+                     [blockers :refer [bz-bugs bz-bug auto-issue]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
@@ -35,7 +35,7 @@
 
 (defn create-test-environment []
   (def test-environment (first *environments*))
-  (create-recursive test-environment))
+    (rest/when-katello (create-recursive test-environment)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
@@ -113,7 +113,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (bz-bugs "717408" "728357" "987925")
+  :blockers (conj (bz-bugs "717408" "728357") (bz-bug "987925" :katello))
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
