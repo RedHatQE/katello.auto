@@ -484,5 +484,5 @@
 (defn get-repo-desc-button [repo-name env-name]
   (browser getText (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
 
-(defn click-repo-desc [repo-name env-name]
-  (browser click (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
+(defn click-repo-desc [repo-name env-name view-name]
+  (browser click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))
