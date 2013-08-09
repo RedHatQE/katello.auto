@@ -130,8 +130,8 @@
 
     [[::system/name-text-edit "yoursys" false success]
      [::system/name-text-edit "test.pnq.redhat.com" true success]
-     [::system/name-text-edit (random-ascii-string 251) true (common/errtype ::notification/system-name-char-limit)]
-     [::system/name-text-edit (random-ascii-string 250) true success]
+     [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
+     [::system/name-text-edit (random-ascii-string 255) true success]
      [::system/description-text-edit "cancel description" false success]
      [::system/description-text-edit "System Registration Info" true success]
      [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
