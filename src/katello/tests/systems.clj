@@ -180,9 +180,9 @@
 
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
-    (with-unique [org (kt/newOrganization {:name "delsyscount"
-                                           :initial-env (kt/newEnvironment {:name "dev"})})]
-      (let [systems (->> {:name "delsys", :env (:initial-env org)}
+    (with-unique [org (kt/newOrganization {:name "delsyscount"})]
+      (let [env (assoc kt/library :org org)
+            systems (->> {:name "delsys", :env env}
                          kt/newSystem
                          uniques
                          (take 4))]
@@ -217,14 +217,12 @@
   (deftest "Creates org with default custom system key and adds new system"
     :uuid "7d5ff301-b2eb-05a4-aee3-ab60d9583585"
     :blockers (list rest/katello-only)
-    (with-unique [org (kt/newOrganization
-                       {:name "defaultsysinfo"
-                        :initial-env (kt/newEnvironment {:name "dev"})})
+    (with-unique [org (kt/newOrganization {:name "defaultsysinfo"})
 
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
-                                        :env (:initial-env org)})]
+                                        :env (assoc kt/library :org org)})]
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
