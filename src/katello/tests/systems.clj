@@ -113,7 +113,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (conj (bz-bugs "717408" "728357") (bz-bug "987925" :katello))
+  :blockers (bz-bugs "717408" "728357") 
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
