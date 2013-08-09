@@ -37,9 +37,14 @@
 
 (defrecord Environment [id name label description ^Organization org prior next])
 
-(def library (map->Environment {:name "Library"})) ;  Library is a special
+(def ^:private library-name "Library")
+(def library (map->Environment {:name library-name})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
+
+(defn library? "Returns true if env is a Library"
+  [env]
+  (= (:name env) library-name))
 
 (declare org)
 

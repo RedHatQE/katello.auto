@@ -155,11 +155,12 @@
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "
   [cs]
-  (let [content (:content cs)
-        cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
-    (ui/create cs)
-    (ui/update cs assoc :content content)
-    (promote-or-delete cs)))
+  (when-not (-> cs kt/env kt/library?)
+    (let [content (:content cs)
+          cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
+      (ui/create cs)
+      (ui/update cs assoc :content content)
+      (promote-or-delete cs))))
 
 (defn sync-and-promote
   "Syncs all the repos and then promotes all their parent products
