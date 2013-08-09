@@ -34,8 +34,8 @@
 ;; Functions
 
 (defn create-test-environment []
-  (def test-environment (first *environments*))
-    (rest/when-katello (create-recursive test-environment)))
+  (def test-environment (assoc kt/library
+                          :org *session-org*)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
