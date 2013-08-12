@@ -37,9 +37,14 @@
 
 (defrecord Environment [id name label description ^Organization org prior next])
 
-(def library (map->Environment {:name "Library"})) ;  Library is a special
+(def ^:private library-name "Library")
+(def library (map->Environment {:name library-name})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
+
+(defn library? "Returns true if env is a Library"
+  [env]
+  (= (:name env) library-name))
 
 (declare org)
 
@@ -101,6 +106,8 @@
 
 (defrecord ContentView [id name description composite composite-name org published-name])
 
+(defrecord Filter [id name ^ContentView cv type exclude?])
+
 (defrecord Manifest [provider file-path url])
 
 (defrecord SyncPlan [id name ^Organization org interval])
@@ -120,6 +127,7 @@
   (product [x])
   (reposet [x])
   (repository [x])
+  (cv [x])
   (parent [x]))
 
 (def relationships
@@ -141,7 +149,8 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
-   ContentView {:org :org, :parent #'org}
+   ContentView {:org :org, :cv identity :parent #'org}
+   Filter {:org  (comp #'org #'cv), :parent #'cv}
    Changeset {:org (comp #'org #'env), :env :env, :parent #'env}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
    SyncPlan {:org :org, :parent #'org}})

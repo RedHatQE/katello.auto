@@ -1,5 +1,6 @@
 (ns katello.users
-  (:require [slingshot.slingshot :refer [throw+]]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
@@ -74,7 +75,7 @@
   [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
   (browser/click ::new)
-  (let [env-chooser (fn [env] (when env
+  (let [env-chooser (fn [env] (when (and env (rest/is-katello?))
                                (nav/select-environment-widget env)))]
     (browser/quick-fill-submit {::username-text name}
                                {::password-text password}
@@ -106,10 +107,10 @@
   "Assigns a default organization and environment to a user"
   [org env]
   (when org
-    (browser/select-by-text ::default-org (:name org)))
-  (when env
-    (browser/click (ui/environment-link (:name env))))
-  (browser/click ::save-environment)
+    (browser/select-by-text ::default-org-select (:name org)))
+  (when (and env (rest/is-katello?))
+    (browser click (ui/environment-link (:name env))))
+  (browser click ::save-environment)
   (notification/success-type :users-update-env))
 
 (defn current

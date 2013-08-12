@@ -19,7 +19,7 @@
                      [gpg-keys :as gpg-key]
                      [notices :as notices]
                      [conf :refer [*session-user* *session-org* config *environments*]]
-                     [blockers :refer [bz-bugs auto-issue]])
+                     [blockers :refer [bz-bugs bz-bug auto-issue]])
             [katello.client.provision :as provision]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
@@ -35,8 +35,8 @@
 ;; Functions
 
 (defn create-test-environment []
-  (def test-environment (first *environments*))
-  (create-recursive test-environment))
+  (def test-environment (assoc kt/library
+                          :org *session-org*)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
@@ -63,9 +63,8 @@
   (assert/is (common/disabled? ::system/subs-attach-button)))
 
 (defn configure-product-for-pkg-install
-  "Creates and promotes a product with fake content repo, returns the
-  product."
-  [target-env]
+  "Creates a product with fake content repo, returns the product."
+  []
   (with-unique [provider (katello/newProvider {:name "custom_provider" :org *session-org*})
                 product (katello/newProduct {:name "fake" :provider provider})
                 testkey (katello/newGPGKey {:name "mykey" :org *session-org*
@@ -75,10 +74,7 @@
                                              :product product
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
                                              :gpg-key testkey})]
-    (create-recursive target-env)
     (ui/create-all (list testkey provider product repo))
-    (when (rest/is-katello?)
-      (changeset/sync-and-promote (list repo) target-env))
     product))
 
 (defn validate-system-facts
@@ -114,7 +110,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (bz-bugs "717408" "728357")
+  :blockers (bz-bugs "717408" "728357") 
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
@@ -135,8 +131,8 @@
 
     [[::system/name-text-edit "yoursys" false success]
      [::system/name-text-edit "test.pnq.redhat.com" true success]
-     [::system/name-text-edit (random-ascii-string 251) true (common/errtype ::notification/system-name-char-limit)]
-     [::system/name-text-edit (random-ascii-string 250) true success]
+     [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
+     [::system/name-text-edit (random-ascii-string 255) true success]
      [::system/description-text-edit "cancel description" false success]
      [::system/description-text-edit "System Registration Info" true success]
      [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
@@ -185,9 +181,9 @@
 
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
-    (with-unique [org (kt/newOrganization {:name "delsyscount"
-                                           :initial-env (kt/newEnvironment {:name "dev"})})]
-      (let [systems (->> {:name "delsys", :env (:initial-env org)}
+    (with-unique [org (kt/newOrganization {:name "delsyscount"})]
+      (let [env (assoc kt/library :org org)
+            systems (->> {:name "delsys", :env env}
                          kt/newSystem
                          uniques
                          (take 4))]
@@ -222,14 +218,12 @@
   (deftest "Creates org with default custom system key and adds new system"
     :uuid "7d5ff301-b2eb-05a4-aee3-ab60d9583585"
     :blockers (list rest/katello-only)
-    (with-unique [org (kt/newOrganization
-                       {:name "defaultsysinfo"
-                        :initial-env (kt/newEnvironment {:name "dev"})})
+    (with-unique [org (kt/newOrganization {:name "defaultsysinfo"})
 
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
-                                        :env (:initial-env org)})]
+                                        :env (assoc kt/library :org org)})]
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
@@ -416,17 +410,16 @@
                     (auto-issue "790"))
 
     (fn [package-opts]
-      (let [target-env test-environment
-            product (configure-product-for-pkg-install target-env)]
+      (let [product (configure-product-for-pkg-install)]
         (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn
                            {:username (:name *session-user*)
                             :password (:password *session-user*)
                             :org (-> product :provider :org :name)
-                            :env (:name target-env)
+                            :env (:name test-environment)
                             :force true})
-          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                           katello/newSystem)]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
@@ -461,10 +454,7 @@
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
     :blockers (list rest/katello-only)
-    (with-unique [target-env (kt/newEnvironment {:name "dev"
-                                                 :org *session-org*})
-                  repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
-      (ui/create target-env)
+    (with-unique [repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (create-recursive repo)
       (sync/perform-sync (list repo))
       (provision/with-queued-client
@@ -473,20 +463,19 @@
                          {:username (:name *session-user*)
                           :password (:password *session-user*)
                           :org (:name *session-org*)
-                          :env (:name target-env)
+                          :env (:name test-environment)
                           :force true})
         (let [hostname (client/my-hostname ssh-conn)
-              system (kt/newSystem {:name hostname :env target-env})]
+              system (kt/newSystem {:name hostname :env test-environment})]
           (validate-sys-subscription system)))))
 
   (deftest "Register a system using multiple activation keys"
     :uuid "a39bf0f7-7e7b-1e54-cdf3-d1442d6e6a6a"
     :blockers (list rest/katello-only)
-    (with-unique [target-env (kt/newEnvironment {:name "dev" :org *session-org*})
-                  [ak1 ak2] (kt/newActivationKey {:name "ak1"
-                                                  :env target-env
+    (with-unique [[ak1 ak2] (kt/newActivationKey {:name "ak1"
+                                                  :env test-environment
                                                   :description "auto activation key"})]
-      (ui/create-all (list target-env ak1 ak2))
+      (ui/create-all (list ak1 ak2))
       (let [ak1-name (:name ak1)
             ak2-name (:name ak2)
             ak-name (join "," [ak1-name ak2-name])]
@@ -494,7 +483,7 @@
           (client/register ssh-conn
                            {:org (:name *session-org*)
                             :activationkey ak-name})
-          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env target-env})]
+          (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})]
             (doseq [ak [ak1 ak2]]
               (let [aklink (system/activation-key-link (:name ak))]
                 (nav/go-to ::system/details-page system)
@@ -526,7 +515,7 @@
           (client/sm-cmd ssh-conn :refresh)
           (let [cmd (format "subscription-manager list --consumed | grep -o %s" product-name)
                 result (client/run-cmd ssh-conn cmd)]
-            (assert/is (->> result :exit-code (= 0))))))))
+            (assert/is (client/ok? result)))))))
 
   (deftest "Install package after moving a system from one env to other"
     :uuid "960cc577-e045-f9d4-7383-dec4e5eed00b"
@@ -561,4 +550,4 @@
           (expecting-error [:type :katello.systems/package-install-failed]
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit-code (= 1)))))))))
+            (assert/is (->> cmd_result :exit (= 1)))))))))

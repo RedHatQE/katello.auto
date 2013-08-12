@@ -1,6 +1,5 @@
 (ns katello.rh-repositories
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello :as kt]
             (katello [ui :as ui]                   
                      [navigation :as nav]
@@ -26,7 +25,7 @@
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
-  [::redhat-page
+  [::page
    [::rpms-page (nav/browser-fn (click ::rpms-tab))]
    [::source-rpms-page (nav/browser-fn (click ::srpms-tab))]
    [::debug-rpms-page (nav/browser-fn (click ::debugs-tab))] 

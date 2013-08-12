@@ -36,9 +36,9 @@
                 ::username-must-contain-3-char        #"Username must contain at least 3 character"
                 ::username-cant-be-blank              #"Username can't be blank"
                 ::name-128-char-limit                 #"(Username|Name) cannot contain more than 128 characters"
-                ::system-name-char-limit              #"Name is too long.*maximum is 250"
                 ::sys-description-255-char-limit      #"Description cannot contain more than 255 characters"
                 ::sys-location-255-char-limit         #"Location is too long \(maximum is 255 characters\)"
+                ::default-org-info-255-char-limit     #"Default info must be less than 256 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
                 ::max-systems-must-be-positive        #"System limit must be a positive"
@@ -67,6 +67,10 @@
    :cv-update-content        "content_view_definitions___update_content"
    :cv-update                "content_view_definitions___update"
    :cv-publish               "content_view_definitions___publish"
+   
+   :filters-create           "filters___create"
+   :filters-destroy          "filters___destroy_filters"
+   :filter-rules-destroy     "filter_rules___destroy_rules"
    
    :gpg-keys-create           "gpg_keys___create"
    :gpg-keys-destroy          "gpg_keys___destroy"
@@ -129,7 +133,9 @@
    
    :changeset-create         "changesets___create"
    :changeset-apply          "changesets___apply"
-   :changeset-promoted       "changesets___promote"})
+   :changeset-promoted       "changesets___promote"
+   
+   :manifest-crud            "providers__update_redhat_provider"})
 
 
 (def ^{:doc "A mapping of known errors in Katello. This helps
@@ -145,7 +151,9 @@
                 ::already-contains-default-info         #".*already contains default info.*"
                 ::add-systems-greater-than-allowed      #"You cannot have more.*associated with system group.*"
                 ::distributor-has-already-been-imported #"This.*has already been imported by another owner"
-                ::distributor-invalid-or-empty          #"The archive.*is not a properly compressed file or is empty"}]
+                ::distributor-invalid-or-empty          #"The archive.*is not a properly compressed file or is empty"
+                ::failed-signature-check                #"Archive failed signature check"
+                ::already-imported-another-manifest     #"Owner has already imported from another.*"}]
     (doseq [e (conj (keys errors) ::validation-error)]
       (derive e ::katello-error))
     (merge errors validation-errors)))

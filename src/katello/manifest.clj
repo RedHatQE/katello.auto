@@ -17,7 +17,7 @@
                      [ui-common :as common]
                      [subscriptions :as subs]
                      [sync-management :as sync]
-                     [rh-repositories :as rh-repos]))
+                     [redhat-repositories :as rh-repos]))
   (:import [java.util.zip ZipEntry ZipFile ZipOutputStream ZipInputStream]
            [java.io ByteArrayInputStream ByteArrayOutputStream]
            [org.bouncycastle.openssl PEMReader]
@@ -124,6 +124,12 @@
     (io/copy (update-in-nested-zip (zis tmp), (list "signature"), (sign tmp key-url))
              (java.io.File. dest-path))))
 
+(defn fetch-manifest [manifest-url]
+  "Downloads a manifest and fetches it's location"
+  (let [dest (new-tmp-loc)]
+    (io/copy (-> manifest-url java.net.URL. io/input-stream)
+      (java.io.File. dest))
+    dest))
 
 (defn download-original-manifest [redhat-manifest?]
   (let [dest (new-tmp-loc)
@@ -145,7 +151,6 @@
         product (-> repos first kt/product :name)]
     (with-unique [manifest (download-original-manifest (not= product reposet))]
       (ui/create (assoc manifest :provider (-> repos first kt/provider)))
-      #_(Thread/sleep 10000)
       (rh-repos/enable-disable-repos repos)
       (sync/perform-sync repos))))
 
@@ -179,7 +184,21 @@
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
   ;; was using asynchronous notification until the bug https://bugzilla.redhat.com/show_bug.cgi?id=842325 gets fixed.
-  (notification/check-for-success {:timeout-ms (* 10 60 1000)}))
+  (notification/check-for-success {:timeout-ms (* 10 60 1000) :match-pred (notification/request-type? :manifest-crud)}))
+
+(defn refresh-manifest
+  "Refreshes a subscription manifest uploaded"
+  [manifest]
+  (nav/go-to ::subs/new-page (kt/provider manifest))
+  (browser click ::subs/refresh-manifest)
+  (browser click ::ui/confirmation-yes))
+
+(defn- delete-manifest
+  "Deletes a subscription manifest uploaded"
+  [manifest]
+  (nav/go-to ::subs/new-page (kt/provider manifest))
+  (browser click ::subs/delete-manifest)
+  (browser click ::ui/confirmation-yes))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."
@@ -189,7 +208,9 @@
 
 
 (extend katello.Manifest
-  ui/CRUD {:create upload-manifest}
+  ui/CRUD {:create upload-manifest
+           :delete delete-manifest}
+  
   rest/CRUD {:create (fn [{:keys [url file-path] :as m}]
                        (merge m
                               (let [provid (-> m :provider rest/get-id)]

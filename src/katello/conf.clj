@@ -3,7 +3,7 @@
             [clojure.string :as string]
             clojure.tools.cli
             [fn.trace :refer [all-fns]]
-            [deltacloud :as cloud]
+            [ovirt.client :as ovirt]
             katello
             [katello.tasks :refer [unique-names]])
   
@@ -51,13 +51,15 @@
    ["-e" "--environments" "A comma separated list of environment names to test with (need not already exist)"
     :parse-fn #(seq (string/split % #",")) :default '("Development" "Q-eh") ]
 
-   ["--deltacloud-url" "A URL to deltacloud API that can be used to provision client machines for tests that require them"]
+   ["--ovirt-url" "A URL to ovirt (or RHEVM) API that can be used to provision client machines for tests that require them"]
 
-   ["--deltacloud-user" "The username to log in to deltacloud api."]
+   ["--ovirt-user" "The username to log in to ovirt api."]
 
-   ["--deltacloud-password" "The password for the deltacloud-user."]
+   ["--ovirt-password" "The password for the ovirt user."]
 
-   ["--deltacloud-image-id" "The image id to use to provision clients."]
+   ["--ovirt-template" "The template to use to provision clients."]
+
+   ["--ovirt-cluster" "The cluster to use to deploy clients on."]
 
    ["-a" "--selenium-address" "Address of the selenium server to connect to. eg 'host.com:4444' If none specified, an embedded selenium server is used."]
 
@@ -75,12 +77,7 @@
    ["-c" "--config" "Config files (containing a clojure map of config options) to read and overlay  other command line options on top of - a list of comma separated places to look - first existing file is used and rest are ignored."
     :default ["automation-properties.clj" (format "%s/automation-properties.clj" (System/getProperty "user.home"))]
     :parse-fn #(string/split % #",")]
-
-
-   #_("to regenerate the list of test namespaces to trace:"
-      (require 'katello.tests.suite)
-      (filter (fn [sym] (-> sym str (.startsWith "katello.tests"))) (loaded-libs)))
-   
+  
    ["--trace" "Namespaces and functions to trace"
     :parse-fn #(->> (string/split % #",") (map symbol) vec)]
    
@@ -189,10 +186,12 @@
                                                   :password (@config :admin-password)
                                                   :email "admin@katello.org"}))
   (def ^:dynamic *session-org* (katello/newOrganization {:name (@config :admin-org)}))
-  (def ^:dynamic *cloud-conn* (when-let [dc-url (@config :deltacloud-url)]
-                                (deltacloud.Connection. dc-url           
-                                                        (@config :deltacloud-user)
-                                                        (@config :deltacloud-password))))
+  (def ^:dynamic *cloud-conn* (try (when-let [ovirt-url (@config :ovirt-url)]
+                                     {:api (org.ovirt.engine.sdk.Api. ovirt-url           
+                                                                      (@config :ovirt-user)
+                                                                      (@config :ovirt-password))
+                                      :cluster (@config :ovirt-cluster)})
+                                   (catch Exception e (.printStackTrace e))))
   (def ^:dynamic *browsers* (@config :browser-types))
   (def ^:dynamic *environments* (for [e (@config :environments)]
                                   (katello/newEnvironment {:name e
@@ -201,18 +200,16 @@
 (def promotion-deletion-lock nil) ;; var to lock on for promotions
 
 (defn no-clients-defined "Blocks a test if no client machines are accessible." [_]
-  (try
-    (cloud/instances *cloud-conn*)
-    []
-    (catch Exception e [e])))
+  (boolean *cloud-conn*))
 
 (defn client-defs "Return an infinite seq of client instance property definitions."
   [basename]
   (for [instname (unique-names basename)]
-    (merge cloud/small-instance-properties
-           {:name instname
-            :hwp_memory "512" ;;override to allow RHEL6.3 stock to boot - 256 is too small?
-            :image_id (@config :deltacloud-image-id)})))
+    (ovirt/map->InstanceDefinition {:name instname
+                                    :template-name (@config :ovirt-template)
+                                    :memory (* 512 1024 1024)
+                                    :sockets 2
+                                    :cores 1})))
 
 (defmacro with-creds
   "Execute body and with the given user and password, all api calls

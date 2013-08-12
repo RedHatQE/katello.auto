@@ -41,9 +41,7 @@
         ::update-prd-gpg-keys      "//div[contains(@class,'edit_select_product_gpg')]"
         ::prd-gpg-select    "//select[@name='product[gpg_key]']"
         ::save-updated-gpg-key     "//div[@name='product[gpg_key]']//button[contains(.,'Save')]"
-        ::confirm-gpg-update       "//span[@class='ui-button-text' and contains(.,'Yes')]"
-        ::remove-product           (ui/remove-link "products")}
-       )
+        ::remove-product           (ui/remove-link "products")})
 
 (wd/template-fns
  {repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
@@ -96,7 +94,7 @@
     (wd/->browser (click  ::update-prd-gpg-keys)
                    (select ::prd-gpg-select gpg-key)
                    (click  ::save-updated-gpg-key)
-                   (click  ::confirm-gpg-update))
+                   (click  ::ui/confirmation-yes))
     (notification/success-type :prod-update)))
 
 (defn- delete-product

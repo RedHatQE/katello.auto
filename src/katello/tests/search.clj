@@ -143,7 +143,9 @@
         (search ak searchterms)
         (validate-search-results (list ak))))
     
-    [[{:name "activation_key1" :description "my auto-key"} {:criteria "environment:dev*"}]
+    [(with-meta
+       [{:name "activation_key1" :description "my auto-key"} {:criteria "environment:dev*"}]
+       {:blockers (list rest/katello-only)})
      [{:name "activation_key2" :description "my activation-key"} {:criteria "name:activation_key2*"}]
      [{:name "activation_key3" :description "my activation-key"} {:criteria "description:\"my activation-key\""}]
      [{:name "activation_key4" :description "my activation-key"} {:criteria "name:activation*"}]])

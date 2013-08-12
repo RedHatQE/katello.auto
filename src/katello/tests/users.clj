@@ -190,14 +190,14 @@
     :uuid "e502a331-b905-7c94-a8c3-d4bca1094d20"
     (ui/create (uniqueify (assoc generic-user :name "user")))
     
-    (deftest "Admin creates a user with i18n characters"
+    (deftest "Admin creates a user with i18n and html characters "
       :uuid "3d79f50b-f27b-4e44-fa4b-834568c214d7"
       :data-driven true
       :blockers (bz-bugs "868906")
       
       (fn [username]
         (ui/create (uniqueify (assoc generic-user :name username ))))
-      [["صالح"] ["Гесер"] ["洪"]["標準語"]])
+      [["صالح"] ["Гесер"] ["洪"]["標準語"] ["<a href='foo1'>Click Here></a>"]])
 
     (deftest "User validation"
       :uuid "99693586-885f-9124-6c9b-93490b1bb687"
@@ -210,13 +210,10 @@
        [(random-ascii-string 129) :katello.notifications/name-128-char-limit]
        ["foo   " :katello.notifications/validation-error]
        ["   foo   " :katello.notifications/validation-error]
-       ["<a href='foo'>Click Here></a>" :katello.notifications/name-must-not-contain-html]
        ["" :katello.notifications/username-cant-be-blank]])
 
     (deftest "Admin creates a user with a default organization"
-      :uuid "0ec513c6-d68e-fff4-3b6b-d7ee7a590308"
-      :blockers (bz-bugs "852119")
-      
+      :uuid "0ec513c6-d68e-fff4-3b6b-d7ee7a590308"      
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     env (kt/newEnvironment {:name "environment" :org org})
                     user (assoc generic-user
@@ -240,7 +237,7 @@
           (create-recursive default-org-env)
           (ui/update user assoc :default-org *session-org* :default-env default-org-env)
           (assert/is (= (browser/text  ::user/current-default-org) (:name *session-org*)))
-          (assert/is (= (browser/text  ::user/current-default-env) (:name default-org-env))))))
+          (rest/when-katello (assert/is (= (browser/text  ::user/current-default-env) (:name default-org-env)))))))
     
     (deftest "Check whether the users email address gets updated"
       :uuid "23b69aad-209c-98d4-d993-c24c215a0e6a"
@@ -359,6 +356,20 @@
           (let [not-showing? #(not (browser/exists?  %))]
             (assert/is (every? not-showing? [::menu/systems-link ::menu/content-link ::menu/setup-link] ))))
         (assign-admin admin))))
+  
+  (deftest "Assure left pane updates when users/roles are added/deleted"
+    :uuid "05f27396-e1d8-33b4-44a3-9ffdb01d227e"
+    (with-unique [user (assoc generic-user :name "user1")
+                  role  (kt/newRole {:name "myrole"})]
+      (ui/create-all (list user role))
+      (nav/go-to ::user/page)
+      (assert/is (some #(= (user :name) %) (common/extract-left-pane-list)))
+      (ui/delete user)
+      (assert/is (some #(not= (user :name) %) (common/extract-left-pane-list)))
+      (nav/go-to ::role/page)
+      (assert/is (some #(= (role :name) %) (common/extract-left-pane-list)))
+      (ui/delete role)
+      (assert/is (some #(not= (role :name) %) (common/extract-left-pane-list)))))
 
   user-settings default-org-tests)
 

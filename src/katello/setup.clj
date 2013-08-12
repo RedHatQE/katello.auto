@@ -92,8 +92,9 @@
 
 (def runner-config 
   {:teardown (fn []
-                 )
-   :thread-runner thread-runner
+                 (when selenium-server/selenium-server 
+                 (selenium-server/stop)))
+   :thread-wrapper thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
               ;; :screencapture
               #_(watch/on-fail

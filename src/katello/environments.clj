@@ -64,27 +64,32 @@
   (nav/go-to env)
   (common/in-place-edit {::description-text description}))
 
+
 (extend katello.Environment
-  ui/CRUD {:create create
-           :update* edit
-           :delete delete}
+  ui/CRUD {:create (rest/only-when-katello create)
+           :update* (rest/only-when-katello edit)
+           :delete (rest/only-when-katello delete)}
   
   rest/CRUD
-  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments/" [:org]]])
+  (let [org-url (partial rest/url-maker [["api/organizations/%s/environments" [#'katello/org]]])
         id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
     {:id rest/id-field
      :query (partial rest/query-by-name org-url)
-     :create (fn [env] 
-               (merge env
-                      (rest/http-post (org-url env)
+     :create (fn [env]
+               (if (rest/is-katello?)
+                 (merge env
+                   (rest/http-post (org-url env)
                                  {:body
                                   {:environment
                                    {:name (:name env)
                                     :description (:description env)
                                     :prior (rest/get-id (or (:prior env)
-                                                        (katello/mklibrary env)))}}})))
-     :read (partial rest/read-impl id-url)
-     
+                                                        (katello/mklibrary env)))}}}))))
+     :read (fn [env]
+             (if (rest/is-katello?)
+               (rest/read-impl id-url env)
+               true)) ;; hack to make rest/exists? think that env's in a record exists for headpin.
+                   
      :update* (fn [env new-env]
                (merge new-env (rest/http-put (id-url env)
                                              {:environment (select-keys new-env [:description])})))})

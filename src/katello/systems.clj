@@ -138,6 +138,7 @@
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page (:org env))
+   ;; TODO - check for katello/only	
   (browser/quick-fill-submit {::name-text name}
                              {::arch-select (or system-arch "x86_64")}
                              {::sockets-text sockets}
@@ -352,16 +353,22 @@
            :delete delete
            :update* update}
 
-  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]
-                                                     ["api/organizations/%s/systems" [#'kt/org]]])
+   rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+                  katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
-               :query (partial rest/query-by-name query-url)
+               :query (fn [sys]
+                        (rest/query-by-name 
+                          (if (rest/is-katello?) 
+                           katello-url headpin-url) sys))
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
-                         (merge sys (rest/http-post (query-url sys)
-                                               {:body (assoc (select-keys sys [:name :facts])
-                                                        :type "system")})))})
+                         (merge sys (rest/http-post 
+                                      (if (rest/is-katello?) 
+                                        (katello-url sys) 
+                                        (headpin-url sys))
+                                      {:body (assoc (select-keys sys [:name :facts])
+                                       :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity %1 s)

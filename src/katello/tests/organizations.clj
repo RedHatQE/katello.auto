@@ -48,12 +48,8 @@
 ;; Data (Generated)
 
 (def bad-org-names
-  (for [[name err] (concat
-                    (for [inv-char-str validation/invalid-character-strings]
-                      [inv-char-str ::notification/name-must-not-contain-characters])
-                    (for [trailing-ws-str validation/trailing-whitespace-strings]
-                      [trailing-ws-str ::notification/name-no-leading-trailing-whitespace]))]
-    [(mkorg name) err]))
+  (for [trailing-ws-str validation/trailing-whitespace-strings]
+    [(mkorg trailing-ws-str) ::notification/name-no-leading-trailing-whitespace]))
 
 (def name-taken-error (common/errtype ::notification/name-taken-error))
 (def label-taken-error (common/errtype ::notification/label-taken-error))
@@ -127,6 +123,26 @@
       verify-bad-entity-create-gives-expected-error
       bad-org-names)
 
+    (deftest "Verify HTML names are properly escaped"
+      :uuid "ef423cc9-bbde-9b64-7adb-647287a96807"
+      :blockers (bz-bugs "987909")
+      :data-driven true
+      (fn [f-str tag innertext]
+        (let [n (format f-str (uniqueify "foo") tag)
+              notifs (-> n mkorg ui/create)
+              escaped (fn [tag innertext msg]
+                        (let [found-in #(-> %1 re-pattern (re-find %2) boolean)]
+                          (= (found-in innertext msg)
+                             (found-in tag msg))))]
+          (assert/is (some #{n} (common/extract-left-pane-list)))
+          ;; no notifs contain the innertext but not the tag
+          ;; FIXME this doesn't properly capture how the app renders
+          ;; text in the notif, currently doesn't escape it.  getting
+          ;; notif text from javascript though, shows it as escaped.
+          (assert/is (every? (partial escaped tag innertext)
+                         (mapcat :notices notifs)))))
+      [["<a %2$s='%1$s'>%3$s</a>" "href" "Click here"]])
+    
 
     (deftest "Edit an organization"
       :uuid "68b51c16-9596-7804-4ba3-ddd1e8eb1dd9"
@@ -162,15 +178,15 @@
                       env (kt/newEnvironment {:name "env" :org org})]
           (let [repos (for [r fake/custom-repos]
                         (update-in r [:product :provider] assoc :org org))]
-           (setup-custom-org-with-content env repos)
-           ;; not allowed to delete the current org, so switch first.
-           (organization/switch)
-           (ui/delete org)
-           (setup-custom-org-with-content env repos)))))
+            (setup-custom-org-with-content env repos)
+            ;; not allowed to delete the current org, so switch first.
+            (organization/switch)
+            (ui/delete org)
+            (setup-custom-org-with-content env repos)))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"
-      :blockers (conj (bz-bugs "966670") rest/katello-only)
+      :blockers (conj (bz-bugs "966670" "983994") rest/katello-only)
       :data-driven true
 
       (fn [env-name env-lbl notif]
@@ -191,26 +207,16 @@
 
       (fn [keyname success?]
         (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")
-                                             :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+                                               :label (uniqueify "org-label")
+                                               :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
           (ui/create org)
           (assert/is (not (organization/isKeynamePresent? keyname)))
           (organization/add-custom-keyname org ::organization/system-default-info-page keyname)
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-ascii-string 255) true]
-
-       (vary-meta
-        [(random-ascii-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
-       [(random-unicode-string 10) true]
-
-       (vary-meta
-        [(random-unicode-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
+       [(random-ascii-string 255) true]      
+       [(random-unicode-string 10) true]      
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
 
@@ -245,27 +251,46 @@
 
       (fn [keyname success?]
         (with-unique [org (kt/newOrganization {:name "keyname-org"
-                                             :label (uniqueify "org-label")})]
+                                               :label (uniqueify "org-label")})]
           (ui/create org)
           (assert/is (not (organization/isKeynamePresent? keyname)))
           (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
           (assert/is (= (organization/isKeynamePresent? keyname) success?))))
 
       [["Color" true]
-       [(random-ascii-string 255) true]
-
-       (vary-meta
-        [(random-ascii-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-
-       [(random-unicode-string 10) true]
-
-       (vary-meta
-        [(random-unicode-string 256) false]
-        assoc :blockers (bz-bugs "977925"))
-       
+       [(random-ascii-string 255) true]     
+       [(random-unicode-string 10) true]     
        ["bar_+{}|\"?hi" true]
        ["bar_+{}|\"?<blink>hi</blink>" true]])
+    
+    (deftest "Org: Default distributor keyname char limit validation"
+      :uuid "3301fae9-282e-4a05-8903-dad35a516e15"
+      :data-driven true
+
+      (fn [keyname expected-error]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                               :label (uniqueify "org-label")})]
+          (ui/create org)
+          (expecting-error (common/errtype expected-error)
+            (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname))))
+ 
+      [[(random-ascii-string 256) :katello.notifications/default-org-info-255-char-limit]
+       [(random-unicode-string 256) :katello.notifications/default-org-info-255-char-limit]])
+    
+    (deftest "Org: Default System keyname char limit validation"
+      :uuid "6a357b3f-515c-48d6-a2ea-57112e8e813e"
+      :data-driven true
+      
+      (fn [keyname expected-error]
+        (with-unique [org (kt/newOrganization {:name "keyname-org"
+                                               :label (uniqueify "org-label")
+                                               :initial-env (kt/newEnvironment {:name "keyname-env", :label "env-label"})})]
+          (ui/create org)
+          (expecting-error (common/errtype expected-error)
+            (organization/add-custom-keyname org ::organization/system-default-info-page keyname))))
+ 
+      [[(random-ascii-string 256) :katello.notifications/default-org-info-255-char-limit]
+       [(random-unicode-string 256) :katello.notifications/default-org-info-255-char-limit]])
 
     (deftest "Create org with default distributor keyname and delete keyname"
       :uuid "80a04f72-4194-5c54-e1db-0f2e43ee0c67"

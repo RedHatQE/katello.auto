@@ -7,12 +7,14 @@
                      providers
                      repositories
                      [tasks :refer [with-unique uniques uniqueify]] 
+                     [content-view-definitions :as views]
                      [fake-content :as fake]
                      [changesets :as changeset]
                      [sync-management :as sync]
-                     [conf :refer [config *session-org*]]
+                     [conf :refer [config *session-org* ]]
                      [blockers :refer [bz-bugs]])
-            [katello.tests.useful :refer [create-recursive] :as testfns]
+            [katello.tests.useful :refer [create-recursive fresh-repo]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]
@@ -20,48 +22,28 @@
             [clojure.set :refer [index]])
   (:refer-clojure :exclude [fn]))
 
-(defmacro fresh-repo []
-  `(testfns/fresh-repo *session-org* (@config :sync-repo)))
-
-(def promo-data
-  (runtime-data [2 (list (:product (fresh-repo)))]))
-
-(defn verify-promote-content [num-envs content-to-promote]
-  ;;create envs
-  (let [envs (->> {:name "promo-env", :org *session-org*}
-                  kt/newEnvironment
-                  uniques
-                  (take num-envs)
-                  kt/chain)
-        setup-item {katello.Product (fn [prod] ; create a repo in the given product and sync it
-                                      (let [repo (assoc (fresh-repo) :product prod)]
-                                        (create-recursive repo)
-                                        (sync/perform-sync (list repo))))}]
-    (rest/create-all envs)
-    (doseq [item content-to-promote]
-      ((setup-item (class item)) item))
-
-    (doseq [target-env envs]
-      (changeset/promote-delete-content (uniqueify (kt/newChangeset {:name "cs", :env target-env
-                                                                     :content content-to-promote}))))
-    (let [ui-member (fn [s m] ; check that m's name and class match an item in the set.
-                      (some (fn [i]
-                              (let [l (list i m)]
-                                (and (map (comp = class) l)
-                                     (map (comp = :name) l))))
-                            s))]
-      (assert/is (every? (partial ui-member (changeset/environment-content (last envs)))
-                         (set content-to-promote))))))
-
-(defgroup promotion-tests
-  
-  :blockers (bz-bugs "714297" "738054" "745315" "784853" "845096" "955729")
-          
+(defgroup promotion-tests        
   (deftest "Promote content"
     :uuid "fa2796db-f82f-f564-aa13-8239f154154d"
-    :data-driven true
-    :description "Takes content and promotes it thru more
-                   environments. Verifies that it shows up in the new
-                   env."
-    verify-promote-content
-    promo-data))
+    :description "Takes content and promotes it thru more environments. 
+                  Verifies that it shows up in the new env."
+    (with-unique [org        (kt/newOrganization {:name "org"})
+                  env (kt/newEnvironment {:name "env" :org org})
+                  cv         (kt/newContentView {:name "content-view"
+                                                 :org org
+                                                 :published-name "publish-name"})             
+                  cs         (kt/newChangeset {:name "cs"
+                                               :env env
+                                               :content (list cv)})]
+        (let [repo (fresh-repo org (@config :sync-repo))]
+          (ui/create-all (list org env cv))
+          (create-recursive repo)
+          (sync/perform-sync (list repo))
+          (ui/update cv assoc :products (list (kt/product repo)))
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (assert/is (changeset/environment-has-content? cs))))))
+              
