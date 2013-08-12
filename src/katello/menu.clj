@@ -65,14 +65,14 @@
 
 ;; Nav
 (def subscriptions-menu
-  [:subscriptions (browser-fn (click ::subscriptions-link)) ;; TODO: make these clicks mouseovers
+  [:subscriptions (browser-fn (click ::subscriptions-link))
    [:katello.subscriptions/page (browser-fn (click ::red-hat-subscriptions-link))]
    [:katello.distributors/page (browser-fn (click ::distributors-link))]
    [:katello.activation-keys/page (browser-fn (click ::activation-keys-link))]
    [:katello.subscriptions/import-history-page (browser-fn (click ::import-history-link))]])
 
 (def systems-menu
-  [::systems-menu (browser-fn (click ::systems-link)) ;; TODO: make these clicks mouseovers
+  [::systems-menu (browser-fn (click ::systems-link))
    [:katello.systems/page (browser-fn (click ::systems-all-link))]
    [:katello.systems/by-environments-page (browser-fn (click ::by-environments-link))]
    [:katello.system-groups/page (browser-fn (click ::system-groups-link))]])
@@ -80,7 +80,7 @@
 (def right-hand-menus
   (list [:katello.notices/page (browser-fn (click ::notifications-link))]
 
-        [::administer-menu (browser-fn (click ::administer-link)) ;; TODO: make these clicks mouseovers
+        [::administer-menu (browser-fn (click ::administer-link))
          [:katello.users/page (browser-fn (click ::users-link))]
          [:katello.roles/page (browser-fn (click ::roles-link))]
          [:katello.organizations/page (browser-fn (click ::manage-organizations-link))]]))
@@ -91,15 +91,15 @@
            [::org-context (fn [ent] (nav/switch-org (kt/org ent)))
             systems-menu
 
-            [::content-menu (browser-fn (click ::content-link)) ;; TODO: make these clicks mouseovers
+            [::content-menu (browser-fn (click ::content-link))
              subscriptions-menu
 
-             [::repositories-menu (browser-fn (click ::repositories-link)) ;; TODO: make these clicks mouseovers
+             [::repositories-menu (browser-fn (click ::repositories-link))
               [:katello.providers/custom-page (browser-fn (click ::custom-content-repositories-link))]
               [:katello.rh-repositories/redhat-page (browser-fn (click ::red-hat-repositories-link))]
               [:katello.gpg-keys/page (browser-fn (click ::gpg-keys-link))]]
 
-             [::sync-management-menu (browser-fn (click ::sync-management-link)) ;; TODO: make these clicks mouseovers
+             [::sync-management-menu (browser-fn (click ::sync-management-link))
               [:katello.sync-management/status-page (browser-fn (click ::sync-status-link))]
               [:katello.sync-management/plans-page (browser-fn (click ::sync-plans-link))]
               [:katello.sync-management/schedule-page (browser-fn (click ::sync-schedule-link))]]
@@ -108,7 +108,7 @@
 
              [:katello.content-search/page (browser-fn (click ::content-search-link))]
 
-             [::changeset-management-menu (browser-fn (click ::changeset-management-link)) ;; TODO: make these clicks mouseovers
+             [::changeset-management-menu (browser-fn (click ::changeset-management-link))
               [:katello.changesets/page (browser-fn (click ::changesets-link))]
               [:katello.changesets/history-page (browser-fn (click ::changeset-history-link))]]]]]
           right-hand-menus))

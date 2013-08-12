@@ -357,10 +357,10 @@
   ;; Select environments (columns)
   (doseq [env envs]
     (let [col-locator (column env)]
-      #_(wd/->browser (mouseOver ::column-selector) ;; TODO: composite action
-                     (mouseOver col-locator)
-                     (click col-locator)
-                     (mouseOut ::column-selector)))))
+      (wd/move-to browser/*driver* ::column-selector) 
+      (wd/move-to browser/*driver* col-locator)
+      (browser/click col-locator)
+      (wd/move-off browser/*driver* ::column-selector))))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -407,21 +407,21 @@
 
 (defn test-errata-popup-click [name]
   (browser/click (span-text name))
-  (browser/click   ::errata-search) ;; TODO: this was a mouseover
+  (wd/move-to browser/*driver* ::errata-search)
   ;DOESNT CONTAIN NAME ANYMORE
   (assert/is (.contains (browser/text ::details-container) "Erratum"))
   (browser/click (span-text name))
   (assert/is (= 0 (count (browser/find-elements ::details-container)))))
 
-(defn test-errata-popup-hover [name] ;; TODO: this function needs to hover, composite event
+(defn test-errata-popup-hover [name] 
   (assert/is
    (.contains
-    #_(wd/->browser (mouseOver (span-text name))
-                   (waitForElement  ::details-container) "4000"
-                   (getText ::details-container))
+    (do  (wd/move-to browser/*driver* (span-text name))
+         (browser/wait-until  (browser/exists? ::details-container) 4000)
+         (browser/text ::details-container))
     name))
-  #_(browser mouseOut (.getLocator (span-text name)))
-  #_(browser sleep 1000)
+  (wd/move-off (.getLocator (span-text name))) ;; TODO: deal with getLocator
+  (Thread/sleep 1000)
   (assert/is (= 0 (count (browser/find-elements ::details-container))))
 
   (defn get-errata-set  [type]

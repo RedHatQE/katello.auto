@@ -17,7 +17,7 @@
         ::name-text                 {:name "provider[name]"}
         ::provider-description-text {:name "provider[description]"}
         ::repository-url-text       {:name "provider[repository_url]"}
-        ::discovery-url-text        "discover_url"
+        ::discovery-url-text        {:name "discover_url"}
         ::discover-button           "//input[@value='Discover']"
 
         ::create-within-product     "new_repos"
@@ -142,7 +142,8 @@
       (Thread/sleep 3000)
       (browser/click ::cancel-discovery))
     (do
-      (browser/wait-until  (not (browser/visible? ::discover-spinner)) 120000)
+      (Thread/sleep 2000)
+      (browser/wait-until  #(not (browser/visible? ::discover-spinner)) 120000 2000)
       (doseq [url enabled-urls] (browser/click (repo-create-checkbox url)))
       (browser/click ::create-within-product)
       (if new-prod
@@ -151,8 +152,7 @@
           (browser/input-text ::new-product-name-text (:name product)))
         (do
           (browser/execute-script ::existing-product-dropdown)
-          ;; TODO: fix mouseUp event
-          #_(browser mouseUp (existing-product-select (:name product)))))
+          (wd/move-to browser/*driver* (existing-product-select (:name product)))))
       (browser/click ::create-repositories)
       (notification/success-type :repo-create)))) 
 

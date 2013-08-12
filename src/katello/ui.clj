@@ -120,6 +120,8 @@
    ::active-org              "//a[contains(@class,'organization-name')]"
    ::manage-orgs             "//li[@id='manage_orgs']//span[contains(.,'Manage Organizations')]"
    ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
+
+   ::keyname-list            {:xpath "//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')]"}
    
    ::search-bar              "search"
    ::search-menu             "//form[@id='search_form']//span[@class='arrow']"

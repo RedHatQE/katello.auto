@@ -1,7 +1,6 @@
 (ns katello.repl
   (:require [clojure.pprint :refer [pp pprint]]
             fn.trace
-            selenium-server
             [clj-webdriver.taxi :as taxi]
             katello.conf
             katello.setup
@@ -9,7 +8,6 @@
 
 
 (defn new-browser [& [optmap]]
-  #_(katello.setup/new-selenium (-> katello.conf/config deref :browser-types first) true)
   (katello.setup/start-selenium))
 
 
@@ -42,10 +40,8 @@
   #_(com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
   #_(com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
 
-  #_(selenium-server/start)
   (if-let [locale (@katello.conf/config :locale)]
-    (do (selenium-server/create-locale-profile locale)
-        (new-browser {:browser-config-opts (katello.setup/config-with-profile
+    (do (new-browser {:browser-config-opts (katello.setup/config-with-profile
                                             locale)}))
     (new-browser)))
 

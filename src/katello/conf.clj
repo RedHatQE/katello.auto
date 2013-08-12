@@ -2,7 +2,6 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             clojure.tools.cli
-            selenium-server
             [fn.trace :refer [all-fns]]
             [deltacloud :as cloud]
             katello
@@ -149,7 +148,8 @@
          ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *cloud-conn*
-         ^:dynamic *environments*)
+         ^:dynamic *environments*
+         ^:dynamic *wd-driver*)
 
 (defn- try-read-configs
   "try to read a config from filename, if file doesn't exist, return nil"
@@ -181,7 +181,7 @@
 
   ;; if user didn't specify sel address, start a server and use that
   ;; address.
-  (when-not (@config :selenium-address)
+  #_(when-not (@config :selenium-address)
     (selenium-server/start)
     (swap! config assoc :selenium-address "localhost:4444"))
   

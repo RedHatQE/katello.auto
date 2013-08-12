@@ -52,7 +52,7 @@
 
   (nav/go-to ::provider/products-page product)
   (browser/click (add-repo-link (:name product)))
-  (when gpg-key (browser/select ::repo-gpg-select (:name gpg-key)))
+  (when gpg-key (browser/select-by-text ::repo-gpg-select (:name gpg-key)))
   (browser/quick-fill-submit {::repo-name-text name}
                              {::repo-name-text "\t"}
                              {::repo-url-text url}

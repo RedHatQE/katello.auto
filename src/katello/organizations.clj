@@ -32,12 +32,12 @@
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
    ;; System Default Info
-   ::default-custom-info      (ui/third-level-link "organization_default")
+   ::default-info             {:xpath (ui/third-level-link "organization_default_info")}
    ::system-default-info      (ui/third-level-link "org_system_default_info")
    ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
-   ::keyname-text             "new_default_info_keyname"
-   ::create-keyname           "add_default_info_button"
-   ::apply-default-info       "apply_default_info_button"
+   ::keyname-text             {:id "new_default_info_keyname"}
+   ::create-keyname           {:id "add_default_info_button"}
+   ::apply-default-info       {:id "apply_default_info_button"}
    ::disabled-apply-btn       "//input[@class='btn fullwidth']"})
 
 (wd/template-fns
@@ -49,8 +49,14 @@
   [::page 
    [::new-page (nav/browser-fn (click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
-    [::system-default-info-page (nav/browser-fn (click ::system-default-info))]
-    [::distributor-default-info-page (nav/browser-fn (click ::distributor-default-info))]]])
+    [::default-info-menu (fn [n]
+                           (Thread/sleep 1000)
+                           (wd/move-to browser/*driver* (browser/element ::default-info)))
+     [::system-default-info-page (nav/browser-fn (click ::system-default-info))]
+     [::distributor-default-info-page (fn [n]
+                                        (wd/move-to browser/*driver* (browser/element ::distributor-default-info))
+                                        (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
+                                        #_(browser/click ::distributor-default-info))]]]])
 
 ;; Tasks
 
@@ -65,9 +71,9 @@
   [org section keyname & [{:keys [apply-default]}]]
   (nav/go-to section org)
   ;; Make sure the 'Add' button is disabled
-  (assert (= (browser/attribute ::create-keyname "disabled") ""))
+  (assert (boolean (browser/attribute ::create-keyname :disabled)))
+  (Thread/sleep 1000)
   (wd/->browser (input-text ::keyname-text keyname)
-                #_(keyUp ::keyname-text "w") ;;TODO : fix this, find equivalent in webdriver
                 (click ::create-keyname))
   (if apply-default
     (do
@@ -92,18 +98,16 @@
                              {::name-text name}
                              {::name-text "\t"} ;; tab to trigger the label-filling ajax call
                              {::description-text (or description "")})
-  (if ::label-text
-    (do
-      (browser/clear ::label-text)
-      (browser/input-text ::label-text label)))
+  (when label
+    (browser/clear ::label-text)
+    (browser/input-text ::label-text label))
   (browser/quick-fill-submit {::initial-env-name-text browser/focus}
                              {::initial-env-name-text (or (:name initial-env) "")}
                              {::initial-env-name-text "\t"}
                              {::initial-env-desc-text (or (:description initial-env) "")})
-  (if ::initial-env-label-text
-    (do
-      (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
+  (when initial-env
+    (browser/clear ::initial-env-label-text)
+    (browser/input-text ::initial-env-label-text (or (:label initial-env) "")))
   (browser/click ::create)
   (notification/success-type :org-create))
 
@@ -186,11 +190,18 @@
                                                :org default-org})))
                current-default (try (browser/text ::default)
                                     (catch NoSuchElementException _ nil))]
-           (when (not= current-default default-org-name)
-             (browser/click (ui/default-star (or default-org-name
-                                                 current-default)))
-             (notification/check-for-success))))
+           (if (nil? default-org-name)
+             (while (not (browser/visible? ::default))
+               (nav/scroll-org-switcher))
+             (when (not= current-default default-org-name)
+              (while (not (browser/visible? (ui/switcher-link default-org-name)))
+                (nav/scroll-org-switcher))))
+           (browser/click (ui/default-star (or default-org-name current-default)))
+           (notification/check-for-success)
+           (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))))
        (when name
+         (while (not (browser/visible? (ui/switcher-link name)))
+           (nav/scroll-org-switcher))
          (browser/click (ui/switcher-link name))))))
 
 (defn switcher-available-orgs

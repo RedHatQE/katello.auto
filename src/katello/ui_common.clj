@@ -85,7 +85,7 @@
   (extract-list ui/left-pane-field-list))
 
 (defn extract-custom-keyname-list []
-  (set (extract-list ui/custom-keyname-list)))
+  (set (map browser/text (browser/elements ::ui/keyname-list))))
 
 (defn extract-custom-value-list []
   (set (extract-list ui/custom-value-list)))

@@ -11,6 +11,7 @@
                      [blockers :refer [bz-bugs]])
             (test.tree [script :refer [defgroup deftest]])
             [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
 
@@ -42,8 +43,8 @@
         (let [expected-res #(-> % :type (= :success))]
           (ui/create-all (list org env dist))
           (ui/update dist assoc :custom-info {keyname value})
-          (assert/is (= (browser isTextPresent keyname) success?))
-          (assert/is (= (browser isTextPresent keyname) success?)))))
+          (assert/is (= (wd/text-present? keyname) success?))
+          (assert/is (= (wd/text-present? keyname) success?)))))
 
     [["Platform" "RHEL6" true]
      [(random-ascii-string 255) (uniqueify "cust-value") true]
@@ -84,5 +85,5 @@
                   dist (kt/newDistributor {:name "test-dist" :env env})]
       (ui/create-all (list org env dist))
       (let [dist (ui/update dist assoc :custom-info {"fname" "FEDORA"})]
-        (assert/is (browser isTextPresent "fname"))
+        (assert/is (wd/text-present? "fname"))
         (ui/update dist update-in [:custom-info] dissoc "fname")))))

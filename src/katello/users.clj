@@ -25,11 +25,11 @@
    ::save-environment            "update_user"
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
-   ::username-text               "user[username]"
+   ::username-text               {:name "user[username]"}
    ::password-text               "//input[@id='password_field']" ; use id attr 
    ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
-   ::default-org                 "org_id[org_id]"
-   ::email-text                  "user[email]"
+   ::default-org                 {:name "org_id[org_id]"}
+   ::email-text                  {:name "user[email]"}
    ::save                        "save_user"
    ::save-roles                  "save_roles"
    ::remove                      (ui/link "Remove User")
@@ -79,10 +79,12 @@
     (browser/quick-fill-submit {::username-text name}
                                {::password-text password}
                                {::confirm-text (or password-confirm password)}
-                               {::email-text email}
-                               {::default-org (:name default-org)}
-                               {env-chooser [default-env]}
-                               {::save browser/click}))
+                               {::email-text email})
+    (when default-org
+      (browser/select-by-text (browser/element ::default-org) (:name default-org)))
+    (when default-env
+      (env-chooser default-env))
+    (browser/click ::save))
   (notification/success-type :users-create))
 
 (defn- delete "Deletes the given user."
@@ -104,7 +106,7 @@
   "Assigns a default organization and environment to a user"
   [org env]
   (when org
-    (browser/select ::default-org-select (:name org)))
+    (browser/select-by-text ::default-org (:name org)))
   (when env
     (browser/click (ui/environment-link (:name env))))
   (browser/click ::save-environment)
@@ -127,7 +129,7 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (browser/click ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
+      (do (wd/move-to browser/*driver* ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
           (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))

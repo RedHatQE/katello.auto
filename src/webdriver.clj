@@ -21,10 +21,31 @@ keywords."
                   (str "Locator " arg " not found in UI mapping."))))
       arg)))
 
+(def ^{:doc "custom snippet that checks both jQuery and angular"}
+  jquery+angular-ajax-finished
+  "var errfn = function(f,n) { try { return f(n) } catch(e) {return 0}};
+   return errfn(function(n) { return jQuery.active }) +
+   errfn(function(n) { return angular.element('.ng-scope').injector().get('$http').pendingRequests.length });")
+
+(def js-toggle-hidden
+  "var tags = document.getElementsByClassName(arguments[0]);
+    for (var i = 0; i < tags.length; i++) {
+        tags[i].style.visibility = 'visible'
+    }")
+
+(def js-click
+  "var tag = document.getElementById(arguments[0]);
+")
+
+(defn ajax-wait
+  []
+  (browser/wait-until #(= (browser/execute-script jquery+angular-ajax-finished) 0) 60000 1000))
+
 (defn locator-finder-fn 
   ([q] (locator-finder-fn browser/*driver* q))
   ([driver q]
      (println (str "Q: " q))
+     (ajax-wait)
      (let [loc (if (keyword? q)
                  (first (locator-args q))
                  q)]
@@ -86,3 +107,15 @@ Default browser-spec: firefox"
 (defn move-to
   [driver loc]
   (clj-web/move-to-element driver loc))
+
+(defn move-off
+  [driver loc]
+  (clj-web/move-to-element driver loc -20 -20))
+
+(defn key-up
+  [driver loc k]
+  (clj-web/key-up driver loc  k))
+
+(defn text-present?
+  [text]
+  (.contains (browser/page-source) text))

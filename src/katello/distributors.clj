@@ -37,7 +37,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (nav/browser-fn (click ::details-link)) ;; TODO: make me a mouseover
+    [::details-menu (nav/browser-fn (click ::details-link)) 
      [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
      [::events-history-page (nav/browser-fn (click ::events-history-link))]
      [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
@@ -63,9 +63,9 @@
       (do (common/in-place-edit {(value-text k) v}))
       (do (wd/->browser 
            (input-text ::keyname-text k)
-           (input-text ::value-text v)
-           #_(keyUp ::keyname-text "z") ;; TODO: replace with composite actions
-           (click ::custom-info-button))))) 
+           (input-text ::value-text v))
+          (wd/key-up browser/*driver* ::keyname-text "z")
+          (browser/click ::custom-info-button)))) 
   ;; below dissoc required while updating, else will rm the just updated key/value
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
     (browser/click (remove-custom-info-button k))))

@@ -38,8 +38,7 @@
    environment, and an optional description."
   [{:keys [name label org description prior]}]
   (nav/go-to ::new-page org)
-  (Thread/sleep 3000)
-  ;; TODO: fix form here after figuring out label-filler
+  (Thread/sleep 2000)
   (browser/quick-fill-submit {::name-text browser/focus}
                              {::name-text (or name "")}
                              {::description-text (or description "")}

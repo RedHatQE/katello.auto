@@ -130,7 +130,6 @@
   [res]
   (= res (:ok messages)))
 
-;; TODO: Figure out what loop-with-timeout is doing and migrate to webdriver
 (defn perform-sync
   "Syncs the given list of repositories. Also takes an optional
   timeout (in ms) of how long to wait for the sync to complete before

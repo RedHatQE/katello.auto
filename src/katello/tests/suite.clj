@@ -9,36 +9,46 @@
             katello.tests.providers.redhat
             [katello.client.provision :as provision]
             [katello.setup :as setup]
-            [katello.conf :as conf] 
+            [katello.conf :as conf :refer [config]]
+            [katello.login :as login]
             [clojure.tools.cli :as cli]
+            [clj-webdriver.taxi :as browser]
+            [webdriver :as wd]
             [serializable.fn :refer :all] 
             [test.tree.jenkins :as jenkins]
             [test.tree.script :refer :all]))
 
 (defgroup katello-tests
-  :test-setup katello.tests.login/navigate-toplevel
+  :test-wrapper (fn [f & args]
+                  (browser/with-driver-fn setup/empty-browser-config wd/locator-finder-fn
+                    (setup/conf-selenium)
+                    #_(login/login (katello/newUser {:name "admin" :password "admin"}))
+                    #_(setup/switch-new-admin-user conf/*session-user*)
+                    (katello.tests.login/navigate-toplevel)
+                    (apply f args)))
 
-  katello.tests.login/login-tests
-  katello.tests.navigation/nav-tests
+;;  katello.tests.login/login-tests
+;;  katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
-  katello.tests.search/search-tests
-  katello.tests.environments/environment-tests
-  katello.tests.providers/provider-tests
-  katello.tests.distributors/distributor-tests
-  katello.tests.promotions/promotion-tests
+;;  katello.tests.search/search-tests
+;;  katello.tests.environments/environment-tests
+;;  katello.tests.providers/provider-tests
+;;  katello.tests.distributors/distributor-tests
+;;  katello.tests.promotions/promotion-tests
   ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
-  katello.tests.permissions/permission-tests
-  katello.tests.systems/system-tests
-  katello.tests.system-groups/sg-tests
-  katello.tests.activation-keys/ak-tests
-  katello.tests.sync_management/sync-tests
-  katello.tests.users/user-tests
-  katello.tests.e2e/end-to-end-tests
-  katello.tests.providers.redhat/manifest-tests
-  katello.tests.providers.redhat/redhat-content-provider-tests
-  katello.tests.providers.custom/custom-product-tests
-  katello.tests.content-search/content-search-tests
-  katello.tests.content-views/content-views-tests)
+;;  katello.tests.permissions/permission-tests
+;;  katello.tests.systems/system-tests
+;;  katello.tests.system-groups/sg-tests
+;;  katello.tests.activation-keys/ak-tests
+;;  katello.tests.sync_management/sync-tests
+;;  katello.tests.users/user-tests
+;;  katello.tests.e2e/end-to-end-tests
+;;  katello.tests.providers.redhat/manifest-tests
+;;  katello.tests.providers.redhat/redhat-content-provider-tests
+;;  katello.tests.providers.custom/custom-product-tests
+;;  katello.tests.content-search/content-search-tests
+;;  katello.tests.content-views/content-views-tests
+  )
 
 
 (defgroup headpin-tests
@@ -71,8 +81,6 @@
       (do (println banner))
       (do
         (conf/init opts)
-        (com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-        (com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
         (let [client-queue (provision/init 3)]
           (try (jenkins/run-suite (make-suite suite)  
                               (merge setup/runner-config 

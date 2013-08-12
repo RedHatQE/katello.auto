@@ -18,8 +18,8 @@
 (ui/defelements :katello.deployment/any [katello.ui]
        {::new                   "//a[@id='new']"
         ::create                "group_save"
-        ::name-text             "system_group[name]"
-        ::description-text      "system_group[description]"
+        ::name-text             {:name "system_group[name]"}
+        ::description-text      {:name "system_group[description]"}
         ::systems-link          (ui/third-level-link "system_groups_systems")
         ::details-link          (ui/third-level-link "system_group_details")
         ::hostname-toadd        "add_system_input"
@@ -28,15 +28,15 @@
         ::copy                  (ui/link "Copy")
         ::copy-name-text        "name_input"
         ::copy-description-text "description_input"
-        ::copy-submit           "copy_button"
-        ::cancel-copy           "cancel_copy_button"
+        ::copy-submit           {:id "copy_button"}
+        ::cancel-copy           {:id "cancel_copy_button"}
         ::close                 (ui/link "Close")
         ::remove                (ui/link "Remove")
         ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
         ::confirm-only-group    "//span[.='No, only delete the system group.']"
         ::unlimited-checkbox    "//input[@class='unlimited_members']"
         ::save-new-limit        "//button[.='Save']"
-        ::limit-value           "system_group[max_systems]"}
+        ::limit-value           {:name "system_group[max_systems]"}}
        )
 
 ;; Nav
@@ -56,7 +56,7 @@
   [{:keys [name description] :as sg}]
   (nav/go-to ::new-page sg)
   (browser/quick-fill-submit {::name-text name}
-                             {::description-text description}
+                             {::description-text (or description "")}
                              {::create browser/click})
   (notification/success-type :sysgrps-create))
 

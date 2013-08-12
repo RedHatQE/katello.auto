@@ -1,7 +1,6 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
   (:require [test.tree.watcher :as watch]
-            [selenium-server :refer :all] 
             [clojure.string :refer [split replace]]
             [katello :as kt]
             (katello [login :refer [login logout]]
@@ -9,14 +8,13 @@
                      [rest :as rest]
                      [ui :as ui]
                      [client :as client]
-                     [conf :refer [config *session-user* *session-org* *browsers*]]
+                     [conf :refer [config *session-user* *session-org* *browsers* *wd-driver*]]
                      [tasks :refer :all] 
                      [users :as user])
             [fn.trace :as trace]
             [clj-webdriver.taxi :as browser]
             [clj-webdriver.firefox :as ff]
-            [webdriver :as wd])
-  (:import [com.thoughtworks.selenium BrowserConfigurationOptions]))
+            [webdriver :as wd]))
 
 #_(defn new-selenium
   "Returns a new selenium client. If running in a REPL or other
@@ -34,21 +32,7 @@
   ([locale]
      (config-with-profile empty-browser-config locale))
   ([browser-config locale]
-     (.setProfile browser-config locale)))
-
-(def ^{:doc "custom snippet that checks both jQuery and angular"}
-  jquery+angular-ajax-finished
-  "var errfn = function(f,n) { try { return f(n) } catch(e) {return 0}};
-   errfn(function(n){ return selenium.browserbot.getCurrentWindow().jQuery.active }) +
-   errfn(function(n) { return selenium.browserbot.getCurrentWindow().angular.element('.ng-scope').injector().get('$http').pendingRequests.length })
-    == 0")
-
-(defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (browser/set-driver! (or browser-config-opts empty-browser-config))
-  (browser/set-finder! wd/locator-finder-fn)
-  (browser/implicit-wait 5000)
-  (browser/to (@config :server-url))
-  (login))
+     (empty-browser-config)))
 
 (defn switch-new-admin-user
   "Creates a new user with a unique name, assigns him admin
@@ -61,10 +45,29 @@
   (login user {:default-org *session-org*
                :org *session-org*}))
 
-(defn stop-selenium []
-   (browser/quit))
+(defn new-selenium
+  [& [{:keys [browser-config-opts]}]]
+  (browser/new-driver (or browser-config-opts empty-browser-config)))
 
-#_(defn thread-runner
+(defn start-selenium [& [{:keys [browser-config-opts]}]]  
+  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-finder! wd/locator-finder-fn)
+  (browser/implicit-wait 2000)
+  (browser/to (@config :server-url))
+  (login)
+  browser/*driver*)
+
+(defn conf-selenium
+  []
+  #_(browser/set-finder! wd/locator-finder-fn)
+  (browser/implicit-wait 2000)
+  (browser/to (@config :server-url)))
+
+(defn stop-selenium 
+  ([] (browser/quit browser/*driver*))
+  ([driver] (browser/quit driver)))
+
+(defn thread-runner
   "A test.tree thread runner function that binds some variables for
    each thread. Starts selenium client for each thread before kicking
    off tests, and stops it after all tests are done."
@@ -72,26 +75,24 @@
   (fn []
     (let [thread-number (->> (Thread/currentThread) .getName (re-seq #"\d+") first Integer.)
           user (uniqueify (update-in *session-user* [:name] #(format "%s%s" % thread-number)))]
-      (binding [sel (new-selenium (nth (cycle *browsers*)
-                                       thread-number))]
-        (try
-          ;;staggered startup
-          (Thread/sleep (* thread-number 10000))
-
-          (start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
+      (try
+        ;;staggered startup
+        (Thread/sleep (* thread-number 5000))
+        #_(start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
                                                   (config-with-profile locale))})
-          (switch-new-admin-user user)
-          (binding [*session-user* user]
-            (consume-fn))
-          (finally 
-            (stop-selenium)))))))
+        (rest/create user)
+        (rest/http-post (rest/url-maker [["api/users/%s/roles" [identity]]] user) {:body
+                                                                                   {:role_id 1}})
+        (binding [*session-user* user]
+          (consume-fn))
+        (finally 
+          #_(stop-selenium))))))
 
 
 
 (def runner-config 
   {:teardown (fn []
-                 (when selenium-server/selenium-server 
-                 (selenium-server/stop)))
+                 )
    :thread-runner thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
               ;; :screencapture

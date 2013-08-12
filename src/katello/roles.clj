@@ -149,6 +149,11 @@
   ui/CRUD {:create create
            :update* edit
            :delete delete}
+
+  rest/CRUD (let [url "api/roles"
+                  url-by-id (partial rest/url-maker [["api/roles/%s" [identity]]])]
+              {:id rest/id-field})
+  
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 

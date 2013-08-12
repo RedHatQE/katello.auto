@@ -234,7 +234,7 @@
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
       (nav/go-to ::system/custom-info-page system)
-      #_(assert/is (browser isTextPresent "Manager")))) ;;TODO: text present?
+      (assert/is (wd/text-present? "Manager")))) 
 
   (deftest "Creates org adds new system then applies custom org default"
     :uuid "0825248e-3c30-5194-28b3-eeff22bb5806"
@@ -291,7 +291,7 @@
       (with-unique-system s
         (rest/create s)
         (ui/update s assoc :custom-info {keyname custom-value})
-        #_(assert/is (= (browser isTextPresent keyname) success?))))  ;;TODO: text present?
+        (assert/is (= (wd/text-present? keyname) success?)))) 
 
     [["Hypervisor" "KVM" true]
      [(random-ascii-string 255) (uniqueify "cust-value") true]
@@ -315,9 +315,9 @@
       (with-unique-system s
         (rest/create s)
         (let [s (ui/update s assoc :custom-info {keyname custom-value})]
-          #_(assert/is (browser isTextPresent custom-value)) ;;TODO: text present?
+          (assert/is (wd/text-present? custom-value))
           (ui/update s assoc :custom-info {keyname new-value})
-          #_(assert/is (= (browser isTextPresent new-value) success?))))) ;;TODO: text present?
+          (assert/is (= (wd/text-present? new-value) success?)))))
 
     [["Hypervisor" "KVM" "Xen" true]
      ["Hypervisor" "KVM" (random-ascii-string 255) true]
@@ -331,7 +331,7 @@
     (with-unique-system s
       (rest/create s)
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
-        #_(assert/is (browser isTextPresent "Hypervisor")) ;;TODO: text present?
+        (assert/is (wd/text-present? "Hypervisor"))
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
 
   (deftest "Check whether all the envs of org can be selected for a system"
