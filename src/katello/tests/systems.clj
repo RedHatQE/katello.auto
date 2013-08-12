@@ -289,7 +289,6 @@
     [["Hypervisor" "KVM" true]
      [(random-ascii-string 255) (uniqueify "cust-value") true]
      [(uniqueify "cust-keyname") (random-ascii-string 255) true]
-     [(uniqueify "cust-keyname") (random-ascii-string 256) false]
      [(random-unicode-string 10) (uniqueify "cust-value") true]
      [(uniqueify "cust-keyname") (random-unicode-string 10) true]
 
@@ -314,10 +313,9 @@
 
     [["Hypervisor" "KVM" "Xen" true]
      ["Hypervisor" "KVM" (random-ascii-string 255) true]
-     ["Hypervisor" "KVM" (random-ascii-string 256) false]
      ["Hypervisor" "KVM" (random-unicode-string 10) true]
      ["Hypervisor" "KVM" "bar_+{}|\"?<blink>hi</blink>" true]])
-
+   
   (deftest "System Details: Delete custom info"
     :uuid "b3b7de8e-cf55-1b24-346b-bab3bc209660"
     :blockers (bz-bugs "919373")
@@ -326,6 +324,22 @@
       (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
         (assert/is (browser isTextPresent "Hypervisor"))
         (ui/update s update-in [:custom-info] dissoc "Hypervisor"))))
+  
+  (deftest "System Details: Key value limit validation"
+    :uuid "fd2edd3a-3653-9544-c26b-1c9b4b9ef9d7"
+    :blockers (bz-bugs "919373" "951231" "951197" "970079")
+    :data-driven true
+
+    (fn [keyname custom-value new-value]
+      (with-unique-system s
+        (rest/create s)
+        (let [s (ui/update s assoc :custom-info {keyname custom-value})]
+          (assert/is (browser isTextPresent custom-value))
+          (expecting-error (common/errtype ::notification/sys-key-value-255-char-limit)
+            (ui/update s assoc :custom-info {keyname new-value})))))
+
+    [["Hypervisor" "KVM" (random-ascii-string 256)]
+     ["Hypervisor" "KVM" (random-unicode-string 256)]])
 
   (deftest "Check whether all the envs of org can be selected for a system"
     :uuid "8284f1df-c3d7-0b94-a583-bf702470b485"
@@ -346,41 +360,55 @@
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     :uuid "21db8829-8208-ff54-63eb-40e3ce4d39db"
     :blockers (bz-bugs "959211")
-    (provision/with-queued-client
-      ssh-conn
-      (client/register ssh-conn
-                       {:username (:name *session-user*)
-                        :password (:password *session-user*)
-                        :org (:name *session-org*)
-                        :env (:name test-environment)
-                        :force true})
-      (let [hostname (client/my-hostname ssh-conn)
-            system (kt/newSystem {:name hostname
-                                  :env test-environment})
-            details (system/get-details system)]
-        (assert/is (= (client/get-distro ssh-conn)
-                      (details "OS")))
-        (assert/is (every? not-empty (vals details)))
-        (assert/is (= (client/get-ip-address ssh-conn)
-                      (system/get-ip-addr system))))))
+    (let [katello-details {:username (:name *session-user*)
+                           :password (:password *session-user*)
+                           :org (:name *session-org*)
+                           :env (:name test-environment)
+                           :force true}
+          headpin-details {:username (:name *session-user*)
+                           :password (:password *session-user*)
+                           :org (:name *session-org*)
+                           :force true}]
+      (provision/with-queued-client
+        ssh-conn
+        (client/register ssh-conn
+                         (if (rest/is-katello?)
+                           katello-details
+                           headpin-details)
+        (let [hostname (client/my-hostname ssh-conn)
+              system (kt/newSystem {:name hostname
+                                    :env test-environment})
+              details (system/get-details system)]
+          (assert/is (= (client/get-distro ssh-conn)
+                        (details "OS")))
+          (assert/is (every? not-empty (vals details)))
+          (assert/is (= (client/get-ip-address ssh-conn)
+                        (system/get-ip-addr system))))))))
 
   (deftest "Review Facts of registered system"
     :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
     ;;:blockers no-clients-defined
     :blockers (bz-bugs "959211" "970570")
-    (provision/with-queued-client
-      ssh-conn
-      (client/register ssh-conn {:username (:name *session-user*)
-                                 :password (:password *session-user*)
-                                 :org (:name *session-org*)
-                                 :env (:name test-environment)
-                                 :force true})
-      (let [hostname (client/my-hostname ssh-conn)
-            system (kt/newSystem {:name hostname
-                                  :env test-environment})
-            facts (system/get-facts system)]
-        (system/expand-collapse-facts-group system)
-        (assert/is (every? (complement empty?) (vals facts))))))
+    (let [katello-details {:username (:name *session-user*)
+                           :password (:password *session-user*)
+                           :org (:name *session-org*)
+                           :env (:name test-environment)
+                           :force true}
+          headpin-details {:username (:name *session-user*)
+                           :password (:password *session-user*)
+                           :org (:name *session-org*)
+                           :force true}]
+      (provision/with-queued-client
+        ssh-conn
+         (client/register ssh-conn (if (rest/is-katello?)
+                                     katello-details
+                                     headpin-details))
+         (let [hostname (client/my-hostname ssh-conn)
+               system (kt/newSystem {:name hostname
+                                     :env test-environment})
+               facts (system/get-facts system)]
+           (system/expand-collapse-facts-group system)
+           (assert/is (every? (complement empty?) (vals facts)))))))
 
 
   (deftest "System-Details: Validate Activation-key link"
