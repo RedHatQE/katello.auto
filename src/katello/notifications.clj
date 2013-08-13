@@ -38,6 +38,7 @@
                 ::name-128-char-limit                 #"(Username|Name) cannot contain more than 128 characters"
                 ::sys-description-255-char-limit      #"Description cannot contain more than 255 characters"
                 ::sys-location-255-char-limit         #"Location is too long \(maximum is 255 characters\)"
+                ::sys-key-value-255-char-limit        #"Value is too long \(maximum is 255 characters\)"
                 ::default-org-info-255-char-limit     #"Default info must be less than 256 characters"
                 ::repository-url-cant-be-blank        #"Repository url can't be blank"
                 ::name-cant-be-blank                  #"Name can't be blank"
