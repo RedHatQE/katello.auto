@@ -44,7 +44,7 @@
     :description "Search for a system based on criteria."
     :blockers (list rest/katello-only)
     (fn [sysinfo searchterms & [groupinfo]]
-      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
+      (with-unique [env (assoc kt/library :org *session-org*)
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         ;; update hostname in facts to match uniquified system name
@@ -175,7 +175,7 @@
     :blockers (list rest/katello-only)
     
     (fn [groupinfo sysinfo searchterms]
-      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
+      (with-unique [env (assoc kt/library :org *session-org*)
                     system (kt/newSystem (assoc sysinfo :env env))
                     sg (kt/newSystemGroup (assoc groupinfo :org *session-org*))]
         (ensure-exists env)
