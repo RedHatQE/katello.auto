@@ -808,6 +808,7 @@
     
     (deftest "Delete part of the composite content view definition and re-promote it"
       :uuid "9fe84637-a8d4-459f-aa63-99bc387a3121"
+      :blockers (bz-bugs "990026")
       :data-driven true
       
       (fn [re-promote?]
