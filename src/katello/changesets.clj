@@ -128,7 +128,7 @@
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock 
-     (browser sleep 2000)
+    (browser sleep 2000)
     (browser click ::review-for-promotion)
     (browser sleep 5000)
     (browser refresh)
