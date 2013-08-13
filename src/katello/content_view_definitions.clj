@@ -116,15 +116,15 @@
 
 (defn check-published-view-status
   "Function to monitor the published view status from 'Generating version' to 'Refresh' "
-  [cv & [timeout-ms]]
+  [published-name & [timeout-ms]]
   (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
                          (case current-status
                            "" current-status 
-                           "Refresh Failed" (throw+ {:type :publish-failed
-                                                     :published-name (:published-name cv)})
+                           "Error generating version" (throw+ {:type :publish-failed
+                                                               :published-name published-name})
                            (do
                              (Thread/sleep 2000)
-                             (recur (browser getText (status (:published-name cv))))))))
+                             (recur (browser getText (status published-name)))))))
 
 (defn- create
   "Creates a new Content View Definition."
@@ -172,7 +172,7 @@
   (sel/fill-ajax-form {::publish-name-text published-name
                        ::publish-description-text description}
                       ::publish-new)
-  (check-published-view-status content-defn)
+  (check-published-view-status published-name)
   (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
 (defn add-filter
