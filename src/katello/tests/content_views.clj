@@ -91,7 +91,7 @@
   [cv]
   (let [current-version (Integer/parseInt (browser getText (views/refresh-version (:published-name cv))))]
     (browser click (views/refresh-cv (:published-name cv)))
-    (views/check-published-view-status cv)
+    (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser getText (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
 ;; Data (Generated)
@@ -805,6 +805,36 @@
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
                (assert/is (client/ok? cmd_result)))))))
+    
+    (deftest "Consuming ERRATA content using an activation key that has a content view definition"
+      :uuid "90027966-e618-47c2-b327-c3a1c2bd3e10"
+      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+            repo (fresh-repo org
+                             "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+            cv (add-product-to-cv org target-env repo)]
+        (with-unique [cs (kt/newChangeset {:name "cs"
+                                           :env target-env
+                                           :content (list cv)})
+                      ak (kt/newActivationKey {:name "ak"
+                                               :env target-env
+                                               :description "auto activation key"
+                                               :content-view cv})]        
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd1 (client/run-cmd ssh-conn "yum install -y sheep-1.3.7-1 cow-5.3.2-1 zebra-10.0.8-1 seal-3.10.1-1")
+                  cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie sheep-1.3.7-1 -ie cow-5.3.2-1 -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]
+              (assert/is (client/ok? cmd1))
+              (assert/is (client/ok? cmd2)))))))
     
     (deftest "Delete part of the composite content view definition and re-promote it"
       :uuid "9fe84637-a8d4-459f-aa63-99bc387a3121"
