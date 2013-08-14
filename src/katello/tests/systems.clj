@@ -34,8 +34,7 @@
 ;; Functions
 
 (defn create-test-environment []
-  (def test-environment (assoc kt/library
-                          :org *session-org*)))
+  (def test-environment (kt/library *session-org*)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
@@ -181,7 +180,7 @@
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
     (with-unique [org (kt/newOrganization {:name "delsyscount"})]
-      (let [env (assoc kt/library :org org)
+      (let [env (kt/library org)
             systems (->> {:name "delsys", :env env}
                          kt/newSystem
                          uniques
@@ -222,7 +221,7 @@
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
-                                        :env (assoc kt/library :org org)})]
+                                        :env (kt/library org)})]
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
@@ -235,7 +234,7 @@
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"})]
-      (let [sys1 (assoc system :env (kt/newEnvironment {:name "Library" :org org}))]
+      (let [sys1 (assoc system :env (kt/library org))]
         (rest/create-all (list org sys1))
         (nav/go-to sys1)
         (browser click ::system/custom-info)

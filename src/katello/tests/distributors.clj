@@ -21,13 +21,13 @@
     (with-unique [org  (kt/newOrganization {:name "test-org"})
                   dist (kt/newDistributor {:name "test-dist"})]
       (rest/create org)
-      (ui/create (assoc dist :env (kt/newEnvironment {:name "Library" :org org})))))
+      (ui/create (assoc dist :env (kt/library org)))))
 
   (deftest "Delete a Distributor"
     :uuid "e051b199-f3e0-4e04-aeb9-04b699653f9a"
     (with-unique [org  (kt/newOrganization {:name "test-org"})
                   dist (kt/newDistributor {:name "test-dist"})]
-      (let [dist1 (assoc dist :env (kt/newEnvironment {:name "Library" :org org}))]
+      (let [dist1 (assoc dist :env (kt/library org))]
         (rest/create org)
         (ui/create dist1)
         (ui/delete dist1))))

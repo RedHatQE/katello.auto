@@ -24,7 +24,7 @@
 ;; Functions
 
 (defn some-group [] (kt/newSystemGroup {:name "group" :org *session-org*}))
-(defn some-system [] (kt/newSystem {:name "system" :env (assoc kt/library :org *session-org*)}))
+(defn some-system [] (kt/newSystem {:name "system" :env (kt/library *session-org*)}))
 
 (defn cancel-close-widget
   "Click 'cancel' on copy widget and widget should close properly 
