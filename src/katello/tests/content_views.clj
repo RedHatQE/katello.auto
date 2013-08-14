@@ -91,7 +91,7 @@
   [cv]
   (let [current-version (Integer/parseInt (browser getText (views/refresh-version (:published-name cv))))]
     (browser click (views/refresh-cv (:published-name cv)))
-    (views/check-published-view-status cv)
+    (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser getText (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
 ;; Data (Generated)
