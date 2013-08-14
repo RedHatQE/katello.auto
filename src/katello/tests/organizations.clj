@@ -65,11 +65,12 @@
 
     (deftest "Create an organization with valid name"
       :uuid "1abae899-440f-d254-15ab-81341908d0d2"
-      :blockers (bz-bugs "975593")
+;      :blockers (bz-bugs "975593")
       :data-driven true
 
-      create-and-verify-with-basename
-      (map list validation/non-html-names))
+      (comp rest/create uniqueify mkorg)      
+      (map list (concat validation/non-html-names
+                        validation/html-character-strings)))
 
     (deftest "Create an org with a 1 character UTF-8 name"
       :uuid "b64a6748-c4c7-ef64-688b-59b85b4dcb55"
@@ -141,8 +142,8 @@
           ;; text in the notif, currently doesn't escape it.  getting
           ;; notif text from javascript though, shows it as escaped.
           (assert/is (every? (partial escaped tag innertext)
-                         (mapcat :notices notifs)))))
-      [["<a %2$s='%1$s'>%3$s</a>" "href" "Click here"]])
+                             (mapcat :notices notifs)))))
+      [["<a %2$s='%1$s'>%3$s</a>" "href" "http://foo.com/" "Click here"]])
     
 
     (deftest "Edit an organization"
