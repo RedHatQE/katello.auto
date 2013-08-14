@@ -37,10 +37,9 @@
     :uuid "9ff7fa88-6ee8-4425-9f5a-ff1896f4c6c5"
     (fn [keyname value success?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    env (kt/newEnvironment {:name "environment" :org org})
-                    dist (kt/newDistributor {:name "test-dist" :env env})]
+                    dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
         (let [expected-res #(-> % :type (= :success))]
-          (ui/create-all (list org env dist))
+          (ui/create-all (list org dist))
           (ui/update dist assoc :custom-info {keyname value})
           (assert/is (= (browser isTextPresent keyname) success?))
           (assert/is (= (browser isTextPresent keyname) success?)))))
@@ -65,10 +64,9 @@
 
     (fn [input-loc new-value save?]
       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    env (kt/newEnvironment {:name "environment" :org org})
-                    dist (kt/newDistributor {:name "test-dist" :env env})]
+                    dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
         (let [expected-res #(-> % :type (= :success))]
-          (ui/create-all (list org env dist))
+          (ui/create-all (list org dist))
           (ui/update dist assoc :custom-info {"fname" "redhat"})
           (expecting-error expected-res
             (nav/go-to ::distributor/custom-info-page dist)
@@ -80,9 +78,8 @@
   (deftest "Delete custom info for a distributor"
     :uuid "6776a633-b0d2-4dec-9e71-07c9c352afcc"
     (with-unique [org (kt/newOrganization {:name "auto-org"})
-                  env (kt/newEnvironment {:name "environment" :org org})
-                  dist (kt/newDistributor {:name "test-dist" :env env})]
-      (ui/create-all (list org env dist))
+                  dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
+      (ui/create-all (list org dist))
       (let [dist (ui/update dist assoc :custom-info {"fname" "FEDORA"})]
         (assert/is (browser isTextPresent "fname"))
         (ui/update dist update-in [:custom-info] dissoc "fname")))))
