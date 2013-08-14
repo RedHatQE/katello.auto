@@ -1,6 +1,7 @@
-(ns katello.rh-repositories
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [katello :as kt]
+(ns katello.redhat-repositories
+  (:require [katello :as kt]
+            [webdriver :as wd]
+            [clj-webdriver.taxi :as browser]
             (katello [ui :as ui]                   
                      [navigation :as nav]
                      [notifications :as notification]

@@ -190,15 +190,15 @@
   "Refreshes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (browser click ::subs/refresh-manifest)
-  (browser click ::ui/confirmation-yes))
+  (browser/click ::subs/refresh-manifest)
+  (browser/click ::ui/confirmation-yes))
 
 (defn- delete-manifest
   "Deletes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (browser click ::subs/delete-manifest)
-  (browser click ::ui/confirmation-yes))
+  (browser/click ::subs/delete-manifest)
+  (browser/click ::ui/confirmation-yes))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."

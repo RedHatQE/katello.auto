@@ -90,10 +90,10 @@
 (defn- refresh-published-cv
   "Refresh published-view and increment the version by 1"
   [cv]
-  (let [current-version (Integer/parseInt (browser getText (views/refresh-version (:published-name cv))))]
-    (browser click (views/refresh-cv (:published-name cv)))
+  (let [current-version (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv))))]
+    (browser/click (views/refresh-cv (:published-name cv)))
     (views/check-published-view-status cv)
-    (assert/is (= (Integer/parseInt (browser getText (views/refresh-version (:published-name cv)))) (inc current-version)))))
+    (assert/is (= (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
 ;; Data (Generated)
 
@@ -253,10 +253,10 @@
             (if (:exclude? cv-filter)
               (do
                 (assert/is (= (format msg-format packages-in-msg) expect-msg))
-                (assert/is (browser isTextPresent "Exclude Packages: No details specified")))
+                (assert/is (wd/text-present? "Exclude Packages: No details specified")))
               (do 
                 (assert/is (= (format msg-format packages-in-msg) expect-msg))
-                (assert/is (browser isTextPresent "Include Packages: No details specified"))))
+                (assert/is (wd/text-present? "Include Packages: No details specified"))))
             (views/add-repo-from-filters (list (kt/repository repo))))))
       
       [[true "Exclude Packages: %s" "Exclude Packages: cow, cat"]
@@ -285,10 +285,10 @@
             (if (:exclude? cv-filter)
               (do
                 (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
-                (assert/is (browser isTextPresent "Exclude Package Groups: No details specified")))
+                (assert/is (wd/text-present?  "Exclude Package Groups: No details specified")))
               (do
                 (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
-                (assert/is (browser isTextPresent "Include Package Groups: No details specified"))))
+                (assert/is (wd/text-present?  "Include Package Groups: No details specified"))))
             (views/add-repo-from-filters (list (kt/repository repo))))))
         
         [[true "Exclude Package Groups: %s" "Exclude Package Groups: birds, mammals"]
@@ -322,11 +322,11 @@
               (do
                 (assert/is (= (format msg-format new-erratum) expect-msg-errata))
                 (assert/is (= (format msg-format new-date-type) expect-msg-date))
-                (assert/is (browser isTextPresent "Exclude Errata: No details specified")))
+                (assert/is (wd/text-present?  "Exclude Errata: No details specified")))
               (do
                 (assert/is (= (format msg-format new-erratum) expect-msg-errata))
                 (assert/is (= (format msg-format new-date-type) expect-msg-date))
-                (assert/is (browser isTextPresent "Include Errata: No details specified"))))
+                (assert/is (wd/text-present?  "Include Errata: No details specified"))))
             (views/add-repo-from-filters (list (kt/repository repo))))))
       
       gen-errata-test-data)

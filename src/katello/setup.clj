@@ -59,7 +59,6 @@
 
 (defn conf-selenium
   []
-  #_(browser/set-finder! wd/locator-finder-fn)
   (browser/implicit-wait 2000)
   (browser/to (@config :server-url)))
 
@@ -92,7 +91,7 @@
 
 (def runner-config 
   {:teardown (fn []
-                 (when selenium-server/selenium-server 
+                #_ (when selenium-server/selenium-server 
                  (selenium-server/stop)))
    :thread-wrapper thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher

@@ -104,7 +104,7 @@
     [::details-page (nav/browser-fn (click ::details-tab))]
     [::content-page (nav/browser-fn (click ::content-tab))]
     [::filter-page (nav/browser-fn (click ::filter-tab))
-     [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser click)))]]
+     [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser/click)))]]
     [::views-page (nav/browser-fn (click ::views-tab))]]])
 
 
@@ -118,14 +118,14 @@
 (defn check-published-view-status
   "Function to monitor the published view status from 'Generating version' to 'Refresh' "
   [cv & [timeout-ms]]
-  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
+  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
                          (case current-status
                            "" current-status 
                            "Refresh Failed" (throw+ {:type :publish-failed
                                                      :published-name (:published-name cv)})
                            (do
                              (Thread/sleep 2000)
-                             (recur (browser getText (status (:published-name cv))))))))
+                             (recur (browser/text  (status (:published-name cv))))))))
 
 (defn- create
   "Creates a new Content View Definition."
@@ -179,17 +179,17 @@
 (defn add-filter
   "Create a new content filter"
   [{:keys [name]}]
-  (sel/->browser
+  (wd/->browser
     (click ::filter-tab)
     (click ::new-filter-button)
-    (setText ::filter-name-text name)
+    (input-text ::filter-name-text name)
     (click ::filter-create))
   (notification/success-type :filters-create))
 
 (defn remove-filter
   "Remove the selected filter from content-view-def"
   [{:keys [name]}]
-  (sel/->browser
+  (wd/->browser
     (click ::filter-tab)
     (click (select-filter name))
     (click ::remove-button))
@@ -197,25 +197,24 @@
 
 (defn- select-exclude-filter []
   "Function to enable exclusion type filter"
-  (browser click ::edit-inclusion-link)
-  (browser click ::filter-rule-exclusion)
-  (browser click ::close-edit-inclusion))
+  (browser/click ::edit-inclusion-link)
+  (browser/click ::filter-rule-exclusion)
+  (browser/click ::close-edit-inclusion))
 
 (defn add-repo-from-filters
   "Selects repo tab under CV filters"
   [repos]
-  (browser click ::repo-tab)
+  (browser/click ::repo-tab)
   (doseq [repo repos]
-    (sel/->browser
-      (mouseUp (-> repo :name product-or-repository))
-      (click ::add-product-btn)
-      (click ::update-content))))
+    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)
+    (browser/click ::update-content)))
 
 (defn select-package-version-value
   "Select package version and set values: 
    versions are: 'All Versions' 'Only version' 'Newer Than' 'Older Than' 'Range'"
   [{:keys [version-type value1 value2]}]
-  (browser select ::select-package-version
+  (browser/select ::select-package-version
            (case version-type
              :all           "All Versions"
              :only-version  "Only Version"
@@ -223,17 +222,17 @@
              :older-than    "Older Than"
              :range         "Range"))
   (when (some #{version-type} [:only-version :newer-than :older-than])   
-    (browser setText ::version-value value1)
-    (browser click ::save-version))
+    (browser/input-text  ::version-value value1)
+    (browser/click ::save-version))
   (when (= :range version-type)
-    (browser setText ::range-value1 value1)
-    (browser setText ::range-value2 value2)
-    (browser click ::save-version)))
+    (browser/input-text  ::range-value1 value1)
+    (browser/input-text  ::range-value2 value2)
+    (browser/click ::save-version)))
 
 (defn- add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
-  (sel/->browser
+  (wd/->browser
     (click ::add-rule)
     (select ::select-filter-type (:type cv-filter))
     (click ::create-rule))
@@ -244,8 +243,8 @@
   "Function to input rule items like: name of package, package-group or errata-id"
   [items]
   (doseq [item items]
-    (browser setText ::rule-input item)
-    (browser click ::submit-rule)))
+    (browser/input-text  ::rule-input item)
+    (browser/click ::submit-rule)))
   
 (defn add-package-rule 
   "Define rule to add packages to content filter"
@@ -254,52 +253,52 @@
   (input-rule-items packages)
   (when-not (= "all" version-type)
     (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
-  (browser click (filter-link (:name cv-filter))))
+  (browser/click (filter-link (:name cv-filter))))
 
 (defn add-pkg-group-rule 
   "Define rule to add package groups to content filter"
   [cv-filter {:keys [pkg-groups]}]
   (add-rule cv-filter)
   (input-rule-items pkg-groups)
-  (browser click (filter-link (:name cv-filter)))
+  (browser/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-id 
   "Define rule to add errata by erratum name to content filter"
   [cv-filter erratum-names]
   (add-rule cv-filter)
-  (browser click ::select-errata-id)
+  (browser/click ::select-errata-id)
   (input-rule-items erratum-names)
-  (browser click (filter-link (:name cv-filter)))
+  (browser/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-date-type
   "Define rule to filter errata by date to conten t filter"
   [cv-filter & [{:keys [from-date to-date errata-type]}]]
   (add-rule cv-filter)
-  (browser click ::select-errata-date-type)
+  (browser/click ::select-errata-date-type)
   (when from-date
-    (browser click ::edit-errata-from-date)
-    (browser setText ::input-from-date (date from-date))
-    (browser click ::save-errata))
+    (browser/click ::edit-errata-from-date)
+    (browser/input-text ::input-from-date (date from-date))
+    (browser/click ::save-errata))
   (when to-date
-    (browser click ::edit-errata-to-date)
-    (browser setText ::input-to-date (date to-date))
-    (browser click ::save-errata))
+    (browser/click ::edit-errata-to-date)
+    (browser/input-text ::input-to-date (date to-date))
+    (browser/click ::save-errata))
   (when errata-type
-    (browser click ::errata-type)
-    (browser addSelection ::select-errata-label errata-type)
-    (browser click ::save-errata))
-  (browser click (filter-link (:name cv-filter)))
+    (browser/click ::errata-type)
+    (browser/select  ::select-errata-label errata-type)
+    (browser/click ::save-errata))
+  (browser/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn remove-rule
   "Remove a rule from selected filter"
   [rule-names]
   (doseq [rule-name rule-names]
-    (browser click (select-rule rule-name))
-    (browser sleep 1000)
-    (browser click ::remove-button)
+    (browser/click (select-rule rule-name))
+    (Thread/sleep 1000)
+    (browser/click ::remove-button)
     (notification/success-type :filter-rules-destroy)))
 
 (defn- edit-content-view-details [name description]

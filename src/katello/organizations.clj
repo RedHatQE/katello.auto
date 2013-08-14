@@ -94,6 +94,7 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
+  (wd/ajax-wait)
   (browser/quick-fill-submit {::name-text browser/focus}
                              {::name-text name}
                              {::name-text "\t"} ;; tab to trigger the label-filling ajax call
@@ -108,6 +109,7 @@
   (when initial-env
     (browser/clear ::initial-env-label-text)
     (browser/input-text ::initial-env-label-text (or (:label initial-env) "")))
+  (wd/move-to browser/*driver* (browser/element ::create))
   (browser/click ::create)
   (notification/success-type :org-create))
 

@@ -84,9 +84,9 @@
                   (browser/click ::promotion-eligible-home))]
     (nav/go-to changeset env)
     (doseq [item (:content to-add)]
-      (browser click (-> item :published-name add-content-item)))
+      (browser/click (-> item :published-name add-content-item)))
     (doseq [item (:content to-remove)]
-      (browser click (-> item :published-name remove-content-item)))))
+      (browser/click (-> item :published-name remove-content-item)))))
 
 (extend katello.Changeset
   ui/CRUD {:create create
@@ -182,7 +182,7 @@
   "If the published-name is present in the given environment, returns true."
   [{:keys [name deletion? env content] :as changeset}]
   (nav/go-to ::named-environment-page env)
-  (browser click (select-env (:name env)))
+  (browser/click (select-env (:name env)))
   (every? true? (doall (for [cv content]
                          (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))   
 

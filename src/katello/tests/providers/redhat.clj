@@ -77,9 +77,12 @@
 (defn all-subs-exist?
   [map manifest]
   (nav/go-to ::subscriptions/page (kt/provider manifest))
-  (every? true? (for [subscription (keys map)]]
+  (every? true? (for [subscription (keys map)]
                   (browser/exists? (subscriptions/subs-exists (map subscription))))))
   
+(defn extract-manifest-history-list [page manifest]
+  (nav/go-to page manifest)
+  (common/extract-list subscriptions/fetch-all-history))
 
 ;; Tests
 (defgroup redhat-promoted-content-tests
