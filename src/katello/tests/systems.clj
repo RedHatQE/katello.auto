@@ -34,8 +34,7 @@
 ;; Functions
 
 (defn create-test-environment []
-  (def test-environment (assoc kt/library
-                          :org *session-org*)))
+  (def test-environment (kt/library *session-org*)))
 
 (with-unique-ent "system" (kt/newSystem {:name "sys"
                                          :env test-environment}))
@@ -181,7 +180,7 @@
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
     (with-unique [org (kt/newOrganization {:name "delsyscount"})]
-      (let [env (assoc kt/library :org org)
+      (let [env (kt/library org)
             systems (->> {:name "delsys", :env env}
                          kt/newSystem
                          uniques
@@ -222,7 +221,7 @@
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
-                                        :env (assoc kt/library :org org)})]
+                                        :env (kt/library org)})]
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
@@ -235,7 +234,7 @@
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"})]
-      (let [sys1 (assoc system :env (kt/newEnvironment {:name "Library" :org org}))]
+      (let [sys1 (assoc system :env (kt/library org))]
         (rest/create-all (list org sys1))
         (nav/go-to sys1)
         (browser click ::system/custom-info)
@@ -336,7 +335,7 @@
         (let [s (ui/update s assoc :custom-info {keyname custom-value})]
           (assert/is (browser isTextPresent custom-value))
           (expecting-error (common/errtype ::notification/sys-key-value-255-char-limit)
-            (ui/update s assoc :custom-info {keyname new-value})))))
+                           (ui/update s assoc :custom-info {keyname new-value})))))
 
     [["Hypervisor" "KVM" (random-ascii-string 256)]
      ["Hypervisor" "KVM" (random-unicode-string 256)]])
@@ -364,17 +363,12 @@
                            :password (:password *session-user*)
                            :org (:name *session-org*)
                            :env (:name test-environment)
-                           :force true}
-          headpin-details {:username (:name *session-user*)
-                           :password (:password *session-user*)
-                           :org (:name *session-org*)
                            :force true}]
       (provision/with-queued-client
         ssh-conn
-        (client/register ssh-conn
-                         (if (rest/is-katello?)
-                           katello-details
-                           headpin-details)
+        (client/register ssh-conn (if (rest/is-katello?)
+                                    katello-details
+                                    (dissoc katello-details :env)))
         (let [hostname (client/my-hostname ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
@@ -383,7 +377,7 @@
                         (details "OS")))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
-                        (system/get-ip-addr system))))))))
+                        (system/get-ip-addr system)))))))
 
   (deftest "Review Facts of registered system"
     :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
@@ -400,15 +394,15 @@
                            :force true}]
       (provision/with-queued-client
         ssh-conn
-         (client/register ssh-conn (if (rest/is-katello?)
-                                     katello-details
-                                     headpin-details))
-         (let [hostname (client/my-hostname ssh-conn)
-               system (kt/newSystem {:name hostname
-                                     :env test-environment})
-               facts (system/get-facts system)]
-           (system/expand-collapse-facts-group system)
-           (assert/is (every? (complement empty?) (vals facts)))))))
+        (client/register ssh-conn (if (rest/is-katello?)
+                                    katello-details
+                                    headpin-details))
+        (let [hostname (client/my-hostname ssh-conn)
+              system (kt/newSystem {:name hostname
+                                    :env test-environment})
+              facts (system/get-facts system)]
+          (system/expand-collapse-facts-group system)
+          (assert/is (every? (complement empty?) (vals facts)))))))
 
 
   (deftest "System-Details: Validate Activation-key link"

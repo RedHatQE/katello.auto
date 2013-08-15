@@ -410,10 +410,11 @@
 
 (defn get-details [system]
   (nav/go-to ::details-page system)
-  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
-                 "Arch" "RAM (GB)" "Sockets" "Location" "Environment"
-                 "Checked In" "Registered" "Last Booted" "Activation Key"
-                 "System Type" "Host"]]
+  (let [headpin-details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
+                         "Arch" "RAM (GB)" "Sockets" "Location" "Checked In" "Registered" "Last Booted"
+                         "Activation Key" "System Type" "Host"]
+        katello-details (conj headpin-details "Environment")
+        details (if (rest/is-katello?) katello-details headpin-details)]
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))

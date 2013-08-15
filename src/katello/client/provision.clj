@@ -49,6 +49,9 @@
             client)
           (catch Object o
             (.printStackTrace o)
+            ;;try to clean up
+            (try+ (ovirt/unprovision vm)
+                 (catch Object _))
             (throw+ {:type ::setup-failed
                      :vm vm
                      :cause o})))))
