@@ -22,14 +22,13 @@
   :test-wrapper (fn [f & args]
                   (browser/with-driver-fn setup/empty-browser-config wd/locator-finder-fn
                     (setup/conf-selenium)
-                    #_(login/login (katello/newUser {:name "admin" :password "admin"}))
                     #_(setup/switch-new-admin-user conf/*session-user*)
                     (katello.tests.login/navigate-toplevel)
                     (apply f args)))
 
-;;  katello.tests.login/login-tests
+  katello.tests.login/login-tests
 ;;  katello.tests.navigation/nav-tests
-  katello.tests.organizations/org-tests
+;;  katello.tests.organizations/org-tests
 ;;  katello.tests.search/search-tests
 ;;  katello.tests.environments/environment-tests
 ;;  katello.tests.providers/provider-tests
@@ -82,13 +81,13 @@
       (do (println banner))
       (do
         (conf/init opts)
-        (let [client-queue (provision/init 3)]
+        (let [client-queue  nil #_(provision/init 3)]
           (try (jenkins/run-suite (make-suite suite)  
                               (merge setup/runner-config 
                                      {:threads (:num-threads opts)
                                       :trace-depths-fn conf/trace-list
                                       :to-trace (@conf/config :trace)
                                       :do-not-trace (@conf/config :trace-excludes)}))
-               (finally (provision/shutdown client-queue)
-                        (-> conf/*cloud-conn* :api .shutdown)
-                        (shutdown-agents))))))))
+               (finally #_(provision/shutdown client-queue)
+                        #_(-> conf/*cloud-conn* :api .shutdown)
+                        #_(shutdown-agents))))))))

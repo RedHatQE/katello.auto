@@ -84,7 +84,7 @@
                                             :notices (list (browser/text ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
-     #_(browser ajaxWait)
+     (wd/ajax-wait)
      (when org
        (organization/switch org {:default-org default-org}))))
 
@@ -96,3 +96,4 @@
           (login)
           ~@body)
         (finally (login))))
+

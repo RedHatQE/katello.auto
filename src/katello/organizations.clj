@@ -184,14 +184,20 @@
                default-org
                (not= (nav/current-org) name)) 
        (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       (wd/ajax-wait)
        (when default-org
          (let [default-org-name (when (not= default-org :none)
                                   (or (:name default-org)
                                       (throw+ {:type ::nil-org-name
                                                :msg "Can't set default org to an org with :name=nil"
                                                :org default-org})))
-               current-default (try (browser/text ::default)
-                                    (catch NoSuchElementException _ nil))]
+               current-default (try
+                                 (if (browser/exists? ::default)
+                                   (do (while (not (browser/visible? ::default))
+                                         (nav/scroll-org-switcher))
+                                       (browser/text ::default))
+                                      nil)
+                                 (catch NoSuchElementException _ nil))]
            (if (nil? default-org-name)
              (while (not (browser/visible? ::default))
                (nav/scroll-org-switcher))

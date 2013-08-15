@@ -44,7 +44,7 @@
            (apply = (map :name (list *session-user* (user/current)))))
     (do (nav/go-to ::nav/top-level)
         (if (= (nav/current-org) "Select an Organization:") ;;see bz 857173
-          (try (organization/switch (@config :admin-org))
+          (try (organization/switch (@config :admin-org) {:default-org *session-org*})
                (catch Exception _
                  (login-admin)))))
     (login))) 
@@ -89,3 +89,22 @@
     [(fn [] [(-> *session-user* :name .toUpperCase) (-> *session-user* :password .toUpperCase)])
      (fn [] [(-> *session-user* :name .toUpperCase) (:password *session-user*)])
      (fn [] [(:name *session-user*) (-> *session-user* :password .toUpperCase)])]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
