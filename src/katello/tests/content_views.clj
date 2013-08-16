@@ -72,18 +72,6 @@
       (changeset/promote-delete-content composite-cs)
       composite-view)))
 
-(defn add-product-to-cv
-  [org target-env repo]
-  (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
-                                       :published-name "publish-name"
-                                       :org org})]
-      (ui/create-all-recursive (list org target-env))
-      (create-recursive repo)
-      (sync/perform-sync (list repo))
-      (ui/create cv)
-      (ui/update cv assoc :products (list (kt/product repo)))
-      cv))
-
 (defn- refresh-published-cv
   "Refresh published-view and increment the version by 1"
   [cv]
