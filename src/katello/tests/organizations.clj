@@ -129,21 +129,21 @@
       :uuid "ef423cc9-bbde-9b64-7adb-647287a96807"
       :blockers (bz-bugs "987909")
       :data-driven true
-      (fn [f-str tag innertext]
-        (let [n (format f-str (uniqueify "foo") tag)
+      (fn [f-str attr attr-val innertext]
+        (let [n (format f-str attr attr-val (uniqueify innertext))
               notifs (-> n mkorg ui/create)
-              escaped (fn [tag innertext msg]
-                        (let [found-in #(-> %1 re-pattern (re-find %2) boolean)]
+              escaped (fn [attr innertext msg]
+                        (let [found-in #(.contains %2 %1)]
                           (= (found-in innertext msg)
-                             (found-in tag msg))))]
+                             (found-in attr msg))))]
           (assert/is (some #{n} (common/extract-left-pane-list)))
-          ;; no notifs contain the innertext but not the tag
+          ;; no notifs contain the innertext but not the attr
           ;; FIXME this doesn't properly capture how the app renders
           ;; text in the notif, currently doesn't escape it.  getting
           ;; notif text from javascript though, shows it as escaped.
-          (assert/is (every? (partial escaped tag innertext)
+          (assert/is (every? (partial escaped attr innertext)
                              (mapcat :notices notifs)))))
-      [["<a %2$s='%1$s'>%3$s</a>" "href" "http://foo.com/" "Click here"]])
+      [["<a %1$s='%2$s'>%3$s</a>" "href" "http://foo.com/" "foo"]])
     
 
     (deftest "Edit an organization"
