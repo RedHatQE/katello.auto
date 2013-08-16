@@ -20,7 +20,7 @@
             [katello.client.provision :as provision]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [katello.tests.useful :refer [fresh-repo create-recursive]]
+            [katello.tests.useful :refer [fresh-repo create-recursive add-product-to-cv]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]))
 
 ;; Functions
