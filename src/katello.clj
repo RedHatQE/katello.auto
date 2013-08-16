@@ -90,9 +90,9 @@
 
 (defrecord SystemGroup [id name systems  ^Organization org])
 
-(defrecord ContentView [id name description composite composite-name org published-name])
+(defrecord ContentViewDefinition [id name description composite composite-name org published-name])
 
-(defrecord Filter [id name ^ContentView cv type exclude?])
+(defrecord Filter [id name ^ContentViewDefinition cv type exclude?])
 
 (defrecord Manifest [provider file-path url])
 
@@ -136,7 +136,7 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
-   ContentView {:org :org, :cv identity :parent #'org}
+   ContentViewDefinition {:org :org, :cv identity :parent #'org}
    Filter {:org  (comp #'org #'cv), :parent #'cv}
    Changeset {:org (comp #'org #'env), :env :env, :parent #'env}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
