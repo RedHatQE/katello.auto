@@ -141,7 +141,7 @@
                   [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
                   [::system/description-text-edit (random-ascii-string 255) true success]]]
          (with-meta row
-               {:blockers (bz-bugs "994946")}))))
+               {:blockers (bz-bugs "985586")}))))
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
