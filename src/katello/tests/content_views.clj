@@ -20,10 +20,9 @@
             [katello.client.provision :as provision]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [katello.tests.useful :refer [fresh-repo create-recursive]]
+            [katello.tests.useful :refer [fresh-repo create-recursive add-product-to-cv]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
-            [katello :refer [newOrganization newProvider newProduct newRepository newContentView newFilter]]
-            ))
+            [katello :refer [newOrganization newProvider newProduct newRepository newContentView newFilter]]))
 
 ;; Functions
 (defn promote-published-content-view
@@ -73,18 +72,6 @@
                                                       :env env})]
       (changeset/promote-delete-content composite-cs)
       composite-view)))
-
-(defn add-product-to-cv
-  [org target-env repo]
-  (with-unique [cv (kt/newContentView {:name "con-def"
-                                       :published-name "publish-name"
-                                       :org org})]
-      (ui/create-all-recursive (list org target-env))
-      (create-recursive repo)
-      (sync/perform-sync (list repo))
-      (ui/create cv)
-      (ui/update cv assoc :products (list (kt/product repo)))
-      cv))
 
 (defn- refresh-published-cv
   "Refresh published-view and increment the version by 1"
