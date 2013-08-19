@@ -51,7 +51,9 @@
   (rest/when-katello (browser click (ui/environment-link (:name env))))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       ::content-view-select (:published-name content-view)}
+                       (fn [] 
+                         (rest/when-katello
+                           (browser select ::content-view-select (:published-name content-view)))) []}
                       ::save)
   (notification/success-type :ak-create))
 

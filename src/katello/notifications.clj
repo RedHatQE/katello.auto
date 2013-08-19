@@ -45,6 +45,7 @@
                 ::max-systems-must-be-positive        #"System limit must be a positive"
                 ::max-systems-may-not-be-zero         #"System limit may not be set to 0"
                 ::name-too-long                       #"Name cannot contain more than"
+                ::sys-name-too-long                   #"Name is too long \(maximum is 250 characters\)"
                 ::login-is-invalid                    #"Login is invalid"}]
     
     (doseq [e (keys errors)]
