@@ -127,19 +127,21 @@
         (expecting-error expected-res
                          (nav/go-to ::system/details-page s)
                          (save-cancel input-loc new-value save?))))
-
-    [[::system/name-text-edit "yoursys" false success]
-     [::system/name-text-edit "test.pnq.redhat.com" true success]
-     [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
-     [::system/name-text-edit (random-ascii-string 255) true success]
-     [::system/description-text-edit "cancel description" false success]
-     [::system/description-text-edit "System Registration Info" true success]
-     [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
-     [::system/description-text-edit (random-ascii-string 255) true success]
-     [::system/location-text-edit "Cancel Location" false success]
-     [::system/location-text-edit "System Location Info" true success]
-     [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
-     [::system/location-text-edit (random-ascii-string 255) true success]])
+    (concat 
+      [[::system/name-text-edit "yoursys" false success]
+       [::system/name-text-edit "test.pnq.redhat.com" true success]
+       [::system/name-text-edit (random-ascii-string 251) true (common/errtype ::notification/sys-name-too-long)]
+       [::system/name-text-edit (random-ascii-string 250) true success]]
+       (for [row [[::system/location-text-edit "Cancel Location" false success]
+                  [::system/location-text-edit "System Location Info" true success]
+                  [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
+                  [::system/location-text-edit (random-ascii-string 255) true success]
+                  [::system/description-text-edit "cancel description" false success]
+                  [::system/description-text-edit "System Registration Info" true success]
+                  [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
+                  [::system/description-text-edit (random-ascii-string 255) true success]]]
+         (with-meta row
+               {:blockers (bz-bugs "985586")}))))
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
