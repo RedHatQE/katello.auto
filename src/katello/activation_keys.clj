@@ -5,7 +5,6 @@
                      [ui-common :as common]
                      [ui :as ui]
                      [rest :as rest]
-                     [conf :refer [*session-org*]]
                      [tasks :refer [when-some-let] :as tasks])
             [clojure.data :as data]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser ->browser]]))
