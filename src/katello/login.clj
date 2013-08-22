@@ -16,7 +16,8 @@
    ::re-log-in-link    "//a[contains(@href, '/login')]"
    ::error-message     "//ul[@class='error']"
    ::close-error       "//div[@id='notifications']//div[@class='control']"
-   ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
+   ;;::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
+   ::interstitial      "//div[contains(@id,'interstitial') and contains(.,'Choose an Organization')]"}
   )
 
 (defn logged-in?
@@ -62,25 +63,15 @@
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
-     (when (sel/browser isElementPresent ::re-log-in-link)
-       (sel/browser clickAndWait ::re-log-in-link))
+     (sel/fill-ajax-form {::username-text name
+                          ::password-text password}
+                          ::log-in)
 
-     (when (signo-error?)
-       (clear-signo-errors))
-     
-     (sel/fill-form {::username-text name
-                     ::password-text password}
-                    ::log-in)
      ;; throw errors
-     ;;(notification/verify-no-error)     ; katello notifs
-     ;;(notification/flush)
-     
-     (if (signo-error?)                 ; signo notifs
-       (throw+ (list (ui/map->Notification {:level :error
-                                            :notices (list (browser getText ::error-message))}))))
-     ;; no interstitial for signo logins, if we go straight to default org, and that's the
-     ;; org we want, switch won't click anything
-     (browser ajaxWait)
+     (notification/verify-no-error) ; katello notifs
+     (notification/flush)
+     (Thread/sleep 3000)
+     (browser refresh)
      (when org
        (organization/switch org {:default-org default-org}))))
 
