@@ -26,6 +26,7 @@
    (expecting-error (common/errtype :katello.notifications/invalid-credentials)
                     (login (kt/newUser {:name username, :password password})))
    (finally
+     (katello.notifications/flush)
      (login))))
 
 (defn login-admin []
