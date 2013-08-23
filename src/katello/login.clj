@@ -65,11 +65,10 @@
      (when (logged-in?) (logout))
      (sel/fill-ajax-form {::username-text name
                           ::password-text password}
-                          ::log-in)
-
+                          ::log-in) 
      ;; throw errors
      (notification/verify-no-error) ; katello notifs
-     (notification/flush)
+     (notification/flush)     
      (Thread/sleep 3000)
      (browser refresh)
      (when org
