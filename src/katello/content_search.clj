@@ -4,10 +4,11 @@
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
             [clojure.data.zip.xml :as zfx]
-            [clojure.string :refer [split trim]]
+            [clojure.string :refer [split triml trim]]
             [clojure.walk :refer [postwalk] ]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (katello [navigation :as nav]
+                     [organizations :as org]
                      [tasks         :refer :all]
                      [ui            :as ui]
                      [ui-common     :as common]
@@ -97,6 +98,23 @@
      (browser getEval)
      (format "<root>%s</root>")))
 
+(defn get-string-of-body-element []
+  (->>
+     "window.document.getElementsByTagName('body')[0].innerHTML;"
+     (browser getEval)
+     (format "<body>%s</body>")
+    ))
+
+(defn search-in-zip [query node]
+  (loop [q query
+         n node]
+    (if (q n)
+      n
+      (if (zip/end? n)
+        nil
+        (recur q (zip/next n))))))
+
+
 (defn get-zip-of-xml-string [xml-string]
   (->> xml-string
      java.io.StringReader.
@@ -131,6 +149,18 @@
                 (remove nil?)
                 (remove empty?)
                 (into empty-col))
+                %) 
+            tree))
+
+(defn postwalk-trim [tree]
+  (postwalk #(if (string? %)
+               (trim %)
+                %) 
+            tree))
+
+(defn postwalk-rm [what tree]
+  (postwalk #(if (= % what)
+               nil
                 %) 
             tree))
 
