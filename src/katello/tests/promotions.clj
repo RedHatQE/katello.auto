@@ -14,7 +14,6 @@
                      [conf :refer [config *session-org* ]]
                      [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive fresh-repo]]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             (test.tree [script :refer :all]
                        [builder :refer [data-driven dep-chain]])
             [serializable.fn :refer [fn]]

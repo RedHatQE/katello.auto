@@ -1,6 +1,5 @@
 (ns katello.users
-  (:require [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
-            [slingshot.slingshot :refer [throw+]]
+  (:require [slingshot.slingshot :refer [throw+]]
             [clojure.data :as data]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
@@ -109,8 +108,8 @@
   (when org
     (browser/select-by-text ::default-org-select (:name org)))
   (when (and env (rest/is-katello?))
-    (browser click (ui/environment-link (:name env))))
-  (browser click ::save-environment)
+    (browser/click (ui/environment-link (:name env))))
+  (browser/click ::save-environment)
   (notification/success-type :users-update-env))
 
 (defn current

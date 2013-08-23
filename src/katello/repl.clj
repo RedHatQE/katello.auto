@@ -37,8 +37,6 @@
 (defn start-session []
   (katello.conf/init {:selenium-address "localhost:4444"})
 
-  #_(com.redhat.qe.tools.SSLCertificateTruster/trustAllCerts)
-  #_(com.redhat.qe.tools.SSLCertificateTruster/trustAllCertsForApacheXMLRPC)
 
   (if-let [locale (@katello.conf/config :locale)]
     (do (new-browser {:browser-config-opts (katello.setup/config-with-profile

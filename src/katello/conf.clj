@@ -91,7 +91,11 @@
     :default "https://raw.github.com/gist/1978881"]
    
    ["--gpg-key" "URL of a GPG-Key"
-    :default "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator"]])
+    :default "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator"]
+
+   ["--sauce-username" "Username for Sauce Labs account."]
+
+   ["--sauce-api-key" "API key to authenticate with the Sauce Labs API."]])
 
 (def defaults (first (apply clojure.tools.cli/cli [] options)))
 
@@ -102,14 +106,14 @@
 (def ^{:doc "Some pre-set trace settings. Don't trace too deeply into some
   functions (or not at all into others)"}
   trace-depths
-  '{com.redhat.qe.auto.selenium.selenium/call-sel 1
-    katello.menu/fmap 0
+  '{katello.menu/fmap 0
     katello.ui/component-deployment-dispatch 0
     katello.ui/current-session-deployment 0
     katello.notifications/success? 0
     katello.tasks/uniqueify 0
     katello.tasks/uniques 0
     katello.conf/client-defs 0
+    katello.setup/conf-selenium 0
     katello.rest/read-json-safe 0
     katello.rest/get-id 1
     katello/chain 1
@@ -132,10 +136,9 @@
   (-> (->> (loaded-libs)
            (filter (fn [sym] (-> sym str (.startsWith "katello"))))
            all-fns
-           (concat '(com.redhat.qe.auto.selenium.selenium/call-sel
-                     clj-http.client/get
+           (concat '(clj-http.client/get
                      clj-http.client/put
-                     clj-http.client/post
+                     ;;clj-http.client/post
                      clj-http.client/delete)))
       (zipmap (repeat nil)) ;; default no limit to trace depth
       (merge trace-depths (record-contructor-depths))))
@@ -145,8 +148,7 @@
          ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *cloud-conn*
-         ^:dynamic *environments*
-         ^:dynamic *wd-driver*)
+         ^:dynamic *environments*)
 
 (defn- try-read-configs
   "try to read a config from filename, if file doesn't exist, return nil"
@@ -226,5 +228,3 @@
   [org-name & body]
    `(binding [*session-org* ~org-name]
       ~@body))
-
-

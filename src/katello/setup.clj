@@ -8,25 +8,33 @@
                      [rest :as rest]
                      [ui :as ui]
                      [client :as client]
-                     [conf :refer [config *session-user* *session-org* *browsers* *wd-driver*]]
+                     [conf :refer [config *session-user* *session-org* *browsers*]]
                      [tasks :refer :all] 
                      [users :as user])
             [fn.trace :as trace]
             [clj-webdriver.taxi :as browser]
             [clj-webdriver.firefox :as ff]
+            [clj-webdriver.remote.server :as rs]
+            [sauce-api.jobs :as job]
             [webdriver :as wd]))
 
-#_(defn new-selenium
-  "Returns a new selenium client. If running in a REPL or other
-   single-session environment, set single-thread to true."
-  [browser-string & [single-thread]]
-  (let [[host port] (split (@config :selenium-address) #":")
-        sel-fn (if single-thread connect new-sel)] 
-    (sel-fn host (Integer/parseInt port) browser-string (@config :server-url))))
+(def ^:dynamic *job-id* nil)
+
+(def sauce-name "bmorriso")
+
+(def sauce-key "f70c3b5c-f09f-4236-b0aa-250a2fce395d")
 
 (def empty-browser-config {:browser :firefox
                            :profile (doto (ff/new-profile)
                                       (ff/enable-native-events true))})
+(defn new-remote-grid
+  "Returns a remote grid server. See new-remote-driver."
+  [url port spec]
+  (rs/init-remote-server {:host url
+                          :port port
+                          :existing true}))
+
+(def default-grid (new-remote-grid (str sauce-name ":" sauce-key "@ondemand.saucelabs.com") 80 empty-browser-config))
 
 (defn config-with-profile
   ([locale]
@@ -45,7 +53,13 @@
   (login user {:default-org *session-org*
                :org *session-org*}))
 
+(defn new-remote-driver
+  "Returns a remote selenium webdriver browser on the specified selenium grid server."
+  [server & [{:keys [browser-config-opts]}]]
+  (rs/new-remote-driver server (or browser-config-opts empty-browser-config)))
+
 (defn new-selenium
+  "Returns a local selenium webdriver browser."
   [& [{:keys [browser-config-opts]}]]
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
@@ -58,13 +72,30 @@
   browser/*driver*)
 
 (defn conf-selenium
+  "Sets the implicit-wait time for the driver and navigates to the specified urlu"
   []
-  (browser/implicit-wait 2000)
+  (browser/implicit-wait 1000)
   (browser/to (@config :server-url)))
+
+(defn set-job-id
+  "Sets a thread-local binding of the session-id to *job-id*. This is to allow pass/fail reporting after the browser session has ended."
+  []
+  (set! *job-id* (second (re-find #"\(([^\)]+)\)" (str (:webdriver browser/*driver*))))))
 
 (defn stop-selenium 
   ([] (browser/quit browser/*driver*))
   ([driver] (browser/quit driver)))
+
+(defmacro with-remote-driver-fn
+  "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser."
+  
+  [browser-spec finder-fn & body]
+  `(binding [browser/*driver* (new-remote-driver default-grid ~browser-spec)
+             browser/*finder-fn* ~finder-fn]
+     (try
+      ~@body
+      (finally
+        (browser/quit)))))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
@@ -77,33 +108,48 @@
       (try
         ;;staggered startup
         (Thread/sleep (* thread-number 5000))
-        #_(start-selenium {:browser-config-opts (when-let [locale (@config :locale)]
-                                                  (config-with-profile locale))})
+      
+        ;;create the admin user
         (rest/create user)
         (rest/http-post (rest/url-maker [["api/users/%s/roles" [identity]]] user) {:body
                                                                                    {:role_id 1}})
-        (binding [*session-user* user]
-          (consume-fn))
-        (finally 
-          #_(stop-selenium))))))
+        (binding [*session-user* user
+                  *job-id* nil]
+          (consume-fn))))))
 
-
+(defn on-pass
+  "create a watcher that will call f when a test passes."
+  [f]
+  (watch/watch-on-pred (fn [test report]
+                   (let [r (:report report)]
+                     (and r (-> r :result (= :pass)))))
+                 f))
 
 (def runner-config 
-  {:teardown (fn []
-                #_ (when selenium-server/selenium-server 
-                 (selenium-server/stop)))
-   :thread-wrapper thread-runner
+  {:thread-wrapper thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher
-              ;; :screencapture
-              #_(watch/on-fail
-               (fn [t _] 
-                 (browser "screenCapture"
-                          "screenshots"
-                          (str 
-                           (clojure.string/replace (:name t) #"[/\.,]" "-") 
-                           (if (:parameters t)
-                             (str "-" (System/currentTimeMillis))
-                             "")
-                           ".png")
-                          false)))}})
+              :onpass (on-pass
+                       (fn [t _]
+                         (if (complement (contains? t :configuration))
+                           (let [s-id *job-id*]
+                             (job/update-id  sauce-name
+                                             sauce-key
+                                             s-id {:name (:name t)
+                                                   :build 2
+                                                   :tags [(:version (rest/get-version))]
+                                                   :passed true})))))
+              :onfail (watch/on-fail
+                       (fn [t e]
+                         (if (complement (contains? t :configuration))
+                           (let [s-id *job-id*]
+                             (job/update-id  sauce-name
+                                             sauce-key
+                                             s-id {:name (:name t)
+                                                   :tags [(:version (rest/get-version))]
+                                                   :build 2
+                                                   :passed false
+                                                   :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
+                                                                 "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})
+
+
+

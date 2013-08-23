@@ -119,3 +119,28 @@ Default browser-spec: firefox"
 (defn text-present?
   [text]
   (.contains (browser/page-source) text))
+
+(defmacro with-remote-driver-fn
+  "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser.
+
+   Examples:
+   =========
+
+   ;;
+   ;; Log into Github
+   ;;
+   (with-driver {:browser :firefox} xpath-finder
+     (to \"https://github.com\")
+     (click \"//a[text()='Login']\")
+
+     (input-text \"//input[@id='login_field']\" \"your_username\")
+     (-> \"//input[@id='password']\"
+       (input-text \"your_password\")
+       submit))"
+  [browser-spec finder-fn & body]
+  `(binding [*driver* (core/new-driver ~browser-spec)
+             *finder-fn* ~finder-fn]
+    (try
+      ~@body
+      (finally
+        (quit)))))

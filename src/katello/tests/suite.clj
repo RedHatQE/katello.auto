@@ -16,15 +16,19 @@
             [webdriver :as wd]
             [serializable.fn :refer :all] 
             [test.tree.jenkins :as jenkins]
-            [test.tree.script :refer :all]))
+            [test.tree.script :refer :all])
+  (:import [org.openqa.selenium.remote SessionNotFoundException]
+           [org.openqa.selenium InvalidElementStateException]))
 
 (defgroup katello-tests
   :test-wrapper (fn [f & args]
-                  (browser/with-driver-fn setup/empty-browser-config wd/locator-finder-fn
-                    (setup/conf-selenium)
-                    #_(setup/switch-new-admin-user conf/*session-user*)
-                    (katello.tests.login/navigate-toplevel)
-                    (apply f args)))
+                  (try
+                    (setup/with-remote-driver-fn setup/empty-browser-config wd/locator-finder-fn
+                      (setup/conf-selenium)
+                      (setup/set-job-id)
+                      (katello.tests.login/navigate-toplevel)
+                      (apply f args))
+                    (catch InvalidElementStateException _ nil)))
 
   katello.tests.login/login-tests
 ;;  katello.tests.navigation/nav-tests
@@ -88,6 +92,7 @@
                                       :trace-depths-fn conf/trace-list
                                       :to-trace (@conf/config :trace)
                                       :do-not-trace (@conf/config :trace-excludes)}))
+               (catch SessionNotFoundException _ nil)
                (finally #_(provision/shutdown client-queue)
                         #_(-> conf/*cloud-conn* :api .shutdown)
                         #_(shutdown-agents))))))))

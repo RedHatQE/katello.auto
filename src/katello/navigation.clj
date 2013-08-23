@@ -60,7 +60,7 @@
 
 (defn scroll-org-switcher
   []
-  (browser/execute-script "$('#allowed-orgs').data('jsp').scrollByY(200);"))
+  (browser/execute-script "$('#allowed-orgs').data('jsp').scrollByY(300);"))
 
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a

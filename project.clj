@@ -1,10 +1,10 @@
 (defproject katello.auto "1.0.0-SNAPSHOT"
   :description "Katello automation"  
   :main ^{:skip-aot true} katello.tests.suite
-  :dependencies [[org.clojure/clojure "1.5.0"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.macro "0.1.2"]
                  [org.clojure/tools.cli "0.2.1"]
-                 [org.clojure/data.json "0.1.1"]
+                 [org.clojure/data.json "0.2.2"]
                  [org.clojure/data.zip "0.1.1"]
                  
                  [org.seleniumhq.selenium/selenium-server "2.33.0"]
@@ -23,12 +23,16 @@
                  [com.redhat.qe/ovirt.client "0.1.0-SNAPSHOT"]
                  [com.redhat.qe/deltacloud.client "1.2.0-SNAPSHOT"]
 
-                 [clj-webdriver "0.6.0"]
+
                  
                  [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure org.clojure/data.xml]]
                  [clj-http "0.6.4"]
                  [clj-ssh "0.5.6"]
+
+                 [clj-webdriver "0.6.0"]
                  
+                 [org.clojars.firesofmay/sauce-api "0.1.0-SNAPSHOT"]
+
                  [ui.navigate "0.4.0-SNAPSHOT"]
                  [bugzilla.checker "0.2.0-SNAPSHOT"]
                  [github.checker "0.2.0-SNAPSHOT"]
