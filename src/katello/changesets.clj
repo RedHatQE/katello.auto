@@ -132,7 +132,10 @@
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock
+    (Thread/sleep 2000)
     (browser/click ::review-for-promotion)
+    (Thread/sleep 5000)
+    (browser/refresh)
     ;;for the submission
     (wd/loop-with-timeout (* 10 60 1000) []
       (when-not (try+ (browser/click ::promote-to-next-environment)

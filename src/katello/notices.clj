@@ -19,7 +19,8 @@
        cs/get-zip-of-xml-string
        zip/node    
       ;I want table to be formated as list of lists 
-	    (cs/node-content-as [])
+       (cs/node-content-as [])
+       cs/postwalk-trim
       ;convert ["asdf"] to "asdf" and [] to ""
       (map (partial map 
              #(cond (= % []) ""

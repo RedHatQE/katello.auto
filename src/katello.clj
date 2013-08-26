@@ -38,7 +38,7 @@
 (defrecord Environment [id name label description ^Organization org prior next])
 
 (def ^:private library-name "Library")
-(def library (map->Environment {:name library-name})) ;  Library is a special
+(def base-library (map->Environment {:name library-name})) ;  Library is a special
                                         ;  environment so create a var
                                         ;  to refer to it later
 
@@ -48,25 +48,11 @@
 
 (declare org)
 
-;; override the default constructor to chain in to previous env
-(defn chain
-  "Sets the next and prior fields of successive envs to make a doubly
-  linked list."
-  [environments] {:pre [(apply = (map org environments))]} ; all in same org
-  (let [org (-> environments first org)
-        f (fn [envs latest-env]
-            (let [l (last envs)
-                  r (butlast envs)]
-              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
-    (rest (reduce f (vector (assoc library :org org)) (vec environments)))))
-
-(def newEnvironment (comp first chain list map->Environment))
-
 (defn mklibrary
   "Creates a library record for a particular org and next
    environment (used for env selection in UI)"
   [env]
-  (assoc library :org (:org env) :next env))
+  (assoc base-library :org (:org env) :next env))
 
 (defrecord Provider [id name description ^Organization org])
 
@@ -104,9 +90,9 @@
 
 (defrecord SystemGroup [id name systems  ^Organization org])
 
-(defrecord ContentView [id name description composite composite-name org published-name])
+(defrecord ContentViewDefinition [id name description composite composite-name org published-name])
 
-(defrecord Filter [id name ^ContentView cv type exclude?])
+(defrecord Filter [id name ^ContentViewDefinition cv type exclude?])
 
 (defrecord Manifest [provider file-path url])
 
@@ -128,11 +114,12 @@
   (reposet [x])
   (repository [x])
   (cv [x])
-  (parent [x]))
+  (parent [x])
+  (library [x]))
 
 (def relationships
-  {Organization {:org identity, :parent (constantly nil)}
-   Environment {:org :org, :env identity, :parent #'org}  ; the org is in the env's :org field
+  {Organization {:org identity, :parent (constantly nil), :library #(assoc base-library :org %)}
+   Environment {:org :org, :env identity, :parent #'org, :library mklibrary} ; the org is in the env's :org field
    Provider {:org :org, :provider identity, :parent #'org}
    Distributor {:org (comp #'org #'env), :env :env, :parent #'env}
    Product {:org (comp #'org #'provider), :provider :provider, :product identity, :parent #'provider} ; the org is the provider's org
@@ -149,12 +136,28 @@
    Permission {:org :org, :parent #'org}
    ActivationKey {:org (comp #'org #'env), :env :env, :parent #'env}
    SystemGroup {:org :org}
-   ContentView {:org :org, :cv identity :parent #'org}
+   ContentViewDefinition {:org :org, :cv identity :parent #'org}
    Filter {:org  (comp #'org #'cv), :parent #'cv}
    Changeset {:org (comp #'org #'env), :env :env, :parent #'env}
    Manifest {:org (comp #'org #'provider), :provider :provider, :parent #'provider}
-   SyncPlan {:org :org, :parent #'org}})
+   SyncPlan {:org :org, :parent #'org}
+   nil {:library (constantly base-library)}})
 
 (doseq [[rec impls] relationships]
   (extend rec BelongsTo impls))
+
+;; override the default constructor to chain in to previous env
+(defn chain
+  "Sets the next and prior fields of successive envs to make a doubly
+  linked list."
+  [environments] {:pre [(apply = (map org environments))]} ; all in same org
+  (let [org (-> environments first org)
+        f (fn [envs latest-env]
+            (let [l (last envs)
+                  r (butlast envs)]
+              (conj (vec r) (assoc l :next latest-env) (assoc latest-env :prior l))))]
+    (rest (reduce f (vector (library org)) (vec environments)))))
+
+(def newEnvironment (comp first chain list map->Environment))
+
 

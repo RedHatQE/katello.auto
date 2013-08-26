@@ -30,7 +30,7 @@
 (defn promote-published-content-view
   "Function to promote published content view"
   [org target-env repo]
-  (with-unique [cv (kt/newContentView {:name "content-view"
+  (with-unique [cv (kt/newContentViewDefinition {:name "content-view"
                                        :org org
                                        :published-name "publish-name"})
                 
@@ -61,7 +61,7 @@
                                      [repo2 cv2 (:published-name cv2)]]]
     (ui/update cv assoc :products (list (kt/product repo)))
     (views/publish {:content-defn cv :published-name published-names :org org}))
-  (with-unique [composite-view (newContentView {:name "composite-view"
+  (with-unique [composite-view (kt/newContentViewDefinition {:name "composite-view"
                                                 :org org
                                                 :description "Composite Content View"
                                                 :published-name "publish-composite"
@@ -92,7 +92,7 @@
   [cv]
   (let [current-version (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv))))]
     (browser/click (views/refresh-cv (:published-name cv)))
-    (views/check-published-view-status cv)
+    (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
 ;; Data (Generated)
@@ -114,7 +114,7 @@
     (deftest "Create a new content view definition"
       :uuid "43016c01-3f46-b164-3ffb-4c31e0d3339d"
       (-> {:name "view-def" :org *session-org*}
-          katello/newContentView
+          katello/newContentViewDefinition
           uniqueify
           ui/create))
 
@@ -125,7 +125,7 @@
 
       (fn [view-name]
         (-> {:name view-name :org *session-org*}
-            katello/newContentView
+            katello/newContentViewDefinition
             uniqueify
             ui/create))
       (map list i18n-chars))
@@ -136,7 +136,7 @@
 
       (expecting-error (common/errtype ::notifications/name-cant-be-blank)
                        (-> {:name "" :org *session-org*}
-                           katello/newContentView
+                           katello/newContentViewDefinition
                            ui/create)))
 
     (deftest "Create a new content view with a long name"
@@ -146,16 +146,16 @@
       :blockers (bz-bugs "987670")
 
       (fn [view-name expected-res]
-        (let [content-view (katello/newContentView {:name view-name :org *session-org*})]
+        (let [content-view (katello/newContentViewDefinition {:name view-name :org *session-org*})]
           (expecting-error expected-res (ui/create content-view))))
 
-      [[(random-ascii-string 129) (common/errtype ::notifications/name-128-char-limit)]
-       [(random-ascii-string 128) success]])
+      [[(random-ascii-string 256) (common/errtype ::notifications/name-too-long)]
+       [(random-ascii-string 255) success]])
 
     (deftest "Create a new content view definition using the same name"
       :uuid "32447769-82b4-1334-bdab-8d40d7012286"
-      (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                    :org conf/*session-org*})]
+      (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
+                                                              :org conf/*session-org*})]
         (ui/create content-def)
         (expecting-error (common/errtype ::notifications/name-taken-error)
                          (ui/create content-def))))
@@ -163,15 +163,15 @@
     (deftest "Delete a content view definition"
       :uuid "79c7d67f-5fca-dcc4-7e33-73c8bf413c67"
       (doto (-> {:name "view-def" :org *session-org*}
-                kt/newContentView
+                kt/newContentViewDefinition
                 uniqueify)
         (ui/create)
         (ui/delete)))
 
     (deftest "Clone empty content view definition"
       :uuid "2184af79-0ffb-3cf4-52bb-48b28eefe34c"
-      (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                    :org conf/*session-org*})]
+      (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
+                                                              :org conf/*session-org*})]
         (ui/create content-def)
         (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))
 
@@ -189,7 +189,7 @@
     
     (deftest "Create a filter"
       :uuid "da277945-9bad-468f-8460-c0149d4ee806"
-      (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+      (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                     cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
         (ui/create-all (list cv cv-filter))))
  
@@ -198,7 +198,7 @@
       :data-driven true
       
       (fn [name expected-res]
-        (let [cv (katello/newContentView {:name (uniqueify "con-def") :org *session-org*})
+        (let [cv (katello/newContentViewDefinition {:name (uniqueify "con-def") :org *session-org*})
               cv-filter (katello/newFilter {:name name :cv cv})]
           (ui/create cv)
           (expecting-error expected-res (ui/create cv-filter))))
@@ -212,7 +212,7 @@
       :data-driven true
       
       (fn [packages version-type &[value1 value2]]
-        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+        (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (ui/create-all (list cv cv-filter))
           (views/add-package-rule cv-filter {:packages (list packages)
@@ -371,6 +371,7 @@
     
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
+      :blockers (bz-bugs "996172")
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org
@@ -504,8 +505,8 @@
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
       :data-driven true
       (fn [errata-type]
-        (with-unique [cv (kt/newContentView {:name "con-def"
-                                             :org conf/*session-org*})
+        (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
+                                                       :org conf/*session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
           (ui/create-all (list cv cv-filter))
           (views/filter-errata-by-date-type cv-filter {:errata-type errata-type})))
@@ -516,17 +517,17 @@
     
     (deftest "Remove a content filter"
       :uuid "1b4197f9-3e2a-41b0-b63c-ffdf8ba9ca3a"
-      (with-unique [cv (kt/newContentView {:name "con-def"
-                                           :org conf/*session-org*})
+      (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
+                                                     :org conf/*session-org*})
                     cv-filter (katello/newFilter {:name "auto-filter" :cv cv})]
         (ui/create-all (list cv cv-filter))
         (views/remove-filter cv-filter)))
     
     (deftest "Publish content view definition and refresh it once"
       :uuid "b71674d7-0e86-fe04-39f3-f408cb2a95bc"
-      (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                    :published-name "publish-name"
-                                                    :org conf/*session-org*})]
+      (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
+                                                              :published-name "publish-name"
+                                                              :org conf/*session-org*})]
         (ui/create content-def)
         (views/publish {:content-defn content-def
                         :published-name (:published-name content-def)
@@ -535,9 +536,9 @@
     
     (deftest "Published content view name links to content search page"
       :uuid "16fb0291-7312-6ab4-e92b-063d776f837b"
-      (with-unique [content-def (kt/newContentView {:name "con-def"
-                                                    :published-name "publish-name"
-                                                    :org conf/*session-org*})]
+      (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
+                                                              :published-name "publish-name"
+                                                              :org conf/*session-org*})]
         (ui/create content-def)
         (views/publish {:content-defn content-def 
                         :published-name (:published-name content-def)
@@ -551,16 +552,16 @@
       :data-driven true
 
       (fn [composite?]
-        (with-unique [org (newOrganization {:name "auto-org"})
-                      content-view (kt/newContentView {:name "auto-view-definition"
-                                                       :published-name "publish-name"
-                                                       :org org})
+        (with-unique [org (kt/newOrganization {:name "auto-org"})
+                      content-view (kt/newContentViewDefinition {:name "auto-view-definition"
+                                                                 :published-name "publish-name"
+                                                                 :org org})
                       repo (fresh-repo org pulp-repo)
-                      composite-view (kt/newContentView {:name "composite-view"
-                                                         :org org
-                                                         :description "Composite Content View"
-                                                         :composite 'yes'
-                                                         :composite-name content-view})]
+                      composite-view (kt/newContentViewDefinition {:name "composite-view"
+                                                                   :org org
+                                                                   :description "Composite Content View"
+                                                                   :composite 'yes'
+                                                                   :composite-name content-view})]
           (ui/create-all (list org content-view))
           (create-recursive repo)
           (ui/update content-view assoc :products (list (kt/product repo)))
@@ -577,9 +578,9 @@
       :uuid "f8de7fae-2cdf-4854-4793-50c33371e491"
       :blockers (bz-bugs "988359")
       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    content-definition (kt/newContentView {:name "auto-view-definition"
-                                                           :description "new description"
-                                                           :org org})
+                    content-definition (kt/newContentViewDefinition {:name "auto-view-definition"
+                                                                     :description "new description"
+                                                                     :org org})
                     modified-name "mod-name"]
         (ui/create-all (list org content-definition))
         (ui/update content-definition assoc :name modified-name :description "modified description")))
@@ -588,8 +589,8 @@
     (deftest "Remove complete product or a repo from content-view-defnition"
       :uuid "5439b54f-e679-19b4-fd93-3fbc32c96b14"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    content-defn (kt/newContentView {:name "auto-view-definition"
-                                                     :org org})
+                    content-defn (kt/newContentViewDefinition {:name "auto-view-definition"
+                                                               :org org})
                     repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
                     repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
         (ui/create-all (list org content-defn))
@@ -603,12 +604,12 @@
     (deftest "Create composite content-definition with two products"
       :uuid "9463a161-8d9b-9cc4-f09b-c011b0cd6c53"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    cv1 (kt/newContentView {:name "content-view1"
-                                            :org org
-                                            :published-name "publish-name1"})
-                    cv2 (kt/newContentView {:name "content-view2"
-                                            :org org
-                                            :published-name "publish-name2"})]
+                    cv1 (kt/newContentViewDefinition {:name "content-view1"
+                                                      :org org
+                                                      :published-name "publish-name1"})
+                    cv2 (kt/newContentViewDefinition {:name "content-view2"
+                                                      :org org
+                                                      :published-name "publish-name2"})]
         (let [repo1 (fresh-repo org pulp-repo)
               repo2 (fresh-repo org zoo-repo)]
           (ui/create-all (list org cv1 cv2))
@@ -620,11 +621,11 @@
             (views/publish {:content-defn cv
                             :published-name published-names
                             :org org}))
-          (with-unique [composite-view (newContentView {:name "composite-view"
-                                                        :org org
-                                                        :description "Composite Content View"
-                                                        :composite 'yes'
-                                                        :composite-names (list cv1 cv2)})]
+          (with-unique [composite-view (kt/newContentViewDefinition {:name "composite-view"
+                                                                     :org org
+                                                                     :description "Composite Content View"
+                                                                     :composite 'yes'
+                                                                     :composite-names (list cv1 cv2)})]
             (ui/create composite-view)))))
 
     (deftest "Add published content-view to an activation-key"
@@ -646,12 +647,12 @@
       :uuid "0151b513-6248-7e04-97eb-1bb43c81b592"
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
-                    cv1 (kt/newContentView {:name "content-view1"
-                                            :org org
-                                            :published-name "publish-name1"})
-                    cv2 (kt/newContentView {:name "content-view2"
-                                            :org org
-                                            :published-name "publish-name2"})
+                    cv1 (kt/newContentViewDefinition {:name "content-view1"
+                                                      :org org
+                                                      :published-name "publish-name1"})
+                    cv2 (kt/newContentViewDefinition {:name "content-view2"
+                                                      :org org
+                                                      :published-name "publish-name2"})
                     cs (kt/newChangeset {:name "cs"
                                          :env env
                                          :content (list cv1 cv2)})]
@@ -710,49 +711,49 @@
       
     (deftest "Clone content view definition and consume content from it"
       :uuid "6a356ca9-d3e4-4184-89cb-b72940c480e3"
-       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     target-env (kt/newEnvironment {:name "dev", :org org})]   
-         (let [repo (fresh-repo org
-                                "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-               cv (promote-published-content-view org target-env repo)
-               clone (update-in cv [:name] #(str % "-clone"))
-               cloned-cv (kt/newContentView {:name clone
-                                             :org org
-                                             :published-name "cloned-publish-name"})]
-           (views/clone cv clone)
-           (views/publish {:content-defn clone
-                           :published-name (:published-name cloned-cv)
-                           :description "test pub"
-                           :org org})
-           (let [cs (kt/newChangeset {:name (uniqueify "cs")
-                                      :env target-env
-                                      :content (list cloned-cv)})
-                 ak (kt/newActivationKey {:name (uniqueify "ak")
-                                          :env target-env
-                                          :description "auto activation key"
-                                          :content-view cv})]           
-             (changeset/promote-delete-content cs)
-             (ui/create ak)
-             (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
-             (provision/with-queued-client ssh-conn
-               (client/register ssh-conn
-                                {:org (:name org)
-                                 :activationkey (:name ak)})
-               (client/sm-cmd ssh-conn :refresh)
-               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-                 (assert/is (client/ok? cmd_result))))))))
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev", :org org})]   
+        (let [repo (fresh-repo org
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (promote-published-content-view org target-env repo)
+              clone (update-in cv [:name] #(str % "-clone"))
+              cloned-cv (kt/newContentViewDefinition {:name clone
+                                                      :org org
+                                                      :published-name "cloned-publish-name"})]
+          (views/clone cv clone)
+          (views/publish {:content-defn clone
+                          :published-name (:published-name cloned-cv)
+                          :description "test pub"
+                          :org org})
+          (let [cs (kt/newChangeset {:name (uniqueify "cs")
+                                     :env target-env
+                                     :content (list cloned-cv)})
+                ak (kt/newActivationKey {:name (uniqueify "ak")
+                                         :env target-env
+                                         :description "auto activation key"
+                                         :content-view cv})]           
+            (changeset/promote-delete-content cs)
+            (ui/create ak)
+            (ui/update ak assoc :subscriptions (list (-> repo kt/product :name)))
+            (provision/with-queued-client ssh-conn
+              (client/register ssh-conn
+                               {:org (:name org)
+                                :activationkey (:name ak)})
+              (client/sm-cmd ssh-conn :refresh)
+              (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+                (assert/is (client/ok? cmd_result))))))))
      
     (deftest "Two published-view's of same contents and one of them should be disabled while adding it to composite-view"
       :uuid "7f698537-7525-2e74-8c4b-32445cf0140f"
       :blockers (list (auto-issue "788"))
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     env (kt/newEnvironment {:name  "dev" :org org})
-                    cv1 (kt/newContentView {:name "content-view1"
-                                            :org org
-                                            :published-name "publish-name1"})
-                    cv2 (kt/newContentView {:name "content-view2"
-                                            :org org
-                                            :published-name "publish-name2"})
+                    cv1 (kt/newContentViewDefinition {:name "content-view1"
+                                                      :org org
+                                                      :published-name "publish-name1"})
+                    cv2 (kt/newContentViewDefinition {:name "content-view2"
+                                                      :org org
+                                                      :published-name "publish-name2"})
                     cs (kt/newChangeset {:name "cs"
                                          :env env
                                          :content (list cv1 cv2)})]
@@ -766,11 +767,11 @@
             (ui/update cv assoc :products (list (kt/product repo1)))
             (ui/update cv assoc :products (list (kt/product repo2)))
             (views/publish {:content-defn cv :published-name (:published-name cv) :org org}))
-          (with-unique [composite-view (newContentView {:name "composite-view"
-                                                        :org org
-                                                        :description "Composite Content View"
-                                                        :composite true
-                                                        :composite-names (list cv1)})]
+          (with-unique [composite-view (kt/newContentViewDefinition {:name "composite-view"
+                                                                     :org org
+                                                                     :description "Composite Content View"
+                                                                     :composite true
+                                                                     :composite-names (list cv1)})]
             (ui/create composite-view)
             (nav/go-to ::views/content-page composite-view)
             (assert/is (not (browser/selected? (views/composite-view-name (:published-name cv2)))))
@@ -778,44 +779,75 @@
      
     (deftest "Consume content from composite content view definition"
       :uuid "a4b4fdf5-b38b-f634-5aeb-d09f02769acb"
-       :blockers (bz-bugs "961696")
-       (with-unique [org (kt/newOrganization {:name "cv-org"})
-                     env (kt/newEnvironment {:name  "dev" :org org})
-                     cv1 (kt/newContentView {:name "content-view1"
-                                             :org org
-                                             :published-name "publish-name1"})
-                     cv2 (kt/newContentView {:name "content-view2"
-                                             :org org
-                                             :published-name "publish-name2"})]
-         (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
-               repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-               product1 (-> repo1 kt/product :name)
-               product2 (-> repo2 kt/product :name)
-               composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
-               ak (kt/newActivationKey {:name (uniqueify "ak")
-                                        :env env
-                                        :description "auto activation key"
-                                        :content-view composite-view})]
-           (ui/create ak)
-           (ui/update ak assoc :subscriptions (list product1 product2))
-           (provision/with-queued-client ssh-conn
-             (client/register ssh-conn
-                              {:org (:name org)
-                               :activationkey (:name ak)})
-             (client/sm-cmd ssh-conn :refresh)
-             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
-               (assert/is (client/ok? cmd_result)))))))
+      :blockers (bz-bugs "961696")
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    env (kt/newEnvironment {:name  "dev" :org org})
+                    cv1 (kt/newContentViewDefinition {:name "content-view1"
+                                                      :org org
+                                                      :published-name "publish-name1"})
+                    cv2 (kt/newContentViewDefinition {:name "content-view2"
+                                                      :org org
+                                                      :published-name "publish-name2"})]
+        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+              product1 (-> repo1 kt/product :name)
+              product2 (-> repo2 kt/product :name)
+              composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
+              ak (kt/newActivationKey {:name (uniqueify "ak")
+                                       :env env
+                                       :description "auto activation key"
+                                       :content-view composite-view})]
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list product1 product2))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
+              (assert/is (client/ok? cmd_result)))))))
+    
+    (deftest "Consuming ERRATA content using an activation key that has a content view definition"
+      :uuid "90027966-e618-47c2-b327-c3a1c2bd3e10"
+      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
+            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
+            repo (fresh-repo org
+                             "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+            cv (add-product-to-cv org target-env repo)]
+        (with-unique [cs (kt/newChangeset {:name "cs"
+                                           :env target-env
+                                           :content (list cv)})
+                      ak (kt/newActivationKey {:name "ak"
+                                               :env target-env
+                                               :description "auto activation key"
+                                               :content-view cv})]        
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
+          (provision/with-queued-client ssh-conn
+            (client/register ssh-conn
+                             {:org (:name org)
+                              :activationkey (:name ak)})
+            (client/sm-cmd ssh-conn :refresh)
+            (let [cmd1 (client/run-cmd ssh-conn "yum install -y sheep-1.3.7-1 cow-5.3.2-1 zebra-10.0.8-1 seal-3.10.1-1")
+                  cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie sheep-1.3.7-1 -ie cow-5.3.2-1 -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]
+              (assert/is (client/ok? cmd1))
+              (assert/is (client/ok? cmd2)))))))
     
     (deftest "Delete part of the composite content view definition and re-promote it"
       :uuid "9fe84637-a8d4-459f-aa63-99bc387a3121"
+      :blockers (bz-bugs "990026")
       :data-driven true
       
       (fn [re-promote?]
         (with-unique [org (kt/newOrganization {:name "cv-org"})
                       env (kt/newEnvironment {:name  "dev" :org org})
-                      [cv1 cv2] (kt/newContentView {:name "content-view"
-                                                    :org org
-                                                    :published-name "publish-name"})
+                      [cv1 cv2] (kt/newContentViewDefinition {:name "content-view"
+                                                              :org org
+                                                              :published-name "publish-name"})
                       deletion-cs (kt/newChangeset {:name "deletion-cs"
                                                     :content (list cv1)
                                                     :env env

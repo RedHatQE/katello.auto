@@ -23,6 +23,7 @@
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
+  check-selected-env              "//span[@class='checkbox_holder']/input[@class='node_select' and @data-node_name='%s']"
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
@@ -411,10 +412,11 @@
 
 (defn get-details [system]
   (nav/go-to ::details-page system)
-  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
-                 "Arch" "RAM (GB)" "Sockets" "Location" "Environment"
-                 "Checked In" "Registered" "Last Booted" "Activation Key"
-                 "System Type" "Host"]]
+  (let [headpin-details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
+                         "Arch" "RAM (GB)" "Sockets" "Location" "Checked In" "Registered" "Last Booted"
+                         "Activation Key" "System Type" "Host"]
+        katello-details (conj headpin-details "Environment")
+        details (if (rest/is-katello?) katello-details headpin-details)]
     (zipmap details
             (doall (for [detail details]
                      (browser/text (system-detail-textbox detail)))))))
