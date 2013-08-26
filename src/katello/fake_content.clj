@@ -4,7 +4,7 @@
             (katello [manifest :as manifest]
                      [tasks :refer [with-unique]]
                      [subscriptions :as subscriptions]
-                     [conf :refer [config with-org]]
+                     [conf :refer [config]]
                      [organizations :as org]
                      [environments :as env]
                      [repositories :as repo]
