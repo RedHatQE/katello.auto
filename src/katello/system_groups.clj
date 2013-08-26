@@ -56,8 +56,8 @@
   [{:keys [name description] :as sg}]
   (nav/go-to ::new-page sg)
   (browser/quick-fill-submit {::name-text name}
-                             {::description-text (or description "")}
-                             {::create browser/click})
+                             {::description-text (or description "")})
+  (wd/move-to-and-click ::create)
   (notification/success-type :sysgrps-create))
 
 (defn- add-to

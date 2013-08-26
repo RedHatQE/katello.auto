@@ -24,9 +24,26 @@
 
 (def sauce-key "f70c3b5c-f09f-4236-b0aa-250a2fce395d")
 
+(def sauce-configs [{"browserName" "chrome"
+                     "platform" "WIN8"
+                     "version" "27"
+                     "nativeEvents" true}
+                    {"browserName" "firefox"
+                     "platform" "LINUX"
+                     "version" "23"
+                     "nativeEvents" true}
+                    {"browserName" "firefox"
+                     "platform" "WIN8"
+                     "version" "27"
+                     "nativeEvents" true}
+                    {"browserName" "firefox"
+                     "platform" "MAC"
+                     "version" "21"
+                     "nativeEvents" true}])
+
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
-                           "version" "22"
+                           "version" "23"
                            "nativeEvents" true
                            ;; :profile
                            #_(doto (ff/new-profile)
@@ -65,7 +82,12 @@
 (defn get-last-sauce-build
   "Returns the last sauce build number used."
   []
-  (job/get-all-ids sauce-name sauce-key {:limit 10}))
+  (->> (job/get-all-ids sauce-name sauce-key {:limit 10
+                                             :full true})
+       (map #(get % "build"))
+       (filter #(not (nil? %)))
+       (first)
+       (Integer.)))
 
 (defn new-selenium
   "Returns a local selenium webdriver browser."
@@ -144,7 +166,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 4
+                                                   :build 10
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -155,7 +177,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 4
+                                                   :build 10
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})
