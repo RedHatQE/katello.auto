@@ -148,7 +148,7 @@
     (if (empty? org-text) nil org-text)))
 
 (defn go-top [] 
-     (browser click "//a[@href='dashboard']"))
+     (browser/click "//a[@href='dashboard']"))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg

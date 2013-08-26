@@ -31,8 +31,8 @@
                     (catch InvalidElementStateException _ nil)))
 
   katello.tests.login/login-tests
-;;  katello.tests.navigation/nav-tests
-;;  katello.tests.organizations/org-tests
+  katello.tests.navigation/nav-tests
+  katello.tests.organizations/org-tests
 ;;  katello.tests.search/search-tests
 ;;  katello.tests.environments/environment-tests
 ;;  katello.tests.providers/provider-tests
@@ -56,7 +56,14 @@
 
 (defgroup headpin-tests
   :description "All the tests that apply to headpin or SAM."
-  :test-setup katello.tests.login/navigate-toplevel
+  :test-wrapper (fn [f & args]
+                  (try
+                    (setup/with-remote-driver-fn setup/empty-browser-config wd/locator-finder-fn
+                      (setup/conf-selenium)
+                      (setup/set-job-id)
+                      (katello.tests.login/navigate-toplevel)
+                      (apply f args))
+                    (catch InvalidElementStateException _ nil)))
   
   katello.tests.login/login-tests
   katello.tests.navigation/nav-tests
