@@ -68,9 +68,15 @@
    ::package-name                "content_input"
    ::select-package-group        "perform_action_package_groups"
    ::select-package              "perform_action_packages"
-   ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::pkg-install-status-link     "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::pkg-install-status          "//td[@class='package_action_status']"
    ::add-package-error            (ui/link "Add Package Error")
    ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
+   ::pkg-header                   "//div[@id='subpanel']//div[@class='head']/h2"
+   ::pkg-summary                  "//div[@class='grid_7' and contains(.,'Summary')]/following::div[@class='grid_7 multiline']"
+   ::pkg-request                  "//div[@class='grid_7' and contains(.,'Request')]/following::div[@class='grid_7 la']"
+   ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
+   ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
 
    ;;system-edit details
    ::details                     (ui/third-level-link "general")
@@ -447,36 +453,35 @@
       (browser click (system-fact-group-expand group)))))
 
 
-(defn add-package "Add a package or package group to a system."
-  [system {:keys [package package-group]}]
+(defn add-package "Add a package"
+  [system packages &[timeout-ms]]
   (nav/go-to ::content-packages-page system)
-  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
-                                        [package-group "Add Package Group Complete" true]]]
-    (when items
-      (when is-group? (browser click ::select-package-group))
-      (sel/->browser (setText ::package-name items)
-                     (typeKeys ::package-name items)
-                     (click ::add-content))
-      (Thread/sleep 50000)
-      (when-not (= exp-status
-                   (browser getText ::pkg-install-status))
-        (throw+ {:type ::package-install-failed :msg "Add Package Error"})))))
+  (doseq [package packages]
+    (sel/->browser (setText ::package-name package)
+                   (typeKeys ::package-name package)
+                   (click ::add-content))
+    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+                           (case current-status
+                             "Add Package Complete" current-status
+                             "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
+                             (do (Thread/sleep 2000)
+                               (recur (browser getText ::pkg-install-status)))))))
 
 
-(defn remove-package "Remove a package or package group from a system."
-  [system {:keys [package package-group]}]
+(defn add-package-group "Add package-group"
+  [system package-groups &[timeout-ms]]
   (nav/go-to ::content-packages-page system)
-  (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
-                                        [package-group "Remove Package Group Complete" true]]]
-    (when items
-      (when is-group? (browser click ::select-package-group))
-      (sel/->browser (setText ::package-name items)
-                     (typeKeys ::package-name items)
-                     (click ::remove-content))
-      (Thread/sleep 50000)
-      (assert/is (= exp-status
-                    (browser getText ::pkg-install-status))))))
-
+  (browser click ::select-package-group)
+  (doseq [package-group package-groups]
+    (sel/->browser (setText ::package-name package-group)
+                   (typeKeys ::package-name package-group)
+                   (click ::add-content))
+    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+                           (case current-status
+                             "Add Package Group Complete" current-status
+                             "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
+                             (do (Thread/sleep 2000)
+                               (recur (browser getText ::pkg-install-status)))))))
 
 
 

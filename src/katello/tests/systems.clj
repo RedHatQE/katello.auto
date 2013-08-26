@@ -24,7 +24,7 @@
             [katello.tests.content-views :refer [promote-published-content-view]]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
-            [clojure.string :refer [blank? join]]
+            [clojure.string :refer [blank? join split]]
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [test.tree.script :refer [defgroup deftest]]
             [clojure.zip :as zip]
@@ -61,9 +61,21 @@
   (assert/is (= "Auto-attach On, No Service Level Preference" (browser getText ::system/subs-servicelevel)))
   (assert/is (common/disabled? ::system/subs-attach-button)))
 
+(defn validate-package-info
+  "validate package install/remove info
+   Here opr-type is package installed/removed 
+   msg-format is Package Install/Package Remove"
+  [msg-format opr-type packages pkg-version]
+  (browser click ::system/pkg-install-status-link)
+  (assert/is (= msg-format (browser getText ::system/pkg-header)))
+  (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser getText ::system/pkg-summary)))
+  (assert/is (= (join " " [packages opr-type]) (browser getText ::system/pkg-request)))
+  (assert/is (= packages (browser getText ::system/pkg-parameters)))
+  (assert/is (= (apply str (split pkg-version #"\n+")) (browser getText ::system/pkg-result))))
+
 (defn configure-product-for-pkg-install
   "Creates a product with fake content repo, returns the product."
-  []
+  [repo-url]
   (with-unique [provider (katello/newProvider {:name "custom_provider" :org *session-org*})
                 product (katello/newProduct {:name "fake" :provider provider})
                 testkey (katello/newGPGKey {:name "mykey" :org *session-org*
@@ -71,7 +83,7 @@
                                                        "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")})
                 repo (katello/newRepository {:name "zoo_repo"
                                              :product product
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+                                             :url repo-url
                                              :gpg-key testkey})]
     (ui/create-all (list testkey provider product repo))
     (sync/perform-sync (list repo))
@@ -428,16 +440,14 @@
           (when (browser isElementPresent aklink)
             (browser clickAndWait aklink))))))
 
-  (deftest "Install package group"
-    :uuid "869db0f1-3e41-b864-eecb-1acda7f6daf7"
+ (deftest "Add/Remove system packages"
+    :uuid "e6e74dcc-46e5-48c8-9a2d-0ac33de7dd70"
     :data-driven true
-    :description "Add package and package group"
-    :blockers (conj (bz-bugs "959211" "970570")
-                    rest/katello-only
-                    (auto-issue "790"))
-
-    (fn [package-opts]
-      (let [product (configure-product-for-pkg-install)]
+    
+    (fn [remove-pkg?]
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            packages "cow"]
         (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn
@@ -447,13 +457,23 @@
                             :env (:name test-environment)
                             :force true})
           (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
-                          katello/newSystem)]
+                        katello/newSystem)]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-            (system/add-package mysys package-opts)))))
-
-    [[{:package "cow"}]
-     [{:package-group "birds"}]])
+            (system/add-package mysys (list packages))
+            (let [cmd (format "rpm -qa | grep %s" packages)
+                  cmd_result (client/run-cmd ssh-conn cmd)
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Install" "package installed" packages pkg-version)
+              (when remove-pkg?
+                (system/remove-package mysys (list packages))
+                (let [cmd (format "rpm -qa | grep %s" packages)
+                      cmd_result (client/run-cmd ssh-conn cmd)]
+                  (assert/is (->> cmd_result :exit-code (not= 0)))
+                  (validate-package-info "Package Remove" "package removed" packages pkg-version))))))))
+    [[true]
+     [false]])
 
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
