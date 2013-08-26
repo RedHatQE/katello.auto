@@ -74,6 +74,7 @@
                                              :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
                                              :gpg-key testkey})]
     (ui/create-all (list testkey provider product repo))
+    (sync/perform-sync (list repo))
     product))
 
 (defn validate-system-facts
