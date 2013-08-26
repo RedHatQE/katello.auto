@@ -65,12 +65,12 @@
                       (apply f args))
                     (catch InvalidElementStateException _ nil)))
   
-  katello.tests.login/login-tests
+;;  katello.tests.login/login-tests
 ;;  katello.tests.navigation/nav-tests
 ;;  katello.tests.organizations/org-tests
 ;;  katello.tests.search/search-tests
 ;;  katello.tests.distributors/distributor-tests
-;;  katello.tests.systems/system-tests
+  katello.tests.systems/system-tests
 ;;  katello.tests.system-groups/sg-tests
 ;;  katello.tests.activation-keys/ak-tests
 ;;  katello.tests.users/user-tests

@@ -50,11 +50,11 @@
    optional."
   [{:keys [name description content-view env] :as ak}]
   (nav/go-to ::new-page ak)
-  (browser/click (ui/environment-link (:name env)))
+  (rest/when-katello (browser/click (ui/environment-link (:name env))))
   (browser/quick-fill-submit {::name-text (or name "")}
-                             {::description-text (or description "")}
-                             {::content-view-select (or (:published-name content-view) "")}
-                             {::create browser/click})
+                             {::description-text (or description "")})
+  (rest/when-katello (browser/input-text ::content-view-select (or (:published-name content-view) "")))
+  (browser/click ::create) 
   (notification/success-type :ak-create))
 
 (defn- delete

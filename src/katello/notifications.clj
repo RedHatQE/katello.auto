@@ -204,6 +204,7 @@
    one notification to appear. Does not do any extra waiting after the
    first notification is detected. Default timeout is 15 seconds."
   []
+  (wd/ajax-wait)
   (try (let [notices (->> notice-array-js-var
                           (format "return JSON.stringify(%s)") 
                           browser/execute-script

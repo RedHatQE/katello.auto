@@ -58,7 +58,7 @@
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
   editable             "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
   environment-link     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
-  left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
+  left-pane-field-list "//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'][%s]"
   link                 "//a[normalize-space(.)='%s']"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
@@ -123,7 +123,8 @@
    ::back                    "//div[@id='nav-container']/a[contains(.,'Back')]"
 
    ::keyname-list            {:xpath "//td[@class='ra']/label[contains(@for, 'default_info') or contains(@for, 'custom_info')]"}
-   
+
+   ::left-pane-list          "//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall']"
    ::search-bar              "search"
    ::search-menu             "//form[@id='search_form']//span[@class='arrow']"
    ::search-save-as-favorite "search_favorite_save"

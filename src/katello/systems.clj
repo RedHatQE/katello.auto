@@ -144,7 +144,7 @@
                              {::sockets-text sockets}
                              {::ram-mb-text ram-mb}
                              {::system-virtual-type (when virtual? browser/click)}) 
-  (when env (nav/select-environment-widget env))
+  (when (and env rest/is-katello?) (nav/select-environment-widget env))
   (browser/click ::create)
   (notification/success-type :sys-create))
 

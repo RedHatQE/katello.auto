@@ -85,6 +85,7 @@
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (wd/ajax-wait)
+     (browser/refresh)
      (when org
        (organization/switch org {:default-org default-org}))))
 

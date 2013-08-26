@@ -24,9 +24,13 @@
 
 (def sauce-key "f70c3b5c-f09f-4236-b0aa-250a2fce395d")
 
-(def empty-browser-config {:browser :firefox
-                           :profile (doto (ff/new-profile)
-                                      (ff/enable-native-events true))})
+(def empty-browser-config {"browserName" "firefox"
+                           "platform" "LINUX"
+                           "version" "22"
+                           "nativeEvents" true
+                           ;; :profile
+                           #_(doto (ff/new-profile)
+                             (ff/enable-native-events true))})
 (defn new-remote-grid
   "Returns a remote grid server. See new-remote-driver."
   [url port spec]
@@ -56,7 +60,12 @@
 (defn new-remote-driver
   "Returns a remote selenium webdriver browser on the specified selenium grid server."
   [server & [{:keys [browser-config-opts]}]]
-  (rs/new-remote-driver server (or browser-config-opts empty-browser-config)))
+  (rs/new-remote-driver server {:capabilities (or browser-config-opts empty-browser-config)}))
+
+(defn get-last-sauce-build
+  "Returns the last sauce build number used."
+  []
+  (job/get-all-ids sauce-name sauce-key {:limit 10}))
 
 (defn new-selenium
   "Returns a local selenium webdriver browser."
@@ -135,7 +144,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 2
+                                                   :build 4
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -146,7 +155,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 2
+                                                   :build 4
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})

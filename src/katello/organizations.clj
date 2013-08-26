@@ -102,13 +102,13 @@
   (when label
     (browser/clear ::label-text)
     (browser/input-text ::label-text label))
-  (browser/quick-fill-submit {::initial-env-name-text browser/focus}
-                             {::initial-env-name-text (or (:name initial-env) "")}
-                             {::initial-env-name-text "\t"}
-                             {::initial-env-desc-text (or (:description initial-env) "")})
-  (when initial-env
-    (browser/clear ::initial-env-label-text)
-    (browser/input-text ::initial-env-label-text (or (:label initial-env) "")))
+  (when (rest/is-katello?) (browser/quick-fill-submit {::initial-env-name-text browser/focus}
+                               {::initial-env-name-text (or (:name initial-env) "")}
+                               {::initial-env-name-text "\t"}
+                               {::initial-env-desc-text (or (:description initial-env) "")})
+        (when initial-env
+          (browser/clear ::initial-env-label-text)
+          (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
   (wd/move-to browser/*driver* (browser/element ::create))
   (browser/click ::create)
   (notification/success-type :org-create))
