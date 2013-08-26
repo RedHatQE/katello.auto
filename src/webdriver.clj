@@ -120,6 +120,11 @@ Default browser-spec: firefox"
   [text]
   (.contains (browser/page-source) text))
 
+(defn move-to-and-click
+  [driver loc]
+  (move-to driver loc)
+  (browser/click loc))
+
 (defmacro with-remote-driver-fn
   "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser.
 

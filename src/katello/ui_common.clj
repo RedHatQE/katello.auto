@@ -78,11 +78,11 @@
                 (f (str index)))]
     (doall (take-while identity (for [elem elems]
                                   (try (browser/text elem)
-                                       (catch SeleniumException e nil)))))))
+                                       (catch NoSuchElementException e nil)))))))
 
 (defn extract-left-pane-list []
   (nav/scroll-left-pane-until (constantly false))
-  (extract-list ui/left-pane-field-list))
+  (map browser/text (browser/elements ::ui/left-pane-list)))
 
 (defn extract-custom-keyname-list []
   (set (map browser/text (browser/elements ::ui/keyname-list))))
@@ -145,10 +145,10 @@
 (defn save-cancel [save-locator cancel-locator request-type input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser/text  inactive-elem)]
-    (browser/click inactive-elem)
+    (wd/move-to-and-click browser/*driver* (browser/element inactive-elem))
     (browser/input-text  input-locator requested-value)
     (if save?
-      (do (browser/click save-locator)
+      (do (wd/move-to-and-click browser/*driver* (browser/element save-locator))
           (notification/success-type request-type)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text requested-value)
@@ -156,7 +156,7 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Input field didn't update properly after saving."}))))
-      (do (browser/click cancel-locator)
+      (do (wd/move-to-and-click browser/*driver* (browser/element cancel-locator))
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text orig-text)
               (throw+ {:type ::cancel-failed
