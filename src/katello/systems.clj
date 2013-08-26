@@ -483,5 +483,19 @@
                              (do (Thread/sleep 2000)
                                (recur (browser getText ::pkg-install-status)))))))
 
+(defn remove-package "Remove a installed package from selected system."
+  [system packages &[timeout-ms]]
+  (nav/go-to ::content-packages-page system)
+  (doseq [package packages]
+    (sel/->browser (setText ::package-name package)
+                   (typeKeys ::package-name package)
+                   (click ::remove-content))
+    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+                           (case current-status
+                             "Remove Package Complete" current-status
+                             "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                             (do (Thread/sleep 2000)
+                               (recur (browser getText ::pkg-install-status)))))))
+
 
 
