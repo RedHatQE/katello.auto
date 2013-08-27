@@ -33,8 +33,45 @@
               (map (partial zipmap [:created :short-desc]))
               (map #(assoc % :short-desc (string/replace (% :short-desc) 
                                                   #"\.\.\." "")))
-              (into #{})
-         )
-         )
+              (into #{})))
+
+(defn get-dashboard-sync []
+    (->> (cs/get-string-of-body-element)  
+         cs/get-zip-of-html-string
+         (cs/search-in-zip
+            #(= (some-> % zip/node :attrs :data-url) "/katello/dashboard/sync" ))
+         zip/node
+         (cs/node-content-as []) 
+         cs/postwalk-trim
+         (cs/postwalk-rm " ")
+         cs/normalize-nodes
+         (cs/remove-nil-and-empty vector? [])
+         cs/normalize-nodes
+         (map #(if (< 2 (count %))
+                 (zipmap [:product :result :date] %)
+                 (zipmap [:product :result] %)))
+         (into #{})))
+             
+
+(defn get-dashboard-views []
+    (->> (cs/get-string-of-html-element "dashboard_content_views")  
+         cs/get-zip-of-html-string
+         (cs/node-content-as []) 
+         cs/postwalk-trim
+         (cs/remove-nil-and-empty vector? [])
+         cs/normalize-nodes
+         (map (partial zipmap [:view :result :date]))
+         (into #{})))
+
+(defn get-dashboard-promotions []
+    (->> (cs/get-string-of-html-element "dashboard_promotions")  
+         cs/get-zip-of-html-string
+         (cs/node-content-as []) 
+         cs/postwalk-trim
+         (cs/remove-nil-and-empty vector? [])
+         cs/normalize-nodes
+         (map (partial zipmap [:promotion :result :env]))
+         (into #{})))
+               
 
 
