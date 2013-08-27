@@ -20,26 +20,23 @@
 
 (def ^:dynamic *job-id* nil)
 
-(def sauce-name "bmorriso")
-
-(def sauce-key "")
-
-(def sauce-configs [{"browserName" "chrome"
-                     "platform" "WIN8"
-                     "version" "27"
-                     "nativeEvents" true}
-                    {"browserName" "firefox"
-                     "platform" "LINUX"
-                     "version" "23"
-                     "nativeEvents" true}
-                    {"browserName" "firefox"
-                     "platform" "WIN8"
-                     "version" "27"
-                     "nativeEvents" true}
-                    {"browserName" "firefox"
-                     "platform" "MAC"
-                     "version" "21"
-                     "nativeEvents" true}])
+(def sauce-configs
+  {:chrome+win8   {"browserName" "chrome"
+                   "platform" "WIN8"
+                   "version" "27"
+                   "nativeEvents" true}
+   :firefox+linux {"browserName" "firefox"
+                   "platform" "LINUX"
+                   "version" "23"
+                   "nativeEvents" true}
+   :firefox+win8  {"browserName" "firefox"
+                   "platform" "WIN8"
+                   "version" "27"
+                   "nativeEvents" true}
+   :firefox+osx   {"browserName" "firefox"
+                   "platform" "MAC"
+                   "version" "21"
+                   "nativeEvents" true}})
 
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
@@ -60,7 +57,9 @@
                           :port port
                           :existing true}))
 
-(def default-grid (new-remote-grid (str sauce-name ":" sauce-key "@ondemand.saucelabs.com") 80 empty-browser-config))
+(defn make-default-grid []
+  (defonce default-grid (new-remote-grid (str (@config :sauce-user) ":" (@config :sauce-key) "@ondemand.saucelabs.com") 80 empty-browser-config))
+  default-grid)
 
 (defn config-with-profile
   ([locale]
@@ -87,8 +86,9 @@
 (defn get-last-sauce-build
   "Returns the last sauce build number used."
   []
-  (->> (job/get-all-ids sauce-name sauce-key {:limit 10
-                                             :full true})
+  (->> (job/get-all-ids (@config :sauce-user) (@config :sauce-key)
+                        {:limit 10
+                         :full true})
        (map #(get % "build"))
        (filter #(not (nil? %)))
        (first)
@@ -127,7 +127,7 @@
   "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser."
   
   [browser-spec finder-fn & body]
-  `(binding [browser/*driver* (new-remote-driver default-grid ~browser-spec)
+  `(binding [browser/*driver* (new-remote-driver (make-default-grid) ~browser-spec)
              browser/*finder-fn* ~finder-fn]
      (try
       ~@body
@@ -169,8 +169,8 @@
                        (fn [t _]
                          (if (complement (contains? t :configuration))
                            (let [s-id *job-id*]
-                             (job/update-id  sauce-name
-                                             sauce-key
+                             (job/update-id  (@config :sauce-user)
+                                             (@config :sauce-key)
                                              s-id {:name (:name t)
                                                    :build 11
                                                    :tags [(:version (rest/get-version))]
@@ -179,8 +179,8 @@
                        (fn [t e]
                          (if (complement (contains? t :configuration))
                            (let [s-id *job-id*]
-                             (job/update-id  sauce-name
-                                             sauce-key
+                             (job/update-id  (@config :sauce-user)
+                                             (@config :sauce-key)
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
                                                    :build 11
