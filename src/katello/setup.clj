@@ -20,10 +20,6 @@
 
 (def ^:dynamic *job-id* nil)
 
-(def sauce-name "bmorriso")
-
-(def sauce-key "")
-
 (def sauce-configs [{"browserName" "chrome"
                      "platform" "WIN8"
                      "version" "27"
@@ -60,7 +56,7 @@
                           :port port
                           :existing true}))
 
-(def default-grid (new-remote-grid (str sauce-name ":" sauce-key "@ondemand.saucelabs.com") 80 empty-browser-config))
+(def default-grid (new-remote-grid (str (@config :sauce-name) ":" (@config :sauce-key) "@ondemand.saucelabs.com") 80 empty-browser-config))
 
 (defn config-with-profile
   ([locale]
@@ -87,8 +83,9 @@
 (defn get-last-sauce-build
   "Returns the last sauce build number used."
   []
-  (->> (job/get-all-ids sauce-name sauce-key {:limit 10
-                                             :full true})
+  (->> (job/get-all-ids (@config :sauce-name) (@config :sauce-key)
+                        {:limit 10
+                         :full true})
        (map #(get % "build"))
        (filter #(not (nil? %)))
        (first)
@@ -169,8 +166,8 @@
                        (fn [t _]
                          (if (complement (contains? t :configuration))
                            (let [s-id *job-id*]
-                             (job/update-id  sauce-name
-                                             sauce-key
+                             (job/update-id  (@config :sauce-name)
+                                             (@config :sauce-key)
                                              s-id {:name (:name t)
                                                    :build 11
                                                    :tags [(:version (rest/get-version))]
@@ -179,8 +176,8 @@
                        (fn [t e]
                          (if (complement (contains? t :configuration))
                            (let [s-id *job-id*]
-                             (job/update-id  sauce-name
-                                             sauce-key
+                             (job/update-id  (@config :sauce-name)
+                                             (@config :sauce-key)
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
                                                    :build 11
