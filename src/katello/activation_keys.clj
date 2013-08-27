@@ -48,10 +48,13 @@
    optional."
   [{:keys [name description content-view env] :as ak}]
   (nav/go-to ::new-page ak)
-  (browser click (ui/environment-link (:name env)))
+  (rest/when-katello (browser click (ui/environment-link (:name env))))
   (sel/fill-ajax-form {::name-text name
                        ::description-text description
-                       ::content-view-select (:published-name content-view)}
+                       (fn [content-view] 
+                         (rest/when-katello
+                           (when content-view
+                             (browser select ::content-view-select (:published-name content-view))))) [content-view]}
                       ::save)
   (notification/success-type :ak-create))
 
@@ -117,15 +120,21 @@
            :update* update}
 
   rest/CRUD (let [id-url (partial rest/url-maker [["api/activation_keys/%s" [identity]]])
-                  query-url (partial rest/url-maker [["api/organizations/%s/activation_keys" [#'katello/org]]])]
+                  katello-url (partial rest/url-maker [["/api/environments/%s/activation_keys" [#'kt/env]]])
+                  headpin-url (partial rest/url-maker [["api/organizations/%s/activation_keys" [#'kt/org]]])]
               {:id rest/id-field
-               :query (partial rest/query-by-name query-url)
+               :query (fn [ak]
+                        (rest/query-by-name 
+                          (if (rest/is-katello?) 
+                           katello-url headpin-url) ak))
                :read (partial rest/read-impl id-url)
                :create (fn [ak]
                          (merge ak
                                 (rest/http-post
-                                 (rest/url-maker [["api/environments/%s/activation_keys" [#'katello/env]]] ak)
-                                 {:body {:activation_key (select-keys ak [:name :content-view :description])}})))})
+                                  (if (rest/is-katello?) 
+                                        (katello-url ak) 
+                                        (headpin-url ak))
+                                  {:body {:activation_key (select-keys ak [:name :content-view :description])}})))})
   
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})

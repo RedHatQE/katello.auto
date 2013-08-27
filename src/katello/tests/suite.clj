@@ -25,7 +25,7 @@
   katello.tests.environments/environment-tests
   katello.tests.providers/provider-tests
   katello.tests.distributors/distributor-tests
-  ;; katello.tests.promotions/promotion-tests
+  katello.tests.promotions/promotion-tests
   ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
   katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
@@ -53,7 +53,8 @@
   katello.tests.systems/system-tests
   katello.tests.system-groups/sg-tests
   katello.tests.activation-keys/ak-tests
-  katello.tests.users/user-tests)
+  katello.tests.users/user-tests
+  katello.tests.providers.redhat/manifest-tests)
 
 (defn make-suite
   ([] (make-suite nil))
@@ -81,4 +82,5 @@
                                       :to-trace (@conf/config :trace)
                                       :do-not-trace (@conf/config :trace-excludes)}))
                (finally (provision/shutdown client-queue)
+                        (-> conf/*cloud-conn* :api .shutdown)
                         (shutdown-agents))))))))

@@ -1,6 +1,7 @@
 (ns katello.content-view-definitions
   (:require [katello :as kt]
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [loop-with-timeout browser]]
+            [slingshot.slingshot :refer [throw+ try+]]
             [clojure.data :as data]
             (katello [navigation :as nav]
                      [rest :as rest]
@@ -22,6 +23,9 @@
   select-rule                 "//a[contains(text(), '%s')]/../input[@type='checkbox']"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
   publish-view-name           "//a[@class='tipsify separator' and contains(.,'%s')]"
+  status                      "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/div[@class='fl']"
+  refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
+  refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
@@ -110,6 +114,18 @@
 (defn- date [d] (.format inputformat (.parse inputformat d)))
 (defn msg-date [d] (.format outputformat (.parse inputformat d)))
 
+(defn check-published-view-status
+  "Function to monitor the published view status from 'Generating version' to 'Refresh' "
+  [published-name & [timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
+                         (case current-status
+                           "" current-status 
+                           "Error generating version" (throw+ {:type :publish-failed
+                                                               :published-name published-name})
+                           (do
+                             (Thread/sleep 2000)
+                             (recur (browser getText (status published-name)))))))
+
 (defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
@@ -149,14 +165,15 @@
   
 (defn publish
   "Publishes a Content View Definition"
-  [{:keys [content-defn published-name description]}]
+  [{:keys [content-defn published-name description]} & [timeout-ms]]
   (nav/go-to content-defn)
   (browser click ::views-tab)
   (browser click ::publish-button)
   (sel/fill-ajax-form {::publish-name-text published-name
                        ::publish-description-text description}
                       ::publish-new)
-  (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :cv-publish)}))
+  (check-published-view-status published-name)
+  (notification/check-for-success {:timeout-ms (* 20 60 1000)}))
 
 (defn add-filter
   "Create a new content filter"
@@ -352,7 +369,7 @@
                       ::sg/copy-submit)
   (notification/success-type :cv-clone))
 
-(extend katello.ContentView
+(extend katello.ContentViewDefinition
   ui/CRUD {:create create
            :delete delete
            :update* update}

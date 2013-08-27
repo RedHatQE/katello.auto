@@ -37,8 +37,9 @@
    the env." [ent & [{:keys [check-exist?] :or {check-exist? true}}]]
    (doseq [field (vals ent) :when (satisfies? CRUD field)]
      (create-recursive field))
-   (if check-exist? (ensure-exists ent)
-       (create ent)))
+   (if check-exist? 
+     (ensure-exists ent)
+     (create ent)))
 
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]
@@ -127,7 +128,8 @@
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"
-   ::log-out                 "//div[@ng-controller='MenuController']//a[contains(@href,'logout')]"})
+   ::log-out                 "//nav[@alch-menu='userMenu']//a[contains(@href,'logout')]"})
+
 
 (extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword

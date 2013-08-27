@@ -24,7 +24,7 @@
 ;; Functions
 
 (defn some-group [] (kt/newSystemGroup {:name "group" :org *session-org*}))
-(defn some-system [] (kt/newSystem {:name "system" :env (first *environments*)}))
+(defn some-system [] (kt/newSystem {:name "system" :env (kt/library *session-org*)}))
 
 (defn cancel-close-widget
   "Click 'cancel' on copy widget and widget should close properly 
@@ -64,11 +64,14 @@
       (fn [f & args]
         (with-unique-group g 
           (ui/create g)
-          (apply ui/update g f args)) )
-
-      [[assoc :limit 4]
-       [assoc :limit 8, :description "updated description"]
-       [assoc :description "updated description"]])
+          (apply ui/update g f args)))
+      (concat 
+        [[assoc :limit 4]]
+         (for [row
+               [[assoc :limit 8, :description "updated description"]
+                [assoc :description "updated description"]]]
+           (with-meta row
+                 {:blockers (bz-bugs "994946")}))))
 
 
     (deftest "Edit system limit of a system group, then set back to unlimited"
@@ -210,7 +213,8 @@
       (with-unique [g (some-group)
                     s (some-system)
                     ak (kt/newActivationKey {:name "ak", :env (kt/env s)})]
-        (rest/create-all (list g s ak))
+        (rest/create-all (list g s))
+        (ui/create ak) ;; Temp fix, looks like (rest/create ak) is buggy, need to raise a bug.
         (ui/update g assoc :systems #{s})
         (ui/update ak assoc :system-group g)
         (provision/with-queued-client ssh-conn
@@ -269,4 +273,3 @@
 
         [[{:close-widget? true}]
          [{:close-widget? false}]]))))
-

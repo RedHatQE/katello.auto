@@ -97,12 +97,16 @@
   (nav/go-to ::new-page)
   (browser setText ::name-text name)
   (browser sleep 1000)
-  (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
-                       ::description-text description
-                       ::initial-env-name-text (:name initial-env)
-                       label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
-                       ::initial-env-desc-text (:description initial-env)]
-                      ::create)
+  (if (rest/is-katello?) 
+    (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
+                         ::description-text description
+                         ::initial-env-name-text (:name initial-env)
+                         label-filler [::initial-env-name-text ::initial-env-label-text (:label initial-env)]
+                         ::initial-env-desc-text (:description initial-env)]
+                        ::create)
+    (sel/fill-ajax-form [label-filler [::name-text ::label-text label]
+                         ::description-text description]
+                        ::create))
   (notification/success-type :org-create))
 
 (defn- delete

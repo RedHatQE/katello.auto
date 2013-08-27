@@ -193,7 +193,7 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 0\"")
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0))))
+              (assert/is (client/ok? result)))
             (client/sm-cmd ssh-conn :unsubscribe {:all true})
             (changeset/promote-delete-content deletion-changeset)
             (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
@@ -204,7 +204,7 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (->> result :exit-code (= 0)))))))))))
+              (assert/is (client/ok? result)))))))))
 
 
 #_(defgroup package-filter-tests

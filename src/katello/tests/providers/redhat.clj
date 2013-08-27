@@ -192,6 +192,7 @@
   redhat-promoted-content-tests)
 
 (defgroup manifest-tests
+  :blockers (bz-bugs "994946")
     
   #_(deftest "Upload the same manifest to an org, expecting an error message"
     :uuid "7c3ef15d-1d7f-6f74-8b9b-ed4a239101a5"

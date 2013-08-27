@@ -2,6 +2,9 @@
   (:require [clojure.zip :as zip]
             [katello :as kt]
             (katello [rest :as rest]
+                     [ui :as ui]
+                     [tasks :refer [with-unique]]
+                     [sync-management :as sync]
                      [tasks :as tasks])))
 
 (defn ensure-exists [ent]
@@ -66,3 +69,14 @@
   [org url]
   (first (fresh-repos org url)))
 
+(defn add-product-to-cv
+  [org target-env repo]
+  (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
+                                                 :published-name "publish-name"
+                                                 :org org})]
+    (ui/create-all-recursive (list org target-env))
+    (create-recursive repo)
+    (sync/perform-sync (list repo))
+    (ui/create cv)
+    (ui/update cv assoc :products (list (kt/product repo)))
+    cv))

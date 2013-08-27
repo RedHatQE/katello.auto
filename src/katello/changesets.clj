@@ -20,15 +20,15 @@
 ;; Locators
 
 (sel/template-fns
- {add-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Add')]"
-  remove-content-item "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Undo')]"
-  content-category    "//div[@id='%s']"
-  content-item-n      "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
-  select-product      "//span[contains(.,'%s')]"
-  select-env          "//a[normalize-space(.)='%s' and contains(@class,'path_link')]"
-  select-types        "//div[contains(@class,'simple_link') and contains(.,'%s')]"
-  status              "//span[.='%s']/..//span[@class='changeset_status']"
-  list-item           "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
+ {add-content-item       "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Add')]"
+  remove-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Undo')]"
+  content-category       "//div[@id='%s']"
+  content-item-n         "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
+  select-product         "//span[contains(.,'%s')]"
+  select-env             "//a[normalize-space(.)='%s' and contains(@class,'path_link')]"
+  select-published-names "xpath=(//div[contains(@class,'simple_link')])[%s]"
+  status                 "//span[.='%s']/..//span[@class='changeset_status']"
+  list-item              "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
 ;; Nav
 
@@ -127,7 +127,8 @@
    wait for the promotion or deletion to complete successfully."
   [{:keys [name deletion? env] :as changeset} & [timeout-ms]]
   (nav/go-to changeset env)
-  (locking #'conf/promotion-deletion-lock  
+  (locking #'conf/promotion-deletion-lock 
+    (browser sleep 2000)
     (browser click ::review-for-promotion)
     (browser sleep 5000)
     (browser refresh)
@@ -143,7 +144,7 @@
     (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
       (case current-status
         "Applied" current-status
-        "Apply Failed" (throw+ {:type :promotion-failed
+        "Apply Failed" (throw+ {:type ::promotion-failed
                                 :changeset name
                                 :from-env (:name env)
                                 :to-env (-> env :next :name)})
@@ -155,11 +156,12 @@
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "
   [cs]
-  (let [content (:content cs)
-        cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
-    (ui/create cs)
-    (ui/update cs assoc :content content)
-    (promote-or-delete cs)))
+  (when-not (-> cs kt/env kt/library?)
+    (let [content (:content cs)
+          cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
+      (ui/create cs)
+      (ui/update cs assoc :content content)
+      (promote-or-delete cs))))
 
 (defn sync-and-promote
   "Syncs all the repos and then promotes all their parent products
@@ -174,6 +176,14 @@
         katello/newChangeset
         uniqueify
         promote-delete-content)))
+
+(defn environment-has-content?
+  "If the published-name is present in the given environment, returns true."
+  [{:keys [name deletion? env content] :as changeset}]
+  (nav/go-to ::named-environment-page env)
+  (browser click (select-env (:name env)))
+  (every? true? (doall (for [cv content]
+                         (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))   
 
 (defn api-promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,

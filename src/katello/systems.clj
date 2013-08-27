@@ -21,6 +21,7 @@
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
+  check-selected-env              "//span[@class='checkbox_holder']/input[@class='node_select' and @data-node_name='%s']"
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
@@ -143,7 +144,8 @@
                        (fn [v] (when v
                                  (browser click ::system-virtual-type))) [virtual?]
                        (fn [env]
-                         (when env (nav/select-environment-widget env))) [env]]
+                         (when (and env rest/is-katello?) 
+                           (nav/select-environment-widget env))) [env]]
                       ::create)
   (notification/success-type :sys-create))
 
@@ -345,22 +347,28 @@
     "dmi.bios.relase_date" "12/01/2006"
     "lscpu.numa_node0_cpu(s)" "0"
     }))
-
+        
 (extend katello.System
   ui/CRUD {:create create
            :delete delete
            :update* update}
 
-  rest/CRUD (let [query-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]
-                                                     ["api/organizations/%s/systems" [#'kt/org]]])
+   rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+                  katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
-               :query (partial rest/query-by-name query-url)
+               :query (fn [sys]
+                        (rest/query-by-name 
+                          (if (rest/is-katello?) 
+                           katello-url headpin-url) sys))
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
-                         (merge sys (rest/http-post (query-url sys)
-                                               {:body (assoc (select-keys sys [:name :facts])
-                                                        :type "system")})))})
+                         (merge sys (rest/http-post 
+                                      (if (rest/is-katello?) 
+                                        (katello-url sys) 
+                                        (headpin-url sys))
+                                      {:body (assoc (select-keys sys [:name :facts])
+                                       :type "system")})))})
   
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity %1 s)
@@ -403,10 +411,11 @@
 
 (defn get-details [system]
   (nav/go-to ::details-page system)
-  (let [details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
-                 "Arch" "RAM (GB)" "Sockets" "Location" "Environment"
-                 "Checked In" "Registered" "Last Booted" "Activation Key"
-                 "System Type" "Host"]]
+  (let [headpin-details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
+                         "Arch" "RAM (GB)" "Sockets" "Location" "Checked In" "Registered" "Last Booted"
+                         "Activation Key" "System Type" "Host"]
+        katello-details (conj headpin-details "Environment")
+        details (if (rest/is-katello?) katello-details headpin-details)]
     (zipmap details
             (doall (for [detail details]
                      (browser getText (system-detail-textbox detail)))))))
