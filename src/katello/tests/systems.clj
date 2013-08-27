@@ -440,7 +440,7 @@
           (when (browser isElementPresent aklink)
             (browser clickAndWait aklink))))))
 
- (deftest "Add/Remove system packages"
+  (deftest "Add/Remove system packages"
     :uuid "e6e74dcc-46e5-48c8-9a2d-0ac33de7dd70"
     :data-driven true
     
@@ -460,6 +460,7 @@
                         katello/newSystem)]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
             (system/add-package mysys (list packages))
             (let [cmd (format "rpm -qa | grep %s" packages)
                   cmd_result (client/run-cmd ssh-conn cmd)
