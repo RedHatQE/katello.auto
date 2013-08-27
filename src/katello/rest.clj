@@ -114,7 +114,7 @@
   (fn [] (get-version-from-server (api-url "/api/version"))))
 
 (defn is-headpin? []
-  (-> (get-version) :name (= "Headpin")))
+  (-> (get-version) :name .toLowerCase (= "headpin")))
 
 (def is-katello? (complement is-headpin?))
 
@@ -176,7 +176,7 @@
   "A function you can call from :blockers of any test so it will skip
    if run against a non-katello (eg SAM or headpin) deployment"
   [_]
-  (if (->> (get-version) :name (= "Headpin"))
+  (if (->> (get-version) :name .toLowerCase (= "headpin"))
     ["This test is for Katello based deployments only and this is a headpin-based server."] []))
 
 
