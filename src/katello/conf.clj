@@ -61,6 +61,10 @@
 
    ["--ovirt-cluster" "The cluster to use to deploy clients on."]
 
+   ["--sauce-user" "The username to log in to sauce api."]
+
+   ["--sauce-key" "The api key used to log in to sauce."]
+   
    ["-a" "--selenium-address" "Address of the selenium server to connect to. eg 'host.com:4444' If none specified, an embedded selenium server is used."]
 
    ["-k" "--client-ssh-key" "The location of a (passwordless) ssh private key that can be used to access client machines."
