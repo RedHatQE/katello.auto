@@ -23,7 +23,7 @@
             [webdriver :as wd]
             [katello.tests.useful :refer [fresh-repo create-recursive]]
             [katello.tests.organizations :refer [setup-custom-org-with-content]]
-            [katello :refer [newOrganization newProvider newProduct newRepository newContentView newFilter]]
+            [katello :refer [newOrganization newProvider newProduct newRepository newContentViewDefinition newFilter]]
             ))
 
 ;; Functions
@@ -77,7 +77,7 @@
 
 (defn add-product-to-cv
   [org target-env repo]
-  (with-unique [cv (kt/newContentView {:name "con-def"
+  (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
                                        :published-name "publish-name"
                                        :org org})]
       (ui/create-all-recursive (list org target-env))
@@ -179,7 +179,7 @@
         :uuid "3a536c98-1829-6cb4-24e3-ff68de2e095d"
         :tcms "248743"
         
-        (with-unique [content-def (kt/newContentView {:name "con-def"
+        (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
                                                       :org conf/*session-org*})
                       repo (fresh-repo (kt/org content-def) pulp-repo)]
           (ui/create content-def)

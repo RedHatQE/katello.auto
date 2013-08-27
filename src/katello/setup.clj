@@ -22,7 +22,7 @@
 
 (def sauce-name "bmorriso")
 
-(def sauce-key "f70c3b5c-f09f-4236-b0aa-250a2fce395d")
+(def sauce-key "")
 
 (def sauce-configs [{"browserName" "chrome"
                      "platform" "WIN8"
@@ -111,7 +111,8 @@
   "Sets the implicit-wait time for the driver and navigates to the specified urlu"
   []
   (browser/implicit-wait 1000)
-  (browser/to (@config :server-url)))
+  (browser/to (@config :server-url))
+  (browser/window-maximize))
 
 (defn set-job-id
   "Sets a thread-local binding of the session-id to *job-id*. This is to allow pass/fail reporting after the browser session has ended."

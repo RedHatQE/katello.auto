@@ -30,8 +30,8 @@
                       (apply f args))
                     (catch InvalidElementStateException _ nil)))
 
-  katello.tests.login/login-tests
-  katello.tests.navigation/nav-tests
+;;  katello.tests.login/login-tests
+;;  katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
 ;;  katello.tests.search/search-tests
 ;;  katello.tests.environments/environment-tests

@@ -67,7 +67,7 @@
     :default (format "%s/.ssh/id_auto_dsa" (System/getProperty "user.home"))]
    
    ["-n" "--num-threads" "Number of threads to run tests with"
-    :parse-fn #(Integer. %) :default 3]
+    :parse-fn #(Integer. %) :default 5]
 
    ["-b" "--browser-types" "Selenium browser types, eg '*firefox' or '*firefox,*googlechrome' (multiple values only used when threads > 1"
     :default ["*firefox"] :parse-fn #(string/split % #",")]

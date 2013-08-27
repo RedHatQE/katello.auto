@@ -117,7 +117,7 @@
 
 (defn check-published-view-status
   "Function to monitor the published view status from 'Generating version' to 'Refresh' "
-  [cv & [timeout-ms]]
+  [published-name & [timeout-ms]]
   (wd/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
                          (case current-status
                            "" current-status 
@@ -324,9 +324,9 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (sel/->browser
-      (mouseUp (->  product :name product-or-repository))
-      (click (-> product :name remove-product))
+    (wd/move-to browser/*driver* (->  product :name product-or-repository))
+    (wd/->browser
+     (click (-> product :name remove-product))
       (click ::update-content))
     (notification/success-type :cv-update-content)))
 

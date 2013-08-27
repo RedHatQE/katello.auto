@@ -101,7 +101,7 @@
 (defn get-string-of-body-element []
   (->>
      "window.document.getElementsByTagName('body')[0].innerHTML;"
-     (browser getEval)
+     (browser/execute-script)
      (format "<body>%s</body>")
     ))
 

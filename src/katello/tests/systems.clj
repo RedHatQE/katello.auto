@@ -339,7 +339,7 @@
       (with-unique-system s
         (rest/create s)
         (let [s (ui/update s assoc :custom-info {keyname custom-value})]
-          (assert/is (browser isTextPresent custom-value))
+          (assert/is (wd/text-present? custom-value))
           (expecting-error (common/errtype ::notification/sys-key-value-255-char-limit)
                            (ui/update s assoc :custom-info {keyname new-value})))))
 
@@ -484,7 +484,7 @@
                               :env (:name env)
                               :force true})
             (nav/go-to ::system/details-page mysys)
-            (browser isChecked (system/check-selected-env (:name env))))
+            (browser/selected? (system/check-selected-env (:name env))))
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
   
