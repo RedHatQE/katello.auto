@@ -453,49 +453,45 @@
       (browser click (system-fact-group-expand group)))))
 
 
-(defn add-package "Add a package"
-  [system packages &[timeout-ms]]
-  (nav/go-to ::content-packages-page system)
-  (doseq [package packages]
-    (sel/->browser (setText ::package-name package)
-                   (typeKeys ::package-name package)
-                   (click ::add-content))
-    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
-                           (case current-status
-                             "Add Package Complete" current-status
-                             "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
-                             (do (Thread/sleep 2000)
-                               (recur (browser getText ::pkg-install-status)))))))
+(defn check-package-status
+  [&[timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                         (case current-status
+                           "Add Package Complete" current-status
+                           "Add Package Group Complete" current-status
+                           "Remove Package Complete" current-status
+                           "Remove Package Group Complete" current-status
+                           "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
+                           "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
+                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                           "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})              
+                           (do (Thread/sleep 2000)
+                             (recur (browser getText ::pkg-install-status))))))
 
-
-(defn add-package-group "Add package-group"
-  [system package-groups &[timeout-ms]]
+(defn add-package "Add a package/package-group on selected system"
+  [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page system)
-  (browser click ::select-package-group)
-  (doseq [package-group package-groups]
-    (sel/->browser (setText ::package-name package-group)
-                   (typeKeys ::package-name package-group)
-                   (click ::add-content))
-    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
-                           (case current-status
-                             "Add Package Group Complete" current-status
-                             "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
-                             (do (Thread/sleep 2000)
-                               (recur (browser getText ::pkg-install-status)))))))
+  (doseq [[items is-group?] [[package false]
+                             [package-group true]]]
+    (when items
+      (when is-group? (browser click ::select-package-group))
+      (sel/->browser (setText ::package-name items)
+                     (typeKeys ::package-name items)
+                     (click ::add-content))
+      (check-package-status))))
 
-(defn remove-package "Remove a installed package from selected system."
-  [system packages &[timeout-ms]]
+(defn remove-package "Remove a installed package/package-group from selected system."
+  [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page system)
-  (doseq [package packages]
-    (sel/->browser (setText ::package-name package)
-                   (typeKeys ::package-name package)
-                   (click ::remove-content))
-    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
-                           (case current-status
-                             "Remove Package Complete" current-status
-                             "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                             (do (Thread/sleep 2000)
-                               (recur (browser getText ::pkg-install-status)))))))
+  (doseq [[items is-group?] [[package false]
+                             [package-group true]]]
+    (when items
+      (when is-group? (browser click ::select-package-group))
+      (sel/->browser (setText ::package-name items)
+                     (typeKeys ::package-name items)
+                     (click ::remove-content))
+      (check-package-status))))
+
 
 
 

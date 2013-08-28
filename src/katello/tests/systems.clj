@@ -461,14 +461,14 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/add-package mysys (list packages))
+            (system/add-package mysys {:package packages})
             (let [cmd (format "rpm -qa | grep %s" packages)
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
               (validate-package-info "Package Install" "package installed" packages pkg-version)
               (when remove-pkg?
-                (system/remove-package mysys (list packages))
+                (system/remove-package mysys {:package packages})
                 (let [cmd (format "rpm -qa | grep %s" packages)
                       cmd_result (client/run-cmd ssh-conn cmd)]
                   (assert/is (->> cmd_result :exit-code (not= 0)))
