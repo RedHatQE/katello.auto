@@ -581,12 +581,20 @@
                     rest/katello-only
                     (auto-issue "791"))
 
-    (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
-                                           katello/newEnvironment
-                                           create-series
-                                           (take 2))
-          product (configure-product-for-pkg-install env-dev)
-          package (katello/newPackage {:name "cow" :product product})]
+    (let [org (kt/newOrganization {:name (uniqueify "sys-org")})
+          repo (fresh-repo org
+                           "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+          product (-> repo kt/product)
+          env-dev (katello/newEnvironment {:name (uniqueify "env-dev")
+                                           :org org})
+          env-test (katello/newEnvironment {:name (uniqueify "env-test")
+                                            :org org})
+          cv (promote-published-content-view org env-dev repo)
+          cs (kt/newChangeset {:name (uniqueify "cs")
+                               :env env-test
+                               :content (list cv)})]
+      (ui/create env-test)
+      (changeset/promote-delete-content cs)
       (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn
@@ -595,9 +603,8 @@
                           :org (-> env-dev :org :name)
                           :env (:name env-dev)
                           :force true})
-        (let [mysys (-> {:name (client/my-hostname ssh-conn)}
-                        katello/newSystem
-                        rest/read)]
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env env-dev}
+                      katello/newSystem)]
           (assert/is (= (:name env-dev) (system/environment mysys)))
           (ui/update mysys assoc :env env-test)
           (assert/is (= (:name env-test) (system/environment mysys)))
@@ -605,7 +612,6 @@
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
-          (expecting-error [:type :katello.systems/package-install-failed]
-                           (ui/update mysys update-in [:packages] (fnil conj #{}) package))
+          (system/add-package mysys {:package "cow"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit (= 1)))))))))
+            (assert/is (client/ok? cmd_result))))))))

@@ -85,7 +85,8 @@
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
    ::release-version-select      "system[releaseVer]"
-   ::environment                 "//span[@id='environment_path_selector']"              
+   ::environment                 "//span[@id='environment_path_selector']"
+   ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
    ::edit-description            "system_description"
@@ -408,7 +409,7 @@
 (defn environment "Get name of current environment of the system"
   [system]
   (nav/go-to ::details-page system)
-  (browser getText ::environment))
+  (browser getText ::get-selected-env))
 
 (defn get-ip-addr
   [system]
