@@ -41,7 +41,7 @@
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
                            "version" "23"
-                           "nativeEvents" true
+                           "nativeEvents" false
                            ;; :profile
                            #_(doto (ff/new-profile)
                              (ff/enable-native-events true))})
@@ -110,7 +110,7 @@
 (defn conf-selenium
   "Sets the implicit-wait time for the driver and navigates to the specified urlu"
   []
-  (browser/implicit-wait 1000)
+  (browser/implicit-wait 0)
   (browser/to (@config :server-url))
   (browser/window-maximize))
 

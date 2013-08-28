@@ -67,7 +67,7 @@
 ;      :blockers (bz-bugs "975593")
       :data-driven true
 
-      (comp rest/create uniqueify mkorg)      
+      (comp ui/create uniqueify mkorg)      
       (map list (concat validation/non-html-names
                         validation/html-character-strings)))
 
