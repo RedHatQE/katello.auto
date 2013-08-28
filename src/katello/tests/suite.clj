@@ -30,27 +30,27 @@
                       (apply f args))
                     (catch InvalidElementStateException _ nil)))
 
-;;  katello.tests.login/login-tests
-;;  katello.tests.navigation/nav-tests
+  katello.tests.login/login-tests
+  katello.tests.navigation/nav-tests
   katello.tests.organizations/org-tests
-;;  katello.tests.search/search-tests
-;;  katello.tests.environments/environment-tests
-;;  katello.tests.providers/provider-tests
-;;  katello.tests.distributors/distributor-tests
-;;  katello.tests.promotions/promotion-tests
-  ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
-;;  katello.tests.permissions/permission-tests
-;;  katello.tests.systems/system-tests
-;;  katello.tests.system-groups/sg-tests
-;;  katello.tests.activation-keys/ak-tests
-;;  katello.tests.sync_management/sync-tests
-;;  katello.tests.users/user-tests
-;;  katello.tests.e2e/end-to-end-tests
-;;  katello.tests.providers.redhat/manifest-tests
-;;  katello.tests.providers.redhat/redhat-content-provider-tests
-;;  katello.tests.providers.custom/custom-product-tests
-;;  katello.tests.content-search/content-search-tests
-;;  katello.tests.content-views/content-views-tests
+  katello.tests.search/search-tests
+  katello.tests.environments/environment-tests
+  katello.tests.providers/provider-tests
+  katello.tests.distributors/distributor-tests
+  katello.tests.promotions/promotion-tests
+;; katello.tests.promotions/deletion-tests  ;; needs to be added back
+  katello.tests.permissions/permission-tests
+  katello.tests.systems/system-tests
+  katello.tests.system-groups/sg-tests
+  katello.tests.activation-keys/ak-tests
+  katello.tests.sync_management/sync-tests
+  katello.tests.users/user-tests
+  katello.tests.e2e/end-to-end-tests
+  katello.tests.providers.redhat/manifest-tests
+  katello.tests.providers.redhat/redhat-content-provider-tests
+  katello.tests.providers.custom/custom-product-tests
+  katello.tests.content-search/content-search-tests
+  katello.tests.content-views/content-views-tests
   )
 
 
