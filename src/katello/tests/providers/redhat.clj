@@ -10,6 +10,7 @@
                      [organizations   :as organization]
                      [manifest        :as manifest]
                      [subscriptions   :as subscriptions]
+                     [content-view-definitions :as views]
                      [repositories    :as repo]
                      [changesets      :as changesets]
                      [systems         :as system]
@@ -29,6 +30,8 @@
 ;; Constants
 
 (def eus-manifest-url  "http://cosmos.lab.eng.pnq.redhat.com/rhel64/redhat-manifest-eus.zip")
+
+(def non-standard-manifest-url  "http://cosmos.lab.eng.pnq.redhat.com/rhel64/redhat-manifest-all.zip")
 
 (def hacked-manifest-url "http://cosmos.lab.eng.pnq.redhat.com/rhel64/hacked-manifest.zip")
 
@@ -54,9 +57,6 @@
   {:eus          "Extended Update Support for Red Hat Enterprise Linux Server (8 sockets)"})
 
 ;; Functions
-
-(defn verify-all-repos-synced [repos]
-  (assert/is  (every? #(= "Sync complete." %) (map sync/complete-status repos))))
 
 (defn prepare-org-fetch-org []
   (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
@@ -85,6 +85,7 @@
   
 ;; Tests
 (defgroup redhat-promoted-content-tests
+  :blockers (bz-bugs "994946")
   
   (deftest "Admin can set Release Version on system"
     :uuid "cf82309e-8348-c414-4a53-f5ba08648513"
@@ -94,19 +95,28 @@
           repos (describe-repos-to-enable-disable fake-repos)
           products (->> (map :reposet repos) (map :product) distinct)
           target-env (first envz)
-          rel-ver "1.1"]
+          rel-ver "1.1"
+          cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentViewDefinition uniqueify)
+          cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
-      (verify-all-repos-synced repos)
-      (-> {:name "cs-manifest" :content products :env target-env} 
-          katello/newChangeset uniqueify changesets/promote-delete-content)
+      (sync/verify-all-repos-synced repos)
+      (ui/create cv)
+      (ui/update cv assoc :products products)
+      (views/publish {:content-defn cv
+                      :published-name (:published-name cv)
+                      :description "test pub"
+                      :org org})
+      (changesets/promote-delete-content cs)
       (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn {:username (:name conf/*session-user*)
                                      :password (:password conf/*session-user*)
                                      :org (:name org)
-                                     :env (:name (first envz))
+                                     :env (:name target-env)
                                      :force true})
-          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (first envz)}
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
                           katello/newSystem)]
             (doseq [prd1 products]
               (client/subscribe ssh-conn (system/pool-id mysys prd1)))
@@ -125,41 +135,62 @@
           repos (describe-repos-to-enable-disable fake-repos)
           products (->> (map :reposet repos) (map :product) distinct)
           package-to-install "cow"
-          target-env (first envz)]
+          target-env (first envz)
+          cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentViewDefinition uniqueify)
+          cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
-      (verify-all-repos-synced repos)
-      (-> {:name "cs-manifest" :content products :env target-env} 
-          katello/newChangeset uniqueify changesets/promote-delete-content)
+      (sync/verify-all-repos-synced repos)
+      (ui/create cv)
+      (ui/update cv assoc :products products)
+      (views/publish {:content-defn cv
+                      :published-name (:published-name cv)
+                      :description "test pub"
+                      :org org})
+      (changesets/promote-delete-content cs)
       (e2e/test-client-access target-env products [package-to-install])))) 
     
 (defgroup redhat-content-provider-tests 
 
-  (deftest "Upload a fake subscription manifest"
+  (deftest "Upload a fake and real subscription manifest"
     :uuid "60b9676a-c421-3564-1513-b4e38b9bc135"
-    (let [manifest  (new-manifest false)]
-      (ui/create manifest)))
+    :data-driven true
+    (fn [redhat-manifest?]
+      (let [manifest  (new-manifest redhat-manifest?)]
+        (ui/create manifest)))
+    [[false]
+     [true]])
       
          
-  (deftest "Enable Fake Repositories of manifest"
+  (deftest "Enable Fake and Real Repositories of manifest"
     :uuid "b803c8d2-a9e9-8a14-4d63-bb03cfd11328"
     :blockers (list rest/katello-only)
-    (let [manifest  (new-manifest false)
-          org       (kt/org manifest)
-          repos     (for [r (describe-repos-to-enable-disable fake-repos)]
-                      (update-in r [:reposet :product :provider] assoc :org org))]
-      (ui/create manifest)
-      (enable-disable-repos repos)))
+    :data-driven true 
+    (fn [redhat-manifest? repos]
+      (let [manifest  (new-manifest redhat-manifest?)
+            org       (kt/org manifest)
+            repos     (for [r (describe-repos-to-enable-disable repos)]
+                        (update-in r [:reposet :product :provider] assoc :org org))]
+        (ui/create manifest)
+        (enable-disable-repos repos)))
+    [[false fake-repos]
+     [true redhat-repos]])
     
-  (deftest "Verify Sync of Fake Repositories from manifest"
+  (deftest "Verify Sync of Fake and Real Repositories from manifest"
     :uuid "b803c8d2-a9e9-8a14-4d63-bb03cfd10329"
     :blockers (list rest/katello-only)
-    (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
-          envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
-          repos (describe-repos-to-enable-disable fake-repos)]
-      (manifest/setup-org envz repos)
-      (verify-all-repos-synced repos)))
+    :data-driven true
+    (fn [repos]
+      (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+            envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+            repos (describe-repos-to-enable-disable repos)]
+        (manifest/setup-org envz repos)
+        (sync/verify-all-repos-synced repos)))
+    [[fake-repos]
+     [redhat-repos]]))
 
-  redhat-promoted-content-tests)
+ redhat-promoted-content-tests)
 
 (defgroup manifest-tests
   :blockers (bz-bugs "994946")
@@ -215,24 +246,21 @@
                        (ui/create org-manifest-2))
       (assert/is (= 2 (count (extract-manifest-history-list ::subscriptions/import-history-page manifest))))))
   
-  (deftest "Upload a non standard manifest and 
-            check whether all subscriptions are visible"
-    :uuid "779235f6-94f3-fe14-4a6b-eafdbbdc4555"
-    (let [manifest  (new-manifest true)]
-      (ui/create manifest)
-      (assert/is (all-subs-exist? non-standard-map manifest))))
-  
-  (deftest "Upload a EUS non-standard manifest and
+  (deftest "Upload non-standard manifests and
             check whether all subscriptions are visible"
     :uuid "0a48ed2d-9e15-d434-37d3-8dd78996ac2a"
-    (let [org (prepare-org-fetch-org)
-          provider (assoc kt/red-hat-provider :org org)
-          dest (manifest/fetch-manifest eus-manifest-url)
-          manifest (uniqueify (kt/newManifest {:file-path dest
-                                               :url (@conf/config :redhat-repo-url)
-                                               :provider provider}))]     
-      (ui/create manifest)
-      (assert/is (all-subs-exist? eus-map manifest))))
+    :data-driven true
+    (fn [manifest-url subs-map]
+      (let [org (prepare-org-fetch-org)
+            provider (assoc kt/red-hat-provider :org org)
+            dest (manifest/fetch-manifest manifest-url)
+            manifest (uniqueify (kt/newManifest {:file-path dest
+                                                 :url (@conf/config :redhat-repo-url)
+                                                 :provider provider}))]     
+        (ui/create manifest)
+        (assert/is (all-subs-exist? subs-map manifest))))
+    [[eus-manifest-url eus-map]
+     [non-standard-manifest-url non-standard-map]])
   
   (deftest "Upload a hacked manifest"
     :uuid "c646cc3b-6e84-44fc-8beb-403fb2e8113a"
