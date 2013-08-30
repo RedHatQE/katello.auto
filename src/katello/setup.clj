@@ -36,7 +36,11 @@
    :firefox+osx   {"browserName" "firefox"
                    "platform" "MAC"
                    "version" "21"
-                   "nativeEvents" true}})
+                   "nativeEvents" true}
+   :ie+win8       {"browserName" "internet explorer"
+                   "platform" "WIN8"
+                   "version" "10"
+                   "nativeEvents" false}})
 
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
