@@ -156,7 +156,7 @@
             prd1   (kt/product repo1)         
             prv1   (kt/provider repo1)
             cv (-> {:name "content-view" :org conf/*session-org* :published-name "publish-name"}
-                             kt/newContentView uniqueify)
+                             kt/newContentViewDefinition uniqueify)
             cs (-> {:name "cs" :env test-environment :content (list cv)}
                              kt/newChangeset uniqueify)]
         (ui/create-all (list gpgkey prv1 prd1 repo1 cv))       
@@ -204,7 +204,7 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
                   result (client/run-cmd ssh-conn cmd)]
-              (assert/is (client/ok? result)))))))))
+              (assert/is (client/ok? result))))))))))
 
 
 #_(defgroup package-filter-tests

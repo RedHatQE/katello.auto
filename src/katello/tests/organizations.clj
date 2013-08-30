@@ -201,7 +201,7 @@
               products (->> (map :reposet repos) (map :product) distinct)
               target-env (first envz)
               cv         (-> {:name "content-view" :org org :published-name "publish-name"}
-                             kt/newContentView uniqueify)
+                             kt/newContentViewDefinition uniqueify)
               cs         (-> {:name "cs" :env target-env :content (list cv)}
                              kt/newChangeset uniqueify)]
           (manifest/setup-org envz repos)

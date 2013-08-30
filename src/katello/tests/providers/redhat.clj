@@ -96,7 +96,7 @@
           target-env (first envz)
           rel-ver "1.1"
           cv (-> {:name "content-view" :org org :published-name "publish-name"}
-                             kt/newContentView uniqueify)
+                             kt/newContentViewDefinition uniqueify)
           cs (-> {:name "cs" :env target-env :content (list cv)}
                              kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
@@ -136,7 +136,7 @@
           package-to-install "cow"
           target-env (first envz)
           cv (-> {:name "content-view" :org org :published-name "publish-name"}
-                             kt/newContentView uniqueify)
+                             kt/newContentViewDefinition uniqueify)
           cs (-> {:name "cs" :env target-env :content (list cv)}
                              kt/newChangeset uniqueify)]
       (manifest/setup-org envz repos)
@@ -187,9 +187,9 @@
         (manifest/setup-org envz repos)
         (sync/verify-all-repos-synced repos)))
     [[fake-repos]
-     [redhat-repos]])
+     [redhat-repos]]))
 
-  redhat-promoted-content-tests)
+ ;; redhat-promoted-content-tests)
 
 (defgroup manifest-tests
   :blockers (bz-bugs "994946")

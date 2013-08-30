@@ -590,7 +590,7 @@
           (expecting-error [:type :katello.systems/package-install-failed]
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit (= 1)))))))))
+            (assert/is (->> cmd_result :exit (= 1))))))))
 
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
@@ -602,7 +602,7 @@
               products (->> (map :reposet repos) (map :product) distinct)
               target-env (first envz)
               cv (-> {:name "content-view" :org org :published-name "publish-name"}
-                             kt/newContentView uniqueify)
+                             kt/newContentViewDefinition uniqueify)
               cs (-> {:name "cs" :env target-env :content (list cv)}
                              kt/newChangeset uniqueify)]
           (manifest/setup-org envz repos)
