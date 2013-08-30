@@ -478,7 +478,7 @@
                 (let [cmd (format "rpm -qa | grep %s" packages)
                       cmd_result (client/run-cmd ssh-conn cmd)]
                   (assert/is (->> cmd_result :exit-code (not= 0)))
-                  (validate-package-info "Package Remove" "package removed"{:package packages} pkg-version))))))))
+                  (validate-package-info "Package Remove" "package removed" {:package packages} pkg-version))))))))
     [[true]
      [false]])
   
