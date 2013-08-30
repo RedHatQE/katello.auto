@@ -65,13 +65,19 @@
   "validate package install/remove info
    Here opr-type is package installed/removed 
    msg-format is Package Install/Package Remove"
-  [msg-format opr-type packages pkg-version]
+  [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
   (browser click ::system/pkg-install-status-link)
   (assert/is (= msg-format (browser getText ::system/pkg-header)))
   (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser getText ::system/pkg-summary)))
-  (assert/is (= (join " " [packages opr-type]) (browser getText ::system/pkg-request)))
-  (assert/is (= packages (browser getText ::system/pkg-parameters)))
-  (assert/is (= (apply str (split pkg-version #"\n+")) (browser getText ::system/pkg-result))))
+  (if-not (nil? package-group)
+    (do
+      (assert/is (= (join " " [package-group opr-type]) (browser getText ::system/pkg-request)))
+      (assert/is (= (join ["@" package-group]) (browser getText ::system/pkg-parameters)))
+      (assert/is (browser isElementPresent ::system/pkg-result)))
+    (do
+      (assert/is (= (join " " [package opr-type]) (browser getText ::system/pkg-request)))
+      (assert/is (= package (browser getText ::system/pkg-parameters)))
+      (assert/is (= (apply str (split pkg-version #"\n+")) (browser getText ::system/pkg-result))))))
 
 (defn configure-product-for-pkg-install
   "Creates a product with fake content repo, returns the product."
@@ -466,20 +472,55 @@
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
-              (validate-package-info "Package Install" "package installed" packages pkg-version)
+              (validate-package-info "Package Install" "package installed" {:package packages} pkg-version)
               (when remove-pkg?
                 (system/remove-package mysys {:package packages})
                 (let [cmd (format "rpm -qa | grep %s" packages)
                       cmd_result (client/run-cmd ssh-conn cmd)]
                   (assert/is (->> cmd_result :exit-code (not= 0)))
-                  (validate-package-info "Package Remove" "package removed" packages pkg-version))))))))
+                  (validate-package-info "Package Remove" "package removed"{:package packages} pkg-version))))))))
+    [[true]
+     [false]])
+  
+  (deftest "Add/Remove Package groups"
+    :uuid "e7387a9e-53bf-40a8-be66-807dcafd0c20"
+    :data-driven true
+    
+    (fn [remove-group?]
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            package-groups "birds"]
+        (provision/with-queued-client
+          ssh-conn
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (-> product :provider :org :name)
+                            :env (:name test-environment)
+                            :force true})
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                        katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/add-package mysys {:package-group package-groups})
+            (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork lion wolf tiger dolphin bear")
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Group Install" "package group installed" {:package-group package-groups}))
+            (when remove-group?
+              (system/remove-package mysys {:package-group package-groups})
+              (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork")]
+                (assert/is (->> cmd_result :exit-code (not= 0)))
+                (validate-package-info "Package Group Remove" "package group removed" {:package-group package-groups})))))))
+
     [[true]
      [false]])
 
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
-
+    
     (let [org (kt/newOrganization {:name (uniqueify "sys-org")})
           repo (fresh-repo org
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
