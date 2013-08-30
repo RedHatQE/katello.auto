@@ -85,6 +85,7 @@
   
 ;; Tests
 (defgroup redhat-promoted-content-tests
+  :blockers (bz-bugs "994946")
   
   (deftest "Admin can set Release Version on system"
     :uuid "cf82309e-8348-c414-4a53-f5ba08648513"

@@ -595,7 +595,7 @@
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
         :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"
-        :blockers (list rest/katello-only)
+        :blockers (conj (bz-bugs "994946") rest/katello-only)
         (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
               envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
               repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
