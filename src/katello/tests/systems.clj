@@ -130,8 +130,8 @@
     (concat 
       [[::system/name-text-edit "yoursys" false success]
        [::system/name-text-edit "test.pnq.redhat.com" true success]
-       [::system/name-text-edit (random-ascii-string 251) true (common/errtype ::notification/sys-name-too-long)]
-       [::system/name-text-edit (random-ascii-string 250) true success]]
+       [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
+       [::system/name-text-edit (random-ascii-string 255) true success]]
        (for [row [[::system/location-text-edit "Cancel Location" false success]
                   [::system/location-text-edit "System Location Info" true success]
                   [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
