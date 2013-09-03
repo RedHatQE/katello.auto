@@ -106,8 +106,7 @@
 (def ^{:doc "Some pre-set trace settings. Don't trace too deeply into some
   functions (or not at all into others)"}
   trace-depths
-  '{com.redhat.qe.auto.selenium.selenium/call-sel 1
-    katello.menu/fmap 0
+  '{katello.menu/fmap 0
     katello.ui/component-deployment-dispatch 0
     katello.ui/current-session-deployment 0
     katello.notifications/success? 0
