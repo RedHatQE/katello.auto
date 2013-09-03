@@ -22,7 +22,7 @@
 
 (def sauce-name "bmorriso")
 
-(def sauce-key "f70c3b5c-f09f-4236-b0aa-250a2fce395d")
+(def sauce-key "86230ec4-28f0-4d30-a6b0-027dcfa686b8")
 
 (def sauce-configs [{"browserName" "chrome"
                      "platform" "WIN8"
@@ -44,7 +44,7 @@
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
                            "version" "23"
-                           "nativeEvents" true
+                           "nativeEvents" false
                            ;; :profile
                            #_(doto (ff/new-profile)
                              (ff/enable-native-events true))})
@@ -95,7 +95,7 @@
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-driver! {:browser :chrome} #_(or browser-config-opts empty-browser-config))
   (browser/set-finder! wd/locator-finder-fn)
   (browser/implicit-wait 2000)
   (browser/to (@config :server-url))
@@ -105,8 +105,9 @@
 (defn conf-selenium
   "Sets the implicit-wait time for the driver and navigates to the specified urlu"
   []
-  (browser/implicit-wait 1000)
-  (browser/to (@config :server-url)))
+  (browser/implicit-wait 0)
+  (browser/to (@config :server-url))
+  (browser/window-maximize))
 
 (defn set-job-id
   "Sets a thread-local binding of the session-id to *job-id*. This is to allow pass/fail reporting after the browser session has ended."
@@ -166,7 +167,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 10
+                                                   :build 14
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -177,7 +178,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 10
+                                                   :build 14
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})

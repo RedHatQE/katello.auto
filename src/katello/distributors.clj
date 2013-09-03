@@ -17,7 +17,7 @@
   {::new                   "new"
    ::create                {:name "commit"}
    ::distributor-name-text {:name "distributor[name]"}
-   ::details-link          "distributor_details"
+   ::details-link          {:id "distributor_details"}
    ::keyname-text          "new_custom_info_keyname"
    ::value-text            "new_custom_info_value"
    ::custom-info-button    "//input[@id='create_custom_info_button']"
@@ -37,7 +37,9 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (nav/browser-fn (click ::details-link)) 
+    [::details-menu (fn [x]
+                      (wd/ajax-wait)
+                      (wd/move-to browser/*driver* (browser/element ::details-link))) 
      [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
      [::events-history-page (nav/browser-fn (click ::events-history-link))]
      [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]

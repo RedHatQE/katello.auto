@@ -41,7 +41,8 @@
                     env (kt/newEnvironment {:name "environment" :org org})
                     dist (kt/newDistributor {:name "test-dist" :env env})]
         (let [expected-res #(-> % :type (= :success))]
-          (ui/create-all (list org env dist))
+          (rest/create-all (list org env))
+          (ui/create dist)
           (ui/update dist assoc :custom-info {keyname value})
           (assert/is (= (wd/text-present? keyname) success?))
           (assert/is (= (wd/text-present? keyname) success?)))))
@@ -87,3 +88,18 @@
       (let [dist (ui/update dist assoc :custom-info {"fname" "FEDORA"})]
         (assert/is (wd/text-present? "fname"))
         (ui/update dist update-in [:custom-info] dissoc "fname")))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
