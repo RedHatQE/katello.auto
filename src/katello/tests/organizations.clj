@@ -141,7 +141,7 @@
           ;; FIXME this doesn't properly capture how the app renders
           ;; text in the notif, currently doesn't escape it. getting
           ;; notif text from javascript though, shows it as escaped.
-          (assert/is (every? (partial escaped tag innertext)
+          (assert/is (every? (partial escaped attr innertext)
                              (mapcat :notices notifs)))))
       [["<a %2$s='%1$s'>%3$s</a>" "href" "http://foo.com/" "Click here"]])
     
