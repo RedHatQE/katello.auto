@@ -188,7 +188,7 @@
         (manifest/setup-org envz repos)
         (sync/verify-all-repos-synced repos)))
     [[fake-repos]
-     [redhat-repos]]))
+     [redhat-repos]])
 
  redhat-promoted-content-tests)
 
