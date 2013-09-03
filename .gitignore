@@ -18,3 +18,4 @@ pom.xml
 .settings/
 autodoc/**
 .lein-repl-history
+.nrepl-port
