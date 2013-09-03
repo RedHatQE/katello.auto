@@ -45,6 +45,7 @@
                 ::max-systems-must-be-positive        #"System limit must be a positive"
                 ::max-systems-may-not-be-zero         #"System limit may not be set to 0"
                 ::name-too-long                       #"Name cannot contain more than"
+                ::sys-name-too-long                   #"Name is too long \(maximum is 250 characters\)"
                 ::login-is-invalid                    #"Login is invalid"}]
     
     (doseq [e (keys errors)]
@@ -143,7 +144,7 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials                   #"Authentication failed"
+  (let [errors {::invalid-credentials                   #"You have entered an incorrect username/password combination.*"
                 ::promotion-already-in-progress         #"action is currently in progress"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #".*Manifest subscriptions unchanged from previous"

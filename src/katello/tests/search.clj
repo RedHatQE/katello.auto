@@ -11,9 +11,11 @@
                      [system-groups :as sg]
                      [activation-keys :as ak]
                      [systems :as system]
+                     [changesets :as changeset]
                      [conf :refer [*session-org* config]]
+                     [content-view-definitions :as views]
                      [blockers :refer [bz-bugs auto-issue]])
-            [katello.tests.useful :refer [ensure-exists create-recursive]]
+            [katello.tests.useful :refer [ensure-exists fresh-repo create-recursive add-product-to-cv]]
             (test.tree [script :refer :all])
             [test.assert :as assert]
             [slingshot.slingshot :refer :all]))
@@ -133,15 +135,27 @@
   (deftest "search activation keys"
     :uuid "f7f0d6e8-88ae-c964-69eb-65fd0a3351e5"
     :data-driven true
-    :description "search activation keys by default criteria i.e. name"
-    
+    :description "search activation keys by default criteria i.e. name"   
     (fn [akinfo searchterms]
-      (with-unique [env (kt/newEnvironment {:name "dev", :org *session-org*})
-                    ak (kt/newActivationKey (assoc akinfo :env env))]
-        (rest/create env)
-        (ui/create ak)
-        (search ak searchterms)
-        (validate-search-results (list ak))))
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})]
+        (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+              cv (rest/when-katello (add-product-to-cv org target-env repo))
+              ak (kt/newActivationKey (assoc akinfo :env target-env
+                                                    :content-view cv))
+              cs (kt/newChangeset {:name "cs"
+                                   :env target-env
+                                   :content (list cv)})]
+          (if (rest/is-katello?) 
+            (do 
+              (views/publish {:content-defn cv
+                              :published-name (:published-name cv)
+                              :org org})
+              (changeset/promote-delete-content cs))
+            (ui/create org))
+          (ui/create ak)
+          (search ak searchterms)
+          (validate-search-results (list ak)))))
     
     [(with-meta
        [{:name "activation_key1" :description "my auto-key"} {:criteria "environment:dev*"}]
@@ -149,7 +163,6 @@
      [{:name "activation_key2" :description "my activation-key"} {:criteria "name:activation_key2*"}]
      [{:name "activation_key3" :description "my activation-key"} {:criteria "description:\"my activation-key\""}]
      [{:name "activation_key4" :description "my activation-key"} {:criteria "name:activation*"}]])
-  
   
   (deftest "search sync plans"
     :uuid "327872ef-0576-b5c4-eac3-d5b035e95b11"
