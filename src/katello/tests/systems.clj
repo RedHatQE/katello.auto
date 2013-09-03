@@ -5,7 +5,9 @@
                      [notifications :as notification]
                      [ui :as ui]
                      [rest :as rest]
+                     [manifest :as manifest]
                      [validation :as val]
+                     [fake-content    :as fake]
                      [organizations :as org]
                      [environments :as env]
                      [client :as client]
@@ -14,6 +16,8 @@
                      [repositories :as repo]
                      [ui-common :as common]
                      [changesets :as changeset]
+                     [redhat-repositories :as rh-repos]
+                     [content-view-definitions :as views]
                      [tasks :refer :all]
                      [systems :as system]
                      [gpg-keys :as gpg-key]
@@ -21,6 +25,7 @@
                      [conf :refer [*session-user* *session-org* config *environments*]]
                      [blockers :refer [bz-bugs bz-bug auto-issue]])
             [katello.client.provision :as provision]
+            [katello.tests.content-views :refer [promote-published-content-view]]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
             [clojure.string :refer [blank? join]]
@@ -126,21 +131,23 @@
         (expecting-error expected-res
                          (nav/go-to ::system/details-page s)
                          (save-cancel input-loc new-value save?))))
-    (concat 
-      [[::system/name-text-edit "yoursys" false success]
-       [::system/name-text-edit "test.pnq.redhat.com" true success]
-       [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
-       [::system/name-text-edit (random-ascii-string 255) true success]]
-       (for [row [[::system/location-text-edit "Cancel Location" false success]
-                  [::system/location-text-edit "System Location Info" true success]
-                  [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
-                  [::system/location-text-edit (random-ascii-string 255) true success]
-                  [::system/description-text-edit "cancel description" false success]
-                  [::system/description-text-edit "System Registration Info" true success]
-                  [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
-                  [::system/description-text-edit (random-ascii-string 255) true success]]]
-         (with-meta row
-               {:blockers (bz-bugs "985586")}))))
+
+    ;;block if using save
+    (for [d [[::system/name-text-edit "yoursys" false success]
+             [::system/name-text-edit "test.pnq.redhat.com" true success]
+             [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
+             [::system/name-text-edit (random-ascii-string 255) true success]
+             [::system/description-text-edit "cancel description" false success]
+             [::system/description-text-edit "System Registration Info" true success]
+             [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
+             [::system/description-text-edit (random-ascii-string 255) true success]
+             [::system/location-text-edit "Cancel Location" false success]
+             [::system/location-text-edit "System Location Info" true success]
+             [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
+             [::system/location-text-edit (random-ascii-string 255) true success]]]
+      (if (nth d 2)
+        (with-meta d {:blockers (bz-bugs "985586")})
+        d)))
 
 
   (deftest "Verify system appears on Systems By Environment page in its proper environment"
@@ -455,10 +462,19 @@
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
 
-    (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
-                                           katello/newEnvironment
-                                           create-series
-                                           (take 2))]
+    (let [org (kt/newOrganization {:name (uniqueify "sys-org")})
+          repo (fresh-repo org
+                           "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+          env-dev (katello/newEnvironment {:name (uniqueify "env-dev")
+                                           :org org})
+          env-test (katello/newEnvironment {:name (uniqueify "env-test")
+                                            :org org})
+          cv (promote-published-content-view org env-dev repo)
+          cs (kt/newChangeset {:name "cs"
+                               :env env-test
+                               :content (list cv)})]
+      (ui/create env-test)
+      (changeset/promote-delete-content cs)
       (provision/with-queued-client
         ssh-conn
         (let [hostname (client/my-hostname ssh-conn)
@@ -470,10 +486,11 @@
                               :org (-> env :org :name)
                               :env (:name env)
                               :force true})
-            (assert/is (= (:name env) (system/environment mysys))))
+            (nav/go-to ::system/details-page mysys)
+            (browser isChecked (system/check-selected-env (:name env))))
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
-
+  
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
     :blockers (list rest/katello-only)
@@ -573,4 +590,51 @@
           (expecting-error [:type :katello.systems/package-install-failed]
                            (ui/update mysys update-in [:packages] (fnil conj #{}) package))
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit (= 1)))))))))
+            (assert/is (->> cmd_result :exit (= 1))))))))
+
+(deftest "Systems cannot retrieve content from environment
+	 after a remove changeset has been applied"
+        :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"
+        :blockers (conj (bz-bugs "994946") rest/katello-only)
+        (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+              envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+              repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
+              products (->> (map :reposet repos) (map :product) distinct)
+              target-env (first envz)
+              cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentViewDefinition uniqueify)
+              cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
+          (manifest/setup-org envz repos)
+          (sync/verify-all-repos-synced repos)
+          (ui/create cv)
+          (ui/update cv assoc :products products)
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (provision/with-queued-client
+            ssh-conn
+             (client/register ssh-conn {:username (:name *session-user*)
+                                        :password (:password *session-user*)
+                                        :org (:name org)
+                                        :env (:name target-env)
+                                        :force true})
+             (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+                             katello/newSystem)
+                   deletion-changeset (-> {:name "deletion-cs" :content (list cv)
+                                           :env target-env :deletion? true}
+                                          katello/newChangeset
+                                          uniqueify)]
+               (doseq [prd1 products]
+                 (client/subscribe ssh-conn (system/pool-id mysys prd1)))
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist")
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
+                 (assert/is (->> result :exit-code (= 0))))
+               (changeset/promote-delete-content deletion-changeset)
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist")
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
+                 (assert/is (->> result :exit-code (= 1)))))))))

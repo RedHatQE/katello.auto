@@ -12,7 +12,7 @@
 
 (def trailing-whitespace-strings [ "abc123 ", " ", "abc  1-2-3   "]) 
 (def javascript-strings          ["<script type=\"text/javascript\">document.write('<b>Hello World</b>'); </script>"])
-(def html-character-strings      ["/", ">", "   <", "xyz/123", "123 abc 5 > b", "<abc123"])
+(def html-character-strings      ["/", ">", "< >", "xyz/123", "123 abc 5 > b", "<abc123"])
 (def invalid-urls                ["@$#%$%&%*()[]{}" "https://" "http" "https://blah.com:5:6:7/abc" "http:///" ""])
 
 

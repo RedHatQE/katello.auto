@@ -13,7 +13,7 @@
                      [redhat-repositories :as rh-repos]
                      [fake-content  :as fake]
                      [subscriptions :as subs]
-                     [conf :refer [*environments*]]
+                     [conf :refer [*session-org* *environments*]]
                      [blockers :refer [bz-bugs]])
             [katello.tests.useful :refer [create-recursive]]
             [katello.client.provision :as provision]            
@@ -24,7 +24,7 @@
 ;; Tests
 
 (defn some-ak [] (kt/newActivationKey {:name "ak"
-                                       :env (first *environments*)
+                                       :env (kt/library *session-org*)
                                        :description "auto activation key"}))
 
 (defmacro with-unique-ak [sym & body]

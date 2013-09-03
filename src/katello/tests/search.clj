@@ -14,7 +14,7 @@
                      [changesets :as changeset]
                      [conf :refer [*session-org* config]]
                      [content-view-definitions :as views]
-                     [blockers :refer [bz-bugs auto-issue]])
+                     [blockers :refer [bz-bugs bz-bug auto-issue]])
             [katello.tests.useful :refer [ensure-exists fresh-repo create-recursive add-product-to-cv]]
             (test.tree [script :refer :all])
             [test.assert :as assert]
@@ -44,7 +44,7 @@
     :uuid "98a8bcdc-5e66-6cb4-8683-f7a141fbce30"
     :data-driven true
     :description "Search for a system based on criteria."
-    :blockers (list rest/katello-only)
+    :blockers (list rest/katello-only (bz-bug "985586"))
     (fn [sysinfo searchterms & [groupinfo]]
       (let [env (kt/library *session-org*)]
         (with-unique [system (kt/newSystem (assoc sysinfo :env env))

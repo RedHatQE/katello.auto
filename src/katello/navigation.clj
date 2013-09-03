@@ -141,6 +141,9 @@
   (let [org-text ((->> ::ui/active-org (browser getAttributes) (into {})) "title")]
     (if (empty? org-text) nil org-text)))
 
+(defn go-top [] 
+     (browser click "//a[@href='dashboard']"))
+
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg
    setting default orgs) see katello.organizations/switch."

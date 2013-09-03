@@ -71,13 +71,12 @@
 
 (defn add-product-to-cv
   [org target-env repo]
-  (with-unique [cv (kt/newContentView {:name "con-def"
-                                       :published-name "publish-name"
-                                       :org org})]
-      (ui/create-all-recursive (list org target-env))
-      (create-recursive repo)
-      (sync/perform-sync (list repo))
-      (ui/create cv)
-      (ui/update cv assoc :products (list (kt/product repo)))
-      cv))
-
+  (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
+                                                 :published-name "publish-name"
+                                                 :org org})]
+    (ui/create-all-recursive (list org target-env))
+    (create-recursive repo)
+    (sync/perform-sync (list repo))
+    (ui/create cv)
+    (ui/update cv assoc :products (list (kt/product repo)))
+    cv))

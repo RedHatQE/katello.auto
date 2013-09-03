@@ -6,7 +6,7 @@
                      [environments :as env]
                      providers
                      repositories
-                     [tasks :refer [with-unique uniques uniqueify]] 
+                     [tasks :refer [with-unique uniques uniqueify]]
                      [content-view-definitions :as views]
                      [fake-content :as fake]
                      [changesets :as changeset]
@@ -22,28 +22,27 @@
             [clojure.set :refer [index]])
   (:refer-clojure :exclude [fn]))
 
-(defgroup promotion-tests        
+(defgroup promotion-tests
   (deftest "Promote content"
     :uuid "fa2796db-f82f-f564-aa13-8239f154154d"
-    :description "Takes content and promotes it thru more environments. 
+    :description "Takes content and promotes it thru more environments.
                   Verifies that it shows up in the new env."
-    (with-unique [org        (kt/newOrganization {:name "org"})
+    (with-unique [org (kt/newOrganization {:name "org"})
                   env (kt/newEnvironment {:name "env" :org org})
-                  cv         (kt/newContentView {:name "content-view"
-                                                 :org org
-                                                 :published-name "publish-name"})             
-                  cs         (kt/newChangeset {:name "cs"
-                                               :env env
-                                               :content (list cv)})]
-        (let [repo (fresh-repo org (@config :sync-repo))]
-          (ui/create-all (list org env cv))
-          (create-recursive repo)
-          (sync/perform-sync (list repo))
-          (ui/update cv assoc :products (list (kt/product repo)))
-          (views/publish {:content-defn cv
-                          :published-name (:published-name cv)
-                          :description "test pub"
-                          :org org})
-          (changeset/promote-delete-content cs)
-          (assert/is (changeset/environment-has-content? cs))))))
-              
+                  cv (kt/newContentViewDefinition {:name "content-view"
+                                                   :org org
+                                                   :published-name "publish-name"})
+                  cs (kt/newChangeset {:name "cs"
+                                       :env env
+                                       :content (list cv)})]
+      (let [repo (fresh-repo org (@config :sync-repo))]
+        (ui/create-all (list org env cv))
+        (create-recursive repo)
+        (sync/perform-sync (list repo))
+        (ui/update cv assoc :products (list (kt/product repo)))
+        (views/publish {:content-defn cv
+                        :published-name (:published-name cv)
+                        :description "test pub"
+                        :org org})
+        (changeset/promote-delete-content cs)
+        (assert/is (changeset/environment-has-content? cs))))))

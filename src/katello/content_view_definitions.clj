@@ -369,7 +369,7 @@
                       ::sg/copy-submit)
   (notification/success-type :cv-clone))
 
-(extend katello.ContentView
+(extend katello.ContentViewDefinition
   ui/CRUD {:create create
            :delete delete
            :update* update}
