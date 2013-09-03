@@ -7,17 +7,24 @@
                      [validation :as validation]
                      [repositories :as repo]
                      [tasks :refer :all]
+                     [client :as client]
+                     [manifest :as manifest]
                      [notifications :as notification]
                      [organizations :as organization]
+                     [content-view-definitions :as views]
                      [environments :as environment]
+                     [sync-management :as sync]
+                     [redhat-repositories :as rh-repos]
                      [changesets :as changeset]
+                     [systems         :as system]
                      [fake-content :as fake]
-                     [conf :refer [config]]
+                     [conf :as conf]
                      [blockers :refer [bz-bugs]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
+            [katello.client.provision :as provision]
             [clojure.string :refer [capitalize upper-case lower-case]]))
 
 ;; Functions
@@ -179,11 +186,48 @@
                       env (kt/newEnvironment {:name "env" :org org})]
           (let [repos (for [r fake/custom-repos]
                         (update-in r [:product :provider] assoc :org org))]
-            (setup-custom-org-with-content env repos)
-            ;; not allowed to delete the current org, so switch first.
-            (organization/switch)
-            (ui/delete org)
-            (setup-custom-org-with-content env repos)))))
+           (setup-custom-org-with-content env repos)
+           ;; not allowed to delete the current org, so switch first.
+           (organization/switch)
+           (ui/delete org)
+           (setup-custom-org-with-content env repos)))))
+      
+      (deftest "Delete Organization with systems"
+        :uuid "b1b638ec-9341-4498-9a54-7397895d5bad"       
+        (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+              envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+              repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
+              products (->> (map :reposet repos) (map :product) distinct)
+              target-env (first envz)
+              cv         (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentViewDefinition uniqueify)
+              cs         (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
+          (manifest/setup-org envz repos)
+          (sync/verify-all-repos-synced repos)
+          (ui/create cv)
+          (ui/update cv assoc :products products)
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org}) 
+          (changeset/promote-delete-content cs)
+          (provision/with-queued-client
+            ssh-conn
+            (client/register ssh-conn {:username (:name conf/*session-user*)
+                                       :password (:password conf/*session-user*)
+                                       :org (:name org)
+                                       :env (:name target-env)
+                                       :force true})
+            (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+                             katello/newSystem)]
+              (doseq [prd1 products]
+                (client/subscribe ssh-conn (system/pool-id mysys prd1)))
+              (client/sm-cmd ssh-conn :refresh)
+              (client/run-cmd ssh-conn "yum repolist")
+              (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")
+              (organization/switch conf/*session-org*)
+              (ui/delete org))))))
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"
@@ -302,4 +346,4 @@
         (organization/add-custom-keyname org ::organization/distributor-default-info-page keyname)
         (assert/is (organization/isKeynamePresent? keyname))
         (organization/remove-custom-keyname org ::organization/distributor-default-info-page keyname)
-        (assert/is (not (organization/isKeynamePresent? keyname)))))))
+        (assert/is (not (organization/isKeynamePresent? keyname))))))

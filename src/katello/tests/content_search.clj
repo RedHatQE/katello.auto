@@ -4,7 +4,7 @@
                      [organizations :as org]
                      [providers :as providers]
                      [environments  :as env]
-                     [conf          :refer [config with-org]]
+                     [conf          :refer [config]]
                      [changesets :refer [promote-delete-content]]
                      [rest     :as rest]
                      [ui     :as ui]
