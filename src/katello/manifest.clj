@@ -10,7 +10,7 @@
                      [rest :as rest]
                      [navigation :as nav]
                      [tasks :refer [with-unique unique-format tmpfile]]
-                     [conf :refer [config with-org]]
+                     [conf :refer [config]]
                      [tasks :as tasks]
                      [notifications :as notification]
                      [ui-common :as common]

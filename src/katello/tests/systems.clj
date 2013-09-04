@@ -5,7 +5,9 @@
                      [notifications :as notification]
                      [ui :as ui]
                      [rest :as rest]
+                     [manifest :as manifest]
                      [validation :as val]
+                     [fake-content    :as fake]
                      [organizations :as org]
                      [environments :as env]
                      [client :as client]
@@ -14,6 +16,8 @@
                      [repositories :as repo]
                      [ui-common :as common]
                      [changesets :as changeset]
+                     [redhat-repositories :as rh-repos]
+                     [content-view-definitions :as views]
                      [tasks :refer :all]
                      [systems :as system]
                      [gpg-keys :as gpg-key]
@@ -655,4 +659,52 @@
           (client/run-cmd ssh-conn "yum repolist")
           (system/add-package mysys {:package "cow"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (client/ok? cmd_result))))))))
+            (assert/is (client/ok? cmd_result)))))))
+
+
+(deftest "Systems cannot retrieve content from environment
+	 after a remove changeset has been applied"
+        :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"
+        :blockers (conj (bz-bugs "994946") rest/katello-only)
+        (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+              envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))
+              repos (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos)
+              products (->> (map :reposet repos) (map :product) distinct)
+              target-env (first envz)
+              cv (-> {:name "content-view" :org org :published-name "publish-name"}
+                             kt/newContentViewDefinition uniqueify)
+              cs (-> {:name "cs" :env target-env :content (list cv)}
+                             kt/newChangeset uniqueify)]
+          (manifest/setup-org envz repos)
+          (sync/verify-all-repos-synced repos)
+          (ui/create cv)
+          (ui/update cv assoc :products products)
+          (views/publish {:content-defn cv
+                          :published-name (:published-name cv)
+                          :description "test pub"
+                          :org org})
+          (changeset/promote-delete-content cs)
+          (provision/with-queued-client
+            ssh-conn
+             (client/register ssh-conn {:username (:name *session-user*)
+                                        :password (:password *session-user*)
+                                        :org (:name org)
+                                        :env (:name target-env)
+                                        :force true})
+             (let [mysys (-> {:name (client/my-hostname ssh-conn) :env target-env}
+                             katello/newSystem)
+                   deletion-changeset (-> {:name "deletion-cs" :content (list cv)
+                                           :env target-env :deletion? true}
+                                          katello/newChangeset
+                                          uniqueify)]
+               (doseq [prd1 products]
+                 (client/subscribe ssh-conn (system/pool-id mysys prd1)))
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist")
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
+                 (assert/is (->> result :exit-code (= 0))))
+               (changeset/promote-delete-content deletion-changeset)
+               (client/sm-cmd ssh-conn :refresh)
+               (client/run-cmd ssh-conn "yum repolist")
+               (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
+                 (assert/is (->> result :exit-code (= 1)))))))))
