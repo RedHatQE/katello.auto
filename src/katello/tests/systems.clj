@@ -529,6 +529,37 @@
      [false]])
 
   
+   (deftest "Update selected system package"
+    :uuid "aaca29c2-fdff-4901-81b6-98db22871edd"
+    
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            package-name "walrus-0.71-1.noarch"
+            
+            package (first (split package-name #"-+"))]
+        (provision/with-queued-client
+          ssh-conn
+          (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+          (let [cmd (format "yum install -y %s" package-name)]
+            (client/run-cmd ssh-conn cmd))
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (-> product :provider :org :name)
+                            :env (:name test-environment)
+                            :force true})
+          (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                        katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/update-selected-package mysys {:package package})
+            (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Update" "package updated" {:package package} pkg-version))))))
+  
   (deftest "Search a Package from package-list"
     :uuid "5dc869d7-2604-4524-85f1-574722e9dd59"
     (let [package-name "walrus-0.71-1.noarch"
@@ -546,7 +577,7 @@
                           :force true})
         (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                       katello/newSystem)]
-          (system/filter-package mysys package)
+          (system/filter-package mysys {:package package})
           (assert/is (= package-name (browser getText (system/get-filtered-package package))))))))
   
   (deftest "Re-registering a system to different environment"

@@ -26,6 +26,7 @@
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
   package-select                  "//input[@id='package_%s']"
+  package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
   get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
@@ -80,6 +81,7 @@
    ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
    ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
    ::filter-package               "//input[@id='filter']"
+   ::update-package               "update_packages"
 
    ;;system-edit details
    ::details                     (ui/third-level-link "general")
@@ -472,6 +474,16 @@
                            (do (Thread/sleep 2000)
                              (recur (browser getText ::pkg-install-status))))))
 
+(defn check-pkg-update-status
+  "Function to test selected package status while updating it"
+  [package &[timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                         (case current-status
+                           "Update Package Complete" current-status
+                           "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
+                           (do (Thread/sleep 2000)
+                             (recur (browser getText (package-action-status package)))))))
+
 (defn add-package "Add a package/package-group on selected system"
   [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page system)
@@ -497,12 +509,14 @@
       (check-package-status))))
 
 (defn filter-package "filter a package from package-list"
-  [system package]
+  [system {:keys [package]}]
   (nav/go-to ::content-packages-page system)
   (sel/->browser (setText ::filter-package package)
                  (typeKeys ::filter-package package)
                  (click (package-select package))))
 
-
-
-
+(defn update-selected-package "Update a selected package from package-list"
+  [system  {:keys [package]}]
+  (filter-package system {:package package})
+  (browser click ::update-package)
+  (check-pkg-update-status package))
