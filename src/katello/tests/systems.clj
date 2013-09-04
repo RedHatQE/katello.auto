@@ -38,6 +38,10 @@
 
 ;; Functions
 
+(def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
+(def outputformat (java.text.SimpleDateFormat. "EEE, dd MMM yyyy"))
+(defn date [d] (.format outputformat (.parse inputformat d)))
+
 (defn create-test-environment []
   (def test-environment (kt/library *session-org*)))
 
@@ -398,11 +402,14 @@
                                     katello-details
                                     (dissoc katello-details :env)))
         (let [hostname (client/my-hostname ssh-conn)
+              sys-date (client/get-client-date ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
               details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
+          (assert/is (= (date sys-date) (subs (details "Checked In") 0 16)))
+          (assert/is (= (date sys-date) (subs (details "Registered") 0 16)))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
                         (system/get-ip-addr system)))))))
