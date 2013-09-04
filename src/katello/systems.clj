@@ -25,6 +25,8 @@
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
+  package-select                  "//input[@id='package_%s']"
+  get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
   system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
@@ -77,6 +79,7 @@
    ::pkg-request                  "//div[@class='grid_7' and contains(.,'Request')]/following::div[@class='grid_7 la']"
    ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
    ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
+   ::filter-package               "//input[@id='filter']"
 
    ;;system-edit details
    ::details                     (ui/third-level-link "general")
@@ -492,6 +495,13 @@
                      (typeKeys ::package-name items)
                      (click ::remove-content))
       (check-package-status))))
+
+(defn filter-package "filter a package from package-list"
+  [system package]
+  (nav/go-to ::content-packages-page system)
+  (sel/->browser (setText ::filter-package package)
+                 (typeKeys ::filter-package package)
+                 (click (package-select package))))
 
 
 

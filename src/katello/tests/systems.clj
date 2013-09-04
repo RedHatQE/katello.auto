@@ -528,6 +528,27 @@
     [[true]
      [false]])
 
+  
+  (deftest "Search a Package from package-list"
+    :uuid "5dc869d7-2604-4524-85f1-574722e9dd59"
+    (let [package-name "walrus-0.71-1.noarch"
+          package (first (split package-name #"-+"))]
+      (provision/with-queued-client
+        ssh-conn
+        (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+        (let [cmd (format "yum install -y %s" package-name)]
+          (client/run-cmd ssh-conn cmd))
+        (client/register ssh-conn
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
+                          :org (:name *session-org*)
+                          :env (:name test-environment)
+                          :force true})
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                      katello/newSystem)]
+          (system/filter-package mysys package)
+          (assert/is (= package-name (browser getText (system/get-filtered-package package))))))))
+  
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
