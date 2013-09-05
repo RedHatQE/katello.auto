@@ -152,7 +152,7 @@
       (e2e/test-client-access target-env products [package-to-install])))) 
     
 (defgroup redhat-content-provider-tests 
-
+  :blockers (bz-bugs "994946")
   (deftest "Upload a fake and real subscription manifest"
     :uuid "60b9676a-c421-3564-1513-b4e38b9bc135"
     :data-driven true

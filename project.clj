@@ -27,7 +27,7 @@
                  [clj-ssh "0.5.6"]
                  
                  [ui.navigate "0.4.0-SNAPSHOT"]
-                 [bugzilla.checker "0.2.0-SNAPSHOT"]
+                 [org.clojars.blrm/bugzilla.checker "0.2.0-SNAPSHOT"]
                  [github.checker "0.2.0-SNAPSHOT"]
                  [fn.trace "1.4.0-SNAPSHOT"]]
   :jvm-opts ["-Xmx640m" "-Xms48m" "-XX:-OmitStackTraceInFastThrow"]
