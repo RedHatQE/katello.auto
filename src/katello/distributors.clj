@@ -39,7 +39,9 @@
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
     [::details-menu (fn [x]
                       (wd/ajax-wait)
-                      (wd/move-to browser/*driver* (browser/element ::details-link))) 
+                      (wd/move-to browser/*driver* (browser/element ::details-link))
+                      (wd/ajax-wait)
+                      (Thread/sleep 1000)) 
      [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
      [::events-history-page (nav/browser-fn (click ::events-history-link))]
      [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
@@ -67,7 +69,7 @@
       (do (wd/->browser 
            (input-text ::keyname-text k)
            (input-text ::value-text v))
-          (wd/key-up browser/*driver* ::keyname-text "z")
+          #_(wd/key-up browser/*driver* ::keyname-text "z")
           (browser/click ::custom-info-button)))) 
   ;; below dissoc required while updating, else will rm the just updated key/value
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]

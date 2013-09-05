@@ -44,6 +44,7 @@
           (rest/create-all (list org env))
           (ui/create dist)
           (ui/update dist assoc :custom-info {keyname value})
+          (wd/ajax-wait)
           (assert/is (= (wd/text-present? keyname) success?))
           (assert/is (= (wd/text-present? keyname) success?)))))
 

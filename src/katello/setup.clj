@@ -95,9 +95,9 @@
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (browser/set-driver! {:browser :chrome} #_(or browser-config-opts empty-browser-config))
+  (browser/set-driver! {:browser :chrome} )
   (browser/set-finder! wd/locator-finder-fn)
-  (browser/implicit-wait 2000)
+  (browser/implicit-wait 100)
   (browser/to (@config :server-url))
   (login)
   browser/*driver*)
@@ -167,7 +167,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 14
+                                                   :build 16
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -178,7 +178,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 14
+                                                   :build 16
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})
