@@ -128,7 +128,7 @@
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"
-   ::log-out                 "//div[@ng-controller='MenuController']//a[contains(@href,'logout')]"})
+   ::log-out                 "//a[@class='dropdown-item-link' and contains(@href,'logout')]"})
 
 (extend-protocol sel/SeleniumLocatable
   clojure.lang.Keyword
