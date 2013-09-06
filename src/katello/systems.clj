@@ -25,6 +25,7 @@
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
+  get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
   get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
@@ -66,6 +67,8 @@
    ::packages-link               (ui/third-level-link "systems_packages")
    ::software-link               (ui/third-level-link "system_products")
    ::errata-link                 (ui/third-level-link "errata")
+   ::select-errata-type          "//select[@id='display_errata_type']"
+   ::install-errata              "//button[@id='run_errata_button']"
    ::add-content                 "add_content"
    ::remove-content              "remove_content" 
    ::package-name                "content_input"
@@ -529,3 +532,4 @@
   (filter-package system {:package package})
   (browser click ::remove-package)
   (check-pkg-update-status package))
+  

@@ -130,6 +130,13 @@
   (nav/go-to ::system/page org)
   (Integer/parseInt (browser getText ::system/total-sys-count)))
 
+(defn filter-errata-by-type "Filter errata based on selected errata-type"
+  [system {:keys [errata-type errata-ids]}]
+  (nav/go-to ::system/content-errata-page system)
+  (browser select ::system/select-errata-type errata-type)
+  (doseq [errata-id errata-ids]
+    (assert/is (= errata-id (browser getText (system/get-errata errata-id))))))
+
 ;; Tests
 
 (def success #(-> % :type (= :success)))
@@ -588,6 +595,31 @@
           (system/filter-package mysys {:package package})
           (assert/is (= package-name (browser getText (system/get-filtered-package package))))))))
   
+  (deftest "Filter Errata"
+    :uuid "ed64eea5-4c37-4810-8f43-8da0bfbced43"
+    (let [repo-url "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/"
+          product (configure-product-for-pkg-install repo-url)]
+      (provision/with-queued-client
+        ssh-conn
+        (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+        (client/run-cmd ssh-conn "yum install -y cow cheetah pig zebra")
+        (client/register ssh-conn
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
+                          :org (-> product :provider :org :name)
+                          :env (:name test-environment)
+                          :force true})
+        (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                      katello/newSystem)]
+          (client/subscribe ssh-conn (system/pool-id mysys product))
+          (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+          (client/run-cmd ssh-conn "yum repolist")
+          (doall (for [errata [{:errata-type "All Errata", :errata-ids (list "RHEA-2012:3234" "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}
+                               {:errata-type "Bug Fix", :errata-ids (list "RHEA-2012:3234")}
+                               {:errata-type "Security", :errata-ids (list "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}]]
+                   (filter-errata-by-type mysys errata)))))))
+        
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
