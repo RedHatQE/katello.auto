@@ -82,6 +82,7 @@
    ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
    ::filter-package               "//input[@id='filter']"
    ::update-package               "update_packages"
+   ::remove-package               "remove_packages"
 
    ;;system-edit details
    ::details                     (ui/third-level-link "general")
@@ -480,7 +481,9 @@
   (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
                          (case current-status
                            "Update Package Complete" current-status
+                           "Remove Package Complete" current-status
                            "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
+                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
                            (do (Thread/sleep 2000)
                              (recur (browser getText (package-action-status package)))))))
 
@@ -516,7 +519,13 @@
                  (click (package-select package))))
 
 (defn update-selected-package "Update a selected package from package-list"
-  [system  {:keys [package]}]
+  [system {:keys [package]}]
   (filter-package system {:package package})
   (browser click ::update-package)
+  (check-pkg-update-status package))
+
+(defn remove-selected-package "Remove a selected package from package-list"
+  [system {:keys [package]}]
+  (filter-package system {:package package})
+  (browser click ::remove-package)
   (check-pkg-update-status package))

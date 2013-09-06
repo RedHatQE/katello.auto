@@ -529,13 +529,13 @@
      [false]])
 
   
-   (deftest "Update selected system package"
+  (deftest "Update/Remove selected system package"
     :uuid "aaca29c2-fdff-4901-81b6-98db22871edd"
-    
+    :data-driven true
+    (fn [remove-pkg?]
       (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
             product (configure-product-for-pkg-install repo-url)
-            package-name "walrus-0.71-1.noarch"
-            
+            package-name "walrus-0.71-1.noarch"       
             package (first (split package-name #"-+"))]
         (provision/with-queued-client
           ssh-conn
@@ -558,7 +558,15 @@
             (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
-              (validate-package-info "Package Update" "package updated" {:package package} pkg-version))))))
+              (validate-package-info "Package Update" "package updated" {:package package} pkg-version)
+              (when remove-pkg?
+                (system/remove-selected-package mysys {:package package})
+                (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")]
+                  (assert/is (->> cmd_result :exit-code (not= 0))))
+                (validate-package-info "Package Remove" "package removed" {:package package} pkg-version)))))))
+    
+    [[true]
+     [false]])
   
   (deftest "Search a Package from package-list"
     :uuid "5dc869d7-2604-4524-85f1-574722e9dd59"
