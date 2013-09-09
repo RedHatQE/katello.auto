@@ -72,8 +72,8 @@
     (deftest "Dashboard: Content Views Overview"
        (dashboard/go-top)
        (assert/is (= (project (dashboard/get-dashboard-views) [:result :view])
-                     #{{:date "Tue, 27 Aug 2013 05:37:48 +0000", :result "Success", :view publish-dev}
-                       {:date "Tue, 27 Aug 2013 05:40:17 +0000", :result "Success", :view publish-qa}})))
+                     #{{:result "Success", :view publish-dev}
+                       {:result "Success", :view publish-qa}})))
 
     (deftest "Dashboard: Promotions Overview"
       (dashboard/go-top)
