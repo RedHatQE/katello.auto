@@ -25,6 +25,10 @@
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
+  get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
+  package-select                  "//input[@id='package_%s']"
+  package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
+  get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
   system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
@@ -63,14 +67,25 @@
    ::packages-link               (ui/third-level-link "systems_packages")
    ::software-link               (ui/third-level-link "system_products")
    ::errata-link                 (ui/third-level-link "errata")
+   ::select-errata-type          "//select[@id='display_errata_type']"
+   ::install-errata              "//button[@id='run_errata_button']"
    ::add-content                 "add_content"
    ::remove-content              "remove_content" 
    ::package-name                "content_input"
    ::select-package-group        "perform_action_package_groups"
    ::select-package              "perform_action_packages"
-   ::pkg-install-status           "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::pkg-install-status-link     "//td[@class='package_action_status']/a[@class='subpanel_element']"
+   ::pkg-install-status          "//td[@class='package_action_status']"
    ::add-package-error            (ui/link "Add Package Error")
    ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
+   ::pkg-header                   "//div[@id='subpanel']//div[@class='head']/h2"
+   ::pkg-summary                  "//div[@class='grid_7' and contains(.,'Summary')]/following::div[@class='grid_7 multiline']"
+   ::pkg-request                  "//div[@class='grid_7' and contains(.,'Request')]/following::div[@class='grid_7 la']"
+   ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
+   ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
+   ::filter-package               "//input[@id='filter']"
+   ::update-package               "update_packages"
+   ::remove-package               "remove_packages"
 
    ;;system-edit details
    ::details                     (ui/third-level-link "general")
@@ -79,7 +94,8 @@
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
    ::release-version-select      "system[releaseVer]"
-   ::environment                 "//span[@id='environment_path_selector']"              
+   ::environment                 "//span[@id='environment_path_selector']"
+   ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
    ::save-environment            "//input[@value='Save']"
    ::edit-sysname                "system_name"
    ::edit-description            "system_description"
@@ -402,7 +418,7 @@
 (defn environment "Get name of current environment of the system"
   [system]
   (nav/go-to ::details-page system)
-  (browser getText ::environment))
+  (browser getText ::get-selected-env))
 
 (defn get-ip-addr
   [system]
@@ -447,36 +463,73 @@
       (browser click (system-fact-group-expand group)))))
 
 
-(defn add-package "Add a package or package group to a system."
+(defn check-package-status
+  [&[timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                         (case current-status
+                           "Add Package Complete" current-status
+                           "Add Package Group Complete" current-status
+                           "Remove Package Complete" current-status
+                           "Remove Package Group Complete" current-status
+                           "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
+                           "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
+                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                           "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})              
+                           (do (Thread/sleep 2000)
+                             (recur (browser getText ::pkg-install-status))))))
+
+(defn check-pkg-update-status
+  "Function to test selected package status while updating it"
+  [package &[timeout-ms]]
+  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                         (case current-status
+                           "Update Package Complete" current-status
+                           "Remove Package Complete" current-status
+                           "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
+                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                           (do (Thread/sleep 2000)
+                             (recur (browser getText (package-action-status package)))))))
+
+(defn add-package "Add a package/package-group on selected system"
   [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page system)
-  (doseq [[items exp-status is-group?] [[package "Add Package Complete" false]
-                                        [package-group "Add Package Group Complete" true]]]
+  (doseq [[items is-group?] [[package false]
+                             [package-group true]]]
     (when items
       (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
                      (typeKeys ::package-name items)
                      (click ::add-content))
-      (Thread/sleep 50000)
-      (when-not (= exp-status
-                   (browser getText ::pkg-install-status))
-        (throw+ {:type ::package-install-failed :msg "Add Package Error"})))))
+      (check-package-status))))
 
-
-(defn remove-package "Remove a package or package group from a system."
+(defn remove-package "Remove a installed package/package-group from selected system."
   [system {:keys [package package-group]}]
   (nav/go-to ::content-packages-page system)
-  (doseq [[items exp-status is-group?] [[package "Remove Package Complete" false]
-                                        [package-group "Remove Package Group Complete" true]]]
+  (doseq [[items is-group?] [[package false]
+                             [package-group true]]]
     (when items
       (when is-group? (browser click ::select-package-group))
       (sel/->browser (setText ::package-name items)
                      (typeKeys ::package-name items)
                      (click ::remove-content))
-      (Thread/sleep 50000)
-      (assert/is (= exp-status
-                    (browser getText ::pkg-install-status))))))
+      (check-package-status))))
 
+(defn filter-package "filter a package from package-list"
+  [system {:keys [package]}]
+  (nav/go-to ::content-packages-page system)
+  (sel/->browser (setText ::filter-package package)
+                 (typeKeys ::filter-package package)
+                 (click (package-select package))))
 
+(defn update-selected-package "Update a selected package from package-list"
+  [system {:keys [package]}]
+  (filter-package system {:package package})
+  (browser click ::update-package)
+  (check-pkg-update-status package))
 
-
+(defn remove-selected-package "Remove a selected package from package-list"
+  [system {:keys [package]}]
+  (filter-package system {:package package})
+  (browser click ::remove-package)
+  (check-pkg-update-status package))
+  
