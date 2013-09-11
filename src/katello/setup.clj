@@ -49,7 +49,7 @@
                      "nativeEvents" false}])
 
 (def empty-browser-config {"browserName" "firefox"
-                           "platform" "LINUX"
+                           "platform" "MAC"
                            "version" "21"
                            "nativeEvents" false})
 (defn new-remote-grid
@@ -171,7 +171,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 34
+                                                   :build 37
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -182,7 +182,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 34
+                                                   :build 37
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})
