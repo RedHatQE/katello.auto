@@ -197,7 +197,8 @@
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
   (browser click ::subs/delete-manifest)
-  (browser click ::ui/confirmation-yes))
+  (browser click ::ui/confirmation-yes)
+  (notification/check-for-success {:timeout-ms (* 10 60 1000) :match-pred (notification/request-type? :manifest-crud)}))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."

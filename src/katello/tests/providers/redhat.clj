@@ -1,6 +1,7 @@
 (ns katello.tests.providers.redhat
   (:require [katello :as kt]
             (katello [navigation :as nav]
+                     [activation-keys :as ak]   
                      [tasks           :refer :all]
                      [ui :as ui]
                      [ui-common       :as common]
@@ -24,6 +25,7 @@
             [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.client.provision :as provision]
             [test.tree.script :refer [defgroup deftest]]
+            [katello.tests.useful :refer [prepare-org-fetch-org new-manifest]]
             [katello.tests.e2e :as e2e]
             [test.assert :as assert]))
 
@@ -57,21 +59,6 @@
   {:eus          "Extended Update Support for Red Hat Enterprise Linux Server (8 sockets)"})
 
 ;; Functions
-
-(defn prepare-org-fetch-org []
-  (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
-        envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
-    (ui/create org)
-    (doseq [e (kt/chain envz)]
-      (ui/create e))
-    org))
-
-(defn new-manifest [redhat-manifest?]
-  (let [org       (prepare-org-fetch-org)
-        provider  (assoc kt/red-hat-provider :org org)
-        fetch-manifest  (uniqueify (manifest/download-original-manifest redhat-manifest?))
-        manifest  (assoc fetch-manifest :provider provider)]
-    manifest))
 
 (defn all-subs-exist?
   [map manifest]
@@ -274,7 +261,7 @@
       (expecting-error (common/errtype :katello.notifications/failed-signature-check)
                          (ui/create manifest))
       (ui/create manifest-2)))
-  
+            
   (deftest "Delete a manifest"
     :uuid "60b9676a-d420-3564-1666-b4e3ff9b3885"
     (let [manifest  (new-manifest false)]
