@@ -23,7 +23,6 @@
            [org.ccil.cowan.tagsoup Parser]
            [java.io InputStream File FileInputStream ByteArrayInputStream BufferedInputStream InputStreamReader BufferedReader]
            [org.xml.sax InputSource]
-           [java.text SimpleDateFormat]
            [java.io ByteArrayInputStream]))
 
 ;; Locators
