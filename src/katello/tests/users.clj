@@ -16,8 +16,8 @@
                      [conf :refer [config *session-org* *session-user* *environments*]] 
                      [navigation :as nav]
                      [blockers :refer [bz-bugs]]) 
-            [katello.tests.useful :refer [create-all-recursive create-recursive]]
-            [slingshot.slingshot :refer [throw+]]
+            [katello.tests.useful :refer [create-all-recursive create-recursive new-manifest]]
+            [slingshot.slingshot :refer [throw+ try+]]
             [test.tree.script :refer :all]
             [test.assert :as assert]
             [com.redhat.qe.auto.selenium.selenium :refer [browser]]
@@ -356,6 +356,31 @@
             (assert/is (every? not-showing? [::menu/systems-link ::menu/content-link ::menu/setup-link] ))))
         (assign-admin admin))))
   
+  (deftest "ORG - USER Dependency Removal"
+    :uuid "749d23d7-f806-48c1-8961-e1d0be60e49b"
+    :blockers (bz-bugs "1001609")
+    :data-driven true
+    (fn [flip-order?]
+      (let [user (-> (new-unique-user)
+                      create-user
+                      assign-admin)]
+        (try+
+          (login user {:org *session-org*})
+          (let [manifest (new-manifest true)
+                org (kt/org manifest)]
+            (ui/create manifest)
+            (login)
+            (if flip-order?
+              (do
+                (ui/delete org)
+                (ui/delete user))
+              (do
+                (ui/delete user)
+                (ui/delete org))))
+           (finally (login)))))
+      [[true]
+       [false]])
+           
   (deftest "Assure left pane updates when users/roles are added/deleted"
     :uuid "05f27396-e1d8-33b4-44a3-9ffdb01d227e"
     (with-unique [user (assoc generic-user :name "user1")
