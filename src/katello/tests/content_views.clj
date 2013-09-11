@@ -157,7 +157,7 @@
       :uuid "965cd000-3336-4758-b86c-751b38556d9d"
       :blockers (bz-bugs "1006693")
       (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
-                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups"})]
         (ui/create-all (list cv cv-filter))
         (views/add-pkg-group-rule cv-filter {:pkg-groups (list "birds")})
         (ui/delete cv)))
