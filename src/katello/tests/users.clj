@@ -48,10 +48,14 @@
   user)
 
 (defn assign-admin [user]
-  (ui/update user assoc :roles #{role/administrator}))
+  (ui/update user assoc :roles #{role/administrator})
+  (Thread/sleep 3000) ;; wait for update notification to disappear so the user-menu
+  )
 
 (defn set-default-org-at-login-screen
   [{:keys [default-org] :as user}]
+  (notification/flush)
+  (Thread/sleep 4000)
   (login user  {:default-org default-org
                 :org default-org})
   user) ;; return user for more steps
@@ -372,4 +376,5 @@
       (assert/is (some #(not= (role :name) %) (common/extract-left-pane-list)))))
 
   user-settings default-org-tests)
+
 

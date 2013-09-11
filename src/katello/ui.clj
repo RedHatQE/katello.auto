@@ -62,7 +62,8 @@
   link                 "//a[normalize-space(.)='%s']"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
-  
+
+  js-id-click          "$(\"li#%s > a\").click();"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
@@ -130,6 +131,7 @@
    ::search-save-as-favorite "search_favorite_save"
    ::search-clear-the-search "search_clear"
    ::search-submit           "//button[@form='search_form']"
+   ::notification-container  {:tag "div" :class "jnotify-container"}
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"

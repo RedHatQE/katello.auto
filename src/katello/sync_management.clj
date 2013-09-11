@@ -2,6 +2,7 @@
   (:require [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [clojure.data :as data]
+            [test.assert :as assert]
             [katello :as kt]
             (katello [navigation :as nav] 
                      [notifications :as notification] 
@@ -146,4 +147,7 @@
                     (or (complete-status repo)
                         (do (Thread/sleep 10000)
                             (recur)))))))
+
+(defn verify-all-repos-synced [repos]
+  (assert/is  (every? #(= "Sync complete." %) (map complete-status repos))))
 

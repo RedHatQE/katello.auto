@@ -143,13 +143,13 @@
                 [:disallowed-actions del-actions]))))))
 
 (defn- get-cv-pub [org]
-  {:cv1 (uniqueify (kt/newContentView {:name "con-def1"
+  {:cv1 (uniqueify (kt/newContentViewDefinition {:name "con-def1"
                                        :org org
                                        :published-name "pub-name1"}))
-   :cv2 (uniqueify (kt/newContentView {:name "con-def2"
+   :cv2 (uniqueify (kt/newContentViewDefinition {:name "con-def2"
                                        :org org
                                        :published-name "pub-name2"}))
-   :cv3 (uniqueify (kt/newContentView {:name "con-def3"
+   :cv3 (uniqueify (kt/newContentViewDefinition {:name "con-def3"
                                        :org org
                                        :published-name "pub-name3"}))
    :env (uniqueify (kt/newEnvironment {:name  "dev"
@@ -260,7 +260,7 @@
      (vary-meta
       (fn [] (with-unique [org      baseorg
                            pub-name (uniqueify "pub1")
-                           cv       (kt/newContentView {:name "con-def"
+                           cv       (kt/newContentViewDefinition {:name "con-def"
                                                         :org conf/*session-org*})]
                [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Administer Content View Definitions"], :name "cvaccess_create"}]
                 :allowed-actions [(navigate-fn :katello.content-view-definitions/page)
@@ -273,9 +273,9 @@
       assoc :blockers (auto-issue "800"))
 
      (fn [] (with-unique [org      baseorg
-                          cv       (kt/newContentView {:name "con-def"
+                          cv       (kt/newContentViewDefinition {:name "con-def"
                                                        :org conf/*session-org*})
-                          cv1       (kt/newContentView {:name "con-def1"
+                          cv1       (kt/newContentViewDefinition {:name "con-def1"
                                                         :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions"], :name "cvaccess_read"}]
                :setup (fn [] (ui/create cv))
@@ -290,9 +290,9 @@
                                          (fn [] (ui/delete cv)))]))
 
      (fn [] (with-unique [org      baseorg
-                          cv       (kt/newContentView {:name "con-def"
+                          cv       (kt/newContentViewDefinition {:name "con-def"
                                                        :org conf/*session-org*})
-                          cv1       (kt/newContentView {:name "con-def1"
+                          cv1       (kt/newContentViewDefinition {:name "con-def1"
                                                         :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Modify Content View Definitions" "Publish Content View Definitions" ], :name "cvaccess_publish"}]
                :setup (fn [] (ui/create cv))
@@ -305,9 +305,9 @@
                                          (fn [] (ui/delete cv)))]))
 
      (fn [] (with-unique [org      baseorg
-                          cv       (kt/newContentView {:name "con-def"
+                          cv       (kt/newContentViewDefinition {:name "con-def"
                                                        :org conf/*session-org*})
-                          cv1       (kt/newContentView {:name "con-def1"
+                          cv1       (kt/newContentViewDefinition {:name "con-def1"
                                                         :org conf/*session-org*})]
               [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Modify Content View Definitions"], :name "cvaccess_modify"}]
                :setup (fn [] (ui/create cv))
@@ -321,9 +321,9 @@
 
      (vary-meta
        (fn [] (with-unique [org      baseorg
-                            cv       (kt/newContentView {:name "con-def"
+                            cv       (kt/newContentViewDefinition {:name "con-def"
                                                          :org conf/*session-org*})
-                            cv1       (kt/newContentView {:name "con-def1"
+                            cv1       (kt/newContentViewDefinition {:name "con-def1"
                                                           :org conf/*session-org*})]
                 [:permissions [{:org global, :resource-type "Content View Definitions", :verbs ["Read Content View Definitions" "Delete Content View Definitions"], :name "cvaccess_delete"}]
                  :setup (fn [] (ui/create cv))
@@ -377,7 +377,7 @@
       (fn [] (with-unique [org (kt/newOrganization {:name "cv-org"})
                            env (kt/newEnvironment {:name  "dev"
                                                    :org org})
-                           cv (kt/newContentView {:name "con-def3"
+                           cv (kt/newContentViewDefinition {:name "con-def3"
                                                   :org org
                                                   :published-name "pub-name3"})
                            cs (kt/newChangeset {:name "cs"
@@ -439,10 +439,10 @@
               [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
                :setup (fn [] (rest/create org)
                         (ui/create user))
-               :allowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+               :allowed-actions [(fn [] (wd/move-to browser/*driver* (browser/element ::user/user-account-dropdown))
                                    (browser/click ::user/account)
                                    (nav/browser-fn (click ::user/roles-link)))]
-               :disallowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+               :disallowed-actions [(fn [] (wd/move-to browser/*driver* (browser/element ::user/user-account-dropdown))
                                       (browser/click ::user/account)
                                       (nav/browser-fn (click ::user/roles-link))
                                       (browser/click ::user/add-role))]]))

@@ -30,24 +30,28 @@
                      "nativeEvents" true}
                     {"browserName" "firefox"
                      "platform" "LINUX"
-                     "version" "23"
+                     "version" "21"
                      "nativeEvents" true}
                     {"browserName" "firefox"
                      "platform" "WIN8"
-                     "version" "27"
+                     "version" "23"
                      "nativeEvents" true}
                     {"browserName" "firefox"
                      "platform" "MAC"
                      "version" "21"
-                     "nativeEvents" true}])
+                     "nativeEvents" true}
+                    {"browserName" "firefox"
+                     "platform" "VISTA"
+                     "version" "21"}
+                    {"browserName" "internet explorer"
+                     "platform" "VISTA"
+                     "version" "9"
+                     "nativeEvents" false}])
 
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
-                           "version" "23"
-                           "nativeEvents" false
-                           ;; :profile
-                           #_(doto (ff/new-profile)
-                             (ff/enable-native-events true))})
+                           "version" "21"
+                           "nativeEvents" false})
 (defn new-remote-grid
   "Returns a remote grid server. See new-remote-driver."
   [url port spec]
@@ -167,7 +171,7 @@
                              (job/update-id  sauce-name
                                              sauce-key
                                              s-id {:name (:name t)
-                                                   :build 16
+                                                   :build 34
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -178,7 +182,7 @@
                                              sauce-key
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 16
+                                                   :build 34
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})

@@ -39,12 +39,24 @@
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
     [::details-menu (fn [x]
                       (wd/ajax-wait)
+                      (Thread/sleep 1000)
                       (wd/move-to browser/*driver* (browser/element ::details-link))
-                      (wd/ajax-wait)
-                      (Thread/sleep 1000)) 
-     [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
-     [::events-history-page (nav/browser-fn (click ::events-history-link))]
-     [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
+                      (wd/ajax-wait)) 
+     [::distributor-info-page (fn [x]
+                           (Thread/sleep 1000)
+                           (wd/move-to browser/*driver* (browser/element ::distributor-info-link))
+                           (wd/ajax-wait)
+                           (browser/execute-script (ui/js-id-click "distributor_info")))]
+     [::events-history-page (fn [x]
+                           (Thread/sleep 1000)
+                           (wd/move-to browser/*driver* (browser/element ::events-history-link))
+                           (wd/ajax-wait)
+                           (browser/execute-script (ui/js-id-click "distributor_events")))]
+     [::custom-info-page (fn [x]
+                           (Thread/sleep 1000)
+                           (wd/move-to browser/*driver* (browser/element ::custom-info-link))
+                           (wd/ajax-wait)
+                           (browser/execute-script (ui/js-id-click "custom_info")))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
@@ -55,7 +67,7 @@
   {:pre [(instance? katello.Environment env)]}
   (nav/go-to ::new-page env)
   (rest/when-katello  
-(browser/click (ui/environment-link (:name env))))
+   (browser/click (ui/environment-link (:name env))))
   (browser/quick-fill-submit {::distributor-name-text name}
                              {::create browser/click})
   (notification/success-type :distributor-create))

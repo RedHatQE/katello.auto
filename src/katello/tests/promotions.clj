@@ -28,7 +28,7 @@
                   Verifies that it shows up in the new env."
     (with-unique [org        (kt/newOrganization {:name "org"})
                   env (kt/newEnvironment {:name "env" :org org})
-                  cv         (kt/newContentView {:name "content-view"
+                  cv         (kt/newContentViewDefinition {:name "content-view"
                                                  :org org
                                                  :published-name "publish-name"})             
                   cs         (kt/newChangeset {:name "cs"

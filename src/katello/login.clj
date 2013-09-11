@@ -41,7 +41,12 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
+    (wd/ajax-wait)
+    (wd/move-to browser/*driver* (browser/element ::ui/user-menu))
     (browser/click ::ui/user-menu)
+    (Thread/sleep 1000)
+    (wd/ajax-wait)
+    (wd/move-to browser/*driver* (browser/element ::ui/log-out))
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []

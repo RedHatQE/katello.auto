@@ -52,7 +52,9 @@
     [::default-info-menu (fn [n]
                            (Thread/sleep 1000)
                            (wd/move-to browser/*driver* (browser/element ::default-info)))
-     [::system-default-info-page (nav/browser-fn (click ::system-default-info))]
+     [::system-default-info-page (fn [n]
+                                   (wd/move-to browser/*driver* (browser/element ::system-default-info))
+                                   (browser/click ::system-default-info))]
      [::distributor-default-info-page (fn [n]
                                         (wd/move-to browser/*driver* (browser/element ::distributor-default-info))
                                         (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
@@ -202,10 +204,12 @@
              (while (not (browser/visible? ::default))
                (nav/scroll-org-switcher))
              (when (not= current-default default-org-name)
-              (while (not (browser/visible? (ui/switcher-link default-org-name)))
-                (nav/scroll-org-switcher))))
+               (while (not (browser/visible? (ui/switcher-link default-org-name)))
+                 (nav/scroll-org-switcher))))
            (browser/click (ui/default-star (or default-org-name current-default)))
            (notification/check-for-success)
+           (notification/flush)
+           (Thread/sleep 5000)
            (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))))
        (when name
          (while (not (browser/visible? (ui/switcher-link name)))

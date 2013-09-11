@@ -58,20 +58,21 @@
   (browser/quick-fill-submit {::name-text name}
                              {::description-text (or description "")})
   (wd/move-to-and-click browser/*driver* (browser/element ::create))
-  (notification/success-type :sysgrps-create))
+  (notification/success-type :sysgrps-create)
+  (browser/wait-until #(not (browser/visible? ::ui/notification-container)) 5000 1000))
 
 (defn- add-to
   "Adds systems to a system group"
   [systems]
   (browser/click ::systems-link)
   (doseq [system systems]
-    (browser/quick-fill-submit {::hostname-toadd (:name system)}
+    (browser/quick-fill-submit {::hostname-toadd (:name system)})
                                ;;try to trigger autocomplete via javascript -
                                ;;hackalert - see
                                ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
-                               {#(browser/execute-script %) ["window.$(\"#add_system_input\").autocomplete('search')"]}
-                               {#(Thread/sleep 5000) []}
-                               {::add-system browser/click})
+    (browser/execute-script "window.$(\"#add_system_input\").autocomplete('search')")
+    (Thread/sleep 3000)
+    (browser/click ::add-system)
     (notification/success-type :sysgrps-add-sys)))
 
 (defn- remove-from
