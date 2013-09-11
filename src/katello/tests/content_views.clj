@@ -160,14 +160,23 @@
         (expecting-error (common/errtype ::notifications/name-taken-error)
                          (ui/create content-def))))
 
-    (deftest "Delete a content view definition"
+    (deftest "Delete a empty content view definition"
       :uuid "79c7d67f-5fca-dcc4-7e33-73c8bf413c67"
       (doto (-> {:name "view-def" :org *session-org*}
                 kt/newContentViewDefinition
                 uniqueify)
         (ui/create)
         (ui/delete)))
-
+    
+    (deftest  "Delete a non-empty content-view definition"
+      :uuid "965cd000-3336-4758-b86c-751b38556d9d"
+      :blockers (bz-bugs "1006693")
+      (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups"})]
+        (ui/create-all (list cv cv-filter))
+        (views/add-pkg-group-rule cv-filter {:pkg-groups (list "birds")})
+        (ui/delete cv)))
+    
     (deftest "Clone empty content view definition"
       :uuid "2184af79-0ffb-3cf4-52bb-48b28eefe34c"
       (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
