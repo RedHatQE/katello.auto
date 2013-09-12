@@ -281,7 +281,14 @@
     :uuid "3737658d-3924-4df1-86fa-272a8b9d8b72"
     (let [manifest      (new-manifest false)
           org2          (prepare-org-fetch-org)
-          org2-manifest (update-in manifest [:provider] assoc :org org2) ]
+          org2-manifest (update-in manifest [:provider] assoc :org org2)]
       (ui/create manifest)
       (ui/delete manifest)
-      (ui/create org2-manifest))))
+      (ui/create org2-manifest)))
+  
+  (deftest "Manifest link should point to customer portal not localhost"
+    :uuid "c1d0b7ef-fb2d-4dc5-ac35-6aa65530def9"
+    (let [manifest      (new-manifest true)]
+      (ui/create manifest)
+      (nav/go-to ::subscriptions/new-page (kt/provider manifest))
+      (assert/is (browser isElementPresent ::subscriptions/manifest-link)))))

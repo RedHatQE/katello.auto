@@ -13,7 +13,9 @@
    ::create                   "commit"
    ::repository-url-text      "provider[repository_url]"
    ::choose-file              "provider_contents"
-   ::manifest-history         "//a[contains(@href,'history_items')]"})
+   ::manifest-history         "//a[contains(@href,'history_items')]"
+   ::manifest-link            "//fieldset/div/a[contains(@href,'access')]"
+   ::redhat-login             "//label[@for='username' and contains(.,'Red Hat Login')]"})
 
 (sel/template-fns
  {subs-exists       "//div[@class='one-line-ellipsis' and contains(.,'%s')]"
