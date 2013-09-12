@@ -7,19 +7,24 @@
                      [ui-common :as common]
                      [tasks :refer :all]
                      [rest :as rest]
+                     [navigation :as nav]
                      [environments :as env]
                      [validation :as val]
                      [manifest :as manifest]
                      [redhat-repositories :as rh-repos]
                      [fake-content  :as fake]
                      [subscriptions :as subs]
-                     [conf :refer [*session-org* *environments*]]
+                     [systems :as system]
+                     [conf :refer [*session-org* *environments* config]]
                      [blockers :refer [bz-bugs]])
-            [katello.tests.useful :refer [create-recursive]]
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [katello.tests.useful :refer [create-recursive new-manifest]]
             [katello.client.provision :as provision]            
             [test.tree.script :refer [defgroup deftest]]
             [serializable.fn :refer [fn]]
             [test.assert :as assert]))
+
+(def ces-manifest-url "http://cosmos.lab.eng.pnq.redhat.com/rhel64/manifest_ces.zip")
 
 ;; Tests
 
@@ -71,7 +76,32 @@
           (ui/create ak)
           (ui/update ak assoc :subscriptions fake/subscription-names)
           (assert/is (some #{(first fake/subscription-names)}
-                           (ak/get-subscriptions ak))))))
+                           (ak/get-subscriptions ak))))))  
+    
+    (deftest  "Deleting the pool referenced by the activation key" 
+      :uuid "600a0af7-2c55-4a65-9754-96050096891a"
+      (let [dest (manifest/fetch-manifest ces-manifest-url)
+            manifest (new-manifest true)
+            org (kt/org manifest)
+            provider (assoc kt/red-hat-provider :org org)
+            manifest-1 (kt/newManifest {:file-path dest
+                                        :url (@config :redhat-repo-url)
+                                        :provider provider})
+            repos     (for [r (rh-repos/describe-repos-to-enable-disable rh-repos/enable-redhat-repos)]
+                        (update-in r [:reposet :product :provider] assoc :org org))]
+        (ui/create manifest)
+        (rh-repos/enable-disable-repos repos)
+        (with-unique [ak (kt/newActivationKey {:name "ak"
+                                               :env (kt/library org)
+                                               :description "auto activation key"})]
+          (ui/create ak)
+          (ui/update ak assoc :subscriptions rh-repos/redhat-ak-subscriptions)
+          (assert/is (some #{(first rh-repos/redhat-ak-subscriptions)}
+                           (ak/get-subscriptions ak)))
+          (ui/delete manifest)
+          (ui/create manifest-1)
+          (assert/is (not-any? #{(first rh-repos/redhat-ak-subscriptions)}
+                               (ak/get-subscriptions ak))))))
 
   (deftest "Delete activation key after registering a system with it"
     :uuid "b6a914fb-d3cf-0134-da73-4ea1ca367f71"
@@ -84,5 +114,27 @@
                          {:org (-> ak :env :org :name)
                           :activationkey (:name ak)})
         (ui/delete ak)
-        (client/sm-cmd ssh-conn :refresh)))))
+        (client/sm-cmd ssh-conn :refresh))))
   
+  (deftest "Check whether the systems link on activation keys page works correctly"
+    :uuid "35b9d9e2-ab84-4a99-a633-6135d40e6970"
+    (let [manifest (new-manifest true)
+          org (kt/org manifest)
+          repos     (for [r (rh-repos/describe-repos-to-enable-disable rh-repos/enable-redhat-repos)]
+                        (update-in r [:reposet :product :provider] assoc :org org))]
+      (ui/create manifest)
+      (rh-repos/enable-disable-repos repos)
+      (with-unique [ak (kt/newActivationKey {:name "ak"
+                                             :env (kt/library org)
+                                             :description "auto activation key"})]
+        (ui/create ak)
+        (ui/update ak assoc :subscriptions rh-repos/redhat-ak-subscriptions)
+        (provision/with-queued-client ssh-conn
+          (client/register ssh-conn
+                           {:org (-> ak :env :org :name)
+                            :activationkey (:name ak)}) 
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
+                             katello/newSystem)]
+            (nav/go-to ::ak/systems-page ak)
+            (browser clickAndWait (ak/systems-link (:name mysys)))
+            (assert/is (browser isElementPresent ::system/subscriptions))))))))

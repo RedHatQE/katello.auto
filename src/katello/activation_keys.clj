@@ -18,6 +18,7 @@
    ::content-view-select     "activation_key[content_view_id]"
    ::save                    "save_key"
    ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
+   ::systems-select          (ui/third-level-link "activation_keys_menu_systems")
    ::add-sys-group-form      "//form[@id='add_group_form']/button"
    ::add-sys-group           "//input[@id='add_groups']"
    ::system-groups           (ui/third-level-link "system_mgmt")
@@ -30,7 +31,8 @@
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   sysgroup-checkbox "//input[@title='%s']"
-  applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
+  applied-subscriptions "xpath=(//table[@class='filter_table clear']//td[1])[%s]"
+  systems-link          "//a[contains(@href,'systems') and contains(.,'%s')]"})
 
 ;; Nav
 
@@ -38,7 +40,8 @@
   [::page
    [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
     [::system-group-menu (nav/browser-fn (mouseOver ::system-groups))
-     [::system-group-page (nav/browser-fn (click ::system-group-select))]]]
+     [::system-group-page (nav/browser-fn (click ::system-group-select))]
+     [::systems-page (nav/browser-fn (click ::systems-select))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
