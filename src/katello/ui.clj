@@ -133,8 +133,8 @@
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"
-   ::user-menu               "//nav[@alch-menu='user_menu']//a"
-   ::log-out                 "//div[@ng-controller='MenuController']//a[contains(@href,'logout')]"})
+   ::user-menu               "//nav[@alch-menu='userMenu']"
+   ::log-out                 "//section[@id='navigation']//a[contains(@href,'logout')]"})
 
 (extend-protocol wd/SeleniumLocatable
   clojure.lang.Keyword

@@ -92,7 +92,7 @@
 ;;; Tests
 
 (defgroup default-org-tests
-  :test-teardown (fn [& _ ] (login))
+  
   (deftest "Set default org for a user at login"
     :uuid "b5acedf5-f7d5-bb34-10c3-2d91caa3f9c8"
     :tcms "201013"
@@ -174,7 +174,6 @@
 
 
 (defgroup user-settings
-  :test-teardown (fn [& _ ] (login))
  
   (deftest "User changes his password"
     :uuid "19567fea-dc37-7974-9a6b-3e11e16fab47"

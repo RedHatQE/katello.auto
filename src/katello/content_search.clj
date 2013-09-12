@@ -398,8 +398,8 @@
   ;; Select environments (columns)
   (doseq [env envs]
     (let [col-locator (column env)]
-      (wd/move-to browser/*driver* ::column-selector) 
-      (wd/move-to browser/*driver* col-locator)
+      (wd/move-to ::column-selector) 
+      (wd/move-to col-locator)
       (browser/click col-locator)
       (wd/move-off browser/*driver* ::column-selector))))
 
@@ -448,7 +448,7 @@
 
 (defn test-errata-popup-click [name]
   (browser/click (span-text name))
-  (wd/move-to browser/*driver* ::errata-search)
+  (wd/move-to ::errata-search)
   ;DOESNT CONTAIN NAME ANYMORE
   (assert/is (.contains (browser/text ::details-container) "Erratum"))
   (browser/click (span-text name))
@@ -457,7 +457,7 @@
 (defn test-errata-popup-hover [name] 
   (assert/is
    (.contains
-    (do  (wd/move-to browser/*driver* (span-text name))
+    (do  (wd/move-to (span-text name))
          (browser/wait-until  (browser/exists? ::details-container) 4000)
          (browser/text ::details-container))
     name))

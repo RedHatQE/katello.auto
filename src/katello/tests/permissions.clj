@@ -439,10 +439,10 @@
               [:permissions [{:org org, :resource-type :all, :name "fullaccess"}]
                :setup (fn [] (rest/create org)
                         (ui/create user))
-               :allowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+               :allowed-actions [(fn [] (wd/move-to ::user/user-account-dropdown)
                                    (browser/click ::user/account)
                                    (nav/browser-fn (click ::user/roles-link)))]
-               :disallowed-actions [(fn [] (wd/move-to browser/*driver* ::user/user-account-dropdown)
+               :disallowed-actions [(fn [] (wd/move-to ::user/user-account-dropdown)
                                       (browser/click ::user/account)
                                       (nav/browser-fn (click ::user/roles-link))
                                       (browser/click ::user/add-role))]]))

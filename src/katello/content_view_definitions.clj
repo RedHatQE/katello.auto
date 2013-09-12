@@ -146,7 +146,7 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (wd/move-to (-> repo :name product-or-repository))
     (wd/->browser
      (click ::add-product-btn)
      (click ::update-content))
@@ -157,7 +157,7 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (wd/move-to (-> repo :name product-or-repository))
     (wd/->browser
      (click ::add-product-btn)
      (click  (-> repo :name remove-repository))
@@ -207,7 +207,7 @@
   [repos]
   (browser/click ::repo-tab)
   (doseq [repo repos]
-    (wd/move-to browser/*driver* (-> repo :name product-or-repository))
+    (wd/move-to (-> repo :name product-or-repository))
     (browser/click ::add-product-btn)
     (browser/click ::update-content)))
 
@@ -313,7 +313,7 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (wd/move-to browser/*driver* (-> product :name product-or-repository))
+    (wd/move-to (-> product :name product-or-repository))
     (wd/->browser
      (click ::add-product-btn)
      (click ::update-content))
@@ -324,7 +324,7 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (wd/move-to browser/*driver* (->  product :name product-or-repository))
+    (wd/move-to (->  product :name product-or-repository))
     (wd/->browser
      (click (-> product :name remove-product))
       (click ::update-content))

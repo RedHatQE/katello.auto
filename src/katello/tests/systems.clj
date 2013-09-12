@@ -75,18 +75,18 @@
    Here opr-type is package installed/removed 
    msg-format is Package Install/Package Remove"
   [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
-  (browser click ::system/pkg-install-status-link)
-  (assert/is (= msg-format (browser getText ::system/pkg-header)))
-  (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser getText ::system/pkg-summary)))
+  (browser/click ::system/pkg-install-status-link)
+  (assert/is (= msg-format (browser/text ::system/pkg-header)))
+  (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser/text ::system/pkg-summary)))
   (if-not (nil? package-group)
     (do
-      (assert/is (= (join " " [package-group opr-type]) (browser getText ::system/pkg-request)))
-      (assert/is (= (join ["@" package-group]) (browser getText ::system/pkg-parameters)))
-      (assert/is (browser isElementPresent ::system/pkg-result)))
+      (assert/is (= (join " " [package-group opr-type]) (browser/text ::system/pkg-request)))
+      (assert/is (= (join ["@" package-group]) (browser/text ::system/pkg-parameters)))
+      (assert/is (browser/exists? ::system/pkg-result)))
     (do
-      (assert/is (= (join " " [package opr-type]) (browser getText ::system/pkg-request)))
-      (assert/is (= package (browser getText ::system/pkg-parameters)))
-      (assert/is (= (apply str (split pkg-version #"\n+")) (browser getText ::system/pkg-result))))))
+      (assert/is (= (join " " [package opr-type]) (browser/text ::system/pkg-request)))
+      (assert/is (= package (browser/text ::system/pkg-parameters)))
+      (assert/is (= (apply str (split pkg-version #"\n+")) (browser/text ::system/pkg-result))))))
 
 (defn configure-product-for-pkg-install
   "Creates a product with fake content repo, returns the product."
@@ -134,9 +134,9 @@
 (defn filter-errata-by-type "Filter errata based on selected errata-type"
   [system {:keys [errata-type errata-ids]}]
   (nav/go-to ::system/content-errata-page system)
-  (browser select ::system/select-errata-type errata-type)
+  (browser/select ::system/select-errata-type errata-type)
   (doseq [errata-id errata-ids]
-    (assert/is (= errata-id (browser getText (system/get-errata errata-id))))))
+    (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
 
 ;; Tests
 
@@ -594,7 +594,7 @@
         (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                       katello/newSystem)]
           (system/filter-package mysys {:package package})
-          (assert/is (= package-name (browser getText (system/get-filtered-package package))))))))
+          (assert/is (= package-name (browser/text (system/get-filtered-package package))))))))
   
   (deftest "Filter Errata"
     :uuid "ed64eea5-4c37-4810-8f43-8da0bfbced43"

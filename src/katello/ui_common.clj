@@ -145,10 +145,10 @@
 (defn save-cancel [save-locator cancel-locator request-type input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser/text  inactive-elem)]
-    (wd/move-to-and-click browser/*driver* (browser/element inactive-elem))
+    (wd/move-to-and-click (browser/element inactive-elem))
     (browser/input-text  input-locator requested-value)
     (if save?
-      (do (wd/move-to-and-click browser/*driver* (browser/element save-locator))
+      (do (wd/move-to-and-click (browser/element save-locator))
           (notification/success-type request-type)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text requested-value)
@@ -156,7 +156,7 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Input field didn't update properly after saving."}))))
-      (do (wd/move-to-and-click browser/*driver* (browser/element cancel-locator))
+      (do (wd/move-to-and-click (browser/element cancel-locator))
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text orig-text)
               (throw+ {:type ::cancel-failed

@@ -112,11 +112,11 @@
   browser/*driver*)
 
 (defn conf-selenium
-  "Sets the implicit-wait time for the driver and navigates to the specified urlu"
+  "Opens katello url (to a quick-loading page, not dashboard), and logs in"
   []
-  (browser/implicit-wait 0)
-  (browser/to (@config :server-url))
-  (browser/window-maximize))
+  (browser/window-maximize)
+  (browser/to (str (@config :server-url) "/users"))
+  (login))
 
 (defn set-job-id
   "Sets a thread-local binding of the session-id to *job-id*. This is to allow pass/fail reporting after the browser session has ended."
@@ -158,39 +158,9 @@
                   *job-id* nil]
           (consume-fn))))))
 
-(defn on-pass
-  "create a watcher that will call f when a test passes."
-  [f]
-  (watch/watch-on-pred (fn [test report]
-                   (let [r (:report report)]
-                     (and r (-> r :result (= :pass)))))
-                 f))
-
 (def runner-config 
   {:thread-wrapper thread-runner
-   :watchers {:stdout-log watch/stdout-log-watcher
-              :onpass (on-pass
-                       (fn [t _]
-                         (if (complement (contains? t :configuration))
-                           (let [s-id *job-id*]
-                             (job/update-id  (@config :sauce-user)
-                                             (@config :sauce-key)
-                                             s-id {:name (:name t)
-                                                   :build 11
-                                                   :tags [(:version (rest/get-version))]
-                                                   :passed true})))))
-              :onfail (watch/on-fail
-                       (fn [t e]
-                         (if (complement (contains? t :configuration))
-                           (let [s-id *job-id*]
-                             (job/update-id  (@config :sauce-user)
-                                             (@config :sauce-key)
-                                             s-id {:name (:name t)
-                                                   :tags [(:version (rest/get-version))]
-                                                   :build 11
-                                                   :passed false
-                                                   :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
-                                                                 "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})
+   :watchers {:stdout-log watch/stdout-log-watcher}})
 
 
 

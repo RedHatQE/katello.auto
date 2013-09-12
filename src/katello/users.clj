@@ -129,7 +129,7 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (wd/move-to browser/*driver* ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
+      (do (wd/move-to ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
           (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))

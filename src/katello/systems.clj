@@ -278,7 +278,7 @@
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (wd/move-to browser/*driver* (browser/element ::name-text))
+      (wd/move-to (browser/element ::name-text))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -466,7 +466,7 @@
 
 (defn check-package-status
   [&[timeout-ms]]
-  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
                          (case current-status
                            "Add Package Complete" current-status
                            "Add Package Group Complete" current-status
@@ -477,19 +477,19 @@
                            "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
                            "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})              
                            (do (Thread/sleep 2000)
-                             (recur (browser getText ::pkg-install-status))))))
+                             (recur (browser/text ::pkg-install-status))))))
 
 (defn check-pkg-update-status
   "Function to test selected package status while updating it"
   [package &[timeout-ms]]
-  (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
                          (case current-status
                            "Update Package Complete" current-status
                            "Remove Package Complete" current-status
                            "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
                            "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
                            (do (Thread/sleep 2000)
-                             (recur (browser getText (package-action-status package)))))))
+                             (recur (browser/text (package-action-status package)))))))
 
 (defn add-package "Add a package/package-group on selected system"
   [system {:keys [package package-group]}]
@@ -523,19 +523,19 @@
 (defn filter-package "filter a package from package-list"
   [system {:keys [package]}]
   (nav/go-to ::content-packages-page system)
-  (sel/->browser (setText ::filter-package package)
-                 (typeKeys ::filter-package package)
-                 (click (package-select package))))
+  (wd/->browser (input-text ::filter-package package)
+                (send-keys ::filter-package package)
+                (click (package-select package))))
 
 (defn update-selected-package "Update a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (browser click ::update-package)
+  (browser/click ::update-package)
   (check-pkg-update-status package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (browser click ::remove-package)
+  (browser/click ::remove-package)
   (check-pkg-update-status package))
   
