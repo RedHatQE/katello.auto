@@ -19,25 +19,23 @@
 (declare test-org)
 
 (defn setup []
-      (def ^:dynamic test-org (uniqueify (kt/newOrganization {:name "dash-org"})))
-      (rest/create test-org)
-      (org/switch test-org)
-      (fake/prepare-org-custom-provider test-org fake/custom-errata-test-provider)
-      (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org :prior-env "Library"})))
+  (def ^:dynamic test-org (uniqueify (kt/newOrganization {:name "dash-org"})))
+  (rest/create test-org)
+  (org/switch test-org)
+  (fake/prepare-org-custom-provider test-org fake/custom-errata-test-provider)
+  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org :prior-env "Library"})))
 
 (defgroup equality 
-    :group-setup setup
+  :group-setup setup
 
-    (deftest "Repo compare: Differences between repos can be qualified"
-      (dashboard/go-top)
+  (deftest "Repo compare: Differences between repos can be qualified"
+    (dashboard/go-top)
       
-      (let
-         [dashboard-notice (dashboard/get-dashboard-notices)   
-          notice (select #(or (= (test-org :name) (% :org))
+    (let
+        [dashboard-notice (dashboard/get-dashboard-notices)   
+         notice (select #(or (= (test-org :name) (% :org))
                              (= "" (% :org))) (notices/page-content))
-          comparison (filter (fn [a] (.startsWith (a :desc) (a :short-desc))) (clojure.set/join notice dashboard-notice))] 
-          (assert/is
-            (=
-             (count dashboard-notice) (count notice) (count comparison))
-        ))
-      ))
+         comparison (filter (fn [a] (.startsWith (a :desc) (a :short-desc))) (clojure.set/join notice dashboard-notice))] 
+      (assert/is
+       (=
+        (count dashboard-notice) (count notice) (count comparison))))))
