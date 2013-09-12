@@ -7,14 +7,17 @@
                      [ui-common :as common]
                      [tasks :refer :all]
                      [rest :as rest]
+                     [navigation :as nav]
                      [environments :as env]
                      [validation :as val]
                      [manifest :as manifest]
                      [redhat-repositories :as rh-repos]
                      [fake-content  :as fake]
                      [subscriptions :as subs]
+                     [systems :as system]
                      [conf :refer [*session-org* *environments* config]]
                      [blockers :refer [bz-bugs]])
+            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
             [katello.tests.useful :refer [create-recursive new-manifest]]
             [katello.client.provision :as provision]            
             [test.tree.script :refer [defgroup deftest]]
@@ -111,4 +114,27 @@
                          {:org (-> ak :env :org :name)
                           :activationkey (:name ak)})
         (ui/delete ak)
-        (client/sm-cmd ssh-conn :refresh)))))
+        (client/sm-cmd ssh-conn :refresh))))
+  
+  (deftest "Check whether the systems link on activation keys page works correctly"
+    :uuid "35b9d9e2-ab84-4a99-a633-6135d40e6970"
+    (let [manifest (new-manifest true)
+          org (kt/org manifest)
+          repos     (for [r (rh-repos/describe-repos-to-enable-disable rh-repos/enable-redhat-repos)]
+                        (update-in r [:reposet :product :provider] assoc :org org))]
+      (ui/create manifest)
+      (rh-repos/enable-disable-repos repos)
+      (with-unique [ak (kt/newActivationKey {:name "ak"
+                                             :env (kt/library org)
+                                             :description "auto activation key"})]
+        (ui/create ak)
+        (ui/update ak assoc :subscriptions rh-repos/redhat-ak-subscriptions)
+        (provision/with-queued-client ssh-conn
+          (client/register ssh-conn
+                           {:org (-> ak :env :org :name)
+                            :activationkey (:name ak)}) 
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
+                             katello/newSystem)]
+            (nav/go-to ::ak/systems-page ak)
+            (browser clickAndWait (ak/systems-link (:name mysys)))
+            (assert/is (browser isElementPresent ::system/subscriptions))))))))
