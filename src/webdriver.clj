@@ -110,7 +110,13 @@ Default browser-spec: firefox"
 
 (defn move-off
   [driver loc]
-  (clj-web/move-to-element driver loc -20 -20))
+  (clj-web/move-to-element driver loc -5 0))
+
+(defn move-to-and-jiggle
+  [loc]
+  (move-to browser/*driver* (browser/element loc))
+  (move-off browser/*driver* (browser/element loc))
+  (move-to browser/*driver* (browser/element loc)))
 
 (defn key-up
   [driver loc k]

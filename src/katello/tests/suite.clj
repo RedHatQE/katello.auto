@@ -38,7 +38,7 @@
   katello.tests.providers/provider-tests
   katello.tests.distributors/distributor-tests
   katello.tests.promotions/promotion-tests
-;; katello.tests.promotions/deletion-tests  ;; needs to be added back
+  ;; katello.tests.promotions/deletion-tests  ;; needs to be added back
   katello.tests.permissions/permission-tests
   katello.tests.systems/system-tests
   katello.tests.system-groups/sg-tests

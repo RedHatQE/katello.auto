@@ -85,7 +85,9 @@
     (when default-env
       (env-chooser default-env))
     (browser/click ::save))
-  (notification/success-type :users-create))
+  (notification/success-type :users-create)
+  (Thread/sleep 3000) ;; waits for notification to disappear
+  )
 
 (defn- delete "Deletes the given user."
   [user]
@@ -129,11 +131,11 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (wd/move-to browser/*driver* ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
+      (do (wd/move-to browser/*driver* (browser/element ::user-account-dropdown)) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
           (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
-    
+    (Thread/sleep 1000)
     (when-not (nil? inline-help)
       (browser/select ::enable-inline-help-checkbox))
     (when password
@@ -149,7 +151,7 @@
       (browser/click ::save-edit) 
       (notification/success-type :users-update))
     (when email
-      (common/in-place-edit {::email-text email}))
+      (common/in-place-edit {::email-text "blorp"}))
     (let [role-changes (map :roles (list to-add to-remove))]
       (when (some seq role-changes)
         (browser/click ::roles-link)
@@ -206,7 +208,7 @@
           (throw+ {:type ::not-all-notifications-deleted
                    :msg "Still some notifications remained after trying to delete all"})))
       (do
-        (browser/click ::confirmation-no)
+        (browser/click ::ui/confirmation-no)
         (when (not= num-count (browser/text ::user-notifications))
           (throw+ {:type ::notifications-deleted-anyway
                    :msg "Notifications were deleted even after clicking 'no' on confirm."}))))))

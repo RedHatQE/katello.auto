@@ -35,8 +35,8 @@
 
 (defn scroll-left-pane-more
   "Loads another group of 25 items in the left pane, by scrolling down" []
-  (wd/->browser (execute-script (str "window.scrollTo(0,1000000);"))
-                #_(ajaxWait)))
+  (wd/->browser (execute-script (str "window.scrollTo(0,1000000);")))
+  (wd/ajax-wait))
 
 (defn scroll-left-pane-until
   "Scroll the left pane down until (side-effecty) no-arg function f

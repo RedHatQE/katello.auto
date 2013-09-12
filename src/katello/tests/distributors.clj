@@ -40,8 +40,10 @@
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
         (let [expected-res #(-> % :type (= :success))]
-          (ui/create-all (list org dist))
+          (rest/create-all (list org))
+          (ui/create dist)
           (ui/update dist assoc :custom-info {keyname value})
+          (wd/ajax-wait)
           (assert/is (= (wd/text-present? keyname) success?))
           (assert/is (= (wd/text-present? keyname) success?)))))
 
@@ -67,7 +69,8 @@
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
         (let [expected-res #(-> % :type (= :success))]
-          (ui/create-all (list org dist))
+          (rest/create org)
+          (ui/create dist)
           (ui/update dist assoc :custom-info {"fname" "redhat"})
           (expecting-error expected-res
             (nav/go-to ::distributor/custom-info-page dist)
@@ -80,7 +83,8 @@
     :uuid "6776a633-b0d2-4dec-9e71-07c9c352afcc"
     (with-unique [org (kt/newOrganization {:name "auto-org"})
                   dist (kt/newDistributor {:name "test-dist" :env (kt/library org)})]
-      (ui/create-all (list org dist))
+      (rest/create org)
+      (ui/create dist)
       (let [dist (ui/update dist assoc :custom-info {"fname" "FEDORA"})]
         (assert/is (wd/text-present? "fname"))
         (ui/update dist update-in [:custom-info] dissoc "fname")))))

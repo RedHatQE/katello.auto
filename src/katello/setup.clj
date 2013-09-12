@@ -42,18 +42,36 @@
                    "version" "10"
                    "nativeEvents" false}})
 
+
+(def sauce-configs 
+  {:chrome+win8 	{"browserName" "chrome"
+                     "platform" "WIN8"
+                     "version" "27"
+                     "nativeEvents" true}
+   :ff+linux        {"browserName" "firefox"
+                     "platform" "LINUX"
+                     "version" "21"
+                     "nativeEvents" true}
+   :ff+win8         {"browserName" "firefox"
+                     "platform" "WIN8"
+                     "version" "23"
+                     "nativeEvents" true}
+   :ff+osx          {"browserName" "firefox"
+                     "platform" "MAC"
+                     "version" "21"
+                     "nativeEvents" true}
+   :ff+win2008      {"browserName" "firefox"
+                     "platform" "VISTA"
+                     "version" "21"}
+   :ie+win2008      {"browserName" "internet explorer"
+                     "platform" "VISTA"
+                     "version" "9"
+                     "nativeEvents" false}})
+
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
-                           "version" "23"
-                           "nativeEvents" false
-                           ;; :profile
-                           #_(doto (ff/new-profile)
-                             (ff/enable-native-events true))})
-
-(def empty-local-browser-config {:browser :firefox
-                                 :profile (doto (ff/new-profile)
-                                            (ff/enable-native-events true))})
-
+                           "version" "21"
+                           "nativeEvents" false})
 (defn new-remote-grid
   "Returns a remote grid server. See new-remote-driver."
   [url port spec]
@@ -104,9 +122,9 @@
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]  
-  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-driver! {:browser :chrome} )
   (browser/set-finder! wd/locator-finder-fn)
-  (browser/implicit-wait 2000)
+  (browser/implicit-wait 100)
   (browser/to (@config :server-url))
   (login)
   browser/*driver*)
@@ -176,7 +194,7 @@
                              (job/update-id  (@config :sauce-user)
                                              (@config :sauce-key)
                                              s-id {:name (:name t)
-                                                   :build 11
+                                                   :build 37
                                                    :tags [(:version (rest/get-version))]
                                                    :passed true})))))
               :onfail (watch/on-fail
@@ -187,7 +205,7 @@
                                              (@config :sauce-key)
                                              s-id {:name (:name t)
                                                    :tags [(:version (rest/get-version))]
-                                                   :build 11
+                                                   :build 37
                                                    :passed false
                                                    :custom-data {"throwable" (pr-str (:throwable (:error (:report e))))
                                                                  "stacktrace" (-> e :report :error :stack-trace java.util.Arrays/toString)}})))))}})

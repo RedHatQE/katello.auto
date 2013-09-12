@@ -29,6 +29,10 @@
   [loc]
   (conj {:tag "textarea"} {:name (browser/attribute (wd/sel-locator loc) :name)}))
 
+(defn input-loc
+  [loc]
+  (conj {:tag "input"} {:name (browser/attribute (wd/sel-locator loc) :name)}))
+
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
   (browser/click (a-toggler associated-text on?)))
@@ -66,7 +70,8 @@
   (doall (for [[loc val] items]
            (if-not (nil? val)
              (do (activate-in-place loc)
-                 (browser/input-text (textfield-loc loc) val)
+                 (browser/clear (input-loc loc))
+                 (browser/input-text (input-loc loc) val)
                  (browser/click ::ui/save-inplace-edit)
                  (notification/check-for-success))))))
 
@@ -144,9 +149,9 @@
 
 (defn save-cancel [save-locator cancel-locator request-type input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
-        orig-text (browser/text  inactive-elem)]
+        orig-text (browser/text inactive-elem)]
     (wd/move-to-and-click browser/*driver* (browser/element inactive-elem))
-    (browser/input-text  input-locator requested-value)
+    (browser/input-text input-locator requested-value)
     (if save?
       (do (wd/move-to-and-click browser/*driver* (browser/element save-locator))
           (notification/success-type request-type)

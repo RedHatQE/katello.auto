@@ -212,7 +212,7 @@
       :data-driven true
       
       (fn [packages version-type &[value1 value2]]
-        (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
+        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (ui/create-all (list cv cv-filter))
           (views/add-package-rule cv-filter {:packages (list packages)
@@ -371,7 +371,6 @@
     
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
-      :blockers (bz-bugs "996172")
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org

@@ -119,7 +119,7 @@
 
 (def relationships
   {Organization {:org identity, :parent (constantly nil), :library #(assoc base-library :org %)}
-   Environment {:org :org, :env identity, :parent #'org, :library mklibrary} ; the org is in the env's :org field
+   Environment {:org :org, :env identity, :parent #'org, :library mklibrary}  ; the org is in the env's :org field
    Provider {:org :org, :provider identity, :parent #'org}
    Distributor {:org (comp #'org #'env), :env :env, :parent #'env}
    Product {:org (comp #'org #'provider), :provider :provider, :product identity, :parent #'provider} ; the org is the provider's org
@@ -159,5 +159,3 @@
     (rest (reduce f (vector (library org)) (vec environments)))))
 
 (def newEnvironment (comp first chain list map->Environment))
-
-
