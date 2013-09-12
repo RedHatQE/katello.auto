@@ -30,7 +30,7 @@
 (sel/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   sysgroup-checkbox "//input[@title='%s']"
-  applied-subscriptions "xpath=(//table[@class='filter_table']//a[contains(@href, 'providers') or contains(@href, 'subscriptions')])[%s]"})
+  applied-subscriptions "xpath=(//table[@class='filter_table clear']//td[1])[%s]"})
 
 ;; Nav
 
