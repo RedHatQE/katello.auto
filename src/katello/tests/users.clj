@@ -360,26 +360,22 @@
     :uuid "749d23d7-f806-48c1-8961-e1d0be60e49b"
     :blockers (bz-bugs "1001609")
     :data-driven true
-    (fn [flip-order?]
+    (fn [reorder]
       (let [user (-> (new-unique-user)
                       create-user
                       assign-admin)]
         (try+
-          (login user {:org *session-org*})
-          (let [manifest (new-manifest true)
-                org (kt/org manifest)]
-            (ui/create manifest)
-            (login)
-            (if flip-order?
-              (do
-                (ui/delete org)
-                (ui/delete user))
-              (do
-                (ui/delete user)
-                (ui/delete org))))
-           (finally (login)))))
-      [[true]
-       [false]])
+         (login user {:org *session-org*})
+         (let [manifest (new-manifest true)
+               org (kt/org manifest)
+               entities [org user]]
+           (ui/create manifest)
+           (login)
+           (doseq [item (reorder entities)]
+             (ui/delete item)))
+         (finally (login)))))
+    [[identity]
+     [reverse]])
            
   (deftest "Assure left pane updates when users/roles are added/deleted"
     :uuid "05f27396-e1d8-33b4-44a3-9ffdb01d227e"
