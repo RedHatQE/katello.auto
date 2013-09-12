@@ -49,7 +49,6 @@
    :cloud-providers "Red Hat Enterprise Linux for Cloud Providers, Partner Enablement, Premium"
    :hcn             "Red Hat Enterprise Linux Server for HPC Compute Node, Self-support (8 sockets) (Up to 1 guest)"
    :rhev            "Red Hat Enterprise Virtualization for Desktops (25 concurrent desktops), Premium"
-   :jboss           "Red Hat JBoss Enterprise Application Platform ELS Program, 64 Core Standard"
    :scalable-hcn    "Scalable File System for HPC Compute Node (1-2 sockets)"})
 
 ;; extended update support (eus), part of non-standard subscriptions manifest,
