@@ -221,7 +221,7 @@
       :data-driven true
       
       (fn [packages version-type &[value1 value2]]
-        (with-unique [cv (katello/newContentView {:name "con-def" :org *session-org*})
+        (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (ui/create-all (list cv cv-filter))
           (views/add-package-rule cv-filter {:packages (list packages)
