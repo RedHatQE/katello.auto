@@ -79,19 +79,33 @@
       (do (println banner))
       (do
         (conf/init opts)
-        (let [client-queue  nil #_(provision/init 3)
-              middleware (jenkins/debug+sauce-middleware
-                          (assoc (select-keys @config [:sauce-user :sauce-key])
-                            :sauce-server (setup/make-default-grid)
-                            :capabilities-chooser-fn (constantly setup/empty-browser-config)
-                            :finder-fn wd/locator-finder-fn))]
+        (let [client-queue (provision/init 3)
+              sel-config {:selenium-server (cond (@config :sauce-user)
+                                                 (setup/new-remote-grid
+                                                  (setup/sauce-host (@config :sauce-user)
+                                                                    (@config :sauce-key)))
+                                                 
+                                                 (@config :selenium-address)
+                                                 (setup/new-remote-grid (@config :selenium-address)) ; other remote wd
+
+                                                 :else (setup/new-selenium)) ; local
+                          :capabilities-chooser-fn (constantly setup/empty-browser-config)
+                          :finder-fn wd/locator-finder-fn}
+              
+              middleware (if (@config :sauce-user)
+                           (jenkins/debug+sauce-middleware (-> config
+                                                               deref
+                                                               (select-keys [:sauce-user :sauce-key])
+                                                               (merge sel-config)
+                                                               (assoc :sauce-job-attributes-fn setup/sauce-attributes)))
+                           (jenkins/debug+webdriver-middleware sel-config))]
           (try (jenkins/run-suite (make-suite suite)  
-                              (merge setup/runner-config 
-                                     {:threads (:num-threads opts)
-                                      :trace-depths-fn conf/trace-list
-                                      :to-trace (@conf/config :trace)
-                                      :do-not-trace (@conf/config :trace-excludes)
-                                      :middleware middleware}))
-               (finally #_(provision/shutdown client-queue)
-                        #_(-> conf/*cloud-conn* :api .shutdown)
-                        #_(shutdown-agents))))))))
+                                  (merge setup/runner-config 
+                                         {:threads (:num-threads opts)
+                                          :trace-depths-fn conf/trace-list
+                                          :to-trace (@conf/config :trace)
+                                          :do-not-trace (@conf/config :trace-excludes)
+                                          :middleware middleware}))
+               (finally (provision/shutdown client-queue)
+                        (-> conf/*cloud-conn* :api .shutdown)
+                        (shutdown-agents))))))))

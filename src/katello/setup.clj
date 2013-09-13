@@ -9,7 +9,7 @@
                      [ui :as ui]
                      [client :as client]
                      [conf :refer [config *session-user* *session-org* *browsers*]]
-                     [tasks :refer :all] 
+                     [tasks :refer :all]
                      [users :as user])
             [fn.trace :as trace]
             [clj-webdriver.taxi :as browser]
@@ -48,7 +48,7 @@
                            "nativeEvents" false
                            ;; :profile
                            #_(doto (ff/new-profile)
-                             (ff/enable-native-events true))})
+                               (ff/enable-native-events true))})
 
 (def empty-local-browser-config {:browser :firefox
                                  :profile (doto (ff/new-profile)
@@ -56,14 +56,11 @@
 
 (defn new-remote-grid
   "Returns a remote grid server. See new-remote-driver."
-  [url port spec]
-  (rs/init-remote-server {:host url
-                          :port port
-                          :existing true}))
+  [host & [port]]
+  (rs/init-remote-server {:host host, :port (or port 80), :existing true}))
 
-(defn make-default-grid []
-  (defonce default-grid (new-remote-grid (str (@config :sauce-user) ":" (@config :sauce-key) "@ondemand.saucelabs.com") 80 empty-browser-config))
-  default-grid)
+(def sauce-host
+  (partial format "%s:%s@ondemand.saucelabs.com"))
 
 (defn config-with-profile
   ([locale]
@@ -87,23 +84,12 @@
   [server & [{:keys [browser-config-opts]}]]
   (rs/new-remote-driver server {:capabilities (or browser-config-opts empty-browser-config)}))
 
-(defn get-last-sauce-build
-  "Returns the last sauce build number used."
-  []
-  (->> (job/get-all-ids (@config :sauce-user) (@config :sauce-key)
-                        {:limit 10
-                         :full true})
-       (map #(get % "build"))
-       (filter #(not (nil? %)))
-       (first)
-       (Integer.)))
-
 (defn new-selenium
   "Returns a local selenium webdriver browser."
   [& [{:keys [browser-config-opts]}]]
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
-(defn start-selenium [& [{:keys [browser-config-opts]}]]  
+(defn start-selenium [& [{:keys [browser-config-opts]}]]
   (browser/set-driver! (or browser-config-opts empty-browser-config))
   (browser/set-finder! wd/locator-finder-fn)
   (browser/implicit-wait 2000)
@@ -118,25 +104,20 @@
   (browser/to (str (@config :server-url) "/users"))
   (login))
 
-(defn set-job-id
-  "Sets a thread-local binding of the session-id to *job-id*. This is to allow pass/fail reporting after the browser session has ended."
-  []
-  (set! *job-id* (second (re-find #"\(([^\)]+)\)" (str (:webdriver browser/*driver*))))))
-
-(defn stop-selenium 
+(defn stop-selenium
   ([] (browser/quit browser/*driver*))
   ([driver] (browser/quit driver)))
 
-(defmacro with-remote-driver-fn
-  "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser."
-  
-  [browser-spec finder-fn & body]
-  `(binding [browser/*driver* (new-remote-driver (make-default-grid) ~browser-spec)
-             browser/*finder-fn* ~finder-fn]
-     (try
-      ~@body
-      (finally
-        (browser/quit)))))
+(defn sauce-attributes [test]
+  (let [full-ver (:version (rest/get-version))
+        [_ ver build] (re-find #"(.*-\d+)\.(.*)" full-ver)
+        build (-> (re-find #"\.(\d+)\." build)
+                  second
+                  (or 1))]
+    
+    {:name (:name test)
+     :tags [ver full-ver]
+     :build (Integer/parseInt build)}))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
@@ -149,18 +130,14 @@
       (try
         ;;staggered startup
         (Thread/sleep (* thread-number 5000))
-      
+
         ;;create the admin user
         (rest/create user)
         (rest/http-post (rest/url-maker [["api/users/%s/roles" [identity]]] user) {:body
                                                                                    {:role_id 1}})
-        (binding [*session-user* user
-                  *job-id* nil]
+        (binding [*session-user* user]
           (consume-fn))))))
 
-(def runner-config 
+(def runner-config
   {:thread-wrapper thread-runner
    :watchers {:stdout-log watch/stdout-log-watcher}})
-
-
-
