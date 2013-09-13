@@ -17,8 +17,7 @@
    ::re-log-in-link    "//a[contains(@href, '/login')]"
    ::error-message     "//ul[@class='error']"
    ::close-error       "//div[@id='notifications']//div[@class='control']"
-   ;; ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"
-   ::interstitial      "//div[contains(@id,'interstitial') and contains(.,'Choose an Organization')]"})
+   ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"})
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
@@ -41,12 +40,10 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (wd/ajax-wait)
-    (wd/move-to browser/*driver* (browser/element ::ui/user-menu))
+    (wd/move-to ::ui/user-menu)
     (browser/click ::ui/user-menu)
     (Thread/sleep 1000)
-    (wd/ajax-wait)
-    (wd/move-to browser/*driver* (browser/element ::ui/log-out))
+    (wd/move-to ::ui/log-out)
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
@@ -69,10 +66,10 @@
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
-     #_(when (browser/exists? ::re-log-in-link)
+     (when (browser/exists? ::re-log-in-link)
        (browser/click ::re-log-in-link))
 
-     #_(when (signo-error?)
+     (when (signo-error?)
        (clear-signo-errors))
 
      (wd/->browser (clear ::username-text)
@@ -81,16 +78,16 @@
                                 {::password-text password}
                                 {::log-in browser/click})
      ;; throw errors
-     (notification/verify-no-error)     ; katello notifs
-     (notification/flush)
+     ;;(notification/verify-no-error)     ; katello notifs
+     ;;(notification/flush)
      
-     #_(if (signo-error?)                 ; signo notifs
+     (if (signo-error?)                 ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
                                             :notices (list (browser/text ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (wd/ajax-wait)
-     (browser/refresh)
+     ;;(browser/refresh)
      (when org
        (organization/switch org {:default-org default-org}))))
 

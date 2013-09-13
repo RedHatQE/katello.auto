@@ -39,7 +39,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
-    [::system-group-menu  (fn [n] (wd/move-to browser/*driver* (browser/element ::system-groups))) 
+    [::system-group-menu  (fn [_] (wd/move-to browser/*driver* (browser/element ::system-groups))) 
      [::system-group-page (nav/browser-fn (click ::system-group-select))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 

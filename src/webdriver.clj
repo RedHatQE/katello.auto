@@ -107,7 +107,8 @@ Default browser-spec: firefox"
 (defn move-to
   ([loc] (move-to browser/*driver* loc))
   ([driver loc]
-     (clj-web/move-to-element driver (browser/element loc))))
+     (clj-web/move-to-element driver (browser/element loc))
+     (ajax-wait)))
 
 (defn move-off
   ([loc] (move-off browser/*driver* loc))
@@ -127,6 +128,8 @@ Default browser-spec: firefox"
   ([driver loc]
      (move-to driver loc)
      (browser/click loc)))
+
+
 
 (defmacro with-remote-driver-fn
   "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser.

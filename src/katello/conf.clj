@@ -71,7 +71,7 @@
     :default (format "%s/.ssh/id_auto_dsa" (System/getProperty "user.home"))]
    
    ["-n" "--num-threads" "Number of threads to run tests with"
-    :parse-fn #(Integer. %) :default 10]
+    :parse-fn #(Integer. %) :default 5]
 
    ["-b" "--browser-types" "Selenium browser types, eg '*firefox' or '*firefox,*googlechrome' (multiple values only used when threads > 1"
     :default ["*firefox"] :parse-fn #(string/split % #",")]
@@ -139,7 +139,7 @@
            all-fns
            (concat '(clj-http.client/get
                      clj-http.client/put
-                     ;;clj-http.client/post
+                     clj-http.client/post
                      clj-http.client/delete)))
       (zipmap (repeat nil)) ;; default no limit to trace depth
       (merge trace-depths (record-contructor-depths))))

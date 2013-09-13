@@ -2,6 +2,7 @@
   (:require [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [katello :as kt]
+            [katello.tests.useful :refer [third-lvl-menu-click]]
             [clojure.data :as data]
             (katello [ui :as ui]
                      [rest :as rest]
@@ -22,9 +23,9 @@
    ::value-text            "new_custom_info_value"
    ::custom-info-button    "//input[@id='create_custom_info_button']"
    ::remove-link           (ui/remove-link "distributors")
-   ::distributor-info-link (ui/third-level-link "distributor_info")
-   ::events-history-link   (ui/third-level-link "distributor_events")
-   ::custom-info-link      (ui/third-level-link "custom_info")
+   ::distributor-info-link "distributor_info"
+   ::events-history-link   "distributor_events"
+   ::custom-info-link      "custom_info"
    ::save-button           "//button[@type='submit']"
    ::cancel-button         "//button[@type='cancel']"})
 
@@ -38,25 +39,14 @@
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
     [::details-menu (fn [x]
-                      (wd/ajax-wait)
                       (Thread/sleep 1000)
-                      (wd/move-to browser/*driver* (browser/element ::details-link))
-                      (wd/ajax-wait)) 
+                      (wd/move-to ::details-link)) 
      [::distributor-info-page (fn [x]
-                           (Thread/sleep 1000)
-                           (wd/move-to browser/*driver* (browser/element ::distributor-info-link))
-                           (wd/ajax-wait)
-                           (browser/execute-script (ui/js-id-click "distributor_info")))]
+                                (third-lvl-menu-click ::distributor-info-link))]
      [::events-history-page (fn [x]
-                           (Thread/sleep 1000)
-                           (wd/move-to browser/*driver* (browser/element ::events-history-link))
-                           (wd/ajax-wait)
-                           (browser/execute-script (ui/js-id-click "distributor_events")))]
+                              (third-lvl-menu-click ::events-history-link))]
      [::custom-info-page (fn [x]
-                           (Thread/sleep 1000)
-                           (wd/move-to browser/*driver* (browser/element ::custom-info-link))
-                           (wd/ajax-wait)
-                           (browser/execute-script (ui/js-id-click "custom_info")))]]]
+                           (third-lvl-menu-click ::custom-info-link))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
