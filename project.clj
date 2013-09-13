@@ -7,13 +7,13 @@
                  [org.clojure/data.json "0.2.2"]
                  [org.clojure/data.zip "0.1.1"]
                  
-                 [org.seleniumhq.selenium/selenium-server "2.33.0"]
-                 [org.seleniumhq.selenium/selenium-java "2.33.0"]
+                 [org.seleniumhq.selenium/selenium-server "2.34.0"]
+                 [org.seleniumhq.selenium/selenium-java "2.34.0"]
 
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  
-                 [test.tree.jenkins "0.10.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
+                 [test.tree.jenkins "0.10.1-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree "1.0.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                                   

@@ -118,6 +118,7 @@
     katello.rest/get-id 1
     katello/chain 1
     katello/instance-or-nil? 0
+    webdriver/locator-finder-fn 1
     })
 
 (defn record-contructor-depths
@@ -134,7 +135,7 @@
    underlying lib namespaces."
   []
   (-> (->> (loaded-libs)
-           (filter (fn [sym] (-> sym str (.startsWith "katello"))))
+           (filter (fn [sym] (->> sym str (re-find #"^katello|^webdriver"))))
            all-fns
            (concat '(clj-http.client/get
                      clj-http.client/put

@@ -1,6 +1,7 @@
 (ns webdriver
-  (:use [clj-webdriver.element :only [element-like?]])
-  (:require [clj-webdriver.taxi :as browser]
+  (:require [clj-webdriver.element :refer [element-like?]]
+            [slingshot.slingshot :refer [throw+]]
+            [clj-webdriver.taxi :as browser]
             [clj-webdriver.core :as clj-web]))
 
 (declare my-driver)
@@ -44,7 +45,6 @@ keywords."
 (defn locator-finder-fn 
   ([q] (locator-finder-fn browser/*driver* q))
   ([driver q]
-     (println (str "Q: " q))
      (ajax-wait)
      (let [loc (if (keyword? q)
                  (first (locator-args q))
@@ -105,31 +105,28 @@ Default browser-spec: firefox"
          ~body))))
 
 (defn move-to
-  [driver loc]
-  (clj-web/move-to-element driver loc))
+  ([loc] (move-to browser/*driver* loc))
+  ([driver loc]
+     (clj-web/move-to-element driver (browser/element loc))))
 
 (defn move-off
-  [driver loc]
-  (clj-web/move-to-element driver loc -5 0))
-
-(defn move-to-and-jiggle
-  [loc]
-  (move-to browser/*driver* (browser/element loc))
-  (move-off browser/*driver* (browser/element loc))
-  (move-to browser/*driver* (browser/element loc)))
+  ([loc] (move-off browser/*driver* loc))
+  ([driver loc]
+     (clj-web/move-to-element driver (browser/element loc) -20 -20)))
 
 (defn key-up
-  [driver loc k]
-  (clj-web/key-up driver loc  k))
+  ([loc k] (key-up browser/*driver* loc k))
+  ([driver loc k]
+     (clj-web/key-up driver (browser/element loc) k)))
 
-(defn text-present?
-  [text]
+(defn text-present? [text]
   (.contains (browser/page-source) text))
 
 (defn move-to-and-click
-  [driver loc]
-  (move-to driver loc)
-  (browser/click loc))
+  ([loc] (move-to-and-click browser/*driver* loc))
+  ([driver loc]
+     (move-to driver loc)
+     (browser/click loc)))
 
 (defmacro with-remote-driver-fn
   "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser.
@@ -155,3 +152,8 @@ Default browser-spec: firefox"
       ~@body
       (finally
         (quit)))))
+
+;; remove print-method for webdriver due to https://github.com/semperos/clj-webdriver/issues/105
+
+(remove-method print-method org.openqa.selenium.WebDriver)
+(remove-method print-method org.openqa.selenium.WebElement)

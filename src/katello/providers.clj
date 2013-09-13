@@ -150,7 +150,7 @@
           (browser/input-text ::new-product-name-text (:name product)))
         (do
           (browser/execute-script ::existing-product-dropdown)
-          (wd/move-to browser/*driver* (existing-product-select (:name product)))))
+          (wd/move-to (existing-product-select (:name product)))))
       (browser/click ::create-repositories)
       (notification/success-type :repo-create)))) 
 

@@ -28,7 +28,7 @@
             [katello.tests.content-views :refer [promote-published-content-view]]
             [katello.tests.useful :refer [create-all-recursive create-series
                                           create-recursive fresh-repo]]
-            [clojure.string :refer [blank? join]]
+            [clojure.string :refer [blank? join split]]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [test.tree.script :refer [defgroup deftest]]
@@ -38,6 +38,10 @@
             [test.assert :as assert]))
 
 ;; Functions
+
+(def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
+(def outputformat (java.text.SimpleDateFormat. "EEE, dd MMM yyyy"))
+(defn date [d] (.format outputformat (.parse inputformat d)))
 
 (defn create-test-environment []
   (def test-environment (kt/library *session-org*)))
@@ -66,9 +70,27 @@
   (assert/is (= "Auto-attach On, No Service Level Preference" (browser/text ::system/subs-servicelevel)))
   (assert/is (common/disabled? ::system/subs-attach-button)))
 
+(defn validate-package-info
+  "validate package install/remove info
+   Here opr-type is package installed/removed 
+   msg-format is Package Install/Package Remove"
+  [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
+  (browser/click ::system/pkg-install-status-link)
+  (assert/is (= msg-format (browser/text ::system/pkg-header)))
+  (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser/text ::system/pkg-summary)))
+  (if-not (nil? package-group)
+    (do
+      (assert/is (= (join " " [package-group opr-type]) (browser/text ::system/pkg-request)))
+      (assert/is (= (join ["@" package-group]) (browser/text ::system/pkg-parameters)))
+      (assert/is (browser/exists? ::system/pkg-result)))
+    (do
+      (assert/is (= (join " " [package opr-type]) (browser/text ::system/pkg-request)))
+      (assert/is (= package (browser/text ::system/pkg-parameters)))
+      (assert/is (= (apply str (split pkg-version #"\n+")) (browser/text ::system/pkg-result))))))
+
 (defn configure-product-for-pkg-install
   "Creates a product with fake content repo, returns the product."
-  []
+  [repo-url]
   (with-unique [provider (katello/newProvider {:name "custom_provider" :org *session-org*})
                 product (katello/newProduct {:name "fake" :provider provider})
                 testkey (katello/newGPGKey {:name "mykey" :org *session-org*
@@ -76,9 +98,10 @@
                                                        "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")})
                 repo (katello/newRepository {:name "zoo_repo"
                                              :product product
-                                             :url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+                                             :url repo-url
                                              :gpg-key testkey})]
     (ui/create-all (list testkey provider product repo))
+    (sync/perform-sync (list repo))
     product))
 
 (defn validate-system-facts
@@ -107,6 +130,13 @@
   [org]
   (nav/go-to ::system/page org)
   (Integer/parseInt (browser/text ::system/total-sys-count)))
+
+(defn filter-errata-by-type "Filter errata based on selected errata-type"
+  [system {:keys [errata-type errata-ids]}]
+  (nav/go-to ::system/content-errata-page system)
+  (browser/select ::system/select-errata-type errata-type)
+  (doseq [errata-id errata-ids]
+    (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
 
 ;; Tests
 
@@ -380,11 +410,14 @@
                                     katello-details
                                     (dissoc katello-details :env)))
         (let [hostname (client/my-hostname ssh-conn)
+              sys-date (client/get-client-date ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
               details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
+          (assert/is (= (date sys-date) (subs (details "Checked In") 0 16)))
+          (assert/is (= (date sys-date) (subs (details "Registered") 0 16)))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
                         (system/get-ip-addr system)))))))
@@ -432,16 +465,14 @@
           (when (browser/exists?  aklink)
             (browser/click aklink))))))
 
-  (deftest "Install package group"
-    :uuid "869db0f1-3e41-b864-eecb-1acda7f6daf7"
+  (deftest "Add/Remove system packages"
+    :uuid "e6e74dcc-46e5-48c8-9a2d-0ac33de7dd70"
     :data-driven true
-    :description "Add package and package group"
-    :blockers (conj (bz-bugs "959211" "970570")
-                    rest/katello-only
-                    (auto-issue "790"))
-
-    (fn [package-opts]
-      (let [product (configure-product-for-pkg-install)]
+    
+    (fn [remove-pkg?]
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            packages "cow"]
         (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn
@@ -451,18 +482,149 @@
                             :env (:name test-environment)
                             :force true})
           (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
-                          katello/newSystem)]
+                        katello/newSystem)]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
-            (system/add-package mysys package-opts)))))
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/add-package mysys {:package packages})
+            (let [cmd (format "rpm -qa | grep %s" packages)
+                  cmd_result (client/run-cmd ssh-conn cmd)
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Install" "package installed" {:package packages} pkg-version)
+              (when remove-pkg?
+                (system/remove-package mysys {:package packages})
+                (let [cmd (format "rpm -qa | grep %s" packages)
+                      cmd_result (client/run-cmd ssh-conn cmd)]
+                  (assert/is (->> cmd_result :exit-code (not= 0)))
+                  (validate-package-info "Package Remove" "package removed" {:package packages} pkg-version))))))))
+    [[true]
+     [false]])
+  
+  (deftest "Add/Remove Package groups"
+    :uuid "e7387a9e-53bf-40a8-be66-807dcafd0c20"
+    :data-driven true
+    
+    (fn [remove-group?]
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            package-groups "birds"]
+        (provision/with-queued-client
+          ssh-conn
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (-> product :provider :org :name)
+                            :env (:name test-environment)
+                            :force true})
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                        katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/add-package mysys {:package-group package-groups})
+            (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork lion wolf tiger dolphin bear")
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Group Install" "package group installed" {:package-group package-groups}))
+            (when remove-group?
+              (system/remove-package mysys {:package-group package-groups})
+              (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork")]
+                (assert/is (->> cmd_result :exit-code (not= 0)))
+                (validate-package-info "Package Group Remove" "package group removed" {:package-group package-groups})))))))
 
-    [[{:package "cow"}]
-     [{:package-group "birds"}]])
+    [[true]
+     [false]])
 
+  
+  (deftest "Update/Remove selected system package"
+    :uuid "aaca29c2-fdff-4901-81b6-98db22871edd"
+    :data-driven true
+    (fn [remove-pkg?]
+      (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
+            product (configure-product-for-pkg-install repo-url)
+            package-name "walrus-0.71-1.noarch"       
+            package (first (split package-name #"-+"))]
+        (provision/with-queued-client
+          ssh-conn
+          (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+          (let [cmd (format "yum install -y %s" package-name)]
+            (client/run-cmd ssh-conn cmd))
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (-> product :provider :org :name)
+                            :env (:name test-environment)
+                            :force true})
+          (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                        katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/update-selected-package mysys {:package package})
+            (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
+                  pkg-version (->> cmd_result :out)]
+              (assert/is (client/ok? cmd_result))
+              (validate-package-info "Package Update" "package updated" {:package package} pkg-version)
+              (when remove-pkg?
+                (system/remove-selected-package mysys {:package package})
+                (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")]
+                  (assert/is (->> cmd_result :exit-code (not= 0))))
+                (validate-package-info "Package Remove" "package removed" {:package package} pkg-version)))))))
+    
+    [[true]
+     [false]])
+  
+  (deftest "Search a Package from package-list"
+    :uuid "5dc869d7-2604-4524-85f1-574722e9dd59"
+    (let [package-name "walrus-0.71-1.noarch"
+          package (first (split package-name #"-+"))]
+      (provision/with-queued-client
+        ssh-conn
+        (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+        (let [cmd (format "yum install -y %s" package-name)]
+          (client/run-cmd ssh-conn cmd))
+        (client/register ssh-conn
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
+                          :org (:name *session-org*)
+                          :env (:name test-environment)
+                          :force true})
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                      katello/newSystem)]
+          (system/filter-package mysys {:package package})
+          (assert/is (= package-name (browser/text (system/get-filtered-package package))))))))
+  
+  (deftest "Filter Errata"
+    :uuid "ed64eea5-4c37-4810-8f43-8da0bfbced43"
+    (let [repo-url "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/"
+          product (configure-product-for-pkg-install repo-url)]
+      (provision/with-queued-client
+        ssh-conn
+        (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+        (client/run-cmd ssh-conn "yum install -y cow cheetah pig zebra")
+        (client/register ssh-conn
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
+                          :org (-> product :provider :org :name)
+                          :env (:name test-environment)
+                          :force true})
+        (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                      katello/newSystem)]
+          (client/subscribe ssh-conn (system/pool-id mysys product))
+          (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+          (client/run-cmd ssh-conn "yum repolist")
+          (doall (for [errata [{:errata-type "All Errata", :errata-ids (list "RHEA-2012:3234" "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}
+                               {:errata-type "Bug Fix", :errata-ids (list "RHEA-2012:3234")}
+                               {:errata-type "Security", :errata-ids (list "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}]]
+                   (filter-errata-by-type mysys errata)))))))
+        
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
-
+    
     (let [org (kt/newOrganization {:name (uniqueify "sys-org")})
           repo (fresh-repo org
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
@@ -564,12 +726,20 @@
                     rest/katello-only
                     (auto-issue "791"))
 
-    (let [[env-dev env-test :as envs] (->> {:name "env" :org *session-org*}
-                                           katello/newEnvironment
-                                           create-series
-                                           (take 2))
-          product (configure-product-for-pkg-install env-dev)
-          package (katello/newPackage {:name "cow" :product product})]
+    (let [org (kt/newOrganization {:name (uniqueify "sys-org")})
+          repo (fresh-repo org
+                           "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+          product (-> repo kt/product)
+          env-dev (katello/newEnvironment {:name (uniqueify "env-dev")
+                                           :org org})
+          env-test (katello/newEnvironment {:name (uniqueify "env-test")
+                                            :org org})
+          cv (promote-published-content-view org env-dev repo)
+          cs (kt/newChangeset {:name (uniqueify "cs")
+                               :env env-test
+                               :content (list cv)})]
+      (ui/create env-test)
+      (changeset/promote-delete-content cs)
       (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn
@@ -578,9 +748,8 @@
                           :org (-> env-dev :org :name)
                           :env (:name env-dev)
                           :force true})
-        (let [mysys (-> {:name (client/my-hostname ssh-conn)}
-                        katello/newSystem
-                        rest/read)]
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env env-dev}
+                      katello/newSystem)]
           (assert/is (= (:name env-dev) (system/environment mysys)))
           (ui/update mysys assoc :env env-test)
           (assert/is (= (:name env-test) (system/environment mysys)))
@@ -588,10 +757,10 @@
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
-          (expecting-error [:type :katello.systems/package-install-failed]
-                           (ui/update mysys update-in [:packages] (fnil conj #{}) package))
+          (system/add-package mysys {:package "cow"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
-            (assert/is (->> cmd_result :exit (= 1))))))))
+            (assert/is (client/ok? cmd_result)))))))
+
 
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"

@@ -88,6 +88,10 @@
 (defn register [session opts]
   (sm-cmd session :register opts))
 
+(defn get-client-date "get client system date"
+  [session]
+  (-> session (run-cmd "date") :out trim))
+
 (defn get-client-facts [session]
   (apply hash-map (split (:out (run-cmd session "subscription-manager facts --list")) #"\n|: ")))
 

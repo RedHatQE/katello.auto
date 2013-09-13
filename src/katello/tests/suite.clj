@@ -16,19 +16,13 @@
             [webdriver :as wd]
             [serializable.fn :refer :all] 
             [test.tree.jenkins :as jenkins]
-            [test.tree.script :refer :all])
+            [test.tree.script :refer :all]
+            [test.tree.builder :as ttb])
   (:import [org.openqa.selenium.remote SessionNotFoundException]
            [org.openqa.selenium InvalidElementStateException]))
 
 (defgroup katello-tests
-  :test-wrapper (fn [f & args]
-                  (try
-                    (setup/with-remote-driver-fn setup/empty-browser-config wd/locator-finder-fn
-                      (setup/conf-selenium)
-                      (setup/set-job-id)
-                      (katello.tests.login/navigate-toplevel)
-                      (apply f args))
-                    (catch InvalidElementStateException _ nil)))
+  
 
   katello.tests.login/login-tests
   katello.tests.navigation/nav-tests
@@ -56,14 +50,6 @@
 
 (defgroup headpin-tests
   :description "All the tests that apply to headpin or SAM."
-  :test-wrapper (fn [f & args]
-                  (try
-                    (setup/with-remote-driver-fn setup/empty-browser-config wd/locator-finder-fn
-                      (setup/conf-selenium)
-                      (setup/set-job-id)
-                      (katello.tests.login/navigate-toplevel)
-                      (apply f args))
-                    (catch InvalidElementStateException _ nil)))
   
   katello.tests.login/login-tests
   katello.tests.navigation/nav-tests
@@ -79,8 +65,9 @@
 (defn make-suite
   ([] (make-suite nil))
   ([group]
-     (try (-> group (or "katello.tests.suite/katello-tests")
-              symbol resolve deref)
+     (try (ttb/run-before (constantly true) (fn [& _] (setup/conf-selenium))
+           (-> group (or "katello.tests.suite/katello-tests")
+               symbol resolve deref))
           (catch Exception e
             (throw (RuntimeException.
                     (format "Could not find any test suite named %s. Please specify a fully qualified symbol whose value contains a test suite, eg 'katello.tests.suite/katello-tests'." group) e))))))
@@ -92,14 +79,33 @@
       (do (println banner))
       (do
         (conf/init opts)
-        (let [client-queue  nil #_(provision/init 3)]
+        (let [client-queue (provision/init 3)
+              sel-config {:selenium-server (cond (@config :sauce-user)
+                                                 (setup/new-remote-grid
+                                                  (setup/sauce-host (@config :sauce-user)
+                                                                    (@config :sauce-key)))
+                                                 
+                                                 (@config :selenium-address)
+                                                 (setup/new-remote-grid (@config :selenium-address)) ; other remote wd
+
+                                                 :else (setup/new-selenium)) ; local
+                          :capabilities-chooser-fn (constantly setup/empty-browser-config)
+                          :finder-fn wd/locator-finder-fn}
+              
+              middleware (if (@config :sauce-user)
+                           (jenkins/debug+sauce-middleware (-> config
+                                                               deref
+                                                               (select-keys [:sauce-user :sauce-key])
+                                                               (merge sel-config)
+                                                               (assoc :sauce-job-attributes-fn setup/sauce-attributes)))
+                           (jenkins/debug+webdriver-middleware sel-config))]
           (try (jenkins/run-suite (make-suite suite)  
-                              (merge setup/runner-config 
-                                     {:threads (:num-threads opts)
-                                      :trace-depths-fn conf/trace-list
-                                      :to-trace (@conf/config :trace)
-                                      :do-not-trace (@conf/config :trace-excludes)}))
-               (catch SessionNotFoundException _ nil)
-               (finally #_(provision/shutdown client-queue)
-                        #_(-> conf/*cloud-conn* :api .shutdown)
-                        #_(shutdown-agents))))))))
+                                  (merge setup/runner-config 
+                                         {:threads (:num-threads opts)
+                                          :trace-depths-fn conf/trace-list
+                                          :to-trace (@conf/config :trace)
+                                          :do-not-trace (@conf/config :trace-excludes)
+                                          :middleware middleware}))
+               (finally (provision/shutdown client-queue)
+                        (-> conf/*cloud-conn* :api .shutdown)
+                        (shutdown-agents))))))))

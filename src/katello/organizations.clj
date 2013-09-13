@@ -51,12 +51,12 @@
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
     [::default-info-menu (fn [n]
                            (Thread/sleep 1000)
-                           (wd/move-to browser/*driver* (browser/element ::default-info)))
+                           (wd/move-to (browser/element ::default-info)))
      [::system-default-info-page (fn [n]
                                    (wd/move-to browser/*driver* (browser/element ::system-default-info))
                                    (browser/click ::system-default-info))]
      [::distributor-default-info-page (fn [n]
-                                        (wd/move-to browser/*driver* (browser/element ::distributor-default-info))
+                                        (wd/move-to (browser/element ::distributor-default-info))
                                         (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
                                         #_(browser/click ::distributor-default-info))]]]])
 
@@ -111,7 +111,7 @@
         (when initial-env
           (browser/clear ::initial-env-label-text)
           (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
-  (wd/move-to browser/*driver* (browser/element ::create))
+  (wd/move-to (browser/element ::create))
   (browser/click ::create)
   (notification/success-type :org-create))
 

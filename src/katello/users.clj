@@ -85,9 +85,7 @@
     (when default-env
       (env-chooser default-env))
     (browser/click ::save))
-  (notification/success-type :users-create)
-  (Thread/sleep 3000) ;; waits for notification to disappear
-  )
+  (notification/success-type :users-create))
 
 (defn- delete "Deletes the given user."
   [user]
@@ -131,11 +129,11 @@
                     :as to-add} _] (data/diff user updated)]
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
-      (do (wd/move-to browser/*driver* (browser/element ::user-account-dropdown)) ;; TODO : fix mouseover once this compiles
+      (do (wd/move-to ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
           (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
-    (Thread/sleep 1000)
+    
     (when-not (nil? inline-help)
       (browser/select ::enable-inline-help-checkbox))
     (when password
@@ -151,7 +149,7 @@
       (browser/click ::save-edit) 
       (notification/success-type :users-update))
     (when email
-      (common/in-place-edit {::email-text "blorp"}))
+      (common/in-place-edit {::email-text email}))
     (let [role-changes (map :roles (list to-add to-remove))]
       (when (some seq role-changes)
         (browser/click ::roles-link)
