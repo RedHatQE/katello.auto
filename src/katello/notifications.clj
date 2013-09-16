@@ -143,7 +143,7 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials                   #"Authentication failed"
+  (let [errors {::invalid-credentials                   #"You have entered an incorrect username/password combination.*"
                 ::promotion-already-in-progress         #"action is currently in progress"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #".*Manifest subscriptions unchanged from previous"
@@ -205,6 +205,7 @@
    one notification to appear. Does not do any extra waiting after the
    first notification is detected. Default timeout is 15 seconds."
   []
+  (wd/ajax-wait)
   (try (let [notices (->> notice-array-js-var
                           (format "return JSON.stringify(%s)") 
                           browser/execute-script

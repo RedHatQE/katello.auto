@@ -206,7 +206,7 @@
           (throw+ {:type ::not-all-notifications-deleted
                    :msg "Still some notifications remained after trying to delete all"})))
       (do
-        (browser/click ::confirmation-no)
+        (browser/click ::ui/confirmation-no)
         (when (not= num-count (browser/text ::user-notifications))
           (throw+ {:type ::notifications-deleted-anyway
                    :msg "Notifications were deleted even after clicking 'no' on confirm."}))))))
