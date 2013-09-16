@@ -30,7 +30,7 @@
 
 (def subscriptions {::subscriptions-link "Subscriptions"})
 
-(def flyout-items {::custom-content-repositories-link "Custom Content Repositories"
+(def flyout-items {::custom-content-repositories-link "Custom Repositories"
                    ::red-hat-repositories-link        "Red Hat Repositories"
                    ::gpg-keys-link                    "GPG Keys"
                    ::sync-plans-link                  "Sync Plans"
