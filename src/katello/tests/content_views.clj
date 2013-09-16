@@ -380,7 +380,6 @@
     
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
-      :blockers (bz-bugs "996172")
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org

@@ -58,11 +58,12 @@
  {button-div           "//div[contains(@class,'button') and normalize-space(.)='%s']"  
   editable             "//div[contains(@class, 'editable') and descendant::text()[substring(normalize-space(),2)='%s']]"
   environment-link     "//div[contains(@class,'jbreadcrumb')]//a[normalize-space(.)='%s']"
-  left-pane-field-list "xpath=(//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'])[%s]"
+  left-pane-field-list "//div[contains(@class,'left')]//div[contains(@class,'ellipsis') or @class='block tall'][%s]"
   link                 "//a[normalize-space(.)='%s']"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
-  
+
+  js-id-click          "$(\"li#%s > a\").click();"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
   tab                  "link=%s"
@@ -130,6 +131,7 @@
    ::search-save-as-favorite "search_favorite_save"
    ::search-clear-the-search "search_clear"
    ::search-submit           "//button[@form='search_form']"
+   ::notification-container  {:tag "div" :class "jnotify-container"}
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"

@@ -159,5 +159,3 @@
     (rest (reduce f (vector (library org)) (vec environments)))))
 
 (def newEnvironment (comp first chain list map->Environment))
-
-

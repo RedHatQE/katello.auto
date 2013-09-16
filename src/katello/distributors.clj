@@ -2,6 +2,7 @@
   (:require [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
             [katello :as kt]
+            [katello.tests.useful :refer [third-lvl-menu-click]]
             [clojure.data :as data]
             (katello [ui :as ui]
                      [rest :as rest]
@@ -17,14 +18,14 @@
   {::new                   "new"
    ::create                {:name "commit"}
    ::distributor-name-text {:name "distributor[name]"}
-   ::details-link          "distributor_details"
+   ::details-link          {:id "distributor_details"}
    ::keyname-text          "new_custom_info_keyname"
    ::value-text            "new_custom_info_value"
    ::custom-info-button    "//input[@id='create_custom_info_button']"
    ::remove-link           (ui/remove-link "distributors")
-   ::distributor-info-link (ui/third-level-link "distributor_info")
-   ::events-history-link   (ui/third-level-link "distributor_events")
-   ::custom-info-link      (ui/third-level-link "custom_info")
+   ::distributor-info-link "distributor_info"
+   ::events-history-link   "distributor_events"
+   ::custom-info-link      "custom_info"
    ::save-button           "//button[@type='submit']"
    ::cancel-button         "//button[@type='cancel']"})
 
@@ -37,10 +38,15 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (nav/browser-fn (click ::details-link)) 
-     [::distributor-info-page (nav/browser-fn (click ::distributor-info-link))]
-     [::events-history-page (nav/browser-fn (click ::events-history-link))]
-     [::custom-info-page (nav/browser-fn (click ::custom-info-link))]]]
+    [::details-menu (fn [x]
+                      (Thread/sleep 1000)
+                      (wd/move-to ::details-link)) 
+     [::distributor-info-page (fn [x]
+                                (third-lvl-menu-click ::distributor-info-link))]
+     [::events-history-page (fn [x]
+                              (third-lvl-menu-click ::events-history-link))]
+     [::custom-info-page (fn [x]
+                           (third-lvl-menu-click ::custom-info-link))]]]
    [::new-page (nav/browser-fn (click ::new))]])
 
 ;; Tasks
@@ -51,7 +57,7 @@
   {:pre [(instance? katello.Environment env)]}
   (nav/go-to ::new-page env)
   (rest/when-katello  
-(browser/click (ui/environment-link (:name env))))
+   (browser/click (ui/environment-link (:name env))))
   (browser/quick-fill-submit {::distributor-name-text name}
                              {::create browser/click})
   (notification/success-type :distributor-create))
@@ -65,7 +71,7 @@
       (do (wd/->browser 
            (input-text ::keyname-text k)
            (input-text ::value-text v))
-          (wd/key-up browser/*driver* ::keyname-text "z")
+          #_(wd/key-up browser/*driver* ::keyname-text "z")
           (browser/click ::custom-info-button)))) 
   ;; below dissoc required while updating, else will rm the just updated key/value
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]

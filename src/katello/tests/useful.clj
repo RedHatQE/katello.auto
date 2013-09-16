@@ -1,6 +1,8 @@
 (ns katello.tests.useful
   (:require [clojure.zip :as zip]
             [katello :as kt]
+            [webdriver :as wd]
+            [clj-webdriver.taxi :as browser]
             (katello [rest :as rest]
                      [ui :as ui]
                      [tasks :refer [with-unique]]
@@ -53,6 +55,15 @@
   on ent"
   [ent]
   (lazy-seq (map rest/create (tasks/uniques ent))))
+
+(defn third-lvl-menu-click
+  "Clicks on a 3rd level menu item by executing js. Workaround for
+  webdriver issue that considers some menu items hidden when they are visible."
+  [loc-id]
+  (Thread/sleep 1000)
+  (wd/move-to (ui/third-level-link loc-id))
+  (browser/execute-script (ui/js-id-click loc-id))
+  (wd/ajax-wait))
 
 (defn fresh-repos
   "Infite seq of unique repos (in new provider/product) in given org,

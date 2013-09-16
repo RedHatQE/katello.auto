@@ -22,6 +22,7 @@
                      [blockers :refer [bz-bugs]])
             [test.assert :as assert]
             [serializable.fn :refer [fn]]
+            [katello.client.provision :as provision]
             [slingshot.slingshot :refer [try+]]
             [test.tree.script :refer :all]
             [katello.client.provision :as provision]

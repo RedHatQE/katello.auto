@@ -17,8 +17,7 @@
    ::re-log-in-link    "//a[contains(@href, '/login')]"
    ::error-message     "//ul[@class='error']"
    ::close-error       "//div[@id='notifications']//div[@class='control']"
-   ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"}
-  )
+   ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"})
 
 (defn logged-in?
   "Returns true if the browser is currently showing a page where a
@@ -41,7 +40,10 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
+    (wd/move-to ::ui/user-menu)
     (browser/click ::ui/user-menu)
+    (Thread/sleep 1000)
+    (wd/move-to ::ui/log-out)
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
@@ -73,8 +75,8 @@
      (wd/->browser (clear ::username-text)
                    (clear ::password-text))
      (browser/quick-fill-submit {::username-text name}
-                             {::password-text password}
-                             {::log-in browser/click})
+                                {::password-text password}
+                                {::log-in browser/click})
      ;; throw errors
      ;;(notification/verify-no-error)     ; katello notifs
      ;;(notification/flush)
@@ -85,6 +87,7 @@
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (wd/ajax-wait)
+     ;;(browser/refresh)
      (when org
        (organization/switch org {:default-org default-org}))))
 
