@@ -1,6 +1,8 @@
 (ns katello.setup
   (:refer-clojure :exclude [replace])
-  (:require [test.tree.watcher :as watch]
+  (:require (test.tree
+             [watcher :as watch]
+             [jenkins :as jenkins])
             [clojure.string :refer [split replace]]
             [katello :as kt]
             (katello [login :refer [login logout]]
@@ -118,6 +120,29 @@
     {:name (:name test)
      :tags [ver full-ver]
      :build (Integer/parseInt build)}))
+
+(defn harness-middleware
+  "Returns a function that runs test.tree tests with all middleware that katello needs."
+  []
+  (let [sel-config {:selenium-server (cond (@config :sauce-user)
+                                           (new-remote-grid
+                                            (sauce-host (@config :sauce-user)
+                                                        (@config :sauce-key)))
+                                           
+                                           (@config :selenium-address)
+                                           (new-remote-grid (@config :selenium-address)) ; other remote wd
+
+                                           :else (new-selenium)) ; local
+                    :capabilities-chooser-fn (constantly empty-browser-config)
+                    :finder-fn wd/locator-finder-fn}]
+    
+    (if (@config :sauce-user)
+      (jenkins/debug+sauce-middleware (-> config
+                                          deref
+                                          (select-keys [:sauce-user :sauce-key])
+                                          (merge sel-config)
+                                          (assoc :sauce-job-attributes-fn sauce-attributes)))
+      (jenkins/debug+webdriver-middleware sel-config))))
 
 (defn thread-runner
   "A test.tree thread runner function that binds some variables for
