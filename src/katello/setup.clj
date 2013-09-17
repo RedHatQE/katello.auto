@@ -112,13 +112,11 @@
 (defn sauce-attributes [test]
   (let [full-ver (:version (rest/get-version))
         [_ ver build] (re-find #"(.*-\d+)\.(.*)" full-ver)
-        build (-> (re-find #"\.(\d+)\." build)
-                  second
-                  (or 1))]
+        build (second (re-find #"\.(\d+)\." build))]
     
     {:name (:name test)
      :tags [ver full-ver]
-     :build (Integer/parseInt build)}))
+     :build (if build (Integer/parseInt build) 1)}))
 
 (defn harness-middleware
   "Returns a function that runs test.tree tests with all middleware that katello needs."
