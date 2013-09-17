@@ -163,7 +163,7 @@ Default browser-spec: firefox"
 
 (defmacro alias-all [] 
   `(do ~@(for [[k v] (ns-publics 'clj-webdriver.taxi)]
-          `(def ~k ~v))))
+          `(def ~k (deref ~v)))))
 
 (alias-all)
 
