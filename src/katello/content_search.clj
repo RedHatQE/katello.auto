@@ -461,8 +461,8 @@
          (browser/wait-until  (browser/exists? ::details-container) 4000)
          (browser/text ::details-container))
     name))
-  (wd/move-off (.getLocator (span-text name))) ;; TODO: deal with getLocator
-  (Thread/sleep 1000)
+  (wd/move-to ::switcher-button)
+  (Threread/sleep 1000)
   (assert/is (= 0 (count (browser/find-elements ::details-container))))
 
   (defn get-errata-set  [type]

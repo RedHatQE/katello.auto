@@ -2,7 +2,7 @@
   (:require [clj-webdriver.element :refer [element-like?]]
             [slingshot.slingshot :refer [throw+]]
             [clj-webdriver.taxi :as browser]
-            [clj-webdriver.core :as clj-web]))
+            [clj-webdriver.core :as core]))
 
 (declare my-driver)
 
@@ -107,18 +107,18 @@ Default browser-spec: firefox"
 (defn move-to
   ([loc] (move-to browser/*driver* loc))
   ([driver loc]
-     (clj-web/move-to-element driver (browser/element loc))
+     (core/move-to-element driver (browser/element loc))
      (ajax-wait)))
 
 (defn move-off
   ([loc] (move-off browser/*driver* loc))
   ([driver loc]
-     (clj-web/move-to-element driver (browser/element loc) -20 -20)))
+     (core/move-to-element driver (browser/element loc) -20 -20)))
 
 (defn key-up
   ([loc k] (key-up browser/*driver* loc k))
   ([driver loc k]
-     (clj-web/key-up driver (browser/element loc) k)))
+     (core/key-up driver (browser/element loc) k)))
 
 (defn text-present? [text]
   (.contains (browser/page-source) text))
@@ -156,7 +156,90 @@ Default browser-spec: firefox"
       (finally
         (quit)))))
 
-;; remove print-method for webdriver due to https://github.com/semperos/clj-webdriver/issues/105
+;; remove print-method for webdriver due to https://github.com/semperos/core/issues/105
 
 (remove-method print-method org.openqa.selenium.WebDriver)
 (remove-method print-method org.openqa.selenium.WebElement)
+
+(defmacro alias-all [] 
+  `(do ~@(for [[k v] (ns-publics 'clj-webdriver.taxi)]
+          `(def ~k ~v))))
+
+(alias-all)
+
+(defmacro with-element [[s q] & body]
+  `(let [~s (element ~q)]
+     ~@body))
+
+
+(defn click
+  "Click the first element found with query `q`.
+
+   Examples:
+   =========
+
+   (click \"a#foo\")"
+  ([q] (click *driver* q))
+  ([driver q]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       (core/click e)
+       (ajax-wait))))
+
+(defn select
+  "If the first form element found with query `q` is not selected, click the element to select it. Otherwise, do nothing and just return the element found.
+
+   Examples:
+   =========
+
+   (select \"input.already-selected\") ;=> do nothing
+   (select \"input.not-selected\")     ;=> click"
+  ([q] (select *driver* q))
+  ([driver q]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       (core/select e)
+       (ajax-wait))))
+
+(defn select-by-text
+  "Select the option element with visible text `text` within the first select list found with query `q`.
+
+   Examples:
+   =========
+
+   (select-by-text \"#my-select-list\" \"foo\")"
+  ([q text] (select-by-text *driver* q text))
+  ([driver q text]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       (core/select-by-text e text)
+       (ajax-wait))))
+
+(defn hover "Hover over the specified element"
+  ([q] (hover *driver* q))
+  ([driver q]
+     (core/move-to-element driver (element q))
+     (ajax-wait)))
+
+(defn input-text
+  "Type the string `s` into the first form element found with query `q`.
+
+   Examples:
+   =========
+
+   (input-text \"input#login_field\" \"semperos\")"
+  ([q s] (input-text *driver* q s))
+  ([driver q s]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       (core/clear e)
+       (core/input-text e s)
+       (ajax-wait))))
+
+(defn select-deselect-by-text
+  ([q b text] (select-deselect-by-text *driver* q b text))
+  ([driver q b text]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       ((if b core/select-by-text core/deselect-by-text) e text)
+       (ajax-wait))))
