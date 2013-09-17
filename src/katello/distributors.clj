@@ -57,9 +57,9 @@
   {:pre [(instance? katello.Environment env)]}
   (nav/go-to ::new-page env)
   (rest/when-katello  
-   (browser/click (ui/environment-link (:name env))))
+   (wd/click (ui/environment-link (:name env))))
   (browser/quick-fill-submit {::distributor-name-text name}
-                             {::create browser/click})
+                             {::create wd/click})
   (notification/success-type :distributor-create))
 
 (defn- update-dist-custom-info
@@ -72,10 +72,10 @@
            (input-text ::keyname-text k)
            (input-text ::value-text v))
           #_(wd/key-up browser/*driver* ::keyname-text "z")
-          (browser/click ::custom-info-button)))) 
+          (wd/click ::custom-info-button)))) 
   ;; below dissoc required while updating, else will rm the just updated key/value
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (browser/click (remove-custom-info-button k))))
+    (wd/click (remove-custom-info-button k))))
   
 
 (defn- delete
@@ -83,8 +83,8 @@
   [dist]
   {:pre [(instance? katello.Distributor dist)]}
   (nav/go-to dist)
-  (browser/click ::remove-link)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-link)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :distributor-destroy))
 
 (defn- update

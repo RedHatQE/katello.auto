@@ -127,7 +127,7 @@ Default browser-spec: firefox"
   ([loc] (move-to-and-click browser/*driver* loc))
   ([driver loc]
      (move-to driver loc)
-     (browser/click loc)))
+     (click loc)))
 
 
 

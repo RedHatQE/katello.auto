@@ -45,7 +45,7 @@
                    (click ::upload-button))
     (browser/quick-fill-submit {::name-text name}
                                {::content-text contents}
-                               {::save browser/click}))
+                               {::save wd/click}))
   (notification/success-type :gpg-keys-create))
 
 
@@ -53,8 +53,8 @@
   "Deletes existing GPG keys"
   [gpg-key]
   (nav/go-to gpg-key)
-  (browser/click ::remove-link )
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-link )
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :gpg-keys-destroy))
 
 (extend katello.GPGKey

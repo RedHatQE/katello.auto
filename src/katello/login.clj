@@ -41,17 +41,17 @@
   []
   (when-not (logged-out?)
     (wd/move-to ::ui/user-menu)
-    (browser/click ::ui/user-menu)
+    (wd/click ::ui/user-menu)
     (Thread/sleep 1000)
     (wd/move-to ::ui/log-out)
-    (browser/click ::ui/log-out)))
+    (wd/click ::ui/log-out)))
 
 (defn- signo-error? []
   (and (browser/exists? ::error-message)
        (browser/visible? ::error-message)))
 
 (defn- clear-signo-errors []
-  (browser/click ::close-error))
+  (wd/click ::close-error))
 
 (defn login
   "Logs in a user to the UI with the given user and password. If none
@@ -67,7 +67,7 @@
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
      (when (logged-in?) (logout))
      (when (browser/exists? ::re-log-in-link)
-       (browser/click ::re-log-in-link))
+       (wd/click ::re-log-in-link))
 
      (when (signo-error?)
        (clear-signo-errors))
@@ -76,7 +76,7 @@
                    (clear ::password-text))
      (browser/quick-fill-submit {::username-text name}
                                 {::password-text password}
-                                {::log-in browser/click})
+                                {::log-in wd/click})
      ;; throw errors
      ;;(notification/verify-no-error)     ; katello notifs
      ;;(notification/flush)

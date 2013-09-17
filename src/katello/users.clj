@@ -73,7 +73,7 @@
   "Creates a user with the given name and properties."
   [{:keys [name password password-confirm email default-org default-env]}]
   (nav/go-to ::page)
-  (browser/click ::new)
+  (wd/click ::new)
   (let [env-chooser (fn [env] (when (and env (rest/is-katello?))
                                (nav/select-environment-widget env)))]
     (browser/quick-fill-submit {::username-text name}
@@ -81,35 +81,35 @@
                                {::confirm-text (or password-confirm password)}
                                {::email-text email})
     (when default-org
-      (browser/select-by-text (browser/element ::default-org) (:name default-org)))
+      (wd/select-by-text (browser/element ::default-org) (:name default-org)))
     (when default-env
       (env-chooser default-env))
-    (browser/click ::save))
+    (wd/click ::save))
   (notification/success-type :users-create))
 
 (defn- delete "Deletes the given user."
   [user]
   (nav/go-to user)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :users-destroy))
 
 (defn- modify-roles [to-add to-remove]
   (doseq [role to-add]
-    (browser/click (plus-icon (:name role))))
+    (wd/click (plus-icon (:name role))))
   (doseq [role to-remove]
-    (browser/click (minus-icon (:name role))))
-  (browser/click ::save-roles)
+    (wd/click (minus-icon (:name role))))
+  (wd/click ::save-roles)
   (notification/success-type :users-update-roles))
 
 (defn- assign-default-org-and-env 
   "Assigns a default organization and environment to a user"
   [org env]
   (when org
-    (browser/select-by-text ::default-org-select (:name org)))
+    (wd/select-by-text ::default-org-select (:name org)))
   (when (and env (rest/is-katello?))
-    (browser/click (ui/environment-link (:name env))))
-  (browser/click ::save-environment)
+    (wd/click (ui/environment-link (:name env))))
+  (wd/click ::save-environment)
   (notification/success-type :users-update-env))
 
 (defn current
@@ -130,15 +130,15 @@
     ;; use the {username} link at upper right if we're self-editing.
     (if (= (:name (current)) (:name user))
       (do (wd/move-to ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
-          (browser/click ::account)
+          (wd/click ::account)
           (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
     
     (when-not (nil? inline-help)
-      (browser/select ::enable-inline-help-checkbox))
+      (wd/select ::enable-inline-help-checkbox))
     (when password
-      (browser/input-text ::password-text password)
-      (browser/input-text ::confirm-text (or password-confirm password))
+      (wd/input-text ::password-text password)
+      (wd/input-text ::confirm-text (or password-confirm password))
 
       ;;hack alert - force the page to check the passwords (selenium
       ;;doesn't fire the event by itself
@@ -146,16 +146,16 @@
 
       (when (browser/exists? ::password-conflict)
         (throw+ {:type :password-mismatch :msg "Passwords do not match"}))
-      (browser/click ::save-edit) 
+      (wd/click ::save-edit) 
       (notification/success-type :users-update))
     (when email
       (common/in-place-edit {::email-text email}))
     (let [role-changes (map :roles (list to-add to-remove))]
       (when (some seq role-changes)
-        (browser/click ::roles-link)
+        (wd/click ::roles-link)
         (apply modify-roles role-changes)))
     (when (or default-org default-env)
-      (browser/click ::environments-link)
+      (wd/click ::environments-link)
       (assign-default-org-and-env default-org default-env))))
 
 (extend katello.User
@@ -195,18 +195,18 @@
   the cancel button will be clicked and no notifications should be
   deleted."
   [confirm?]
-  (browser/click  ::user-notifications)
+  (wd/click  ::user-notifications)
   (let [num-count (browser/text ::user-notifications)]
-    (browser/click ::delete-link)
+    (wd/click ::delete-link)
     (if confirm?
       (do
-        (browser/click ::ui/confirmation-yes)
-        (browser/click  ::user-notifications)
+        (wd/click ::ui/confirmation-yes)
+        (wd/click  ::user-notifications)
         (when (not= "0" (browser/text  ::user-notifications))
           (throw+ {:type ::not-all-notifications-deleted
                    :msg "Still some notifications remained after trying to delete all"})))
       (do
-        (browser/click ::ui/confirmation-no)
+        (wd/click ::ui/confirmation-no)
         (when (not= num-count (browser/text ::user-notifications))
           (throw+ {:type ::notifications-deleted-anyway
                    :msg "Notifications were deleted even after clicking 'no' on confirm."}))))))

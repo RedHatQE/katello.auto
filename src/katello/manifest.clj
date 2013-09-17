@@ -174,12 +174,12 @@
   [{:keys [file-path url provider]}]
   (nav/go-to ::subs/new-page provider)
   (when-not (browser/exists? ::subs/choose-file)
-    (browser/click ::subs/new))
+    (wd/click ::subs/new))
   (when url
     (common/in-place-edit {::subs/repository-url-text url})
     (notification/success-type :prov-update))
   (browser/quick-fill-submit {::subs/choose-file file-path}
-                             {::subs/upload-manifest browser/click})
+                             {::subs/upload-manifest wd/click})
   (browser/refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
@@ -190,15 +190,15 @@
   "Refreshes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (browser/click ::subs/refresh-manifest)
-  (browser/click ::ui/confirmation-yes))
+  (wd/click ::subs/refresh-manifest)
+  (wd/click ::ui/confirmation-yes))
 
 (defn- delete-manifest
   "Deletes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (browser/click ::subs/delete-manifest)
-  (browser/click ::ui/confirmation-yes))
+  (wd/click ::subs/delete-manifest)
+  (wd/click ::ui/confirmation-yes))
 
 (defn upload-manifest-import-history?
   "Returns true if after an manifest import the history is updated."

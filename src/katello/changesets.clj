@@ -33,7 +33,7 @@
 
 (defn check-all [template coll]
   (doseq [item coll]
-    (browser/click (template item))))
+    (wd/click (template item))))
 ;; Nav
 
 (ui/defelements :katello.deployment/any []
@@ -55,8 +55,8 @@
                                (let [env (kt/env cs)]
                                  (nav/select-environment-widget (:prior env) {:next-env env :wait true})))
     [::named-page (fn [cs] (when (:deletion? cs)
-                             (browser/click ::deletion)
-                             (browser/click (list-item (:name cs)))))]]])
+                             (wd/click ::deletion)
+                             (wd/click (list-item (:name cs)))))]]])
 
 ;; Tasks
 
@@ -67,10 +67,10 @@
   (nav/go-to ::named-environment-page env)
   (if deletion?
     (do
-      (browser/click (select-env (:name env)))
+      (wd/click (select-env (:name env)))
       (Thread/sleep 3000)
       (if (browser/exists? ::promotion)
-        (browser/click ::deletion))))
+        (wd/click ::deletion))))
   (wd/->browser (click ::new)
                  (input-text ::name-text name)
                  (click ::save))
@@ -81,12 +81,12 @@
   (let [[to-remove to-add _] (data/diff changeset new-changeset)
         go-home (fn []
                   (Thread/sleep 5000)
-                  (browser/click ::promotion-eligible-home))]
+                  (wd/click ::promotion-eligible-home))]
     (nav/go-to changeset env)
     (doseq [item (:content to-add)]
-      (browser/click (-> item :published-name add-content-item)))
+      (wd/click (-> item :published-name add-content-item)))
     (doseq [item (:content to-remove)]
-      (browser/click (-> item :published-name remove-content-item)))))
+      (wd/click (-> item :published-name remove-content-item)))))
 
 (extend katello.Changeset
   ui/CRUD {:create create
@@ -133,12 +133,12 @@
   (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock
     (Thread/sleep 2000)
-    (browser/click ::review-for-promotion)
+    (wd/click ::review-for-promotion)
     (Thread/sleep 5000)
     (browser/refresh)
     ;;for the submission
     (wd/loop-with-timeout (* 10 60 1000) []
-      (when-not (try+ (browser/click ::promote-to-next-environment)
+      (when-not (try+ (wd/click ::promote-to-next-environment)
                       (check-for-success)
                       (catch (common/errtype ::notification/promotion-already-in-progress) _
                         (nav/go-to changeset)))
@@ -185,7 +185,7 @@
   "If the published-name is present in the given environment, returns true."
   [{:keys [name deletion? env content] :as changeset}]
   (nav/go-to ::named-environment-page env)
-  (browser/click (select-env (:name env)))
+  (wd/click (select-env (:name env)))
   (every? true? (doall (for [cv content]
                          (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))   
 

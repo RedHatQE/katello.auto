@@ -64,7 +64,7 @@
 (defn- add-to
   "Adds systems to a system group"
   [systems]
-  (browser/click ::systems-link)
+  (wd/click ::systems-link)
   (doseq [system systems]
     (browser/quick-fill-submit {::hostname-toadd (:name system)})
                                ;;try to trigger autocomplete via javascript -
@@ -72,16 +72,16 @@
                                ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
     (browser/execute-script "window.$(\"#add_system_input\").autocomplete('search')")
     (Thread/sleep 3000)
-    (browser/click ::add-system)
+    (wd/click ::add-system)
     (notification/success-type :sysgrps-add-sys)))
 
 (defn- remove-from
   "Remove systems from a system group"
   [systems]
-  (browser/click ::systems-link)
+  (wd/click ::systems-link)
   (doseq [system systems]
-    (browser/click (system/checkbox (:name system)))
-    (browser/click ::remove-system)))
+    (wd/click (system/checkbox (:name system)))
+    (wd/click ::remove-system)))
 
 (defn copy
   "Clones a system group, given the original system group to clone,
@@ -89,10 +89,10 @@
    description will be taken for the clone)."
   [orig clone]
   (nav/go-to orig)
-  (browser/click ::copy)
+  (wd/click ::copy)
   (browser/quick-fill-submit {::copy-name-text (:name clone)}
                              {::copy-description-text (:description clone)}
-                             {::copy-submit browser/click})
+                             {::copy-submit wd/click})
   (notification/success-type :sysgrps-copy))
 
 (defn- remove
@@ -100,9 +100,9 @@
    group as well."
   [{:keys [also-remove-systems?] :as group}]
   (nav/go-to group)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
-  (browser/click (if also-remove-systems?
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
+  (wd/click (if also-remove-systems?
                    ::ui/confirmation-yes
                    ::confirm-only-group))
   (notification/success-type (if also-remove-systems?
@@ -112,15 +112,15 @@
 (defn- edit-details
   "Change the name, description and limit in system group"
   [name description limit]
-  (browser/click ::details-link)
+  (wd/click ::details-link)
   (let [needed-flipping (and limit
                              (not= (= limit :unlimited)
-                                   (browser/selected? ::unlimited-checkbox)))]
+                                   (wd/selected? ::unlimited-checkbox)))]
     (if (and limit (not= limit :unlimited))
-      (do (browser/click ::unlimited-checkbox)
+      (do (wd/click ::unlimited-checkbox)
           (browser/quick-fill-submit {::limit-value (str limit)}
-                                     {::save-new-limit browser/click}))
-      (browser/click ::unlimited-checkbox))
+                                     {::save-new-limit wd/click}))
+      (wd/click ::unlimited-checkbox))
     (when needed-flipping (notification/success-type :sysgrps-update)))
   (common/in-place-edit {::name-text name
                          ::description-text description}))

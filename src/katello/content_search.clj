@@ -265,23 +265,23 @@
 
 (defn load-all-results []
   (while (browser/exists? ::load-more)
-    (browser/click ::load-more)))
+    (wd/click ::load-more)))
 
 (defn submit-browse-button []
-  (browser/click ::browse-button)
+  (wd/click ::browse-button)
   (load-all-results))
 
 (defn add-to-repository-browser [repository]
   (autocomplete-adder-for-content-search ::repo-auto-complete ::add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
-  (browser/click (repo-remove repository)))
+  (wd/click (repo-remove repository)))
 
 (defn remove-repositories [repositories]
   (do
     (doseq [removing repositories]
       (remove-one-repository-from-browser removing))
-    (browser/click ::browse-button)))
+    (wd/click ::browse-button)))
 
 (defn name-map-to-name [name-map]
   (->> name-map
@@ -324,45 +324,45 @@
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-name-map repositories)]
     (doseq [repository repositories]
-      (browser/click (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
+      (wd/click (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
 
 (defn go-to-content-search-page [org]
   (nav/go-to ::page org))
 
 (defn add-repositories [repositories]
-  (browser/select ::type-select "Repositories")
-  (browser/click  ::repo-auto-complete-radio)
+  (wd/select-by-text ::type-select "Repositories")
+  (wd/click  ::repo-auto-complete-radio)
   (doseq [repository repositories]
     (add-to-repository-browser repository))
-  (browser/click ::browse-button))
+  (wd/click ::browse-button))
 
 (defn click-if-compare-button-is-disabled? []
-  (browser/click ::repo-compare-button)
+  (wd/click ::repo-compare-button)
   (not (=  "" (browser/text ::repo-compare-button))))
 
 (defn click-repo-errata [repo]
   (let [repo-id ((get-repo-search-data-name-map [repo]) repo) ]
-    (browser/click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
+    (wd/click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
 
 (defn compare-repositories [repositories]
   ;(nav/go-to ::page)
-  (browser/select ::type-select "Repositories")
-  (browser/click  ::repo-auto-complete-radio)
-  (browser/click ::browse-button)
+  (wd/select-by-text ::type-select "Repositories")
+  (wd/click  ::repo-auto-complete-radio)
+  (wd/click ::browse-button)
   (check-repositories repositories)
-  (browser/click ::repo-compare-button)
+  (wd/click ::repo-compare-button)
   (get-repo-content-search))
 
 (defn select-type [type]
   (case type
-    :packages  (browser/select ::repo-result-type-select "Packages")
-    :errata    (browser/select ::repo-result-type-select "Errata")))
+    :packages  (wd/select-by-text ::repo-result-type-select "Packages")
+    :errata    (wd/select-by-text ::repo-result-type-select "Errata")))
 
 (defn select-view [set-type]
   (case set-type
-    :all (browser/select ::repo-result-filter-select   "Union")
-    :shared (browser/select ::repo-result-filter-select   "Intersection")
-    :unique (browser/select ::repo-result-filter-select   "Difference")))
+    :all (wd/select-by-text ::repo-result-filter-select   "Union")
+    :shared (wd/select-by-text ::repo-result-filter-select   "Intersection")
+    :unique (wd/select-by-text ::repo-result-filter-select   "Difference")))
 
 (defn get-repo-packages [repo & {:keys [view] :or {view :packages} }]
   (compare-repositories [repo])
@@ -372,15 +372,15 @@
 
 (defn search-for-repositories [repo]
   ;(nav/go-to ::page)
-  (browser/select ::type-select "Repositories")
-  (browser/input-text ::repo-search repo)
+  (wd/select-by-text ::type-select "Repositories")
+  (wd/input-text ::repo-search repo)
   (submit-browse-button)
   (get-grid-row-headers))
 
 (defn search-for-packages [package]
   ;(nav/go-to ::page)
-  (browser/select ::type-select "Packages")
-  (browser/input-text ::pkg-search package)
+  (wd/select-by-text ::type-select "Packages")
+  (wd/input-text ::pkg-search package)
   (submit-browse-button)
   (get-grid-row-headers))
 
@@ -392,7 +392,7 @@
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
     ;(nav/go-to ::page)
-    (browser/select ::type-select ctype-str)))
+    (wd/select-by-text ::type-select ctype-str)))
 
 (defn select-environments [envs]
   ;; Select environments (columns)
@@ -400,7 +400,7 @@
     (let [col-locator (column env)]
       (wd/move-to ::column-selector) 
       (wd/move-to col-locator)
-      (browser/click col-locator)
+      (wd/click col-locator)
       (wd/move-off browser/*driver* ::column-selector))))
 
 (defn search-for-content
@@ -434,10 +434,10 @@
       (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
 
   ;; Add package
-  (when-not (empty? pkg) (browser/input-text ::pkg-search pkg))
+  (when-not (empty? pkg) (wd/input-text ::pkg-search pkg))
 
   ;; Add errata
-  (when-not (empty? errata) (browser/input-text ::errata-search errata))
+  (when-not (empty? errata) (wd/input-text ::errata-search errata))
 
   (submit-browse-button)
 
@@ -447,11 +447,11 @@
      (json/read-json)))
 
 (defn test-errata-popup-click [name]
-  (browser/click (span-text name))
+  (wd/click (span-text name))
   (wd/move-to ::errata-search)
   ;DOESNT CONTAIN NAME ANYMORE
   (assert/is (.contains (browser/text ::details-container) "Erratum"))
-  (browser/click (span-text name))
+  (wd/click (span-text name))
   (assert/is (= 0 (count (browser/find-elements ::details-container)))))
 
 (defn test-errata-popup-hover [name] 
@@ -462,7 +462,7 @@
          (browser/text ::details-container))
     name))
   (wd/move-to ::switcher-button)
-  (Threread/sleep 1000)
+  (Thread/sleep 1000)
   (assert/is (= 0 (count (browser/find-elements ::details-container))))
 
   (defn get-errata-set  [type]
@@ -510,4 +510,4 @@
   (browser/text (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
 
 (defn click-repo-desc [repo-name env-name view-name]
-  (browser/click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))
+  (wd/click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))

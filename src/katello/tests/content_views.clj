@@ -91,7 +91,7 @@
   "Refresh published-view and increment the version by 1"
   [cv]
   (let [current-version (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv))))]
-    (browser/click (views/refresh-cv (:published-name cv)))
+    (wd/click (views/refresh-cv (:published-name cv)))
     (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
@@ -782,7 +782,7 @@
                                                                      :composite-names (list cv1)})]
             (ui/create composite-view)
             (nav/go-to ::views/content-page composite-view)
-            (assert/is (not (browser/selected? (views/composite-view-name (:published-name cv2)))))
+            (assert/is (not (wd/selected? (views/composite-view-name (:published-name cv2)))))
             (assert/is (common/disabled? (views/composite-view-name (:published-name cv2))))))))
      
     (deftest "Consume content from composite content view definition"

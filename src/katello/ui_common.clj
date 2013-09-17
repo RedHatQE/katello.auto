@@ -35,7 +35,7 @@
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
-  (browser/click (a-toggler associated-text on?)))
+  (wd/click (a-toggler associated-text on?)))
 
 ;;UI tasks
 
@@ -59,7 +59,7 @@
    mode. Takes the locator of the input in editing mode as an
    argument."
   [loc]
-  (browser/click (inactive-edit-field loc)))
+  (wd/click (inactive-edit-field loc)))
 
 (defn in-place-edit
   "Fill out a form that uses in-place editing. Takes a map of locators
@@ -71,8 +71,8 @@
            (if-not (nil? val)
              (do (activate-in-place loc)
                  (browser/clear (input-loc loc))
-                 (browser/input-text (input-loc loc) val)
-                 (browser/click ::ui/save-inplace-edit)
+                 (wd/input-text (input-loc loc) val)
+                 (wd/click ::ui/save-inplace-edit)
                  (notification/check-for-success))))))
 
 (defn extract-list [f]
@@ -123,11 +123,11 @@
      (if with-favorite
        (wd/->browser (click ::ui/search-menu)
                      (click (ui/search-favorite with-favorite)))
-       (do (browser/input-text ::ui/search-bar criteria)
+       (do (wd/input-text ::ui/search-bar criteria)
            (when add-as-favorite
              (wd/->browser (click ::ui/search-menu)
                             (click ::ui/search-save-as-favorite)))
-           (browser/click ::ui/search-submit)))
+           (wd/click ::ui/search-submit)))
      (notification/verify-no-error {:timeout-ms 2000}))
   ([proto-entity opts]
      (search (class proto-entity) (try (kt/org proto-entity)
@@ -151,7 +151,7 @@
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser/text  inactive-elem)]
     (wd/move-to-and-click (browser/element inactive-elem))
-    (browser/input-text  input-locator requested-value)
+    (wd/input-text  input-locator requested-value)
     (if save?
       (do (wd/move-to-and-click (browser/element save-locator))
           (notification/success-type request-type)
