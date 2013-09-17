@@ -130,7 +130,7 @@
                                                         (@config :sauce-key)))
                                            
                                            (@config :selenium-address)
-                                           (new-remote-grid (@config :selenium-address)) ; other remote wd
+                                           (apply new-remote-grid (split (@config :selenium-address) #":")) ; other remote wd
 
                                            :else (new-selenium)) ; local
                     :capabilities-chooser-fn (constantly empty-browser-config)
