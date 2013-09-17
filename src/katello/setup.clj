@@ -46,7 +46,6 @@
 
 (def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
-                           "version" "23"
                            "nativeEvents" false
                            ;; :profile
                            #_(doto (ff/new-profile)
