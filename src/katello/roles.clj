@@ -60,52 +60,52 @@
   "Creates a role with the given name and optional description."
   [{:keys [name description]}]
   (nav/go-to ::page)
-  (browser/click ::new)
+  (wd/click ::new)
   (browser/quick-fill-submit {::name-text name}
                              {::description-text description}
-                             {::save browser/click})
+                             {::save wd/click})
   (notification/success-type :roles-create))
 
 (defn- goto-org-perms [org]
-  (browser/click ::permissions)
+  (wd/click ::permissions)
   (wd/->browser (click (permission-org (:name org))))
   (Thread/sleep 1000))
 
 (defn- add-permissions [permissions]
-  (browser/click ::slide-link-home)
+  (wd/click ::slide-link-home)
   (doseq [{:keys [name org description resource-type verbs tags]} permissions]
     (goto-org-perms org)
-    (browser/click ::add-permission)
+    (wd/click ::add-permission)
     (if (= resource-type :all)
-      (browser/click ::all-types)
-      (do (browser/select ::permission-resource-type-select resource-type)
-          (browser/click ::next)
+      (wd/click ::all-types)
+      (do (wd/select-by-text ::permission-resource-type-select resource-type)
+          (wd/click ::next)
           (cond 
            (and (not verbs) (browser/visible? ::all-verbs)) 
-           (browser/click ::all-verbs)
+           (wd/click ::all-verbs)
                           
            (not (nil? verbs))
            (doseq [verb verbs]
-             (browser/select  ::permission-verb-select verb)))
-          (browser/click ::next)
+             (wd/select-by-text  ::permission-verb-select verb)))
+          (wd/click ::next)
           (cond 
            (and (not tags) (browser/visible? ::all-tags)) 
-           (browser/click ::all-tags)
+           (wd/click ::all-tags)
                           
            (not (nil? tags))
            (doseq [tag tags]
-             (browser/select  ::permission-tag-select tag)))))
+             (wd/select-by-text  ::permission-tag-select tag)))))
     (browser/quick-fill-submit {::permission-name-text name}
                                {::permission-description-text description}
-                               {::save-permission browser/click})
+                               {::save-permission wd/click})
     (notification/success-type :roles-create-permission)))
     
 
 (defn- remove-permissions [permissions]
-  (browser/click ::slide-link-home)
+  (wd/click ::slide-link-home)
   (doseq [{:keys [name org]} permissions]
     (goto-org-perms org)
-    (browser/click (user-role-toggler name false))
+    (wd/click (user-role-toggler name false))
     (notification/success-type :roles-destroy-permission)
     (Thread/sleep 5000)))
 
@@ -127,7 +127,7 @@
     (when (some not-empty (list to-remove to-add))
       (nav/go-to role))
     (when (or users-to-add users-to-remove)
-      (browser/click ::users)
+      (wd/click ::users)
       (doseq [user users-to-add]
         (common/toggle user-role-toggler (:name user) true))
       (doseq [user users-to-remove]
@@ -140,8 +140,8 @@
   "Deletes the given role."
   [role]
   (nav/go-to role)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :roles-destroy))
 
 

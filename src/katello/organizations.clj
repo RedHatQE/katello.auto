@@ -54,11 +54,11 @@
                            (wd/move-to (browser/element ::default-info)))
      [::system-default-info-page (fn [n]
                                    (wd/move-to browser/*driver* (browser/element ::system-default-info))
-                                   (browser/click ::system-default-info))]
+                                   (wd/click ::system-default-info))]
      [::distributor-default-info-page (fn [n]
                                         (wd/move-to (browser/element ::distributor-default-info))
                                         (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
-                                        #_(browser/click ::distributor-default-info))]]]])
+                                        #_(wd/click ::distributor-default-info))]]]])
 
 ;; Tasks
 
@@ -89,7 +89,7 @@
   "Removes custom keyname field from an organization"
   [org section keyname]
   (nav/go-to section org)
-  (browser/click (remove-keyname-btn keyname))
+  (wd/click (remove-keyname-btn keyname))
   (notification/check-for-success))
 
 (defn- create
@@ -103,7 +103,7 @@
                              {::description-text (or description "")})
   (when label
     (browser/clear ::label-text)
-    (browser/input-text ::label-text label))
+    (wd/input-text ::label-text label))
   (when (rest/is-katello?)
     (browser/quick-fill-submit {::initial-env-name-text browser/focus}
                                {::initial-env-name-text (or (:name initial-env) "")}
@@ -111,17 +111,17 @@
                                {::initial-env-desc-text (or (:description initial-env) "")})
     (when initial-env
       (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
+      (wd/input-text ::initial-env-label-text (or (:label initial-env) ""))))
   (wd/move-to (browser/element ::create))
-  (browser/click ::create)
+  (wd/click ::create)
   (notification/success-type :org-create))
 
 (defn- delete
   "Deletes an organization."
   [org]
   (nav/go-to org)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :org-destroy) ;queueing success
   (browser/refresh)
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :org-delete)})) ;for actual delete
@@ -186,7 +186,7 @@
      (when (or force? 
                default-org
                (not= (nav/current-org) name)) 
-       (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       (wd/click (browser/find-element-under ::ui/switcher {:tag :a}))
        (wd/ajax-wait)
        (when default-org
          (let [default-org-name (when (not= default-org :none)
@@ -207,20 +207,20 @@
              (when (not= current-default default-org-name)
                (while (not (browser/visible? (ui/switcher-link default-org-name)))
                  (nav/scroll-org-switcher))))
-           (browser/click (ui/default-star (or default-org-name current-default)))
+           (wd/click (ui/default-star (or default-org-name current-default)))
            (notification/check-for-success)
            (notification/flush)
            (Thread/sleep 5000)
-           (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))))
+           (wd/click (browser/find-element-under ::ui/switcher {:tag :a}))))
        (when name
          (while (not (browser/visible? (ui/switcher-link name)))
            (nav/scroll-org-switcher))
-         (browser/click (ui/switcher-link name))))))
+         (wd/click (ui/switcher-link name))))))
 
 (defn switcher-available-orgs
   "List of names of orgs currently selectable in the org dropdown."
   []
-  (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+  (wd/click (browser/find-element-under ::ui/switcher {:tag :a}))
   (Thread/sleep 1000)
   (->> (browser/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
        (map browser/text)))

@@ -160,16 +160,16 @@
                              {::arch-select (or system-arch "x86_64")}
                              {::sockets-text sockets}
                              {::ram-mb-text ram-mb}
-                             {::system-virtual-type (when virtual? browser/click)}) 
+                             {::system-virtual-type (when virtual? wd/click)}) 
   (when (and env rest/is-katello?) (nav/select-environment-widget env))
-  (browser/click ::create)
+  (wd/click ::create)
   (notification/success-type :sys-create))
 
 (defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :sys-destroy))
 
 (defn- select-multisys-with-ctrl 
@@ -184,8 +184,8 @@
 (defn multi-delete "Delete multiple systems at once."
   [systems]
   (select-multisys-with-ctrl systems)
-  (browser/click ::multi-remove)
-  (browser/click ::confirm-yes)
+  (wd/click ::multi-remove)
+  (wd/click ::confirm-yes)
   (notification/success-type :sys-bulk-destroy))
 
 (defn add-bulk-sys-to-sysgrp 
@@ -202,12 +202,12 @@
   "Adding sys to sysgroup from right pane"
   [system group-name]
   (nav/go-to system)
-  (browser/click ::system-groups)
-  (browser/click ::add-group-form)
+  (wd/click ::system-groups)
+  (wd/click ::add-group-form)
   (if (browser/exists?  (select-sysgroup-checkbox group-name))
     (do
-      (browser/click (select-sysgroup-checkbox group-name))
-      (browser/click ::add-group)
+      (wd/click (select-sysgroup-checkbox group-name))
+      (wd/click ::add-group)
       (notification/success-type :sys-add-sysgrps))
     (throw+ {:type ::selected-sys-group-is-unavailable 
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
@@ -229,8 +229,8 @@
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
-                           (browser/click (checkbox-fn (:name item))))
-                         (browser/click submit)
+                           (wd/click (checkbox-fn (:name item))))
+                         (wd/click submit)
                          (notification/success-type :sys-update-subscriptions)))]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
@@ -243,11 +243,11 @@
         groups-to-add (:package-groups to-add)
         groups-to-remove (:package-groups to-remove)]
     (when (or packages-to-add packages-to-remove)
-      (let [x {}] (browser/click ::packages-link))
+      (let [x {}] (wd/click ::packages-link))
       ))
   (let [ks (list :packages :package-groups)]
     (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (browser/click ::packages-link))))
+      (wd/click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
@@ -256,17 +256,17 @@
                          ::release-version-select release-version}))
 
 (defn- update-custom-info [to-add to-remove]
-  (browser/click ::custom-info)
+  (wd/click ::custom-info)
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (common/in-place-edit {(existing-key-value-field k) v}))
-      (do (browser/input-text ::key-name k)
-          (browser/input-text ::key-value v)
+      (do (wd/input-text ::key-name k)
+          (wd/input-text ::key-value v)
           #_(browser keyUp ::key-name "w") ;; TODO: composite actions fixme
-          (browser/click ::create-custom-info))))
+          (wd/click ::create-custom-info))))
   ;; process removes
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (browser/click (remove-custom-info-button k))))
+    (wd/click (remove-custom-info-button k))))
 
 (defn- update
   "Edits the properties of the given system. Optionally specify a new
@@ -291,7 +291,7 @@
             removed-products (:products to-remove) ]
         (when (some #(not (nil? %)) (list added-products removed-products
                                           service-level auto-attach))
-          (browser/click ::subscriptions)
+          (wd/click ::subscriptions)
           (subscribe added-products removed-products)
           (when (some #(not (nil? %)) (list service-level auto-attach))
             (common/in-place-edit {::service-level-select (format "Auto-attach %s, %s"
@@ -459,9 +459,9 @@
   (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
     (doseq [group groups] ;;To expand
       (when (browser/exists?  (system-fact-group-expand group))
-        (browser/click (system-fact-group-expand group))))
+        (wd/click (system-fact-group-expand group))))
     (doseq [group groups] ;;To collapse
-      (browser/click (system-fact-group-expand group)))))
+      (wd/click (system-fact-group-expand group)))))
 
 
 (defn check-package-status
@@ -497,7 +497,7 @@
   (doseq [[items is-group?] [[package false]
                              [package-group true]]]
     (when items
-      (when is-group? (browser/click ::select-package-group))
+      (when is-group? (wd/click ::select-package-group))
       (wd/->browser (input-text ::package-name items)
                     (send-keys ::package-name items)
                     (click ::add-content))
@@ -510,7 +510,7 @@
   (doseq [[items is-group?] [[package false]
                              [package-group true]]]
     (when items
-      (when is-group? (browser/click ::select-package-group))
+      (when is-group? (wd/click ::select-package-group))
       (wd/->browser (input-text ::package-name items)
                     (send-keys ::package-name items)
                     (click ::remove-content))
@@ -530,12 +530,12 @@
 (defn update-selected-package "Update a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (browser/click ::update-package)
+  (wd/click ::update-package)
   (check-pkg-update-status package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (browser/click ::remove-package)
+  (wd/click ::remove-package)
   (check-pkg-update-status package))
   

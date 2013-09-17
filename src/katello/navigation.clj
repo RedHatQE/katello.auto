@@ -19,13 +19,13 @@
 
 (defn select-environment-widget [env & [{:keys [next-env wait]}]]
   (do (when (browser/exists? ::ui/expand-path)
-        (browser/click ::ui/expand-path))
-      (browser/click (environment-breadcrumb (:name env) (:name next-env)))
+        (wd/click ::ui/expand-path))
+      (wd/click (environment-breadcrumb (:name env) (:name next-env)))
       #_(when wait (browser waitForPageToLoad))))
 
 (defn search-here [search-term]
   (browser/quick-fill-submit {::ui/search-bar search-term}
-                             {::ui/search-submit browser/click}))
+                             {::ui/search-submit wd/click}))
 
 (def ^{:doc "Returns a selenium locator for an item in a left pane
              list (by the name of the item) - truncate to 32 chars to
@@ -69,10 +69,10 @@
      (choose-left-pane left-pane-item entity))
   ([templ entity]
      (let [loc (templ (:name entity))]
-       (try (browser/click loc)
+       (try (wd/click loc)
             (catch NoSuchElementException se
               (do (search-here (format "\"%s\"" (:name entity)))
-                  (browser/click loc)))))))
+                  (wd/click loc)))))))
 
 (defmacro browser-fn
   "produces a function that ignores context args and passes body to
@@ -148,7 +148,7 @@
     (if (empty? org-text) nil org-text)))
 
 (defn go-top [] 
-     (browser/click "//a[@href='dashboard']"))
+     (wd/click "//a[@href='dashboard']"))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg
@@ -157,7 +157,7 @@
      {:pre [name]}
      (go-to ::top-level)
      (when-not (= name (current-org))
-       (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
+       (wd/click (browser/find-element-under ::ui/switcher {:tag :a}))
        (while (not (browser/visible? (ui/switcher-link name)))
          (scroll-org-switcher))
-       (browser/click (ui/switcher-link name)))))
+       (wd/click (ui/switcher-link name)))))

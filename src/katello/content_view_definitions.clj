@@ -104,7 +104,7 @@
     [::details-page (nav/browser-fn (click ::details-tab))]
     [::content-page (nav/browser-fn (click ::content-tab))]
     [::filter-page (nav/browser-fn (click ::filter-tab))
-     [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser/click)))]]
+     [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (wd/click)))]]
     [::views-page (nav/browser-fn (click ::views-tab))]]])
 
 
@@ -132,19 +132,18 @@
   [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page org)
   (browser/quick-fill-submit {::name-text name}
-                             {::description-text description}
-                             {(fn [composite] 
-                                 (when composite 
-                                   (browser/click ::composite)
-                                   (doseq [composite-name composite-names]
-                                     (browser/click (composite-view-name (:published-name composite-name)))))) [composite]}
-                             {::save-new browser/click})
+                             {::description-text description})
+  (when composite 
+    (wd/click ::composite)
+    (doseq [composite-name composite-names]
+      (wd/click (composite-view-name (:published-name composite-name)))))
+  (wd/click ::save-new) 
   (notification/success-type :cv-create))
 
 (defn- add-repo
   "Add the given repository to content-view definition"
   [repos]
-  (browser/click ::content-tab)
+  (wd/click ::content-tab)
   (doseq [repo repos]
     (wd/move-to (-> repo :name product-or-repository))
     (wd/->browser
@@ -155,7 +154,7 @@
 (defn- remove-repo
   "Removes the given repository from existing content-view"
   [repos]
-  (browser/click ::content-tab)
+  (wd/click ::content-tab)
   (doseq [repo repos]
     (wd/move-to (-> repo :name product-or-repository))
     (wd/->browser
@@ -168,11 +167,11 @@
   "Publishes a Content View Definition"
   [{:keys [content-defn published-name description]} & [timeout-ms]]
   (nav/go-to content-defn)
-  (browser/click ::views-tab)
-  (browser/click ::publish-button)
+  (wd/click ::views-tab)
+  (wd/click ::publish-button)
   (browser/quick-fill-submit {::publish-name-text published-name}
                              {::publish-description-text description}
-                             {::publish-new browser/click})
+                             {::publish-new wd/click})
   (check-published-view-status published-name)  
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :cv-publish)}))
 
@@ -198,24 +197,24 @@
 
 (defn- select-exclude-filter []
   "Function to enable exclusion type filter"
-  (browser/click ::edit-inclusion-link)
-  (browser/click ::filter-rule-exclusion)
-  (browser/click ::close-edit-inclusion))
+  (wd/click ::edit-inclusion-link)
+  (wd/click ::filter-rule-exclusion)
+  (wd/click ::close-edit-inclusion))
 
 (defn add-repo-from-filters
   "Selects repo tab under CV filters"
   [repos]
-  (browser/click ::repo-tab)
+  (wd/click ::repo-tab)
   (doseq [repo repos]
     (wd/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)))
+    (wd/click ::add-product-btn)
+    (wd/click ::update-content)))
 
 (defn select-package-version-value
   "Select package version and set values: 
    versions are: 'All Versions' 'Only version' 'Newer Than' 'Older Than' 'Range'"
   [{:keys [version-type value1 value2]}]
-  (browser/select ::select-package-version
+  (wd/select-by-text ::select-package-version
            (case version-type
              :all           "All Versions"
              :only-version  "Only Version"
@@ -223,12 +222,12 @@
              :older-than    "Older Than"
              :range         "Range"))
   (when (some #{version-type} [:only-version :newer-than :older-than])   
-    (browser/input-text  ::version-value value1)
-    (browser/click ::save-version))
+    (wd/input-text  ::version-value value1)
+    (wd/click ::save-version))
   (when (= :range version-type)
-    (browser/input-text  ::range-value1 value1)
-    (browser/input-text  ::range-value2 value2)
-    (browser/click ::save-version)))
+    (wd/input-text  ::range-value1 value1)
+    (wd/input-text  ::range-value2 value2)
+    (wd/click ::save-version)))
 
 (defn- add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
@@ -244,8 +243,8 @@
   "Function to input rule items like: name of package, package-group or errata-id"
   [items]
   (doseq [item items]
-    (browser/input-text  ::rule-input item)
-    (browser/click ::submit-rule)))
+    (wd/input-text  ::rule-input item)
+    (wd/click ::submit-rule)))
   
 (defn add-package-rule 
   "Define rule to add packages to content filter"
@@ -254,56 +253,56 @@
   (input-rule-items packages)
   (when-not (= "all" version-type)
     (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
-  (browser/click (filter-link (:name cv-filter))))
+  (wd/click (filter-link (:name cv-filter))))
 
 (defn add-pkg-group-rule 
   "Define rule to add package groups to content filter"
   [cv-filter {:keys [pkg-groups]}]
   (add-rule cv-filter)
   (input-rule-items pkg-groups)
-  (browser/click (filter-link (:name cv-filter)))
+  (wd/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-id 
   "Define rule to add errata by erratum name to content filter"
   [cv-filter erratum-names]
   (add-rule cv-filter)
-  (browser/click ::select-errata-id)
+  (wd/click ::select-errata-id)
   (input-rule-items erratum-names)
-  (browser/click (filter-link (:name cv-filter)))
+  (wd/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn filter-errata-by-date-type
   "Define rule to filter errata by date to conten t filter"
   [cv-filter & [{:keys [from-date to-date errata-type]}]]
   (add-rule cv-filter)
-  (browser/click ::select-errata-date-type)
+  (wd/click ::select-errata-date-type)
   (when from-date
-    (browser/click ::edit-errata-from-date)
-    (browser/input-text ::input-from-date (date from-date))
-    (browser/click ::save-errata))
+    (wd/click ::edit-errata-from-date)
+    (wd/input-text ::input-from-date (date from-date))
+    (wd/click ::save-errata))
   (when to-date
-    (browser/click ::edit-errata-to-date)
-    (browser/input-text ::input-to-date (date to-date))
-    (browser/click ::save-errata))
+    (wd/click ::edit-errata-to-date)
+    (wd/input-text ::input-to-date (date to-date))
+    (wd/click ::save-errata))
   (when errata-type
-    (browser/click ::errata-type)
-    (browser/select  ::select-errata-label errata-type)
-    (browser/click ::save-errata))
-  (browser/click (filter-link (:name cv-filter)))
+    (wd/click ::errata-type)
+    (wd/select-by-text  ::select-errata-label errata-type)
+    (wd/click ::save-errata))
+  (wd/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
 
 (defn remove-rule
   "Remove a rule from selected filter"
   [rule-names]
   (doseq [rule-name rule-names]
-    (browser/click (select-rule rule-name))
+    (wd/click (select-rule rule-name))
     (Thread/sleep 1000)
-    (browser/click ::remove-button)
+    (wd/click ::remove-button)
     (notification/success-type :filter-rules-destroy)))
 
 (defn- edit-content-view-details [name description]
-  (browser/click ::details-tab)
+  (wd/click ::details-tab)
   (common/in-place-edit {::details-name-text name
                          ::details-description-text description})
   (notification/success-type :cv-update))
@@ -311,7 +310,7 @@
 (defn- add-to
   "Adds the given product to a content view definition"
   [products]
-  (browser/click ::content-tab)
+  (wd/click ::content-tab)
   (doseq [product products]
     (wd/move-to (-> product :name product-or-repository))
     (wd/->browser
@@ -322,7 +321,7 @@
 (defn- remove-from
   "Removes the given product from existing Content View"
   [products]
-  (browser/click ::content-tab)
+  (wd/click ::content-tab)
   (doseq [product products]
     (wd/move-to (->  product :name product-or-repository))
     (wd/->browser
@@ -355,8 +354,8 @@
   "Deletes an existing View Definition."
   [content-defn]
   (nav/go-to content-defn)
-  (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :cv-destroy))
 
 (defn clone
@@ -364,10 +363,10 @@
    to clone, and the new name and description."
   [orig clone]
   (nav/go-to orig)
-  (browser/click ::clone)
+  (wd/click ::clone)
   (browser/quick-fill-submit {::sg/copy-name-text (:name clone)}
                              {::sg/copy-description-text (:description clone)}
-                             {::sg/copy-submit browser/click})
+                             {::sg/copy-submit wd/click})
   (notification/success-type :cv-clone))
 
 (extend katello.ContentViewDefinition
