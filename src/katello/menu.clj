@@ -30,7 +30,7 @@
 
 (def subscriptions {::subscriptions-link "Subscriptions"})
 
-(def flyout-items {::custom-content-repositories-link "Custom Repositories"
+(def flyout-items {::products-link                    "Products"
                    ::red-hat-repositories-link        "Red Hat Repositories"
                    ::gpg-keys-link                    "GPG Keys"
                    ::sync-plans-link                  "Sync Plans"
@@ -95,7 +95,7 @@
              subscriptions-menu
 
              [::repositories-menu (browser-fn (click ::repositories-link))
-              [:katello.providers/custom-page (browser-fn (click ::custom-content-repositories-link))]
+              [:katello.providers/products-page (browser-fn (click ::products-link))]
               [:katello.redhat-repositories/redhat-page (browser-fn (click ::red-hat-repositories-link))]
               [:katello.gpg-keys/page (browser-fn (click ::gpg-keys-link))]]
 
