@@ -38,7 +38,7 @@
 
 (nav/defpages :katello.deployment/any katello.providers
   [::provider/products-page 
-   [::named-page (fn [repo] (browser/click (ui/editable (:name repo))))]])
+   [::named-page (fn [repo] (wd/click (ui/editable (:name repo))))]])
 
 ;; Tasks
 
@@ -51,12 +51,12 @@
           (instance? katello.Organization (kt/org product))]} 
 
   (nav/go-to ::provider/products-page product)
-  (browser/click (add-repo-link (:name product)))
-  (when gpg-key (browser/select-by-text ::repo-gpg-select (:name gpg-key)))
+  (wd/click (add-repo-link (:name product)))
+  (when gpg-key (wd/select-by-text ::repo-gpg-select (:name gpg-key)))
   (browser/quick-fill-submit {::repo-name-text name}
                              {::repo-name-text "\t"}
                              {::repo-url-text url}
-                             {::save-repository browser/click})
+                             {::save-repository wd/click})
   (notification/success-type :repo-create))
 
 (defn- update
@@ -75,14 +75,14 @@
   [repo]
   {:pre [(instance? katello.Repository repo)]}
   (nav/go-to repo)
-  (browser/click ::remove-repository)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-repository)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :repo-destroy))
 
 (defn gpgkey-associated?
   [product repo-name]
   (nav/go-to product)
-  (browser/click (select-repo repo-name))
+  (wd/click (select-repo repo-name))
   (browser/exists? (gpgkey-under-repo-details (:gpg-key product))))
 
 

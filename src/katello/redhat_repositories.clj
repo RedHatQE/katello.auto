@@ -76,10 +76,10 @@
     (let [prd      (kt/product repo)
           reposet  (kt/reposet repo)
           checked? (common/disabled? (select-repo-set (:type repo) (:name reposet)))]
-      (browser/click (expand-product (:type repo) (:name prd)))
+      (wd/click (expand-product (:type repo) (:name prd)))
       (if-not checked?
-        (browser/click (select-repo-set (:type repo)(:name reposet)))
-        (browser/click (expand-repo-set (:type repo)(:name reposet))))
+        (wd/click (select-repo-set (:type repo)(:name reposet)))
+        (wd/click (expand-repo-set (:type repo)(:name reposet))))
       (if (repo :deselect?)
         (browser/deselect (select-repo (:name repo)))
-        (browser/click (select-repo (:name repo)))))))  
+        (wd/click (select-repo (:name repo)))))))  

@@ -56,7 +56,7 @@
    [::named-page (fn [ent] (nav/choose-left-pane (kt/provider ent)))
     [::products-page (nav/browser-fn (click ::products-and-repositories)
                                      #_(sleep 2000))
-     [::named-product-page (fn [ent] (->> ent kt/product :name ui/editable (browser/click)))]]
+     [::named-product-page (fn [ent] (->> ent kt/product :name ui/editable (wd/click)))]]
     [::details-page (nav/browser-fn (click ::details-link))]
     [::repo-discovery-page (nav/browser-fn (click ::repository-discovery))]]]) 
 
@@ -69,7 +69,7 @@
   (nav/go-to ::new-page org)
   (browser/quick-fill-submit {::name-text (or name "")}
                              {::provider-description-text (or description "")}
-                             {::create-save browser/click})
+                             {::create-save wd/click})
   (notification/success-type :prov-create))
 
 (defn- add-product
@@ -78,11 +78,11 @@
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::products-page provider)
-  (browser/click ::add-product)
-  (when gpg-key (browser/select ::prd-gpg-select gpg-key))
+  (wd/click ::add-product)
+  (when gpg-key (wd/select-by-text ::prd-gpg-select gpg-key))
   (browser/quick-fill-submit {::product-name-text (or name "")}
                              {::product-description-text (or description "")}
-                             {::create-product browser/click})
+                             {::create-product wd/click})
   (notification/success-type :prod-create))
 
 (defn- update-product
@@ -103,8 +103,8 @@
    {:pre [(not-empty provider)
           (instance? katello.Product product)]}
   (nav/go-to product)
-  (browser/click ::remove-product)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-product)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :prod-destroy))
 
 (defn- delete
@@ -112,8 +112,8 @@
   [provider]
   {:pre [(instance? katello.Provider provider)]}
   (nav/go-to provider)
-  (browser/click ::remove-provider-link)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-provider-link)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :prov-destroy))
 
 (defn- edit
@@ -134,24 +134,24 @@
   [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
   (nav/go-to ::repo-discovery-page product)
   (browser/quick-fill-submit {::discovery-url-text discoverable-url}
-                             {::discover-button browser/click})
+                             {::discover-button wd/click})
   (if cancel
     (do
       (Thread/sleep 3000)
-      (browser/click ::cancel-discovery))
+      (wd/click ::cancel-discovery))
     (do
       (Thread/sleep 2000)
       (browser/wait-until  #(not (browser/visible? ::discover-spinner)) 120000 2000)
-      (doseq [url enabled-urls] (browser/click (repo-create-checkbox url)))
-      (browser/click ::create-within-product)
+      (doseq [url enabled-urls] (wd/click (repo-create-checkbox url)))
+      (wd/click ::create-within-product)
       (if new-prod
         (do
-          (browser/click (new-product-radio-btn "true"))
-          (browser/input-text ::new-product-name-text (:name product)))
+          (wd/click (new-product-radio-btn "true"))
+          (wd/input-text ::new-product-name-text (:name product)))
         (do
           (browser/execute-script ::existing-product-dropdown)
           (wd/move-to (existing-product-select (:name product)))))
-      (browser/click ::create-repositories)
+      (wd/click ::create-repositories)
       (notification/success-type :repo-create)))) 
 
 (extend katello.Provider

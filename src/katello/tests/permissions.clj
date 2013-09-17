@@ -82,18 +82,18 @@
                 (select ::role/permission-resource-type-select resource-type)
                 (click ::role/next))
   (doseq [verb verbs]
-    (browser/click  ::role/permission-verb-select verb))
-  (browser/click ::role/next)
+    (wd/select-by-text  ::role/permission-verb-select verb))
+  (wd/click ::role/next)
   (doseq [tag tags]
-    (browser/click  ::role/permission-tag-select tag))
+    (wd/select-by-text  ::role/permission-tag-select tag))
   (wd/->browser (click ::role/next)
                 (input-text ::role/permission-name-text name)
                 (input-text ::role/permission-description-text "myperm descriptions"))
   (while (browser/visible?  ::role/previous)
-    (browser/click ::role/previous))
+    (wd/click ::role/previous))
   (while (not (browser/visible?  ::role/save-permission))
-    (browser/click ::role/next))
-  (browser/click ::role/save-permission)
+    (wd/click ::role/next))
+  (wd/click ::role/save-permission)
   (notification/success-type :roles-create-permission))
 
 (defn verify-access
@@ -440,12 +440,12 @@
                :setup (fn [] (rest/create org)
                         (ui/create user))
                :allowed-actions [(fn [] (wd/move-to ::user/user-account-dropdown)
-                                   (browser/click ::user/account)
+                                   (wd/click ::user/account)
                                    (nav/browser-fn (click ::user/roles-link)))]
                :disallowed-actions [(fn [] (wd/move-to ::user/user-account-dropdown)
-                                      (browser/click ::user/account)
+                                      (wd/click ::user/account)
                                       (nav/browser-fn (click ::user/roles-link))
-                                      (browser/click ::user/add-role))]]))
+                                      (wd/click ::user/add-role))]]))
 
      (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]
               [:permissions []

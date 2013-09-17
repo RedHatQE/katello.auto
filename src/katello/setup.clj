@@ -44,7 +44,7 @@
                    "version" "10"
                    "nativeEvents" false}})
 
-(def empty-browser-config {"browserName" "firefox"
+(def empty-browser-config {"browserName" "chrome"
                            "platform" "LINUX"
                            "nativeEvents" false
                            ;; :profile
@@ -91,7 +91,7 @@
   (browser/new-driver (or browser-config-opts empty-browser-config)))
 
 (defn start-selenium [& [{:keys [browser-config-opts]}]]
-  (browser/set-driver! (or browser-config-opts empty-browser-config))
+  (browser/set-driver! {:browser :chrome} #_(or browser-config-opts empty-browser-config))
   (browser/set-finder! wd/locator-finder-fn)
   (browser/implicit-wait 2000)
   (browser/to (@config :server-url))
