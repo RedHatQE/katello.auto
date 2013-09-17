@@ -100,9 +100,9 @@
   [{:keys [products plan]}]
   (nav/go-to ::schedule-page plan)
   (doseq [product products]
-    (browser/click (schedule-item (:name product))))
-  (browser/click (plan-link (:name plan)))
-  (browser/click ::apply-schedule)
+    (wd/click (schedule-item (:name product))))
+  (wd/click (plan-link (:name plan)))
+  (wd/click ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
                                         ;don't match 
 
@@ -137,10 +137,10 @@
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
   (nav/go-to ::status-page (first repos))
-  (browser/click ::expand-all-products)
+  (wd/click ::expand-all-products)
   (doseq [repo repos]
-    (browser/click (provider-checkbox (:name repo))))
-  (browser/click ::synchronize-now)
+    (wd/click (provider-checkbox (:name repo))))
+  (wd/click ::synchronize-now)
   (Thread/sleep 10000)
   (zipmap repos (for [repo repos]
                   (wd/loop-with-timeout (or timeout 60000) []

@@ -28,7 +28,7 @@
 (nav/defpages :katello.deployment/any katello.organizations
   [:katello.organizations/named-page
    [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [env] (browser/click (ui/environment-link (:name env))))]])
+   [::named-page (fn [env] (wd/click (ui/environment-link (:name env))))]])
 
 ;; Tasks
 
@@ -44,7 +44,7 @@
                              {::description-text (or description "")}
                              {::label-text (or label "")}
                              {::prior (or (:name prior) "")}
-                             {::create browser/click})
+                             {::create wd/click})
   (notification/success-type :env-create))
 
 (defn- delete
@@ -52,9 +52,9 @@
   [env]
   (nav/go-to env)
   (if (browser/exists? ::remove-link)
-    (browser/click ::remove-link)
+    (wd/click ::remove-link)
     (throw+ {:type ::cant-be-deleted :env env}))
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :env-destroy))
 
 (defn- edit

@@ -75,7 +75,7 @@
    Here opr-type is package installed/removed 
    msg-format is Package Install/Package Remove"
   [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
-  (browser/click ::system/pkg-install-status-link)
+  (wd/click ::system/pkg-install-status-link)
   (assert/is (= msg-format (browser/text ::system/pkg-header)))
   (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser/text ::system/pkg-summary)))
   (if-not (nil? package-group)
@@ -107,13 +107,13 @@
 (defn validate-system-facts
   [system cpu arch virt? env]
   (nav/go-to ::system/facts-page system)
-  (browser/click ::system/cpu-expander)
+  (wd/click ::system/cpu-expander)
   (assert/is (= cpu (browser/text ::system/cpu-socket)))
-  (browser/click ::system/network-expander)
+  (wd/click ::system/network-expander)
   (assert/is (= (:name system) (browser/text ::system/net-hostname)))
-  (browser/click ::system/uname-expander)
+  (wd/click ::system/uname-expander)
   (assert/is (= arch (browser/text ::system/machine-arch)))
-  (browser/click ::system/virt-expander)
+  (wd/click ::system/virt-expander)
   (if virt?
     (assert/is (= "true" (browser/text ::system/virt-status)))
     (assert/is (= "false" (browser/text ::system/virt-status))))
@@ -134,7 +134,7 @@
 (defn filter-errata-by-type "Filter errata based on selected errata-type"
   [system {:keys [errata-type errata-ids]}]
   (nav/go-to ::system/content-errata-page system)
-  (browser/select ::system/select-errata-type errata-type)
+  (wd/select-by-text ::system/select-errata-type errata-type)
   (doseq [errata-id errata-ids]
     (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
 
@@ -243,12 +243,12 @@
                                           :env test-environment})]
         (rest/create system)
         (nav/go-to system)
-        (browser/click ::system/remove)
+        (wd/click ::system/remove)
         (if confirm?
-          (do (browser/click ::ui/confirmation-yes)
+          (do (wd/click ::ui/confirmation-yes)
               (notification/success-type :sys-destroy)
               (assert (rest/not-exists? system)))
-          (do (browser/click ::ui/confirmation-no)
+          (do (wd/click ::ui/confirmation-no)
               (nav/go-to system)))))
     [[false]
      [true]])
@@ -277,11 +277,11 @@
       (let [sys1 (assoc system :env (kt/library org))]
         (rest/create-all (list org sys1))
         (nav/go-to sys1)
-        (browser/click ::system/custom-info)
+        (wd/click ::system/custom-info)
         (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
         (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
         (nav/go-to sys1)
-        (browser/click ::system/custom-info)
+        (wd/click ::system/custom-info)
         (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
@@ -463,7 +463,7 @@
               aklink (system/activation-key-link (:name ak))]
           (nav/go-to ::system/details-page system)
           (when (browser/exists?  aklink)
-            (browser/click aklink))))))
+            (wd/click aklink))))))
 
   (deftest "Add/Remove system packages"
     :uuid "e6e74dcc-46e5-48c8-9a2d-0ac33de7dd70"
@@ -650,7 +650,7 @@
                               :env (:name env)
                               :force true})
             (nav/go-to ::system/details-page mysys)
-            (browser/selected? (system/check-selected-env (:name env))))
+            (wd/selected? (system/check-selected-env (:name env))))
           (assert/is (not= (:environment_id mysys)
                            (rest/get-id env-dev)))))))
   
@@ -691,7 +691,7 @@
               (let [aklink (system/activation-key-link (:name ak))]
                 (nav/go-to ::system/details-page system)
                 (when (browser/exists?  aklink)
-                  (browser/click aklink)))))))))
+                  (wd/click aklink)))))))))
 
   (deftest  "Registering a system from CLI and consuming contents from UI"
     :uuid "867f7827-2ec2-48b4-d063-adc1e58dcfe5"

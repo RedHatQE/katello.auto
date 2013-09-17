@@ -50,30 +50,30 @@
    optional."
   [{:keys [name description content-view env] :as ak}]
   (nav/go-to ::new-page ak)
-  (rest/when-katello (browser/click (ui/environment-link (:name env))))
+  (rest/when-katello (wd/click (ui/environment-link (:name env))))
   (browser/quick-fill-submit {::name-text (or name "")}
                              {::description-text (or description "")})
   (rest/when-katello
     (when content-view 
-	(browser/input-text ::content-view-select (or (:published-name content-view) ""))))
-     (browser/click ::create) 
+	(wd/input-text ::content-view-select (or (:published-name content-view) ""))))
+     (wd/click ::create) 
   (notification/success-type :ak-create))
 
 (defn- delete
   "Deletes the given activation key."
   [ak]
   (nav/go-to ak)
-  (browser/click ::remove-link)
-  (browser/click ::ui/confirmation-yes)
+  (wd/click ::remove-link)
+  (wd/click ::ui/confirmation-yes)
   (notification/success-type :ak-destroy))
 
 (defn- add-subscriptions
   "Add subscriptions to activation key."
   [subscriptions]
-  (browser/click ::available-subscriptions)
+  (wd/click ::available-subscriptions)
   (doseq [subscription subscriptions]
-    (browser/click (subscription-checkbox subscription)))
-  (browser/click ::add-subscriptions)
+    (wd/click (subscription-checkbox subscription)))
+  (wd/click ::add-subscriptions)
   (notification/success-type :ak-add-subscriptions))
 
 (defn- remove-subscriptions [subscriptions]
@@ -91,7 +91,7 @@
 (defn get-subscriptions "Get applied susbscription info from activation key"
   [ak]
   (nav/go-to ak)
-  (browser/click ::applied-subscriptions)
+  (wd/click ::applied-subscriptions)
   (common/extract-list applied-subscriptions))
 
 (defn- update [ak updated]
@@ -107,7 +107,7 @@
                      
                      (browser/quick-fill-submit {::content-view-select cv}
                                                 {nav/select-environment-widget env}
-                                                {::save browser/click}))
+                                                {::save wd/click}))
       (when-let [sg (:system-group add)]
         (associate-system-group sg))
       (when-let [subs (:subscriptions add)]
