@@ -179,7 +179,7 @@ Default browser-spec: firefox"
    =========
 
    (click \"a#foo\")"
-  ([q] (click *driver* q))
+  ([q] (click clj-webdriver.taxi/*driver* q))
   ([driver q]
      (with-element [e q]
        (core/move-to-element driver e)
@@ -194,7 +194,7 @@ Default browser-spec: firefox"
 
    (select \"input.already-selected\") ;=> do nothing
    (select \"input.not-selected\")     ;=> click"
-  ([q] (select *driver* q))
+  ([q] (select clj-webdriver.taxi/*driver* q))
   ([driver q]
      (with-element [e q]
        (core/move-to-element driver e)
@@ -208,7 +208,7 @@ Default browser-spec: firefox"
    =========
 
    (select-by-text \"#my-select-list\" \"foo\")"
-  ([q text] (select-by-text *driver* q text))
+  ([q text] (select-by-text clj-webdriver.taxi/*driver* q text))
   ([driver q text]
      (with-element [e q]
        (core/move-to-element driver e)
@@ -216,7 +216,7 @@ Default browser-spec: firefox"
        (ajax-wait))))
 
 (defn hover "Hover over the specified element"
-  ([q] (hover *driver* q))
+  ([q] (hover clj-webdriver.taxi/*driver* q))
   ([driver q]
      (core/move-to-element driver (element q))
      (ajax-wait)))
@@ -228,7 +228,7 @@ Default browser-spec: firefox"
    =========
 
    (input-text \"input#login_field\" \"semperos\")"
-  ([q s] (input-text *driver* q s))
+  ([q s] (input-text clj-webdriver.taxi/*driver* q s))
   ([driver q s]
      (with-element [e q]
        (core/move-to-element driver e)
@@ -237,7 +237,7 @@ Default browser-spec: firefox"
        (ajax-wait))))
 
 (defn select-deselect-by-text
-  ([q b text] (select-deselect-by-text *driver* q b text))
+  ([q b text] (select-deselect-by-text clj-webdriver.taxi/*driver* q b text))
   ([driver q b text]
      (with-element [e q]
        (core/move-to-element driver e)
