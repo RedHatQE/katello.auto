@@ -1,6 +1,7 @@
 (ns katello.tests.providers.redhat
   (:require [katello :as kt]
             (katello [navigation :as nav]
+                     [activation-keys :as ak]   
                      [tasks           :refer :all]
                      [ui :as ui]
                      [ui-common       :as common]
@@ -25,6 +26,7 @@
             [slingshot.slingshot :refer [try+]]
             [katello.client.provision :as provision]
             [test.tree.script :refer [defgroup deftest]]
+            [katello.tests.useful :refer [prepare-org-fetch-org new-manifest]]
             [katello.tests.e2e :as e2e]
             [test.assert :as assert]))
 
@@ -48,7 +50,6 @@
    :cloud-providers "Red Hat Enterprise Linux for Cloud Providers, Partner Enablement, Premium"
    :hcn             "Red Hat Enterprise Linux Server for HPC Compute Node, Self-support (8 sockets) (Up to 1 guest)"
    :rhev            "Red Hat Enterprise Virtualization for Desktops (25 concurrent desktops), Premium"
-   :jboss           "Red Hat JBoss Enterprise Application Platform ELS Program, 64 Core Standard"
    :scalable-hcn    "Scalable File System for HPC Compute Node (1-2 sockets)"})
 
 ;; extended update support (eus), part of non-standard subscriptions manifest,
@@ -58,21 +59,6 @@
   {:eus          "Extended Update Support for Red Hat Enterprise Linux Server (8 sockets)"})
 
 ;; Functions
-
-(defn prepare-org-fetch-org []
-  (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
-        envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
-    (ui/create org)
-    (doseq [e (kt/chain envz)]
-      (ui/create e))
-    org))
-
-(defn new-manifest [redhat-manifest?]
-  (let [org       (prepare-org-fetch-org)
-        provider  (assoc kt/red-hat-provider :org org)
-        fetch-manifest  (uniqueify (manifest/download-original-manifest redhat-manifest?))
-        manifest  (assoc fetch-manifest :provider provider)]
-    manifest))
 
 (defn all-subs-exist?
   [map manifest]
@@ -275,7 +261,7 @@
       (expecting-error (common/errtype :katello.notifications/failed-signature-check)
                          (ui/create manifest))
       (ui/create manifest-2)))
-  
+            
   (deftest "Delete a manifest"
     :uuid "60b9676a-d420-3564-1666-b4e3ff9b3885"
     (let [manifest  (new-manifest false)]
@@ -295,7 +281,14 @@
     :uuid "3737658d-3924-4df1-86fa-272a8b9d8b72"
     (let [manifest      (new-manifest false)
           org2          (prepare-org-fetch-org)
-          org2-manifest (update-in manifest [:provider] assoc :org org2) ]
+          org2-manifest (update-in manifest [:provider] assoc :org org2)]
       (ui/create manifest)
       (ui/delete manifest)
-      (ui/create org2-manifest))))
+      (ui/create org2-manifest)))
+  
+  (deftest "Manifest link should point to customer portal not localhost"
+    :uuid "c1d0b7ef-fb2d-4dc5-ac35-6aa65530def9"
+    (let [manifest      (new-manifest true)]
+      (ui/create manifest)
+      (nav/go-to ::subscriptions/new-page (kt/provider manifest))
+      (assert/is (browser isElementPresent ::subscriptions/manifest-link)))))
