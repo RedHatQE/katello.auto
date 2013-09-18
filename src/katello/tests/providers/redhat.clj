@@ -291,4 +291,4 @@
     (let [manifest      (new-manifest true)]
       (ui/create manifest)
       (nav/go-to ::subscriptions/new-page (kt/provider manifest))
-      (assert/is (browser isElementPresent ::subscriptions/manifest-link)))))
+      (assert/is (browser/exists? ::subscriptions/manifest-link)))))

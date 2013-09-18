@@ -17,7 +17,7 @@
                      [systems :as system]
                      [conf :refer [*session-org* *environments* config]]
                      [blockers :refer [bz-bugs]])
-            [com.redhat.qe.auto.selenium.selenium :as sel :refer [browser]]
+            [clj-webdriver.taxi :as browser]
             [katello.tests.useful :refer [create-recursive new-manifest]]
             [katello.client.provision :as provision]            
             [test.tree.script :refer [defgroup deftest]]
@@ -136,5 +136,5 @@
           (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
                              katello/newSystem)]
             (nav/go-to ::ak/systems-page ak)
-            (browser clickAndWait (ak/systems-link (:name mysys)))
-            (assert/is (browser isElementPresent ::system/subscriptions))))))))
+            (browser/click (ak/systems-link (:name mysys)))
+            (assert/is (browser/exists? ::system/subscriptions))))))))
