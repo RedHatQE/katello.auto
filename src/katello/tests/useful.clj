@@ -68,17 +68,17 @@
 (defn fresh-repos
   "Infite seq of unique repos (in new provider/product) in given org,
    with given url."
-  [org url]
+  [org url repo-type]
   (for [[prov prod repo] (apply map list
                                 (map tasks/uniques
                                      (list (kt/newProvider {:name "sync", :org org})
                                            (kt/newProduct {:name "sync-test1"})
-                                           (kt/newRepository {:name "testrepo", :url url}))))]
+                                           (kt/newRepository {:name "testrepo", :url url, :repo-type repo-type}))))]
     (assoc repo :product (assoc prod :provider prov))))
 
 (defn fresh-repo "New repo in a new product in a new provider"
-  [org url]
-  (first (fresh-repos org url)))
+  [org url repo-type]
+  (first (fresh-repos org url repo-type)))
 
 (defn add-product-to-cv
   [org target-env repo]

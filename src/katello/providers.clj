@@ -13,47 +13,39 @@
 ;; Locators
 
 (ui/defelements :katello.deployment/any [katello.ui]
-       {::new-provider              "//a[@class='ng-binding' and contains(.,'New Provider')]"
-        ::provider-name-text        "//input[@name='name']"
-        ::provider-save             "//button[@ng-click='save(provider)']"
+  {::new-provider             "//a[@class='ng-binding' and contains(.,'New Provider')]"
+   ::provider-name-text       "//input[@name='name']"
+   ::provider-save            "//button[@ng-click='save(provider)']"
         
-        ::new-product               "//div[@class='nutupane-actions fr']/button[contains (.,'New Product')]"
-        ::repository-discovery      "//div[@class='nutupane-actions fr']/button[contains (.,'Repo Discovery')]"
+   ::new-product              "//div[@class='nutupane-actions fr']/button[contains (.,'New Product')]"
+   ::repository-discovery     "//div[@class='nutupane-actions fr']/button[contains (.,'Repo Discovery')]"
         
-        ::product-name-text         "//input[@name='name']"
-        ::product-label-text        "//input[@name='label']"
-        ::products-provider         "//select[@name='provider_id']"
-        ::products-gpg-key          "//select[@name='gpg_key_id']"
-        ::product-description-text  "//textarea[@name='description']"
-        ::product-save              "//button[@ng-click='save(product)']"
-        ::product-remove            "//button[@ng-click='removeProduct(product)']"
+   ::product-name-text        "//input[@name='name']"
+   ::product-label-text       "//input[@name='label']"
+   ::products-provider        "//select[@name='provider_id']"
+   ::products-gpg-key         "//select[@name='gpg_key_id']"
+   ::product-description-text "//textarea[@name='description']"
+   ::product-save             "//button[@ng-click='save(product)']"
+   ::product-remove           "//button[@ng-click='removeProduct(product)']"
         
-        ::details-link              "//nav[@class='details-navigation']//a[contains(.,'Details')]"
-        ::repositories-link         "//nav[@class='details-navigation']//a[contains(.,'Repositories')]"
-        
-        ::create-repositories       "//button[contains(@class,'ng-binding') and contains(.,'Create Repository')]"
-        
-        ::repository-name-text      "//input[@name='name']"
-        ::repository-label-text     "//input[@name='label']"
-        ::repository-type           "//select[@name='content_type']"
-        ::repository-url            "//input[@name='url']"
-        ::repo-protection-checkbox  "//input[@name='unprotected']"   
-        ::repository-gpg-key        "//select[@name='gpg_key_id']"
-        ::repository-save           "//button[@ng-click='save(repository)']"
-        ::repository-remove         "//button[@ng-click='removeRepository(repository)']"})
+   ::details-link             "//nav[@class='details-navigation']//a[contains(.,'Details')]"
+   ::prd-gpgkey-update        "//div[@selector='product.gpg_key_id']//i[contains(@class,'icon-edit')]"
+   ::prd-gpgkey-update-select "//div[@selector='product.gpg_key_id']//select[@ng-model='selector']"
+   ::save-updated-gpg-key     "//div[@selector='product.gpg_key_id']//button[contains(.,'Save')]"
+   
+   ::prd-description-update   "//div[@alch-edit-textarea='product.description']//i[contains(@class,'icon-edit')]"})
         
 
 (wd/template-fns
  {select-product          "//tr[@row-select='product']/td/a[contains(.,'%s')]"
   select-repository       "//a[contains(@href,'repositories') and contains(.,'%s')]"})
-  ;; repo-create-checkbox    "//table[@id='discovered_repos']//label[normalize-space(.)='%s']//input"
-  ;; new-product-radio-btn   "//input[@name='new_product' and @value='%s']"
-  ;; existing-product-select "//div[@id='existing_product_select_chzn']//li[normalize-space(.)='%s']"}) 
-
+  
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
   [::products-page
+   [::product-page (fn [product] (browser/click (select-product (:name product))))]
+    [::product-details-page (nav/browser-fn (click ::details-link))]
    [::new-page (nav/browser-fn (click ::new-product))]
    [::repo-discovery-page (nav/browser-fn (click ::repository-discovery))]]) 
 
@@ -72,31 +64,29 @@
   [{:keys [provider name description gpg-key]}]
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
-  (nav/go-to ::new-page (kt/org provider))
+  (nav/go-to ::new-page provider)
   (ui/create provider) ;; Todo for same provider
   (when gpg-key (browser/select ::products-gpg-key gpg-key))
   (browser/quick-fill-submit {::product-name-text (or name "")}
                              {::product-description-text (or description "")}
                              {::product-save  browser/click}))
 
-#_(defn- update-product
+(defn- update-product
   "Updates product. Currently the properties of a product that
    can be edited are description and gpg-key"
   [product {:keys [gpg-key]}]
   (when (not= (:gpg-key product) gpg-key) 
-    (nav/go-to product)
-    (wd/->browser (click  ::update-prd-gpg-keys)
-                   (select ::prd-gpg-select gpg-key)
-                   (click  ::save-updated-gpg-key)
-                   (click  ::ui/confirmation-yes))
-    (notification/success-type :prod-update)))
+    (nav/go-to ::product-details-page product)
+    (wd/->browser (click ::prd-gpgkey-update)
+                  (select ::prd-gpgkey-update-select gpg-key)
+                  (click  ::save-updated-gpg-key))))
 
 (defn- delete-product
   "Deletes a product from the given provider."
   [{:keys [provider] :as product}]
    {:pre [(not-empty provider)
           (instance? katello.Product product)]}
-  (nav/go-to ::products-page)
+  (nav/go-to product)
   (browser/click ::product-remove))
 
 
@@ -155,12 +145,11 @@
                                                          (select-keys new-prov [:repository_url])}})))
               :delete (fn [prov] (rest/http-delete (id-url prov)))})
 
-  tasks/Uniqueable  tasks/entity-uniqueable-impl
-
-  nav/Destination {:go-to (partial nav/go-to ::named-page)})
+  tasks/Uniqueable  tasks/entity-uniqueable-impl)
 
 (extend katello.Product
   ui/CRUD {:create create-product
+           :update* update-product  
            :delete delete-product}
 
   rest/CRUD (let [id-url (partial rest/url-maker [["api/organizations/%s/products/%s" [:org identity]]])
@@ -178,5 +167,5 @@
 
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (partial nav/go-to ::products-page)})
+  nav/Destination {:go-to (partial nav/go-to ::product-page)})
 
