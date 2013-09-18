@@ -5,8 +5,9 @@
             [clj-webdriver.taxi :as browser]
             (katello [rest :as rest]
                      [ui :as ui]
-                     [tasks :refer [with-unique]]
+                     [tasks :refer [with-unique uniqueify uniques]]
                      [sync-management :as sync]
+                     [manifest :as manifest]
                      [tasks :as tasks])))
 
 (defn ensure-exists [ent]
@@ -79,6 +80,21 @@
 (defn fresh-repo "New repo in a new product in a new provider"
   [org url]
   (first (fresh-repos org url)))
+
+(defn prepare-org-fetch-org []
+  (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
+        envz (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
+    (ui/create org)
+    (doseq [e (kt/chain envz)]
+      (ui/create e))
+    org))
+
+(defn new-manifest [redhat-manifest?]
+  (let [org       (prepare-org-fetch-org)
+        provider  (assoc kt/red-hat-provider :org org)
+        fetch-manifest  (uniqueify (manifest/download-original-manifest redhat-manifest?))
+        manifest  (assoc fetch-manifest :provider provider)]
+    manifest))
 
 (defn add-product-to-cv
   [org target-env repo]

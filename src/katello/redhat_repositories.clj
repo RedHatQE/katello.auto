@@ -34,6 +34,8 @@
    [::product-isos-page (nav/browser-fn (click ::isos-tab))] 
    [::others-page (nav/browser-fn (click ::others-tab))]])
 
+(def redhat-ak-subscriptions '("Red Hat Employee Subscription"))
+
 (def repo-map
   {:rpms    ::rpms-page
    :srpms   ::source-rpms-page
