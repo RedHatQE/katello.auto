@@ -32,11 +32,11 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                      "new"
-   ::name-text                "content_view_definition[name]"
-   ::label-text               "katello/content_view_definition/default_label"
-   ::description-text         "content_view_definition[description]"
-   ::composite                "content_view_definition[composite]"
-   ::save-new                 "commit"
+   ::name-text                {:name "content_view_definition[name]"}
+   ::label-text               {:name "content_view_definition[label]"}
+   ::description-text         {:name "content_view_definition[description]"}
+   ::composite                {:name "content_view_definition[composite]"}
+   ::save-new                 {:name  "commit"}
    ::remove                   (ui/link "Remove")
    ::clone                    (ui/link "Clone")
 
@@ -47,8 +47,8 @@
    ::update-content            "update_products"
 
    ;; Details tab
-   ::details-name-text         "view_definition[name]"
-   ::details-description-text  "view_definition[description]"
+   ::details-name-text         {:name "view_definition[name]"}
+   ::details-description-text  {:name "view_definition[description]"}
 
    ;; Filters tab
    ::new-filter-button         "//input[@type='button' and @value='New Filter']"
@@ -90,8 +90,8 @@
 
    ;; Promotion
    ::publish-button            "//input[@type='button']"
-   ::publish-name-text         "content_view[name]"
-   ::publish-description-text  "content_view[description]"
+   ::publish-name-text         {:name "content_view[name]"}
+   ::publish-description-text  {:name "content_view[description]"}
    ::publish-new               "commit"
    ::refresh-button            "refresh_action"
    })
@@ -132,12 +132,13 @@
   [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page org)
   (browser/quick-fill-submit {::name-text name}
-                             {::description-text description})
-  (when composite 
-    (wd/click ::composite)
-    (doseq [composite-name composite-names]
-      (wd/click (composite-view-name (:published-name composite-name)))))
-  (wd/click ::save-new) 
+                             {::description-text description}
+                             {::composite (fn [el] 
+                                            (when composite 
+                                              (browser/select el)
+                                              (doseq [composite-name composite-names]
+                                                (browser/click (composite-view-name (:published-name composite-name))))))}
+                             {::save-new browser/click})
   (notification/success-type :cv-create))
 
 (defn- add-repo

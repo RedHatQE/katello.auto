@@ -105,9 +105,10 @@
    needed in this namespace, for m to be merged with.
    Example, (deflocators :katello.deployment/any [other.ns/locators] {:foo 'bar'})"
   [deployment others m]
-  `(defmethod elements [(-> *ns* .getName symbol) ~deployment] [_# _#]
-     (apply merge ~m (for [other# (quote ~others)]
-                       (elements other# ~deployment)))))
+  `(let [m# ~m]
+     (defmethod elements [(-> *ns* .getName symbol) ~deployment] [_# _#]
+       (apply merge m# (for [other# (quote ~others)]
+                         (elements other# ~deployment))))))
 
 (defelements :katello.deployment/any []
   {::save-inplace-edit       "//div[contains(@class, 'editable')]//button[@type='submit']|//span[contains(@class, 'editable')]//button[@type='submit']"

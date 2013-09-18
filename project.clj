@@ -7,8 +7,8 @@
                  [org.clojure/data.json "0.2.2"]
                  [org.clojure/data.zip "0.1.1"]
                  
-                 [org.seleniumhq.selenium/selenium-server "2.33.0"]
-                 [org.seleniumhq.selenium/selenium-java "2.33.0"]
+                 [org.seleniumhq.selenium/selenium-server "2.35.0"]
+                 [org.seleniumhq.selenium/selenium-java "2.35.0"]
 
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
