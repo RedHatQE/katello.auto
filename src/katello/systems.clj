@@ -1,6 +1,5 @@
 (ns katello.systems
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [clj-webdriver.core :as action]
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
@@ -18,7 +17,7 @@
 
 ;; Locators
 
-(wd/template-fns
+(browser/template-fns
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
@@ -63,7 +62,7 @@
    ;;new system form
    ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
-   
+
    ;;content
    ::content-link                (ui/third-level-link "system_content")
    ::packages-link               (ui/third-level-link "systems_packages")
@@ -72,7 +71,7 @@
    ::select-errata-type          "//select[@id='display_errata_type']"
    ::install-errata              "//button[@id='run_errata_button']"
    ::add-content                 "add_content"
-   ::remove-content              "remove_content" 
+   ::remove-content              "remove_content"
    ::package-name                "content_input"
    ::select-package-group        "perform_action_package_groups"
    ::select-package              "perform_action_packages"
@@ -104,30 +103,30 @@
    ::edit-location               "system_location"
    ::save-button                 "//button[@type='submit']"
    ::cancel-button               "//button[@type='cancel']"
-   
+
    ;;system-facts
    ::facts                       (ui/link "Facts")
    ::network-expander            "network"
    ::cpu-expander                "cpu"
    ::uname-expander              "uname"
-   ::virt-expander               "virt" 
-   ::net-hostname                "//tr[@id='network.hostname']/td[3]"  
-   ::cpu-socket	                 "//tr[@id='cpu.cpu_socket(s)']/td[3]" 
-   ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
+   ::virt-expander               "virt"
+   ::net-hostname                "//tr[@id='network.hostname']/td[3]"
+   ::cpu-socket                  "//tr[@id='cpu.cpu_socket(s)']/td[3]"
+   ::machine-arch                "//tr[@id='uname.machine']/td[3]"
    ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
-   
+
    ;;custom-info
    ::custom-info                (ui/link "Custom Information")
    ::key-name                   "new_custom_info_keyname"
    ::key-value                  "new_custom_info_value"
    ::create-custom-info         "create_custom_info_button"
-   
+
    ;;subscriptions pane
    ::subscriptions               (ui/third-level-link "systems_subscriptions")
    ::subscribe                   "sub_submit"
    ::red-subs-icon               "//div[@class='red subs_image']"
    ::subs-text                   "//div[@class='subs_text fl panel_link']"
-   ::subs-servicelevel	         "//div[@name='system[serviceLevel]']"
+   ::subs-servicelevel           "//div[@name='system[serviceLevel]']"
    ::subs-attach-button          "fake_sub_submit"
    ::unsubscribe                 "unsub_submit"})
 
@@ -135,16 +134,16 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (click ::new))]
+   [::new-page (nav/browser-fn (browser/click ::new))]
    [::named-page (fn [system] (nav/choose-left-pane system))
-    [::details-page (nav/browser-fn (click ::details))
-     [::facts-page (nav/browser-fn (click ::facts))]
-     [::custom-info-page (nav/browser-fn (click ::custom-info))]]
-    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
-    [::content-menu (nav/browser-fn (click ::content-link))
-     [::content-software-page (nav/browser-fn (click ::software-link))]
-     [::content-packages-page (nav/browser-fn (click ::packages-link))]
-     [::content-errata-page (nav/browser-fn (click ::errata-link))]]]]
+    [::details-page (nav/browser-fn (browser/click ::details))
+     [::facts-page (nav/browser-fn (browser/click ::facts))]
+     [::custom-info-page (nav/browser-fn (browser/click ::custom-info))]]
+    [::subscriptions-page (nav/browser-fn (browser/click ::subscriptions))]
+    [::content-menu (nav/browser-fn (browser/click ::content-link))
+     [::content-software-page (nav/browser-fn (browser/click ::software-link))]
+     [::content-packages-page (nav/browser-fn (browser/click ::packages-link))]
+     [::content-errata-page (nav/browser-fn (browser/click ::errata-link))]]]]
   [::by-environments-page
    [::environment-page (fn [system] (nav/select-environment-widget (kt/env system)))
     [::named-by-environment-page (fn [system] (nav/choose-left-pane system))]]])
@@ -155,69 +154,69 @@
   "Creates a system"
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page (:org env))
-   ;; TODO - check for katello/only	
-  (browser/quick-fill-submit {::name-text name}
-                             {::arch-select (or system-arch "x86_64")}
-                             {::sockets-text sockets}
-                             {::ram-mb-text ram-mb}
-                             {::system-virtual-type (when virtual? wd/click)}) 
+  ;; TODO - check for katello/only
+  (browser/quick-fill-submit [::name-text name
+                              ::arch-select (or system-arch "x86_64")
+                              ::sockets-text sockets
+                              ::ram-mb-text ram-mb
+                              ::system-virtual-type (when virtual? browser/click)])
   (when (and env rest/is-katello?) (nav/select-environment-widget env))
-  (wd/click ::create)
+  (browser/click ::create)
   (notification/success-type :sys-create))
 
 (defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
-  (wd/click ::remove)
-  (wd/click ::ui/confirmation-yes)
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :sys-destroy))
 
-(defn- select-multisys-with-ctrl 
+(defn- select-multisys-with-ctrl
   [systems]
   (nav/go-to ::page (first systems))
   (action/key-down browser/*driver* :ctrl)
   (doseq [system systems]
     (nav/scroll-to-left-pane-item system)
     (nav/choose-left-pane system))
-  (action/key-up browser/*driver* :ctrl))  
+  (action/key-up browser/*driver* :ctrl))
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
   (select-multisys-with-ctrl systems)
-  (wd/click ::multi-remove)
-  (wd/click ::confirm-yes)
+  (browser/click ::multi-remove)
+  (browser/click ::confirm-yes)
   (notification/success-type :sys-bulk-destroy))
 
-(defn add-bulk-sys-to-sysgrp 
+(defn add-bulk-sys-to-sysgrp
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [systems group] 
+  [systems group]
   (select-multisys-with-ctrl systems)
-  (wd/->browser (click ::select-sysgrp)
-             (click (-> group :name sysgroup-checkbox))
-             (click ::add-sysgrp)
-             (click ::confirm-to-yes))
+  (browser/click ::select-sysgrp)
+  (browser/click (-> group :name sysgroup-checkbox))
+  (browser/click ::add-sysgrp)
+  (browser/click ::confirm-to-yes)
   (notification/success-type :sys-add-bulk-sysgrps))
 
 (defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
   [system group-name]
   (nav/go-to system)
-  (wd/click ::system-groups)
-  (wd/click ::add-group-form)
+  (browser/click ::system-groups)
+  (browser/click ::add-group-form)
   (if (browser/exists?  (select-sysgroup-checkbox group-name))
     (do
-      (wd/click (select-sysgroup-checkbox group-name))
-      (wd/click ::add-group)
+      (browser/click (select-sysgroup-checkbox group-name))
+      (browser/click ::add-group)
       (notification/success-type :sys-add-sysgrps))
-    (throw+ {:type ::selected-sys-group-is-unavailable 
+    (throw+ {:type ::selected-sys-group-is-unavailable
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
 (defn- set-environment "select a new environment for a system"
   [new-environment]
-  {:pre [(not-empty new-environment)]} 
-  (wd/->browser (click ::environment)
-                (click (environment-checkbox new-environment))
-                (click ::save-environment)))
+  {:pre [(not-empty new-environment)]}
+  (browser/click ::environment)
+  (browser/click (environment-checkbox new-environment))
+  (browser/click ::save-environment))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -229,8 +228,8 @@
   (let [sub-unsub-fn (fn [content checkbox-fn submit]
                        (when-not (empty? content)
                          (doseq [item content]
-                           (wd/click (checkbox-fn (:name item))))
-                         (wd/click submit)
+                           (browser/click (checkbox-fn (:name item))))
+                         (browser/click submit)
                          (notification/success-type :sys-update-subscriptions)))]
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
@@ -243,11 +242,11 @@
         groups-to-add (:package-groups to-add)
         groups-to-remove (:package-groups to-remove)]
     (when (or packages-to-add packages-to-remove)
-      (let [x {}] (wd/click ::packages-link))
+      (let [x {}] (browser/click ::packages-link))
       ))
   (let [ks (list :packages :package-groups)]
     (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (wd/click ::packages-link))))
+      (browser/click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
@@ -256,29 +255,29 @@
                          ::release-version-select release-version}))
 
 (defn- update-custom-info [to-add to-remove]
-  (wd/click ::custom-info)
+  (browser/click ::custom-info)
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (common/in-place-edit {(existing-key-value-field k) v}))
-      (do (wd/input-text ::key-name k)
-          (wd/input-text ::key-value v)
+      (do (browser/input-text ::key-name k)
+          (browser/input-text ::key-value v)
           #_(browser keyUp ::key-name "w") ;; TODO: composite actions fixme
-          (wd/click ::create-custom-info))))
+          (browser/click ::create-custom-info))))
   ;; process removes
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
-    (wd/click (remove-custom-info-button k))))
+    (browser/click (remove-custom-info-button k))))
 
 (defn- update
   "Edits the properties of the given system. Optionally specify a new
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
-                            service-level auto-attach env]
-             :as to-add} _] (data/diff system updated)]
-    
+                           service-level auto-attach env]
+                    :as to-add} _] (data/diff system updated)]
+
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (wd/move-to (browser/element ::name-text))
+      (browser/move-to (browser/element ::name-text))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -286,12 +285,12 @@
         (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
 
       (add-remove-content to-add to-remove)
-      
-      (let [added-products (:products to-add) 
+
+      (let [added-products (:products to-add)
             removed-products (:products to-remove) ]
         (when (some #(not (nil? %)) (list added-products removed-products
                                           service-level auto-attach))
-          (wd/click ::subscriptions)
+          (browser/click ::subscriptions)
           (subscribe added-products removed-products)
           (when (some #(not (nil? %)) (list service-level auto-attach))
             (common/in-place-edit {::service-level-select (format "Auto-attach %s, %s"
@@ -304,95 +303,95 @@
   []
   (let [rand (java.util.Random.)
         rand-255 #(.nextInt rand 255)
-        splice (comp (partial apply str) interpose) 
+        splice (comp (partial apply str) interpose)
         ip-prefix (splice "." (repeatedly 3 rand-255 ))
         mac  (splice ":" (repeatedly 6 #(format "%02x" (rand-255))))] {
-    "dmi.bios.runtime_size" "128 KB"
-    "lscpu.cpu_op-mode(s)" "64-bit"
-    "uname.sysname" "Linux"
-    "distribution.name" "Fedora"
-    "dmi.system.family" "Virtual Machine"
-    "lscpu.l1d_cache" "32K"
-    "dmi.system.product_name" "VirtualBox"
-    "dmi.bios.address" "0xe0000"
-    "lscpu.stepping" "5"
-    "virt.host_type" "virtualbox"
-    "lscpu.l2d_cache" "6144K"
-    "uname.machine" "x86_64"
-    "lscpu.thread(s)_per_core" "1"
-    "cpu.cpu_socket(s)" "1"
-    "net.interface.eth1.hwaddr" mac
-    "lscpu.cpu(s)" "1"
-    "uname.version" "#1 SMP Fri Oct 22 15:36:08 UTC 2010"
-    "distribution.version" "14"
-    "lscpu.architecture" "x86_64"
-    "dmi.system.manufacturer" "innotek GmbH"
-    "network.ipaddr" (format "%s.4" ip-prefix),
-    "system.entitlements_valid" "true"
-    "dmi.system.uuid" (.toString (java.util.UUID/randomUUID)),
-    "uname.release" "2.6.35.6-48.fc14.x86_64"
-    "dmi.system.serial_number" "0"
-    "dmi.bios.version" "VirtualBox"
-    "cpu.core(s)_per_socket" "1"
-    "lscpu.core(s)_per_socket" "1"
-    "net.interface.lo.broadcast" "0.0.0.0"
-    "memory.swaptotal" "2031612"
-    "net.interface.lo.netmask" "255.0.0.0"
-    "lscpu.model" "37"
-    "lscpu.cpu_mhz" "2825.811"
-    "net.interface.eth1.netmask" "255.255.255.0"
-    "lscpu.numa_node(s)" "1"
-    "net.interface.lo.hwaddr" "00:00:00:00:00:00"
-    "uname.nodename" "killing-time.appliedlogic.ca"
-    "dmi.bios.vendor" "innotek GmbH"
-    "network.hostname" (str "killing-time" (rand-255) ".appliedlogic."
-                            (rand-nth ["ca" "org" "com" "edu" "in"])),
-    "net.interface.eth1.broadcast" (format "%s.255" ip-prefix),
-    "memory.memtotal" "1023052"
-    "dmi.system.wake-up_type" "Power Switch"
-    "cpu.cpu(s)" "1"
-    "virt.is_guest" "true"
-    "dmi.system.sku_number" "Not Specified"
-    "net.interface.lo.ipaddr" "127.0.0.1"
-    "distribution.id" "Laughlin"
-    "lscpu.cpu_socket(s)" "1"
-    "dmi.system.version" "1.2"
-    "dmi.bios.rom_size" "128 KB"
-    "lscpu.vendor_id" "GenuineIntel"
-    "net.interface.eth1.ipaddr" (format "%s.8" ip-prefix),
-    "lscpu.cpu_family" "6"
-    "dmi.bios.relase_date" "12/01/2006"
-    "lscpu.numa_node0_cpu(s)" "0"
-    }))
+                                                                       "dmi.bios.runtime_size" "128 KB"
+                                                                       "lscpu.cpu_op-mode(s)" "64-bit"
+                                                                       "uname.sysname" "Linux"
+                                                                       "distribution.name" "Fedora"
+                                                                       "dmi.system.family" "Virtual Machine"
+                                                                       "lscpu.l1d_cache" "32K"
+                                                                       "dmi.system.product_name" "VirtualBox"
+                                                                       "dmi.bios.address" "0xe0000"
+                                                                       "lscpu.stepping" "5"
+                                                                       "virt.host_type" "virtualbox"
+                                                                       "lscpu.l2d_cache" "6144K"
+                                                                       "uname.machine" "x86_64"
+                                                                       "lscpu.thread(s)_per_core" "1"
+                                                                       "cpu.cpu_socket(s)" "1"
+                                                                       "net.interface.eth1.hwaddr" mac
+                                                                       "lscpu.cpu(s)" "1"
+                                                                       "uname.version" "#1 SMP Fri Oct 22 15:36:08 UTC 2010"
+                                                                       "distribution.version" "14"
+                                                                       "lscpu.architecture" "x86_64"
+                                                                       "dmi.system.manufacturer" "innotek GmbH"
+                                                                       "network.ipaddr" (format "%s.4" ip-prefix),
+                                                                       "system.entitlements_valid" "true"
+                                                                       "dmi.system.uuid" (.toString (java.util.UUID/randomUUID)),
+                                                                       "uname.release" "2.6.35.6-48.fc14.x86_64"
+                                                                       "dmi.system.serial_number" "0"
+                                                                       "dmi.bios.version" "VirtualBox"
+                                                                       "cpu.core(s)_per_socket" "1"
+                                                                       "lscpu.core(s)_per_socket" "1"
+                                                                       "net.interface.lo.broadcast" "0.0.0.0"
+                                                                       "memory.swaptotal" "2031612"
+                                                                       "net.interface.lo.netmask" "255.0.0.0"
+                                                                       "lscpu.model" "37"
+                                                                       "lscpu.cpu_mhz" "2825.811"
+                                                                       "net.interface.eth1.netmask" "255.255.255.0"
+                                                                       "lscpu.numa_node(s)" "1"
+                                                                       "net.interface.lo.hwaddr" "00:00:00:00:00:00"
+                                                                       "uname.nodename" "killing-time.appliedlogic.ca"
+                                                                       "dmi.bios.vendor" "innotek GmbH"
+                                                                       "network.hostname" (str "killing-time" (rand-255) ".appliedlogic."
+                                                                                               (rand-nth ["ca" "org" "com" "edu" "in"])),
+                                                                       "net.interface.eth1.broadcast" (format "%s.255" ip-prefix),
+                                                                       "memory.memtotal" "1023052"
+                                                                       "dmi.system.wake-up_type" "Power Switch"
+                                                                       "cpu.cpu(s)" "1"
+                                                                       "virt.is_guest" "true"
+                                                                       "dmi.system.sku_number" "Not Specified"
+                                                                       "net.interface.lo.ipaddr" "127.0.0.1"
+                                                                       "distribution.id" "Laughlin"
+                                                                       "lscpu.cpu_socket(s)" "1"
+                                                                       "dmi.system.version" "1.2"
+                                                                       "dmi.bios.rom_size" "128 KB"
+                                                                       "lscpu.vendor_id" "GenuineIntel"
+                                                                       "net.interface.eth1.ipaddr" (format "%s.8" ip-prefix),
+                                                                       "lscpu.cpu_family" "6"
+                                                                       "dmi.bios.relase_date" "12/01/2006"
+                                                                       "lscpu.numa_node0_cpu(s)" "0"
+                                                                       }))
 
 (extend katello.System
   ui/CRUD {:create create
            :delete delete
            :update* update}
 
-   rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+  rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
                   katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
                :query (fn [sys]
-                        (rest/query-by-name 
-                          (if (rest/is-katello?) 
+                        (rest/query-by-name
+                         (if (rest/is-katello?)
                            katello-url headpin-url) sys))
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
-                         (merge sys (rest/http-post 
-                                      (if (rest/is-katello?) 
-                                        (katello-url sys) 
-                                        (headpin-url sys))
-                                      {:body (assoc (select-keys sys [:name :facts])
-                                       :type "system")})))})
-  
+                         (merge sys (rest/http-post
+                                     (if (rest/is-katello?)
+                                       (katello-url sys)
+                                       (headpin-url sys))
+                                     {:body (assoc (select-keys sys [:name :facts])
+                                              :type "system")})))})
+
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity %1 s)
                                   :facts (if-let [f (:facts %1)]
                                            f
                                            (random-facts))))}
-  
+
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 
@@ -439,7 +438,7 @@
 
 (defn get-facts [system]
   (nav/go-to ::facts-page system)
-  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
+  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)"
                "distribution.id" "distribution.name" "distribution.version"
                "memory.memtotal" "memory.swaptotal"
                "virt.host_type" "virt.is_guest" "virt.uuid"
@@ -447,7 +446,7 @@
                "uname.sysname" "uname.version" "system.entitlements_valid"
                "network.hostname" "network.ipv4_address" "network.ipv6_address"
                "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
-               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
+               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]
     (zipmap facts
             (doall (for [fact facts]
                      (browser/text (system-fact-textbox fact)))))))
@@ -459,37 +458,37 @@
   (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
     (doseq [group groups] ;;To expand
       (when (browser/exists?  (system-fact-group-expand group))
-        (wd/click (system-fact-group-expand group))))
+        (browser/click (system-fact-group-expand group))))
     (doseq [group groups] ;;To collapse
-      (wd/click (system-fact-group-expand group)))))
+      (browser/click (system-fact-group-expand group)))))
 
 
 (defn check-package-status
   [&[timeout-ms]]
-  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
-                         (case current-status
-                           "Add Package Complete" current-status
-                           "Add Package Group Complete" current-status
-                           "Remove Package Complete" current-status
-                           "Remove Package Group Complete" current-status
-                           "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
-                           "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
-                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                           "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})              
-                           (do (Thread/sleep 2000)
-                             (recur (browser/text ::pkg-install-status))))))
+  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                             (case current-status
+                               "Add Package Complete" current-status
+                               "Add Package Group Complete" current-status
+                               "Remove Package Complete" current-status
+                               "Remove Package Group Complete" current-status
+                               "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
+                               "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
+                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                               "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})
+                               (do (Thread/sleep 2000)
+                                   (recur (browser/text ::pkg-install-status))))))
 
 (defn check-pkg-update-status
   "Function to test selected package status while updating it"
   [package &[timeout-ms]]
-  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
-                         (case current-status
-                           "Update Package Complete" current-status
-                           "Remove Package Complete" current-status
-                           "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
-                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                           (do (Thread/sleep 2000)
-                             (recur (browser/text (package-action-status package)))))))
+  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                             (case current-status
+                               "Update Package Complete" current-status
+                               "Remove Package Complete" current-status
+                               "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
+                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                               (do (Thread/sleep 2000)
+                                   (recur (browser/text (package-action-status package)))))))
 
 (defn add-package "Add a package/package-group on selected system"
   [system {:keys [package package-group]}]
@@ -497,10 +496,10 @@
   (doseq [[items is-group?] [[package false]
                              [package-group true]]]
     (when items
-      (when is-group? (wd/click ::select-package-group))
-      (wd/->browser (input-text ::package-name items)
-                    (send-keys ::package-name items)
-                    (click ::add-content))
+      (when is-group? (browser/click ::select-package-group))
+      (browser/input-text ::package-name items)
+      (browser/send-keys ::package-name items)
+      (browser/click ::add-content)
       (Thread/sleep 50000)
       (check-package-status))))
 
@@ -510,10 +509,10 @@
   (doseq [[items is-group?] [[package false]
                              [package-group true]]]
     (when items
-      (when is-group? (wd/click ::select-package-group))
-      (wd/->browser (input-text ::package-name items)
-                    (send-keys ::package-name items)
-                    (click ::remove-content))
+      (when is-group? (browser/click ::select-package-group))
+      (browser/input-text ::package-name items)
+      (browser/send-keys ::package-name items)
+      (browser/click ::remove-content)
       (Thread/sleep 50000)
       (check-package-status))))
 
@@ -523,19 +522,18 @@
 (defn filter-package "filter a package from package-list"
   [system {:keys [package]}]
   (nav/go-to ::content-packages-page system)
-  (wd/->browser (input-text ::filter-package package)
-                (send-keys ::filter-package package)
-                (click (package-select package))))
+  (browser/input-text ::filter-package package)
+  (browser/send-keys ::filter-package package)
+  (browser/click (package-select package)))
 
 (defn update-selected-package "Update a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (wd/click ::update-package)
+  (browser/click ::update-package)
   (check-pkg-update-status package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
   (filter-package system {:package package})
-  (wd/click ::remove-package)
+  (browser/click ::remove-package)
   (check-pkg-update-status package))
-  

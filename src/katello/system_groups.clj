@@ -1,6 +1,5 @@
 (ns katello.system-groups
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
             [test.assert :as assert]
@@ -16,37 +15,37 @@
 
 
 (ui/defelements :katello.deployment/any [katello.ui]
-       {::new                   "//a[@id='new']"
-        ::create                "group_save"
-        ::name-text             {:name "system_group[name]"}
-        ::description-text      {:name "system_group[description]"}
-        ::systems-link          (ui/third-level-link "system_groups_systems")
-        ::details-link          (ui/third-level-link "system_group_details")
-        ::hostname-toadd        "add_system_input"
-        ::add-system            "add_system"
-        ::remove-system         "remove_systems"
-        ::copy                  (ui/link "Copy")
-        ::copy-name-text        "name_input"
-        ::copy-description-text "description_input"
-        ::copy-submit           {:id "copy_button"}
-        ::cancel-copy           {:id "cancel_copy_button"}
-        ::close                 (ui/link "Close")
-        ::remove                (ui/link "Remove")
-        ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
-        ::confirm-only-group    "//span[.='No, only delete the system group.']"
-        ::unlimited-checkbox    "//input[@class='unlimited_members']"
-        ::save-new-limit        "//button[.='Save']"
-        ::limit-value           {:name "system_group[max_systems]"}}
-       )
+  {::new                   "//a[@id='new']"
+   ::create                "group_save"
+   ::name-text             {:name "system_group[name]"}
+   ::description-text      {:name "system_group[description]"}
+   ::systems-link          (ui/third-level-link "system_groups_systems")
+   ::details-link          (ui/third-level-link "system_group_details")
+   ::hostname-toadd        "add_system_input"
+   ::add-system            "add_system"
+   ::remove-system         "remove_systems"
+   ::copy                  (ui/link "Copy")
+   ::copy-name-text        "name_input"
+   ::copy-description-text "description_input"
+   ::copy-submit           {:id "copy_button"}
+   ::cancel-copy           {:id "cancel_copy_button"}
+   ::close                 (ui/link "Close")
+   ::remove                (ui/link "Remove")
+   ::total                 "//fieldset[contains(.,'Total')]/div[2]/a"
+   ::confirm-only-group    "//span[.='No, only delete the system group.']"
+   ::unlimited-checkbox    "//input[@class='unlimited_members']"
+   ::save-new-limit        "//button[.='Save']"
+   ::limit-value           {:name "system_group[max_systems]"}}
+  )
 
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (click ::new))]
+   [::new-page (nav/browser-fn (browser/click ::new))]
    [::named-page (fn [system-group] (nav/choose-left-pane system-group))
-    [::systems-page (nav/browser-fn (click ::systems-link))]
-    [::details-page (nav/browser-fn (click ::details-link))]]])
+    [::systems-page (nav/browser-fn (browser/click ::systems-link))]
+    [::details-page (nav/browser-fn (browser/click ::details-link))]]])
 
 
 ;; Tasks
@@ -55,33 +54,33 @@
   "Creates a system group"
   [{:keys [name description] :as sg}]
   (nav/go-to ::new-page sg)
-  (browser/quick-fill-submit {::name-text name}
-                             {::description-text (or description "")})
-  (wd/move-to-and-click browser/*driver* (browser/element ::create))
+  (browser/quick-fill-submit [::name-text name
+                              ::description-text description
+                              ::create browser/click])
   (notification/success-type :sysgrps-create)
   (browser/wait-until #(not (browser/visible? ::ui/notification-container)) 5000 1000))
 
 (defn- add-to
   "Adds systems to a system group"
   [systems]
-  (wd/click ::systems-link)
+  (browser/click ::systems-link)
   (doseq [system systems]
     (browser/quick-fill-submit {::hostname-toadd (:name system)})
-                               ;;try to trigger autocomplete via javascript -
-                               ;;hackalert - see
-                               ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
+    ;;try to trigger autocomplete via javascript -
+    ;;hackalert - see
+    ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
     (browser/execute-script "window.$(\"#add_system_input\").autocomplete('search')")
     (Thread/sleep 3000)
-    (wd/click ::add-system)
+    (browser/click ::add-system)
     (notification/success-type :sysgrps-add-sys)))
 
 (defn- remove-from
   "Remove systems from a system group"
   [systems]
-  (wd/click ::systems-link)
+  (browser/click ::systems-link)
   (doseq [system systems]
-    (wd/click (system/checkbox (:name system)))
-    (wd/click ::remove-system)))
+    (browser/click (system/checkbox (:name system)))
+    (browser/click ::remove-system)))
 
 (defn copy
   "Clones a system group, given the original system group to clone,
@@ -89,10 +88,10 @@
    description will be taken for the clone)."
   [orig clone]
   (nav/go-to orig)
-  (wd/click ::copy)
-  (browser/quick-fill-submit {::copy-name-text (:name clone)}
-                             {::copy-description-text (:description clone)}
-                             {::copy-submit wd/click})
+  (browser/click ::copy)
+  (browser/quick-fill-submit [::copy-name-text (:name clone)
+                              ::copy-description-text (:description clone)
+                              ::copy-submit browser/click])
   (notification/success-type :sysgrps-copy))
 
 (defn- remove
@@ -100,27 +99,27 @@
    group as well."
   [{:keys [also-remove-systems?] :as group}]
   (nav/go-to group)
-  (wd/click ::remove)
-  (wd/click ::ui/confirmation-yes)
-  (wd/click (if also-remove-systems?
+  (browser/click ::remove)
+  (browser/click ::ui/confirmation-yes)
+  (browser/click (if also-remove-systems?
                    ::ui/confirmation-yes
                    ::confirm-only-group))
   (notification/success-type (if also-remove-systems?
-                                 :sysgrps-destroy-sys
-                                 :sysgrps-destroy)))
+                               :sysgrps-destroy-sys
+                               :sysgrps-destroy)))
 
 (defn- edit-details
   "Change the name, description and limit in system group"
   [name description limit]
-  (wd/click ::details-link)
+  (browser/click ::details-link)
   (let [needed-flipping (and limit
                              (not= (= limit :unlimited)
-                                   (wd/selected? ::unlimited-checkbox)))]
+                                   (browser/selected? ::unlimited-checkbox)))]
     (if (and limit (not= limit :unlimited))
-      (do (wd/click ::unlimited-checkbox)
-          (browser/quick-fill-submit {::limit-value (str limit)}
-                                     {::save-new-limit wd/click}))
-      (wd/click ::unlimited-checkbox))
+      (do (browser/click ::unlimited-checkbox)
+          (browser/quick-fill [::limit-value (str limit)
+                               ::save-new-limit browser/click]))
+      (browser/click ::unlimited-checkbox))
     (when needed-flipping (notification/success-type :sysgrps-update)))
   (common/in-place-edit {::name-text name
                          ::description-text description}))

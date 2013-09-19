@@ -7,8 +7,7 @@
                      [notifications :as notification]
                      [conf :refer [config]]
                      [tasks :as tasks])
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd])
+            [webdriver :as browser])
   (:refer-clojure :exclude [remove]))
 
 ;; Locators
@@ -22,14 +21,14 @@
    ::new              "new"
    ::remove-link      (ui/remove-link "gpg_keys")})
 
-(wd/template-fns
+(browser/template-fns
  {gpgkey-product-association  "//ul[contains (@class,'bordered-table')]/div[contains (.,'%s')]"})
 
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (click ::new))]
+   [::new-page (nav/browser-fn (browser/click ::new))]
    [::named-page (fn [gpg-key] (nav/choose-left-pane gpg-key))]])
 
 ;;Tasks
@@ -40,21 +39,21 @@
   (assert (string? name))
   (nav/go-to ::new-page org)
   (if url
-    (wd/->browser (input-text ::name-text name)
-                   #_(attachFile ::file-upload-text url) ;;TODO: uh oh. need to figure out how to do with with webdriver
-                   (click ::upload-button))
-    (browser/quick-fill-submit {::name-text name}
-                               {::content-text contents}
-                               {::save wd/click}))
+    (do (browser/input-text ::name-text name)
+        #_(attachFile ::file-upload-text url) ;;TODO: uh oh. need to figure out how to do with with webdriver
+        (browser/click ::upload-button))
+    (browser/quick-fill [::name-text name
+                         ::content-text contents
+                         ::save browser/click]))
   (notification/success-type :gpg-keys-create))
 
 
-(defn- delete 
+(defn- delete
   "Deletes existing GPG keys"
   [gpg-key]
   (nav/go-to gpg-key)
-  (wd/click ::remove-link )
-  (wd/click ::ui/confirmation-yes)
+  (browser/click ::remove-link )
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :gpg-keys-destroy))
 
 (extend katello.GPGKey
@@ -70,12 +69,10 @@
                          {:pre [(instance? katello.Organization org)
                                 (not (and url contents))]}
                          (merge gpg-key
-                                (rest/http-post (query-url gpg-key) 
-                                 {:body {:gpg_key {:name name
-                                                   :content (if url (slurp url) contents)}}})))})
-  
-  nav/Destination {:go-to (partial nav/go-to ::named-page)}
-  
-  tasks/Uniqueable tasks/entity-uniqueable-impl)
+                                (rest/http-post (query-url gpg-key)
+                                                {:body {:gpg_key {:name name
+                                                                  :content (if url (slurp url) contents)}}})))})
 
-  
+  nav/Destination {:go-to (partial nav/go-to ::named-page)}
+
+  tasks/Uniqueable tasks/entity-uniqueable-impl)

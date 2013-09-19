@@ -10,8 +10,7 @@
                      [organizations :as organization]
                      [sync-management :as sync]
                      [notifications :as notification :refer [check-for-success request-type?]])
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+            [webdriver :as browser]
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert :as assert]
             [clojure.data :as data]
@@ -20,7 +19,7 @@
 
 ;; Locators
 
-(wd/template-fns
+(browser/template-fns
  {add-content-item       "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Add')]"
   remove-content-item    "//a[@data-display_name='%s' and starts-with(@id,'add_remove_') and contains(.,'Undo')]"
   content-category       "//div[@id='%s']"
@@ -33,7 +32,7 @@
 
 (defn check-all [template coll]
   (doseq [item coll]
-    (wd/click (template item))))
+    (browser/click (template item))))
 ;; Nav
 
 (ui/defelements :katello.deployment/any []
@@ -47,33 +46,33 @@
    ::type                        "changeset[action_type]"
    ::promotion                   "//div[@data-cs_type='promotion']"
    ::deletion                    "//div[@data-cs_type='deletion']"
-   ::remove-changeset            "//span[contains(.,'Remove')]"})  
-   
+   ::remove-changeset            "//span[contains(.,'Remove')]"})
+
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-environment-page (fn [cs]
                                (let [env (kt/env cs)]
                                  (nav/select-environment-widget (:prior env) {:next-env env :wait true})))
     [::named-page (fn [cs] (when (:deletion? cs)
-                             (wd/click ::deletion)
-                             (wd/click (list-item (:name cs)))))]]])
+                             (browser/click ::deletion)
+                             (browser/click (list-item (:name cs)))))]]])
 
 ;; Tasks
 
 (defn- create
-  "Creates a changeset for promotion from env to next-env 
+  "Creates a changeset for promotion from env to next-env
   or for deletion from env-name."
   [{:keys [name env deletion?]}]
   (nav/go-to ::named-environment-page env)
   (if deletion?
     (do
-      (wd/click (select-env (:name env)))
+      (browser/click (select-env (:name env)))
       (Thread/sleep 3000)
       (if (browser/exists? ::promotion)
-        (wd/click ::deletion))))
-  (wd/->browser (click ::new)
-                 (input-text ::name-text name)
-                 (click ::save))
+        (browser/click ::deletion))))
+  (browser/click ::new)
+  (browser/input-text ::name-text name)
+  (browser/click ::save)
   (check-for-success))
 
 
@@ -81,12 +80,12 @@
   (let [[to-remove to-add _] (data/diff changeset new-changeset)
         go-home (fn []
                   (Thread/sleep 5000)
-                  (wd/click ::promotion-eligible-home))]
+                  (browser/click ::promotion-eligible-home))]
     (nav/go-to changeset env)
     (doseq [item (:content to-add)]
-      (wd/click (-> item :published-name add-content-item)))
+      (browser/click (-> item :published-name add-content-item)))
     (doseq [item (:content to-remove)]
-      (wd/click (-> item :published-name remove-content-item)))))
+      (browser/click (-> item :published-name remove-content-item)))))
 
 (extend katello.Changeset
   ui/CRUD {:create create
@@ -96,7 +95,7 @@
                   env-url (partial rest/url-maker [["api/organizations/%s/environments/%s/changesets"
                                                     [(comp :org :env) :env]]])
                   ent-to-api-name #(-> % class .getName (string/split #"\.") last string/lower-case pluralize)
-                  ent-to-api-req-field #(-> % class .getName (string/split #"\.") last string/lower-case (str "_id")) 
+                  ent-to-api-req-field #(-> % class .getName (string/split #"\.") last string/lower-case (str "_id"))
                   content-add-url (fn [cs additem]
                                     (rest/api-url (format "api/changesets/%s/%s"
                                                           (rest/get-id cs)
@@ -122,7 +121,7 @@
                               (rest/http-delete (content-delete-url cs i)))))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
-  
+
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 (defn promote-or-delete
@@ -133,27 +132,27 @@
   (nav/go-to changeset env)
   (locking #'conf/promotion-deletion-lock
     (Thread/sleep 2000)
-    (wd/click ::review-for-promotion)
+    (browser/click ::review-for-promotion)
     (Thread/sleep 5000)
     (browser/refresh)
     ;;for the submission
-    (wd/loop-with-timeout (* 10 60 1000) []
-      (when-not (try+ (wd/click ::promote-to-next-environment)
-                      (check-for-success)
-                      (catch (common/errtype ::notification/promotion-already-in-progress) _
-                        (nav/go-to changeset)))
-        (Thread/sleep 30000)
-        (recur)))
+    (browser/loop-with-timeout (* 10 60 1000) []
+                               (when-not (try+ (browser/click ::promote-to-next-environment)
+                                               (check-for-success)
+                                               (catch (common/errtype ::notification/promotion-already-in-progress) _
+                                                 (nav/go-to changeset)))
+                                 (Thread/sleep 30000)
+                                 (recur)))
     ;;for confirmation
-    (wd/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
-      (case current-status
-        "Applied" current-status
-        "Apply Failed" (throw+ {:type ::promotion-failed
-                                :changeset name
-                                :from-env (:name env)
-                                :to-env (-> env :next :name)})
-        (do (Thread/sleep 2000)
-            (recur (browser/text (status name))))))
+    (browser/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status ""]
+                               (case current-status
+                                 "Applied" current-status
+                                 "Apply Failed" (throw+ {:type ::promotion-failed
+                                                         :changeset name
+                                                         :from-env (:name env)
+                                                         :to-env (-> env :next :name)})
+                                 (do (Thread/sleep 2000)
+                                     (recur (browser/text (status name))))))
     ;;wait for async success notif
     (check-for-success {:timeout-ms (* 20 60 1000)})))
 
@@ -185,9 +184,9 @@
   "If the published-name is present in the given environment, returns true."
   [{:keys [name deletion? env content] :as changeset}]
   (nav/go-to ::named-environment-page env)
-  (wd/click (select-env (:name env)))
+  (browser/click (select-env (:name env)))
   (every? true? (doall (for [cv content]
-                         (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))   
+                         (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))
 
 (defn api-promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,
@@ -196,13 +195,13 @@
   [changeset]
   (locking #'conf/promotion-deletion-lock
     (rest/http-post (rest/url-maker [["api/changesets/%s/promote" [identity]]] changeset))
-    (wd/loop-with-timeout (* 20 60 1000) [cs {}]
-      (let [state (:state cs)]
-        (case state
-          "promoted" cs
-          "failed" (throw+ {:type :failed-promotion :response cs})    
-          (do (Thread/sleep 5000)
-              (recur (rest/read changeset))))))))
+    (browser/loop-with-timeout (* 20 60 1000) [cs {}]
+                               (let [state (:state cs)]
+                                 (case state
+                                   "promoted" cs
+                                   "failed" (throw+ {:type :failed-promotion :response cs})
+                                   (do (Thread/sleep 5000)
+                                       (recur (rest/read changeset))))))))
 
 (defn api-promote
   "Does a promotion of the given content (creates a changeset, adds
@@ -212,5 +211,5 @@
   (with-unique [cs (katello/newChangeset {:name "api-changeset"
                                           :env env})]
     (rest/create cs)
-    (rest/update cs update-in [:content] (fnil concat (list)) content)  
+    (rest/update cs update-in [:content] (fnil concat (list)) content)
     (api-promote-changeset cs)))

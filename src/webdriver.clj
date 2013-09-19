@@ -82,14 +82,6 @@ Default browser-spec: firefox"
   (browser/set-driver! my-driver)
   (browser/set-finder! locator-finder-fn))
 
-(defmacro brow
-  [action & args]
-  `(~(symbol (str "browser/" action)) ~@args))
-
-(defmacro ->browser
-  [ & forms]
-  `(do ~@(for [form forms] `(brow ~@form))))
-
 (defmacro loop-with-timeout
   "Similar to clojure.core/loop, but adds a timeout to break out of
   the loop if it takes too long. timeout is in ms. bindings are the
@@ -123,13 +115,6 @@ Default browser-spec: firefox"
 (defn text-present? [text]
   (.contains (browser/page-source) text))
 
-(defn move-to-and-click
-  ([loc] (move-to-and-click browser/*driver* loc))
-  ([driver loc]
-     (move-to driver loc)
-     (click loc)))
-
-
 
 (defmacro with-remote-driver-fn
   "Given a `browser-spec` to start a browser and a `finder-fn` to use as a finding function, execute the forms in `body`, then call `quit` on the browser.
@@ -161,14 +146,16 @@ Default browser-spec: firefox"
 (remove-method print-method org.openqa.selenium.WebDriver)
 (remove-method print-method org.openqa.selenium.WebElement)
 
-(defmacro alias-all [] 
+(defmacro alias-all
+  "Alias all the vars of taxi in this ns"
+  [] 
   `(do ~@(for [[k v] (ns-publics 'clj-webdriver.taxi)]
           `(def ~k (deref ~v)))))
 
 (alias-all)
 
 (defmacro with-element [[s q] & body]
-  `(let [~s (element ~q)]
+  `(let [~s (browser/element ~q)]
      ~@body))
 
 
@@ -186,6 +173,23 @@ Default browser-spec: firefox"
        (core/click e)
        (ajax-wait))))
 
+
+(defn select-deselect
+  "Set the selected state of element matching query `q` to boolean `b` (true = selected). Otherwise, do nothing and just return the element found.
+
+   Examples:
+   =========
+
+   (select-deselect \"input.already-selected\" true) ;=> do nothing
+   (select-deselect \"input.not-selected\" false)     ;=> do nothing
+   (select-deselect \"input.not-selected\" true) ;=> click"
+  ([q b] (select-deselect clj-webdriver.taxi/*driver* q b))
+  ([driver q b]
+     (with-element [e q]
+       (core/move-to-element driver e)
+       ((if b core/select core/deselect) e)
+       (ajax-wait))))
+
 (defn select
   "If the first form element found with query `q` is not selected, click the element to select it. Otherwise, do nothing and just return the element found.
 
@@ -196,10 +200,19 @@ Default browser-spec: firefox"
    (select \"input.not-selected\")     ;=> click"
   ([q] (select clj-webdriver.taxi/*driver* q))
   ([driver q]
-     (with-element [e q]
-       (core/move-to-element driver e)
-       (core/select e)
-       (ajax-wait))))
+     (select-deselect driver q true)))
+
+(defn deselect
+  "If the first form element found with query `q` is selected, click the element to deselect it. Otherwise, do nothing and just return the element found.
+
+   Examples:
+   =========
+
+   (select \"input.already-selected\") ;=> click
+   (select \"input.not-selected\")     ;=> do nothing"
+  ([q] (deselect clj-webdriver.taxi/*driver* q))
+  ([driver q]
+     (select-deselect driver q false)))
 
 (defn select-by-text
   "Select the option element with visible text `text` within the first select list found with query `q`.
@@ -243,3 +256,33 @@ Default browser-spec: firefox"
        (core/move-to-element driver e)
        ((if b core/select-by-text core/deselect-by-text) e text)
        (ajax-wait))))
+
+(defn quick-fill quick-fill
+  "A utility for filling out multiple fields in a form in one go. Always returns nil instead of the affected elements, since on submit all of the elements will be void.
+
+   `items`   - a seq of queries to actions (queries find HTML elements, actions are fn's that act on them). Nil values are ignored.
+
+   Note that an \"action\" that is just a String will be interpreted as a call to `input-text` with that String for the target text field.
+
+   Examples:
+   =========
+
+   (quick-fill {\"#first_name\" \"Rich\" ; don't care about order
+                \"a.foo\" click}) 
+   (quick-fill [\"#first_name\" \"Rich\" ; enforce order
+                \"a.foo\" click]"
+  [items]
+  (let [ordered-items (if (sequential? items)
+                        (partition 2 items)
+                        items)]
+    (doseq [[q v] ordered-items]
+      (when v
+        (let [action (if (string? v)
+                       #(input-text % v)
+                       v)
+              target-els (browser/elements q)]
+          (if-not (seq target-els)
+            (throw+ {:type ::form-item-not-found
+                     :query q}))
+          (doseq [el target-els]
+            (action el)))))))

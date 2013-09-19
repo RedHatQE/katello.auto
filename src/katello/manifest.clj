@@ -3,9 +3,8 @@
             including changing the id and re-signing the new manifest."}
   katello.manifest
   (:require [clojure.java.io :as io]
-            [clojure.data.json :as json]
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+            [clojure.data.json :as json] 
+            [webdriver :as browser]
             [katello :as kt]
             (katello [ui :as ui]
                      [rest :as rest]
@@ -174,12 +173,12 @@
   [{:keys [file-path url provider]}]
   (nav/go-to ::subs/new-page provider)
   (when-not (browser/exists? ::subs/choose-file)
-    (wd/click ::subs/new))
+    (browser/click ::subs/new))
   (when url
     (common/in-place-edit {::subs/repository-url-text url})
     (notification/success-type :prov-update))
-  (browser/quick-fill-submit {::subs/choose-file file-path}
-                             {::subs/upload-manifest wd/click})
+  (browser/quick-fill [::subs/choose-file file-path
+                       ::subs/upload-manifest browser/click])
   (browser/refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
@@ -190,15 +189,15 @@
   "Refreshes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (wd/click ::subs/refresh-manifest)
-  (wd/click ::ui/confirmation-yes))
+  (browser/click ::subs/refresh-manifest)
+  (browser/click ::ui/confirmation-yes))
 
 (defn- delete-manifest
   "Deletes a subscription manifest uploaded"
   [manifest]
   (nav/go-to ::subs/new-page (kt/provider manifest))
-  (wd/click ::subs/delete-manifest)
-  (wd/click ::ui/confirmation-yes)
+  (browser/click ::subs/delete-manifest)
+  (browser/click ::ui/confirmation-yes)
   (notification/check-for-success {:timeout-ms (* 10 60 1000) :match-pred (notification/request-type? :manifest-crud)}))
 
 (defn upload-manifest-import-history?

@@ -1,11 +1,10 @@
 (ns katello.sync-management
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [clojure.data :as data]
             [test.assert :as assert]
             [katello :as kt]
-            (katello [navigation :as nav] 
-                     [notifications :as notification] 
+            (katello [navigation :as nav]
+                     [notifications :as notification]
                      [ui-common :as common]
                      [tasks :as tasks]
                      [ui :as ui]
@@ -26,11 +25,11 @@
    ::expand-all-products   {:css "a#expand_all"}
    ::synchronize-now       "sync_button"})
 
-(wd/template-fns
+(browser/template-fns
  {product-schedule  "//div[normalize-space(.)='%s']/following-sibling::div[1]"
   provider-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
   provider-expander "//table[@id='products_table']//td[normalize-space(.)='%s']"
-  provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]" 
+  provider-progress "//tr[td/label[normalize-space(.)='%s']]/td[5]"
   plan-link         "//div[@id='plans']//div[normalize-space(.)='%s']"
   schedule-item     "//div[@panel_id='products' and child::div[normalize-space(.)='%s']]"})
 
@@ -39,7 +38,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::plans-page
    [::named-plan-page (fn [sync-plan] (nav/choose-left-pane sync-plan))]
-   [::new-plan-page (nav/browser-fn (click ::new-plan))]])
+   [::new-plan-page (nav/browser-fn (browser/click ::new-plan))]])
 
 ;; Tasks
 
@@ -62,11 +61,12 @@
            start-date-literal start-time-literal org] :as plan}]
   (nav/go-to ::new-plan-page org)
   (let [[date time] (split-date plan)]
-    (browser/quick-fill-submit {::plan-name-text name}
-                               {::plan-description-text description}
-                               {::plan-interval-select interval}
-                               {::plan-time-text time}
-                               {::plan-date-text date})
+    (browser/quick-fill [::plan-name-text name
+                         ::plan-description-text description
+                         ::plan-interval-select interval
+                         ::plan-time-text time
+                         ::plan-date-text date
+                         ::save-plan browser/click])
     (notification/success-type :sync-create)))
 
 (defn- edit-plan
@@ -76,7 +76,7 @@
   (nav/go-to plan)
   (let [[removed {:keys [name description interval]
                   :as added}] (data/diff plan updated)
-        [date time] (split-date added)]
+                  [date time] (split-date added)]
     (common/in-place-edit {::plan-name-text name
                            ::plan-description-text description
                            ::plan-interval-select interval
@@ -87,11 +87,11 @@
 (extend katello.SyncPlan
   ui/CRUD {:create create-plan
            :update* edit-plan}
-  
+
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity % s)
                                   :start-time (java.util.Date.)))}
-  
+
   nav/Destination {:go-to (partial nav/go-to ::named-plan-page)})
 
 (defn schedule
@@ -100,11 +100,11 @@
   [{:keys [products plan]}]
   (nav/go-to ::schedule-page plan)
   (doseq [product products]
-    (wd/click (schedule-item (:name product))))
-  (wd/click (plan-link (:name plan)))
-  (wd/click ::apply-schedule)
+    (browser/click (schedule-item (:name product))))
+  (browser/click (plan-link (:name plan)))
+  (browser/click ::apply-schedule)
   (notification/check-for-success))  ;notif class is 'undefined' so
-                                        ;don't match 
+                                        ;don't match
 
 (defn current-plan
   "Returns a map of what sync plan a product is currently scheduled
@@ -137,17 +137,16 @@
   throwing an error.  Default timeout is 2 minutes."
   [repos & [{:keys [timeout]}]]
   (nav/go-to ::status-page (first repos))
-  (wd/click ::expand-all-products)
+  (browser/click ::expand-all-products)
   (doseq [repo repos]
-    (wd/click (provider-checkbox (:name repo))))
-  (wd/click ::synchronize-now)
+    (browser/click (provider-checkbox (:name repo))))
+  (browser/click ::synchronize-now)
   (Thread/sleep 10000)
   (zipmap repos (for [repo repos]
-                  (wd/loop-with-timeout (or timeout 60000) []
-                    (or (complete-status repo)
-                        (do (Thread/sleep 10000)
-                            (recur)))))))
+                  (browser/loop-with-timeout (or timeout 60000) []
+                                             (or (complete-status repo)
+                                                 (do (Thread/sleep 10000)
+                                                     (recur)))))))
 
 (defn verify-all-repos-synced [repos]
   (assert/is  (every? #(= "Sync complete." %) (map complete-status repos))))
-

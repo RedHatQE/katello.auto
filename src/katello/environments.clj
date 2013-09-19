@@ -1,15 +1,14 @@
 (ns katello.environments
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [slingshot.slingshot :refer [throw+ try+]]
             [katello :as kt]
             (katello [navigation :as nav]
-                     [tasks :as tasks] 
-                     [notifications :as notification] 
+                     [tasks :as tasks]
+                     [notifications :as notification]
                      [ui :as ui]
                      [rest :as rest]
                      [ui-common :as common]
-                     [organizations :as org]))) 
+                     [organizations :as org])))
 
 ;; Locators
 
@@ -27,8 +26,8 @@
 
 (nav/defpages :katello.deployment/any katello.organizations
   [:katello.organizations/named-page
-   [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [env] (wd/click (ui/environment-link (:name env))))]])
+   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::named-page (fn [env] (browser/click (ui/environment-link (:name env))))]])
 
 ;; Tasks
 
@@ -39,12 +38,12 @@
   [{:keys [name label org description prior]}]
   (nav/go-to ::new-page org)
   (Thread/sleep 2000)
-  (browser/quick-fill-submit {::name-text browser/focus}
-                             {::name-text (or name "")}
-                             {::description-text (or description "")}
-                             {::label-text (or label "")}
-                             {::prior (or (:name prior) "")}
-                             {::create wd/click})
+  (browser/quick-fill [::name-text browser/focus
+                       ::name-text name
+                       ::description-text description
+                       ::label-text label
+                       ::prior (:name prior)
+                       ::create browser/click])
   (notification/success-type :env-create))
 
 (defn- delete
@@ -52,9 +51,9 @@
   [env]
   (nav/go-to env)
   (if (browser/exists? ::remove-link)
-    (wd/click ::remove-link)
+    (browser/click ::remove-link)
     (throw+ {:type ::cant-be-deleted :env env}))
-  (wd/click ::ui/confirmation-yes)
+  (browser/click ::ui/confirmation-yes)
   (notification/success-type :env-destroy))
 
 (defn- edit
@@ -69,7 +68,7 @@
   ui/CRUD {:create (rest/only-when-katello create)
            :update* (rest/only-when-katello edit)
            :delete (rest/only-when-katello delete)}
-  
+
   rest/CRUD
   (let [org-url (partial rest/url-maker [["api/organizations/%s/environments" [#'katello/org]]])
         id-url (partial rest/url-maker [["api/organizations/%s/environments/%s" [:org identity]]])]
@@ -78,24 +77,22 @@
      :create (fn [env]
                (if (rest/is-katello?)
                  (merge env
-                   (rest/http-post (org-url env)
-                                 {:body
-                                  {:environment
-                                   {:name (:name env)
-                                    :description (:description env)
-                                    :prior (rest/get-id (or (:prior env)
-                                                        (katello/mklibrary env)))}}}))))
+                        (rest/http-post (org-url env)
+                                        {:body
+                                         {:environment
+                                          {:name (:name env)
+                                           :description (:description env)
+                                           :prior (rest/get-id (or (:prior env)
+                                                                   (katello/mklibrary env)))}}}))))
      :read (fn [env]
              (if (rest/is-katello?)
                (rest/read-impl id-url env)
                true)) ;; hack to make rest/exists? think that env's in a record exists for headpin.
-                   
+
      :update* (fn [env new-env]
-               (merge new-env (rest/http-put (id-url env)
-                                             {:environment (select-keys new-env [:description])})))})
+                (merge new-env (rest/http-put (id-url env)
+                                              {:environment (select-keys new-env [:description])})))})
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
 
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
-
-

@@ -3,8 +3,7 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [clojure.data.zip :as zf]
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+            [webdriver :as browser]
             [clojure.data.zip.xml :as zfx]
             [clojure.string :refer [split triml trim]]
             [clojure.walk :refer [postwalk] ]
@@ -50,7 +49,7 @@
    ::switcher-button           "//a[@id='switcherButton']"
    })
 
-(wd/template-fns
+(browser/template-fns
  {auto-complete-item      "//ul[@role='listbox']//a[contains(.,'%s')]"
   result-item-n           "//ul[@id='grid_row_headers']/li[%s]"
   package-name            "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
@@ -68,8 +67,8 @@
   result-col-id           "//ul[@id='column_headers']//li[contains(.,'%s')]"
   result-row-id           "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell             "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
-  repo-errata-count               "//div[@id='grid_row_%s']" 
-  errata-link               "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']" 
+  repo-errata-count               "//div[@id='grid_row_%s']"
+  errata-link               "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
   repo-link               "//div[@id='grid_row_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
 ;; Nav
@@ -94,16 +93,16 @@
 
 (defn get-string-of-html-element [id]
   (->> id
-     (format "window.document.getElementById('%s').innerHTML;")
-     (browser/execute-script)
-     (format "<root>%s</root>")))
+       (format "window.document.getElementById('%s').innerHTML;")
+       (browser/execute-script)
+       (format "<root>%s</root>")))
 
 (defn get-string-of-body-element []
   (->>
-     "window.document.getElementsByTagName('body')[0].innerHTML;"
-     (browser/execute-script)
-     (format "<body>%s</body>")
-    ))
+   "window.document.getElementsByTagName('body')[0].innerHTML;"
+   (browser/execute-script)
+   (format "<body>%s</body>")
+   ))
 
 (defn search-in-zip [query node]
   (loop [q query
@@ -117,60 +116,60 @@
 
 (defn get-zip-of-xml-string [xml-string]
   (->> xml-string
-     java.io.StringReader.
-     org.xml.sax.InputSource.
-     xml/parse
-     zip/xml-zip))
+       java.io.StringReader.
+       org.xml.sax.InputSource.
+       xml/parse
+       zip/xml-zip))
 
 (defn get-zip-of-html-string [html-string]
   (->> html-string
-     .getBytes
-     ByteArrayInputStream.
-     parse-xml
-     zip/xml-zip))
+       .getBytes
+       ByteArrayInputStream.
+       parse-xml
+       zip/xml-zip))
 
 (defn node-content-as [empty-coll tree]
-  (postwalk 
-    #(cond 
-       (and (map? %) (contains? % :content)) (into empty-coll (:content %))  
-       :else %)
-    tree))
+  (postwalk
+   #(cond
+     (and (map? %) (contains? % :content)) (into empty-coll (:content %))
+     :else %)
+   tree))
 
 (defn normalize-nodes [tree]
-  (postwalk 
-    #(if (and (not (map? %)) (= 1 (count %)))
-                (first %)
-                %)
-    tree))
+  (postwalk
+   #(if (and (not (map? %)) (= 1 (count %)))
+      (first %)
+      %)
+   tree))
 
 (defn remove-nil-and-empty [when? empty-col tree]
   (postwalk #(if (when? %)
-             (->> %
-                (remove nil?)
-                (remove empty?)
-                (into empty-col))
-                %) 
+               (->> %
+                    (remove nil?)
+                    (remove empty?)
+                    (into empty-col))
+               %)
             tree))
 
 (defn postwalk-trim [tree]
   (postwalk #(if (string? %)
                (trim %)
-                %) 
+               %)
             tree))
 
 (defn postwalk-rm [what tree]
   (postwalk #(if (= % what)
                nil
-                %) 
+               %)
             tree))
 
 (defn get-search-page-result-list-of-lists [xml-zip]
   (->> xml-zip
-    zip/node    
-	  (node-content-as []) 
-    (remove-nil-and-empty vector? []) 
-    normalize-nodes
-    (postwalk #(if (= "--" %) false %))))
+       zip/node
+       (node-content-as [])
+       (remove-nil-and-empty vector? [])
+       normalize-nodes
+       (postwalk #(if (= "--" %) false %))))
 
 
 (defn get-grid-row-headers []
@@ -178,30 +177,30 @@
        get-string-of-html-element
        get-zip-of-xml-string
        zip/node
-(postwalk 
-   #(cond 
-     (vector? %) (reduce 
-                   (fn [acc n]
-                     (if (and (map? (last acc)) (map? n) (= :ul (:tag  n)))
-                       (into (into [] (butlast acc)) [{(last acc) n}] )
-                       (into acc [n])))
-                   [] %)
-     :else %))
-   (node-content-as #{}) 
-   (remove-nil-and-empty set? #{})
-    normalize-nodes))
+       (postwalk
+        #(cond
+          (vector? %) (reduce
+                       (fn [acc n]
+                         (if (and (map? (last acc)) (map? n) (= :ul (:tag  n)))
+                           (into (into [] (butlast acc)) [{(last acc) n}] )
+                           (into acc [n])))
+                       [] %)
+          :else %))
+       (node-content-as #{})
+       (remove-nil-and-empty set? #{})
+       normalize-nodes))
 
 (defn get-search-page-result-list-of-lists-html [id]
-     (-> id
-       get-string-of-html-element
-       get-zip-of-html-string
-       get-search-page-result-list-of-lists))
+  (-> id
+      get-string-of-html-element
+      get-zip-of-html-string
+      get-search-page-result-list-of-lists))
 
 (defn get-search-page-result-list-of-lists-xml [id]
-     (-> id
-       get-string-of-html-element
-       get-zip-of-xml-string
-       get-search-page-result-list-of-lists))
+  (-> id
+      get-string-of-html-element
+      get-zip-of-xml-string
+      get-search-page-result-list-of-lists))
 
 (def ^{:arglists '([locator attribute])}
   attr-loc (partial format  "%s@%s"))
@@ -238,14 +237,11 @@
 
 (defn autocomplete-adder-for-content-search [auto-comp-box add-button cont-item]
   (let [elem (auto-complete-item cont-item)]
-    (wd/->browser (send-keys auto-comp-box cont-item)
-                  (input-text auto-comp-box cont-item)
-                   ;; typeKeys is necessary to trigger drop-down list
-                  (send-keys auto-comp-box " ")
-                   ;(waitForElement elem "2000")
-                   ;(mouseOver elem)
-                   ;(click elem)
-                  (click add-button))))
+    (browser/send-keys auto-comp-box cont-item)
+    (browser/input-text auto-comp-box cont-item)
+    ;; typeKeys is necessary to trigger drop-down list
+    (browser/send-keys auto-comp-box " ")
+    (browser/click add-button)))
 
 (defn get-search-result-repositories []
   (doall (for [locator (get-all-of-locator repo-column-name)]
@@ -257,7 +253,7 @@
 (defn row-in-column? [package repository]
   (let [row-id (browser/attribute (result-row-id package) "data-id")
         col-id (get-col-id repository)]
-    (not (= "--" 
+    (not (= "--"
             (browser/text (result-cell row-id col-id))))))
 
 (defn package-in-repository? [package repository]
@@ -265,104 +261,105 @@
 
 (defn load-all-results []
   (while (browser/exists? ::load-more)
-    (wd/click ::load-more)))
+    (browser/click ::load-more)))
 
 (defn submit-browse-button []
-  (wd/click ::browse-button)
+  (browser/click ::browse-button)
   (load-all-results))
 
 (defn add-to-repository-browser [repository]
   (autocomplete-adder-for-content-search ::repo-auto-complete ::add-repo repository))
 
 (defn remove-one-repository-from-browser [repository]
-  (wd/click (repo-remove repository)))
+  (browser/click (repo-remove repository)))
 
 (defn remove-repositories [repositories]
   (do
     (doseq [removing repositories]
       (remove-one-repository-from-browser removing))
-    (wd/click ::browse-button)))
+    (browser/click ::browse-button)))
 
 (defn name-map-to-name [name-map]
   (->> name-map
-    (into [])
-    flatten
-    (clojure.string/join "_")))
-(defn get-data-id-from [locator-fn name] 
-              (->> name
-                locator-fn   
-                (#(browser/attribute % "data-id"))
-                (#(split % #"_"))
-                (apply hash-map)))           
+       (into [])
+       flatten
+       (clojure.string/join "_")))
+
+(defn get-data-id-from [locator-fn name]
+  (->> name
+       locator-fn
+       (#(browser/attribute % "data-id"))
+       (#(split % #"_"))
+       (apply hash-map)))
 
 (defn get-view-id [view-name]
   (get-data-id-from result-view-id view-name))
 
 (defn get-repo-search-data-name-map [repositories]
   (->> repositories
-    (map (partial get-data-id-from result-repo-id)) 
-    (zipmap repositories)))
-    
+       (map (partial get-data-id-from result-repo-id))
+       (zipmap repositories)))
+
 (defn get-repo-search-library-id-map [repositories]
-  (apply hash-map 
-         (reduce 
-          (fn [result name] 
+  (apply hash-map
+         (reduce
+          (fn [result name]
             (conj result  name
-                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers   
-                                     (browser/attribute (result-repo-id name) "data-id"))))) 
+                  (apply str (filter #(#{\0,\1,\2,\3,\4,\5,\6,\7,\8,\9} %) ; filter out non-numbers
+                                     (browser/attribute (result-repo-id name) "data-id")))))
           []
           repositories)))
 
-;problem with two repos of a same name
-(defn get-repo-search-data-name 
+                                        ;problem with two repos of a same name
+(defn get-repo-search-data-name
   ([repo-name]
-    ((get-repo-search-data-name-map [repo-name]) repo-name))
+     ((get-repo-search-data-name-map [repo-name]) repo-name))
   ([repo-name view]
-   (merge (get-repo-search-data-name repo-name)  
-          (get-view-id view))))
+     (merge (get-repo-search-data-name repo-name)
+            (get-view-id view))))
 
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-name-map repositories)]
     (doseq [repository repositories]
-      (wd/click (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
+      (browser/click (compare-checkbox (name-map-to-name (repo-id-map repository)))))))
 
 (defn go-to-content-search-page [org]
   (nav/go-to ::page org))
 
 (defn add-repositories [repositories]
-  (wd/select-by-text ::type-select "Repositories")
-  (wd/click  ::repo-auto-complete-radio)
+  (browser/select-by-text ::type-select "Repositories")
+  (browser/click  ::repo-auto-complete-radio)
   (doseq [repository repositories]
     (add-to-repository-browser repository))
-  (wd/click ::browse-button))
+  (browser/click ::browse-button))
 
 (defn click-if-compare-button-is-disabled? []
-  (wd/click ::repo-compare-button)
+  (browser/click ::repo-compare-button)
   (not (=  "" (browser/text ::repo-compare-button))))
 
 (defn click-repo-errata [repo]
   (let [repo-id ((get-repo-search-data-name-map [repo]) repo) ]
-    (wd/click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
+    (browser/click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
 
 (defn compare-repositories [repositories]
-  ;(nav/go-to ::page)
-  (wd/select-by-text ::type-select "Repositories")
-  (wd/click  ::repo-auto-complete-radio)
-  (wd/click ::browse-button)
+                                        ;(nav/go-to ::page)
+  (browser/select-by-text ::type-select "Repositories")
+  (browser/click  ::repo-auto-complete-radio)
+  (browser/click ::browse-button)
   (check-repositories repositories)
-  (wd/click ::repo-compare-button)
+  (browser/click ::repo-compare-button)
   (get-repo-content-search))
 
 (defn select-type [type]
   (case type
-    :packages  (wd/select-by-text ::repo-result-type-select "Packages")
-    :errata    (wd/select-by-text ::repo-result-type-select "Errata")))
+    :packages  (browser/select-by-text ::repo-result-type-select "Packages")
+    :errata    (browser/select-by-text ::repo-result-type-select "Errata")))
 
 (defn select-view [set-type]
   (case set-type
-    :all (wd/select-by-text ::repo-result-filter-select   "Union")
-    :shared (wd/select-by-text ::repo-result-filter-select   "Intersection")
-    :unique (wd/select-by-text ::repo-result-filter-select   "Difference")))
+    :all (browser/select-by-text ::repo-result-filter-select   "Union")
+    :shared (browser/select-by-text ::repo-result-filter-select   "Intersection")
+    :unique (browser/select-by-text ::repo-result-filter-select   "Difference")))
 
 (defn get-repo-packages [repo & {:keys [view] :or {view :packages} }]
   (compare-repositories [repo])
@@ -371,16 +368,16 @@
   (get-result-packages))
 
 (defn search-for-repositories [repo]
-  ;(nav/go-to ::page)
-  (wd/select-by-text ::type-select "Repositories")
-  (wd/input-text ::repo-search repo)
+                                        ;(nav/go-to ::page)
+  (browser/select-by-text ::type-select "Repositories")
+  (browser/input-text ::repo-search repo)
   (submit-browse-button)
   (get-grid-row-headers))
 
 (defn search-for-packages [package]
-  ;(nav/go-to ::page)
-  (wd/select-by-text ::type-select "Packages")
-  (wd/input-text ::pkg-search package)
+                                        ;(nav/go-to ::page)
+  (browser/select-by-text ::type-select "Packages")
+  (browser/input-text ::pkg-search package)
   (submit-browse-button)
   (get-grid-row-headers))
 
@@ -391,17 +388,17 @@
                    :pkg-type    "Packages"
                    :errata-type "Errata"}
         ctype-str (ctype-map content-type)]
-    ;(nav/go-to ::page)
-    (wd/select-by-text ::type-select ctype-str)))
+                                        ;(nav/go-to ::page)
+    (browser/select-by-text ::type-select ctype-str)))
 
 (defn select-environments [envs]
   ;; Select environments (columns)
   (doseq [env envs]
     (let [col-locator (column env)]
-      (wd/move-to ::column-selector) 
-      (wd/move-to col-locator)
-      (wd/click col-locator)
-      (wd/move-off browser/*driver* ::column-selector))))
+      (browser/move-to ::column-selector)
+      (browser/move-to col-locator)
+      (browser/click col-locator)
+      (browser/move-off browser/*driver* ::column-selector))))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -434,34 +431,34 @@
       (autocomplete-adder-for-content-search auto-comp-box add-button cont-item)))
 
   ;; Add package
-  (when-not (empty? pkg) (wd/input-text ::pkg-search pkg))
+  (when-not (empty? pkg) (browser/input-text ::pkg-search pkg))
 
   ;; Add errata
-  (when-not (empty? errata) (wd/input-text ::errata-search errata))
+  (when-not (empty? errata) (browser/input-text ::errata-search errata))
 
   (submit-browse-button)
 
   ;;extract and return content
   (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
-     (browser/execute-script)
-     (json/read-json)))
+       (browser/execute-script)
+       (json/read-json)))
 
 (defn test-errata-popup-click [name]
-  (wd/click (span-text name))
-  (wd/move-to ::errata-search)
-  ;DOESNT CONTAIN NAME ANYMORE
+  (browser/click (span-text name))
+  (browser/move-to ::errata-search)
+                                        ;DOESNT CONTAIN NAME ANYMORE
   (assert/is (.contains (browser/text ::details-container) "Erratum"))
-  (wd/click (span-text name))
+  (browser/click (span-text name))
   (assert/is (= 0 (count (browser/find-elements ::details-container)))))
 
-(defn test-errata-popup-hover [name] 
+(defn test-errata-popup-hover [name]
   (assert/is
    (.contains
-    (do  (wd/move-to (span-text name))
+    (do  (browser/move-to (span-text name))
          (browser/wait-until  (browser/exists? ::details-container) 4000)
          (browser/text ::details-container))
     name))
-  (wd/move-to ::switcher-button)
+  (browser/move-to ::switcher-button)
   (Thread/sleep 1000)
   (assert/is (= 0 (count (browser/find-elements ::details-container))))
 
@@ -485,23 +482,23 @@
   (get-search-page-result-list-of-lists-html "grid_content_window"))
 
 (defn index-of [item coll]
-    (count (take-while (partial not= item) coll)))
+  (count (take-while (partial not= item) coll)))
 
 (def re-newline (re-pattern "\n"))
 (def erase #(clojure.string/replace %2 %1 ""))
 
 (defn get-repo-errata-count [repo-name view-name  env-name]
   (->>
-    (get-repo-search-data-name repo-name view-name)
-    name-map-to-name 
-    (str "grid_row_") 
-    get-search-page-result-list-of-lists-html
-    (#(nth % (index-of env-name (get-table-headers))))  
-    (#(if (coll? %)
-      (map (partial erase re-newline) %)
-      (clojure.string/split % re-newline)))
-    (into [])
-    ))
+   (get-repo-search-data-name repo-name view-name)
+   name-map-to-name
+   (str "grid_row_")
+   get-search-page-result-list-of-lists-html
+   (#(nth % (index-of env-name (get-table-headers))))
+   (#(if (coll? %)
+       (map (partial erase re-newline) %)
+       (clojure.string/split % re-newline)))
+   (into [])
+   ))
 
 (defn get-errata-desc-button [repo-name env-name]
   (browser/text (errata-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
@@ -510,4 +507,4 @@
   (browser/text (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
 
 (defn click-repo-desc [repo-name env-name view-name]
-  (wd/click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))
+  (browser/click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))
