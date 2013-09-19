@@ -13,51 +13,49 @@
 ;; Locators
 
 (ui/defelements :katello.deployment/any [katello.ui]
-  {::repo-name-text         {:name "repo[name]"}
-   ::repo-label-text        {:name "repo[label]"}
-   ::repo-url-text          {:name "repo[feed]"}
-   ::save-repository        "//input[@value='Create']"
-   ::create                 {:name "commit"}
-   ::remove-repository      (ui/link "Remove Repository")
-   ::repo-gpg-select        "//select[@id='repo_gpg_key']"
-   ::update-repo-gpg-select "//select[@name='gpg_key']"
-   ::update-gpg-key         "//div[@class='jspPane' and contains(.,'Repository Details')]//div[@name='gpg_key']"
-   ::save-updated-gpg-key   "//div[@name='gpg_key']//button[contains(.,'Save')]"
-   ::add-repo-button        "//div[contains(@class,'button') and contains(.,'Add Repository')]"   
-   ::repo-discovery         "//a[contains(@href, 'repo_discovery')]"
-   ::discover-url-text      "discover_url"
-   ::discover-button        "//input[@type='submit']"
-   ::discover-cancel-button "//*[@class='grid_2 la' and @style='display: none;']"}
-  )
+  {::repositories-link         "//nav[@class='details-navigation']//a[contains(.,'Repositories')]"
+   ::create-repo               "//button[contains(@class,'ng-binding') and contains(.,'Create Repository')]"       
+   ::repo-name-text            "//input[@name='name']"
+   ::repo-label-text           "//input[@name='label']"
+   ::repo-type-select          "//select[@name='content_type']"
+   ::repo-url-text             "//input[@name='url']"
+   ::repo-protection-checkbox  "//input[@name='unprotected']"   
+   ::repo-gpg-select           "//select[@name='gpg_key_id']"
+   ::repo-save                 "//button[@ng-click='save(repository)']"
+   ::repo-remove               "//button[@ng-click='removeRepository(repository)']"
+   ::repo-list                 "//a[@class='ng-binding' and contains(.,'Back to Repository List')]"
+   
+   ::repo-gpgkey-update        "//div[@selector='repository.gpg_key_id']//i[contains(@class,'icon-edit')]"
+   ::repo-gpgkey-update-select "//div[@selector='repository.gpg_key_id']//select[@ng-model='selector']"
+   ::save-updated-gpg-key     "//div[@selector='repository.gpg_key_id']//button[contains(.,'Save')]"})
 
 (wd/template-fns
- {repo-enable-checkbox "//table[@id='products_table']//label[normalize-space(.)='%s']/..//input"
-  add-repo-link "//div[@id='products']//div[contains(.,'%s')]/..//div[normalize-space(.)='Add Repository' and contains(@class, 'button')]"
-  gpgkey-under-repo-details "//div[@name='gpg_key' and contains(.,'%s')]"
-  select-repo "//li[@class='repo']//div[contains(@class,'grid') and contains(.,'%s')]"})
+ {select-repository            "//a[contains(@href,'repositories') and contains(.,'%s')]"})
 
 (nav/defpages :katello.deployment/any katello.providers
-  [::provider/products-page 
-   [::named-page (fn [repo] (browser/click (ui/editable (:name repo))))]])
+  [::provider/products-page
+   [::product-page (fn [ent] (browser/click (provider/select-product (:name (kt/product ent)))))
+    [::product-repo-page (nav/browser-fn (click ::repositories-link))
+     [::repo-page (fn [ent] (browser/click (select-repository (:name ent))))]]]])
 
 ;; Tasks
 
 (defn- create
-  "Adds a repository under the given provider and product. Requires a
-   name and url be given for the repo."
-  [{:keys [product name url gpg-key]}]
+  "Adds a repository under the product. 
+   Requires a name and url be given for the repo."
+  [{:keys [product name url gpg-key repo-type http?]}]
    {:pre [(instance? katello.Product product)
           (instance? katello.Provider (kt/provider product))
           (instance? katello.Organization (kt/org product))]} 
-
-  (nav/go-to ::provider/products-page product)
-  (browser/click (add-repo-link (:name product)))
+  (nav/go-to ::product-page product) 
+  (browser/click ::create-repo)
   (when gpg-key (browser/select-by-text ::repo-gpg-select (:name gpg-key)))
+  (browser/select-by-text ::repo-type-select repo-type)
+  (when http? (browser/click ::repo-protection-checkbox))
   (browser/quick-fill-submit {::repo-name-text name}
                              {::repo-name-text "\t"}
                              {::repo-url-text url}
-                             {::save-repository browser/click})
-  (notification/success-type :repo-create))
+                             {::repo-save browser/click}))
 
 (defn- update
   "Edits a repository. Currently the only property of a repository that
@@ -65,21 +63,19 @@
   [repo {:keys [gpg-key]}]
   (when (not= (:gpg-key repo) gpg-key)
     (nav/go-to repo)
-    (wd/->browser (click  ::update-gpg-key)
-                   (select ::update-repo-gpg-select gpg-key)
-                   (click  ::save-updated-gpg-key))
-    (notification/success-type :repo-update-gpg-key)))
+    (wd/->browser (click  ::repo-gpgkey-update)
+                  (select ::repo-gpgkey-update-select gpg-key)
+                  (click  ::save-updated-gpg-key))))
   
 
-(defn- delete "Deletes a repository from the given provider and product."
+(defn- delete "Deletes a repository from the given product."
   [repo]
   {:pre [(instance? katello.Repository repo)]}
   (nav/go-to repo)
-  (browser/click ::remove-repository)
-  (browser/click ::ui/confirmation-yes)
-  (notification/success-type :repo-destroy))
+  (when (browser/displayed? ::repo-remove)
+     (browser/click ::repo-remove)))
 
-(defn gpgkey-associated?
+#_(defn gpgkey-associated?
   [product repo-name]
   (nav/go-to product)
   (browser/click (select-repo repo-name))
@@ -88,7 +84,7 @@
 
 (extend katello.Repository
   ui/CRUD {:create create
-           :update* update
+           :update* update  
            :delete delete}
 
   rest/CRUD {:create (fn [{:keys [product name url]}]
@@ -106,41 +102,4 @@
   
   tasks/Uniqueable  tasks/entity-uniqueable-impl
 
-  nav/Destination {:go-to (partial nav/go-to ::named-page)}) 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  nav/Destination {:go-to (partial nav/go-to ::repo-page)})
