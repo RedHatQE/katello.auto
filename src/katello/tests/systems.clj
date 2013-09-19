@@ -50,7 +50,8 @@
                                          :env test-environment}))
 (defn register-new-test-system []
   (with-unique-system s
-    (rest/create s)))
+    (rest/create s)
+    (browser/refresh)))
 
 (defn verify-system-rename [system]
   (nav/go-to (ui/update system update-in [:name] uniqueify)))
@@ -159,6 +160,7 @@
     (fn [input-loc new-value save? expected-res]
       (with-unique-system s
         (rest/create s)
+        (browser/refresh)
         (expecting-error expected-res
                          (nav/go-to ::system/details-page s)
                          (save-cancel input-loc new-value save?))))
@@ -761,7 +763,7 @@
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (client/ok? cmd_result)))))))
 
-
+ 
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
         :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"

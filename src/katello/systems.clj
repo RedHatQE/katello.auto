@@ -27,6 +27,8 @@
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
+  select-system                   "//td[@class='ng-scope']/a[contains(text(), '%s')]"
+  select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/following::td[@class='row-select']/input[@ng-model='system.selected']"
   get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
@@ -39,20 +41,17 @@
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/defelements :katello.deployment/any []
-  {::new                         "new"
-   ::create                      {:name "commit"}
-   ::name-text                   {:name "system[name]"}
-   ::sockets-text                {:name "system[sockets]"}
-   ::arch-select                 {:name "arch[arch_id]"}
-   ::system-virtual-type         "system_type_virtualized_virtual"
+  {::name-text                   "system[name]"
    ::content-view-select         {:name "system[content_view_id]"}
    ::expand-env-widget           "path-collapsed"
-   ::remove                      (ui/link "Remove System")
+   ::remove                      "//button[contains(text(), 'Remove System')]"
+   ::confirmation-yes            "//button[normalize-space(.)='Yes']"
+   ::confirmation-no             "//button[normalize-space(.)='No']"
+   ::bulk-action                 "//div[@class='nutupane-actions fr']/button[contains (.,'Bulk Actions')]"
    ::multi-remove                (ui/link "Remove System(s)")
    ::confirm-yes                 "//input[@value='Yes']"
-   ::select-sysgrp               "//button[@type='button']"
-   ::add-sysgrp                  "//input[@value='Add']"
-   ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::select-sysgrp               "//div[@class='alch-edit']/div[@ng-click='edit()']"
+   ::add-sysgrp                  "//button[@ng-click='add()']"
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    ::interface-addr              "//td[@class='interface_name' and contains(., 'eth')]//following-sibling::td"
@@ -90,20 +89,17 @@
    ::remove-package               "remove_packages"
 
    ;;system-edit details
-   ::details                     {:xpath (ui/third-level-link "general")}
-   ::name-text-edit              {:name "system[name]"}
-   ::description-text-edit       "system[description]"
+   ::details                     (ui/link "Details")
+   ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::location-text-edit          "system[location]"
    ::service-level-select        "system[serviceLevel]"
    ::release-version-select      "system[releaseVer]"
    ::environment                 "//span[@id='environment_path_selector']"
    ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
    ::save-environment            "//input[@value='Save']"
-   ::edit-sysname                "system_name"
-   ::edit-description            "system_description"
-   ::edit-location               "system_location"
-   ::save-button                 "//button[@type='submit']"
-   ::cancel-button               "//button[@type='cancel']"
+   ::save-button                 "//button[@ng-click='save()']"
+   ::cancel-button               "//button[@ng-click='cancel()']"
    
    ;;system-facts
    ::facts                       (ui/link "Facts")
@@ -135,8 +131,7 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (click ::new))]
-   [::named-page (fn [system] (nav/choose-left-pane system))
+   [::named-page (fn [system] (nav/go-to-system system))
     [::details-page (nav/browser-fn (click ::details))
      [::facts-page (nav/browser-fn (click ::facts))]
      [::custom-info-page (nav/browser-fn (click ::custom-info))]]
@@ -151,52 +146,35 @@
 
 ;; Tasks
 
-(defn- create
-  "Creates a system"
-  [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
-  (nav/go-to ::new-page (:org env))
-   ;; TODO - check for katello/only	
-  (browser/quick-fill-submit {::name-text name}
-                             {::arch-select (or system-arch "x86_64")}
-                             {::sockets-text sockets}
-                             {::ram-mb-text ram-mb}
-                             {::system-virtual-type (when virtual? browser/click)}) 
-  (when (and env rest/is-katello?) (nav/select-environment-widget env))
-  (browser/click ::create)
-  (notification/success-type :sys-create))
-
 (defn- delete "Deletes the selected system."
   [system]
   (nav/go-to system)
   (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
-  (notification/success-type :sys-destroy))
+  (browser/click ::confirmation-yes))
 
-(defn- select-multisys-with-ctrl 
+(defn- select-multisys
   [systems]
-  (nav/go-to ::page (first systems))
-  (action/key-down browser/*driver* :ctrl)
   (doseq [system systems]
-    (nav/scroll-to-left-pane-item system)
-    (nav/choose-left-pane system))
-  (action/key-up browser/*driver* :ctrl))  
+    (browser/click (select-system-checkbox system))))
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
-  (select-multisys-with-ctrl systems)
-  (browser/click ::multi-remove)
-  (browser/click ::confirm-yes)
-  (notification/success-type :sys-bulk-destroy))
+  (nav/go-to ::page (first systems))
+  (select-multisys systems)
+  (browser/click ::bulk-action)
+  (browser/click ::remove)
+  (browser/click ::confirmation-yes)
+  (browser/refresh))
 
 (defn add-bulk-sys-to-sysgrp 
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
   [systems group] 
-  (select-multisys-with-ctrl systems)
+  (select-multisys systems)
+  (browser/click ::bulk-action)
   (wd/->browser (click ::select-sysgrp)
-             (click (-> group :name sysgroup-checkbox))
-             (click ::add-sysgrp)
-             (click ::confirm-to-yes))
-  (notification/success-type :sys-add-bulk-sysgrps))
+                (click (-> group :name sysgroup-checkbox))
+                (click ::add-sysgrp)
+                (click ::confirmation-yes)))
 
 (defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
@@ -278,7 +256,7 @@
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (wd/move-to (browser/element ::name-text))
+      ;(wd/move-to (browser/element ::name-text))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
