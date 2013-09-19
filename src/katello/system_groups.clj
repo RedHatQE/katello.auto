@@ -54,9 +54,9 @@
   "Creates a system group"
   [{:keys [name description] :as sg}]
   (nav/go-to ::new-page sg)
-  (browser/quick-fill-submit [::name-text name
-                              ::description-text description
-                              ::create browser/click])
+  (browser/quick-fill [::name-text name
+                       ::description-text description
+                       ::create browser/click])
   (notification/success-type :sysgrps-create)
   (browser/wait-until #(not (browser/visible? ::ui/notification-container)) 5000 1000))
 
@@ -65,7 +65,7 @@
   [systems]
   (browser/click ::systems-link)
   (doseq [system systems]
-    (browser/quick-fill-submit {::hostname-toadd (:name system)})
+    (browser/quick-fill {::hostname-toadd (:name system)})
     ;;try to trigger autocomplete via javascript -
     ;;hackalert - see
     ;;https://bugzilla.redhat.com/show_bug.cgi?id=865472 -jweiss
@@ -89,7 +89,7 @@
   [orig clone]
   (nav/go-to orig)
   (browser/click ::copy)
-  (browser/quick-fill-submit [::copy-name-text (:name clone)
+  (browser/quick-fill [::copy-name-text (:name clone)
                               ::copy-description-text (:description clone)
                               ::copy-submit browser/click])
   (notification/success-type :sysgrps-copy))

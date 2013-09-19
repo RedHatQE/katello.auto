@@ -39,8 +39,7 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (browser/click ::ui/user-menu)
-    (Thread/sleep 1000)
+    (browser/move-to ::ui/user-menu)
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
@@ -62,6 +61,8 @@
    logging in on the dashboard page."
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
+     {:pre [(not (nil? user))
+            (instance? katello.User user)]}
      (when (logged-in?) (logout))
      (when (browser/exists? ::re-log-in-link)
        (browser/click ::re-log-in-link))

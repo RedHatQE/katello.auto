@@ -86,10 +86,10 @@
 
 (defn extract-left-pane-list []
   (nav/scroll-left-pane-until (constantly false))
-  (map browser/text (browser/elements ::ui/left-pane-list)))
+  (map browser/text ::ui/left-pane-list))
 
 (defn extract-custom-keyname-list []
-  (set (map browser/text (browser/elements ::ui/keyname-list))))
+  (set (map browser/text ::ui/keyname-list)))
 
 (defn extract-custom-value-list []
   (set (extract-list ui/custom-value-list)))
@@ -149,10 +149,10 @@
 (defn save-cancel [save-locator cancel-locator request-type input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser/text  inactive-elem)]
-    (browser/move-to-and-click (browser/element inactive-elem))
+    (browser/click inactive-elem)
     (browser/input-text  input-locator requested-value)
     (if save?
-      (do (browser/move-to-and-click (browser/element save-locator))
+      (do (browser/click save-locator)
           (notification/success-type request-type)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text requested-value)
@@ -160,7 +160,7 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Input field didn't update properly after saving."}))))
-      (do (browser/move-to-and-click (browser/element cancel-locator))
+      (do (browser/click cancel-locator)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text orig-text)
               (throw+ {:type ::cancel-failed

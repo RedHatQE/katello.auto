@@ -110,7 +110,7 @@
     (when initial-env
       (browser/clear ::initial-env-label-text)
       (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
-  (browser/move-to (browser/element ::create))
+  (browser/move-to ::create)
   (browser/click ::create)
   (notification/success-type :org-create))
 

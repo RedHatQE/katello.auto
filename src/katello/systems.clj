@@ -155,11 +155,11 @@
   [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
   (nav/go-to ::new-page (:org env))
   ;; TODO - check for katello/only
-  (browser/quick-fill-submit [::name-text name
-                              ::arch-select (or system-arch "x86_64")
-                              ::sockets-text sockets
-                              ::ram-mb-text ram-mb
-                              ::system-virtual-type (when virtual? browser/click)])
+  (browser/quick-fill [::name-text name
+                       ::arch-select (or system-arch "x86_64")
+                       ::sockets-text sockets
+                       ::ram-mb-text ram-mb
+                       ::system-virtual-type (when virtual? browser/click)])
   (when (and env rest/is-katello?) (nav/select-environment-widget env))
   (browser/click ::create)
   (notification/success-type :sys-create))
@@ -277,7 +277,7 @@
 
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (browser/move-to (browser/element ::name-text))
+      (browser/move-to ::name-text)
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 

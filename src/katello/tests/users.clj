@@ -48,9 +48,9 @@
   user)
 
 (defn assign-admin [user]
-  (ui/update user assoc :roles #{role/administrator})
-  (Thread/sleep 3000) ;; wait for update notification to disappear so the user-menu
-  )
+  (let [user (ui/update user assoc :roles #{role/administrator})]
+    (Thread/sleep 3000)  ;; wait for update notification to disappear so the user-menu
+    user))
 
 (defn set-default-org-at-login-screen
   [{:keys [default-org] :as user}]

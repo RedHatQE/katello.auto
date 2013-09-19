@@ -29,7 +29,7 @@
    ::remove-link             (ui/remove-link "activation_keys")
    ::release-version-text    {:name "system[releaseVer]"}})
 
-(wd/template-fns
+(browser/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   sysgroup-checkbox "//input[@title='%s']"
   applied-subscriptions "xpath=(//table[@class='filter_table clear']//td[1])[%s]"

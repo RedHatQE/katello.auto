@@ -44,7 +44,7 @@
                    "version" "10"
                    "nativeEvents" false}})
 
-(def empty-browser-config {"browserName" "chrome"
+(def empty-browser-config {"browserName" "firefox"
                            "platform" "LINUX"
                            "nativeEvents" false
                            ;; :profile

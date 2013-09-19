@@ -1,7 +1,6 @@
 (ns katello.redhat-repositories
   (:require [katello :as kt]
-            [webdriver :as wd]
-            [clj-webdriver.taxi :as browser]
+            [webdriver :as browser]
             (katello [ui :as ui]                   
                      [navigation :as nav]
                      [notifications :as notification]
@@ -9,7 +8,7 @@
 
 ;; Locators
 
-(wd/template-fns
+(browser/template-fns
  {expand-product  "//div[@id='%s']//td[contains(@style,'cursor') and contains(.,'%s')]/span"
   select-repo-set "//div[@id='%s']//span[@class='expander_area' and contains(.,'%s')]/../../td/input[@type='checkbox']"
   expand-repo-set  "//div[@id='%s']//span[@class='expander_area' and contains(.,'%s')]/span"
@@ -27,12 +26,12 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::rpms-page (nav/browser-fn (click ::rpms-tab))]
-   [::source-rpms-page (nav/browser-fn (click ::srpms-tab))]
-   [::debug-rpms-page (nav/browser-fn (click ::debugs-tab))] 
-   [::beta-rpms-page (nav/browser-fn (click ::beta-tab))]
-   [::product-isos-page (nav/browser-fn (click ::isos-tab))] 
-   [::others-page (nav/browser-fn (click ::others-tab))]])
+   [::rpms-page (nav/browser-fn (browser/click ::rpms-tab))]
+   [::source-rpms-page (nav/browser-fn (browser/click ::srpms-tab))]
+   [::debug-rpms-page (nav/browser-fn (browser/click ::debugs-tab))] 
+   [::beta-rpms-page (nav/browser-fn (browser/click ::beta-tab))]
+   [::product-isos-page (nav/browser-fn (browser/click ::isos-tab))] 
+   [::others-page (nav/browser-fn (browser/click ::others-tab))]])
 
 (def redhat-ak-subscriptions '("Red Hat Employee Subscription"))
 
@@ -78,10 +77,10 @@
     (let [prd      (kt/product repo)
           reposet  (kt/reposet repo)
           checked? (common/disabled? (select-repo-set (:type repo) (:name reposet)))]
-      (wd/click (expand-product (:type repo) (:name prd)))
+      (browser/click (expand-product (:type repo) (:name prd)))
       (if-not checked?
-        (wd/click (select-repo-set (:type repo)(:name reposet)))
-        (wd/click (expand-repo-set (:type repo)(:name reposet))))
+        (browser/click (select-repo-set (:type repo)(:name reposet)))
+        (browser/click (expand-repo-set (:type repo)(:name reposet))))
       (if (repo :deselect?)
         (browser/deselect (select-repo (:name repo)))
-        (wd/click (select-repo (:name repo)))))))  
+        (browser/click (select-repo (:name repo)))))))  

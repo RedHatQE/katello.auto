@@ -75,12 +75,12 @@
   (browser/click ::new)
   (let [env-chooser (fn [env] (when (and env (rest/is-katello?))
                                 (nav/select-environment-widget env)))]
-    (browser/quick-fill-submit [::username-text name
-                                ::password-text password
-                                ::confirm-text (or password-confirm password)
-                                ::email-text email])
+    (browser/quick-fill [::username-text name
+                         ::password-text password
+                         ::confirm-text (or password-confirm password)
+                         ::email-text email])
     (when default-org
-      (browser/select-by-text (browser/element ::default-org) (:name default-org)))
+      (browser/select-by-text ::default-org (:name default-org)))
     (when default-env
       (env-chooser default-env))
     (browser/click ::save))

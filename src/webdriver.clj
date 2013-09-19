@@ -154,10 +154,15 @@ Default browser-spec: firefox"
 
 (alias-all)
 
+(defn throw-element-not-found [q]
+  (throw+ {:type ::element-not-found
+           :query q}))
+
 (defmacro with-element [[s q] & body]
   `(let [~s (browser/element ~q)]
-     ~@body))
-
+     (if ~s
+       (do ~@body)
+       (throw-element-not-found ~q))))
 
 (defn click
   "Click the first element found with query `q`.
@@ -282,7 +287,6 @@ Default browser-spec: firefox"
                        v)
               target-els (browser/elements q)]
           (if-not (seq target-els)
-            (throw+ {:type ::form-item-not-found
-                     :query q}))
+            (throw-element-not-found q))
           (doseq [el target-els]
             (action el)))))))

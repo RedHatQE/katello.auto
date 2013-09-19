@@ -67,10 +67,10 @@
      (choose-left-pane left-pane-item entity))
   ([templ entity]
      (let [loc (templ (:name entity))]
-       (try (browser/click loc)
-            (catch NoSuchElementException se
-              (do (search-here (format "\"%s\"" (:name entity)))
-                  (browser/click loc)))))))
+       (if-let [el (browser/element loc)]
+         (browser/click el)
+         (do (search-here (format "\"%s\"" (:name entity)))
+             (browser/click loc))))))
 
 (defmacro browser-fn
   "produces a function that ignores context args and passes body to
