@@ -42,7 +42,7 @@
   katello.tests.e2e/end-to-end-tests
   katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests
-  katello.tests.providers.custom/custom-product-tests
+;;  katello.tests.providers.custom/custom-product-tests
   katello.tests.content-search/content-search-tests
   katello.tests.content-views/content-views-tests
   )
