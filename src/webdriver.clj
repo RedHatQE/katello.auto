@@ -16,7 +16,7 @@ locator). Returns the args list with those Strings in place of the
 keywords."
   [& args]
   (for [arg args]
-    (if (keyword? arg) 
+    (if (keyword? arg)
       (or (sel-locator arg)
           (throw (IllegalArgumentException.
                   (str "Locator " arg " not found in UI mapping."))))
@@ -42,7 +42,7 @@ keywords."
   []
   (browser/wait-until #(= (browser/execute-script jquery+angular-ajax-finished) 0) 60000 1000))
 
-(defn locator-finder-fn 
+(defn locator-finder-fn
   ([q] (locator-finder-fn browser/*driver* q))
   ([driver q]
      (ajax-wait)
@@ -66,7 +66,7 @@ keywords."
   format string."
   [m]
   `(do ~@(for [[sym fmt] m]
-           `(def ~sym 
+           `(def ~sym
               (template ~fmt)))))
 
 (defn new-local-driver
@@ -136,10 +136,10 @@ Default browser-spec: firefox"
   [browser-spec finder-fn & body]
   `(binding [*driver* (core/new-driver ~browser-spec)
              *finder-fn* ~finder-fn]
-    (try
-      ~@body
-      (finally
-        (quit)))))
+     (try
+       ~@body
+       (finally
+         (quit)))))
 
 ;; remove print-method for webdriver due to https://github.com/semperos/core/issues/105
 
@@ -148,9 +148,9 @@ Default browser-spec: firefox"
 
 (defmacro alias-all
   "Alias all the vars of taxi in this ns"
-  [] 
+  []
   `(do ~@(for [[k v] (ns-publics 'clj-webdriver.taxi)]
-          `(def ~k (deref ~v)))))
+           `(def ~k (deref ~v)))))
 
 (alias-all)
 
@@ -257,7 +257,7 @@ Default browser-spec: firefox"
        ((if b core/select-by-text core/deselect-by-text) e text)
        (ajax-wait))))
 
-(defn quick-fill quick-fill
+(defn quick-fill
   "A utility for filling out multiple fields in a form in one go. Always returns nil instead of the affected elements, since on submit all of the elements will be void.
 
    `items`   - a seq of queries to actions (queries find HTML elements, actions are fn's that act on them). Nil values are ignored.
@@ -268,7 +268,7 @@ Default browser-spec: firefox"
    =========
 
    (quick-fill {\"#first_name\" \"Rich\" ; don't care about order
-                \"a.foo\" click}) 
+                \"a.foo\" click})
    (quick-fill [\"#first_name\" \"Rich\" ; enforce order
                 \"a.foo\" click]"
   [items]
