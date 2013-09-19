@@ -167,7 +167,7 @@
     [(fn [] [:permissions [{:org global, :resource-type "Organizations", :verbs ["Read Organization"], :name "orgaccess"}]
              :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
              :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                      :katello.providers/custom-page
+                                                      :katello.providers/products-page
                                                       :katello.changesets/page])
                                        (fn [] (ui/create (uniqueify baseorg)))
                                        create-an-env)])
@@ -177,7 +177,7 @@
               [:permissions [{:org global, :resource-type "Organizations", :verbs ["Administer Organization"], :name "orgcreate"}]
                :allowed-actions [(fn [] (ui/create org)) (fn [] (ui/delete org)) create-an-env]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
+                                                        :katello.providers/products-page
                                                         :katello.changesets/page]
                                                        org )
                                          (fn [] (ui/create prov))
@@ -193,7 +193,7 @@
                                             :env (first conf/*environments*)
                                             :facts (system/random-facts)} kt/newSystem uniqueify rest/create))
                                 (navigate-fn :katello.systems/page)]
-              :disallowed-actions (conj (navigate-all [:katello.providers/custom-page])
+              :disallowed-actions (conj (navigate-all [:katello.providers/products-page])
                                         create-an-org)])
       assoc :blockers (bz-bugs "757775"))
 
@@ -252,7 +252,7 @@
                :setup (fn [] (rest/create org))
                :allowed-actions [(fn [] (nav/go-to conf/*session-org*))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
+                                                        :katello.providers/products-page
                                                         :katello.changesets/page])
                                          (fn [] (nav/go-to org)))]))
 
@@ -266,7 +266,7 @@
                                   (fn [] (ui/create cv))
                                   (fn [] (views/clone cv (update-in cv [:name] #(str % "-clone"))))]
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                         :katello.providers/custom-page
+                                                         :katello.providers/products-page
                                                          :katello.changesets/page])
                                           (fn [] (views/publish {:content-defn cv :published-name pub-name :description "pub name desc"})))]))
       assoc :blockers (auto-issue "800"))
@@ -280,7 +280,7 @@
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (nav/go-to cv))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
+                                                        :katello.providers/products-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (views/clone cv (update-in cv [:name] #(str % "-clone"))))
@@ -298,7 +298,7 @@
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_publish desc"))
                                  (fn [] (views/publish {:content-defn cv :published-name "pub1" :description "pub name desc"}))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
+                                                        :katello.providers/products-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (ui/delete cv)))]))
@@ -312,7 +312,7 @@
                :setup (fn [] (ui/create cv))
                :allowed-actions [(fn [] (ui/update cv assoc :description "cvaccess_modify desc"))]
                :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                        :katello.providers/custom-page
+                                                        :katello.providers/products-page
                                                         :katello.changesets/page])
                                          (fn [] (ui/create cv1))
                                          (fn [] (views/publish {:content-defn cv :published-name "pub1" :description "pub name desc"}))
@@ -328,7 +328,7 @@
                 :setup (fn [] (ui/create cv))
                 :allowed-actions [(fn [] (ui/delete cv))]
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                         :katello.providers/custom-page
+                                                         :katello.providers/products-page
                                                          :katello.changesets/page])
                                           (fn [] (ui/create cv1))
                                           (fn [] (ui/update cv assoc :description "cvaccess_delete desc"))
@@ -347,7 +347,7 @@
                 :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
                 :allowed-actions [(navigate-fn :katello.changesets/page)]
                 :disallowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                         :katello.providers/custom-page])
+                                                         :katello.providers/products-page])
                                           (fn [] (changeset/promote-delete-content cs)))]))
       assoc :blockers (conj (bz-bugs "960620") (auto-issue "800")))
 
@@ -362,13 +362,13 @@
                :setup (fn [] (setup-cv-publish org env cv1 cv2 cv3))
                :allowed-actions [(fn [] (changeset/promote-delete-content cs))]
                :disallowed-actions [(navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                   :katello.providers/custom-page])]]))
+                                                   :katello.providers/products-page])]]))
 
      (fn [] (with-unique [org baseorg]
               [:permissions [{:org org, :resource-type :all, :name "orgaccess"}]
                :setup (fn [] (ui/create org))
                :allowed-actions [(fn [] (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                       :katello.providers/custom-page
+                                                       :katello.providers/products-page
                                                        :katello.changesets/page]))]
                :disallowed-actions [(fn [] (org/switch))]]))
 
@@ -417,7 +417,7 @@
                                               result2 (client/run-cmd ssh-conn cmd2)]
                                           (assert/is (every? client/ok? (list result1 result2))))))]
                   :disallowed-actions [(navigate-all [:katello.sync-management/status-page
-                                                      :katello.providers/custom-page])]])))
+                                                      :katello.providers/products-page])]])))
       assoc :blockers (bz-bugs "970570"))
 
      (fn [] (with-unique [org baseorg
@@ -425,7 +425,7 @@
               [:permissions [{:org org, :resource-type :all, :name "orgadmin"}]
                :setup (fn [] (rest/create org))
                :allowed-actions (conj (navigate-all [:katello.systems/page :katello.sync-management/status-page
-                                                     :katello.providers/custom-page
+                                                     :katello.providers/products-page
                                                      :katello.changesets/page]
                                                     org)
                                       (fn [] (nav/go-to org))
