@@ -60,6 +60,14 @@
   []
   (browser/execute-script "$('#allowed-orgs').data('jsp').scrollByY(300);"))
 
+(defn scroll-right-pane-more
+  []
+  (browser/execute-script "$('#panel_main').data('jsp').scrollByY(300);"))
+
+(defn scroll-to-right-pane-item [ent]
+  (while (not (browser/visible? ent))
+    (scroll-right-pane-more)))
+
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a
    search is performed and the select is attempted again."
