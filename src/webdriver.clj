@@ -45,7 +45,6 @@ keywords."
 (defn locator-finder-fn
   ([q] (locator-finder-fn browser/*driver* q))
   ([driver q]
-     (println (str "Q: " q))
      (ajax-wait)
      (let [loc (if (keyword? q)
                  (first (locator-args q))
