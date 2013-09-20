@@ -95,22 +95,18 @@
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
   (browser/ajax-wait)
-  (browser/quick-fill [::name-text browser/focus
-                       ::name-text name
-                       ::name-text "\t" ;; tab to trigger the label-filling ajax call
-                       ::description-text (or description "")])
+  (browser/quick-fill [::name-text name
+                       ::description-text description])
   (when label
     (browser/clear ::label-text)
     (browser/input-text ::label-text label))
-  (when (rest/is-katello?)
-    (browser/quick-fill [::initial-env-name-text browser/focus
-                         ::initial-env-name-text (or (:name initial-env) "")
-                         ::initial-env-name-text "\t"
-                         ::initial-env-desc-text (or (:description initial-env) "")])
-    (when initial-env
+  (when (and (rest/is-katello?) initial-env)
+    (browser/quick-fill [::initial-env-name-text (:name initial-env)
+                         ::initial-env-desc-text (:description initial-env)])
+    (when (:label initial-env)
       (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
-  (browser/move-to ::create)
+      (browser/input-text ::initial-env-label-text (:label initial-env))))
+  (nav/scroll-to-right-pane-item ::create)
   (browser/click ::create)
   (notification/success-type :org-create))
 
