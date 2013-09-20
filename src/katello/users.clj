@@ -24,15 +24,15 @@
    ::save-environment            "update_user"
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
-   ::username-text               {:name "user[username]"}
+   ::username-text               {:tag :input, :name "user[username]"}
    ::password-text               "//input[@id='password_field']" ; use id attr
    ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
-   ::default-org                 {:name "org_id[org_id]"}
-   ::email-text                  {:name "user[email]"}
+   ::default-org                 {:tag :input, :name "org_id[org_id]"}
+   ::email-text                  {:tag :input, :name "user[email]"}
    ::save                        "save_user"
    ::save-roles                  "save_roles"
    ::remove                      (ui/link "Remove User")
-   ::enable-inline-help-checkbox "user[helptips_enabled]"
+   ::enable-inline-help-checkbox {:name "user[helptips_enabled]"}
    ::clear-disabled-helptips     "clear_helptips"
    ::password-conflict           "//div[@id='password_conflict' and string-length(.)>0]"
    ::account                     "//a[contains(@class,'dropdown-item-link') and contains(.,'My Account')]"

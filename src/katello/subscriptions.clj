@@ -11,7 +11,7 @@
    ::refresh-manifest         "refresh_form_button"
    ::delete-manifest          "delete_form_button"
    ::create                   "commit"
-   ::repository-url-text      "provider[repository_url]"
+   ::repository-url-text      {:tag :input, :name "provider[repository_url]"}
    ::choose-file              "provider_contents"
    ::manifest-history         "//a[contains(@href,'history_items')]"
    ::manifest-link            "//fieldset/div/a[contains(@href,'access')]"

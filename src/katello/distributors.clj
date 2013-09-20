@@ -16,7 +16,7 @@
 (ui/defelements :katello.deployment/any []
   {::new                   "new"
    ::create                {:name "commit"}
-   ::distributor-name-text {:name "distributor[name]"}
+   ::distributor-name-text {:tag :input, :name "distributor[name]"}
    ::details-link          {:id "distributor_details"}
    ::keyname-text          "new_custom_info_keyname"
    ::value-text            "new_custom_info_value"

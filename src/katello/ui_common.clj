@@ -22,15 +22,7 @@
   "Takes a locator for an active in-place edit field, returns the
   inactive version"
   [loc]
-  (format "//div[@name='%1$s']|//span[@name='%1$s']" (browser/attribute (browser/sel-locator loc) :name)))
-
-(defn textfield-loc
-  [loc]
-  (conj {:tag "textarea"} {:name (browser/attribute (browser/sel-locator loc) :name)}))
-
-(defn input-loc
-  [loc]
-  (conj {:tag "input"} {:name (browser/attribute (browser/sel-locator loc) :name)}))
+  (dissoc (browser/sel-locator loc) :tag))
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
@@ -69,8 +61,8 @@
   (doall (for [[loc val] items]
            (if-not (nil? val)
              (do (activate-in-place loc)
-                 (browser/clear (input-loc loc))
-                 (browser/input-text (input-loc loc) val)
+                 (browser/clear loc)
+                 (browser/input-text loc val)
                  (browser/click ::ui/save-inplace-edit)
                  (notification/check-for-success))))))
 
@@ -86,10 +78,10 @@
 
 (defn extract-left-pane-list []
   (nav/scroll-left-pane-until (constantly false))
-  (map browser/text ::ui/left-pane-list))
+  (map browser/text (browser/elements ::ui/left-pane-list)))
 
 (defn extract-custom-keyname-list []
-  (set (map browser/text ::ui/keyname-list)))
+  (set (map browser/text (browser/elements ::ui/keyname-list))))
 
 (defn extract-custom-value-list []
   (set (extract-list ui/custom-value-list)))

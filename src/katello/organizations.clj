@@ -18,15 +18,15 @@
 (ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
    ::create                 {:name "commit"}
-   ::name-text              {:name "organization[name]"}
-   ::label-text             {:name "organization[label]"}
-   ::description-text       {:name "organization[description]"}
+   ::name-text              {:tag :input, :name "organization[name]"}
+   ::label-text             {:tag :input, :name "organization[label]"}
+   ::description-text       {:tag :textarea :name "organization[description]"}
    ::environments           (ui/link "Environments")
    ::edit                   (ui/link "Edit")
    ::remove                 (ui/link "Remove Organization")
-   ::initial-env-name-text  {:name "environment[name]"}
-   ::initial-env-label-text {:name "environment[label]"}
-   ::initial-env-desc-text  {:name "environment[description]"}
+   ::initial-env-name-text  {:tag :input, :name "environment[name]"}
+   ::initial-env-label-text {:tag :input, :name "environment[label]"}
+   ::initial-env-desc-text  {:tag :input, :name "environment[description]"}
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 

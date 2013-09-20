@@ -43,7 +43,7 @@
    ::name-text                   "changeset_name"
    ::save                        "save_changeset_button"
    ::content                     "//div[contains(@class,'slider_two') and contains(@class,'has_content')]"
-   ::type                        "changeset[action_type]"
+   ::type                        {:name "changeset[action_type]"}
    ::promotion                   "//div[@data-cs_type='promotion']"
    ::deletion                    "//div[@data-cs_type='deletion']"
    ::remove-changeset            "//span[contains(.,'Remove')]"})

@@ -40,8 +40,8 @@
 (ui/defelements :katello.deployment/any []
   {::new                         "new"
    ::create                      {:name "commit"}
-   ::name-text                   {:name "system[name]"}
-   ::sockets-text                {:name "system[sockets]"}
+   ::name-text                   {:tag :input, :name "system[name]"}
+   ::sockets-text                {:tag :input, :name "system[sockets]"}
    ::arch-select                 {:name "arch[arch_id]"}
    ::system-virtual-type         "system_type_virtualized_virtual"
    ::content-view-select         {:name "system[content_view_id]"}
@@ -90,11 +90,11 @@
 
    ;;system-edit details
    ::details                     {:xpath (ui/third-level-link "general")}
-   ::name-text-edit              {:name "system[name]"}
-   ::description-text-edit       "system[description]"
-   ::location-text-edit          "system[location]"
-   ::service-level-select        "system[serviceLevel]"
-   ::release-version-select      "system[releaseVer]"
+   ::name-text-edit              {:tag :input, :name "system[name]"}
+   ::description-text-edit       {:tag :textarea, :name "system[description]"}
+   ::location-text-edit          {:tag :input, :name "system[location]"}
+   ::service-level-select        {:name "system[serviceLevel]"}
+   ::release-version-select      {:name "system[releaseVer]"}
    ::environment                 "//span[@id='environment_path_selector']"
    ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
    ::save-environment            "//input[@value='Save']"

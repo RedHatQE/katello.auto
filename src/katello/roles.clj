@@ -13,18 +13,18 @@
 
 (ui/defelements :katello.deployment/any [katello.ui]
   {::new                             "//a[@id='new']"
-   ::name-text                       "role[name]"
-   ::description-text                "role[description]"
+   ::name-text                       {:tag :input, :name "role[name]"}
+   ::description-text                {:tag :textarea, :name "role[description]"}
    ::save                            "role_save"
    ::users                           "role_users"
    ::permissions                     "role_permissions"
    ::next                            "next_button"
    ::previous                        "previous_button"
-   ::permission-resource-type-select "permission[resource_type_attributes[name]]"
-   ::permission-verb-select          "permission[verb_values][]"
-   ::permission-tag-select           "permission[tag_values][]"
-   ::permission-name-text            "permission[name]"
-   ::permission-description-text     "permission[description]"
+   ::permission-resource-type-select {:name "permission[resource_type_attributes[name]]"}
+   ::permission-verb-select          {:name "permission[verb_values][]"}
+   ::permission-tag-select           {:name "permission[tag_values][]"}
+   ::permission-name-text            {:tag :input, :name "permission[name]"}
+   ::permission-description-text     {:tag :textarea, :name "permission[description]"}
    ::save-permission                 "save_permission_button"
    ::remove                          "remove_role"
    ::add-permission                  "add_permission"

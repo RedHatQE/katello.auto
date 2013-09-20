@@ -27,7 +27,7 @@
    ::available-subscriptions (ui/third-level-link "available_subscriptions")
    ::add-subscriptions       "//input[@id='subscription_submit_button']"
    ::remove-link             (ui/remove-link "activation_keys")
-   ::release-version-text    {:name "system[releaseVer]"}})
+   ::release-version-text    {:tag :input, :name "system[releaseVer]"}})
 
 (browser/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
