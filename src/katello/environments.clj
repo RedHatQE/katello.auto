@@ -38,11 +38,10 @@
   [{:keys [name label org description prior]}]
   (nav/go-to ::new-page org)
   (Thread/sleep 2000)
-  (browser/quick-fill [::name-text browser/focus
-                       ::name-text name
+  (browser/quick-fill [::name-text name
                        ::description-text description
                        ::label-text label
-                       ::prior (:name prior)
+                       ::prior #(browser/select-by-text % (:name prior))
                        ::create browser/click])
   (notification/success-type :env-create))
 
