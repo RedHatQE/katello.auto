@@ -98,6 +98,7 @@
   (browser/quick-fill [::name-text name
                        ::description-text description])
   (when label
+    (browser/click ::description-text) ;; workaround to activate label js
     (browser/clear ::label-text)
     (browser/input-text ::label-text label))
   (when (and (rest/is-katello?) initial-env)
