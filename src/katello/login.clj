@@ -39,6 +39,8 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
+    ;;workaround to scroll user menu into view (to upper right corner)
+    (browser/execute-script "javascript:window.scrollBy(10000,-10000)")
     (browser/move-to ::ui/user-menu)
     (browser/click ::ui/log-out)))
 
