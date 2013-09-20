@@ -28,7 +28,7 @@
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
   select-system                   "//td[@class='ng-scope']/a[contains(text(), '%s')]"
-  select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/following::td[@class='row-select']/input[@ng-model='system.selected']"
+  select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/parent::td/preceding-sibling::td[@class='row-select']/input[@ng-model='system.selected']"
   get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
@@ -63,41 +63,15 @@
    ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
-   ;;content
-   ::content-link                (ui/third-level-link "system_content")
-   ::packages-link               (ui/third-level-link "systems_packages")
-   ::software-link               (ui/third-level-link "system_products")
-   ::errata-link                 (ui/third-level-link "errata")
-   ::select-errata-type          "//select[@id='display_errata_type']"
-   ::install-errata              "//button[@id='run_errata_button']"
-   ::add-content                 "add_content"
-   ::remove-content              "remove_content" 
-   ::package-name                "content_input"
-   ::select-package-group        "perform_action_package_groups"
-   ::select-package              "perform_action_packages"
-   ::pkg-install-status-link     "//td[@class='package_action_status']/a[@class='subpanel_element']"
-   ::pkg-install-status          "//td[@class='package_action_status']"
-   ::add-package-error            (ui/link "Add Package Error")
-   ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
-   ::pkg-header                   "//div[@id='subpanel']//div[@class='head']/h2"
-   ::pkg-summary                  "//div[@class='grid_7' and contains(.,'Summary')]/following::div[@class='grid_7 multiline']"
-   ::pkg-request                  "//div[@class='grid_7' and contains(.,'Request')]/following::div[@class='grid_7 la']"
-   ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
-   ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
-   ::filter-package               "//input[@id='filter']"
-   ::update-package               "update_packages"
-   ::remove-package               "remove_packages"
-
+   ;;content  
+   ::packages                    "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
+   ::events-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Events')]"
+   ::errata-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Errata')]"
+  
    ;;system-edit details
    ::details                     (ui/link "Details")
    ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
-   ::location-text-edit          "system[location]"
-   ::service-level-select        "system[serviceLevel]"
-   ::release-version-select      "system[releaseVer]"
-   ::environment                 "//span[@id='environment_path_selector']"
-   ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
-   ::save-environment            "//input[@value='Save']"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    
@@ -119,13 +93,7 @@
    ::create-custom-info         "create_custom_info_button"
    
    ;;subscriptions pane
-   ::subscriptions               (ui/third-level-link "systems_subscriptions")
-   ::subscribe                   "sub_submit"
-   ::red-subs-icon               "//div[@class='red subs_image']"
-   ::subs-text                   "//div[@class='subs_text fl panel_link']"
-   ::subs-servicelevel	         "//div[@name='system[serviceLevel]']"
-   ::subs-attach-button          "fake_sub_submit"
-   ::unsubscribe                 "unsub_submit"})
+   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})  
 
 ;; Nav
 
@@ -133,18 +101,13 @@
   [::page
    [::named-page (fn [system] (nav/go-to-system system))
     [::details-page (nav/browser-fn (click ::details))
-     [::facts-page (nav/browser-fn (click ::facts))]
-     [::custom-info-page (nav/browser-fn (click ::custom-info))]]
-    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
-    [::content-menu (nav/browser-fn (click ::content-link))
-     [::content-software-page (nav/browser-fn (click ::software-link))]
-     [::content-packages-page (nav/browser-fn (click ::packages-link))]
-     [::content-errata-page (nav/browser-fn (click ::errata-link))]]]]
-  [::by-environments-page
-   [::environment-page (fn [system] (nav/select-environment-widget (kt/env system)))
-    [::named-by-environment-page (fn [system] (nav/choose-left-pane system))]]])
+    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]]]])
 
 ;; Tasks
+(defn- create "Create a system from UI"
+  []
+  ;;use rest 
+  )
 
 (defn- delete "Deletes the selected system."
   [system]

@@ -51,7 +51,7 @@
 (defn register-new-test-system []
   (with-unique-system s
     (rest/create s)
-    (browser/refresh)))
+    (nav/go-top)))
 
 (defn verify-system-rename [system]
   (nav/go-to (ui/update system update-in [:name] uniqueify)))
@@ -187,8 +187,8 @@
     :uuid "f7d6189a-6033-f434-203b-dc6f700e3f15"
     :blockers (conj (bz-bugs "738054") rest/katello-only)
     (verify-system-appears-on-env-page (register-new-test-system)))
-
-  (deftest "Subscribe a system to a custom product"
+  
+    (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
     :blockers (conj (bz-bugs "733780" "736547" "784701") rest/katello-only)
 
@@ -217,7 +217,9 @@
                         :system-arch "x86_64"
                         :env test-environment} katello/newSystem uniques (take 3))]
       (rest/create-all systems)
+      (nav/go-top)
       (system/multi-delete systems)))
+  
 
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
