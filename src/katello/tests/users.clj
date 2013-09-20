@@ -139,8 +139,7 @@
         create-org-and-user 
         login-user)
     (assert/is (= (set (organization/switcher-available-orgs)) 
-                  #{}))
-    (login))
+                  #{})))
 
   (deftest "User's Favorite Organization"
     :uuid "1608619a-68b2-0b54-57db-aaf30b298c43"

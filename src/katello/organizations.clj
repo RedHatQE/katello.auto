@@ -216,5 +216,7 @@
   []
   (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
   (Thread/sleep 1000)
-  (->> (browser/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
-       (map browser/text)))
+  (->> (clj-webdriver.taxi/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
+       (filter :webelement) ;; sel bug? when parent el is empty still returns '({:webelement nil})
+       (map browser/text)
+       doall))
