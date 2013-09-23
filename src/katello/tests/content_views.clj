@@ -190,7 +190,7 @@
         
         (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
                                                       :org conf/*session-org*})
-                      repo (fresh-repo (kt/org content-def) pulp-repo)]
+                      repo (fresh-repo (kt/org content-def) pulp-repo "yum")]
           (ui/create content-def)
           (create-recursive repo)
           (ui/update content-def assoc :products (list (kt/product repo)))
@@ -243,7 +243,7 @@
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
@@ -279,7 +279,7 @@
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
               pkg-groups (list "birds" "mammals")
@@ -311,7 +311,7 @@
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})]        
           (ui/create cv-filter)
@@ -345,7 +345,7 @@
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org
-                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                             "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
             cv (add-product-to-cv org target-env repo)]
         (with-unique [cs (kt/newChangeset {:name "cs"
                                            :env target-env
@@ -383,7 +383,7 @@
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org
-                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                             "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
             cv (add-product-to-cv org target-env repo)]
         (with-unique [cs (kt/newChangeset {:name "cs"
                                            :env target-env
@@ -432,7 +432,7 @@
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
              repo (fresh-repo org
-                              "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                              "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
              cv (add-product-to-cv org target-env repo)]
         (with-unique [cs (kt/newChangeset {:name "cs"
                                            :env target-env
@@ -473,7 +473,7 @@
        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
              repo (fresh-repo org
-                              "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+                              "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/" "yum")
              cv (add-product-to-cv org target-env repo)]
          (with-unique [cs (kt/newChangeset {:name "cs"
                                             :env target-env
@@ -564,7 +564,7 @@
                       content-view (kt/newContentViewDefinition {:name "auto-view-definition"
                                                                  :published-name "publish-name"
                                                                  :org org})
-                      repo (fresh-repo org pulp-repo)
+                      repo (fresh-repo org pulp-repo "yum")
                       composite-view (kt/newContentViewDefinition {:name "composite-view"
                                                                    :org org
                                                                    :description "Composite Content View"
@@ -599,8 +599,8 @@
       (with-unique [org (kt/newOrganization {:name "auto-org"})
                     content-defn (kt/newContentViewDefinition {:name "auto-view-definition"
                                                                :org org})
-                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
+                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
+                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")]
         (ui/create-all (list org content-defn))
         (doseq [repo [repo1 repo2]]
           (create-recursive repo))
@@ -618,8 +618,8 @@
                     cv2 (kt/newContentViewDefinition {:name "content-view2"
                                                       :org org
                                                       :published-name "publish-name2"})]
-        (let [repo1 (fresh-repo org pulp-repo)
-              repo2 (fresh-repo org zoo-repo)]
+        (let [repo1 (fresh-repo org pulp-repo "yum")
+              repo2 (fresh-repo org zoo-repo "yum")]
           (ui/create-all (list org cv1 cv2))
           (doseq [repo [repo1 repo2]]
             (create-recursive repo))
@@ -641,7 +641,7 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
               cv (promote-published-content-view org target-env repo)
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
@@ -665,8 +665,8 @@
                                          :env env
                                          :content (list cv1 cv2)})]
         (ui/create-all (list org env cv1 cv2))
-        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
-              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/" "yum") 
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
           (doseq [repo [repo1 repo2]]
             (create-recursive repo)
             (sync/perform-sync (list repo)))
@@ -682,7 +682,7 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
               cv (promote-published-content-view org target-env repo)
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
@@ -701,7 +701,7 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
               cv (promote-published-content-view org target-env repo)                        
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env
@@ -722,7 +722,7 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev", :org org})]   
         (let [repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum") 
               cv (promote-published-content-view org target-env repo)
               clone (update-in cv [:name] #(str % "-clone"))
               cloned-cv (kt/newContentViewDefinition {:name clone
@@ -766,8 +766,8 @@
                                          :env env
                                          :content (list cv1 cv2)})]
         (ui/create-all (list org env cv1 cv2))
-        (let [repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
-              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+        (let [repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
           (doseq [repo [repo1 repo2]]
             (create-recursive repo)
             (sync/perform-sync (list repo)))
@@ -796,8 +796,8 @@
                     cv2 (kt/newContentViewDefinition {:name "content-view2"
                                                       :org org
                                                       :published-name "publish-name2"})]
-        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
-              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+        (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/" "yum")
+              repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               product1 (-> repo1 kt/product :name)
               product2 (-> repo2 kt/product :name)
               composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
@@ -820,7 +820,7 @@
       (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
             repo (fresh-repo org
-                             "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/")
+                             "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/" "yum")
             cv (add-product-to-cv org target-env repo)]
         (with-unique [cs (kt/newChangeset {:name "cs"
                                            :env target-env
@@ -863,8 +863,8 @@
                       repromote-cs (kt/newChangeset {:name "repromote-cs"
                                                      :content (list cv1)
                                                      :env env})]
-          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/")
-                repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+          (let [repo1 (fresh-repo org "http://repos.fedorapeople.org/repos/pulp/pulp/v2/stable/6Server/x86_64/" "yum")
+                repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
                 product1 (-> repo1 kt/product :name)
                 product2 (-> repo2 kt/product :name)
                 composite-view (promote-published-composite-view org env repo1 repo2 cv1 cv2)
@@ -899,7 +899,7 @@
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
         (let [repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                               "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
               cv (promote-published-content-view org target-env repo)                
               ak (kt/newActivationKey {:name (uniqueify "ak")
                                        :env target-env

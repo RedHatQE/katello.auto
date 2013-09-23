@@ -20,7 +20,7 @@
 ;; Functions
 
 (defmacro fresh-repo []
-  `(testfns/fresh-repo *session-org* (@config :sync-repo)))
+  `(testfns/fresh-repo *session-org* (@config :sync-repo) "yum"))
 
 (defn complete? [sync-result]
   (= "Sync complete." sync-result))

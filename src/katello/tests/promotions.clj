@@ -34,7 +34,7 @@
                   cs         (kt/newChangeset {:name "cs"
                                                :env env
                                                :content (list cv)})]
-        (let [repo (fresh-repo org (@config :sync-repo))]
+        (let [repo (fresh-repo org (@config :sync-repo) "yum")]
           (ui/create-all (list org env cv))
           (create-recursive repo)
           (sync/perform-sync (list repo))

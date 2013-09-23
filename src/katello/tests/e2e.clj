@@ -60,7 +60,7 @@
                     (blocking-tests "simple sync" "promote content")
                     no-clients-defined)
     (let [repo (fresh-repo *session-org*
-                           "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+                           "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
           target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment uniqueify)
           package-to-install "cheetah"]
       (rest/create target-env)

@@ -152,7 +152,7 @@
                         :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
                        kt/newGPGKey
                        uniqueify)
-            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")           
+            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")           
             prd1   (kt/product repo1)         
             prv1   (kt/provider repo1)
             cv (-> {:name "content-view" :org conf/*session-org* :published-name "publish-name"}
