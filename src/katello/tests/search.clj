@@ -139,7 +139,7 @@
     (fn [akinfo searchterms]
       (with-unique [org (kt/newOrganization {:name "cv-org"})
                     target-env (kt/newEnvironment {:name "dev" :org org})]
-        (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+        (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
               cv (rest/when-katello (add-product-to-cv org target-env repo))
               ak (kt/newActivationKey (assoc akinfo :env target-env
                                                     :content-view cv))

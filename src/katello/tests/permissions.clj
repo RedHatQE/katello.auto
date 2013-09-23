@@ -387,7 +387,7 @@
                                                     :env env
                                                     :description "auto activation key"
                                                     :content-view cv})]
-               (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
+               (let [repo (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/" "yum")
                      prd   (kt/product repo)
                      prv   (kt/provider repo)]
                  [:permissions [{:org org, :resource-type "Content View Definitions", :name "cvaccess_cvdefs"}
