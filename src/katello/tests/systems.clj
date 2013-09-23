@@ -151,7 +151,7 @@
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
     :blockers (bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
-
+  
   (deftest "System details: save or cancel editing field"
     :uuid "b3f26238-b35c-aa84-3533-e3d3bb27bd8b"
     :data-driven true

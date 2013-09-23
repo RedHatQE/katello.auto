@@ -29,6 +29,7 @@
   env-select                      (ui/link "%s")
   select-system                   "//td[@class='ng-scope']/a[contains(text(), '%s')]"
   select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/parent::td/preceding-sibling::td[@class='row-select']/input[@ng-model='system.selected']"
+  remove-package                  "//td[contains(text(), '%s')]/following::td/i[@ng-click='table.removePackage(package)']"
   get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
@@ -67,6 +68,13 @@
    ::packages                    "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
    ::events-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Events')]"
    ::errata-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Errata')]"
+   ::package-action              "//select[@ng-model='packageAction.actionType']"
+   ::perform-action              "//input[@name='Perform']"
+   ::input-package-name          "//input[@ng-model='packageAction.term']"
+   ::filter-package              "//input[@ng-model='currentPackagesTable.filter']"
+   ::update-all                  "//button[@ng-click='updateAll()']"
+   ::filter-errata               "//input[@ng-model='errataTable.errataFilterTerm']"
+  
   
    ;;system-edit details
    ::details                     (ui/link "Details")
@@ -74,6 +82,7 @@
    ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
+   ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
    
    ;;system-facts
    ::facts                       (ui/link "Facts")
@@ -101,7 +110,9 @@
   [::page
    [::named-page (fn [system] (nav/go-to-system system))
     [::details-page (nav/browser-fn (click ::details))
-    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]]]])
+    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
+    [::packages-page (nav/browser-fn (click ::packages))
+    [::errata-page (nav/browser-fn (click ::errata-link))]]]]])
 
 ;; Tasks
 (defn- create "Create a system from UI"
@@ -219,7 +230,7 @@
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      ;(wd/move-to (browser/element ::name-text))
+      (wd/move-to (browser/element ::name-text-edit))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -432,51 +443,15 @@
                            (do (Thread/sleep 2000)
                              (recur (browser/text (package-action-status package)))))))
 
-(defn add-package "Add a package/package-group on selected system"
-  [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page system)
-  (doseq [[items is-group?] [[package false]
-                             [package-group true]]]
-    (when items
-      (when is-group? (browser/click ::select-package-group))
-      (wd/->browser (input-text ::package-name items)
-                    (send-keys ::package-name items)
-                    (click ::add-content))
-      (Thread/sleep 50000)
-      (check-package-status))))
-
-(defn remove-package "Remove a installed package/package-group from selected system."
-  [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page system)
-  (doseq [[items is-group?] [[package false]
-                             [package-group true]]]
-    (when items
-      (when is-group? (browser/click ::select-package-group))
-      (wd/->browser (input-text ::package-name items)
-                    (send-keys ::package-name items)
-                    (click ::remove-content))
-      (Thread/sleep 50000)
-      (check-package-status))))
-
-
-
-
-(defn filter-package "filter a package from package-list"
-  [system {:keys [package]}]
-  (nav/go-to ::content-packages-page system)
-  (wd/->browser (input-text ::filter-package package)
-                (send-keys ::filter-package package)
-                (click (package-select package))))
-
-(defn update-selected-package "Update a selected package from package-list"
-  [system {:keys [package]}]
-  (filter-package system {:package package})
-  (browser/click ::update-package)
-  (check-pkg-update-status package))
+(defn package-action "Install/remove/update package/package-group on selected system "
+  [system {:keys [package pkg-action]}]
+  (nav/go-to ::packages-page system)
+  (browser/select-by-text ::package-action pkg-action)
+  (wd/->browser (input-text ::input-package-name package)
+                (click ::perform-action)))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
-  (filter-package system {:package package})
-  (browser/click ::remove-package)
-  (check-pkg-update-status package))
-  
+  (nav/go-to ::packages-page system)
+  (wd/->browser (input-text ::filter-package package)
+                (click (remove-package package))))

@@ -1,12 +1,14 @@
 (ns katello.navigation
   (:require (katello [conf :as conf]
-                     [ui :as ui])
+                     [ui :as ui]
+                     [systems as system])
             [ui.navigate :as nav]
             [slingshot.slingshot :refer [throw+ try+]]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd])
-  (:import [org.openqa.selenium NoSuchElementException]))
-
+  
+(:import [org.openqa.selenium NoSuchElementException]))
+  
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
   are multiple environment paths, and you wish to select Library,
@@ -151,7 +153,7 @@
      (browser/click "//a[@href='dashboard']"))
 
 (defn go-to-system [system] 
-     (browser/click "//td[@class='ng-scope']/a[contains(text(), '%s')]" (:name system)))
+     (browser/click (system/select-system (:name system))))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg
