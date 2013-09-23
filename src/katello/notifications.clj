@@ -197,7 +197,7 @@
 
 (defn flush []
   "Clears the javascript notice array."
-  (browser/execute-script "window.notices.noticeArray = []"))
+  (browser/execute-script "if (window.notices) { window.notices.noticeArray = [] }"))
 
 (defn notifications
   "Gets all notifications from the page, returns a list of maps
