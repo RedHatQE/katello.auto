@@ -6,8 +6,7 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd])
-  
-(:import [org.openqa.selenium NoSuchElementException]))
+  (:import [org.openqa.selenium NoSuchElementException]))
   
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
