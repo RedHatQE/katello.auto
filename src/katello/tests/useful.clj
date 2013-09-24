@@ -69,17 +69,19 @@
 (defn fresh-repos
   "Infite seq of unique repos (in new provider/product) in given org,
    with given url."
-  [org url repo-type]
-  (for [[prov prod repo] (apply map list
+  ([org url] (fresh-repos org url "yum"))
+  ([org url repo-type]
+    (for [[prov prod repo] (apply map list
                                 (map tasks/uniques
                                      (list (kt/newProvider {:name "sync", :org org})
                                            (kt/newProduct {:name "sync-test1"})
                                            (kt/newRepository {:name "testrepo", :url url, :repo-type repo-type}))))]
-    (assoc repo :product (assoc prod :provider prov))))
+    (assoc repo :product (assoc prod :provider prov)))))
 
 (defn fresh-repo "New repo in a new product in a new provider"
-  [org url repo-type]
-  (first (fresh-repos org url repo-type)))
+  ([org url] (fresh-repo org url "yum"))
+  ([org url repo-type]
+    (first (fresh-repos org url repo-type))))
 
 (defn prepare-org-fetch-org []
   (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
