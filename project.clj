@@ -7,9 +7,9 @@
                  [org.clojure/data.json "0.2.2"]
                  [org.clojure/data.zip "0.1.1"]
                  
-                 [org.seleniumhq.selenium/selenium-server "2.33.0"]
-                 [org.seleniumhq.selenium/selenium-java "2.33.0"]
-
+                 [org.seleniumhq.selenium/selenium-server "2.34.0"]
+                 [org.seleniumhq.selenium/selenium-java "2.34.0"]
+               
                  [slingshot "0.10.3"]
                  [inflections "0.6.2"]
                  
@@ -18,18 +18,18 @@
                  [test.tree.runner "0.9.0-SNAPSHOT" :exclusions [org.clojure/clojure]]
                                   
                  [com.redhat.qe/test.assert "1.0.0-SNAPSHOT"]
-                 [com.redhat.qe/extended-selenium "1.1.1-SNAPSHOT" :exclusions [org.seleniumhq.selenium.client-drivers/selenium-java-client-driver]]
                  [com.redhat.qe/xmlrpc-client-tools "1.0.3"]
                  [com.redhat.qe/ovirt.client "0.1.0-SNAPSHOT"]
                  [com.redhat.qe/deltacloud.client "1.2.0-SNAPSHOT"]
 
-
+                 [bouncycastle/bcprov-jdk15 "140"]
                  
                  [clj-tagsoup "0.3.0" :exclusions [org.clojure/clojure org.clojure/data.xml]]
                  [clj-http "0.6.4"]
                  [clj-ssh "0.5.6"]
 
-                 [clj-webdriver "0.6.0"]
+                 [clj-webdriver "0.6.0" :exclusions [org.seleniumhq.selenium/selenium-java
+                                                     org.seleniumhq.selenium/selenium-server]]
                  
                  [org.clojars.firesofmay/sauce-api "0.1.0-SNAPSHOT"]
 

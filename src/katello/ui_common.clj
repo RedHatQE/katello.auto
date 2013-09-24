@@ -1,15 +1,14 @@
 (ns katello.ui-common
   (:require [clojure.data.json  :as json]
-            [webdriver :as wd]
-            [clj-webdriver.taxi :as browser]
+            [webdriver :as browser]
             [katello :as kt]
             (katello [navigation :as nav]
                      [menu :as menu]
                      [ui :as ui]
-                     [tasks         :refer :all] 
-                     [notifications :as notification] 
-                     [conf          :refer [config *session-org*]] 
-                     [rest     :refer [when-katello when-headpin]]) 
+                     [tasks         :refer :all]
+                     [notifications :as notification]
+                     [conf          :refer [config *session-org*]]
+                     [rest     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
             [test.assert         :as assert]
             [inflections.core    :refer [pluralize]])
@@ -23,15 +22,7 @@
   "Takes a locator for an active in-place edit field, returns the
   inactive version"
   [loc]
-  (format "//div[@name='%1$s']|//span[@name='%1$s']" (browser/attribute (wd/sel-locator loc) :name)))
-
-(defn textfield-loc
-  [loc]
-  (conj {:tag "textarea"} {:name (browser/attribute (wd/sel-locator loc) :name)}))
-
-(defn input-loc
-  [loc]
-  (conj {:tag "input"} {:name (browser/attribute (wd/sel-locator loc) :name)}))
+  (dissoc (browser/sel-locator loc) :tag))
 
 (defn toggle "Toggles the item from on to off or vice versa."
   [a-toggler associated-text on?]
@@ -66,12 +57,12 @@
    to values. Each item will be activated, filled in and saved, and
    checks for success notification. Returns all the success
    notifications (or nil if notthing was changed)."
-  [items] 
+  [items]
   (doall (for [[loc val] items]
            (if-not (nil? val)
              (do (activate-in-place loc)
-                 (browser/clear (input-loc loc))
-                 (browser/input-text (input-loc loc) val)
+                 (browser/clear loc)
+                 (browser/input-text loc val)
                  (browser/click ::ui/save-inplace-edit)
                  (notification/check-for-success))))))
 
@@ -96,8 +87,8 @@
   (set (extract-list ui/custom-value-list)))
 
 (defn clear-search []
-  (wd/->browser (click ::ui/search-menu)
-                 (click ::ui/search-clear-the-search)))
+  (browser/click ::ui/search-menu)
+  (browser/click ::ui/search-clear-the-search))
 
 (defn search
   "Search for criteria in a particular class of entity (eg, katello.Role), within a given org.
@@ -109,7 +100,7 @@
    Alternatively, pass in an mostly empty prototype record, as long as
    the class and org can be derived, eg (katello/newRole {:org myorg})"
   ([ent-class org {:keys [criteria scope with-favorite add-as-favorite]}]
-     (nav/go-to ({katello.User :katello.users/page 
+     (nav/go-to ({katello.User :katello.users/page
                   katello.Organization :katello.organizations/page
                   katello.Role :katello.roles/page
                   katello.Subscription :redhat-subscriptions-page
@@ -121,12 +112,12 @@
                   katello.Changeset :katello.changesets/history-page} ent-class)
                 (or org *session-org*))
      (if with-favorite
-       (wd/->browser (click ::ui/search-menu)
-                     (click (ui/search-favorite with-favorite)))
+       (do (browser/click ::ui/search-menu)
+           (browser/click (ui/search-favorite with-favorite)))
        (do (browser/input-text ::ui/search-bar criteria)
            (when add-as-favorite
-             (wd/->browser (click ::ui/search-menu)
-                            (click ::ui/search-save-as-favorite)))
+             (browser/click ::ui/search-menu)
+             (browser/click ::ui/search-save-as-favorite))
            (browser/click ::ui/search-submit)))
      (notification/verify-no-error {:timeout-ms 2000}))
   ([proto-entity opts]
@@ -134,13 +125,13 @@
                                        (catch IllegalArgumentException _ nil)) opts)))
 
 #_(defn disabled?
-  [locator]
-  (let [all-attribs (browser/attribute locator)]
-    (some true?
-          (for [avail-attribs ["class" "disabled" "checked"]]      
-            (if (get all-attribs avail-attribs)    
-              (boolean (some #{"disabled" "checked"}
-                             (clojure.string/split (get all-attribs avail-attribs) #" "))))))))
+    [locator]
+    (let [all-attribs (browser/attribute locator)]
+      (some true?
+            (for [avail-attribs ["class" "disabled" "checked"]]
+              (if (get all-attribs avail-attribs)
+                (boolean (some #{"disabled" "checked"}
+                               (clojure.string/split (get all-attribs avail-attribs) #" "))))))))
 
 (defn disabled?
   [locator]
@@ -150,10 +141,10 @@
 (defn save-cancel [save-locator cancel-locator request-type input-locator requested-value save?]
   (let [inactive-elem (inactive-edit-field input-locator)
         orig-text (browser/text  inactive-elem)]
-    (wd/move-to-and-click (browser/element inactive-elem))
+    (browser/click inactive-elem)
     (browser/input-text  input-locator requested-value)
     (if save?
-      (do (wd/move-to-and-click (browser/element save-locator))
+      (do (browser/click save-locator)
           (notification/success-type request-type)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text requested-value)
@@ -161,7 +152,7 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Input field didn't update properly after saving."}))))
-      (do (wd/move-to-and-click (browser/element cancel-locator))
+      (do (browser/click cancel-locator)
           (let [new-text (browser/text inactive-elem)]
             (when (not= new-text orig-text)
               (throw+ {:type ::cancel-failed

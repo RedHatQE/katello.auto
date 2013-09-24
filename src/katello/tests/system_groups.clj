@@ -32,8 +32,8 @@
    OR closing system-group widget should also close copy widget"
   [group {:keys [close-widget?]}]
   (nav/go-to group)
-  (browser/click ::group/copy)
-  (browser/click (if close-widget?
+  (wd/click ::group/copy)
+  (wd/click (if close-widget?
                    ::group/close
                    ::group/cancel-copy)))
 

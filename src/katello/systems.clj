@@ -1,6 +1,5 @@
 (ns katello.systems
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [clj-webdriver.core :as action]
             [clojure.string :refer [blank?]]
             [clojure.data :as data]
@@ -18,7 +17,7 @@
 
 ;; Locators
 
-(wd/template-fns
+(browser/template-fns
  {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
@@ -42,7 +41,12 @@
   remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
 
 (ui/defelements :katello.deployment/any []
-  {::name-text                   "system[name]"
+  {::new                         "new"
+   ::create                      {:name "commit"}
+   ::name-text                   {:tag :input, :name "system[name]"}
+   ::sockets-text                {:tag :input, :name "system[sockets]"}
+   ::arch-select                 {:name "arch[arch_id]"}
+   ::system-virtual-type         "system_type_virtualized_virtual"
    ::content-view-select         {:name "system[content_view_id]"}
    ::expand-env-widget           "path-collapsed"
    ::remove                      "//button[contains(text(), 'Remove System')]"
@@ -84,25 +88,26 @@
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
    
+
    ;;system-facts
    ::facts                       (ui/link "Facts")
    ::network-expander            "network"
    ::cpu-expander                "cpu"
    ::uname-expander              "uname"
-   ::virt-expander               "virt" 
-   ::net-hostname                "//tr[@id='network.hostname']/td[3]"  
-   ::cpu-socket	                 "//tr[@id='cpu.cpu_socket(s)']/td[3]" 
-   ::machine-arch                "//tr[@id='uname.machine']/td[3]"    
+   ::virt-expander               "virt"
+   ::net-hostname                "//tr[@id='network.hostname']/td[3]"
+   ::cpu-socket                  "//tr[@id='cpu.cpu_socket(s)']/td[3]"
+   ::machine-arch                "//tr[@id='uname.machine']/td[3]"
    ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
-   
+
    ;;custom-info
    ::custom-info                (ui/link "Custom Information")
    ::key-name                   "new_custom_info_keyname"
    ::key-value                  "new_custom_info_value"
    ::create-custom-info         "create_custom_info_button"
-   
+
    ;;subscriptions pane
-   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})  
+   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})
 
 ;; Nav
 
@@ -140,7 +145,7 @@
   (browser/click ::confirmation-yes)
   (browser/refresh))
 
-(defn add-bulk-sys-to-sysgrp 
+(defn add-bulk-sys-to-sysgrp
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
   [systems group] 
   (select-multisys systems)
@@ -161,15 +166,15 @@
       (browser/click (select-sysgroup-checkbox group-name))
       (browser/click ::add-group)
       (notification/success-type :sys-add-sysgrps))
-    (throw+ {:type ::selected-sys-group-is-unavailable 
+    (throw+ {:type ::selected-sys-group-is-unavailable
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
 (defn- set-environment "select a new environment for a system"
   [new-environment]
-  {:pre [(not-empty new-environment)]} 
-  (wd/->browser (click ::environment)
-                (click (environment-checkbox new-environment))
-                (click ::save-environment)))
+  {:pre [(not-empty new-environment)]}
+  (browser/click ::environment)
+  (browser/click (environment-checkbox new-environment))
+  (browser/click ::save-environment))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -225,12 +230,12 @@
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
-                            service-level auto-attach env]
-             :as to-add} _] (data/diff system updated)]
-    
+                           service-level auto-attach env]
+                    :as to-add} _] (data/diff system updated)]
+
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      ;(wd/move-to (browser/element ::name-text-edit))
+      (browser/move-to ::name-text)
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -238,8 +243,8 @@
         (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
 
       (add-remove-content to-add to-remove)
-      
-      (let [added-products (:products to-add) 
+
+      (let [added-products (:products to-add)
             removed-products (:products to-remove) ]
         (when (some #(not (nil? %)) (list added-products removed-products
                                           service-level auto-attach))
@@ -256,95 +261,95 @@
   []
   (let [rand (java.util.Random.)
         rand-255 #(.nextInt rand 255)
-        splice (comp (partial apply str) interpose) 
+        splice (comp (partial apply str) interpose)
         ip-prefix (splice "." (repeatedly 3 rand-255 ))
         mac  (splice ":" (repeatedly 6 #(format "%02x" (rand-255))))] {
-    "dmi.bios.runtime_size" "128 KB"
-    "lscpu.cpu_op-mode(s)" "64-bit"
-    "uname.sysname" "Linux"
-    "distribution.name" "Fedora"
-    "dmi.system.family" "Virtual Machine"
-    "lscpu.l1d_cache" "32K"
-    "dmi.system.product_name" "VirtualBox"
-    "dmi.bios.address" "0xe0000"
-    "lscpu.stepping" "5"
-    "virt.host_type" "virtualbox"
-    "lscpu.l2d_cache" "6144K"
-    "uname.machine" "x86_64"
-    "lscpu.thread(s)_per_core" "1"
-    "cpu.cpu_socket(s)" "1"
-    "net.interface.eth1.hwaddr" mac
-    "lscpu.cpu(s)" "1"
-    "uname.version" "#1 SMP Fri Oct 22 15:36:08 UTC 2010"
-    "distribution.version" "14"
-    "lscpu.architecture" "x86_64"
-    "dmi.system.manufacturer" "innotek GmbH"
-    "network.ipaddr" (format "%s.4" ip-prefix),
-    "system.entitlements_valid" "true"
-    "dmi.system.uuid" (.toString (java.util.UUID/randomUUID)),
-    "uname.release" "2.6.35.6-48.fc14.x86_64"
-    "dmi.system.serial_number" "0"
-    "dmi.bios.version" "VirtualBox"
-    "cpu.core(s)_per_socket" "1"
-    "lscpu.core(s)_per_socket" "1"
-    "net.interface.lo.broadcast" "0.0.0.0"
-    "memory.swaptotal" "2031612"
-    "net.interface.lo.netmask" "255.0.0.0"
-    "lscpu.model" "37"
-    "lscpu.cpu_mhz" "2825.811"
-    "net.interface.eth1.netmask" "255.255.255.0"
-    "lscpu.numa_node(s)" "1"
-    "net.interface.lo.hwaddr" "00:00:00:00:00:00"
-    "uname.nodename" "killing-time.appliedlogic.ca"
-    "dmi.bios.vendor" "innotek GmbH"
-    "network.hostname" (str "killing-time" (rand-255) ".appliedlogic."
-                            (rand-nth ["ca" "org" "com" "edu" "in"])),
-    "net.interface.eth1.broadcast" (format "%s.255" ip-prefix),
-    "memory.memtotal" "1023052"
-    "dmi.system.wake-up_type" "Power Switch"
-    "cpu.cpu(s)" "1"
-    "virt.is_guest" "true"
-    "dmi.system.sku_number" "Not Specified"
-    "net.interface.lo.ipaddr" "127.0.0.1"
-    "distribution.id" "Laughlin"
-    "lscpu.cpu_socket(s)" "1"
-    "dmi.system.version" "1.2"
-    "dmi.bios.rom_size" "128 KB"
-    "lscpu.vendor_id" "GenuineIntel"
-    "net.interface.eth1.ipaddr" (format "%s.8" ip-prefix),
-    "lscpu.cpu_family" "6"
-    "dmi.bios.relase_date" "12/01/2006"
-    "lscpu.numa_node0_cpu(s)" "0"
-    }))
+                                                                       "dmi.bios.runtime_size" "128 KB"
+                                                                       "lscpu.cpu_op-mode(s)" "64-bit"
+                                                                       "uname.sysname" "Linux"
+                                                                       "distribution.name" "Fedora"
+                                                                       "dmi.system.family" "Virtual Machine"
+                                                                       "lscpu.l1d_cache" "32K"
+                                                                       "dmi.system.product_name" "VirtualBox"
+                                                                       "dmi.bios.address" "0xe0000"
+                                                                       "lscpu.stepping" "5"
+                                                                       "virt.host_type" "virtualbox"
+                                                                       "lscpu.l2d_cache" "6144K"
+                                                                       "uname.machine" "x86_64"
+                                                                       "lscpu.thread(s)_per_core" "1"
+                                                                       "cpu.cpu_socket(s)" "1"
+                                                                       "net.interface.eth1.hwaddr" mac
+                                                                       "lscpu.cpu(s)" "1"
+                                                                       "uname.version" "#1 SMP Fri Oct 22 15:36:08 UTC 2010"
+                                                                       "distribution.version" "14"
+                                                                       "lscpu.architecture" "x86_64"
+                                                                       "dmi.system.manufacturer" "innotek GmbH"
+                                                                       "network.ipaddr" (format "%s.4" ip-prefix),
+                                                                       "system.entitlements_valid" "true"
+                                                                       "dmi.system.uuid" (.toString (java.util.UUID/randomUUID)),
+                                                                       "uname.release" "2.6.35.6-48.fc14.x86_64"
+                                                                       "dmi.system.serial_number" "0"
+                                                                       "dmi.bios.version" "VirtualBox"
+                                                                       "cpu.core(s)_per_socket" "1"
+                                                                       "lscpu.core(s)_per_socket" "1"
+                                                                       "net.interface.lo.broadcast" "0.0.0.0"
+                                                                       "memory.swaptotal" "2031612"
+                                                                       "net.interface.lo.netmask" "255.0.0.0"
+                                                                       "lscpu.model" "37"
+                                                                       "lscpu.cpu_mhz" "2825.811"
+                                                                       "net.interface.eth1.netmask" "255.255.255.0"
+                                                                       "lscpu.numa_node(s)" "1"
+                                                                       "net.interface.lo.hwaddr" "00:00:00:00:00:00"
+                                                                       "uname.nodename" "killing-time.appliedlogic.ca"
+                                                                       "dmi.bios.vendor" "innotek GmbH"
+                                                                       "network.hostname" (str "killing-time" (rand-255) ".appliedlogic."
+                                                                                               (rand-nth ["ca" "org" "com" "edu" "in"])),
+                                                                       "net.interface.eth1.broadcast" (format "%s.255" ip-prefix),
+                                                                       "memory.memtotal" "1023052"
+                                                                       "dmi.system.wake-up_type" "Power Switch"
+                                                                       "cpu.cpu(s)" "1"
+                                                                       "virt.is_guest" "true"
+                                                                       "dmi.system.sku_number" "Not Specified"
+                                                                       "net.interface.lo.ipaddr" "127.0.0.1"
+                                                                       "distribution.id" "Laughlin"
+                                                                       "lscpu.cpu_socket(s)" "1"
+                                                                       "dmi.system.version" "1.2"
+                                                                       "dmi.bios.rom_size" "128 KB"
+                                                                       "lscpu.vendor_id" "GenuineIntel"
+                                                                       "net.interface.eth1.ipaddr" (format "%s.8" ip-prefix),
+                                                                       "lscpu.cpu_family" "6"
+                                                                       "dmi.bios.relase_date" "12/01/2006"
+                                                                       "lscpu.numa_node0_cpu(s)" "0"
+                                                                       }))
 
 (extend katello.System
   ui/CRUD {:create create
            :delete delete
            :update* update}
 
-   rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
+  rest/CRUD (let [headpin-url (partial rest/url-maker [["api/organizations/%s/systems" [#'kt/org]]])
                   katello-url (partial rest/url-maker [["api/environments/%s/systems" [#'kt/env]]])
                   id-url (partial rest/url-maker [["api/systems/%s" [identity]]])]
               {:id :uuid
                :query (fn [sys]
-                        (rest/query-by-name 
-                          (if (rest/is-katello?) 
+                        (rest/query-by-name
+                         (if (rest/is-katello?)
                            katello-url headpin-url) sys))
                :read (partial rest/read-impl id-url)
                :create (fn [sys]
-                         (merge sys (rest/http-post 
-                                      (if (rest/is-katello?) 
-                                        (katello-url sys) 
-                                        (headpin-url sys))
-                                      {:body (assoc (select-keys sys [:name :facts])
-                                       :type "system")})))})
-  
+                         (merge sys (rest/http-post
+                                     (if (rest/is-katello?)
+                                       (katello-url sys)
+                                       (headpin-url sys))
+                                     {:body (assoc (select-keys sys [:name :facts])
+                                              :type "system")})))})
+
   tasks/Uniqueable {:uniques #(for [s (tasks/timestamps)]
                                 (assoc (tasks/stamp-entity %1 s)
                                   :facts (if-let [f (:facts %1)]
                                            f
                                            (random-facts))))}
-  
+
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
 
 
@@ -391,7 +396,7 @@
 
 (defn get-facts [system]
   (nav/go-to ::facts-page system)
-  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)" 
+  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)"
                "distribution.id" "distribution.name" "distribution.version"
                "memory.memtotal" "memory.swaptotal"
                "virt.host_type" "virt.is_guest" "virt.uuid"
@@ -399,7 +404,7 @@
                "uname.sysname" "uname.version" "system.entitlements_valid"
                "network.hostname" "network.ipv4_address" "network.ipv6_address"
                "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
-               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]      
+               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]
     (zipmap facts
             (doall (for [fact facts]
                      (browser/text (system-fact-textbox fact)))))))
@@ -418,30 +423,31 @@
 
 (defn check-package-status
   [&[timeout-ms]]
-  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
-                         (case current-status
-                           "Add Package Complete" current-status
-                           "Add Package Group Complete" current-status
-                           "Remove Package Complete" current-status
-                           "Remove Package Group Complete" current-status
-                           "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
-                           "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
-                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                           "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})              
-                           (do (Thread/sleep 2000)
-                             (recur (browser/text ::pkg-install-status))))))
+  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                             (case current-status
+                               "Add Package Complete" current-status
+                               "Add Package Group Complete" current-status
+                               "Remove Package Complete" current-status
+                               "Remove Package Group Complete" current-status
+                               "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
+                               "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
+                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                               "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})
+                               (do (Thread/sleep 2000)
+                                   (recur (browser/text ::pkg-install-status))))))
 
 (defn check-pkg-update-status
   "Function to test selected package status while updating it"
   [package &[timeout-ms]]
-  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
-                         (case current-status
-                           "Update Package Complete" current-status
-                           "Remove Package Complete" current-status
-                           "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
-                           "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                           (do (Thread/sleep 2000)
-                             (recur (browser/text (package-action-status package)))))))
+  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                             (case current-status
+                               "Update Package Complete" current-status
+                               "Remove Package Complete" current-status
+                               "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
+                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
+                               (do (Thread/sleep 2000)
+                                   (recur (browser/text (package-action-status package)))))))
+
 
 (defn package-action "Install/remove/update package/package-group on selected system "
   [system {:keys [package pkg-action]}]

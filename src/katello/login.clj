@@ -1,6 +1,5 @@
 (ns katello.login
-  (:require [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+  (:require [webdriver :as browser]
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-org*]]
                      [ui :as ui]
@@ -40,10 +39,9 @@
   "Logs out the current user from the UI."
   []
   (when-not (logged-out?)
-    (wd/move-to ::ui/user-menu)
-    (browser/click ::ui/user-menu)
-    (Thread/sleep 1000)
-    (wd/move-to ::ui/log-out)
+    ;;workaround to scroll user menu into view (to upper right corner)
+    (browser/execute-script "javascript:window.scrollBy(10000,-10000)")
+    (browser/move-to ::ui/user-menu)
     (browser/click ::ui/log-out)))
 
 (defn- signo-error? []
@@ -65,6 +63,8 @@
    logging in on the dashboard page."
   ([] (login *session-user* {:org *session-org*}))
   ([{:keys [name password] :as user} & [{:keys [org default-org]}]]
+     {:pre [(not (nil? user))
+            (instance? katello.User user)]}
      (when (logged-in?) (logout))
      (when (browser/exists? ::re-log-in-link)
        (browser/click ::re-log-in-link))
@@ -72,21 +72,21 @@
      (when (signo-error?)
        (clear-signo-errors))
 
-     (wd/->browser (clear ::username-text)
-                   (clear ::password-text))
-     (browser/quick-fill-submit {::username-text name}
-                                {::password-text password}
-                                {::log-in browser/click})
+     (browser/clear ::username-text)
+     (browser/clear ::password-text)
+     (browser/quick-fill [::username-text name
+                          ::password-text password
+                          ::log-in browser/click])
      ;; throw errors
      ;;(notification/verify-no-error)     ; katello notifs
      ;;(notification/flush)
-     
+
      (if (signo-error?)                 ; signo notifs
        (throw+ (list (ui/map->Notification {:level :error
                                             :notices (list (browser/text ::error-message))}))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
-     (wd/ajax-wait)
+     (browser/ajax-wait)
      ;;(browser/refresh)
      (when org
        (organization/switch org {:default-org default-org}))))
@@ -99,4 +99,3 @@
           (login)
           ~@body)
         (finally (login))))
-

@@ -3,8 +3,7 @@
                      [ui :as ui])
             [ui.navigate :as nav]
             [slingshot.slingshot :refer [throw+ try+]]
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd])
+            [webdriver :as browser])
   (:import [org.openqa.selenium NoSuchElementException]))
   
 (defn environment-breadcrumb
@@ -13,30 +12,29 @@
   'next' is required."
   [name & [next]]
   (let [prefix "//a[normalize-space(.)='%s' and contains(@class, 'path_link')"]
-    (format 
+    (format
      (str prefix (if next " and ../../..//a[normalize-space(.)='%s']" "") "]")
      name next)))
 
 (defn select-environment-widget [env & [{:keys [next-env wait]}]]
   (do (when (browser/exists? ::ui/expand-path)
         (browser/click ::ui/expand-path))
-      (browser/click (environment-breadcrumb (:name env) (:name next-env)))
-      #_(when wait (browser waitForPageToLoad))))
+      (browser/click (environment-breadcrumb (:name env) (:name next-env)))))
 
 (defn search-here [search-term]
-  (browser/quick-fill-submit {::ui/search-bar search-term}
-                             {::ui/search-submit browser/click}))
+  (browser/quick-fill [::ui/search-bar search-term
+                       ::ui/search-submit browser/click]))
 
 (def ^{:doc "Returns a selenium locator for an item in a left pane
              list (by the name of the item) - truncate to 32 chars to
              match ellipsis behavior."}
   left-pane-item
-  (wd/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
+  (browser/template "//div[@id='list']//div[starts-with(normalize-space(.),'%1.32s')]"))
 
 (defn scroll-left-pane-more
   "Loads another group of 25 items in the left pane, by scrolling down" []
-  (wd/->browser (execute-script (str "window.scrollTo(0,1000000);")))
-  (wd/ajax-wait))
+  (browser/execute-script (str "window.scrollTo(0,1000000);"))
+  (browser/ajax-wait))
 
 (defn scroll-left-pane-until
   "Scroll the left pane down until (side-effecty) no-arg function f
@@ -62,6 +60,14 @@
   []
   (browser/execute-script "$('#allowed-orgs').data('jsp').scrollByY(300);"))
 
+(defn scroll-right-pane-more
+  []
+  (browser/execute-script "$('#panel_main').data('jsp').scrollByY(300);"))
+
+(defn scroll-to-right-pane-item [ent]
+  (while (not (browser/visible? ent))
+    (scroll-right-pane-more)))
+
 (defn choose-left-pane
   "Selects an entity in the left pane. If the entity is not found, a
    search is performed and the select is attempted again."
@@ -69,17 +75,17 @@
      (choose-left-pane left-pane-item entity))
   ([templ entity]
      (let [loc (templ (:name entity))]
-       (try (browser/click loc)
-            (catch NoSuchElementException se
-              (do (search-here (format "\"%s\"" (:name entity)))
-                  (browser/click loc)))))))
+       (if-let [el (browser/element loc)]
+         (browser/click el)
+         (do (search-here (format "\"%s\"" (:name entity)))
+             (browser/click loc))))))
 
 (defmacro browser-fn
   "produces a function that ignores context args and passes body to
   ->browser.  To be used in navigation tree as a shortcut to produce
   functions that don't need arguments and only use the browser."
   [& body]
-  `(fn [& _#] (wd/->browser ~@body)))
+  `(fn [& _#] ~@body))
 
 ;; Define navigation pages
 ;; Note, it's designed this way, rather than one big tree, so that
@@ -92,7 +98,7 @@
    item. Each item contains a keyword to refer to the location in the
    UI, and a function to navigate to the location from its parent
    location. Other namespaces can add their structure here."
-   #'ui/component-deployment-dispatch)
+  #'ui/component-deployment-dispatch)
 
 (defmethod pages [(-> *ns* .getName symbol) :katello.deployment/any] [& _]
   (nav/nav-tree
@@ -147,8 +153,8 @@
   (let [org-text (browser/attribute ::ui/active-org :title)]
     (if (empty? org-text) nil org-text)))
 
-(defn go-top [] 
-     (browser/click "//a[@href='dashboard']"))
+(defn go-top []
+  (browser/click "//a[@href='dashboard']"))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg

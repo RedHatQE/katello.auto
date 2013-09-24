@@ -58,7 +58,7 @@
 
 (defrecord Product [id name ^Provider provider description gpg-key])
 
-(defrecord Repository [id name ^Product product url gpg-key])
+(defrecord Repository [id name ^Product product url gpg-key repo-type http])
 
 (defrecord Changeset [id name ^Environment env deletion?])
 

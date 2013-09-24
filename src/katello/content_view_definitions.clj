@@ -1,7 +1,6 @@
 (ns katello.content-view-definitions
   (:require [katello :as kt]
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+            [webdriver :as browser]
             [slingshot.slingshot :refer [throw+ try+]]
             [clojure.data :as data]
             (katello [navigation :as nav]
@@ -15,7 +14,7 @@
 
 ;; Locators
 
-(wd/template-fns
+(browser/template-fns
  {product-or-repository       "//li[contains(text(), '%s')]"
   filter-link                 "//a[contains(text(), 'Filter: %s')]"
   filter-name-link            "//a[contains(text(), '%s')]"
@@ -32,11 +31,11 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                      "new"
-   ::name-text                "content_view_definition[name]"
-   ::label-text               "katello/content_view_definition/default_label"
-   ::description-text         "content_view_definition[description]"
-   ::composite                "content_view_definition[composite]"
-   ::save-new                 "commit"
+   ::name-text                {:name "content_view_definition[name]"}
+   ::label-text               {:name "content_view_definition[label]"}
+   ::description-text         {:name "content_view_definition[description]"}
+   ::composite                {:name "content_view_definition[composite]"}
+   ::save-new                 {:name  "commit"}
    ::remove                   (ui/link "Remove")
    ::clone                    (ui/link "Clone")
 
@@ -47,8 +46,8 @@
    ::update-content            "update_products"
 
    ;; Details tab
-   ::details-name-text         "view_definition[name]"
-   ::details-description-text  "view_definition[description]"
+   ::details-name-text         {:name "view_definition[name]"}
+   ::details-description-text  {:name "view_definition[description]"}
 
    ;; Filters tab
    ::new-filter-button         "//input[@type='button' and @value='New Filter']"
@@ -90,8 +89,8 @@
 
    ;; Promotion
    ::publish-button            "//input[@type='button']"
-   ::publish-name-text         "content_view[name]"
-   ::publish-description-text  "content_view[description]"
+   ::publish-name-text         {:name "content_view[name]"}
+   ::publish-description-text  {:name "content_view[description]"}
    ::publish-new               "commit"
    ::refresh-button            "refresh_action"
    })
@@ -99,13 +98,13 @@
 ;; Nav
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (click ::new))]
+   [::new-page (nav/browser-fn (browser/click ::new))]
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
-    [::details-page (nav/browser-fn (click ::details-tab))]
-    [::content-page (nav/browser-fn (click ::content-tab))]
-    [::filter-page (nav/browser-fn (click ::filter-tab))
+    [::details-page (nav/browser-fn (browser/click ::details-tab))]
+    [::content-page (nav/browser-fn (browser/click ::content-tab))]
+    [::filter-page (nav/browser-fn (browser/click ::filter-tab))
      [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser/click)))]]
-    [::views-page (nav/browser-fn (click ::views-tab))]]])
+    [::views-page (nav/browser-fn (browser/click ::views-tab))]]])
 
 
 ;; Tasks
@@ -118,7 +117,7 @@
 (defn check-published-view-status
   "Function to monitor the published view status from 'Generating version' to 'Refresh' "
   [published-name & [timeout-ms]]
-  (wd/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
+  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000)) [current-status "Generating version:"]
                          (case current-status
                            "" current-status 
                            "Error generating version" (throw+ {:type :publish-failed
@@ -131,14 +130,13 @@
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
   (nav/go-to ::new-page org)
-  (browser/quick-fill-submit {::name-text name}
-                             {::description-text description}
-                             {(fn [composite] 
-                                 (when composite 
-                                   (browser/click ::composite)
-                                   (doseq [composite-name composite-names]
-                                     (browser/click (composite-view-name (:published-name composite-name)))))) [composite]}
-                             {::save-new browser/click})
+
+  (browser/quick-fill `[::name-text ~name
+                  ::description-text ~description
+                  ::composite ~#(browser/select-deselect % composite)
+                  ~@(interleave (map (comp composite-view-name :published-name) composite-names)
+                                (repeat browser/click))
+                  ::save-new ~browser/click])
   (notification/success-type :cv-create))
 
 (defn- add-repo
@@ -146,10 +144,9 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (wd/move-to (-> repo :name product-or-repository))
-    (wd/->browser
-     (click ::add-product-btn)
-     (click ::update-content))
+    (browser/move-to (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)
+    (browser/click ::update-content)
     (notification/success-type :cv-update-content)))
 
 (defn- remove-repo
@@ -157,11 +154,10 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (wd/move-to (-> repo :name product-or-repository))
-    (wd/->browser
-     (click ::add-product-btn)
-     (click  (-> repo :name remove-repository))
-     (click ::update-content))
+    (browser/move-to (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)
+    (browser/click  (-> repo :name remove-repository))
+    (browser/click ::update-content)
     (notification/success-type :cv-update-content)))
   
 (defn publish
@@ -170,9 +166,9 @@
   (nav/go-to content-defn)
   (browser/click ::views-tab)
   (browser/click ::publish-button)
-  (browser/quick-fill-submit {::publish-name-text published-name}
-                             {::publish-description-text description}
-                             {::publish-new browser/click})
+  (browser/quick-fill [::publish-name-text published-name
+                 ::publish-description-text description
+                 ::publish-new browser/click])
   (check-published-view-status published-name)  
   (notification/check-for-success {:timeout-ms (* 20 60 1000) :match-pred (notification/request-type? :cv-publish)}))
 
@@ -180,20 +176,18 @@
 (defn add-filter
   "Create a new content filter"
   [{:keys [name]}]
-  (wd/->browser
-    (click ::filter-tab)
-    (click ::new-filter-button)
-    (input-text ::filter-name-text name)
-    (click ::filter-create))
+  (browser/click ::filter-tab)
+  (browser/click ::new-filter-button)
+  (browser/input-text ::filter-name-text name)
+  (browser/click ::filter-create)
   (notification/success-type :filters-create))
 
 (defn remove-filter
   "Remove the selected filter from content-view-def"
   [{:keys [name]}]
-  (wd/->browser
-    (click ::filter-tab)
-    (click (select-filter name))
-    (click ::remove-button))
+  (browser/click ::filter-tab)
+  (browser/click (select-filter name))
+  (browser/click ::remove-button)
   (notification/success-type :filters-destroy))
 
 (defn- select-exclude-filter []
@@ -207,7 +201,7 @@
   [repos]
   (browser/click ::repo-tab)
   (doseq [repo repos]
-    (wd/move-to (-> repo :name product-or-repository))
+    (browser/move-to (-> repo :name product-or-repository))
     (browser/click ::add-product-btn)
     (browser/click ::update-content)))
 
@@ -215,7 +209,7 @@
   "Select package version and set values: 
    versions are: 'All Versions' 'Only version' 'Newer Than' 'Older Than' 'Range'"
   [{:keys [version-type value1 value2]}]
-  (browser/select ::select-package-version
+  (browser/select-by-text ::select-package-version
            (case version-type
              :all           "All Versions"
              :only-version  "Only Version"
@@ -233,10 +227,9 @@
 (defn- add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
-  (wd/->browser
-    (click ::add-rule)
-    (select ::select-filter-type (:type cv-filter))
-    (click ::create-rule))
+  (browser/click ::add-rule)
+  (browser/select ::select-filter-type (:type cv-filter))
+  (browser/click ::create-rule)
   (when (:exclude? cv-filter)
     (select-exclude-filter)))
 
@@ -288,7 +281,7 @@
     (browser/click ::save-errata))
   (when errata-type
     (browser/click ::errata-type)
-    (browser/select  ::select-errata-label errata-type)
+    (browser/select-by-text  ::select-errata-label errata-type)
     (browser/click ::save-errata))
   (browser/click (filter-link (:name cv-filter)))
   (notification/check-for-success))
@@ -313,10 +306,9 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (wd/move-to (-> product :name product-or-repository))
-    (wd/->browser
-     (click ::add-product-btn)
-     (click ::update-content))
+    (browser/move-to (-> product :name product-or-repository))
+    (browser/click ::add-product-btn)
+    (browser/click ::update-content)
     (notification/success-type :cv-update-content)))
   
 (defn- remove-from
@@ -324,10 +316,9 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (wd/move-to (->  product :name product-or-repository))
-    (wd/->browser
-     (click (-> product :name remove-product))
-      (click ::update-content))
+    (browser/move-to (->  product :name product-or-repository))
+    (browser/click (-> product :name remove-product))
+    (browser/click ::update-content)
     (notification/success-type :cv-update-content)))
 
 (defn- update
@@ -365,9 +356,9 @@
   [orig clone]
   (nav/go-to orig)
   (browser/click ::clone)
-  (browser/quick-fill-submit {::sg/copy-name-text (:name clone)}
-                             {::sg/copy-description-text (:description clone)}
-                             {::sg/copy-submit browser/click})
+  (browser/quick-fill [::sg/copy-name-text (:name clone)
+                              ::sg/copy-description-text (:description clone)
+                              ::sg/copy-submit browser/click])
   (notification/success-type :cv-clone))
 
 (extend katello.ContentViewDefinition

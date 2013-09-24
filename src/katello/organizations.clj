@@ -1,7 +1,6 @@
 (ns katello.organizations
   (:require [ui.navigate :as navlib :refer [nav-tree]]
-            [clj-webdriver.taxi :as browser]
-            [webdriver :as wd]
+            [webdriver :as browser]
             [slingshot.slingshot :refer [try+ throw+]]
             katello
             (katello [navigation :as nav]
@@ -19,15 +18,15 @@
 (ui/defelements :katello.deployment/any []
   {::new                    "//a[@id='new']"
    ::create                 {:name "commit"}
-   ::name-text              {:name "organization[name]"}
-   ::label-text             {:name "organization[label]"}
-   ::description-text       {:name "organization[description]"}
+   ::name-text              {:tag :input, :name "organization[name]"}
+   ::label-text             {:tag :input, :name "organization[label]"}
+   ::description-text       {:tag :textarea :name "organization[description]"}
    ::environments           (ui/link "Environments")
    ::edit                   (ui/link "Edit")
    ::remove                 (ui/link "Remove Organization")
-   ::initial-env-name-text  {:name "environment[name]"}
-   ::initial-env-label-text {:name "environment[label]"}
-   ::initial-env-desc-text  {:name "environment[description]"}
+   ::initial-env-name-text  {:tag :input, :name "environment[name]"}
+   ::initial-env-label-text {:tag :input, :name "environment[label]"}
+   ::initial-env-desc-text  {:tag :input, :name "environment[description]"}
    ::org-switcher-row       "//div[@id='orgbox']//div[contains(@class, 'row') and position()=2]"
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
@@ -40,23 +39,23 @@
    ::apply-default-info       {:id "apply_default_info_button"}
    ::disabled-apply-btn       "//input[@class='btn fullwidth']"})
 
-(wd/template-fns
+(browser/template-fns
  {org-switcher-row   "//ul[@id='organizationSwitcher']//input[contains(@value,'%s')]/../a"
   remove-keyname-btn "//input[contains(@data-id, 'default_info_%s')]"})
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
-  [::page 
-   [::new-page (nav/browser-fn (click ::new))]
+  [::page
+   [::new-page (nav/browser-fn (browser/click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
     [::default-info-menu (fn [n]
                            (Thread/sleep 1000)
-                           (wd/move-to (browser/element ::default-info)))
+                           (browser/move-to ::default-info))
      [::system-default-info-page (fn [n]
-                                   (wd/move-to browser/*driver* (browser/element ::system-default-info))
+                                   (browser/move-to ::system-default-info)
                                    (browser/click ::system-default-info))]
      [::distributor-default-info-page (fn [n]
-                                        (wd/move-to (browser/element ::distributor-default-info))
+                                        (browser/move-to ::distributor-default-info)
                                         (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
                                         #_(browser/click ::distributor-default-info))]]]])
 
@@ -75,14 +74,13 @@
   ;; Make sure the 'Add' button is disabled
   (assert (boolean (browser/attribute ::create-keyname :disabled)))
   (Thread/sleep 1000)
-  (wd/->browser (input-text ::keyname-text keyname)
-                (click ::create-keyname))
+  (browser/input-text ::keyname-text keyname)
+  (browser/click ::create-keyname)
   (if apply-default
     (do
-      (wd/->browser
-       (click ::apply-default-info)
-       (click ::ui/confirmation-yes)
-       (wait-until (browser/exists? ::disabled-apply-btn) "120000"))))
+      (browser/click ::apply-default-info)
+      (browser/click ::ui/confirmation-yes)
+      (browser/wait-until (browser/exists? ::disabled-apply-btn) "120000")))
   (notification/check-for-success))
 
 (defn remove-custom-keyname
@@ -96,23 +94,21 @@
   "Creates an organization with the given name and optional description."
   [{:keys [name label description initial-env]}]
   (nav/go-to ::new-page)
-  (wd/ajax-wait)
-  (browser/quick-fill-submit {::name-text browser/focus}
-                             {::name-text name}
-                             {::name-text "\t"} ;; tab to trigger the label-filling ajax call
-                             {::description-text (or description "")})
+  (browser/ajax-wait)
+  (browser/quick-fill [::name-text name
+                       ::description-text description])
   (when label
+    (browser/click ::description-text) ;; workaround to activate label js
     (browser/clear ::label-text)
     (browser/input-text ::label-text label))
-  (when (rest/is-katello?)
-    (browser/quick-fill-submit {::initial-env-name-text browser/focus}
-                               {::initial-env-name-text (or (:name initial-env) "")}
-                               {::initial-env-name-text "\t"}
-                               {::initial-env-desc-text (or (:description initial-env) "")})
-    (when initial-env
+  (when (and (rest/is-katello?) initial-env)
+    (browser/quick-fill [::initial-env-name-text (:name initial-env)
+                         ::initial-env-desc-text (:description initial-env)])
+    (when (:label initial-env)
+      (browser/click ::description-text) ;; workaround to activate label js
       (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (or (:label initial-env) ""))))
-  (wd/move-to (browser/element ::create))
+      (browser/input-text ::initial-env-label-text (:label initial-env))))
+  (nav/scroll-to-right-pane-item ::create)
   (browser/click ::create)
   (notification/success-type :org-create))
 
@@ -137,7 +133,7 @@
   ui/CRUD {:create create
            :update* update
            :delete delete}
-  
+
   rest/CRUD (let [uri "api/organizations/"
                   label-url (partial rest/url-maker [[(str uri "%s") [identity]]])]
               {:id rest/label-field
@@ -151,8 +147,8 @@
                :read (fn [org]
                        (try+ (rest/http-get (label-url org))
                              (catch [:status 404] _
-                               (throw+ {:type ::rest/entity-not-found, :entity org})))) 
-              
+                               (throw+ {:type ::rest/entity-not-found, :entity org}))))
+
                :update* (fn [org new-org]
                           (rest/http-put (label-url org)
                                          {:body {:organization (select-keys new-org [:description])}}))
@@ -182,12 +178,12 @@
    org for this user, set default org to :none. Using force is not
    necessary if also setting the default-org."
   ([] (switch *session-org*))
-  ([{:keys [name]} & [{:keys [force? default-org]}]] 
-     (when (or force? 
+  ([{:keys [name]} & [{:keys [force? default-org]}]]
+     (when (or force?
                default-org
-               (not= (nav/current-org) name)) 
+               (not= (nav/current-org) name))
        (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
-       (wd/ajax-wait)
+       (browser/ajax-wait)
        (when default-org
          (let [default-org-name (when (not= default-org :none)
                                   (or (:name default-org)
@@ -199,7 +195,7 @@
                                    (do (while (not (browser/visible? ::default))
                                          (nav/scroll-org-switcher))
                                        (browser/text ::default))
-                                      nil)
+                                   nil)
                                  (catch NoSuchElementException _ nil))]
            (if (nil? default-org-name)
              (while (not (browser/visible? ::default))
@@ -222,5 +218,7 @@
   []
   (browser/click (browser/find-element-under ::ui/switcher {:tag :a}))
   (Thread/sleep 1000)
-  (->> (browser/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
-       (map browser/text)))
+  (->> (clj-webdriver.taxi/find-elements-under ::ui/switcher {:tag :a, :class "org-link"})
+       (filter :webelement) ;; sel bug? when parent el is empty still returns '({:webelement nil})
+       (map browser/text)
+       doall))
