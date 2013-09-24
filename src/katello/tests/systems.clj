@@ -50,8 +50,7 @@
                                          :env test-environment}))
 (defn register-new-test-system []
   (with-unique-system s
-    (rest/create s)
-    (nav/go-top)))
+    (rest/create s)))
 
 (defn verify-system-rename [system]
   (nav/go-to (ui/update system update-in [:name] uniqueify)))
@@ -160,7 +159,6 @@
     (fn [input-loc new-value save? expected-res]
       (with-unique-system s
         (rest/create s)
-        (browser/refresh)
         (expecting-error expected-res
                          (nav/go-to ::system/details-page s)
                          (save-cancel input-loc new-value save?))))
@@ -188,7 +186,7 @@
     :blockers (conj (bz-bugs "738054") rest/katello-only)
     (verify-system-appears-on-env-page (register-new-test-system)))
   
-    (deftest "Subscribe a system to a custom product"
+  (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
     :blockers (conj (bz-bugs "733780" "736547" "784701") rest/katello-only)
 
@@ -217,10 +215,8 @@
                         :system-arch "x86_64"
                         :env test-environment} katello/newSystem uniques (take 3))]
       (rest/create-all systems)
-      (nav/go-top)
       (system/multi-delete systems)))
   
-
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
     (with-unique [org (kt/newOrganization {:name "delsyscount"})]
