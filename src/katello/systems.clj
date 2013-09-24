@@ -78,8 +78,8 @@
   
    ;;system-edit details
    ::details                     (ui/link "Details")
-   ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
-   ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::name-text-edit              {:tag :input, :name "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"}
+   ::description-text-edit       {:tag :textarea, :name "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"}
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
@@ -108,7 +108,7 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::named-page (fn [system] (nav/go-to-system system))
+   [::named-page (fn [system] (ui/go-to-system system))
     [::details-page (nav/browser-fn (click ::details))
     [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
     [::packages-page (nav/browser-fn (click ::packages))
@@ -120,7 +120,7 @@
   ;;use rest 
   )
 
-(defn- delete "Deletes the selected system."
+(defn delete "Deletes the selected system."
   [system]
   (nav/go-to system)
   (browser/click ::remove)
@@ -230,7 +230,7 @@
     
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (wd/move-to (browser/element ::name-text-edit))
+      ;(wd/move-to (browser/element ::name-text-edit))
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -450,8 +450,12 @@
   (wd/->browser (input-text ::input-package-name package)
                 (click ::perform-action)))
 
-(defn remove-selected-package "Remove a selected package from package-list"
+(defn filter-package 
   [system {:keys [package]}]
   (nav/go-to ::packages-page system)
-  (wd/->browser (input-text ::filter-package package)
-                (click (remove-package package))))
+  (wd/->browser (input-text ::filter-package package)))
+
+(defn remove-selected-package "Remove a selected package from package-list"
+  [system {:keys [package]}]
+  (filter-package system {:package package}) 
+  (browser/click (remove-package package)))

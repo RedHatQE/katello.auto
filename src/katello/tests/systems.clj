@@ -151,7 +151,7 @@
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
     :blockers (bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
-  
+    
   (deftest "System details: save or cancel editing field"
     :uuid "b3f26238-b35c-aa84-3533-e3d3bb27bd8b"
     :data-driven true
@@ -490,7 +490,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/add-package mysys {:package packages})
+            (system/package-action mysys {:package packages})
             (let [cmd (format "rpm -qa | grep %s" packages)
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
@@ -526,7 +526,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/add-package mysys {:package-group package-groups})
+            (system/package-action mysys {:package package-groups})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork lion wolf tiger dolphin bear")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
@@ -566,7 +566,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/update-selected-package mysys {:package package})
+            (system/package-action mysys {:package package})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
@@ -761,7 +761,7 @@
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
-          (system/add-package mysys {:package "cow"})
+          (system/package-action mysys {:package "cow"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (client/ok? cmd_result)))))))
 

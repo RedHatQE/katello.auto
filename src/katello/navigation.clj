@@ -1,7 +1,6 @@
 (ns katello.navigation
   (:require (katello [conf :as conf]
-                     [ui :as ui]
-                     [systems as system])
+                     [ui :as ui])
             [ui.navigate :as nav]
             [slingshot.slingshot :refer [throw+ try+]]
             [clj-webdriver.taxi :as browser]
@@ -150,9 +149,6 @@
 
 (defn go-top [] 
      (browser/click "//a[@href='dashboard']"))
-
-(defn go-to-system [system] 
-     (browser/click (system/select-system (:name system))))
 
 (defn switch-org
   "Switches to the given org. Other org-switcher functionality (eg
