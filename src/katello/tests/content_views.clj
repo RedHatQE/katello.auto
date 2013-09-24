@@ -102,6 +102,14 @@
                     [false "Include Errata: %s"  "Include Errata: RHBA, RHSA" "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"]]
         errata-details [[(list "RHBA" "RHSA") (list "RHSA") "07/02/2013" "07/03/2013" "Enhancement"]]]
     (conj errata-details exp-result)))
+
+(defn- assoc-content
+  "Associate product/repo before applying filter rules"
+  [cv cv-filter]
+  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+    (create-recursive repo)
+    (ui/update cv assoc :products (list (kt/product repo)))
+    (views/add-repo-from-filters (list (kt/repository repo)))))
                       
 ;; Tests
 
@@ -223,17 +231,23 @@
       (fn [packages version-type &[value1 value2]]
         (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
-          (ui/create-all (list cv cv-filter))
-          (views/add-package-rule cv-filter {:packages (list packages)
-                                             :version-type version-type
-                                             :value1 value1
-                                             :value2 value2})))  
+          (ui/create cv)
+          (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+            (create-recursive repo)
+            (ui/update cv assoc :repos (list (kt/repository repo)))
+            (ui/create cv-filter)
+            (views/add-repo-from-filters (list (kt/repository repo)))
+            (views/add-package-rule cv-filter {:packages (list packages)
+                                               :version-type version-type
+                                               :value1 value1
+                                               :value2 value2}))))  
       [["cow" :all]
        ["cat" :only-version "0.5"]
        ["crow" :newer-than "2.7"]
        ["bird" :older-than "2.3"]
        ["bear" :range "2.3" "2.7"]])
     
+  
     
     (deftest "Create 'Include/Exclude' type filter for packages"
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
