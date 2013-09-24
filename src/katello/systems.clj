@@ -114,10 +114,10 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [system] (ui/go-to-system system))
-    [::details-page (nav/browser-fn (browser/click ::details))
-    [::subscriptions-page (nav/browser-fn (browser/click ::subscriptions))]
-    [::packages-page (nav/browser-fn (browser/click ::packages))
-    [::errata-page (nav/browser-fn (browser/click ::errata-link))]]]]])
+    [::details-page (fn [_] (browser/click ::details))
+    [::subscriptions-page (fn [_] (browser/click ::subscriptions))]
+    [::packages-page (fn [_] (browser/click ::packages))
+    [::errata-page (fn [_] (browser/click ::errata-link))]]]]])
 
 ;; Tasks
 (defn- create "Create a system from UI"

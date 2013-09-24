@@ -80,13 +80,6 @@
          (do (search-here (format "\"%s\"" (:name entity)))
              (browser/click loc))))))
 
-(defmacro browser-fn
-  "produces a function that ignores context args and passes body to
-  ->browser.  To be used in navigation tree as a shortcut to produce
-  functions that don't need arguments and only use the browser."
-  [& body]
-  `(fn [& _#] ~@body))
-
 ;; Define navigation pages
 ;; Note, it's designed this way, rather than one big tree, so that
 ;; errors in one component namespace (eg activation keys) don't

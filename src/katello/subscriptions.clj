@@ -25,12 +25,12 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))
-    [::manifest-details-page (nav/browser-fn (browser/click ::manifest-details))]
-    [::manifest-import-page (nav/browser-fn (browser/click ::manifest-import))]
-    [::manifest-history-page (nav/browser-fn (browser/click ::manifest-history))]]
+   [::new-page (fn [_] (browser/click ::new))
+    [::manifest-details-page (fn [_] (browser/click ::manifest-details))]
+    [::manifest-import-page (fn [_] (browser/click ::manifest-import))]
+    [::manifest-history-page (fn [_] (browser/click ::manifest-history))]]
    [::named-page (fn [subscription] (nav/choose-left-pane subscription))
-    [::details-page (nav/browser-fn (browser/click ::subscription-details))]
-    [::products-page (nav/browser-fn (browser/click ::subscription-products))]
-    [::units-page (nav/browser-fn (browser/click ::subscription-units))]]]
+    [::details-page (fn [_] (browser/click ::subscription-details))]
+    [::products-page (fn [_] (browser/click ::subscription-products))]
+    [::units-page (fn [_] (browser/click ::subscription-units))]]]
   [::import-history-page])

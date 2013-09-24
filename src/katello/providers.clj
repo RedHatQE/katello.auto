@@ -44,9 +44,9 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::products-page
    [::product-page (fn [product] (browser/click (select-product (:name product))))]
-    [::product-details-page (nav/browser-fn (browser/click ::details-link))]
-   [::new-page (nav/browser-fn (browser/click ::new-product))]
-   [::repo-discovery-page (nav/browser-fn (browser/click ::repository-discovery))]]) 
+    [::product-details-page (fn [_] (browser/click ::details-link))]
+   [::new-page (fn [_] (browser/click ::new-product))]
+   [::repo-discovery-page (fn [_] (browser/click ::repository-discovery))]]) 
 
 ;; Tasks
 

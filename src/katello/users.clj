@@ -55,8 +55,8 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [user] (nav/choose-left-pane user-list-item user))
-    [::environments-page (nav/browser-fn (browser/click ::environments-link))]
-    [::roles-permissions-page (nav/browser-fn (browser/click ::roles-link))]]])
+    [::environments-page (fn [_] (browser/click ::environments-link))]
+    [::roles-permissions-page (fn [_] (browser/click ::roles-link))]]])
 
 
 ;; Vars

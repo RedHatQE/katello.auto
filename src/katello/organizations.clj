@@ -46,7 +46,7 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
     [::default-info-menu (fn [n]
                            (Thread/sleep 1000)

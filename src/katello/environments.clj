@@ -26,7 +26,7 @@
 
 (nav/defpages :katello.deployment/any katello.organizations
   [:katello.organizations/named-page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [env] (browser/click (ui/environment-link (:name env))))]])
 
 ;; Tasks

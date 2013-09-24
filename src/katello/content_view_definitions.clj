@@ -98,13 +98,13 @@
 ;; Nav
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
-    [::details-page (nav/browser-fn (browser/click ::details-tab))]
-    [::content-page (nav/browser-fn (browser/click ::content-tab))]
-    [::filter-page (nav/browser-fn (browser/click ::filter-tab))
+    [::details-page (fn [_] (browser/click ::details-tab))]
+    [::content-page (fn [_] (browser/click ::content-tab))]
+    [::filter-page (fn [_] (browser/click ::filter-tab))
      [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser/click)))]]
-    [::views-page (nav/browser-fn (browser/click ::views-tab))]]])
+    [::views-page (fn [_] (browser/click ::views-tab))]]])
 
 
 ;; Tasks

@@ -38,7 +38,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::plans-page
    [::named-plan-page (fn [sync-plan] (nav/choose-left-pane sync-plan))]
-   [::new-plan-page (nav/browser-fn (browser/click ::new-plan))]])
+   [::new-plan-page (fn [] (browser/click ::new-plan))]])
 
 ;; Tasks
 

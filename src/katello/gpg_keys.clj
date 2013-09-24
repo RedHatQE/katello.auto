@@ -28,7 +28,7 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [gpg-key] (nav/choose-left-pane gpg-key))]])
 
 ;;Tasks
