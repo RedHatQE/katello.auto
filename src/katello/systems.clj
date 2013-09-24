@@ -82,8 +82,8 @@
   
    ;;system-edit details
    ::details                     (ui/link "Details")
-   ::name-text-edit              {:tag :input, :name "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"}
-   ::description-text-edit       {:tag :textarea, :name "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"}
+   ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
@@ -114,10 +114,10 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [system] (ui/go-to-system system))
-    [::details-page (nav/browser-fn (click ::details))
-    [::subscriptions-page (nav/browser-fn (click ::subscriptions))]
-    [::packages-page (nav/browser-fn (click ::packages))
-    [::errata-page (nav/browser-fn (click ::errata-link))]]]]])
+    [::details-page (nav/browser-fn (browser/click ::details))
+    [::subscriptions-page (nav/browser-fn (browser/click ::subscriptions))]
+    [::packages-page (nav/browser-fn (browser/click ::packages))
+    [::errata-page (nav/browser-fn (browser/click ::errata-link))]]]]])
 
 ;; Tasks
 (defn- create "Create a system from UI"
@@ -150,10 +150,10 @@
   [systems group] 
   (select-multisys systems)
   (browser/click ::bulk-action)
-  (wd/->browser (click ::select-sysgrp)
-                (click (-> group :name sysgroup-checkbox))
-                (click ::add-sysgrp)
-                (click ::confirmation-yes)))
+  (browser/click ::select-sysgrp)
+  (browser/click (-> group :name sysgroup-checkbox))
+  (browser/click ::add-sysgrp)
+  (browser/click ::confirmation-yes))
 
 (defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
@@ -235,7 +235,7 @@
 
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (browser/move-to ::name-text)
+      ;(browser/move-to ::name-text)
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -453,13 +453,13 @@
   [system {:keys [package pkg-action]}]
   (nav/go-to ::packages-page system)
   (browser/select-by-text ::package-action pkg-action)
-  (wd/->browser (input-text ::input-package-name package)
-                (click ::perform-action)))
+  (browser/input-text ::input-package-name package)
+  (browser/click ::perform-action))
 
 (defn filter-package 
   [system {:keys [package]}]
   (nav/go-to ::packages-page system)
-  (wd/->browser (input-text ::filter-package package)))
+  (browser/input-text ::filter-package package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
