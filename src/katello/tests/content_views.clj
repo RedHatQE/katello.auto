@@ -102,14 +102,6 @@
                     [false "Include Errata: %s"  "Include Errata: RHBA, RHSA" "Include Errata: Enhancement: 2013-07-02 - 2013-07-03"]]
         errata-details [[(list "RHBA" "RHSA") (list "RHSA") "07/02/2013" "07/03/2013" "Enhancement"]]]
     (conj errata-details exp-result)))
-
-(defn- assoc-content
-  "Associate product/repo before applying filter rules"
-  [cv cv-filter]
-  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
-    (create-recursive repo)
-    (ui/update cv assoc :products (list (kt/product repo)))
-    (views/add-repo-from-filters (list (kt/repository repo)))))
                       
 ;; Tests
 
