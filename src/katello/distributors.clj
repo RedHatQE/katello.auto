@@ -22,9 +22,9 @@
    ::value-text            "new_custom_info_value"
    ::custom-info-button    "//input[@id='create_custom_info_button']"
    ::remove-link           (ui/remove-link "distributors")
-   ::distributor-info-link "distributor_info"
-   ::events-history-link   "distributor_events"
-   ::custom-info-link      "custom_info"
+   ::distributor-info-link (ui/third-level-link "distributor_info")
+   ::events-history-link   (ui/third-level-link "distributor_events")
+   ::custom-info-link      (ui/third-level-link "custom_info")
    ::save-button           "//button[@type='submit']"
    ::cancel-button         "//button[@type='cancel']"})
 
@@ -37,13 +37,11 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (fn [x]
-                      (Thread/sleep 1000)
-                      (browser/move-to ::details-link))
-     [::distributor-info-page (fn [x] (third-lvl-menu-click ::distributor-info-link))]
-     [::events-history-page (fn [x] (third-lvl-menu-click ::events-history-link))]
-     [::custom-info-page (fn [x] (third-lvl-menu-click ::custom-info-link))]]]
-   [::new-page (nav/browser-fn (browser/click ::new))]])
+    [::details-menu (fn [_] (browser/move-to ::details-link))
+     [::distributor-info-page (fn [_] (third-lvl-menu-click ::distributor-info-link))]
+     [::events-history-page (fn [_] (third-lvl-menu-click ::events-history-link))]
+     [::custom-info-page (fn [_] (third-lvl-menu-click ::custom-info-link))]]]
+   [::new-page (fn [_] (browser/click ::new))]])
 
 ;; Tasks
 

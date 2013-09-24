@@ -57,14 +57,9 @@
   [ent]
   (lazy-seq (map rest/create (tasks/uniques ent))))
 
-(defn third-lvl-menu-click
-  "Clicks on a 3rd level menu item by executing js. Workaround for
-  webdriver issue that considers some menu items hidden when they are visible."
-  [loc-id]
-  (Thread/sleep 1000)
-  (wd/move-to (ui/third-level-link loc-id))
-  (browser/execute-script (ui/js-id-click loc-id))
-  (wd/ajax-wait))
+(def ^{:doc "Clicks on a 3rd level menu item. Workaround for webdriver
+  issue that considers some menu items hidden when they are visible."}
+  third-lvl-menu-click (partial #'wd/click-when browser/visible?))
 
 (defn fresh-repos
   "Infite seq of unique repos (in new provider/product) in given org,

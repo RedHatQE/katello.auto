@@ -290,3 +290,10 @@ Default browser-spec: firefox"
             (throw-element-not-found q))
           (doseq [el target-els]
             (action el)))))))
+
+(defn click-when
+  "When (pred q) is true, click q.
+   Example (click-when visible? 'foo')"
+  [pred q]
+  (wait-until (partial pred q))
+  (click q))
