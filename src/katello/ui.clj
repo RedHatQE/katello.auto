@@ -62,7 +62,7 @@
   link                 "//a[normalize-space(.)='%s']"
   remove-link          "//a[@class='remove_item' and contains(@href,'%s')]"
   third-level-link     "//*[@id='%s']/a"
-
+  select-system        "//td[@class='ng-scope']/a[contains(text(), '%s')]"
   js-id-click          "$(\"li#%s > a\").click();"
   search-favorite      "//span[contains(@class,'favorite') and @title='%s']"
   slide-link           "//li[contains(@class,'slide_link') and normalize-space(.)='%s']"
@@ -167,3 +167,7 @@
 (def total-items
   ^{:doc "Returns the number of total left pane items according to the katello ui."}
   (partial item-count ::total-results-count))
+
+(defn go-to-system
+  [system]
+  (browser/click (select-system (:name system))))

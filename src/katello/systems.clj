@@ -26,6 +26,9 @@
   select-sysgroup-checkbox        "//input[contains(@title,'%s') and @name='multiselect_system_group']"
   activation-key-link             (ui/link "%s")
   env-select                      (ui/link "%s")
+  select-system                   "//td[@class='ng-scope']/a[contains(text(), '%s')]"
+  select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/parent::td/preceding-sibling::td[@class='row-select']/input[@ng-model='system.selected']"
+  remove-package                  "//td[contains(text(), '%s')]/following::td/i[@ng-click='table.removePackage(package)']"
   get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
@@ -46,12 +49,14 @@
    ::system-virtual-type         "system_type_virtualized_virtual"
    ::content-view-select         {:name "system[content_view_id]"}
    ::expand-env-widget           "path-collapsed"
-   ::remove                      (ui/link "Remove System")
+   ::remove                      "//button[contains(text(), 'Remove System')]"
+   ::confirmation-yes            "//button[normalize-space(.)='Yes']"
+   ::confirmation-no             "//button[normalize-space(.)='No']"
+   ::bulk-action                 "//div[@class='nutupane-actions fr']/button[contains (.,'Bulk Actions')]"
    ::multi-remove                (ui/link "Remove System(s)")
    ::confirm-yes                 "//input[@value='Yes']"
-   ::select-sysgrp               "//button[@type='button']"
-   ::add-sysgrp                  "//input[@value='Add']"
-   ::confirm-to-yes              "xpath=(//input[@value='Yes'])[4]"
+   ::select-sysgrp               "//div[@class='alch-edit']/div[@ng-click='edit()']"
+   ::add-sysgrp                  "//button[@ng-click='add()']"
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
    ::total-sys-count             "total_items_count"
    ::interface-addr              "//td[@class='interface_name' and contains(., 'eth')]//following-sibling::td"
@@ -62,47 +67,27 @@
    ;;new system form
    ::sockets-icon                "//fieldset[descendant::input[@id='system_sockets']]//i"
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
-
-   ;;content
-   ::content-link                (ui/third-level-link "system_content")
-   ::packages-link               (ui/third-level-link "systems_packages")
-   ::software-link               (ui/third-level-link "system_products")
-   ::errata-link                 (ui/third-level-link "errata")
-   ::select-errata-type          "//select[@id='display_errata_type']"
-   ::install-errata              "//button[@id='run_errata_button']"
-   ::add-content                 "add_content"
-   ::remove-content              "remove_content"
-   ::package-name                "content_input"
-   ::select-package-group        "perform_action_package_groups"
-   ::select-package              "perform_action_packages"
-   ::pkg-install-status-link     "//td[@class='package_action_status']/a[@class='subpanel_element']"
-   ::pkg-install-status          "//td[@class='package_action_status']"
-   ::add-package-error            (ui/link "Add Package Error")
-   ::install-result               "xpath=(//div[@class='grid_7 multiline'])[2]"
-   ::pkg-header                   "//div[@id='subpanel']//div[@class='head']/h2"
-   ::pkg-summary                  "//div[@class='grid_7' and contains(.,'Summary')]/following::div[@class='grid_7 multiline']"
-   ::pkg-request                  "//div[@class='grid_7' and contains(.,'Request')]/following::div[@class='grid_7 la']"
-   ::pkg-parameters               "//div[@class='grid_7' and contains(.,'Parameters')]/following::div[@class='grid_7 la']"
-   ::pkg-result                   "//div[@class='grid_7' and contains(.,'Result')]/following::div[@class='grid_7 multiline']"
-   ::filter-package               "//input[@id='filter']"
-   ::update-package               "update_packages"
-   ::remove-package               "remove_packages"
-
+   
+   ;;content  
+   ::packages                    "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
+   ::events-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Events')]"
+   ::errata-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Errata')]"
+   ::package-action              "//select[@ng-model='packageAction.actionType']"
+   ::perform-action              "//input[@name='Perform']"
+   ::input-package-name          "//input[@ng-model='packageAction.term']"
+   ::filter-package              "//input[@ng-model='currentPackagesTable.filter']"
+   ::update-all                  "//button[@ng-click='updateAll()']"
+   ::filter-errata               "//input[@ng-model='errataTable.errataFilterTerm']"
+  
+  
    ;;system-edit details
-   ::details                     {:xpath (ui/third-level-link "general")}
-   ::name-text-edit              {:tag :input, :name "system[name]"}
-   ::description-text-edit       {:tag :textarea, :name "system[description]"}
-   ::location-text-edit          {:tag :input, :name "system[location]"}
-   ::service-level-select        {:name "system[serviceLevel]"}
-   ::release-version-select      {:name "system[releaseVer]"}
-   ::environment                 "//span[@id='environment_path_selector']"
-   ::get-selected-env            "//div[@id='path_select_edit_env_view']//label[@class='active']/div[descendant::span//input[@checked='checked']]"
-   ::save-environment            "//input[@value='Save']"
-   ::edit-sysname                "system_name"
-   ::edit-description            "system_description"
-   ::edit-location               "system_location"
-   ::save-button                 "//button[@type='submit']"
-   ::cancel-button               "//button[@type='cancel']"
+   ::details                     (ui/link "Details")
+   ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::save-button                 "//button[@ng-click='save()']"
+   ::cancel-button               "//button[@ng-click='cancel()']"
+   ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
+   
 
    ;;system-facts
    ::facts                       (ui/link "Facts")
@@ -122,80 +107,53 @@
    ::create-custom-info         "create_custom_info_button"
 
    ;;subscriptions pane
-   ::subscriptions               (ui/third-level-link "systems_subscriptions")
-   ::subscribe                   "sub_submit"
-   ::red-subs-icon               "//div[@class='red subs_image']"
-   ::subs-text                   "//div[@class='subs_text fl panel_link']"
-   ::subs-servicelevel           "//div[@name='system[serviceLevel]']"
-   ::subs-attach-button          "fake_sub_submit"
-   ::unsubscribe                 "unsub_submit"})
+   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})
 
 ;; Nav
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
-   [::named-page (fn [system] (nav/choose-left-pane system))
+   [::named-page (fn [system] (ui/go-to-system system))
     [::details-page (nav/browser-fn (browser/click ::details))
-     [::facts-page (nav/browser-fn (browser/click ::facts))]
-     [::custom-info-page (nav/browser-fn (browser/click ::custom-info))]]
     [::subscriptions-page (nav/browser-fn (browser/click ::subscriptions))]
-    [::content-menu (nav/browser-fn (browser/click ::content-link))
-     [::content-software-page (nav/browser-fn (browser/click ::software-link))]
-     [::content-packages-page (nav/browser-fn (browser/click ::packages-link))]
-     [::content-errata-page (nav/browser-fn (browser/click ::errata-link))]]]]
-  [::by-environments-page
-   [::environment-page (fn [system] (nav/select-environment-widget (kt/env system)))
-    [::named-by-environment-page (fn [system] (nav/choose-left-pane system))]]])
+    [::packages-page (nav/browser-fn (browser/click ::packages))
+    [::errata-page (nav/browser-fn (browser/click ::errata-link))]]]]])
 
 ;; Tasks
+(defn- create "Create a system from UI"
+  []
+  ;;use rest 
+  )
 
-(defn- create
-  "Creates a system"
-  [{:keys [name env sockets system-arch content-view virtual? ram-mb]}]
-  (nav/go-to ::new-page (:org env))
-  ;; TODO - check for katello/only
-  (browser/quick-fill [::name-text name
-                       ::arch-select (or system-arch "x86_64")
-                       ::sockets-text sockets
-                       ::ram-mb-text ram-mb
-                       ::system-virtual-type (when virtual? browser/click)])
-  (when (and env rest/is-katello?) (nav/select-environment-widget env))
-  (browser/click ::create)
-  (notification/success-type :sys-create))
-
-(defn- delete "Deletes the selected system."
+(defn delete "Deletes the selected system."
   [system]
   (nav/go-to system)
   (browser/click ::remove)
-  (browser/click ::ui/confirmation-yes)
-  (notification/success-type :sys-destroy))
+  (browser/click ::confirmation-yes))
 
-(defn- select-multisys-with-ctrl
+(defn- select-multisys
   [systems]
-  (nav/go-to ::page (first systems))
-  (action/key-down browser/*driver* :ctrl)
   (doseq [system systems]
-    (nav/scroll-to-left-pane-item system)
-    (nav/choose-left-pane system))
-  (action/key-up browser/*driver* :ctrl))
+    (browser/click (select-system-checkbox system))))
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
-  (select-multisys-with-ctrl systems)
-  (browser/click ::multi-remove)
-  (browser/click ::confirm-yes)
-  (notification/success-type :sys-bulk-destroy))
+  (nav/go-to ::page (first systems))
+  (select-multisys systems)
+  (browser/click ::bulk-action)
+  (browser/click ::remove)
+  (browser/click ::confirmation-yes)
+  (browser/refresh))
 
 (defn add-bulk-sys-to-sysgrp
   "Adding systems to system group in bulk by pressing ctrl, from right-pane of system tab."
-  [systems group]
-  (select-multisys-with-ctrl systems)
+  [systems group] 
+  (select-multisys systems)
+  (browser/click ::bulk-action)
   (browser/click ::select-sysgrp)
   (browser/click (-> group :name sysgroup-checkbox))
   (browser/click ::add-sysgrp)
-  (browser/click ::confirm-to-yes)
-  (notification/success-type :sys-add-bulk-sysgrps))
+  (browser/click ::confirmation-yes))
 
 (defn- add-sys-to-sysgrp
   "Adding sys to sysgroup from right pane"
@@ -277,7 +235,7 @@
 
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      (browser/move-to ::name-text)
+      ;(browser/move-to ::name-text)
       (edit-system-details to-add)
       (when env (set-environment (:name env)))
 
@@ -490,50 +448,20 @@
                                (do (Thread/sleep 2000)
                                    (recur (browser/text (package-action-status package)))))))
 
-(defn add-package "Add a package/package-group on selected system"
-  [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page system)
-  (doseq [[items is-group?] [[package false]
-                             [package-group true]]]
-    (when items
-      (when is-group? (browser/click ::select-package-group))
-      (browser/input-text ::package-name items)
-      (browser/send-keys ::package-name items)
-      (browser/click ::add-content)
-      (Thread/sleep 50000)
-      (check-package-status))))
 
-(defn remove-package "Remove a installed package/package-group from selected system."
-  [system {:keys [package package-group]}]
-  (nav/go-to ::content-packages-page system)
-  (doseq [[items is-group?] [[package false]
-                             [package-group true]]]
-    (when items
-      (when is-group? (browser/click ::select-package-group))
-      (browser/input-text ::package-name items)
-      (browser/send-keys ::package-name items)
-      (browser/click ::remove-content)
-      (Thread/sleep 50000)
-      (check-package-status))))
+(defn package-action "Install/remove/update package/package-group on selected system "
+  [system {:keys [package pkg-action]}]
+  (nav/go-to ::packages-page system)
+  (browser/select-by-text ::package-action pkg-action)
+  (browser/input-text ::input-package-name package)
+  (browser/click ::perform-action))
 
-
-
-
-(defn filter-package "filter a package from package-list"
+(defn filter-package 
   [system {:keys [package]}]
-  (nav/go-to ::content-packages-page system)
-  (browser/input-text ::filter-package package)
-  (browser/send-keys ::filter-package package)
-  (browser/click (package-select package)))
-
-(defn update-selected-package "Update a selected package from package-list"
-  [system {:keys [package]}]
-  (filter-package system {:package package})
-  (browser/click ::update-package)
-  (check-pkg-update-status package))
+  (nav/go-to ::packages-page system)
+  (browser/input-text ::filter-package package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]}]
-  (filter-package system {:package package})
-  (browser/click ::remove-package)
-  (check-pkg-update-status package))
+  (filter-package system {:package package}) 
+  (browser/click (remove-package package)))
