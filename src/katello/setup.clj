@@ -55,6 +55,9 @@
                                  :profile (doto (ff/new-profile)
                                             (ff/enable-native-events true))})
 
+(defn local-chrome-config []
+  {:browser-config-opts {:browser :chrome, "chrome.binary" (@config :chrome-binary)}})
+
 (defn new-remote-grid
   "Returns a remote grid server. See new-remote-driver."
   [host & [port]]
