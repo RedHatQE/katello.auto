@@ -119,7 +119,12 @@
     katello/chain 1
     katello/instance-or-nil? 0
     webdriver/locator-finder-fn 1
-    })
+    webdriver/click 1
+    webdriver/input-text 1
+    webdriver/select-by-text 1
+    webdriver/move-to 1
+    webdriver/exists? 1
+    webdriver/visible? 1})
 
 (defn record-contructor-depths
   "Returns trace setting to not trace record constructors."
