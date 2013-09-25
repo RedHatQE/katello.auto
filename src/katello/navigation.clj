@@ -95,9 +95,10 @@
 
 (defmethod pages [(-> *ns* .getName symbol) :katello.deployment/any] [& _]
   (nav/nav-tree
-   [::top-level (fn [& _] (when (or (not (browser/exists? ::ui/log-out))
-                                    (browser/exists? ::ui/confirmation-dialog))
-                            (browser/to (@conf/config :server-url))))]))
+   [::top-level (fn [& _] (if (or (not (browser/exists? ::ui/log-out))
+                                  (browser/exists? ::ui/confirmation-dialog))
+                            (browser/to (@conf/config :server-url))
+                            (browser/execute-script "window.scrollTo(0,0)")))]))
 
 (defmacro defpages
   "Define the pages needed to navigate to in this namespace, and
