@@ -97,17 +97,18 @@
   (browser/ajax-wait)
   (browser/quick-fill [::name-text name
                        ::description-text description])
-  (when label
-    (browser/click ::description-text) ;; workaround to activate label js
-    (browser/clear ::label-text)
-    (browser/input-text ::label-text label))
-  (when (and (rest/is-katello?) initial-env)
-    (browser/quick-fill [::initial-env-name-text (:name initial-env)
-                         ::initial-env-desc-text (:description initial-env)])
-    (when (:label initial-env)
-      (browser/click ::description-text) ;; workaround to activate label js
-      (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (:label initial-env))))
+  (let [label-activate #(webdriver/execute-script "$('.name_input').trigger('blur')")] ;; workaround to activate label js
+    (when label
+      (label-activate) 
+      (browser/clear ::label-text)
+      (browser/input-text ::label-text label))
+    (when (and (rest/is-katello?) initial-env)
+      (browser/quick-fill [::initial-env-name-text (:name initial-env)
+                           ::initial-env-desc-text (:description initial-env)])
+      (when (:label initial-env)
+        (label-activate)
+        (browser/clear ::initial-env-label-text)
+        (browser/input-text ::initial-env-label-text (:label initial-env)))))
   (nav/scroll-to-right-pane-item ::create)
   (browser/click ::create)
   (notification/success-type :org-create))
