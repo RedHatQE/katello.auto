@@ -53,7 +53,7 @@
                            (Thread/sleep 2000)
                            (browser/move-to ::default-info))
      [::system-default-info-page (fn [_] (third-lvl-menu-click ::system-default-info))]
-     [::distributor-default-info-page (fn [_] (browser/click ::distributor-default-info))]]]])
+     [::distributor-default-info-page (fn [_] (third-lvl-menu-click ::distributor-default-info))]]]])
 
 ;; Tasks
 
