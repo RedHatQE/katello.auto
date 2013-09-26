@@ -76,6 +76,7 @@
    ::errata-type               "//div[@name='parameter[errata_type]']"
    ::select-errata-label       "//select[@name='parameter[errata_type]']"
    ::repo-tab                  "//a[contains(@href, '##repos')]"
+   ::rules-tab                 "//a[contains(@href,'##rules')]"
    ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
    
    ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
@@ -144,10 +145,8 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
@@ -156,9 +155,7 @@
   (doseq [repo repos]
     (browser/move-to (-> repo :name product-or-repository))
     (browser/click ::add-product-btn)
-    (browser/click  (-> repo :name remove-repository))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click  (-> repo :name remove-repository))))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -201,9 +198,8 @@
   [repos]
   (browser/click ::repo-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)))
+    (browser/click (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)))
 
 (defn select-package-version-value
   "Select package version and set values: 
@@ -227,8 +223,9 @@
 (defn- add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
+  (browser/click ::rules-tab)
   (browser/click ::add-rule)
-  (browser/select ::select-filter-type (:type cv-filter))
+  (browser/select-by-text ::select-filter-type (:type cv-filter))
   (browser/click ::create-rule)
   (when (:exclude? cv-filter)
     (select-exclude-filter)))
@@ -307,9 +304,7 @@
   (browser/click ::content-tab)
   (doseq [product products]
     (browser/move-to (-> product :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click ::add-product-btn)))
   
 (defn- remove-from
   "Removes the given product from existing Content View"
@@ -317,9 +312,7 @@
   (browser/click ::content-tab)
   (doseq [product products]
     (browser/move-to (->  product :name product-or-repository))
-    (browser/click (-> product :name remove-product))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> product :name remove-product))))
 
 (defn- update
   "Edits an existing Content View Definition."
