@@ -133,6 +133,7 @@
    ::search-clear-the-search "search_clear"
    ::search-submit           "//button[@form='search_form']"
    ::notification-container  {:tag "div" :class "jnotify-container"}
+   ::notification-close      {:tag :a :class "jnotify-close"}
    ::expand-path             "path-collapsed"
    ::total-results-count     "total_results_count"
    ::current-items-count     "current_items_count"

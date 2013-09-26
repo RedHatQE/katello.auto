@@ -1,6 +1,7 @@
 (ns katello.navigation
   (:require (katello [conf :as conf]
-                     [ui :as ui])
+                     [ui :as ui]
+                     [notifications :as notif])
             [ui.navigate :as nav]
             [slingshot.slingshot :refer [throw+ try+]]
             [webdriver :as browser])
@@ -98,7 +99,8 @@
    [::top-level (fn [& _] (if (or (not (browser/exists? ::ui/log-out))
                                   (browser/exists? ::ui/confirmation-dialog))
                             (browser/to (@conf/config :server-url))
-                            (browser/execute-script "window.scrollTo(0,0)")))]))
+                            (do (browser/execute-script "window.scrollTo(0,0)")
+                                (notif/dismiss-all-ui))))]))
 
 (defmacro defpages
   "Define the pages needed to navigate to in this namespace, and
