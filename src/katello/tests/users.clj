@@ -163,12 +163,12 @@
                                          (organization/switch nil {:default-org org}))}]
         (create-all-recursive (conj (vals save-method->env) user))
         (ui/update user assoc :roles (list role/administrator))
-        (with-user-temporarily user
-          (doseq [[save-method env] save-method->env]
-            ((ways-to-set-default save-method) user env))
-          (verify-login-direct-to-default-org (assoc user :default-org (-> expected
-                                                                           save-method->env
-                                                                           kt/org))))))
+        (login user)
+        (doseq [[save-method env] save-method->env]
+          ((ways-to-set-default save-method) user env))
+        (verify-login-direct-to-default-org (assoc user :default-org (-> expected
+                                                                         save-method->env
+                                                                         kt/org)))))
     
     [[[:login :star :settings] :star]
      [[:login :settings] :login]
