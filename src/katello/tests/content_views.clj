@@ -201,12 +201,11 @@
         
         (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
                                                       :org conf/*session-org*})
-                      repo (fresh-repo (kt/org content-def) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+                      repo (fresh-repo (kt/org content-def) "http://inecas.fedorapeople.org/fakerepos/zoo/")]
           (ui/create content-def)
           (create-recursive repo)
-          (ui/update content-def assoc :products (list (kt/product repo)))
-          (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))))
-    
+          (ui/update content-def assoc :products (list (kt/product repo))))))
+      
     (deftest "Create a filter"
       :uuid "da277945-9bad-468f-8460-c0149d4ee806"
       (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
@@ -236,10 +235,10 @@
         (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
           (assoc-content-with-cv cv cv-filter)
-          (views/add-package-rule cv-filter {:packages (list packages)
-                                             :version-type version-type
-                                             :value1 value1
-                                             :value2 value2})))  
+          (views/filter-items cv-filter {:items (list packages)
+                                         :version-type version-type
+                                         :value1 value1
+                                         :value2 value2})))  
       [["cow" :all]
        ["cat" :only-version "0.5"]
        ["crow" :newer-than "2.7"]
@@ -260,13 +259,13 @@
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
-          (doall (for [rule [{:packages packages 
+          (doall (for [rule [{:items packages 
                               :version-type version-type}
-                             {:packages packages1 
+                             {:items packages1 
                               :version-type version-type}
-                             {:packages ""
+                             {:items ""
                               :version-type version-type}]]
-                   (views/add-package-rule cv-filter rule)))
+                   (views/filter-items cv-filter rule)))
           (views/remove-rule packages1)
           (let [packages-in-msg (apply str (interpose ", " packages))]
             (if (:exclude? cv-filter)
@@ -404,19 +403,19 @@
                                                :description "auto activation key"
                                                :content-view cv})]
           (ui/create cv-filter)
-          (doall (for [rule [{:packages (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
-                             {:packages (list "camel"), :version-type :only-version, :value1 "0.1-1"}
-                             {:packages (list "dog"), :version-type :newer-than, :value1 "4.20"}
-                             {:packages (list "dolphin"), :version-type :older-than, :value1 "3.11"}
-                             {:packages (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
-                   (views/add-package-rule cv-filter rule)))
-          (doall (for [rule1 [{:packages (list "elephant"), :version-type :all}
-                              {:packages (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
-                              {:packages (list "horse"), :version-type :newer-than, :value1 "0.21"}
-                              {:packages (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
-                              {:packages (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
+          (doall (for [rule [{:items (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
+                             {:items (list "camel"), :version-type :only-version, :value1 "0.1-1"}
+                             {:items (list "dog"), :version-type :newer-than, :value1 "4.20"}
+                             {:items (list "dolphin"), :version-type :older-than, :value1 "3.11"}
+                             {:items (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
+                   (views/filter-items cv-filter rule)))
+          (doall (for [rule1 [{:items (list "elephant"), :version-type :all}
+                              {:items (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
+                              {:items (list "horse"), :version-type :newer-than, :value1 "0.21"}
+                              {:items (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
+                              {:items (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
                    (-> cv-filter (update-in [:exclude?] (constantly true))
-                     (views/add-package-rule rule1))))
+                     (views/filter-items rule1))))
           (views/add-repo-from-filters (list (kt/repository repo)))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
@@ -454,7 +453,7 @@
                                                :description "auto activation key"
                                                :content-view cv})]
           (ui/create cv-filter-pkg)
-          (views/add-package-rule cv-filter-pkg {:packages (list "frog"), :version-type :all})
+          (views/filter-items cv-filter-pkg {:items (list "frog"), :version-type :all})
           (views/add-repo-from-filters (list (kt/repository repo)))
           (ui/create cv-filter-pkggroup)
           (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
@@ -931,5 +930,24 @@
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))
             (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
-                             (changeset/promote-delete-content deletion-cs)))))))) 
+                             (changeset/promote-delete-content deletion-cs))))))
+    
+    
+    (deftest "Create a puppet module filter"
+      :uuid "e34dd75b-9ec3-4cfd-a00b-b41d9dfc8c5a"
+      (let [cv (kt/newContentViewDefinition {:name (uniqueify "con-def")
+                                             :org conf/*session-org*})
+            cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Puppet Modules"})
+            repo (fresh-repo (kt/org cv) "http://forge.puppetlabs.com/" "puppet")]
+        (ui/create-all (list (kt/product repo) (kt/repository repo)))
+        (ui/create cv)
+        (ui/update cv assoc :repos (list (kt/repository repo)))
+        (ui/create cv-filter)
+        (views/add-repo-from-filters (list (kt/repository repo)))
+        (doall (for [rule [{:items (list "android" "amanda" "ant"), :version-type :all}
+                           {:items (list "apache"), :version-type :only-version, :value1 "1.0.0"}
+                           {:items (list "bind"), :version-type :newer-than, :value1 "1.0.0"}
+                           {:items (list "cobbler"), :version-type :older-than, :value1 "1.2.1"}
+                           {:items (list "activemq"), :version-type :range, :value1 "0.0.1", :value2 "2.0.0"}]]
+                 (views/filter-items cv-filter rule)))))))
                
