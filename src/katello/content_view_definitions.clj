@@ -80,8 +80,6 @@
    ::rules-tab                 "//a[contains(@href,'##rules')]"
    ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
    
-   ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
-   ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
