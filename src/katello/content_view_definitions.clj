@@ -15,7 +15,8 @@
 ;; Locators
 
 (browser/template-fns
- {product-or-repository       "//li[contains(text(), '%s')]"
+ {yum-product-or-repository   "//div[@id='product_select_chzn']//li[contains(text(), '%s')]"
+  puppet-repository           "//div[@id='repo_select_chzn']//li[contains(text(), '%s')]"            
   filter-link                 "//a[contains(text(), 'Filter: %s')]"
   filter-name-link            "//a[contains(text(), '%s')]"
   select-filter               "//input[@value='%s']"
@@ -57,6 +58,7 @@
    ::add-rule                  "//input[@value='Add New Rule']"
    ::create-rule               "//input[@class='create_button']"
    ::rule-input                "//input[@id='rule_input']"
+   ::input-puppet-author       "//input[@id='units_author']"
    ::submit-rule               "//a[@id='add_rule']"
    ::remove-button             "//input[@id='remove_button']"
    ::select-filter-type        "//select[@id='filter_rule_content_type']"
@@ -126,6 +128,17 @@
                              (Thread/sleep 2000)
                              (recur (browser/text  (status published-name)))))))
 
+(defn- select-repo
+  "Function to select repo based on repo-type Puppet or Yum"
+  [repos]
+  (doseq [repo repos]
+    (if (= (:repo-type repo) "yum")
+      (do
+        (browser/click (-> repo :name yum-product-or-repository))
+        (browser/click ::add-product-btn))
+      (do
+        (browser/click (-> repo :name puppet-repository))))))
+  
 (defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
@@ -143,9 +156,7 @@
   "Add the given repository to content-view definition"
   [repos]
   (browser/click ::content-tab)
-  (doseq [repo repos]
-    (browser/click (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)))
+  (select-repo repos))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
@@ -195,9 +206,7 @@
   "Selects repo tab under CV filters"
   [repos]
   (browser/click ::repo-tab)
-  (doseq [repo repos]
-    (browser/click (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)))
+  (select-repo repos))
 
 (defn select-package-version-value
   "Select package version and set values: 
@@ -218,7 +227,7 @@
     (browser/input-text  ::range-value2 value2)
     (browser/click ::save-version)))
 
-(defn- add-rule
+(defn add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
   (browser/click ::rules-tab)
@@ -235,11 +244,11 @@
     (browser/input-text  ::rule-input item)
     (browser/click ::submit-rule)))
   
-(defn add-package-rule 
+(defn filter-items 
   "Define rule to add packages to content filter"
-  [cv-filter & [{:keys [packages version-type value1 value2]}]]
+  [cv-filter & [{:keys [items version-type value1 value2]}]]
   (add-rule cv-filter)
-  (input-rule-items packages)
+  (input-rule-items items)
   (when-not (= "all" version-type)
     (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
   (browser/click (filter-link (:name cv-filter))))
@@ -301,7 +310,7 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/click (-> product :name product-or-repository))
+    (browser/click (-> product :name yum-product-or-repository))
     (browser/click ::add-product-btn)))
   
 (defn- remove-from
