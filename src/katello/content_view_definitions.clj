@@ -305,7 +305,7 @@
                          ::details-description-text description})
   (notification/success-type :cv-update))
 
-(defn- add-to
+(defn- add-product
   "Adds the given product to a content view definition"
   [products]
   (browser/click ::content-tab)
@@ -313,7 +313,7 @@
     (browser/click (-> product :name yum-product-or-repository))
     (browser/click ::add-product-btn)))
   
-(defn- remove-from
+(defn- remove-product
   "Removes the given product from existing Content View"
   [products]
   (browser/click ::content-tab)
@@ -331,8 +331,8 @@
                    (edit-content-view-details name description))
     (when-some-let [product-to-add (:products add)
                     product-to-rm (:products remove)]
-                   (add-to product-to-add)
-                   (remove-from product-to-rm))
+                   (add-product product-to-add)
+                   (remove-product product-to-rm))
     (when-some-let [repo-to-add (:repos add)
                     repo-to-remove (:repos remove)]
                    (add-repo repo-to-add)
