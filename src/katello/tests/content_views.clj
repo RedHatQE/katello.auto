@@ -260,7 +260,6 @@
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
-          (assoc-content-with-cv cv cv-filter)
           (doall (for [rule [{:packages packages 
                               :version-type version-type}
                              {:packages packages1 
@@ -607,11 +606,11 @@
 
     (deftest "Remove complete product or a repo from content-view-defnition"
       :uuid "5439b54f-e679-19b4-fd93-3fbc32c96b14"
-      (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    content-defn (kt/newContentViewDefinition {:name "auto-view-definition"
-                                                               :org org})
-                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
+      (let [org (kt/newOrganization {:name (uniqueify "auto-org")})
+            content-defn (kt/newContentViewDefinition {:name (uniqueify "auto-view-definition")
+                                                       :org org})
+            repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
         (ui/create-all (list org content-defn))
         (doseq [repo [repo1 repo2]]
           (create-recursive repo))
@@ -619,7 +618,7 @@
           (ui/update dissoc :products))
         (-> content-defn (ui/update assoc :repos (list (kt/repository repo2)))
           (ui/update dissoc :repos))))
-
+    
     (deftest "Create composite content-definition with two products"
       :uuid "9463a161-8d9b-9cc4-f09b-c011b0cd6c53"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
