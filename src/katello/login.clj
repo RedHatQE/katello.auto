@@ -14,7 +14,6 @@
   {::username-text     "//input[@class='username']"
    ::password-text     "//input[@class='password']"
    ::log-in            "//input[@value='Log In' or @value='Login']"
-   ::re-log-in-link    "//a[contains(@href, '/login')]"
    ::error-message     "//ul[@class='error']"
    ::close-error       "//div[@id='notifications']//div[@class='control']"
    ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"})
@@ -69,8 +68,6 @@
      {:pre [(not (nil? user))
             (instance? katello.User user)]}
      (when (logged-in?) (logout))
-     #_(when (browser/exists? ::re-log-in-link)
-       (browser/click ::re-log-in-link))
 
      (rest/when-katello
       (when (signo-error?)
