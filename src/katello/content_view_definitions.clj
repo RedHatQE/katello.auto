@@ -26,6 +26,7 @@
   status                      "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/div[@class='fl']"
   refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
   refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
+  expand-toggle               "//span[contains(text(), '%s')]/parent::div/preceding-sibling::div[contains(@class, 'small_col')]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
@@ -153,9 +154,8 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click  (-> repo :name remove-repository))))
+    (browser/click (-> (kt/product repo) :name expand-toggle)) 
+    (browser/click (-> repo :name remove-repository))))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -303,7 +303,7 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (-> product :name product-or-repository))
+    (browser/click (-> product :name product-or-repository))
     (browser/click ::add-product-btn)))
   
 (defn- remove-from
@@ -311,7 +311,7 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (->  product :name product-or-repository))
+    (browser/click (-> product :name expand-toggle)) 
     (browser/click (-> product :name remove-product))))
 
 (defn- update
