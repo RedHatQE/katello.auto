@@ -26,6 +26,7 @@
   status                      "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/div[@class='fl']"
   refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
   refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
+  expand-toggle               "//span[contains(text(), '%s')]/parent::div/preceding-sibling::div[contains(@class, 'small_col')]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
@@ -76,10 +77,9 @@
    ::errata-type               "//div[@name='parameter[errata_type]']"
    ::select-errata-label       "//select[@name='parameter[errata_type]']"
    ::repo-tab                  "//a[contains(@href, '##repos')]"
+   ::rules-tab                 "//a[contains(@href,'##rules')]"
    ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
    
-   ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
-   ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
@@ -144,21 +144,16 @@
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click  (-> repo :name remove-repository))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> (kt/product repo) :name expand-toggle)) 
+    (browser/click (-> repo :name remove-repository))))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -201,9 +196,8 @@
   [repos]
   (browser/click ::repo-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)))
+    (browser/click (-> repo :name product-or-repository))
+    (browser/click ::add-product-btn)))
 
 (defn select-package-version-value
   "Select package version and set values: 
@@ -227,8 +221,9 @@
 (defn- add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
+  (browser/click ::rules-tab)
   (browser/click ::add-rule)
-  (browser/select ::select-filter-type (:type cv-filter))
+  (browser/select-by-text ::select-filter-type (:type cv-filter))
   (browser/click ::create-rule)
   (when (:exclude? cv-filter)
     (select-exclude-filter)))
@@ -306,20 +301,16 @@
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (-> product :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> product :name product-or-repository))
+    (browser/click ::add-product-btn)))
   
 (defn- remove-from
   "Removes the given product from existing Content View"
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (->  product :name product-or-repository))
-    (browser/click (-> product :name remove-product))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> product :name expand-toggle)) 
+    (browser/click (-> product :name remove-product))))
 
 (defn- update
   "Edits an existing Content View Definition."

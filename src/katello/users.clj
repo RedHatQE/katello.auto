@@ -16,11 +16,11 @@
 
 (ui/defelements :katello.deployment/any [katello.ui]
   {::roles-link                  (ui/third-level-link "user_roles")
-   ::environments-link           (ui/third-level-link "environment")
+   ::defaults-link               (ui/third-level-link "environment")
    ::user-notifications          "unread_notices_count"
    ::delete-link                 (ui/link "Delete All")
    ::confirmation-no             "xpath=(//button[@type='button'])[2]"
-   ::default-org-select          "org_id[org_id]"
+   ::default-org-select          {:name "org_id[org_id]"}
    ::save-environment            "update_user"
    ::save-edit                   "save_password"
    ::new                         "//a[@id='new']"
@@ -55,7 +55,7 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [user] (nav/choose-left-pane user-list-item user))
-    [::environments-page (fn [_] (browser/click ::environments-link))]
+    [::environments-page (fn [_] (browser/click ::defaults-link))]
     [::roles-permissions-page (fn [_] (browser/click ::roles-link))]]])
 
 
@@ -130,7 +130,7 @@
     (if (= (:name (current)) (:name user))
       (do (browser/move-to ::user-account-dropdown) ;; TODO : fix mouseover once this compiles
           (browser/click ::account)
-          (browser/wait-until (browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
+          (browser/wait-until #(browser/exists? ::password-text) 60000 5000)) ; normal ajax wait doesn't work here
       (nav/go-to user))
 
     (when-not (nil? inline-help)
@@ -154,7 +154,7 @@
         (browser/click ::roles-link)
         (apply modify-roles role-changes)))
     (when (or default-org default-env)
-      (browser/click ::environments-link)
+      (browser/click ::defaults-link)
       (assign-default-org-and-env default-org default-env))))
 
 (extend katello.User

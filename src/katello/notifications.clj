@@ -199,6 +199,13 @@
   "Clears the javascript notice array."
   (browser/execute-script "if (window.notices) { window.notices.noticeArray = [] }"))
 
+(defn dismiss-all-ui "Dismisses all notifications still onscreen"
+  []
+  (let [close-buttons (browser/elements ::ui/notification-close)]
+    (doseq [close-button close-buttons]
+      (browser/click close-button))
+    (browser/wait-until #(not (browser/exists? ::ui/notification-close)))))
+
 (defn notifications
   "Gets all notifications from the page, returns a list of maps
    representing the notifications. Waits for timeout-ms for at least

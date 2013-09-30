@@ -95,6 +95,17 @@
     (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
+(defn- assoc-content-with-cv
+  "Associate product/repo with cv before applying filter rules"
+  [cv cv-filter]
+  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+    (create-recursive repo)
+    (ui/create cv)
+    (ui/update cv assoc :repos (list (kt/repository repo)))
+    (ui/create cv-filter)
+    (views/add-repo-from-filters (list (kt/repository repo)))))
+
+
 ;; Data (Generated)
 
 (def gen-errata-test-data
@@ -173,7 +184,7 @@
       :blockers (bz-bugs "1006693")
       (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                     cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups"})]
-        (ui/create-all (list cv cv-filter))
+        (assoc-content-with-cv cv cv-filter)
         (views/add-pkg-group-rule cv-filter {:pkg-groups (list "birds")})
         (ui/delete cv)))
     
@@ -190,7 +201,7 @@
         
         (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
                                                       :org conf/*session-org*})
-                      repo (fresh-repo (kt/org content-def) pulp-repo)]
+                      repo (fresh-repo (kt/org content-def) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
           (ui/create content-def)
           (create-recursive repo)
           (ui/update content-def assoc :products (list (kt/product repo)))
@@ -205,6 +216,7 @@
     (deftest "Create a new filter with blank name and long name"
       :uuid "fda6c1a6-7e70-4cc2-8f0f-0089698e1572"
       :data-driven true
+      :blockers (bz-bugs "1011017")
       
       (fn [name expected-res]
         (let [cv (katello/newContentViewDefinition {:name (uniqueify "con-def") :org *session-org*})
@@ -223,7 +235,7 @@
       (fn [packages version-type &[value1 value2]]
         (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
-          (ui/create-all (list cv cv-filter))
+          (assoc-content-with-cv cv cv-filter)
           (views/add-package-rule cv-filter {:packages (list packages)
                                              :version-type version-type
                                              :value1 value1
@@ -233,8 +245,7 @@
        ["crow" :newer-than "2.7"]
        ["bird" :older-than "2.3"]
        ["bear" :range "2.3" "2.7"]])
-    
-    
+     
     (deftest "Create 'Include/Exclude' type filter for packages"
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
       :data-driven true
@@ -243,13 +254,12 @@
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
-          (ui/create cv-filter)
           (doall (for [rule [{:packages packages 
                               :version-type version-type}
                              {:packages packages1 
@@ -596,11 +606,11 @@
 
     (deftest "Remove complete product or a repo from content-view-defnition"
       :uuid "5439b54f-e679-19b4-fd93-3fbc32c96b14"
-      (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    content-defn (kt/newContentViewDefinition {:name "auto-view-definition"
-                                                               :org org})
-                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
+      (let [org (kt/newOrganization {:name (uniqueify "auto-org")})
+            content-defn (kt/newContentViewDefinition {:name (uniqueify "auto-view-definition")
+                                                       :org org})
+            repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
         (ui/create-all (list org content-defn))
         (doseq [repo [repo1 repo2]]
           (create-recursive repo))
@@ -608,7 +618,7 @@
           (ui/update dissoc :products))
         (-> content-defn (ui/update assoc :repos (list (kt/repository repo2)))
           (ui/update dissoc :repos))))
-
+    
     (deftest "Create composite content-definition with two products"
       :uuid "9463a161-8d9b-9cc4-f09b-c011b0cd6c53"
       (with-unique [org (kt/newOrganization {:name "auto-org"})

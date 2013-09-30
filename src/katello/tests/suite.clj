@@ -87,5 +87,7 @@
                                           :to-trace (@conf/config :trace)
                                           :do-not-trace (@conf/config :trace-excludes)
                                           :middleware (setup/harness-middleware)}))
-               (finally (provision/shutdown client-queue)
-                        (-> conf/*cloud-conn* :api .shutdown))))))))
+               (finally (try (provision/shutdown client-queue)
+                             (catch Exception e (.printStackTrace e))
+                             (finally
+                               (-> conf/*cloud-conn* :api .shutdown))))))))))
