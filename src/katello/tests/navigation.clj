@@ -5,6 +5,7 @@
                      redhat-repositories
                      systems
                      gpg-keys
+                     system-groups
                      [notifications :refer [verify-no-error]]
                      [rest :refer [katello-only]])))
 
@@ -18,7 +19,7 @@
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs
   '(:katello.redhat-repositories/page
-    :katello.systems/by-environments-page
+    :katello.system-groups/page
     :katello.gpg-keys/page))
 
 ;;; Functions
