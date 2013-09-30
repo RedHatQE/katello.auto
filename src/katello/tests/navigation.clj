@@ -2,15 +2,18 @@
   (:require [test.tree.script :refer :all] 
             (katello [navigation :as nav]
                      [conf :refer [*session-org*]]
+                     redhat-repositories
+                     systems
+                     gpg-keys
                      [notifications :refer [verify-no-error]]
                      [rest :refer [katello-only]])))
 
 ;; Constants
 
 (def common-tabs '(:katello.roles/page
-                     :katello.users/page 
-                     :katello.systems/page
-                     :katello.activation-keys/page))
+                   :katello.users/page 
+                   :katello.systems/page
+                   :katello.activation-keys/page))
 
 (def ^{:doc "Tabs that don't exist in headpin"}
   katello-only-tabs

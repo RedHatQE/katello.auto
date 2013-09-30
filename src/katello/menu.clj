@@ -94,7 +94,7 @@
 
              [::repositories-menu (fn [_] (browser/move-to ::repositories-link))
               [:katello.providers/products-page (fn [_] (browser/click ::products-link))]
-              [:katello.redhat-repositories/redhat-page (fn [_] (browser/click ::red-hat-repositories-link))]
+              [:katello.redhat-repositories/page (fn [_] (browser/click ::red-hat-repositories-link))]
               [:katello.gpg-keys/page (fn [_] (browser/click ::gpg-keys-link))]]
 
              [::sync-management-menu (fn [_] (browser/move-to ::sync-management-link))

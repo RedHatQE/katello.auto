@@ -26,12 +26,12 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::rpms-page (fn [] (browser/click ::rpms-tab))]
-   [::source-rpms-page (fn [] (browser/click ::srpms-tab))]
-   [::debug-rpms-page (fn [] (browser/click ::debugs-tab))] 
-   [::beta-rpms-page (fn [] (browser/click ::beta-tab))]
-   [::product-isos-page (fn [] (browser/click ::isos-tab))] 
-   [::others-page (fn [] (browser/click ::others-tab))]])
+   [::rpms-page (fn [_] (browser/click ::rpms-tab))]
+   [::source-rpms-page (fn [_] (browser/click ::srpms-tab))]
+   [::debug-rpms-page (fn [_] (browser/click ::debugs-tab))] 
+   [::beta-rpms-page (fn [_] (browser/click ::beta-tab))]
+   [::product-isos-page (fn [_] (browser/click ::isos-tab))] 
+   [::others-page (fn [_] (browser/click ::others-tab))]])
 
 (def redhat-ak-subscriptions '("Red Hat Employee Subscription"))
 
