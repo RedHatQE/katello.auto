@@ -18,6 +18,17 @@
         
    ::new-product              "//div[@class='nutupane-actions fr']/button[contains (.,'New Product')]"
    ::repository-discovery     "//div[@class='nutupane-actions fr']/button[contains (.,'Repo Discovery')]"
+   
+   ::discover-url-text        "//input[@placeholder='URL to discover']"
+   ::discover-button          "//button[@type='submit' and contains(.,'Discover')]"
+   ::cancel-discovery         "//button[@ng-click='cancelDiscovery()']"
+   ::discover-spinner         "//button[@ng-click='cancelDiscovery()']//i[contains(@class,'icon-spinner')]"
+   ::create-selected          "//button[@ng-click='setupSelected()' and contains(.,'Create Selected')]"
+   ::discover-prd-name-text   "//input[@ng-model='createRepoChoices.product.name']"
+   ::discover-prd-label-text  "//input[@ng-model='createRepoChoices.product.label']"
+   ::discover-prd-prov-select "//select[@ng-model='createRepoChoices.product.provider_id']"
+   ::existing-prd-select      "//select[@ng-model='createRepoChoices.existingProductId']"
+   ::create-discover-repos    "//button[@ng-click='createRepos()']"
         
    ::product-name-text        "//input[@name='name']"
    ::product-label-text       "//input[@name='label']"
@@ -37,7 +48,10 @@
 
 (browser/template-fns
  {select-product          "//tr[@row-select='product']/td/a[contains(.,'%s')]"
-  select-repository       "//a[contains(@href,'repositories') and contains(.,'%s')]"})
+  select-repository       "//a[contains(@href,'repositories') and contains(.,'%s')]"
+  repo-create-checkbox    "//table[@alch-table='discoveryTable']//td[normalize-space(.)='%s']/../td/input[@type='checkbox']"
+  new-product-radio-btn   "//input[@name='newProduct' and @value='%s']"
+  existing-product-select "//select[@ng-model='createRepoChoices.existingProductId']"})
   
 ;; Nav
 
@@ -65,7 +79,7 @@
           (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::new-page provider)
   (ui/create provider) ;; Todo for same provider
-  (when gpg-key (browser/select ::products-gpg-key gpg-key))
+  (when gpg-key (browser/select-by-text ::products-gpg-key (:name gpg-key)))
   (browser/quick-fill [::product-name-text name
                        ::product-description-text description
                        ::product-save  browser/click]))
@@ -77,7 +91,7 @@
   (when (not= (:gpg-key product) gpg-key) 
     (nav/go-to ::product-details-page product)
     (browser/click ::prd-gpgkey-update)
-    (browser/select ::prd-gpgkey-update-select gpg-key)
+    (browser/select-by-text ::prd-gpgkey-update-select gpg-key)
     (browser/click ::save-updated-gpg-key)))
 
 (defn- delete-product
@@ -89,14 +103,15 @@
   (browser/click ::product-remove))
 
 
-#_(defn create-discovered-repos-within-product
+(defn create-discovered-repos-within-product
   "Autodiscovers repositories at the provided url and creates the
   selected repositories within the named product. Optional keys:
   cancel - cancels the repo discovery search shortly after starting it.
   new-prod - creates a new product instead of adding repos to an existing one"
-  [product discoverable-url enabled-urls & [{:keys [new-prod cancel]}]]
-  (nav/go-to ::repo-discovery-page product)
-  (browser/quick-fill [::discovery-url-text discoverable-url
+  [product discoverable-url enabled-urls & [{:keys [new-prod cancel http?]}]]
+  (nav/go-to ::products-page product)
+  (browser/click ::repository-discovery)
+  (browser/quick-fill [::discover-url-text discoverable-url
                        ::discover-button browser/click])
   (if cancel
     (do
@@ -104,18 +119,17 @@
       (browser/click ::cancel-discovery))
     (do
       (Thread/sleep 2000)
-      (browser/wait-until  #(not (browser/visible? ::discover-spinner)) 120000 2000)
+      (browser/wait-until  #(not (browser/visible? ::discover-spinner)) 150000 2000)
       (doseq [url enabled-urls] (browser/click (repo-create-checkbox url)))
-      (browser/click ::create-within-product)
+      (browser/click ::create-selected)
       (if new-prod
         (do
           (browser/click (new-product-radio-btn "true"))
-          (browser/input-text ::new-product-name-text (:name product)))
+          (browser/input-text ::discover-prd-name-text (:name product))
+          (browser/select-by-text ::discover-prd-prov-select (:name (kt/provider product))))
         (do
-          (browser/execute-script ::existing-product-dropdown)
-          (browser/move-to (existing-product-select (:name product)))))
-      (browser/click ::create-repositories)
-      (notification/success-type :repo-create))))
+          (browser/select-by-text ::existing-prd-select (:name product))))
+      (browser/click ::create-discover-repos))))
 
 (extend katello.Provider
   ui/CRUD {:create create-provider}
