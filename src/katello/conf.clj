@@ -185,12 +185,6 @@
        (swap! config merge non-defaults)) ; merge 2nd time to override anything in
                                         ; config files
 
-     ;; if user didn't specify sel address, start a server and use that
-     ;; address.
-     #_(when-not (@config :selenium-address)
-         (selenium-server/start)
-         (swap! config assoc :selenium-address "localhost:4444"))
-     
      (def ^:dynamic *session-user* (katello/newUser {:name (@config :admin-user)
                                                      :password (@config :admin-password)
                                                      :email "admin@katello.org"}))
