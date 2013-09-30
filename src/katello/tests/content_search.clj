@@ -11,7 +11,7 @@
                      [blockers :refer [bz-bugs]]
                      [fake-content  :as fake]
             )
-            [katello.tests.content-views :refer [promote-published-content-view]]
+            [katello.tests.content-views :refer [rest-promote-published-content-view]]
             [katello :as kt]
             [test.assert :as assert]
             [test.tree.script :refer [defgroup deftest]]
@@ -22,7 +22,6 @@
 (declare test-org-errata)
 
 (def manifest-loc (tmpfile "cs-manifest.zip"))
-
 
 (defn names-by-type [data-type cs-results]
   (->> cs-results
@@ -363,20 +362,20 @@
   (defn cs-envcomp-setup []
                  (def ^:dynamic test-org-env  (uniqueify  (kt/newOrganization {:name "env-org"})))
                  (rest/create  test-org-env)
-                 (org/switch test-org-env)
+                 ;(org/switch test-org-env)
                  (fake/prepare-org-custom-provider test-org-env fake/custom-env-test-provider)
                  (let [env-dev-r (kt/newEnvironment {:name env-dev :org test-org-env :prior-env "Library"})
                        env-qa-r (kt/newEnvironment {:name env-qa :org test-org-env :prior-env env-dev})
                        env-release-r (kt/newEnvironment {:name env-release :org test-org-env :prior-env env-qa})]
-                   (ui/create-all-recursive [env-dev-r env-qa-r  env-release-r])
+                   (rest/create-all-recursive [env-dev-r env-qa-r  env-release-r])
         (def ^:dynamic publish-dev (:published-name
-                   (promote-published-content-view 
+                   (rest-promote-published-content-view 
                      test-org-env 
                      env-dev-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
                           1))))
         (def ^:dynamic publish-qa (:published-name
-                   (promote-published-content-view 
+                   (rest-promote-published-content-view 
                      test-org-env 
                      env-qa-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)

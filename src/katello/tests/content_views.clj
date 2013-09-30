@@ -37,18 +37,42 @@
                 cs (kt/newChangeset {:name "cs"
                                      :env target-env
                                      :content (list cv)})]
-    (ui/create-all-recursive (list org target-env))
-    (ui/create cv)
-    (create-recursive repo)
-    (when (not (:nosync repo))
-      (sync/perform-sync (list repo)))
-    (ui/update cv assoc :products (list (kt/product repo)))
-    (views/publish {:content-defn cv
-                    :published-name (:published-name cv)
-                    :description "test pub"
-                    :org org})
-    (changeset/promote-delete-content cs)
-    cv))
+       (ui/create-all-recursive (list org target-env))
+		    (ui/create cv)
+		    (create-recursive repo)
+		    (when (not (:nosync repo))
+		      (sync/perform-sync (list repo)))
+		    (ui/update cv assoc :products (list (kt/product repo)))
+		    (views/publish {:content-defn cv
+		                    :published-name (:published-name cv)
+		                    :description "test pub"
+		                    :org org})
+		    (changeset/promote-delete-content cs)
+		    cv))
+
+(defn rest-promote-published-content-view
+  "Function to promote published content view"
+  [org target-env repo]
+  (with-unique [cv (kt/newContentViewDefinition {:name "content-view"
+                                       :org org
+                                       :published-name "publish-name"})
+                
+                cs (kt/newChangeset {:name "cs"
+                                     :env target-env
+                                     :content (list cv)})]
+        (rest/create-all-recursive (list org target-env))
+		    (rest/create cv)
+		    (rest/create-recursive repo)
+		    (when (not (:nosync repo))
+		      (sync/perform-sync (list repo) {:rest true}))
+		    (rest/update cv assoc :products (list (kt/product repo)))
+		    (views/rest-publish {:content-defn cv
+		                    :published-name (:published-name cv)
+		                    :description "test pub"
+		                    :org org})
+		    (changeset/rest-promote-delete-content cs)
+		    cv
+        ))
 
 (defn promote-published-composite-view
   "Function to promote composite content view that contains two published views"

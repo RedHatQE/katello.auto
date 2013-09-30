@@ -10,6 +10,7 @@
                      [repositories :as repo]
                      [providers :as providers]
                      [ui :as ui]
+                     [rest :as rest]
                      [sync-management :as sync])))
 
 (def enable-repos 
@@ -132,8 +133,8 @@
 
 (defn prepare-org-custom-provider [org tree]
   (let [repolist (repo-list-from-tree tree org)]
-    (ui/create-all-recursive repolist)
-    (sync/perform-sync (remove :nosync repolist))))
+    (rest/create-all-recursive repolist)
+    (sync/perform-sync (remove :nosync repolist) {:rest true})))
 
 
 (defn get-all-custom-repo-names []

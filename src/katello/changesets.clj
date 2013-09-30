@@ -156,6 +156,17 @@
     ;;wait for async success notif
     (check-for-success {:timeout-ms (* 20 60 1000)})))
 
+(defn rest-promote-or-delete
+  "Promotes the given changeset to its target environment and could also Delete
+   content from an environment. An optional timeout-ms key will specify how long to
+   wait for the promotion or deletion to complete successfully."
+  [cs]
+   (let [id-url (partial rest/url-maker ["api/changesets/%s" [identity]])
+         id-url-apply (partial rest/url-maker ["api/changesets/%s/apply" [identity]])
+         id-url-promote (partial rest/url-maker ["api/changesets/%s/promote" [identity]])]
+     (rest/http-post (id-url-promote cs))
+     (rest/http-post (id-url-apply cs))))
+
 (defn promote-delete-content
   "Creates the given changeset, adds content to it and promotes it. "
   [cs]
@@ -165,6 +176,16 @@
       (ui/create cs)
       (ui/update cs assoc :content content)
       (promote-or-delete cs))))
+
+(defn rest-promote-delete-content
+  "Creates the given changeset, adds content to it and promotes it. "
+  [cs]
+  (when-not (-> cs kt/env kt/library?)
+    (let [content (:content cs)
+          cs (kt/newChangeset (dissoc cs :content ))] ; since creating doesn't include content
+      (rest/create cs)
+      (rest/update cs assoc :content content)
+      (rest-promote-or-delete cs))))
 
 (defn sync-and-promote
   "Syncs all the repos and then promotes all their parent products
