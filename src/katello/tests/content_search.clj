@@ -269,9 +269,9 @@
   :group-setup (fn []
                  (def ^:dynamic test-org-errata (uniqueify  (kt/newOrganization {:name"erratasearch"})))
                  (rest/create test-org-errata)
-                 (org/switch test-org-errata)
                  (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
-                 (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"})))
+                 (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"}))
+                 (org/switch test-org-errata))
   
   (deftest "Content Browser: Errata information"
     :uuid "f2a008f7-3219-1934-0c1b-82f47633be1c"
@@ -380,7 +380,7 @@
                      env-qa-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
                           2))))))
-(defgroup content-search-env-compare
+#_(defgroup content-search-env-compare
   :group-setup cs-envcomp-setup 
 
   (deftest "Content Browser: Shared content for selected environments"
