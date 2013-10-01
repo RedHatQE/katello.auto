@@ -32,8 +32,7 @@
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
-  (or (browser/exists? ::re-log-in-link)
-      (browser/exists? ::log-in)))
+  (browser/exists? ::log-in))
 
 (defn logout
   "Logs out the current user from the UI."
