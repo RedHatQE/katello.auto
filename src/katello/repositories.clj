@@ -29,7 +29,8 @@
    ::save-updated-gpg-key     "//div[@selector='repository.gpg_key_id']//button[contains(.,'Save')]"})
 
 (browser/template-fns
- {select-repository            "//a[contains(@href,'repositories') and contains(.,'%s')]"})
+ {select-repository            "//a[contains(@href,'repositories') and contains(.,'%s')]"
+  gpgkey-under-repo-details    "//span[contains(@class,'ng-binding') and normalize-space(.)='%s']"})
 
 (nav/defpages :katello.deployment/any katello.providers
   [::provider/products-page
@@ -74,11 +75,10 @@
   (when (browser/displayed? ::repo-remove)
      (browser/click ::repo-remove)))
 
-#_(defn gpgkey-associated?
-  [product repo-name]
-  (nav/go-to product)
-  (browser/click (select-repo repo-name))
-  (browser/exists? (gpgkey-under-repo-details (:gpg-key product))))
+(defn gpgkey-associated?
+  [repo]
+  (nav/go-to repo)
+  (browser/exists? (gpgkey-under-repo-details (-> repo kt/product :gpg-key :name))))
 
 
 (extend katello.Repository

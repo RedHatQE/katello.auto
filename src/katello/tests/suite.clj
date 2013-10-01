@@ -5,7 +5,7 @@
                            systems system-groups activation-keys
                            users permissions e2e navigation search
                            distributors content-search content-views)
-            ;;katello.tests.providers.custom
+            katello.tests.providers.custom
             katello.tests.providers.redhat
             [katello.client.provision :as provision]
             [katello.setup :as setup]
@@ -42,7 +42,7 @@
   katello.tests.e2e/end-to-end-tests
   katello.tests.providers.redhat/manifest-tests
   katello.tests.providers.redhat/redhat-content-provider-tests
-  ;;katello.tests.providers.custom/custom-product-tests
+  katello.tests.providers.custom/custom-product-tests
   katello.tests.content-search/content-search-tests
   katello.tests.content-views/content-views-tests
   )
