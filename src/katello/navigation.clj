@@ -1,11 +1,12 @@
 (ns katello.navigation
   (:require (katello [conf :as conf]
-                     [ui :as ui])
+                     [ui :as ui]
+                     [notifications :as notif])
             [ui.navigate :as nav]
             [slingshot.slingshot :refer [throw+ try+]]
             [webdriver :as browser])
   (:import [org.openqa.selenium NoSuchElementException]))
-
+  
 (defn environment-breadcrumb
   "Locates a link in the environment breadcrumb UI widget. If there
   are multiple environment paths, and you wish to select Library,
@@ -80,13 +81,6 @@
          (do (search-here (format "\"%s\"" (:name entity)))
              (browser/click loc))))))
 
-(defmacro browser-fn
-  "produces a function that ignores context args and passes body to
-  ->browser.  To be used in navigation tree as a shortcut to produce
-  functions that don't need arguments and only use the browser."
-  [& body]
-  `(fn [& _#] ~@body))
-
 ;; Define navigation pages
 ;; Note, it's designed this way, rather than one big tree, so that
 ;; errors in one component namespace (eg activation keys) don't
@@ -102,9 +96,11 @@
 
 (defmethod pages [(-> *ns* .getName symbol) :katello.deployment/any] [& _]
   (nav/nav-tree
-   [::top-level (fn [& _] (when (or (not (browser/exists? ::ui/log-out))
-                                    (browser/exists? ::ui/confirmation-dialog))
-                            (browser/to (@conf/config :server-url))))]))
+   [::top-level (fn [& _] (if (or (not (browser/exists? ::ui/log-out))
+                                  (browser/exists? ::ui/confirmation-dialog))
+                            (browser/to (@conf/config :server-url))
+                            (do (browser/execute-script "window.scrollTo(0,0)")
+                                (notif/dismiss-all-ui))))]))
 
 (defmacro defpages
   "Define the pages needed to navigate to in this namespace, and

@@ -1,6 +1,7 @@
 (ns katello.organizations
   (:require [ui.navigate :as navlib :refer [nav-tree]]
             [webdriver :as browser]
+            [katello.tests.useful :refer [third-lvl-menu-click]]
             [slingshot.slingshot :refer [try+ throw+]]
             katello
             (katello [navigation :as nav]
@@ -31,7 +32,7 @@
    ::default                "//ul[@id='organizationSwitcher']//i[contains(@class,'icon-star') and not(contains(@class,'icon-star-empty'))]/../a"
 
    ;; System Default Info
-   ::default-info             {:xpath (ui/third-level-link "organization_default_info")}
+   ::default-info             {:id "organization_default_info"}
    ::system-default-info      (ui/third-level-link "org_system_default_info")
    ::distributor-default-info (ui/third-level-link "org_distributor_default_info")
    ::keyname-text             {:id "new_default_info_keyname"}
@@ -46,18 +47,13 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [ent] (nav/choose-left-pane (katello/org ent)))
-    [::default-info-menu (fn [n]
-                           (Thread/sleep 1000)
+    [::default-info-menu (fn [_]
+                           (Thread/sleep 2000)
                            (browser/move-to ::default-info))
-     [::system-default-info-page (fn [n]
-                                   (browser/move-to ::system-default-info)
-                                   (browser/click ::system-default-info))]
-     [::distributor-default-info-page (fn [n]
-                                        (browser/move-to ::distributor-default-info)
-                                        (browser/execute-script "$(\"li#org_distributor_default_info > a\").click();")
-                                        #_(browser/click ::distributor-default-info))]]]])
+     [::system-default-info-page (fn [_] (third-lvl-menu-click ::system-default-info))]
+     [::distributor-default-info-page (fn [_] (third-lvl-menu-click ::distributor-default-info))]]]])
 
 ;; Tasks
 
@@ -97,17 +93,18 @@
   (browser/ajax-wait)
   (browser/quick-fill [::name-text name
                        ::description-text description])
-  (when label
-    (browser/click ::description-text) ;; workaround to activate label js
-    (browser/clear ::label-text)
-    (browser/input-text ::label-text label))
-  (when (and (rest/is-katello?) initial-env)
-    (browser/quick-fill [::initial-env-name-text (:name initial-env)
-                         ::initial-env-desc-text (:description initial-env)])
-    (when (:label initial-env)
-      (browser/click ::description-text) ;; workaround to activate label js
-      (browser/clear ::initial-env-label-text)
-      (browser/input-text ::initial-env-label-text (:label initial-env))))
+  (let [label-activate #(webdriver/execute-script "$('.name_input').trigger('blur')")] ;; workaround to activate label js
+    (when label
+      (label-activate) 
+      (browser/clear ::label-text)
+      (browser/input-text ::label-text label))
+    (when (and (rest/is-katello?) initial-env)
+      (browser/quick-fill [::initial-env-name-text (:name initial-env)
+                           ::initial-env-desc-text (:description initial-env)])
+      (when (:label initial-env)
+        (label-activate)
+        (browser/clear ::initial-env-label-text)
+        (browser/input-text ::initial-env-label-text (:label initial-env)))))
   (nav/scroll-to-right-pane-item ::create)
   (browser/click ::create)
   (notification/success-type :org-create))

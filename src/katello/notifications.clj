@@ -143,7 +143,7 @@
   automation throw and catch the right type of exception interally,
   taking UI error messages and mapping them to internal error types."}
   known-errors
-  (let [errors {::invalid-credentials                   #"You have entered an incorrect username/password combination.*"
+  (let [errors {::invalid-credentials                   #"Authentication failed" 
                 ::promotion-already-in-progress         #"action is currently in progress"
                 ::import-older-than-existing-data       #"Import is older than existing data"
                 ::import-same-as-existing-data          #".*Manifest subscriptions unchanged from previous"
@@ -198,6 +198,16 @@
 (defn flush []
   "Clears the javascript notice array."
   (browser/execute-script "if (window.notices) { window.notices.noticeArray = [] }"))
+
+(defn dismiss-all-ui "Dismisses all notifications still onscreen"
+  []
+  (let [close-buttons (browser/elements ::ui/notification-close)
+        results (doall (for  [close-button close-buttons]
+                         (try+ (browser/click close-button)
+                               nil
+                               (catch Object o o))))]
+    (browser/wait-until #(not (browser/exists? ::ui/notification-close)))
+    results))
 
 (defn notifications
   "Gets all notifications from the page, returns a list of maps

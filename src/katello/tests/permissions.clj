@@ -440,10 +440,10 @@
                         (ui/create user))
                :allowed-actions [(fn [] (browser/move-to ::user/user-account-dropdown)
                                    (browser/click ::user/account)
-                                   (nav/browser-fn (browser/click ::user/roles-link)))]
+                                   (fn [_] (browser/click ::user/roles-link)))]
                :disallowed-actions [(fn [] (browser/move-to ::user/user-account-dropdown)
                                       (browser/click ::user/account)
-                                      (nav/browser-fn (browser/click ::user/roles-link))
+                                      (fn [_] (browser/click ::user/roles-link))
                                       (browser/click ::user/add-role))]]))
 
      (fn [] (let [nav-fn (fn [uri] (fn [] (->> uri (str "/katello/") access-page-via-url)))]

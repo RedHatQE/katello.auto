@@ -150,7 +150,7 @@
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
     :blockers (bz-bugs "729364")
     (verify-system-rename (register-new-test-system)))
-
+    
   (deftest "System details: save or cancel editing field"
     :uuid "b3f26238-b35c-aa84-3533-e3d3bb27bd8b"
     :data-driven true
@@ -185,7 +185,7 @@
     :uuid "f7d6189a-6033-f434-203b-dc6f700e3f15"
     :blockers (conj (bz-bugs "738054") rest/katello-only)
     (verify-system-appears-on-env-page (register-new-test-system)))
-
+  
   (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
     :blockers (conj (bz-bugs "733780" "736547" "784701") rest/katello-only)
@@ -216,7 +216,7 @@
                         :env test-environment} katello/newSystem uniques (take 3))]
       (rest/create-all systems)
       (system/multi-delete systems)))
-
+  
   (deftest "Remove systems and validate sys-count"
     :uuid "ad9ea75b-9dbe-0ca4-89db-510babd14234"
     (with-unique [org (kt/newOrganization {:name "delsyscount"})]
@@ -486,7 +486,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/add-package mysys {:package packages})
+            (system/package-action mysys {:package packages})
             (let [cmd (format "rpm -qa | grep %s" packages)
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
@@ -522,7 +522,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/add-package mysys {:package-group package-groups})
+            (system/package-action mysys {:package package-groups})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork lion wolf tiger dolphin bear")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
@@ -562,7 +562,7 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/update-selected-package mysys {:package package})
+            (system/package-action mysys {:package package})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
@@ -757,11 +757,11 @@
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
-          (system/add-package mysys {:package "cow"})
+          (system/package-action mysys {:package "cow"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (client/ok? cmd_result)))))))
 
-
+ 
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
         :uuid "7b2d6b28-a0bc-4c82-bbad-d7e200ad8ff5"

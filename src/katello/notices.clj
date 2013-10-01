@@ -2,7 +2,7 @@
   (:require [clj-webdriver.taxi :as browser]
             [katello :as kt]
             [clojure.zip :as zip]
-            (katello [navigation  :refer [browser-fn] :as nav]
+            (katello [navigation :as nav]
                      [notifications :as notification] 
                      [content-search :as cs]
                      [ui-common :as common]

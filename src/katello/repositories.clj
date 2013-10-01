@@ -34,7 +34,7 @@
 (nav/defpages :katello.deployment/any katello.providers
   [::provider/products-page
    [::product-page (fn [ent] (browser/click (provider/select-product (:name (kt/product ent)))))
-    [::product-repo-page (nav/browser-fn (browser/click ::repositories-link))
+    [::product-repo-page (fn [_] (browser/click ::repositories-link))
      [::repo-page (fn [ent] (browser/click (select-repository (:name ent))))]]]])
 
 ;; Tasks

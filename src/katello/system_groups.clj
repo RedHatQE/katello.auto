@@ -42,10 +42,10 @@
 
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [system-group] (nav/choose-left-pane system-group))
-    [::systems-page (nav/browser-fn (browser/click ::systems-link))]
-    [::details-page (nav/browser-fn (browser/click ::details-link))]]])
+    [::systems-page (fn [_] (browser/click ::systems-link))]
+    [::details-page (fn [_] (browser/click ::details-link))]]])
 
 
 ;; Tasks

@@ -41,9 +41,9 @@
   [::page
    [::named-page (fn [activation-key] (nav/choose-left-pane activation-key))
     [::system-group-menu  (fn [_] (browser/move-to ::system-groups))
-     [::system-group-page (nav/browser-fn (browser/click ::system-group-select))]
-     [::systems-page (nav/browser-fn (browser/click ::systems-select))]]]
-   [::new-page (nav/browser-fn (browser/click ::new))]])
+     [::system-group-page (fn [_] (browser/click ::system-group-select))]
+     [::systems-page (fn [_] (browser/click ::systems-select))]]]
+   [::new-page (fn [_] (browser/click ::new))]])
 
 ;; Tasks
 

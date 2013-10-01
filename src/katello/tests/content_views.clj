@@ -119,6 +119,17 @@
     (views/check-published-view-status (:published-name cv))
     (assert/is (= (Integer/parseInt (browser/text  (views/refresh-version (:published-name cv)))) (inc current-version)))))
 
+(defn- assoc-content-with-cv
+  "Associate product/repo with cv before applying filter rules"
+  [cv cv-filter]
+  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+    (create-recursive repo)
+    (ui/create cv)
+    (ui/update cv assoc :repos (list (kt/repository repo)))
+    (ui/create cv-filter)
+    (views/add-repo-from-filters (list (kt/repository repo)))))
+
+
 ;; Data (Generated)
 
 (def gen-errata-test-data
@@ -197,7 +208,7 @@
       :blockers (bz-bugs "1006693")
       (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                     cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups"})]
-        (ui/create-all (list cv cv-filter))
+        (assoc-content-with-cv cv cv-filter)
         (views/add-pkg-group-rule cv-filter {:pkg-groups (list "birds")})
         (ui/delete cv)))
     
@@ -214,12 +225,11 @@
         
         (with-unique [content-def (kt/newContentViewDefinition {:name "con-def"
                                                       :org conf/*session-org*})
-                      repo (fresh-repo (kt/org content-def) pulp-repo)]
+                      repo (fresh-repo (kt/org content-def) "http://inecas.fedorapeople.org/fakerepos/zoo/")]
           (ui/create content-def)
           (create-recursive repo)
-          (ui/update content-def assoc :products (list (kt/product repo)))
-          (views/clone content-def (update-in content-def [:name] #(str % "-clone"))))))
-    
+          (ui/update content-def assoc :products (list (kt/product repo))))))
+      
     (deftest "Create a filter"
       :uuid "da277945-9bad-468f-8460-c0149d4ee806"
       (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
@@ -229,6 +239,7 @@
     (deftest "Create a new filter with blank name and long name"
       :uuid "fda6c1a6-7e70-4cc2-8f0f-0089698e1572"
       :data-driven true
+      :blockers (bz-bugs "1011017")
       
       (fn [name expected-res]
         (let [cv (katello/newContentViewDefinition {:name (uniqueify "con-def") :org *session-org*})
@@ -247,18 +258,17 @@
       (fn [packages version-type &[value1 value2]]
         (with-unique [cv (katello/newContentViewDefinition {:name "con-def" :org *session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages"})]
-          (ui/create-all (list cv cv-filter))
-          (views/add-package-rule cv-filter {:packages (list packages)
-                                             :version-type version-type
-                                             :value1 value1
-                                             :value2 value2})))  
+          (assoc-content-with-cv cv cv-filter)
+          (views/filter-items cv-filter {:items (list packages)
+                                         :version-type version-type
+                                         :value1 value1
+                                         :value2 value2})))  
       [["cow" :all]
        ["cat" :only-version "0.5"]
        ["crow" :newer-than "2.7"]
        ["bird" :older-than "2.3"]
        ["bear" :range "2.3" "2.7"]])
-    
-    
+     
     (deftest "Create 'Include/Exclude' type filter for packages"
       :uuid "03e22b28-b675-4986-b5bd-0a5fa2c571e8"
       :data-driven true
@@ -267,20 +277,19 @@
         (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
-                               "http://inecas.fedorapeople.org/fakerepos/zoo/")
+                               "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
               cv (add-product-to-cv org target-env repo)
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
-          (ui/create cv-filter)
-          (doall (for [rule [{:packages packages 
+          (doall (for [rule [{:items packages 
                               :version-type version-type}
-                             {:packages packages1 
+                             {:items packages1 
                               :version-type version-type}
-                             {:packages ""
+                             {:items ""
                               :version-type version-type}]]
-                   (views/add-package-rule cv-filter rule)))
+                   (views/filter-items cv-filter rule)))
           (views/remove-rule packages1)
           (let [packages-in-msg (apply str (interpose ", " packages))]
             (if (:exclude? cv-filter)
@@ -418,19 +427,19 @@
                                                :description "auto activation key"
                                                :content-view cv})]
           (ui/create cv-filter)
-          (doall (for [rule [{:packages (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
-                             {:packages (list "camel"), :version-type :only-version, :value1 "0.1-1"}
-                             {:packages (list "dog"), :version-type :newer-than, :value1 "4.20"}
-                             {:packages (list "dolphin"), :version-type :older-than, :value1 "3.11"}
-                             {:packages (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
-                   (views/add-package-rule cv-filter rule)))
-          (doall (for [rule1 [{:packages (list "elephant"), :version-type :all}
-                              {:packages (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
-                              {:packages (list "horse"), :version-type :newer-than, :value1 "0.21"}
-                              {:packages (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
-                              {:packages (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
+          (doall (for [rule [{:items (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
+                             {:items (list "camel"), :version-type :only-version, :value1 "0.1-1"}
+                             {:items (list "dog"), :version-type :newer-than, :value1 "4.20"}
+                             {:items (list "dolphin"), :version-type :older-than, :value1 "3.11"}
+                             {:items (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
+                   (views/filter-items cv-filter rule)))
+          (doall (for [rule1 [{:items (list "elephant"), :version-type :all}
+                              {:items (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
+                              {:items (list "horse"), :version-type :newer-than, :value1 "0.21"}
+                              {:items (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
+                              {:items (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
                    (-> cv-filter (update-in [:exclude?] (constantly true))
-                     (views/add-package-rule rule1))))
+                     (views/filter-items rule1))))
           (views/add-repo-from-filters (list (kt/repository repo)))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
@@ -468,7 +477,7 @@
                                                :description "auto activation key"
                                                :content-view cv})]
           (ui/create cv-filter-pkg)
-          (views/add-package-rule cv-filter-pkg {:packages (list "frog"), :version-type :all})
+          (views/filter-items cv-filter-pkg {:items (list "frog"), :version-type :all})
           (views/add-repo-from-filters (list (kt/repository repo)))
           (ui/create cv-filter-pkggroup)
           (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
@@ -620,11 +629,11 @@
 
     (deftest "Remove complete product or a repo from content-view-defnition"
       :uuid "5439b54f-e679-19b4-fd93-3fbc32c96b14"
-      (with-unique [org (kt/newOrganization {:name "auto-org"})
-                    content-defn (kt/newContentViewDefinition {:name "auto-view-definition"
-                                                               :org org})
-                    repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
-                    repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
+      (let [org (kt/newOrganization {:name (uniqueify "auto-org")})
+            content-defn (kt/newContentViewDefinition {:name (uniqueify "auto-view-definition")
+                                                       :org org})
+            repo1 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/zoo/")
+            repo2 (fresh-repo org "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")]
         (ui/create-all (list org content-defn))
         (doseq [repo [repo1 repo2]]
           (create-recursive repo))
@@ -632,7 +641,7 @@
           (ui/update dissoc :products))
         (-> content-defn (ui/update assoc :repos (list (kt/repository repo2)))
           (ui/update dissoc :repos))))
-
+    
     (deftest "Create composite content-definition with two products"
       :uuid "9463a161-8d9b-9cc4-f09b-c011b0cd6c53"
       (with-unique [org (kt/newOrganization {:name "auto-org"})
@@ -945,5 +954,24 @@
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))
             (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
-                             (changeset/promote-delete-content deletion-cs)))))))) 
+                             (changeset/promote-delete-content deletion-cs))))))
+    
+    
+    (deftest "Create a puppet module filter"
+      :uuid "e34dd75b-9ec3-4cfd-a00b-b41d9dfc8c5a"
+      (let [cv (kt/newContentViewDefinition {:name (uniqueify "con-def")
+                                             :org conf/*session-org*})
+            cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Puppet Modules"})
+            repo (fresh-repo (kt/org cv) "http://forge.puppetlabs.com/" "puppet")]
+        (ui/create-all (list (kt/product repo) (kt/repository repo)))
+        (ui/create cv)
+        (ui/update cv assoc :repos (list (kt/repository repo)))
+        (ui/create cv-filter)
+        (views/add-repo-from-filters (list (kt/repository repo)))
+        (doall (for [rule [{:items (list "android" "amanda" "ant"), :version-type :all}
+                           {:items (list "apache"), :version-type :only-version, :value1 "1.0.0"}
+                           {:items (list "bind"), :version-type :newer-than, :value1 "1.0.0"}
+                           {:items (list "cobbler"), :version-type :older-than, :value1 "1.2.1"}
+                           {:items (list "activemq"), :version-type :range, :value1 "0.0.1", :value2 "2.0.0"}]]
+                 (views/filter-items cv-filter rule)))))))
                

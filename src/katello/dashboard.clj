@@ -3,7 +3,7 @@
              [katello :as kt]
              [clojure.zip :as zip]
              [clojure.string :as string]
-             (katello [navigation  :refer [browser-fn] :as nav]
+             (katello [navigation :as nav]
                       [notifications :as notification] 
                       [organizations :as org]
                       [content-search :as cs]

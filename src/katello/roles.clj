@@ -43,8 +43,8 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [role] (nav/choose-left-pane role))
-    [::named-users-page (nav/browser-fn (browser/click ::users))]
-    [::named-permissions-page (nav/browser-fn (browser/click ::permissions))]]])
+    [::named-users-page (fn [] (browser/click ::users))]
+    [::named-permissions-page (fn [] (browser/click ::permissions))]]])
 
 
 ;; Vars

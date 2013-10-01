@@ -15,7 +15,8 @@
 ;; Locators
 
 (browser/template-fns
- {product-or-repository       "//li[contains(text(), '%s')]"
+ {yum-product-or-repository   "//div[@id='product_select_chzn']//li[contains(text(), '%s')]"
+  puppet-repository           "//div[@id='repo_select_chzn']//li[contains(text(), '%s')]"            
   filter-link                 "//a[contains(text(), 'Filter: %s')]"
   filter-name-link            "//a[contains(text(), '%s')]"
   select-filter               "//input[@value='%s']"
@@ -26,6 +27,7 @@
   status                      "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/div[@class='fl']"
   refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
   refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
+  expand-toggle               "//span[contains(text(), '%s')]/parent::div/preceding-sibling::div[contains(@class, 'small_col')]"
   remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
@@ -56,6 +58,7 @@
    ::add-rule                  "//input[@value='Add New Rule']"
    ::create-rule               "//input[@class='create_button']"
    ::rule-input                "//input[@id='rule_input']"
+   ::input-puppet-author       "//input[@id='units_author']"
    ::submit-rule               "//a[@id='add_rule']"
    ::remove-button             "//input[@id='remove_button']"
    ::select-filter-type        "//select[@id='filter_rule_content_type']"
@@ -76,10 +79,9 @@
    ::errata-type               "//div[@name='parameter[errata_type]']"
    ::select-errata-label       "//select[@name='parameter[errata_type]']"
    ::repo-tab                  "//a[contains(@href, '##repos')]"
+   ::rules-tab                 "//a[contains(@href,'##rules')]"
    ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
    
-   ::sel-products              "window.$(\"#product_select_chzn\").mousedown()"
-   ::sel-repo                  "//div/input[@class='product_radio' and @value='sel']"
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 
    ::update-component_view     "update_component_views"
@@ -98,13 +100,13 @@
 ;; Nav
 (nav/defpages :katello.deployment/any katello.menu
   [::page
-   [::new-page (nav/browser-fn (browser/click ::new))]
+   [::new-page (fn [_] (browser/click ::new))]
    [::named-page (fn [definition-name] (nav/choose-left-pane definition-name))
-    [::details-page (nav/browser-fn (browser/click ::details-tab))]
-    [::content-page (nav/browser-fn (browser/click ::content-tab))]
-    [::filter-page (nav/browser-fn (browser/click ::filter-tab))
+    [::details-page (fn [_] (browser/click ::details-tab))]
+    [::content-page (fn [_] (browser/click ::content-tab))]
+    [::filter-page (fn [_] (browser/click ::filter-tab))
      [::named-filter-page (fn [ent] (->> ent kt/->Filter :name filter-name-link (browser/click)))]]
-    [::views-page (nav/browser-fn (browser/click ::views-tab))]]])
+    [::views-page (fn [_] (browser/click ::views-tab))]]])
 
 
 ;; Tasks
@@ -126,6 +128,17 @@
                              (Thread/sleep 2000)
                              (recur (browser/text  (status published-name)))))))
 
+(defn- select-repo
+  "Function to select repo based on repo-type Puppet or Yum"
+  [repos]
+  (doseq [repo repos]
+    (if (= (:repo-type repo) "yum")
+      (do
+        (browser/click (-> repo :name yum-product-or-repository))
+        (browser/click ::add-product-btn))
+      (do
+        (browser/click (-> repo :name puppet-repository))))))
+  
 (defn- create
   "Creates a new Content View Definition."
   [{:keys [name description composite composite-names org]}]
@@ -143,22 +156,15 @@
   "Add the given repository to content-view definition"
   [repos]
   (browser/click ::content-tab)
-  (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+  (select-repo repos))
 
 (defn- remove-repo
   "Removes the given repository from existing content-view"
   [repos]
   (browser/click ::content-tab)
   (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click  (-> repo :name remove-repository))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> (kt/product repo) :name expand-toggle)) 
+    (browser/click (-> repo :name remove-repository))))
   
 (defn publish
   "Publishes a Content View Definition"
@@ -199,10 +205,7 @@
   "Selects repo tab under CV filters"
   [repos]
   (browser/click ::repo-tab)
-  (doseq [repo repos]
-    (browser/move-to (-> repo :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)))
+  (select-repo repos))
 
 (defn select-package-version-value
   "Select package version and set values: 
@@ -223,11 +226,12 @@
     (browser/input-text  ::range-value2 value2)
     (browser/click ::save-version)))
 
-(defn- add-rule
+(defn add-rule
   "Define inclusion or exclusion rule of type Package, Package Group and Errata"
   [cv-filter]
+  (browser/click ::rules-tab)
   (browser/click ::add-rule)
-  (browser/select ::select-filter-type (:type cv-filter))
+  (browser/select-by-text ::select-filter-type (:type cv-filter))
   (browser/click ::create-rule)
   (when (:exclude? cv-filter)
     (select-exclude-filter)))
@@ -239,11 +243,11 @@
     (browser/input-text  ::rule-input item)
     (browser/click ::submit-rule)))
   
-(defn add-package-rule 
+(defn filter-items 
   "Define rule to add packages to content filter"
-  [cv-filter & [{:keys [packages version-type value1 value2]}]]
+  [cv-filter & [{:keys [items version-type value1 value2]}]]
   (add-rule cv-filter)
-  (input-rule-items packages)
+  (input-rule-items items)
   (when-not (= "all" version-type)
     (select-package-version-value {:version-type version-type :value1 value1 :value2 value2}))
   (browser/click (filter-link (:name cv-filter))))
@@ -300,25 +304,21 @@
                          ::details-description-text description})
   (notification/success-type :cv-update))
 
-(defn- add-to
+(defn- add-product
   "Adds the given product to a content view definition"
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (-> product :name product-or-repository))
-    (browser/click ::add-product-btn)
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> product :name yum-product-or-repository))
+    (browser/click ::add-product-btn)))
   
-(defn- remove-from
+(defn- remove-product
   "Removes the given product from existing Content View"
   [products]
   (browser/click ::content-tab)
   (doseq [product products]
-    (browser/move-to (->  product :name product-or-repository))
-    (browser/click (-> product :name remove-product))
-    (browser/click ::update-content)
-    (notification/success-type :cv-update-content)))
+    (browser/click (-> product :name expand-toggle)) 
+    (browser/click (-> product :name remove-product))))
 
 (defn- update
   "Edits an existing Content View Definition."
@@ -330,8 +330,8 @@
                    (edit-content-view-details name description))
     (when-some-let [product-to-add (:products add)
                     product-to-rm (:products remove)]
-                   (add-to product-to-add)
-                   (remove-from product-to-rm))
+                   (add-product product-to-add)
+                   (remove-product product-to-rm))
     (when-some-let [repo-to-add (:repos add)
                     repo-to-remove (:repos remove)]
                    (add-repo repo-to-add)

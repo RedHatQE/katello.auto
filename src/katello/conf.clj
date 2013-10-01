@@ -119,7 +119,12 @@
     katello/chain 1
     katello/instance-or-nil? 0
     webdriver/locator-finder-fn 1
-    })
+    webdriver/click 1
+    webdriver/input-text 1
+    webdriver/select-by-text 1
+    webdriver/move-to 1
+    webdriver/exists? 1
+    webdriver/visible? 1})
 
 (defn record-contructor-depths
   "Returns trace setting to not trace record constructors."
@@ -180,12 +185,6 @@
        (swap! config merge non-defaults)) ; merge 2nd time to override anything in
                                         ; config files
 
-     ;; if user didn't specify sel address, start a server and use that
-     ;; address.
-     #_(when-not (@config :selenium-address)
-         (selenium-server/start)
-         (swap! config assoc :selenium-address "localhost:4444"))
-     
      (def ^:dynamic *session-user* (katello/newUser {:name (@config :admin-user)
                                                      :password (@config :admin-password)
                                                      :email "admin@katello.org"}))
