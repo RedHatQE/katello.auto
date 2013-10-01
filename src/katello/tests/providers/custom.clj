@@ -9,71 +9,40 @@
                      [conf :as conf]
                      [blockers :refer [bz-bugs]])
             [test.tree.script :refer [defgroup deftest]]
-            [katello.tests.useful :refer [create-recursive]]
+            [katello.tests.useful :refer [create-recursive fresh-repo]]
             [test.assert :as assert]))
-
-;; Variables
-
-(def test-provider (atom nil))
-(def test-product (atom nil))
-
-
-;; Functions
-
-(defn create-test-provider
-  "Sets up a test custom provider to be used by other tests."
-  []
-  (ui/create (reset! test-provider
-                     (uniqueify (katello/newProvider {:name "cust"
-                                                      :description "my description"
-                                                      :org conf/*session-org*})))))
-
 ;; Tests
 
 (defgroup custom-product-tests
-  :group-setup create-test-provider
-  :blockers (bz-bugs "751910")
   
   (deftest "Create a custom product"
     :uuid "c3099090-92af-0e04-6e83-10297ed9b2c9"
-    (ui/create (reset! test-product
-                       (uniqueify (katello/newProduct {:provider @test-provider
-                                                       :name "prod"
-                                                       :description "test product"})))))
+    (let [repo (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
+          prd (katello/product repo)]
+    (ui/create prd)))
 
     
   (deftest "Delete a custom product"
     :uuid "b9940780-8261-01a4-e83b-10ed847dae24"
-    :blockers (bz-bugs "975595")
-    
-    (doto (uniqueify (katello/newProduct {:provider @test-provider
-                                          :name "deleteme"
-                                          :description "test product to delete"}))
-      (ui/create)
-      (ui/delete)))
+    (let [repo (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")
+          prd (katello/product repo)]
+      (ui/create prd)
+      (ui/delete prd)))
   
   (deftest "Create a repository"
     :uuid "14b96ac6-1721-ff74-6d0b-7d3c8c77208c"
     :blockers (bz-bugs "729364")
+    (let [repo (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+      (ui/create (katello/product repo))
+      (ui/create repo)))
     
-    (-> {:name "repo"
-         :url "http://test.com/myurl"
-         :product @test-product}
-        katello/newRepository
-        uniqueify
-        ui/create))
   
   (deftest "Delete a repository"
     :uuid "fa0ed141-2252-fe84-1f03-a0594dbec893"
-    :blockers (bz-bugs "745279")
-    
-    (doto (-> {:name "deleteme"
-               :url "http://my.fake/url" 
-               :product @test-product}
-              katello/newRepository
-              uniqueify)
-      (ui/create)
-      (ui/delete)))
+    (let [repo (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
+      (ui/create (katello/product repo))
+      (ui/create repo)
+      (ui/delete repo)))
   
   (deftest "Create two products with the same name, in different orgs"
     :uuid "925f72c2-1bd7-8024-0d33-1736ea23de14"
@@ -109,11 +78,13 @@
     (with-unique [org      (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})
-                  product  (katello/newProduct  {:name "prod"
-                                                 :provider provider})]
-      (ui/create-all (list org provider))
+                  provider-prd  (katello/newProduct  {:name "prod"
+                                                      :provider provider})  ;; hacked so as to at-least test the UI navigation. Bug 1011473
+                  product   (katello/newProduct  {:name "prod"
+                                                  :provider provider})]
+      (ui/create-all (list org provider-prd))
       (provider/create-discovered-repos-within-product product
-                                                       "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"] {:new-prod true})))
+                                                       "http://inecas.fedorapeople.org/fakerepos/" ["brew-repo/" "cds/content/nature/1.0/i386/rpms/"] {:new-prod true})))
   
   
   (deftest "Repository Autodiscovery for existing product"
@@ -124,9 +95,10 @@
                                                  :org org})
                   product  (katello/newProduct  {:name "prod"
                                                  :provider provider})]
-      (ui/create-all (list org provider product))
+      (ui/create-all (list org product))
       (provider/create-discovered-repos-within-product product
-                                                       "http://inecas.fedorapeople.org/fakerepos/" ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))
+                                                       "http://inecas.fedorapeople.org/fakerepos/" ["brew-repo/" "cds/content/nature/1.0/i386/rpms/"])))
+  
   
   (deftest "Auto-discovered repositories should automatically use GPG keys from product, if associated"
     :uuid "8129ec58-3013-2a74-0cb3-73bc4199c816"
@@ -140,12 +112,13 @@
                              uniqueify)
                   product (katello/newProduct {:name "prod"
                                                  :provider provider
-                                                 :gpg-key (:name gpgkey)})]
-      (let [repo-name "brew-repo"]
-        (ui/create-all (list org gpgkey provider product))
+                                                 :gpg-key gpgkey})]
+      (let [repo (katello/newRepository {:name "brew-repo"
+                                         :product product})]
+        (ui/create-all (list org gpgkey product))
         (provider/create-discovered-repos-within-product product
-                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "/%s/" repo-name)])
-        (assert/is (repo/gpgkey-associated? product repo-name)))))
+                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "%s/" (repo :name))])
+        (assert/is (repo/gpgkey-associated? repo)))))
   
   (deftest "Auto-discovered repositories should not use GPG keys from product, unless associated"
     :uuid "b436d8d9-d663-1174-10b3-c01b7778e33f"
@@ -158,21 +131,25 @@
                              uniqueify)
                   product (katello/newProduct {:name "prod"
                                                  :provider provider})]
-      (let [repo-name "brew-repo"]
-        (ui/create-all (list org gpgkey provider product))
+      (let [repo (katello/newRepository {:name "brew-repo"
+                                         :product (assoc product :gpg-key gpgkey)})]
+        (ui/create-all (list org gpgkey product))
         (provider/create-discovered-repos-within-product product
-                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "/%s/" repo-name)])
-        (assert/is (not (repo/gpgkey-associated? product repo-name))))))
+                                                       "http://inecas.fedorapeople.org/fakerepos/" [(format "%s/" (repo :name))])
+        (assert/is (not (repo/gpgkey-associated? repo))))))
   
   (deftest "Add the same autodiscovered repo to a product twice"
     :uuid "340ec414-d857-d404-8653-58ee90756828"
     :description "Adds the repositories to the selected product twice."
+    :blockers (bz-bugs "1013689")
     (with-unique [org (katello/newOrganization  {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})
+                  provider-prd  (katello/newProduct  {:name "prod"
+                                                      :provider provider})
                   product (katello/newProduct   {:name "prod"
                                                  :provider provider})]
-      (ui/create-all (list org provider product))
+      (ui/create-all (list org provider-prd))
       (val/expecting-error-2nd-try (katello.ui-common/errtype :katello.notifications/label-taken-error)
                                    (provider/create-discovered-repos-within-product product
-                                                                                    "http://inecas.fedorapeople.org/fakerepos/"  ["/brew-repo/" "/cds/content/nature/1.0/i386/rpms/"])))))
+                                                                                    "http://inecas.fedorapeople.org/fakerepos/"  ["brew-repo/" "cds/content/nature/1.0/i386/rpms/"])))))
