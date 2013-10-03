@@ -29,16 +29,15 @@
   select-system                   "//td[@class='ng-scope']/a[contains(text(), '%s')]"
   select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/parent::td/preceding-sibling::td[@class='row-select']/input[@ng-model='system.selected']"
   remove-package                  "//td[contains(text(), '%s')]/following::td/i[@ng-click='table.removePackage(package)']"
+  remove-package-status           "//td[contains(text(), '%s')]/following::td/i[2]"
   get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
-  package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
-  get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
-  environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
+  get-filtered-package            "//td[contains(., '%s') and parent::tr[@ng-repeat='package in table.rows | filter:table.filter']]"
+  environment-checkbox            "//div[contains(text(), '%s')]"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
-  system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
-  system-fact-group-expand        "//tr[@id='%s']/td/span"
-  existing-key-value-field        "custom_info[%s]"
-  remove-custom-info-button       "//input[@data-id='custom_info_%s']"})
+  system-fact-textbox             "//span[contains(.,'%s')]/./following-sibling::*[1]"
+  existing-key-value-field        "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[1]"
+  remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"})
 
 (ui/defelements :katello.deployment/any []
   {::new                         "new"
@@ -53,6 +52,8 @@
    ::confirmation-yes            "//button[normalize-space(.)='Yes']"
    ::confirmation-no             "//button[normalize-space(.)='No']"
    ::bulk-action                 "//div[@class='nutupane-actions fr']/button[contains (.,'Bulk Actions')]"
+   ::select-all-system           "//input[@ng-model='table.allSelected']"
+   ::total-selected-count        "//div[@class='fr select-action']/span"
    ::multi-remove                (ui/link "Remove System(s)")
    ::confirm-yes                 "//input[@value='Yes']"
    ::select-sysgrp               "//div[@class='alch-edit']/div[@ng-click='edit()']"
@@ -69,7 +70,7 @@
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content  
-   ::packages                    "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
+   ::packages-link               "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
    ::events-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Events')]"
    ::errata-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Errata')]"
    ::package-action              "//select[@ng-model='packageAction.actionType']"
@@ -78,19 +79,27 @@
    ::filter-package              "//input[@ng-model='currentPackagesTable.filter']"
    ::update-all                  "//button[@ng-click='updateAll()']"
    ::filter-errata               "//input[@ng-model='errataTable.errataFilterTerm']"
+   ::pkg-install-status          "//div[@class='details']//div[2]/span[2]"
+   ::pkg-summary                 "//div[@class='details']//div/span[2]"
+   ::pkg-request                 "//div[@class='details']//div[4]/span[2]"
+   ::pkg-parameters              "//div[@class='details']//div[5]/span[2]"
+   ::pkg-result                  "//div[@class='detail']/span[contains(., 'Result')]//following-sibling::span"
   
   
    ;;system-edit details
    ::details                     (ui/link "Details")
-   ::name-text-edit              "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+  ; ::name-text-edit              {:tag :div, :alch-edit-text "system.name"}
+  ; ::description-text-edit       {:tag :div, :alch-edit-textarea "system.description"}
+   ::name-text-edit                   "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
+   ::select-content-view         "//div[@edit-trigger='editContentView']/select"
    
 
    ;;system-facts
-   ::facts                       (ui/link "Facts")
+   ::expand-advanced-info       "//div[@class='advanced-info']/header/i[@class='expand-icon clickable icon-plus']"
    ::network-expander            "network"
    ::cpu-expander                "cpu"
    ::uname-expander              "uname"
@@ -102,9 +111,9 @@
 
    ;;custom-info
    ::custom-info                (ui/link "Custom Information")
-   ::key-name                   "new_custom_info_keyname"
-   ::key-value                  "new_custom_info_value"
-   ::create-custom-info         "create_custom_info_button"
+   ::key-name                   {:tag :input, :ng-model "newKey"}
+   ::key-value                  {:tag :input, :ng-model "newValue"}
+   ::add-custom-info            "//button[@ng-click='add({value: {keyname: newKey, value: newValue}})']"
 
    ;;subscriptions pane
    ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})
@@ -116,7 +125,7 @@
    [::named-page (fn [system] (ui/go-to-system system))
     [::details-page (fn [_] (browser/click ::details))
     [::subscriptions-page (fn [_] (browser/click ::subscriptions))]
-    [::packages-page (fn [_] (browser/click ::packages))
+    [::packages-page (fn [_] (browser/click ::packages-link))
     [::errata-page (fn [_] (browser/click ::errata-link))]]]]])
 
 ;; Tasks
@@ -134,7 +143,7 @@
 (defn- select-multisys
   [systems]
   (doseq [system systems]
-    (browser/click (select-system-checkbox system))))
+    (browser/click (select-system-checkbox (:name system)))))
 
 (defn multi-delete "Delete multiple systems at once."
   [systems]
@@ -170,11 +179,11 @@
              :msg "Selected sys-group is not available to add more system as limit already exceeds"})))
 
 (defn- set-environment "select a new environment for a system"
-  [new-environment]
+  [new-environment published-name]
   {:pre [(not-empty new-environment)]}
-  (browser/click ::environment)
   (browser/click (environment-checkbox new-environment))
-  (browser/click ::save-environment))
+  (browser/select-by-text ::select-content-view published-name)
+  (browser/click ::save-button))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -192,19 +201,6 @@
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 
-(defn- add-remove-content
-  "Adds/removes package[-groups] to a system.  Must already be on a system page."
-  [to-add to-remove]
-  (let [packages-to-add (:packages to-add)
-        packages-to-remove (:packages to-remove)
-        groups-to-add (:package-groups to-add)
-        groups-to-remove (:package-groups to-remove)]
-    (when (or packages-to-add packages-to-remove)
-      (let [x {}] (browser/click ::packages-link))
-      ))
-  (let [ks (list :packages :package-groups)]
-    (when (some seq (mapcat #(select-keys % ks) (list to-add to-remove)))
-      (browser/click ::packages-link))))
 
 (defn- edit-system-details [{:keys [name description location release-version]}]
   (common/in-place-edit {::name-text-edit name
@@ -213,14 +209,13 @@
                          ::release-version-select release-version}))
 
 (defn- update-custom-info [to-add to-remove]
-  (browser/click ::custom-info)
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
       (do (common/in-place-edit {(existing-key-value-field k) v}))
       (do (browser/input-text ::key-name k)
           (browser/input-text ::key-value v)
           #_(browser keyUp ::key-name "w") ;; TODO: composite actions fixme
-          (browser/click ::create-custom-info))))
+          (browser/click ::add-custom-info))))
   ;; process removes
   (doseq [[k _] (apply dissoc to-remove (keys to-add))]
     (browser/click (remove-custom-info-button k))))
@@ -230,19 +225,17 @@
   name, a new description, and a new location."
   [system updated]
   (let [[to-remove {:keys [name description location release-version
-                           service-level auto-attach env]
+                           service-level auto-attach env cv]
                     :as to-add} _] (data/diff system updated)]
 
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      ;(browser/move-to ::name-text)
+      ;(browser/click ::name-text-edit)
       (edit-system-details to-add)
-      (when env (set-environment (:name env)))
+      (when env (set-environment (:name env :published-name cv)))
 
       (when (or (:custom-info to-add) (:custom-info to-remove) )
         (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
-
-      (add-remove-content to-add to-remove)
 
       (let [added-products (:products to-add)
             removed-products (:products to-remove) ]
@@ -378,11 +371,6 @@
   (nav/go-to ::details-page system)
   (browser/text ::get-selected-env))
 
-(defn get-ip-addr
-  [system]
-  (nav/go-to ::details-page system)
-  (browser/text ::interface-addr))
-
 (defn get-details [system]
   (nav/go-to ::details-page system)
   (let [headpin-details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
@@ -395,66 +383,36 @@
                      (browser/text (system-detail-textbox detail)))))))
 
 (defn get-facts [system]
-  (nav/go-to ::facts-page system)
-  (let [facts ["cpu.core(s)_per_socket" "cpu.cpu(s)" "cpu.cpu_socket(s)"
-               "distribution.id" "distribution.name" "distribution.version"
-               "memory.memtotal" "memory.swaptotal"
-               "virt.host_type" "virt.is_guest" "virt.uuid"
-               "uname.machine" "uname.nodename" "uname.release"
-               "uname.sysname" "uname.version" "system.entitlements_valid"
-               "network.hostname" "network.ipv4_address" "network.ipv6_address"
-               "net.interface.eth0.ipv4_address" "net.interface.eth0.ipv4_broadcast" "net.interface.eth0.ipv4_netmask"
-               "net.interface.lo.ipv4_address" "dmi.bios.vendor" "dmi.bios.version" "lscpu.vendor_id" "lscpu.vendor_id"]]
+  (nav/go-to ::details-page system)
+  (browser/click ::expand-advanced-info)
+  (let [facts ["core(s) per_socket" "cpu(s)" "cpu_socket(s)"
+               "id" "name" "version"
+               "memtotal" "swaptotal"
+               "host_type" "is_guest" "uuid"
+               "machine" "nodename" "release"
+               "sysname" "entitlements_valid"
+               "hostname" "ipv4 address"
+               "ipv4 broadcast" "ipv4 netmask"]]
     (zipmap facts
             (doall (for [fact facts]
                      (browser/text (system-fact-textbox fact)))))))
-
-(defn expand-collapse-facts-group
-  [system]
-  "Expand/collapse group of selected system's facts"
-  (nav/go-to ::facts-page system)
-  (let [groups ["cpu" "distribution" "dmi" "lscpu" "memory" "net" "network" "system" "uname" "virt"]]
-    (doseq [group groups] ;;To expand
-      (when (browser/exists?  (system-fact-group-expand group))
-        (browser/click (system-fact-group-expand group))))
-    (doseq [group groups] ;;To collapse
-      (browser/click (system-fact-group-expand group)))))
-
 
 (defn check-package-status
   [&[timeout-ms]]
   (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
                              (case current-status
-                               "Add Package Complete" current-status
-                               "Add Package Group Complete" current-status
-                               "Remove Package Complete" current-status
-                               "Remove Package Group Complete" current-status
-                               "Add Package Error" (throw+ {:type ::package-install-failed :msg "Add Package Error"})
-                               "Add Package Group Error" (throw+ {:type ::package-group-install-failed :msg "Add Package Group Error"})
-                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                               "Remove Package Group Error" (throw+ {:type ::remove-package-group-failed :msg "Remove Package Group Error"})
+                               "finished" current-status
+                               "error" (throw+ {:type ::package-install-failed :msg "Package operation failed"})
                                (do (Thread/sleep 2000)
                                    (recur (browser/text ::pkg-install-status))))))
-
-(defn check-pkg-update-status
-  "Function to test selected package status while updating it"
-  [package &[timeout-ms]]
-  (browser/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
-                             (case current-status
-                               "Update Package Complete" current-status
-                               "Remove Package Complete" current-status
-                               "Update Package Error" (throw+ {:type ::update-package-failed :msg "Update Package Error"})
-                               "Remove Package Error" (throw+ {:type ::package-remove-failed :msg "Remove Package Error"})
-                               (do (Thread/sleep 2000)
-                                   (recur (browser/text (package-action-status package)))))))
-
 
 (defn package-action "Install/remove/update package/package-group on selected system "
   [system {:keys [package pkg-action]}]
   (nav/go-to ::packages-page system)
   (browser/select-by-text ::package-action pkg-action)
   (browser/input-text ::input-package-name package)
-  (browser/click ::perform-action))
+  (browser/click ::perform-action)
+  (check-package-status))
 
 (defn filter-package 
   [system {:keys [package]}]
@@ -462,6 +420,7 @@
   (browser/input-text ::filter-package package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
-  [system {:keys [package]}]
+  [system {:keys [package]} &[timeout-ms]]
   (filter-package system {:package package}) 
   (browser/click (remove-package package)))
+  
