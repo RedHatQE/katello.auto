@@ -133,7 +133,12 @@
                                            (apply new-remote-grid (split (@config :selenium-address) #":")) ; other remote wd
 
                                            :else (new-selenium)) ; local
-                    :capabilities-chooser-fn (constantly empty-browser-config)
+                    :capabilities-chooser-fn (cond (@config :sauce-browser)
+                                                   (fn [_] {"browserName" (@config :sauce-browser)
+                                                           "version" (@config :sauce-browser-version)
+                                                           "platform" (@config :sauce-os)
+                                                           "nativeEvents" false})
+                                                   :else (constantly empty-browser-config))
                     :finder-fn wd/locator-finder-fn}]
     
     (if (@config :sauce-user)
