@@ -93,7 +93,7 @@
    ::publish-button            "//input[@type='button']"
    ::publish-name-text         {:name "content_view[name]"}
    ::publish-description-text  {:name "content_view[description]"}
-   ::publish-new               "commit"
+   ::publish-new               "//input[@name='commit']"
    ::refresh-button            "refresh_action"
    })
 
