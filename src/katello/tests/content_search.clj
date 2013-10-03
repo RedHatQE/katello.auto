@@ -67,7 +67,7 @@
 
 (defn repo-compare-test [type first first-packages second  second-packages]
   (content-search/compare-repositories [first second])
-  (content-search/select-type type)
+  ;(content-search/select-type type)
   (verify-compare first first-packages second second-packages))
 
 
@@ -78,7 +78,7 @@
          :all      (union first-packages second-packages)
          :shared   (intersection first-packages second-packages)}]
     (content-search/compare-repositories [first second])
-    (content-search/select-type type)
+   ; (content-search/select-type type)
     (every? true? (doall (for [type [:all :shared :unique]]
                            (do     
                              (content-search/select-view type)
@@ -273,7 +273,7 @@
                  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"}))
                  (org/switch test-org-errata))
   
-  (deftest "Content Browser: Errata information"
+  #_(deftest "Content Browser: Errata information"
     :uuid "f2a008f7-3219-1934-0c1b-82f47633be1c"
     (content-search/go-to-content-search-page test-org-errata)
     (content-search/get-errata-set "*")
@@ -282,7 +282,7 @@
     (content-search/click-repo-errata "ErrataZoo")
     (content-search/test-errata-popup-click "RHEA-2012:2011")
     (content-search/compare-repositories ["ErrataZoo"])
-    (content-search/select-type :errata)
+   ; (content-search/select-type :errata)
     (content-search/test-errata-popup-click "RHEA-2012:2011"))
   
   (deftests-errata-search
@@ -535,5 +535,5 @@
 
 (defgroup content-search-tests
   content-search-repo-compare
-  content-search-errata
-  content-search-env-compare)
+  content-search-errata)
+  ;content-search-env-compare)
