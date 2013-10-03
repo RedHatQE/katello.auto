@@ -3,6 +3,7 @@
             [slingshot.slingshot :refer [throw+]]
             (katello [conf :refer [*session-user* *session-org*]]
                      [ui :as ui]
+                     [rest :as rest]
                      [ui-common :as common]
                      [organizations :as organization]
                      [notifications :as notification])))
@@ -13,7 +14,6 @@
   {::username-text     "//input[@class='username']"
    ::password-text     "//input[@class='password']"
    ::log-in            "//input[@value='Log In' or @value='Login']"
-   ::re-log-in-link    "//a[contains(@href, '/login')]"
    ::error-message     "//ul[@class='error']"
    ::close-error       "//div[@id='notifications']//div[@class='control']"
    ::interstitial      "//a[contains(@class,'menu-item-link') and contains(.,'Select an Organization')]"})
@@ -32,8 +32,7 @@
 (defn logged-out?
   "Returns true if the login page is displayed."
   []
-  (or (browser/exists? ::re-log-in-link)
-      (browser/exists? ::log-in)))
+  (browser/exists? ::log-in))
 
 (defn logout
   "Logs out the current user from the UI."
@@ -68,11 +67,10 @@
      {:pre [(not (nil? user))
             (instance? katello.User user)]}
      (when (logged-in?) (logout))
-     (when (browser/exists? ::re-log-in-link)
-       (browser/click ::re-log-in-link))
 
-     (when (signo-error?)
-       (clear-signo-errors))
+     (rest/when-katello
+      (when (signo-error?)
+        (clear-signo-errors)))
 
      (browser/clear ::username-text)
      (browser/clear ::password-text)
@@ -80,16 +78,16 @@
                           ::password-text password
                           ::log-in browser/click])
      ;; throw errors
-     ;;(notification/verify-no-error)     ; katello notifs
-     ;;(notification/flush)
+     (rest/when-headpin (notification/verify-no-error)     ; katello notifs
+                        (notification/flush))
 
-     (if (signo-error?)                 ; signo notifs
-       (throw+ (list (ui/map->Notification {:level :error
-                                            :notices (list (browser/text ::error-message))}))))
+     (rest/when-katello (if (signo-error?)                 ; signo notifs
+                          (throw+ (list (ui/map->Notification {:level :error
+                                                               :notices (list (browser/text ::error-message))})))))
      ;; no interstitial for signo logins, if we go straight to default org, and that's the
      ;; org we want, switch won't click anything
      (browser/ajax-wait)
-     ;;(browser/refresh)
+     (rest/when-headpin (browser/refresh))
      (when org
        (organization/switch org {:default-org default-org}))))
 
