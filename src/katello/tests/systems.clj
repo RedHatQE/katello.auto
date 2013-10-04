@@ -40,7 +40,7 @@
 ;; Functions
 
 (def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
-(def outputformat (java.text.SimpleDateFormat. "EEE, dd MMM yyyy"))
+(def outputformat (java.text.SimpleDateFormat. "MM/dd/yy"))
 (defn date [d] (.format outputformat (.parse inputformat d)))
 
 (defn create-test-environment []
@@ -54,12 +54,6 @@
 
 (defn verify-system-rename [system]
   (nav/go-to (ui/update system update-in [:name] uniqueify)))
-
-(defn verify-system-appears-on-env-page
-  [system]
-  (nav/go-to ::system/named-by-environment-page system)
-  (assert/is (= (:environment_id system)
-                (-> test-environment rest/query :id))))
 
 (defn validate-sys-subscription
   "Validate subscription tab when no subscription are attached to selected system"
@@ -179,12 +173,6 @@
       (if (nth d 2)
         (with-meta d {:blockers (bz-bugs "985586")})
         d)))
-
-
- ; (deftest "Verify system appears on Systems By Environment page in its proper environment"
- ;   :uuid "f7d6189a-6033-f434-203b-dc6f700e3f15"
- ;   :blockers (conj (bz-bugs "738054") rest/katello-only)
- ;   (verify-system-appears-on-env-page (register-new-test-system)))
   
   (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
@@ -246,7 +234,6 @@
         (wd/click ::system/remove)
         (if confirm?
           (do (wd/click ::system/confirmation-yes)
-             ; (notification/success-type :sys-destroy)
               (assert (rest/not-exists? system)))
           (do (wd/click ::system/confirmation-no)
               (nav/go-to system)))))
@@ -381,7 +368,7 @@
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     :uuid "21db8829-8208-ff54-63eb-40e3ce4d39db"
-    :blockers (bz-bugs "959211")
+    :blockers (bz-bugs "959211" "1015425")
     (let [katello-details {:username (:name *session-user*)
                            :password (:password *session-user*)
                            :org (:name *session-org*)
@@ -400,11 +387,11 @@
               facts (system/get-facts system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
-          (assert/is (= (date sys-date) (subs (details "Checked In") 0 16)))
-          (assert/is (= (date sys-date) (subs (details "Registered") 0 16)))
+          (assert/is (= (date sys-date) (first (split (details "Checkin") #" "))))
+          (assert/is (= (date sys-date) (first (split (details "Registered") #" "))))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
-                        (facts "ipv4 address")))))))
+                        (details "ipv4 address")))))))
 
   (deftest "Review Facts of registered system"
     :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
@@ -433,7 +420,7 @@
 
   (deftest "System-Details: Validate Activation-key link"
     :uuid "0f8a619c-f2f1-44f4-4ad3-84379abbfa8c"
-    :blockers (bz-bugs "959211")
+    :blockers (bz-bugs "959211" "1015249")
 
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
@@ -636,7 +623,7 @@
   
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
-    :blockers (list rest/katello-only)
+    :blockers (conj (bz-bugs "1015256") rest/katello-only)
     (with-unique [repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (create-recursive repo)
       (sync/perform-sync (list repo))
@@ -654,7 +641,7 @@
 
   (deftest "Register a system using multiple activation keys"
     :uuid "a39bf0f7-7e7b-1e54-cdf3-d1442d6e6a6a"
-    :blockers (list rest/katello-only)
+    :blockers (conj (bz-bugs "1015249") rest/katello-only)
     (with-unique [[ak1 ak2] (kt/newActivationKey {:name "ak1"
                                                   :env test-environment
                                                   :description "auto activation key"})]
