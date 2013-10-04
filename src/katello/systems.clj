@@ -34,7 +34,7 @@
   package-select                  "//input[@id='package_%s']"
   get-filtered-package            "//td[contains(., '%s') and parent::tr[@ng-repeat='package in table.rows | filter:table.filter']]"
   environment-checkbox            "//div[contains(text(), '%s')]"
-  system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
+  system-detail-textbox           "//span[contains(.,'%s')]/./following-sibling::*[1]"
   system-fact-textbox             "//span[contains(.,'%s')]/./following-sibling::*[1]"
   existing-key-value-field        "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[1]"
   remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"})
@@ -59,8 +59,6 @@
    ::select-sysgrp               "//div[@class='alch-edit']/div[@ng-click='edit()']"
    ::add-sysgrp                  "//button[@ng-click='add()']"
    ::confirm-to-no               "xpath=(//button[@type='button'])[3]"
-   ::total-sys-count             "total_items_count"
-   ::interface-addr              "//td[@class='interface_name' and contains(., 'eth')]//following-sibling::td"
    ::system-groups               {:xpath (ui/third-level-link "systems_system_groups")}
    ::add-group-form              "//form[@id='add_group_form']/button"
    ::add-group                    "//input[@id='add_groups']"
@@ -87,15 +85,17 @@
   
   
    ;;system-edit details
-   ::details                     (ui/link "Details")
-  ; ::name-text-edit              {:tag :div, :alch-edit-text "system.name"}
-  ; ::description-text-edit       {:tag :div, :alch-edit-textarea "system.description"}
-   ::name-text-edit                   "//div[@alch-edit-text='system.name']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
-   ::description-text-edit       "//div[@alch-edit-textarea='system.description']//span[@class='fr']/i[@ng-hide='editMode || readonly']"
+   ::details                     "//nav[@class='details-navigation']//li/a[contains (text(), 'Details')]" 
+   ::edit-name                   "//div[@alch-edit-text='system.name']//span"
+   ::input-name-text             "//div[@alch-edit-text='system.name']//input"
+   ::edit-description            "//div[@alch-edit-textarea='system.description']//span"
+   ::input-description-text      "//div[@alch-edit-textarea='system.description']/input"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
    ::select-content-view         "//div[@edit-trigger='editContentView']/select"
+   ::expand-eth-interface        "//div/i[@class='expand-icon clickable icon-plus']"
+   ::expand-lo-interface         "//div[2]/i[@class='expand-icon clickable icon-plus']"
    
 
    ;;system-facts
@@ -202,12 +202,17 @@
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 
 
-(defn- edit-system-details [{:keys [name description location release-version]}]
-  (common/in-place-edit {::name-text-edit name
-                         ::description-text-edit description
-                         ::location-text-edit location
-                         ::release-version-select release-version}))
+(defn- edit-system-name
+  [{:keys [name]}]
+  (browser/click ::edit-name)
+  (common/edit-sys-details {::input-name-text name}))
 
+(defn- edit-system-description
+  [{:keys [description]}]
+  (browser/click ::edit-description)
+  (common/edit-sys-details {::input-description-text description}))
+  
+   
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
@@ -230,8 +235,9 @@
 
     (when (some not-empty (list to-remove to-add))
       (nav/go-to ::details-page system)
-      ;(browser/click ::name-text-edit)
-      (edit-system-details to-add)
+      (edit-system-name to-add)
+      (edit-system-description to-add)
+      
       (when env (set-environment (:name env :published-name cv)))
 
       (when (or (:custom-info to-add) (:custom-info to-remove) )
@@ -373,9 +379,12 @@
 
 (defn get-details [system]
   (nav/go-to ::details-page system)
-  (let [headpin-details ["ID" "UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release" "Release Version"
-                         "Arch" "RAM (GB)" "Sockets" "Location" "Checked In" "Registered" "Last Booted"
-                         "Activation Key" "System Type" "Host"]
+  (browser/click ::expand-eth-interface)
+  (let [headpin-details ["UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release"
+                         "Arch" "RAM" "Sockets" "Checkin" "Registered" 
+                         "ipv4 address" "ipv4 netmask" "ipv4 broadcast"] 
+        ;;Removed some details, New UI doesn't show these under details tab
+        ;;"Last Booted" "Activation Key" "System Type" "Host"
         katello-details (conj headpin-details "Environment")
         details (if (rest/is-katello?) katello-details headpin-details)]
     (zipmap details
@@ -385,14 +394,13 @@
 (defn get-facts [system]
   (nav/go-to ::details-page system)
   (browser/click ::expand-advanced-info)
-  (let [facts ["core(s) per_socket" "cpu(s)" "cpu_socket(s)"
+  (let [facts ["core(s) per_socket" "cpu(s)" "cpu socket(s)"
                "id" "name" "version"
                "memtotal" "swaptotal"
-               "host_type" "is_guest" "uuid"
+               "host type" "is guest" "uuid"
                "machine" "nodename" "release"
-               "sysname" "entitlements_valid"
-               "hostname" "ipv4 address"
-               "ipv4 broadcast" "ipv4 netmask"]]
+               "sysname" "entitlements valid"
+               "hostname"]]
     (zipmap facts
             (doall (for [fact facts]
                      (browser/text (system-fact-textbox fact)))))))

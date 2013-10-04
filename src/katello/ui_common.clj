@@ -4,6 +4,7 @@
             [katello :as kt]
             (katello [navigation :as nav]
                      [menu :as menu]
+                     [systems :as system]
                      [ui :as ui]
                      [tasks         :refer :all]
                      [notifications :as notification]
@@ -159,3 +160,11 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Value changed even after clicking cancel button."})))))))
+
+ (defn edit-sys-details 
+    [items]
+    (doall (for [[loc val] items]
+             (if-not (nil? val)
+               (do (browser/clear loc)
+                 (browser/input-text loc val)
+                 (browser/click ::ui/save-button))))))
