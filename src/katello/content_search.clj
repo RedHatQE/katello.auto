@@ -138,7 +138,8 @@
 
 (defn node-content-as [empty-coll tree]
   (postwalk
-   #(cond
+     #(cond
+     (and (map? %) (contains? % :attrs) (= (-> % :attrs :class) "dot_icon-black")) (into empty-coll ["++"])
      (and (map? %) (contains? % :content)) (into empty-coll (:content %))
      :else %)
    tree))
@@ -177,7 +178,9 @@
        (node-content-as [])
        (remove-nil-and-empty vector? [])
        normalize-nodes
-       (postwalk #(if (= "--" %) false %))))
+       (postwalk #(cond (= "--" %) false 
+                        (= "++" %) true
+                        :else %))))
 
 
 (defn get-grid-row-headers []
@@ -222,7 +225,6 @@
   (get-all-text "//ul[@id='grid_row_headers']/li/span/span[1]"))
 
 (defn get-result-packages []
-  (map #(clojure.string/split % #"\n")
         (get-all-text "//ul[@id='grid_row_headers']/li"))
 
 (defn get-table-headers []
@@ -348,11 +350,9 @@
   (nav/go-to ::page org))
 
 (defn add-repositories [repositories]
-  (browser/select-by-text ::type-select "Repositories")
+  (select-content-type :repo-type)
   (browser/click  ::repo-auto-complete-radio)
-  (doseq [repository repositories]
-    (add-to-repository-browser repository))
-  (browser/click ::browse-button))
+  (browser/click  ::browse-button))
 
 (defn click-if-compare-button-is-disabled? []
   (browser/click ::repo-compare-button)
@@ -483,7 +483,7 @@
 
 (defn get-package-desc []
   (load-all-results)
-  (zipmap (get-search-page-result-list-of-lists-xml "grid_row_headers")
+  (zipmap (get-search-page-result-list-of-lists-html "grid_row_headers")
           (get-search-page-result-list-of-lists-html "grid_content_window")))
 
 (defn get-repo-desc []

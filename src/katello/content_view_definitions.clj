@@ -386,9 +386,9 @@
                :query  (partial rest/query-by-name org-uri)
                :create (fn [cv]
                          (merge cv 
-                            (rest/http-post (rest/api-url uri)
+                            (rest/http-post (org-uri cv)
                                {:body
-                                {:content_view_definition (select-keys cv [:name :description :org])}})))
+                                {:content_view_definition (select-keys cv [:name :description :label])}})))
 
                ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
                ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
@@ -408,14 +408,14 @@
                                (rest/http-put (id-org-prod-uri cv)
                                   {:body {:organization_id (-> cv :org resolv-id)
                                           :id  (-> cv resolv-id)
-                                          :products (->> cv :products (partial map resolv-id))}}))
+                                          :products (->> updated :products ((partial map resolv-id)))}}))
                             
                             (when-some-let [repo-to-add (:repos add)
                                             repo-to-remove (:repos remove)]
                                (rest/http-put (id-org-repo-uri cv)
                                   {:body {:organization_id (-> cv :org resolv-id)
                                           :id  (-> cv resolv-id)
-                                          :products (->> cv :repo (partial map resolv-id))}}))))                            
+                                          :repositories (->> updated :repo ((partial map resolv-id)))}}))))                            
                :delete (fn [cv]
                          (rest/http-delete (id-uri cv)))})
   
