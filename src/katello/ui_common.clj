@@ -4,7 +4,6 @@
             [katello :as kt]
             (katello [navigation :as nav]
                      [menu :as menu]
-                     [systems :as system]
                      [ui :as ui]
                      [tasks         :refer :all]
                      [notifications :as notification]
@@ -164,7 +163,7 @@
  (defn edit-sys-details 
     [items]
     (doall (for [[loc val] items]
-             (if-not (nil? val)
-               (do (browser/clear loc)
-                 (browser/input-text loc val)
-                 (browser/click ::ui/save-button))))))
+             (do (browser/clear loc)
+               (browser/input-text loc val)
+               (browser/find-element ::ui/save-button)
+               (browser/click ::ui/save-button)))))

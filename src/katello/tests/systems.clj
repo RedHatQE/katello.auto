@@ -282,8 +282,7 @@
 	      (rest/create s)
 	      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
 	        (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
-
-
+  
   (deftest "System Details: Add custom info"
     :uuid "577a48a3-6a8e-1324-c8a3-71c959b7f373"
     :blockers (bz-bugs "919373")
