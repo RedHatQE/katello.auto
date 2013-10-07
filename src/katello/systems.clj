@@ -37,7 +37,6 @@
   system-detail-textbox           "//span[contains(.,'%s')]/./following-sibling::*[1]"
   system-fact-textbox             "//span[contains(.,'%s')]/./following-sibling::*[1]"
   existing-key-value-field        "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[1]"
-  ;existing-key-value-field        "//div[@ng-click='edit()']/span[contains(., '%s')]"
   remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"})
 
 (ui/defelements :katello.deployment/any []
@@ -116,6 +115,7 @@
    ::key-value                  {:tag :input, :ng-model "newValue"}
    ::add-custom-info            "//button[@ng-click='add({value: {keyname: newKey, value: newValue}})']"
    ::input-custom-value         "//div[@alch-edit-text='customInfo.value']//input"
+
 
    ;;subscriptions pane
    ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})
@@ -203,7 +203,6 @@
     (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
     (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
 
-
 (defn- edit-system-name
   [{:keys [name]}]
   (if-not (nil? name)
@@ -225,6 +224,17 @@
       (browser/click (existing-key-value-field key))
       (common/edit-sys-details {::input-custom-value value}))))
 
+(defn- edit-system-name
+  [{:keys [name]}]
+  (browser/click ::edit-name)
+  (common/edit-sys-details {::input-name-text name}))
+
+(defn- edit-system-description
+  [{:keys [description]}]
+  (browser/click ::edit-description)
+  (common/edit-sys-details {::input-description-text description}))
+  
+   
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
     (if (and to-remove (to-remove k)) ;;if also in the remove, it's an update
