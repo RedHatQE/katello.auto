@@ -115,6 +115,7 @@
    ::key-value                  {:tag :input, :ng-model "newValue"}
    ::add-custom-info            "//button[@ng-click='add({value: {keyname: newKey, value: newValue}})']"
    ::input-custom-value         "//div[@alch-edit-text='customInfo.value']//input"
+   ::custom-info-save-button     "//div/div/div/div/span/div/button"  ;;ui/save-button locator doesn't work
 
 
    ;;subscriptions pane
@@ -222,7 +223,9 @@
   (if-not (nil? value)
     (do 
       (browser/click (existing-key-value-field key))
-      (common/edit-sys-details {::input-custom-value value}))))
+      (browser/clear ::input-custom-value)
+      (browser/input-text ::input-custom-value value)
+      (browser/click ::custom-info-save-button))))
    
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
