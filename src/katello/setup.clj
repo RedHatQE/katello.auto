@@ -18,7 +18,9 @@
             [clj-webdriver.firefox :as ff]
             [clj-webdriver.remote.server :as rs]
             [sauce-api.jobs :as job]
-            [webdriver :as wd]))
+            [webdriver :as wd])
+  (:import [org.openqa.selenium.remote LocalFileDetector RemoteWebDriver]
+           [org.openqa.selenium WebDriver]))
 
 (def ^:dynamic *job-id* nil)
 
@@ -104,6 +106,8 @@
 (defn conf-selenium
   "Opens katello url (to a quick-loading page, not dashboard), and logs in"
   []
+  ;;Set the filedetector to Local
+  (.setFileDetector (-> browser/*driver* :webdriver) (LocalFileDetector.))
   (browser/window-maximize)
   (browser/to (str (@config :server-url) "/users"))
   (login))
@@ -133,7 +137,12 @@
                                            (apply new-remote-grid (split (@config :selenium-address) #":")) ; other remote wd
 
                                            :else (new-selenium)) ; local
-                    :capabilities-chooser-fn (constantly empty-browser-config)
+                    :capabilities-chooser-fn (cond (@config :sauce-browser)
+                                                   (fn [_] {"browserName" (@config :sauce-browser)
+                                                           "version" (@config :sauce-browser-version)
+                                                           "platform" (@config :sauce-os)
+                                                           "nativeEvents" false})
+                                                   :else (constantly empty-browser-config))
                     :finder-fn wd/locator-finder-fn}]
     
     (if (@config :sauce-user)

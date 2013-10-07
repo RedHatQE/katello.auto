@@ -64,6 +64,12 @@
    ["--sauce-user" "The username to log in to sauce api."]
 
    ["--sauce-key" "The api key used to log in to sauce."]
+
+   ["--sauce-browser" "The browser to use on sauce for tests. "]
+
+   ["--sauce-browser-version" "The version number of the browser to be used on sauce."]
+
+   ["--sauce-os" "The OS to use on sauce for tests."]
    
    ["-a" "--selenium-address" "Address of the selenium server to connect to. eg 'host.com:4444' If none specified, an embedded selenium server is used."]
 

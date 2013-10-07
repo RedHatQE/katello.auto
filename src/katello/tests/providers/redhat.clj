@@ -265,7 +265,7 @@
   (deftest "Delete a manifest"
     :uuid "60b9676a-d420-3564-1666-b4e3ff9b3885"
     (let [manifest  (new-manifest false)]
-      (ui/create manifest)
+      (rest/create manifest)
       (ui/delete manifest)))
   
   (deftest "Upload a fake manifest, delete it and upload real manifest"
