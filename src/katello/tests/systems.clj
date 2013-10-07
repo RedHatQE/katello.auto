@@ -66,7 +66,7 @@
 
 (defn validate-package-info
   "validate package install/remove info
-   Here opr-type is package installed/removed 
+   Here opr-type is package installed/removed
    msg-format is Package Install/Package Remove"
   [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
   (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser/text ::system/pkg-summary)))
@@ -138,7 +138,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (bz-bugs "717408" "728357") 
+  :blockers (bz-bugs "717408" "728357")
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
@@ -182,7 +182,7 @@
                   product (katello/newProduct {:name "subscribe-me"
                                                :provider provider})]
       (rest/create provider)
-      (rest/create product)     
+      (rest/create product)
       (ui/update (register-new-test-system) assoc :products (list product))))
 
   (deftest "Set a system to autosubscribe with no SLA preference"
@@ -292,7 +292,7 @@
       (with-unique-system s
         (rest/create s)
         (ui/update s assoc :custom-info {keyname custom-value})
-        (assert/is (= (wd/text-present? keyname) success?)))) 
+        (assert/is (= (wd/text-present? keyname) success?))))
 
     [["Hypervisor" "KVM" true]
      [(random-ascii-string 255) (uniqueify "cust-value") true]
@@ -510,7 +510,7 @@
     (fn [remove-pkg?]
       (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
             product (configure-product-for-pkg-install repo-url)
-            package-name "walrus-0.71-1.noarch"       
+            package-name "walrus-0.71-1.noarch"
             package (first (split package-name #"-+"))]
         (provision/with-queued-client
           ssh-conn

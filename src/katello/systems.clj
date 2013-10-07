@@ -68,7 +68,7 @@
    ::ram-icon                    "//fieldset[descendant::input[@id='system_memory']]//i"
    
    ;;content  
-   ::packages-link               "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"    
+   ::packages-link               "//nav[@class='details-navigation']//li/a[contains (text(), 'Packages')]"
    ::events-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Events')]"
    ::errata-link                 "//nav[@class='details-navigation']//li/a[contains (text(), 'Errata')]"
    ::package-action              "//select[@ng-model='packageAction.actionType']"
@@ -85,7 +85,7 @@
   
   
    ;;system-edit details
-   ::details                     "//nav[@class='details-navigation']//li/a[contains (text(), 'Details')]" 
+   ::details                     "//nav[@class='details-navigation']//li/a[contains (text(), 'Details')]"
    ::edit-name                   "//div[@alch-edit-text='system.name']//span"
    ::input-name-text             "//div[@alch-edit-text='system.name']//input"
    ::edit-description            "//div[@alch-edit-textarea='system.description']//span"
@@ -207,7 +207,7 @@
 (defn- edit-system-name
   [{:keys [name]}]
   (if-not (nil? name)
-    (do 
+    (do
       (browser/click ::edit-name)
       (common/edit-sys-details {::input-name-text name}))))
     
@@ -221,7 +221,7 @@
 (defn- edit-custom-info
   [key value]
   (if-not (nil? value)
-    (do 
+    (do
       (browser/click (existing-key-value-field key))
       (browser/clear ::input-custom-value)
       (browser/input-text ::input-custom-value value)
@@ -254,11 +254,11 @@
       
       (when env (set-environment (:name env :published-name cv)))
 
-      (when (or (:custom-info to-add) (:custom-info to-remove) )
+      (when (or (:custom-info to-add) (:custom-info to-remove))
         (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
 
       (let [added-products (:products to-add)
-            removed-products (:products to-remove) ]
+            removed-products (:products to-remove)]
         (when (some #(not (nil? %)) (list added-products removed-products
                                           service-level auto-attach))
           (browser/click ::subscriptions)
@@ -395,8 +395,8 @@
   (nav/go-to ::details-page system)
   (browser/click ::expand-eth-interface)
   (let [headpin-details ["UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release"
-                         "Arch" "RAM" "Sockets" "Checkin" "Registered" 
-                         "ipv4 address" "ipv4 netmask" "ipv4 broadcast"] 
+                         "Arch" "RAM" "Sockets" "Checkin" "Registered"
+                         "ipv4 address" "ipv4 netmask" "ipv4 broadcast"]
         ;;Removed some details, New UI doesn't show these under details tab
         ;;"Last Booted" "Activation Key" "System Type" "Host"
         katello-details (conj headpin-details "Environment")
@@ -436,13 +436,13 @@
   (browser/click ::perform-action)
   (check-package-status))
 
-(defn filter-package 
+(defn filter-package
   [system {:keys [package]}]
   (nav/go-to ::packages-page system)
   (browser/input-text ::filter-package package))
 
 (defn remove-selected-package "Remove a selected package from package-list"
   [system {:keys [package]} &[timeout-ms]]
-  (filter-package system {:package package}) 
+  (filter-package system {:package package})
   (browser/click (remove-package package)))
   
