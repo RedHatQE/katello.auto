@@ -35,8 +35,9 @@
    ::products-provider        "//select[@name='provider_id']"
    ::products-gpg-key         "//select[@name='gpg_key_id']"
    ::product-description-text "//textarea[@name='description']"
-   ::product-save             "//button[@ng-click='save(product)']"
-   ::product-remove           "//button[@ng-click='removeProduct(product)']"
+   ::product-save             "//span[@class='ng-binding' and contains(.,'Create')]"
+   ::product-remove           "//button[contains(@class,'ng-binding') and contains(.,'Remove Product')]"
+   ::confirm-product-rm       "//div[@alch-confirm-modal='removeProduct(product)']//button[contains(.,'Yes')]"
         
    ::details-link             "//nav[@class='details-navigation']//a[contains(.,'Details')]"
    ::prd-gpgkey-update        "//div[@selector='product.gpg_key_id']//i[contains(@class,'icon-edit')]"
@@ -100,7 +101,8 @@
   {:pre [(not-empty provider)
          (instance? katello.Product product)]}
   (nav/go-to product)
-  (browser/click ::product-remove))
+  (browser/click ::product-remove)
+  (browser/click ::confirm-product-rm))
 
 
 (defn create-discovered-repos-within-product

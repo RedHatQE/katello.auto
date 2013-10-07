@@ -20,8 +20,9 @@
    ::repo-url-text             "//input[@name='url']"
    ::repo-protection-checkbox  "//input[@name='unprotected']"   
    ::repo-gpg-select           "//select[@name='gpg_key_id']"
-   ::repo-save                 "//button[@ng-click='save(repository)']"
-   ::repo-remove               "//button[@ng-click='removeRepository(repository)']"
+   ::repo-save                 "//form[@name='repositoryForm']//span[@class='ng-binding' and contains(.,'Create')]"
+   ::repo-remove               "//button[contains(@class,'ng-binding') and contains(.,'Remove Repository')]"
+   ::confirm-repo-rm           "//div[@alch-confirm-modal='removeRepository(repository)']//button[contains(.,'Yes')]"
    ::repo-list                 "//a[@class='ng-binding' and contains(.,'Back to Repository List')]"
    
    ::repo-gpgkey-update        "//div[@selector='repository.gpg_key_id']//i[contains(@class,'icon-edit')]"
@@ -73,7 +74,8 @@
   {:pre [(instance? katello.Repository repo)]}
   (nav/go-to repo)
   (when (browser/displayed? ::repo-remove)
-     (browser/click ::repo-remove)))
+     (browser/click ::repo-remove)
+     (browser/click ::confirm-repo-rm)))
 
 (defn gpgkey-associated?
   [repo]
