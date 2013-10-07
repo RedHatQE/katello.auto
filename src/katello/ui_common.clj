@@ -4,7 +4,6 @@
             [katello :as kt]
             (katello [navigation :as nav]
                      [menu :as menu]
-                     [systems :as system]
                      [ui :as ui]
                      [tasks         :refer :all]
                      [notifications :as notification]

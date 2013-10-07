@@ -223,17 +223,6 @@
     (do 
       (browser/click (existing-key-value-field key))
       (common/edit-sys-details {::input-custom-value value}))))
-
-(defn- edit-system-name
-  [{:keys [name]}]
-  (browser/click ::edit-name)
-  (common/edit-sys-details {::input-name-text name}))
-
-(defn- edit-system-description
-  [{:keys [description]}]
-  (browser/click ::edit-description)
-  (common/edit-sys-details {::input-description-text description}))
-  
    
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
