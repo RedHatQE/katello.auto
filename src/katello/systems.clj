@@ -111,7 +111,8 @@
 
 
    ;;subscriptions pane
-   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"})
+   ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"
+   ::red-subs-icon               "//i[@class='icon-circle red']"})
 
 ;; Nav
 
