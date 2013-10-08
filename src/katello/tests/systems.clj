@@ -60,9 +60,10 @@
   [system]
   (nav/go-to ::system/subscriptions-page system)
   (browser/exists?  ::system/red-subs-icon)
-  (assert/is (= "Subscriptions are not Current Details" (browser/text ::system/subs-text)))
-  (assert/is (= "Auto-attach On, No Service Level Preference" (browser/text ::system/subs-servicelevel)))
-  (assert/is (common/disabled? ::system/subs-attach-button)))
+  (assert/is (= "invalid" (browser/text (system/system-detail-textbox "Subscription Status"))))
+  (assert/is (= "Red Hat Enterprise Linux Server - Not covered by a valid subscription." 
+                (browser/text (system/system-detail-textbox "Details"))))
+  (assert/is (= "true" (browser/text (system/system-detail-textbox "Auto-Attach")))))
 
 (defn validate-package-info
   "validate package install/remove info
@@ -317,7 +318,7 @@
   
   (deftest "System Details: Key value limit validation"
     :uuid "fd2edd3a-3653-9544-c26b-1c9b4b9ef9d7"
-    :blockers (bz-bugs "919373" "951231" "951197" "970079")
+    :blockers (bz-bugs "919373" "951231" "951197" "970079" "1016203")
     :data-driven true
 
     (fn [keyname custom-value new-value]
@@ -413,7 +414,7 @@
         (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
               aklink (system/activation-key-link (:name ak))]
           (nav/go-to ::system/details-page system)
-          (when (browser/exists?  aklink)  ;;No ak link is available on system details, test can be removed.
+          (when (browser/exists?  aklink)
             (wd/click aklink))))))
     
   (deftest "Add/Remove system packages"
@@ -604,7 +605,7 @@
   
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
-    :blockers (conj (bz-bugs "1015256") rest/katello-only)
+    :blockers (conj (bz-bugs "1015256" "1016625") rest/katello-only)
     (with-unique [repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (create-recursive repo)
       (sync/perform-sync (list repo))
