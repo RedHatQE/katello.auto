@@ -159,3 +159,11 @@
                        :requested-value requested-value
                        :new-value new-text
                        :msg "Value changed even after clicking cancel button."})))))))
+
+ (defn edit-sys-details
+    [items]
+    (doall (for [[loc val] items]
+             (do (browser/clear loc)
+               (browser/input-text loc val)
+               (browser/find-element ::ui/save-button)
+               (browser/click ::ui/save-button)))))
