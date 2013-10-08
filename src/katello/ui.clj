@@ -117,6 +117,7 @@
    ;; use index, no other identifiable info in the DOM
    ::confirmation-yes        "//button/span[normalize-space(.)='Yes']"
    ::confirmation-no         "//button/span[normalize-space(.)='No']"
+   ::save-button             "//button[@ng-click='save()']"
    ::commit                  {:name "commit"}
    
    ::switcher                "organizationSwitcher"

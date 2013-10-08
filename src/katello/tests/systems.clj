@@ -40,7 +40,7 @@
 ;; Functions
 
 (def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
-(def outputformat (java.text.SimpleDateFormat. "EEE, dd MMM yyyy"))
+(def outputformat (java.text.SimpleDateFormat. "MM/dd/yy"))
 (defn date [d] (.format outputformat (.parse inputformat d)))
 
 (defn create-test-environment []
@@ -55,12 +55,6 @@
 (defn verify-system-rename [system]
   (nav/go-to (ui/update system update-in [:name] uniqueify)))
 
-(defn verify-system-appears-on-env-page
-  [system]
-  (nav/go-to ::system/named-by-environment-page system)
-  (assert/is (= (:environment_id system)
-                (-> test-environment rest/query :id))))
-
 (defn validate-sys-subscription
   "Validate subscription tab when no subscription are attached to selected system"
   [system]
@@ -72,11 +66,9 @@
 
 (defn validate-package-info
   "validate package install/remove info
-   Here opr-type is package installed/removed 
+   Here opr-type is package installed/removed
    msg-format is Package Install/Package Remove"
   [msg-format opr-type {:keys [package package-group]} &[pkg-version]]
-  (wd/click ::system/pkg-install-status-link)
-  (assert/is (= msg-format (browser/text ::system/pkg-header)))
   (assert/is (= (join " " [msg-format "scheduled by admin"]) (browser/text ::system/pkg-summary)))
   (if-not (nil? package-group)
     (do
@@ -84,9 +76,9 @@
       (assert/is (= (join ["@" package-group]) (browser/text ::system/pkg-parameters)))
       (assert/is (browser/exists? ::system/pkg-result)))
     (do
-      (assert/is (= (join " " [package opr-type]) (browser/text ::system/pkg-request)))
+      (assert/is (= (join " " [opr-type package]) (browser/text ::system/pkg-request)))
       (assert/is (= package (browser/text ::system/pkg-parameters)))
-      (assert/is (= (apply str (split pkg-version #"\n+")) (browser/text ::system/pkg-result))))))
+      (assert/is (browser/exists? ::system/pkg-result)))))
 
 (defn configure-product-for-pkg-install
   "Creates a product with fake content repo, returns the product."
@@ -99,28 +91,11 @@
                 repo (katello/newRepository {:name "zoo_repo"
                                              :product product
                                              :url repo-url
+                                             :repo-type "yum"
                                              :gpg-key testkey})]
-    (ui/create-all (list testkey provider product repo))
+    (ui/create-all (list testkey product repo))
     (sync/perform-sync (list repo))
     product))
-
-(defn validate-system-facts
-  [system cpu arch virt? env]
-  (nav/go-to ::system/facts-page system)
-  (wd/click ::system/cpu-expander)
-  (assert/is (= cpu (browser/text ::system/cpu-socket)))
-  (wd/click ::system/network-expander)
-  (assert/is (= (:name system) (browser/text ::system/net-hostname)))
-  (wd/click ::system/uname-expander)
-  (assert/is (= arch (browser/text ::system/machine-arch)))
-  (wd/click ::system/virt-expander)
-  (if virt?
-    (assert/is (= "true" (browser/text ::system/virt-status)))
-    (assert/is (= "false" (browser/text ::system/virt-status))))
-  (let [details (system/get-details system)]
-    (assert/is (= (:name system) (details "Name")))
-    (assert/is (= arch (details "Arch")))
-    (assert/is (= (:name env)  (details "Environment")))))
 
 (def save-cancel
   (partial #'common/save-cancel
@@ -129,11 +104,12 @@
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
   (nav/go-to ::system/page org)
-  (Integer/parseInt (browser/text ::system/total-sys-count)))
+  (browser/click ::system/select-all-system)
+  (Integer/parseInt (first (split (browser/text ::system/total-selected-count) #" +"))))
 
 (defn filter-errata-by-type "Filter errata based on selected errata-type"
   [system {:keys [errata-type errata-ids]}]
-  (nav/go-to ::system/content-errata-page system)
+  (nav/go-to ::system/errata-page system)
   (wd/select-by-text ::system/select-errata-type errata-type)
   (doseq [errata-id errata-ids]
     (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
@@ -144,7 +120,7 @@
 
 (defgroup system-tests
   :group-setup create-test-environment
-  :blockers (bz-bugs "717408" "728357") 
+  :blockers (bz-bugs "717408" "728357")
 
   (deftest "Rename an existing system"
     :uuid "50895adf-ae72-5dd4-bd1b-1baf59fd0633"
@@ -179,12 +155,6 @@
       (if (nth d 2)
         (with-meta d {:blockers (bz-bugs "985586")})
         d)))
-
-
-  (deftest "Verify system appears on Systems By Environment page in its proper environment"
-    :uuid "f7d6189a-6033-f434-203b-dc6f700e3f15"
-    :blockers (conj (bz-bugs "738054") rest/katello-only)
-    (verify-system-appears-on-env-page (register-new-test-system)))
   
   (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
@@ -245,10 +215,9 @@
         (nav/go-to system)
         (wd/click ::system/remove)
         (if confirm?
-          (do (wd/click ::ui/confirmation-yes)
-              (notification/success-type :sys-destroy)
+          (do (wd/click ::system/confirmation-yes)
               (assert (rest/not-exists? system)))
-          (do (wd/click ::ui/confirmation-no)
+          (do (wd/click ::system/confirmation-no)
               (nav/go-to system)))))
     [[false]
      [true]])
@@ -257,7 +226,6 @@
     :uuid "7d5ff301-b2eb-05a4-aee3-ab60d9583585"
     :blockers (list rest/katello-only)
     (with-unique [org (kt/newOrganization {:name "defaultsysinfo"})
-
                   system (kt/newSystem {:name "sys"
                                         :sockets "1"
                                         :system-arch "x86_64"
@@ -265,8 +233,8 @@
       (ui/create org)
       (org/add-custom-keyname org ::org/system-default-info-page "Manager")
       (rest/create system)
-      (nav/go-to ::system/custom-info-page system)
-      (assert/is (wd/text-present? "Manager")))) 
+      (nav/go-to system)
+      (assert/is (wd/text-present? "Manager"))))
 
   (deftest "Creates org adds new system then applies custom org default"
     :uuid "0825248e-3c30-5194-28b3-eeff22bb5806"
@@ -277,11 +245,9 @@
       (let [sys1 (assoc system :env (kt/library org))]
         (rest/create-all (list org sys1))
         (nav/go-to sys1)
-        (wd/click ::system/custom-info)
         (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
         (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
         (nav/go-to sys1)
-        (wd/click ::system/custom-info)
         (assert/is (org/isKeynamePresent? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
@@ -294,25 +260,10 @@
   (deftest "System Details: Update custom info"
     :uuid "24ea3405-34cc-0b84-20fb-5d4794c5b47b"
     :blockers (bz-bugs "919373" "970079")
-    (with-unique-system s
-      (rest/create s)
-      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
-        (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
-
-  (deftest "Remove systems and validate sys-count"
-    :uuid "0ddac55e-1b1d-7d94-8b9b-c819b4ea7936"
-    (with-unique [org (kt/newOrganization {:name "delsyscount"
-                                           :initial-env (kt/newEnvironment {:name "dev"})})]
-      (let [systems (->> {:name "delsys", :env (:initial-env org)}
-                         kt/newSystem
-                         uniques
-                         (take 4))]
-        (create-all-recursive systems)
-        (assert/is (= (count systems) (ui-count-systems org)))
-        (ui/delete (first systems))
-        (assert/is (= (dec (count systems)) (ui-count-systems org)))
-        (system/multi-delete (rest systems))
-        (assert/is (= 0 (ui-count-systems org))))))
+	    (with-unique-system s
+	      (rest/create s)
+	      (let [s (ui/update s assoc :custom-info {"Hypervisor" "KVM"})]
+	        (ui/update s assoc :custom-info {"Hypervisor" "Xen"}))))
 
   (deftest "System Details: Add custom info"
     :uuid "577a48a3-6a8e-1324-c8a3-71c959b7f373"
@@ -323,7 +274,7 @@
       (with-unique-system s
         (rest/create s)
         (ui/update s assoc :custom-info {keyname custom-value})
-        (assert/is (= (wd/text-present? keyname) success?)))) 
+        (assert/is (= (wd/text-present? keyname) success?))))
 
     [["Hypervisor" "KVM" true]
      [(random-ascii-string 255) (uniqueify "cust-value") true]
@@ -398,7 +349,7 @@
 
   (deftest "Check whether the details of registered system are correctly displayed in the UI"
     :uuid "21db8829-8208-ff54-63eb-40e3ce4d39db"
-    :blockers (bz-bugs "959211")
+    :blockers (bz-bugs "959211" "1015425")
     (let [katello-details {:username (:name *session-user*)
                            :password (:password *session-user*)
                            :org (:name *session-org*)
@@ -413,14 +364,15 @@
               sys-date (client/get-client-date ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
-              details (system/get-details system)]
+              details (system/get-details system)
+              facts (system/get-facts system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
-          (assert/is (= (date sys-date) (subs (details "Checked In") 0 16)))
-          (assert/is (= (date sys-date) (subs (details "Registered") 0 16)))
+          (assert/is (= (date sys-date) (first (split (details "Checkin") #" "))))
+          (assert/is (= (date sys-date) (first (split (details "Registered") #" "))))
           (assert/is (every? not-empty (vals details)))
           (assert/is (= (client/get-ip-address ssh-conn)
-                        (system/get-ip-addr system)))))))
+                        (details "ipv4 address")))))))
 
   (deftest "Review Facts of registered system"
     :uuid "191d75c4-860f-62a4-908b-659ad8acdc4f"
@@ -444,13 +396,12 @@
               system (kt/newSystem {:name hostname
                                     :env test-environment})
               facts (system/get-facts system)]
-          (system/expand-collapse-facts-group system)
           (assert/is (every? (complement empty?) (vals facts)))))))
 
 
   (deftest "System-Details: Validate Activation-key link"
     :uuid "0f8a619c-f2f1-44f4-4ad3-84379abbfa8c"
-    :blockers (bz-bugs "959211")
+    :blockers (bz-bugs "959211" "1015249")
 
     (with-unique [ak (kt/newActivationKey {:name "ak-link"
                                            :env test-environment})]
@@ -462,9 +413,9 @@
         (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
               aklink (system/activation-key-link (:name ak))]
           (nav/go-to ::system/details-page system)
-          (when (browser/exists?  aklink)
+          (when (browser/exists?  aklink)  ;;No ak link is available on system details, test can be removed.
             (wd/click aklink))))))
-
+    
   (deftest "Add/Remove system packages"
     :uuid "e6e74dcc-46e5-48c8-9a2d-0ac33de7dd70"
     :data-driven true
@@ -472,7 +423,7 @@
     (fn [remove-pkg?]
       (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
             product (configure-product-for-pkg-install repo-url)
-            packages "cow"]
+            package "cow"]
         (provision/with-queued-client
           ssh-conn
           (client/register ssh-conn
@@ -481,23 +432,22 @@
                             :org (-> product :provider :org :name)
                             :env (:name test-environment)
                             :force true})
-          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
-                        katello/newSystem)]
+          (let [mysys (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/package-action mysys {:package packages})
-            (let [cmd (format "rpm -qa | grep %s" packages)
+            (system/package-action mysys {:package package :pkg-action "Package Install"})
+            (let [cmd (format "rpm -qa | grep %s" package)
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
-              (validate-package-info "Package Install" "package installed" {:package packages} pkg-version)
+              ;(validate-package-info "Package Install" "Package installation:" {:package package} pkg-version)
               (when remove-pkg?
-                (system/remove-package mysys {:package packages})
-                (let [cmd (format "rpm -qa | grep %s" packages)
+                (system/package-action mysys {:package package :pkg-action "Package Remove"})
+                (let [cmd (format "rpm -qa | grep %s" package)
                       cmd_result (client/run-cmd ssh-conn cmd)]
-                  (assert/is (->> cmd_result :exit-code (not= 0)))
-                  (validate-package-info "Package Remove" "package removed" {:package packages} pkg-version))))))))
+                  (assert/is (->> cmd_result :exit-code (not= 0))))))))))
+                  ;(validate-package-info "Package Remove" "package removed" {:package packages} pkg-version))))))))
     [[true]
      [false]])
   
@@ -517,21 +467,20 @@
                             :org (-> product :provider :org :name)
                             :env (:name test-environment)
                             :force true})
-          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
-                        katello/newSystem)]
+          (let [mysys (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})]
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/package-action mysys {:package package-groups})
+            (system/package-action mysys {:package package-groups :pkg-action "Group Install"})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork lion wolf tiger dolphin bear")
                   pkg-version (->> cmd_result :out)]
-              (assert/is (client/ok? cmd_result))
-              (validate-package-info "Package Group Install" "package group installed" {:package-group package-groups}))
+              (assert/is (client/ok? cmd_result)))
+              ;(validate-package-info "Package Group Install" "package group installed" {:package-group package-groups}))
             (when remove-group?
-              (system/remove-package mysys {:package-group package-groups})
+              (system/package-action mysys {:package-group package-groups :pkg-action "Group Remove"})
               (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork")]
-                (assert/is (->> cmd_result :exit-code (not= 0)))
-                (validate-package-info "Package Group Remove" "package group removed" {:package-group package-groups})))))))
+                (assert/is (->> cmd_result :exit-code (not= 0)))))))))
+               ; (validate-package-info "Package Group Remove" "package group removed" {:package-group package-groups})))))))
 
     [[true]
      [false]])
@@ -543,7 +492,7 @@
     (fn [remove-pkg?]
       (let [repo-url "http://inecas.fedorapeople.org/fakerepos/zoo/"
             product (configure-product-for-pkg-install repo-url)
-            package-name "walrus-0.71-1.noarch"       
+            package-name "walrus-0.71-1.noarch"
             package (first (split package-name #"-+"))]
         (provision/with-queued-client
           ssh-conn
@@ -562,24 +511,23 @@
             (client/subscribe ssh-conn (system/pool-id mysys product))
             (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
             (client/run-cmd ssh-conn "yum repolist")
-            (system/package-action mysys {:package package})
+            (system/package-action mysys {:package package :pkg-action "Package Update"})
             (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
-              (validate-package-info "Package Update" "package updated" {:package package} pkg-version)
+            ;  (validate-package-info "Package Update" "package updated" {:package package} pkg-version)
               (when remove-pkg?
                 (system/remove-selected-package mysys {:package package})
                 (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")]
-                  (assert/is (->> cmd_result :exit-code (not= 0))))
-                (validate-package-info "Package Remove" "package removed" {:package package} pkg-version)))))))
+                  (assert/is (->> cmd_result :exit-code (not= 0))))))))))
+                ;(validate-package-info "Package Remove" "package removed" {:package package} pkg-version)))))))
     
     [[true]
      [false]])
   
   (deftest "Search a Package from package-list"
     :uuid "5dc869d7-2604-4524-85f1-574722e9dd59"
-    (let [package-name "walrus-0.71-1.noarch"
-          package (first (split package-name #"-+"))]
+    (let [package-name "walrus-0.71-1.noarch"]
       (provision/with-queued-client
         ssh-conn
         (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
@@ -593,8 +541,8 @@
                           :force true})
         (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
                       katello/newSystem)]
-          (system/filter-package mysys {:package package})
-          (assert/is (= package-name (browser/text (system/get-filtered-package package))))))))
+          (system/filter-package mysys {:package package-name})
+          (assert/is (= package-name (browser/text (system/get-filtered-package package-name))))))))
   
   (deftest "Filter Errata"
     :uuid "ed64eea5-4c37-4810-8f43-8da0bfbced43"
@@ -656,7 +604,7 @@
   
   (deftest "Register a system and validate subscription tab"
     :uuid "7169755a-379a-9e24-37eb-cf222e6beb86"
-    :blockers (list rest/katello-only)
+    :blockers (conj (bz-bugs "1015256") rest/katello-only)
     (with-unique [repo (fresh-repo *session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (create-recursive repo)
       (sync/perform-sync (list repo))
@@ -674,7 +622,7 @@
 
   (deftest "Register a system using multiple activation keys"
     :uuid "a39bf0f7-7e7b-1e54-cdf3-d1442d6e6a6a"
-    :blockers (list rest/katello-only)
+    :blockers (conj (bz-bugs "1015249") rest/katello-only)
     (with-unique [[ak1 ak2] (kt/newActivationKey {:name "ak1"
                                                   :env test-environment
                                                   :description "auto activation key"})]
@@ -748,16 +696,15 @@
                           :org (-> env-dev :org :name)
                           :env (:name env-dev)
                           :force true})
-        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env env-dev}
-                      katello/newSystem)]
+        (let [mysys (kt/newSystem {:name (client/my-hostname ssh-conn) :env env-dev})]
           (assert/is (= (:name env-dev) (system/environment mysys)))
-          (ui/update mysys assoc :env env-test)
+          (ui/update mysys assoc :env env-test :cv cv)
           (assert/is (= (:name env-test) (system/environment mysys)))
           (client/subscribe ssh-conn (system/pool-id mysys product))
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/sm-cmd ssh-conn :refresh)
           (client/run-cmd ssh-conn "yum repolist")
-          (system/package-action mysys {:package "cow"})
+          (system/package-action mysys {:package "cow" :pkg-action "Package Install"})
           (let [cmd_result (client/run-cmd ssh-conn "rpm -q cow")]
             (assert/is (client/ok? cmd_result)))))))
 
