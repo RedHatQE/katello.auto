@@ -100,14 +100,6 @@
 
    ;;system-facts
    ::expand-advanced-info       "//div[@class='advanced-info']/header/i[@class='expand-icon clickable icon-plus']"
-   ::network-expander            "network"
-   ::cpu-expander                "cpu"
-   ::uname-expander              "uname"
-   ::virt-expander               "virt"
-   ::net-hostname                "//tr[@id='network.hostname']/td[3]"
-   ::cpu-socket                  "//tr[@id='cpu.cpu_socket(s)']/td[3]"
-   ::machine-arch                "//tr[@id='uname.machine']/td[3]"
-   ::virt-status                 "//tr[@id='virt.is_guest']/td[3]"
 
    ;;custom-info
    ::custom-info                (ui/link "Custom Information")

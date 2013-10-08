@@ -97,24 +97,6 @@
     (sync/perform-sync (list repo))
     product))
 
-(defn validate-system-facts
-  [system cpu arch virt? env]
-  (nav/go-to ::system/facts-page system)
-  (wd/click ::system/cpu-expander)
-  (assert/is (= cpu (browser/text ::system/cpu-socket)))
-  (wd/click ::system/network-expander)
-  (assert/is (= (:name system) (browser/text ::system/net-hostname)))
-  (wd/click ::system/uname-expander)
-  (assert/is (= arch (browser/text ::system/machine-arch)))
-  (wd/click ::system/virt-expander)
-  (if virt?
-    (assert/is (= "true" (browser/text ::system/virt-status)))
-    (assert/is (= "false" (browser/text ::system/virt-status))))
-  (let [details (system/get-details system)]
-    (assert/is (= (:name system) (details "Name")))
-    (assert/is (= arch (details "Arch")))
-    (assert/is (= (:name env)  (details "Environment")))))
-
 (def save-cancel
   (partial #'common/save-cancel
            ::system/save-button ::system/cancel-button :sys-update))
@@ -459,7 +441,7 @@
                   cmd_result (client/run-cmd ssh-conn cmd)
                   pkg-version (->> cmd_result :out)]
               (assert/is (client/ok? cmd_result))
-             ; (validate-package-info "Package Install" "Package installation:" {:package package} pkg-version)
+              ;(validate-package-info "Package Install" "Package installation:" {:package package} pkg-version)
               (when remove-pkg?
                 (system/package-action mysys {:package package :pkg-action "Package Remove"})
                 (let [cmd (format "rpm -qa | grep %s" package)
