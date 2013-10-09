@@ -247,8 +247,9 @@
         (nav/go-to sys1)
         (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
         (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
+        (assert/is (org/isKeynamePresent? "fizzbuzz"))
         (nav/go-to sys1)
-        (assert/is (org/isKeynamePresent? "fizzbuzz")))))
+        (assert/is (wd/text-present? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
     :uuid "d4543bef-3b65-87b4-de1b-791e634d494a"
