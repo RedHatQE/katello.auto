@@ -105,8 +105,7 @@
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
   (nav/go-to ::system/page org)
-  (browser/click ::system/select-all-system)
-  (Integer/parseInt (first (split (browser/text ::system/total-selected-count) #" +"))))
+  (Integer/parseInt (fnext (split (browser/text ::system/sys-count) #" "))))
 
 (defn filter-errata-by-type "Filter errata based on selected errata-type"
   [system {:keys [errata-type errata-ids]}]
@@ -248,8 +247,9 @@
         (nav/go-to sys1)
         (assert/is (not (org/isKeynamePresent? "fizzbuzz")))
         (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
+        (assert/is (org/isKeynamePresent? "fizzbuzz"))
         (nav/go-to sys1)
-        (assert/is (org/isKeynamePresent? "fizzbuzz")))))
+        (assert/is (wd/text-present? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
     :uuid "d4543bef-3b65-87b4-de1b-791e634d494a"
