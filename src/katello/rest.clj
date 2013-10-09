@@ -210,14 +210,3 @@
         (= "finished" (:state (katello.rest/http-get  (katello.rest/api-url (format "/api/tasks/%s" uuid)))))
         (dec max-wait)))))
 
-
-
-
-
-
-
-
-
-
-
-
