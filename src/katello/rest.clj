@@ -199,3 +199,25 @@
 (defn create-all-recursive [ents & [{:keys [check-exist?] :as m}]]
   (doseq [ent ents]
     (create-recursive ent m)))
+
+(defn poll-task-untill-completed   [uuid pause repeats]
+  (loop [finished false
+         max-wait repeats]
+    (Thread/sleep pause) 
+    (if (or finished (= max-wait 0))
+      false
+      (recur        
+        (= "finished" (:state (katello.rest/http-get  (katello.rest/api-url (format "/api/tasks/%s" uuid)))))
+        (dec max-wait)))))
+
+
+
+
+
+
+
+
+
+
+
+

@@ -352,6 +352,7 @@
     (content-search/select-content-type :repo-type)
     (content-search/submit-browse-button)
     (content-search/select-environments [env-dev env-qa env-release])
+    (content-search/expand-everything)
     (content-search/get-repo-errata-count repo view env))
 
 (defn test-env-shared-unique [environments view]
@@ -361,7 +362,6 @@
     (content-search/select-environments environments)
     (content-search/select-view view)
     (content-search/get-grid-row-headers))
-
   (defn cs-envcomp-setup []
                  (def ^:dynamic test-org-env  (uniqueify  (kt/newOrganization {:name "env-org"})))
                  (rest/create  test-org-env)
@@ -383,7 +383,7 @@
                      env-qa-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
                           2))))))
-#_(defgroup content-search-env-compare
+(defgroup content-search-env-compare
   :group-setup cs-envcomp-setup 
 
   (deftest "Content Browser: Shared content for selected environments"
@@ -452,15 +452,15 @@
 
 
   (deftest "Content Browser - Hover over a synced repository should show the correct number of packages and errata"
-    (assert/is (= ["Packages (8)" "Errata (2)"]
+    (assert/is (= ["8" "2" "0"]
                   (test-repo-errata-count "China" "Default Organization View" "Library"))))
 
   (deftest "Content Browser - Validate hover-over shows correct package/errata count with links after promoting the repo from Library to next env"
-    (assert/is (= ["Packages (8)" "Errata (2)"]
+    (assert/is (= ["8" "2""0"]
                   (test-repo-errata-count "China" publish-qa "QA"))))
 
   (deftest "Content Browser - Validate hover-over correctly showing package/errata count for empty repo" 
-    (assert/is (= ["Packages (0)" "Errata (0)"]
+    (assert/is (= ["0" "0""0"]
                   (test-repo-errata-count "ErrataZoo2" "Default Organization View" "Library"))))
 
   (deftest "Content Search: search package info"
@@ -540,3 +540,4 @@
   content-search-repo-compare
   content-search-errata)
   ;content-search-env-compare)
+

@@ -57,21 +57,20 @@
                                        :org org
                                        :published-name "publish-name"})
                 
-                cs (kt/newChangeset {:name "cs"
-                                     :env target-env
-                                     :content (list cv)})]
+                ]
         (rest/create-all-recursive (list org target-env))
 		    (rest/create cv)
 		    (rest/create-recursive repo)
 		    (when (not (:nosync repo))
 		      (sync/perform-sync (list repo) {:rest true}))
 		    (rest/update cv assoc :products (list (kt/product repo)))
-		    (views/rest-publish {:content-defn cv
+		    (let [publish-task (views/rest-publish {:content-defn cv
 		                    :published-name (:published-name cv)
 		                    :description "test pub"
-		                    :org org})
-		    (changeset/rest-promote-delete-content cs)
-		    cv
+		                    :org org})]
+                         (rest/poll-task-untill-completed (publish-task :uuid) 1000 10)
+                         (views/promote-cv-to-env cv target-env)                    
+		         cv)
         ))
 
 (defn promote-published-composite-view

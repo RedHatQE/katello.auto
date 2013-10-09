@@ -85,6 +85,12 @@
 
 ;; Tasks
 
+(defn scroll-right []
+  (browser/execute-script "window.scrollTo(Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.documentElement.clientHeight),0);"))
+
+(defn scroll-left []
+ (browser/execute-script "window.scrollTo(0,0);"))
+
 (defn get-all-of-locator [locatorfn]
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
   (let [count (count (browser/find-elements (locatorfn "'*'")))]
@@ -405,13 +411,14 @@
 
 (defn select-environments [envs]
   ;; Select environments (columns)
-  (doseq [env envs]
-    (let [col-locator (column env)]
+  (scroll-right)
       (browser/move-to ::column-selector)
+  (doseq [env envs]
    (Thread/sleep 1000)
    (browser/move-to (column-li env))
-   (browser/click (column env))
-   (browser/move-off browser/*driver* ::column-selector))))
+   (browser/click (column env)))
+  (browser/move-to ::view-select-btn)
+  (scroll-right))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -502,10 +509,12 @@
    (str "grid_row_")
    get-search-page-result-list-of-lists-html
    (#(nth % (index-of env-name (get-table-headers))))
+   rest first 
    (#(if (coll? %)
        (map (partial erase re-newline) %)
        (clojure.string/split % re-newline)))
    (into [])
+   (remove #(.contains % "/"))
    ))
 
 (defn get-errata-desc-button [repo-name env-name]

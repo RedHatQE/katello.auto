@@ -359,15 +359,14 @@
                               ::sg/copy-description-text (:description clone)
                               ::sg/copy-submit browser/click])
   (notification/success-type :cv-clone))
-
+   
 (defn rest-publish
   "Publishes a Content View Definition"
-  [{:keys [cv published-name description]} & [timeout-ms]]
+  [{:keys [content-defn published-name description]} & [timeout-ms]]
   (let [resolv-id #(-> % rest/read rest/id) 
         id-org-publish-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions/%s/publish" [:org identity]]])]
-       (rest/http-put (id-org-publish-uri cv)
+       (rest/http-post (id-org-publish-uri content-defn)
             {:body {:name published-name
-                    :id  (-> cv resolv-id)
                     :description description}})))
 
 (extend katello.ContentViewDefinition
@@ -435,3 +434,15 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
   
   nav/Destination {:go-to (partial nav/go-to ::filter-page)})
+
+(defn promote-cv-to-env [cv env]
+  (let [env-id (rest/id (rest/read env))
+        cvs-url (partial rest/url-maker [["api/organizations/%s/content_views/" [identity]]])
+        cv-id  (->> (cvs-url (:org env)) 
+                    katello.rest/http-get
+                    (filter #(= (% :label) (:published-name cv)))
+                   first :id )
+        created-task (katello.rest/http-post 
+                       (katello.rest/api-url (format "/api/content_views/%s/promote" cv-id)) 
+                         {:body {:environment_id env-id}})]
+         (rest/poll-task-untill-completed (created-task :uuid) 500 10))) 
