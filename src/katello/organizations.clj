@@ -75,7 +75,7 @@
   (if apply-default
     (do
       (browser/click ::apply-default-info)
-      (browser/click ::ui/confirmation-yes)
+      (browser/click ::ui/confirmation-yes)))
       ;;(browser/wait-until (browser/exists? ::disabled-apply-btn) "120000")))  ;;not required
   (notification/check-for-success))
 
