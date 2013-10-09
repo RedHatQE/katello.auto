@@ -96,6 +96,7 @@
    ::select-content-view         "//div[@edit-trigger='editContentView']/select"
    ::expand-eth-interface        "//div/i[@class='expand-icon clickable icon-plus']"
    ::expand-lo-interface         "//div[2]/i[@class='expand-icon clickable icon-plus']"
+   ::sys-count                   "//div[@class='nutupane-actionbar']/div/span"
    
 
    ;;system-facts

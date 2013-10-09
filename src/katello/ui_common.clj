@@ -165,5 +165,4 @@
     (doall (for [[loc val] items]
              (do (browser/clear loc)
                (browser/input-text loc val)
-               (browser/find-element ::ui/save-button)
                (browser/click ::ui/save-button)))))
