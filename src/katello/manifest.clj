@@ -177,8 +177,8 @@
   (when url
     (common/in-place-edit {::subs/repository-url-text url})
     (notification/success-type :prov-update))
-  (browser/quick-fill [::subs/choose-file file-path
-                       ::subs/upload-manifest browser/click])
+  (browser/send-keys ::subs/choose-file file-path)
+  (browser/click ::subs/upload-manifest)
   (browser/refresh)
   ;;now the page seems to refresh on its own, but sometimes the ajax count
   ;; does not update. 
@@ -225,3 +225,17 @@
                                (repeatedly (fn [] (let [newpath (new-tmp-loc)]
                                                     (clone (:file-path m) newpath (@config :key-url))
                                                     (assoc m :file-path newpath)))))})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
