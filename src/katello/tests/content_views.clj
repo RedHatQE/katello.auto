@@ -98,13 +98,14 @@
 (defn- assoc-content-with-cv
   "Associate product/repo with cv before applying filter rules"
   [cv cv-filter]
-  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
+  (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo3/" "yum")]
     (create-recursive repo)
     (sync/perform-sync (list repo))
     (ui/create cv)
     (ui/update cv assoc :repos (list (kt/repository repo)))
     (ui/create cv-filter)
-    (views/add-repo-from-filters (list (kt/repository repo)))))
+    (views/add-repo-from-filters (list (kt/repository repo)))
+    repo))
 
 
 ;; Data (Generated)
@@ -361,24 +362,24 @@
     
     (deftest "Consume content after applying package-group filter"
       :uuid "e3dc11ef-5cd1-4d93-89ac-585c6faaa86c"
-      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
-            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
-            repo (fresh-repo org
-                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
-            cv (add-product-to-cv org target-env repo)]
-        (with-unique [cs (kt/newChangeset {:name "cs"
-                                           :env target-env
-                                           :content (list cv)})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups" :exclude? false})
-                      ak (kt/newActivationKey {:name "ak"
-                                               :env target-env
-                                               :description "auto activation key"
-                                               :content-view cv})]
-          (ui/create cv-filter)
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (kt/newContentViewDefinition {:name "con-def"
+                                                     :published-name "publish-name"
+                                                     :org org})
+                    cs (kt/newChangeset {:name "cs"
+                                         :env target-env
+                                         :content (list cv)})
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Package Groups" :exclude? false})
+                    ak (kt/newActivationKey {:name "ak"
+                                             :env target-env
+                                             :description "auto activation key"
+                                             :content-view cv})]
+        (ui/create-all-recursive (list org target-env))
+        (let [repo (assoc-content-with-cv cv cv-filter)]
           (views/add-pkg-group-rule cv-filter {:pkg-groups (list "mammals")})
           (-> cv-filter (update-in [:exclude?] (constantly true))
             (views/add-pkg-group-rule {:pkg-groups (list "birds")}))
-          (views/add-repo-from-filters (list (kt/repository repo)))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
                           :org org})
@@ -390,6 +391,7 @@
                              {:org (:name org)
                               :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
+            (client/run-cmd ssh-conn "yum repolist")
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie lion -ie zebra")]
               (assert/is (client/ok? cmd2)))                          
@@ -399,34 +401,35 @@
     
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
-      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
-            target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
-            repo (fresh-repo org
-                             "http://inecas.fedorapeople.org/fakerepos/zoo/")
-            cv (add-product-to-cv org target-env repo)]
-        (with-unique [cs (kt/newChangeset {:name "cs"
+      :blockers (bz-bugs "996172")
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (kt/newContentViewDefinition {:name "con-def"
+                                                     :published-name "publish-name"
+                                                     :org org})
+                    cs (kt/newChangeset {:name "cs"
                                            :env target-env
                                            :content (list cv)})
-                      cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages" :exclude? false})
-                      ak (kt/newActivationKey {:name "ak"
-                                               :env target-env
-                                               :description "auto activation key"
-                                               :content-view cv})]
-          (ui/create cv-filter)
+                    cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Packages" :exclude? false})
+                    ak (kt/newActivationKey {:name "ak"
+                                             :env target-env
+                                             :description "auto activation key"
+                                             :content-view cv})]
+        (ui/create-all-recursive (list org target-env))
+        (let [repo (assoc-content-with-cv cv cv-filter)]
           (doall (for [rule [{:items (list "fox" "lion" "wolf" "bear" "tiger" "cockateel"), :version-type :all}
-                             {:items (list "camel"), :version-type :only-version, :value1 "0.1-1"}
+                             {:items (list "camel"), :version-type :only-version, :value1 "0.1"}
                              {:items (list "dog"), :version-type :newer-than, :value1 "4.20"}
                              {:items (list "dolphin"), :version-type :older-than, :value1 "3.11"}
                              {:items (list "duck"), :version-type :range, :value1 "0.5", :value2 "0.7"}]]
                    (views/filter-items cv-filter rule)))
           (doall (for [rule1 [{:items (list "elephant"), :version-type :all}
-                              {:items (list "walrus"), :version-type :only-version, :value1 "5.21-1"}
+                              {:items (list "walrus"), :version-type :only-version, :value1 "5.21"}
                               {:items (list "horse"), :version-type :newer-than, :value1 "0.21"}
                               {:items (list "kangaroo"), :version-type :older-than, :value1 "0.3"}
                               {:items (list "pike"), :version-type :range, :value1 "2.1", :value2 "2.3"}]]
                    (-> cv-filter (update-in [:exclude?] (constantly true))
                      (views/filter-items rule1))))
-          (views/add-repo-from-filters (list (kt/repository repo)))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
                           :org org})
@@ -448,26 +451,26 @@
     
     (deftest "Consume content after applying package and package-group filters"
       :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
-      (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
-             target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
-             repo (fresh-repo org
-                              "http://inecas.fedorapeople.org/fakerepos/zoo/")
-             cv (add-product-to-cv org target-env repo)]
-        (with-unique [cs (kt/newChangeset {:name "cs"
-                                           :env target-env
-                                           :content (list cv)})
-                      cv-filter-pkg (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
-                      cv-filter-pkggroup (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
-                      ak (kt/newActivationKey {:name "ak"
-                                               :env target-env
-                                               :description "auto activation key"
-                                               :content-view cv})]
-          (ui/create cv-filter-pkg)
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (kt/newContentViewDefinition {:name "con-def"
+                                                     :published-name "publish-name"
+                                                     :org org})
+                    cs (kt/newChangeset {:name "cs"
+                                         :env target-env
+                                         :content (list cv)})
+                    cv-filter-pkg (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
+                    cv-filter-pkggroup (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
+                    ak (kt/newActivationKey {:name "ak"
+                                             :env target-env
+                                             :description "auto activation key"
+                                             :content-view cv})]
+        (ui/create-all-recursive (list org target-env))
+        (let [repo (assoc-content-with-cv cv cv-filter-pkg)]
           (views/filter-items cv-filter-pkg {:items (list "frog"), :version-type :all})
-          (views/add-repo-from-filters (list (kt/repository repo)))
           (ui/create cv-filter-pkggroup)
-          (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
           (views/add-repo-from-filters (list (kt/repository repo)))
+          (views/add-pkg-group-rule cv-filter-pkggroup {:pkg-groups (list "mammals")})
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
                           :org org})
@@ -476,8 +479,8 @@
           (ui/update ak assoc :subscriptions (list  (-> repo kt/product :name)))
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
-                             {:org (:name org)
-                              :activationkey (:name ak)})
+                           {:org (:name org)
+                            :activationkey (:name ak)})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie fox -ie cow -ie dog -ie dolphin -ie duck")]
