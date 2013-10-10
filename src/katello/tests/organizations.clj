@@ -104,8 +104,10 @@
       :uuid "443a9bfa-edc0-4164-2bdb-75fddb37f062"
       :blockers (list rest/katello-only)
       (with-unique [org (kt/newOrganization {:name "auto.org"})
-                    provider (kt/newProvider {:name "custom_provider" :org org})]
-        (ui/create-all (list org provider))
+                    provider (kt/newProvider {:name "custom_provider" :org org})
+                    product (katello/newProduct {:name "custom_prod"
+                                               :provider provider})]
+        (ui/create-all (list org product))
         (assert (rest/exists? provider))))
         
     (deftest "Two organizations with the same name is disallowed"
@@ -232,7 +234,7 @@
 
     (deftest "Creating org with default env named or labeled 'Library' is disallowed"
       :uuid "69e2e49d-2a13-2944-69b3-4f0bbdae42f8"
-      :blockers (conj (bz-bugs "966670" "983994") rest/katello-only)
+      :blockers (conj (bz-bugs "966670" "983994" "1017629") rest/katello-only)
       :data-driven true
 
       (fn [env-name env-lbl notif]
