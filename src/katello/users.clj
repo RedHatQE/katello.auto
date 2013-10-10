@@ -27,7 +27,7 @@
    ::username-text               {:tag :input, :name "user[username]"}
    ::password-text               "//input[@id='password_field']" ; use id attr
    ::confirm-text                "//input[@id='confirm_field']" ; for these two (name is the same)
-   ::default-org                 {:tag :input, :name "org_id[org_id]"}
+   ::default-org                 {:tag :select, :name "org_id[org_id]"}
    ::email-text                  {:tag :input, :name "user[email]"}
    ::save                        "save_user"
    ::save-roles                  "save_roles"
