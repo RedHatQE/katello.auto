@@ -525,7 +525,7 @@
         (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
                                                        :org conf/*session-org*})
                       cv-filter (katello/newFilter {:name "auto-filter" :cv cv :type "Errata"})]
-          (ui/create-all (list cv cv-filter))
+          (assoc-content-with-cv cv cv-filter)
           (views/filter-errata-by-date-type cv-filter {:errata-type errata-type})))
       
       [["Bug Fix"]
