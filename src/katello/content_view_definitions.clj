@@ -48,8 +48,8 @@
    ::update-content            "update_products"
 
    ;; Details tab
-   ::details-name-text         {:name "view_definition[name]"}
-   ::details-description-text  {:name "view_definition[description]"}
+   ::details-name-text         {:tag :input, :name "view_definition[name]"}
+   ::details-description-text  {:tag :textarea, :name "view_definition[description]"}
 
    ;; Filters tab
    ::new-filter-button         "//input[@type='button' and @value='New Filter']"
@@ -80,7 +80,7 @@
    ::select-errata-label       "//select[@name='parameter[errata_type]']"
    ::repo-tab                  "//a[contains(@href, '##repos')]"
    ::rules-tab                 "//a[contains(@href,'##rules')]"
-   ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
+   ::close-edit-inclusion      "//a[@class='close' and @data-close='subpanel']"
    
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 

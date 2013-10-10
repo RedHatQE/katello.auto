@@ -13,9 +13,9 @@
 
 (ui/defelements :katello.deployment/any []
   {::new                     "new"
-   ::name-text               {:name "activation_key[name]"}
-   ::description-text        {:name "activation_key[description]"}
-   ::content-view-select     {:name "activation_key[content_view_id]"}
+   ::name-text               {:tag :input, :name "activation_key[name]"}
+   ::description-text        {:tag :textarea, :name "activation_key[description]"}
+   ::content-view-select     "//select[@name='activation_key[content_view_id]']"
    ::save                    "save_key"
    ::create                  {:name "commit"}
    ::system-group-select     (ui/third-level-link "activation_keys_menu_system_groups")
@@ -57,7 +57,7 @@
                        ::description-text (or description "")])
   (rest/when-katello
    (when content-view
-     (browser/input-text ::content-view-select (or (:published-name content-view) ""))))
+     (browser/select-by-text ::content-view-select (or (:published-name content-view) ""))))
   (browser/click ::create)
   (notification/success-type :ak-create))
 
