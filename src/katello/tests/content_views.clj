@@ -293,11 +293,14 @@
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
-              cv (add-product-to-cv org target-env repo)
+              cv (kt/newContentViewDefinition {:name "con-def"
+                                               :published-name "publish-name"
+                                               :org org})
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Package Groups" :exclude? exclude?})
               pkg-groups (list "birds" "mammals")
-              pkg-groups2 (list "cow")]        
-          (ui/create cv-filter)
+              pkg-groups2 (list "cow")]
+          (ui/create-all-recursive (list org target-env))
+          (assoc-content-with-cv cv cv-filter)
           (doall (for [rule [{:pkg-groups pkg-groups}
                              {:pkg-groups pkg-groups2}
                              {:pkg-groups "" }]]
@@ -310,8 +313,8 @@
                 (assert/is (wd/text-present?  "Exclude Package Groups: No details specified")))
               (do
                 (assert/is (= (format msg-format pkg-groups-in-msg) expect-msg))
-                (assert/is (wd/text-present?  "Include Package Groups: No details specified"))))
-            (views/add-repo-from-filters (list (kt/repository repo))))))
+                (assert/is (wd/text-present?  "Include Package Groups: No details specified")))))))
+            
         
         [[true "Exclude Package Groups: %s" "Exclude Package Groups: birds, mammals"]
          [false "Include Package Groups: %s" "Include Package Groups: birds, mammals"]])
