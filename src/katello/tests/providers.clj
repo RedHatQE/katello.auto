@@ -4,10 +4,12 @@
             [test.assert       :as assert]
             [test.tree.script :refer [defgroup deftest]]
             [katello :as kt]
+            [webdriver :as browser]
             (katello [rest :as rest]
                      [ui :as ui]
                      [client :as client]
                      [tasks           :refer :all]
+                     [navigation :as nav]
                      [ui-common       :as common]
                      [organizations   :as organization]
                      [content-view-definitions :as views]
@@ -64,21 +66,22 @@
          :url "http://sdf.com"} (common/errtype :katello.notifications/name-no-leading-trailing-whitespace)]))))
 
 (defn create-custom-provider-with-gpg-key
-  "Creates a provider with products and repositories that use the provided gpg-key. returns the provider."
+  "Creates a provider with products and repositories that use the provided gpg-key."
   [gpg-key]
-  (with-unique [provider (katello/newProvider {:name "custom_provider" :org (:org gpg-key conf/*session-org*)})
-                [product1 product2] (katello/newProduct {:name "fake1" :provider provider})
+  (with-unique [provider (katello/newProvider {:name "custom_provider1" :org (:org gpg-key)})
+                [product1 product2] (katello/newProduct {:name "fake1" :provider provider :gpg-key gpg-key})
                 repo1 (katello/newRepository {:name "testrepo1"
                                               :product product1
                                               :url (-> fake/custom-repos first :url)
-                                              :gpg-key gpg-key})
+                                              :gpg-key gpg-key
+                                              :repo-type "yum"})
                 repo2 (katello/newRepository {:name "testrepo2"
                                               :product product2
                                               :url (-> fake/custom-repos second :url)
-                                              :gpg-key gpg-key})]
+                                              :gpg-key gpg-key
+                                              :repo-type "yum"})]
     (if (rest/not-exists? gpg-key) (ui/create gpg-key))
-    (ui/create-all (list provider product1 product2 repo1 repo2))
-    provider))
+    (ui/create-all (list product1 product2 repo1 repo2))))
 
 (defn create-test-environment []
   (def test-environment (first conf/*environments*))
@@ -119,92 +122,91 @@
       (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
           katello/newGPGKey
           uniqueify
-          create-custom-provider-with-gpg-key)
+          create-custom-provider-with-gpg-key)))
 
-      (deftest "Associate same GPG key to multiple providers"
-        :blockers (list rest/katello-only)
-        :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
+    (deftest "Associate same GPG key to multiple providers"
+      :blockers (list rest/katello-only)
+      :tcms "https://tcms.engineering.redhat.com/case/202718/?from_plan=7759"
 
-        (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env (kt/newEnvironment {:name "DEV"})})
-                      gpg-key     (katello/newGPGKey {:name "test-key" :url (@config :gpg-key) :org test-org})]
-          (ui/create test-org)
-          (create-custom-provider-with-gpg-key gpg-key)
-          (create-custom-provider-with-gpg-key gpg-key))))
+      (with-unique [test-org    (katello/newOrganization {:name "test-org" :initial-env (kt/newEnvironment {:name "DEV"})})
+                    gpg-key     (katello/newGPGKey {:name "test-key" :contents "asdfasdfasdfasdfasdfasdfasdf" :org test-org})]
+        (ui/create test-org)
+        (create-custom-provider-with-gpg-key gpg-key)
+        (create-custom-provider-with-gpg-key gpg-key)))
     
     (deftest "Delete existing GPG key"
-      (doto (-> {:name (uniqueify "test-key"), :url (@config :gpg-key), :org conf/*session-org*}
+      (doto (-> {:name (uniqueify "test-key"), :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
                 katello/newGPGKey)
-        ui/create
-        ui/delete)
-
+            ui/create
+            ui/delete)
+      
       (deftest "Delete existing GPG key, associated with products/providers"
-        :blockers (list rest/katello-only)
+        :blockers (conj (bz-bugs "1017140") (list rest/katello-only))
 
-        (doto (-> {:name "test-key", :url (@config :gpg-key), :org conf/*session-org*}
-                  katello/newGPGKey
-                  uniqueify)
+        (doto (-> {:name "test-key", :contents "asdfasdfasdfasdfasdfasdfasdf", :org conf/*session-org*}
+                    katello/newGPGKey
+                    uniqueify)
           create-custom-provider-with-gpg-key
           ui/delete)))
     
-    (deftest  "Add key after product has been synced/promoted"
-      :blockers (conj (bz-bugs "970570" "994946") rest/katello-only)
-      (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
-                        :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
-                       kt/newGPGKey
-                       uniqueify)
-            repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")           
-            prd1   (kt/product repo1)         
-            prv1   (kt/provider repo1)
-            cv (-> {:name "content-view" :org conf/*session-org* :published-name "publish-name"}
-                             kt/newContentViewDefinition uniqueify)
-            cs (-> {:name "cs" :env test-environment :content (list cv)}
-                             kt/newChangeset uniqueify)]
-        (ui/create-all (list gpgkey prv1 prd1 repo1 cv))       
-        (ui/update cv assoc :products (list prd1)
-        (views/publish {:content-defn cv
-                        :published-name (:published-name cv)
-                        :description "test pub"
-                        :org conf/*session-org*})
-        (sync/perform-sync (list repo1))
-        (sync/verify-all-repos-synced (list repo1))
-        (changeset/promote-delete-content cs)
-        (provision/with-queued-client
-          ssh-conn
-          (client/register ssh-conn {:username (:name conf/*session-user*)
-                                     :password (:password conf/*session-user*)
-                                     :org (:name (kt/org repo1))
-                                     :env (:name test-environment)
-                                     :force true})
-          (let [mysys              (-> {:name (client/my-hostname ssh-conn) :env test-environment}
-                                       katello/newSystem)
-                deletion-changeset (-> {:name "deletion-cs"
-                                        :content (list cv)
-                                        :env test-environment
-                                        :deletion? true}
-                                       katello/newChangeset
-                                       uniqueify)
-                promotion-changeset (-> {:name "re-promotion-cs"
-                                         :content (list cv)
-                                         :env test-environment}
-                                        katello/newChangeset
-                                        uniqueify)]
-            (client/subscribe ssh-conn (system/pool-id mysys prd1))
-            (client/sm-cmd ssh-conn :refresh)
-            (client/run-cmd ssh-conn "yum repolist")
-            (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 0\"")
-                  result (client/run-cmd ssh-conn cmd)]
-              (assert/is (client/ok? result)))
-            (client/sm-cmd ssh-conn :unsubscribe {:all true})
-            (changeset/promote-delete-content deletion-changeset)
-            (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
-            (changeset/promote-delete-content promotion-changeset)
-            (client/subscribe ssh-conn (system/pool-id mysys prd1))
-            (client/sm-cmd ssh-conn :refresh)
-            (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/redhat.repo")
-            (client/run-cmd ssh-conn "yum repolist")
-            (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
-                  result (client/run-cmd ssh-conn cmd)]
-              (assert/is (client/ok? result))))))))))
+  (deftest  "Add key after product has been synced/promoted"
+    :blockers (conj (bz-bugs "970570" "994946") rest/katello-only)
+    (let [gpgkey (-> {:name "mykey", :org conf/*session-org*,
+                      :contents (slurp "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")}
+                      kt/newGPGKey
+                      uniqueify)
+          repo1  (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")           
+          prd1   (kt/product repo1)         
+          cv (-> {:name "content-view" :org conf/*session-org* :published-name "publish-name"}
+                           kt/newContentViewDefinition uniqueify)
+          cs (-> {:name "cs" :env test-environment :content (list cv)}
+                           kt/newChangeset uniqueify)]
+      (ui/create-all (list gpgkey prd1 repo1 cv))       
+      (ui/update cv assoc :products (list prd1)
+      (views/publish {:content-defn cv
+                      :published-name (:published-name cv)
+                      :description "test pub"
+                      :org conf/*session-org*})
+      (sync/perform-sync (list repo1))
+      (sync/verify-all-repos-synced (list repo1))
+      (changeset/promote-delete-content cs)
+      (provision/with-queued-client
+         ssh-conn
+        (client/register ssh-conn {:username (:name conf/*session-user*)
+                                   :password (:password conf/*session-user*)
+                                   :org (:name (kt/org repo1))
+                                   :env (:name test-environment)
+                                   :force true})
+        (let [mysys              (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                                     katello/newSystem)
+              deletion-changeset (-> {:name "deletion-cs"
+                                      :content (list cv)
+                                      :env test-environment
+                                      :deletion? true}
+                                     katello/newChangeset
+                                     uniqueify)
+              promotion-changeset (-> {:name "re-promotion-cs"
+                                       :content (list cv)
+                                       :env test-environment}
+                                      katello/newChangeset
+                                      uniqueify)]
+          (client/subscribe ssh-conn (system/pool-id mysys prd1))
+          (client/sm-cmd ssh-conn :refresh)
+          (client/run-cmd ssh-conn "yum repolist")
+          (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 0\"")
+                result (client/run-cmd ssh-conn cmd)]
+            (assert/is (client/ok? result)))
+          (client/sm-cmd ssh-conn :unsubscribe {:all true})
+          (changeset/promote-delete-content deletion-changeset)
+          (ui/update (kt/product repo1) assoc :gpg-key (:name gpgkey))
+          (changeset/promote-delete-content promotion-changeset)
+          (client/subscribe ssh-conn (system/pool-id mysys prd1))
+          (client/sm-cmd ssh-conn :refresh)
+          (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/redhat.repo")
+          (client/run-cmd ssh-conn "yum repolist")
+          (let [cmd (format "cat /etc/yum.repos.d/redhat.repo | grep -i \"gpgcheck = 1\"")
+                result (client/run-cmd ssh-conn cmd)]
+            (assert/is (client/ok? result)))))))))
 
 
 #_(defgroup package-filter-tests
@@ -224,19 +226,26 @@
 
   (deftest "Create a custom provider"
     :uuid "34a037ee-8530-9204-639b-06006c5b1dd6"
-    (-> {:name "auto-cp", :description "my description", :org conf/*session-org*}
-        katello/newProvider
-        uniqueify
-        ui/create)
+    (with-unique [provider (katello/newProvider {:name "dupe"
+                                                 :org conf/*session-org*})
+                  product  (katello/newProduct {:name "fake1" 
+                                                :provider provider})]
+        (ui/create product))
 
     (deftest "Cannot create two providers in the same org with the same name"
       :uuid "b7edc321-6d63-6db4-20cb-6e254aca2a28"
       (with-unique [provider (katello/newProvider {:name "dupe"
-                                                   :org conf/*session-org*})]
-        (expecting-error-2nd-try duplicate-disallowed
-                                 (ui/create provider))))
+                                                   :org conf/*session-org*})
+                    product  (katello/newProduct {:name "fake1" 
+                                                  :provider provider})]
+        (ui/create product)
+        (nav/go-to ::provider/new-page provider)
+        (browser/click ::provider/new-provider)
+        (browser/quick-fill [::provider/provider-name-text (provider :name)
+                             ::provider/provider-save browser/click])
+        (assert/is (browser/exists? ::provider/provider-error)))))
 
-    (deftest "Provider validation"
+    #_(deftest "Provider validation"
       :uuid "3a0b3082-1091-3cc4-ade3-cc968a82f278"
       :data-driven true
       :description "Creates a provider using invalid data, and
@@ -245,31 +254,15 @@
       validation
       (get-validation-data))
 
-    (deftest "Rename a custom provider"
-      :uuid "45ad01c6-34ba-7074-cdbb-df3667a4a217"
-      (let [provider (-> {:name "rename", :description "my description", :org conf/*session-org*}
-                         katello/newProvider
-                         uniqueify)]
-        (ui/create provider)
-        (let [updated (ui/update provider update-in  [:name] str "-newname")]
-          (verify-provider-renamed provider updated))))
+ 
 
-    (deftest "Delete a custom provider"
-      :uuid "9ed6ab33-58cc-46f4-0483-c0f86f1b5712"
-      (doto (-> {:name "auto-provider-delete"
-                 :org conf/*session-org*}
-                katello/newProvider
-                uniqueify)
-        (ui/create)
-        (ui/delete)))
-
-    (deftest "Create two providers with the same name, in two different orgs"
+    #_(deftest "Create two providers with the same name, in two different orgs"
       :uuid "939fb331-058e-e5e4-ebbb-543da0e3cc30"
       (with-unique [provider (katello/newProvider {:name "prov"})]
         (doseq [org (->> {:name "prov-org"}
                          katello/newOrganization
                          uniques
                          (take 2))]
-          (create-recursive (assoc provider :org org))))))
+          (create-recursive (assoc provider :org org)))))
 
   gpg-key-tests)

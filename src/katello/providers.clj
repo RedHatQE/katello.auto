@@ -15,6 +15,7 @@
   {::new-provider             "//a[@class='ng-binding' and contains(.,'New Provider')]"
    ::provider-name-text       "//input[@name='name']"
    ::provider-save            "//button[@ng-click='save(provider)']"
+   ::provider-error           "//span[@class='note error']/ul/li"
         
    ::new-product              "//div[@class='nutupane-actions fr']/button[contains (.,'New Product')]"
    ::repository-discovery     "//div[@class='nutupane-actions fr']/button[contains (.,'Repo Discovery')]"
@@ -52,7 +53,7 @@
   select-repository       "//a[contains(@href,'repositories') and contains(.,'%s')]"
   repo-create-checkbox    "//table[@alch-table='discoveryTable']//td[normalize-space(.)='%s']/../td/input[@type='checkbox']"
   new-product-radio-btn   "//input[@name='newProduct' and @value='%s']"
-  existing-product-select "//select[@ng-model='createRepoChoices.existingProductId']"})
+  check-provider          "//select[@name='provider_id']/option[normalize-space(.)='%s']"})
   
 ;; Nav
 
@@ -79,7 +80,9 @@
    {:pre [(instance? katello.Provider provider)
           (instance? katello.Organization (kt/org provider))]} 
   (nav/go-to ::new-page provider)
-  (ui/create provider) ;; Todo for same provider
+  (if (browser/exists? (check-provider (provider :name)))
+    (browser/select-by-text ::products-provider (provider :name))
+    (ui/create provider)) 
   (when gpg-key (browser/select-by-text ::products-gpg-key (:name gpg-key)))
   (browser/quick-fill [::product-name-text name
                        ::product-description-text description
