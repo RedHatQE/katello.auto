@@ -328,9 +328,12 @@
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/")
-              cv (add-product-to-cv org target-env repo)
+              cv (kt/newContentViewDefinition {:name "con-def"
+                                               :published-name "publish-name"
+                                               :org org})
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Errata" :exclude? exclude?})]        
-          (ui/create cv-filter)
+          (ui/create-all-recursive (list org target-env))
+          (assoc-content-with-cv cv cv-filter)
           (doall (for [rule [erratums
                              erratums2]]
                    (views/filter-errata-by-id cv-filter rule)))
@@ -351,8 +354,8 @@
               (do
                 (assert/is (= (format msg-format new-erratum) expect-msg-errata))
                 (assert/is (= (format msg-format new-date-type) expect-msg-date))
-                (assert/is (wd/text-present?  "Include Errata: No details specified"))))
-            (views/add-repo-from-filters (list (kt/repository repo))))))
+                (assert/is (wd/text-present?  "Include Errata: No details specified")))))))
+            
       
       gen-errata-test-data)
     
