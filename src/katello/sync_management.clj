@@ -135,18 +135,44 @@
   "Syncs the given list of repositories. Also takes an optional
   timeout (in ms) of how long to wait for the sync to complete before
   throwing an error.  Default timeout is 2 minutes."
-  [repos & [{:keys [timeout]}]]
-  (nav/go-to ::status-page (first repos))
-  (browser/click ::expand-all-products)
-  (doseq [repo repos]
-    (browser/click (provider-checkbox (:name repo))))
-  (browser/click ::synchronize-now)
-  (Thread/sleep 10000)
-  (zipmap repos (for [repo repos]
-                  (browser/loop-with-timeout (or timeout 60000) []
-                                             (or (complete-status repo)
-                                                 (do (Thread/sleep 10000)
-                                                     (recur)))))))
+  [repos & [{:keys [timeout rest]}]]
+  (if (not rest)
+    (do
+      (nav/go-to ::status-page (first repos))
+      (browser/click ::expand-all-products)
+      (doseq [repo repos]
+        (browser/click (provider-checkbox (:name repo))))
+      (browser/click ::synchronize-now)
+      (Thread/sleep 10000)
+      (zipmap repos (for [repo repos]
+                      (browser/loop-with-timeout (or timeout 60000) []
+                                                 (or (complete-status repo)
+                                                     (do (Thread/sleep 10000)
+                                                         (recur)))))))
+    (do
+      
+      (let [repo-uri (partial rest/url-maker [["api/repositories/%s/sync" [identity]]])
+            resolv-id #(-> % rest/read rest/id) 
+            query-map (fn [repo] {:body {:repository_id (resolv-id repo)}})]
+        (doseq [repo repos]
+           (rest/http-post (repo-uri repo)
+                       (query-map repo)))
+        (loop [check-repos (for [r repos] [nil r])
+               results []]
+          (if (empty? check-repos) results
+            (let [recheck 
+                   (for [[result repo] check-repos]
+                          [(rest/http-get 
+                            (repo-uri repo)
+                            (query-map repo))
+                           repo])
+                   nonpending (filter
+                                    #(->> % first :pending? not)
+                                    recheck)
+                   pending (filter
+                                    #(->> % first :pending?)
+                                    recheck)]
+              (recur pending (into results nonpending))))))))) 
 
 (defn verify-all-repos-synced [repos]
   (assert/is  (every? #(= "Sync complete." %) (map complete-status repos))))
