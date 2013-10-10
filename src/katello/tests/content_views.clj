@@ -100,6 +100,7 @@
   [cv cv-filter]
   (let [repo (fresh-repo (kt/org cv) "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")]
     (create-recursive repo)
+    (sync/perform-sync (list repo))
     (ui/create cv)
     (ui/update cv assoc :repos (list (kt/repository repo)))
     (ui/create cv-filter)
@@ -254,11 +255,15 @@
               target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
               repo (fresh-repo org
                                "http://inecas.fedorapeople.org/fakerepos/zoo/" "yum")
-              cv (add-product-to-cv org target-env repo)
+              cv (kt/newContentViewDefinition {:name "con-def"
+                                               :published-name "publish-name"
+                                               :org org})
               cv-filter (katello/newFilter {:name (uniqueify "auto-filter") :cv cv :type "Packages" :exclude? exclude?})
               packages (list "cow" "cat")
               packages1 (list "crow")
               version-type "all"]
+          (ui/create-all-recursive (list org target-env))
+          (assoc-content-with-cv cv cv-filter)
           (doall (for [rule [{:items packages 
                               :version-type version-type}
                              {:items packages1 
@@ -274,8 +279,7 @@
                 (assert/is (wd/text-present? "Exclude Packages: No details specified")))
               (do 
                 (assert/is (= (format msg-format packages-in-msg) expect-msg))
-                (assert/is (wd/text-present? "Include Packages: No details specified"))))
-            (views/add-repo-from-filters (list (kt/repository repo))))))
+                (assert/is (wd/text-present? "Include Packages: No details specified")))))))
       
       [[true "Exclude Packages: %s" "Exclude Packages: cow, cat"]
        [false "Include Packages: %s" "Include Packages: cow, cat"]])

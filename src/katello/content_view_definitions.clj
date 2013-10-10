@@ -80,7 +80,7 @@
    ::select-errata-label       "//select[@name='parameter[errata_type]']"
    ::repo-tab                  "//a[contains(@href, '##repos')]"
    ::rules-tab                 "//a[contains(@href,'##rules')]"
-   ::close-edit-inclusion      "xpath=(//a[contains(text(),'Close')])[2]"
+   ::close-edit-inclusion      "//a[@class='close' and @data-close='subpanel']"
    
    ::add-product-btn           "add_product"
    ::add-repo                  "//a[@class='add_repo']" 
