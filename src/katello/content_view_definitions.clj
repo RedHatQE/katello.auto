@@ -8,7 +8,7 @@
                      [sync-management :as sync]
                      [notifications :as notification]
                      [system-groups :as sg]
-                     [tasks :refer [when-some-let] :as tasks]
+                     [tasks :refer [when-some-let with-unique] :as tasks]
                      [ui-common :as common]
                      [ui :as ui]))
   (:import java.util.Date))
@@ -446,7 +446,8 @@
         created-task (katello.rest/http-post 
                        (katello.rest/api-url (format "/api/content_views/%s/promote" cv-id)) 
                          {:body {:environment_id env-id}})]
-                         
+        (rest/poll-task-untill-completed (created-task :uuid) 500 10)))   
+
 (defn rest-promote-published-content-view
   "Function to promote published content view"
   [org target-env repo]
@@ -459,12 +460,11 @@
         (when (not (:nosync repo))
           (sync/perform-sync (list repo) {:rest true}))
         (rest/update cv assoc :products (list (kt/product repo)))
-        (let [publish-task (views/rest-publish {:content-defn cv
+        (let [publish-task (rest-publish {:content-defn cv
                         :published-name (:published-name cv)
                         :description "test pub"
                         :org org})]
                          (rest/poll-task-untill-completed (publish-task :uuid) 1000 10)
                          (promote-cv-to-env cv target-env)                    
              cv)))                          
-        (rest/poll-task-untill-completed (created-task :uuid) 500 10)))  
         

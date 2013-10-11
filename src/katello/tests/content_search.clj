@@ -11,7 +11,7 @@
                      [blockers :refer [bz-bugs]]
                      [fake-content :as fake]
             )
-            [katello.content-views :refer [rest-promote-published-content-view]]
+            [katello.content-view-definitions :refer [rest-promote-published-content-view]]
             [katello :as kt]
             [test.assert :as assert]
             [test.tree.script :refer [defgroup deftest]]
@@ -20,7 +20,6 @@
 (declare test-org)
 (declare test-org-compare)
 (declare test-org-errata)
-
 
 (defn names-by-type [data-type cs-results]
   (->> cs-results
@@ -362,7 +361,8 @@ different name and data."
     (content-search/select-environments environments)
     (content-search/select-view view)
     (content-search/get-grid-row-headers))
-  (defn cs-envcomp-setup []
+
+(defn cs-envcomp-setup []
                  (def ^:dynamic test-org-env (uniqueify (kt/newOrganization {:name "env-org"})))
                  (rest/create test-org-env)
                  (org/switch test-org-env)
@@ -383,6 +383,7 @@ different name and data."
                      env-qa-r
                      (nth (fake/repo-list-from-tree fake/custom-env-test-provider test-org-env)
                           2))))))
+
 (defgroup content-search-env-compare
   :group-setup cs-envcomp-setup
 
@@ -516,9 +517,7 @@ different name and data."
   ["walrus" "0.71-1.noarch"] "A dummy package of walrus",
   ["fox" "1.1-2.noarch"] "A dummy package of fox",
   ["cow" "2.2-3.noarch"] "A dummy package of cow",
-  ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}
-
-                          ]])
+  ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}]])
 
   (deftest "Content Search: search repo info"
     (content-search/go-to-content-search-page test-org-env)
@@ -532,4 +531,10 @@ different name and data."
                [[true "Packages (8)\nErrata (2)\n"] [true "Packages (8)\nErrata (2)\n"] false false]
                [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] [true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false]
                [[true "Packages (8)\nErrata (2)\n"] false false false]
-               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false false]] ))
+               [[true ["\nPackages (8)\n" "\nErrata (2)\n"]] false false false]] )))
+
+(defgroup content-search-tests
+    content-search-repo-compare
+    content-search-errata
+    content-search-env-compare)
+

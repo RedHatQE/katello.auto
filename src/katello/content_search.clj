@@ -195,7 +195,7 @@
        get-zip-of-xml-string
        zip/node
        (postwalk
-        #(cond
+       #(cond
           (vector? %) (reduce
                        (fn [acc n]
                          (if (and (map? (last acc)) (map? n) (= :ul (:tag n)))
@@ -441,7 +441,8 @@ Example: search-for-content :errata-type {:prods ['myprod']
 
   (select-content-type content-type)
 
-  (select-environments envs)
+  (when envs
+    (select-environments envs))
 
   ;; Add content filters using auto-complete
   (doseq [[auto-comp-box add-button cont-items]
