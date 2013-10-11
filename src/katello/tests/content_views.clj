@@ -575,7 +575,7 @@
                         :published-name (:published-name content-def)
                         :org *session-org*})
         (let [href (browser/attribute (views/publish-view-name (:published-name content-def)) :href)]
-          (assert (and (.startsWith href "/katello/content_search")
+          (assert (and (.contains href "/katello/content_search")
                        (.contains href (:published-name content-def)))))))
     
     (deftest "Create a new content-view/composite definition and add a product"
