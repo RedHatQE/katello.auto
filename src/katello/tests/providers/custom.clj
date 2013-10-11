@@ -35,6 +35,12 @@
     (let [repo (fresh-repo conf/*session-org* "http://inecas.fedorapeople.org/fakerepos/zoo/")]
       (ui/create (katello/product repo))
       (ui/create repo)))
+  
+  (deftest "Create a repository without repo_url"
+    :uuid "2ccd6072-a6b9-4f3a-a1a6-1893c975b1e7"
+    (let [repo (fresh-repo conf/*session-org* nil)]
+      (ui/create (katello/product repo))
+      (ui/create repo)))
     
   
   (deftest "Delete a repository"
