@@ -29,9 +29,12 @@
 
 (ui/defelements :katello.deployment/any []
   {::type-select               "//select[@id='content']"
+   ::type-select-btn           "//a[@class='chzn-single']"
+   ::view-select-btn           "//div[@id='right_select']//a[@class='chzn-single']"
    ::add-prod                  "add_product"
    ::add-repo                  "add_repo"
    ::repo-result-type-select   "//article[@id='maincontent']//article[@id='comparison_grid']//header//div[@id='left_select']//select"
+   ::repo-result-type-btn      "//div[@id='left_select']//a[@class='chzn-single' and (contains(.,'Packages') or contains(.,'Errata') or contains(.,'Puppet'))]"
    ::repo-result-filter-select "//div[@id='right_select']//select"
    ::row-headers               "//ul[@id='grid_row_headers']/li"
    ::col-headers               "//ul[@id='column_headers']/li"
@@ -51,15 +54,20 @@
 
 (browser/template-fns
  {auto-complete-item      "//ul[@role='listbox']//a[contains(.,'%s')]"
+  view-select-link        "//div[@id='right_select']//li[contains(.,'%s')]"
+  content-type-link       "//ul[@class='chzn-results']//li[contains(.,'%s')]"
+  collapsed               "//li[@data-collapsed='false'][%s]"
   result-item-n           "//ul[@id='grid_row_headers']/li[%s]"
   package-name            "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
   compare-checkbox        "//input[@type='checkbox' and @name='%s']"
   result-repo-errata-link "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
   compare-checkbox-all    "//div[@id='grid_content']//input[%s]"
   repo-remove             "//div[@id='repo_autocomplete_list']/ul/li[@data-name='%s']/i[contains(@class,'remove')]"
+  repo-result-type        "//div[@id='left_select']//li[contains(.,'%s')]"
   repo-header-name        "//ul[@id='column_headers']/li[%s]/span[3]"
   col-header-name         "//ul[@id='column_headers']/li[%s]"
   repo-column-name        "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')][%s]"
+  column-li               "//li[contains(.,'%s')]"
   column                  "//div/span[contains(@class,'checkbox_holder')]/input[@type='checkbox' and @data-node_name='%s']"
   span-text               "//article[@id='comparison_grid']//span[text()='%s']"
   result-repo-id          "//ul[@id='grid_row_headers']//ul[contains(@id,'child_header_list')]//li[contains(.,'%s')]"
@@ -77,6 +85,12 @@
 
 ;; Tasks
 
+(defn scroll-right []
+  (browser/execute-script "window.scrollTo(Math.max(document.documentElement.scrollHeight,document.body.scrollHeight,document.documentElement.clientHeight),0);"))
+
+(defn scroll-left []
+ (browser/execute-script "window.scrollTo(0,0);"))
+
 (defn get-all-of-locator [locatorfn]
   "For locators that accept position and '*' as input, counts xpath-count and returns list of all aviable locators."
   (let [count (count (browser/find-elements (locatorfn "'*'")))]
@@ -93,7 +107,7 @@
 
 (defn get-string-of-html-element [id]
   (->> id
-       (format "window.document.getElementById('%s').innerHTML;")
+       (format "return window.document.getElementById('%s').innerHTML;")
        (browser/execute-script)
        (format "<root>%s</root>")))
 
@@ -130,7 +144,8 @@
 
 (defn node-content-as [empty-coll tree]
   (postwalk
-   #(cond
+     #(cond
+     (and (map? %) (contains? % :attrs) (= (-> % :attrs :class) "dot_icon-black")) (into empty-coll ["++"])
      (and (map? %) (contains? % :content)) (into empty-coll (:content %))
      :else %)
    tree))
@@ -169,7 +184,9 @@
        (node-content-as [])
        (remove-nil-and-empty vector? [])
        normalize-nodes
-       (postwalk #(if (= "--" %) false %))))
+       (postwalk #(cond (= "--" %) false 
+                        (= "++" %) true
+                        :else %))))
 
 
 (defn get-grid-row-headers []
@@ -205,22 +222,24 @@
 (def ^{:arglists '([locator attribute])}
   attr-loc (partial format  "%s@%s"))
 
+(defn get-all-text [xpath]
+  (doall (remove empty?
+    (map browser/text
+        (browser/find-elements {:xpath xpath})))))
+
 (defn get-repo-compare-package-names []
-  (doall (for [locator (get-all-of-locator package-name)]
-           (browser/text locator))))
+  (get-all-text "//ul[@id='grid_row_headers']/li/span/span[1]"))
 
 (defn get-result-packages []
-  (doall (for [locator (get-all-of-locator result-item-n)]
-           (browser/text locator))))
+        (get-all-text "//ul[@id='grid_row_headers']/li"))
 
 (defn get-table-headers []
-  (doall (remove empty?
-                 (for [locator (get-all-of-locator col-header-name)]
-                   (browser/text locator)))))
+  (get-all-text "//ul[@id='column_headers']/li/span[3]"))
 
-(defn get-repo-content-search []
-  (doall (for [locator (get-all-of-locator repo-header-name)]
-           (browser/text locator))))
+(def get-repo-content-search get-table-headers)
+
+(defn get-search-result-repositories []
+  (get-all-text "//ul[@id='grid_row_headers']//li[contains(@data-id,'repo')]"))
 
 (defn validate-content-search-results [results]
   (let [cols (:columns results)
@@ -242,10 +261,6 @@
     ;; typeKeys is necessary to trigger drop-down list
     (browser/send-keys auto-comp-box " ")
     (browser/click add-button)))
-
-(defn get-search-result-repositories []
-  (doall (for [locator (get-all-of-locator repo-column-name)]
-           (browser/text locator))))
 
 (defn get-col-id [col]
   (browser/attribute (result-col-id col) "data-id"))
@@ -318,6 +333,20 @@
      (merge (get-repo-search-data-name repo-name)
             (get-view-id view))))
 
+(defn expand-everything []
+  (doall (map browser/click 
+               (browser/find-elements {:xpath "//*[@data-collapsed='true']"}))))
+
+(defn select-content-type [content-type]
+  ;; Navigate to content search page and select content type
+  (let [ctype-map {:prod-type   "Products"
+                   :repo-type   "Repositories"
+                   :pkg-type    "Packages"
+                   :errata-type "Errata"}
+        ctype-str (ctype-map content-type)]
+    (browser/click ::type-select-btn)
+    (browser/click (content-type-link ctype-str))))
+                                        
 (defn check-repositories [repositories]
   (let [repo-id-map (get-repo-search-data-name-map repositories)]
     (doseq [repository repositories]
@@ -327,11 +356,9 @@
   (nav/go-to ::page org))
 
 (defn add-repositories [repositories]
-  (browser/select-by-text ::type-select "Repositories")
+  (select-content-type :repo-type)
   (browser/click  ::repo-auto-complete-radio)
-  (doseq [repository repositories]
-    (add-to-repository-browser repository))
-  (browser/click ::browse-button))
+  (browser/click  ::browse-button))
 
 (defn click-if-compare-button-is-disabled? []
   (browser/click ::repo-compare-button)
@@ -341,25 +368,40 @@
   (let [repo-id ((get-repo-search-data-name-map [repo]) repo) ]
     (browser/click (result-repo-errata-link  (name-map-to-name  repo-id) (get-col-id "Library")))))
 
+(defn search-for-repositories [repo]
+  (select-content-type :repo-type)
+  (browser/input-text ::repo-search repo)
+  (submit-browse-button)
+  (get-grid-row-headers))
+
+(defn search-for-packages [package]
+  (select-content-type :pkg-type)
+  (browser/input-text ::pkg-search package)
+  (submit-browse-button)
+  (get-grid-row-headers))
+
+
 (defn compare-repositories [repositories]
-                                        ;(nav/go-to ::page)
-  (browser/select-by-text ::type-select "Repositories")
+  (select-content-type :repo-type)
   (browser/click  ::repo-auto-complete-radio)
-  (browser/click ::browse-button)
+  (browser/click  ::browse-button)
+  (expand-everything)
   (check-repositories repositories)
   (browser/click ::repo-compare-button)
   (get-repo-content-search))
 
-(defn select-type [type]
-  (case type
-    :packages  (browser/select-by-text ::repo-result-type-select "Packages")
-    :errata    (browser/select-by-text ::repo-result-type-select "Errata")))
+(defn select-type [set-type]
+  (let [type-map {:packages "Packages"
+                  :errata "Errata"}]
+    (browser/click ::repo-result-type-btn)
+    (browser/click (repo-result-type (type-map set-type)))))
 
 (defn select-view [set-type]
-  (case set-type
-    :all (browser/select-by-text ::repo-result-filter-select   "Union")
-    :shared (browser/select-by-text ::repo-result-filter-select   "Intersection")
-    :unique (browser/select-by-text ::repo-result-filter-select   "Difference")))
+  (let [type-map {:all "Union"
+             :shared "Intersection"
+             :unique "Difference"}]
+    (browser/click ::view-select-btn)
+    (browser/click (view-select-link (type-map set-type)))))
 
 (defn get-repo-packages [repo & {:keys [view] :or {view :packages} }]
   (compare-repositories [repo])
@@ -367,38 +409,16 @@
   (load-all-results)
   (get-result-packages))
 
-(defn search-for-repositories [repo]
-                                        ;(nav/go-to ::page)
-  (browser/select-by-text ::type-select "Repositories")
-  (browser/input-text ::repo-search repo)
-  (submit-browse-button)
-  (get-grid-row-headers))
-
-(defn search-for-packages [package]
-                                        ;(nav/go-to ::page)
-  (browser/select-by-text ::type-select "Packages")
-  (browser/input-text ::pkg-search package)
-  (submit-browse-button)
-  (get-grid-row-headers))
-
-(defn select-content-type [content-type]
-  ;; Navigate to content search page and select content type
-  (let [ctype-map {:prod-type   "Products"
-                   :repo-type   "Repositories"
-                   :pkg-type    "Packages"
-                   :errata-type "Errata"}
-        ctype-str (ctype-map content-type)]
-                                        ;(nav/go-to ::page)
-    (browser/select-by-text ::type-select ctype-str)))
-
 (defn select-environments [envs]
   ;; Select environments (columns)
-  (doseq [env envs]
-    (let [col-locator (column env)]
+  (scroll-right)
       (browser/move-to ::column-selector)
-      (browser/move-to col-locator)
-      (browser/click col-locator)
-      (browser/move-off browser/*driver* ::column-selector))))
+  (doseq [env envs]
+   (Thread/sleep 1000)
+   (browser/move-to (column-li env))
+   (browser/click (column env)))
+  (browser/move-to ::view-select-btn)
+  (scroll-right))
 
 (defn search-for-content
   "Performs a search for the specified content type (:prod-type, :repo-type,
@@ -436,12 +456,7 @@
   ;; Add errata
   (when-not (empty? errata) (browser/input-text ::errata-search errata))
 
-  (submit-browse-button)
-
-  ;;extract and return content
-  (->> "JSON.stringify(window.KT.content_search_cache.get_data());"
-       (browser/execute-script)
-       (json/read-json)))
+  (submit-browse-button))
 
 (defn test-errata-popup-click [name]
   (browser/click (span-text name))
@@ -460,11 +475,11 @@
     name))
   (browser/move-to ::switcher-button)
   (Thread/sleep 1000)
-  (assert/is (= 0 (count (browser/find-elements ::details-container))))
+  (assert/is (= 0 (count (browser/find-elements ::details-container)))))
 
   (defn get-errata-set  [type]
     (search-for-content :errata-type {:errata type})
-    (get-grid-row-headers)))
+    (get-grid-row-headers))
 
 (defn get-repo-set  [search-string]
   (search-for-repositories search-string)
@@ -475,7 +490,7 @@
 
 (defn get-package-desc []
   (load-all-results)
-  (zipmap (get-search-page-result-list-of-lists-xml "grid_row_headers")
+  (zipmap (get-search-page-result-list-of-lists-html "grid_row_headers")
           (get-search-page-result-list-of-lists-html "grid_content_window")))
 
 (defn get-repo-desc []
@@ -494,10 +509,12 @@
    (str "grid_row_")
    get-search-page-result-list-of-lists-html
    (#(nth % (index-of env-name (get-table-headers))))
+   rest first 
    (#(if (coll? %)
        (map (partial erase re-newline) %)
        (clojure.string/split % re-newline)))
    (into [])
+   (remove #(.contains % "/"))
    ))
 
 (defn get-errata-desc-button [repo-name env-name]
