@@ -378,8 +378,6 @@
         (ui/create-all-recursive (list org target-env))
         (let [repo (assoc-content-with-cv cv cv-filter)]
           (views/add-pkg-group-rule cv-filter {:pkg-groups (list "mammals")})
-          (-> cv-filter (update-in [:exclude?] (constantly true))
-            (views/add-pkg-group-rule {:pkg-groups (list "birds")}))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
                           :org org})
@@ -394,11 +392,8 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie lion -ie zebra")]
-              (assert/is (client/ok? cmd2)))                          
-            (let [cmd3 (client/run-cmd ssh-conn "yum groupinstall -y birds")
-                  cmd4 (client/run-cmd ssh-conn "rpm -qa | grep stark")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
-    
+              (assert/is (client/ok? cmd2)))))))
+            
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
       :blockers (bz-bugs "996172")
