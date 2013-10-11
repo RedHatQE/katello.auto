@@ -53,10 +53,9 @@
   (when gpg-key (browser/select-by-text ::repo-gpg-select (:name gpg-key)))
   (browser/select-by-text ::repo-type-select repo-type)
   (when http? (browser/click ::repo-protection-checkbox))
-  (browser/quick-fill [::repo-name-text name
-                       ::repo-name-text "\t"
-                       ::repo-url-text url
-                       ::repo-save browser/click]))
+  (browser/input-text ::repo-name-text name)
+  (when url (browser/input-text ::repo-url-text url))
+  (browser/click ::repo-save))
 
 (defn- update
   "Edits a repository. Currently the only property of a repository that
