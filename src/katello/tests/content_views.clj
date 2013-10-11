@@ -378,8 +378,6 @@
         (ui/create-all-recursive (list org target-env))
         (let [repo (assoc-content-with-cv cv cv-filter)]
           (views/add-pkg-group-rule cv-filter {:pkg-groups (list "mammals")})
-          (-> cv-filter (update-in [:exclude?] (constantly true))
-            (views/add-pkg-group-rule {:pkg-groups (list "birds")}))
           (views/publish {:content-defn cv
                           :published-name (:published-name cv)
                           :org org})
@@ -394,11 +392,8 @@
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie lion -ie zebra")]
-              (assert/is (client/ok? cmd2)))                          
-            (let [cmd3 (client/run-cmd ssh-conn "yum groupinstall -y birds")
-                  cmd4 (client/run-cmd ssh-conn "rpm -qa | grep stark")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
-    
+              (assert/is (client/ok? cmd2)))))))
+            
     (deftest "Consume content after applying package filter"
       :uuid "556f66ed-b3bc-4262-840d-520c77225465"
       :blockers (bz-bugs "996172")
@@ -492,6 +487,7 @@
   
      (deftest "Consume content on client after applying errata filters"
        :uuid "5868c984-7e78-4271-8969-c43a68df55e3"
+       :blockers (bz-bugs "1018061") 
        (let [org (kt/newOrganization {:name (uniqueify "cv-org")})
              target-env (kt/newEnvironment {:name (uniqueify "dev") :org org})
              repo (fresh-repo org
@@ -506,12 +502,12 @@
                                                 :description "auto activation key"
                                                 :content-view cv})]        
            (ui/create cv-filter)
+           (views/add-repo-from-filters (list (kt/repository repo)))
            (views/filter-errata-by-id cv-filter (list "RHEA-2012:3642")) ;;for including pig_erratum (pig-3.7.7-1)
            (views/filter-errata-by-date-type cv-filter {:from-date "07/24/2012", :errata-type "Security"}) ;;for including cow_erratum (cow-5.3.2-1)
            (doto (-> cv-filter (update-in [:exclude?] (constantly true)))
              (views/filter-errata-by-id (list "RHEA-2012:3693"));; for excluding package zebra_erratum (zebra-10.0.8-1)
              (views/filter-errata-by-date-type {:from-date "12/11/2012", :errata-type "Security"})) ;;for excluding package seal_erratum (seal-3.10.1-1)
-           (views/add-repo-from-filters (list (kt/repository repo)))
            (views/publish {:content-defn cv
                            :published-name (:published-name cv)
                            :org org})
@@ -574,7 +570,7 @@
                         :published-name (:published-name content-def)
                         :org *session-org*})
         (let [href (browser/attribute (views/publish-view-name (:published-name content-def)) :href)]
-          (assert (and (.startsWith href "/katello/content_search")
+          (assert (and (.contains href "/katello/content_search")
                        (.contains href (:published-name content-def)))))))
     
     (deftest "Create a new content-view/composite definition and add a product"
