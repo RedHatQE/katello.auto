@@ -5,9 +5,10 @@
             [clojure.data :as data]
             (katello [navigation :as nav]
                      [rest :as rest]
+                     [sync-management :as sync]
                      [notifications :as notification]
                      [system-groups :as sg]
-                     [tasks :refer [when-some-let] :as tasks]
+                     [tasks :refer [when-some-let with-unique] :as tasks]
                      [ui-common :as common]
                      [ui :as ui]))
   (:import java.util.Date))
@@ -361,10 +362,63 @@
                               ::sg/copy-submit browser/click])
   (notification/success-type :cv-clone))
 
+(defn rest-publish
+  "Publishes a Content View Definition"
+  [{:keys [content-defn published-name description]} & [timeout-ms]]
+  (let [resolv-id #(-> % rest/read rest/id) 
+        id-org-publish-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions/%s/publish" [:org identity]]])]
+       (rest/http-post (id-org-publish-uri content-defn)
+            {:body {:name published-name
+                    :description description}})))   
+  
 (extend katello.ContentViewDefinition
   ui/CRUD {:create create
            :delete delete
            :update* update}
+           
+  rest/CRUD (let [uri "api/content_view_definitions"
+                  resolv-id #(-> % rest/read rest/id) 
+                  org-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions" [#'katello/org]]])
+                  id-org-prod-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions/%s/products" [:org identity]]])
+                  id-org-repo-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions/%s/repositories" [:org identity]]])
+                  id-org-uri (partial rest/url-maker [["api/organizations/%s/content_view_definitions/%s" [:org identity]]])
+                  id-uri (partial rest/url-maker [["api/content_view_definitions/%s" [identity]]])]
+             {:id rest/id-field
+               :query  (partial rest/query-by-name org-uri)
+               :create (fn [cv]
+                         (merge cv 
+                            (rest/http-post (org-uri cv)
+                               {:body
+                                {:content_view_definition (select-keys cv [:name :description :label])}})))
+
+               ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
+               ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
+               :read (fn [cv]
+                         (if (rest/is-katello?)
+                           (rest/read-impl id-uri cv)
+                           true)) ;; hack to make rest/exists? think that env's in a record exists for headpin.
+                         
+               :update* (fn [cv updated]
+                          (let [[remove add] (data/diff cv updated)]
+                            (when-some-let [name (:name add)
+                                            description (:description add)]
+                               (rest/http-put (id-org-uri cv)
+                                  {:body {:content_view_definition {:name name :description description}}}))
+                            (when-some-let [product-to-add (:products add)
+                                            product-to-rm (:products remove)]
+                               (rest/http-put (id-org-prod-uri cv)
+                                  {:body {:organization_id (-> cv :org resolv-id)
+                                          :id  (-> cv resolv-id)
+                                          :products (->> updated :products ((partial map resolv-id)))}}))
+                            
+                            (when-some-let [repo-to-add (:repos add)
+                                            repo-to-remove (:repos remove)]
+                               (rest/http-put (id-org-repo-uri cv)
+                                  {:body {:organization_id (-> cv :org resolv-id)
+                                          :id  (-> cv resolv-id)
+                                          :repositories (->> updated :repo ((partial map resolv-id)))}}))))                            
+               :delete (fn [cv]
+                         (rest/http-delete (id-uri cv)))}) 
     
   tasks/Uniqueable {:uniques (fn [t] (for [ts (tasks/timestamps)]
                                        (let [stamp-fn (partial tasks/stamp ts)]
@@ -381,3 +435,36 @@
   tasks/Uniqueable  tasks/entity-uniqueable-impl
   
   nav/Destination {:go-to (partial nav/go-to ::filter-page)})
+  
+(defn promote-cv-to-env [cv env]
+  (let [env-id ( rest/id (rest/read env))
+        cvs-url (partial rest/url-maker [["api/organizations/%s/content_views/" [identity]]])
+        cv-id  (->> (cvs-url (:org env)) 
+                    katello.rest/http-get
+                    (filter #(= (% :label) (:published-name cv)))
+                   first :id )
+        created-task (katello.rest/http-post 
+                       (katello.rest/api-url (format "/api/content_views/%s/promote" cv-id)) 
+                         {:body {:environment_id env-id}})]
+        (rest/poll-task-untill-completed (created-task :uuid) 500 10)))   
+
+(defn rest-promote-published-content-view
+  "Function to promote published content view"
+  [org target-env repo]
+  (with-unique [cv (kt/newContentViewDefinition {:name "content-view"
+                                       :org org
+                                       :published-name "publish-name"})]
+        (rest/create-all-recursive (list org target-env))
+        (rest/create cv)
+        (rest/create-recursive repo)
+        (when (not (:nosync repo))
+          (sync/perform-sync (list repo) {:rest true}))
+        (rest/update cv assoc :products (list (kt/product repo)))
+        (let [publish-task (rest-publish {:content-defn cv
+                        :published-name (:published-name cv)
+                        :description "test pub"
+                        :org org})]
+                         (rest/poll-task-untill-completed (publish-task :uuid) 1000 10)
+                         (promote-cv-to-env cv target-env)                    
+             cv)))                          
+        
