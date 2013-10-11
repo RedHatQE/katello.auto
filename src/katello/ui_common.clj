@@ -10,8 +10,7 @@
                      [conf          :refer [config *session-org*]]
                      [rest     :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
-            [test.assert         :as assert]
-            [inflections.core    :refer [pluralize]])
+            [test.assert         :as assert])
   (:import [com.thoughtworks.selenium SeleniumException]
            [org.openqa.selenium NoSuchElementException]
            [java.text SimpleDateFormat]))
