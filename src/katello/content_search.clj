@@ -17,8 +17,7 @@
                      [rest :refer [when-katello when-headpin]])
             [slingshot.slingshot :refer [throw+ try+]]
             [pl.danieljanus.tagsoup :refer [parse-xml]]
-            [test.assert :as assert]
-            [inflections.core :refer [pluralize]])
+            [test.assert :as assert])
   (:import [org.ccil.cowan.tagsoup Parser]
            [java.io InputStream File FileInputStream ByteArrayInputStream BufferedInputStream InputStreamReader BufferedReader]
            [org.xml.sax InputSource]
