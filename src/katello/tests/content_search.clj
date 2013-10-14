@@ -388,6 +388,7 @@ different name and data."
   :group-setup cs-envcomp-setup
 
   (deftest "Content Browser: Shared content for selected environments"
+    :blockers (bz-bugs "953149")
     :data-driven true
 
     (fn [environments result]
@@ -409,6 +410,7 @@ different name and data."
                                      {publish-qa "Weird Enterprise"}}])])
   
   (deftest "Content Browser: Unique content for selected environments"
+    :blockers (bz-bugs "953149")
     :data-driven true
 
     (fn [environments result]
@@ -438,6 +440,7 @@ different name and data."
         {publish-qa {"Weird Enterprise" #{"China" "Russia"}}}}])])
  
 (deftest "Content Browser: Environment selector for content browser"
+        :blockers (bz-bugs "953149")
         :data-driven true
         
     (fn [environments]
@@ -453,18 +456,22 @@ different name and data."
 
 
   (deftest "Content Browser - Hover over a synced repository should show the correct number of packages and errata"
+    :blockers (bz-bugs "953149")
     (assert/is (= ["8" "2" "0"]
                   (test-repo-errata-count "China" "Default Organization View" "Library"))))
 
   (deftest "Content Browser - Validate hover-over shows correct package/errata count with links after promoting the repo from Library to next env"
+    :blockers (bz-bugs "953149")
     (assert/is (= ["8" "2""0"]
                   (test-repo-errata-count "China" publish-qa "QA"))))
 
   (deftest "Content Browser - Validate hover-over correctly showing package/errata count for empty repo"
+    :blockers (bz-bugs "953149")
     (assert/is (= ["0" "0""0"]
                   (test-repo-errata-count "ErrataZoo2" "Default Organization View" "Library"))))
 
   (deftest "Content Search: search package info"
+        :blockers (bz-bugs "953149")
         :data-driven true
         
         (fn [repo env view result]
@@ -520,6 +527,7 @@ different name and data."
   ["chimpanzee" "0.21-1.noarch"] "A dummy package of chimpanzee"}]])
 
   (deftest "Content Search: search repo info"
+    :blockers (bz-bugs "953149")
     (content-search/go-to-content-search-page test-org-env)
     (content-search/select-content-type :repo-type)
     (content-search/submit-browse-button)
