@@ -142,7 +142,7 @@
                ;; orgs don't have an internal id, they just use :label, so we can't tell whether it exists
                ;; in katello yet or not.  So try to read, and throw ::rest/entity-not-found if not present
                :read (fn [org]
-                       (try+ (rest/http-get (label-url org))
+                       (try+ (rest/read-impl (partial rest/url-maker [["api/organizations/%s" [identity]]]) org) 
                              (catch [:status 404] _
                                (throw+ {:type ::rest/entity-not-found, :entity org}))))
 
