@@ -5,7 +5,10 @@
                      [repositories :as repo]
                      [tasks :refer :all]
                      [validation :as val]
+                     [sync-management :as sync]
+                     [changesets :as changeset]
                      [organizations :as organization]
+                     [content-view-definitions :as views]
                      [conf :as conf]
                      [blockers :refer [bz-bugs]])
             [test.tree.script :refer [defgroup deftest]]
@@ -105,6 +108,30 @@
       (provider/create-discovered-repos-within-product product
                                                        "http://inecas.fedorapeople.org/fakerepos/" ["brew-repo/" "cds/content/nature/1.0/i386/rpms/"])))
   
+  (deftest "Sync and Promote a repository created via Repository Autodiscovery"
+    :uuid "cd24049d-9b47-9654-0f03-1c967d240d55"
+    (with-unique [org      (katello/newOrganization {:name "org"})
+                  env      (katello/newEnvironment {:name "env", :org org})
+                  provider (katello/newProvider {:name "prov"
+                                                 :org org})
+                  product  (katello/newProduct  {:name "prod"
+                                                 :provider provider})]
+      (ui/create-all (list org env product))
+      (provider/create-discovered-repos-within-product product "http://inecas.fedorapeople.org/fakerepos/" ["brew-repo/"])
+      (let [repo  (katello/newRepository {:name "brew-repo", :product product})
+            cv    (-> {:name "content-view" :org org :published-name "publish-name"}
+                      katello/newContentViewDefinition uniqueify)
+            cs    (-> {:name "cs" :env env :content (list cv)}
+                      katello/newChangeset uniqueify)]
+        (sync/perform-sync (list repo))
+        (sync/verify-all-repos-synced (list repo))
+        (ui/create cv)
+        (ui/update cv assoc :products (list product)
+        (views/publish {:content-defn cv
+                        :published-name (:published-name cv)
+                        :description "test pub"
+                        :org org})
+        (changeset/promote-delete-content cs)))))
   
   (deftest "Auto-discovered repositories should automatically use GPG keys from product, if associated"
     :uuid "8129ec58-3013-2a74-0cb3-73bc4199c816"
