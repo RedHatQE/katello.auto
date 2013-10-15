@@ -35,12 +35,12 @@
 
 (defn- create [{:keys [name url contents org]}]
   (assert (not (and url contents))
-          "Must specify one one of :url or :contents.")
+          "Must specify one of :url or :contents.")
   (assert (string? name))
   (nav/go-to ::new-page org)
   (if url
     (do (browser/input-text ::name-text name)
-        #_(attachFile ::file-upload-text url) ;;TODO: uh oh. need to figure out how to do with with webdriver
+        (browser/send-keys  ::file-upload-text url) 
         (browser/click ::upload-button))
     (browser/quick-fill [::name-text name
                          ::content-text contents
