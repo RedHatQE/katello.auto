@@ -172,6 +172,18 @@
         (ui/create content-def)
         (expecting-error (common/errtype ::notifications/name-taken-error)
                          (ui/create content-def))))
+    
+    (deftest "Adding the same label to different Content Views"
+      ::uuid "78410cc1-2b4d-4478-ad13-0db37401977f"
+      (with-unique [cv1 (kt/newContentViewDefinition {:name "con-def1"
+                                                      :org conf/*session-org* 
+                                                      :label "cv1label"})
+                    cv2 (kt/newContentViewDefinition {:name "con-def2"
+                                                      :org conf/*session-org* 
+                                                      :label "cv2label"})]
+        (ui/create-all (list cv1 cv2))
+        (expecting-error (common/errtype ::notifications/label-taken-error)
+                         (ui/create (assoc cv2 :label (:label cv1))))))
 
     (deftest "Delete a empty content view definition"
       :uuid "79c7d67f-5fca-dcc4-7e33-73c8bf413c67"
