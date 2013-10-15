@@ -142,15 +142,19 @@
   
 (defn- create
   "Creates a new Content View Definition."
-  [{:keys [name description composite composite-names org]}]
+  [{:keys [name label description composite composite-names org]}]
   (nav/go-to ::new-page org)
-
   (browser/quick-fill `[::name-text ~name
-                  ::description-text ~description
-                  ::composite ~#(browser/select-deselect % composite)
-                  ~@(interleave (map (comp composite-view-name :published-name) composite-names)
-                                (repeat browser/click))
-                  ::save-new ~browser/click])
+                        ::description-text ~description
+                        ::composite ~#(browser/select-deselect % composite)
+                        ~@(interleave (map (comp composite-view-name :published-name) composite-names)
+                                      (repeat browser/click))])
+  (let [label-activate #(webdriver/execute-script "$('.name_input').trigger('blur')")]
+    (when label
+      (label-activate)
+      (browser/clear ::label-text)
+      (browser/input-text ::label-text label)))
+  (browser/click ::save-new)
   (notification/success-type :cv-create))
 
 (defn- add-repo
