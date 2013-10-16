@@ -89,7 +89,7 @@
    ::edit-name                   "//div[@alch-edit-text='system.name']//span"
    ::input-name-text             "//div[@alch-edit-text='system.name']//input"
    ::edit-description            "//div[@alch-edit-textarea='system.description']//span"
-   ::input-description-text      "//div[@alch-edit-textarea='system.description']/input"
+   ::input-description-text      "//div[@alch-edit-textarea='system.description']//textarea"
    ::save-button                 "//button[@ng-click='save()']"
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
