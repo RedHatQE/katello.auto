@@ -37,6 +37,7 @@
    ::repo-result-filter-select "//div[@id='right_select']//select"
    ::row-headers "//ul[@id='grid_row_headers']/li"
    ::col-headers "//ul[@id='column_headers']/li"
+   ::back-to-result "//a[@id='return_to_results_btn']"
    ::repo-auto-complete-radio "repos_auto_complete_radio"
    ::prod-auto-complete "product_auto_complete"
    ::repo-auto-complete "repo_auto_complete"
@@ -59,7 +60,6 @@
   result-item-n "//ul[@id='grid_row_headers']/li[%s]"
   package-name "//ul[@id='grid_row_headers']/li[%s]/span/span[1]"
   compare-checkbox "//input[@type='checkbox' and @name='%s']"
-  result-repo-errata-link "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
   compare-checkbox-all "//div[@id='grid_content']//input[%s]"
   repo-remove "//div[@id='repo_autocomplete_list']/ul/li[@data-name='%s']/i[contains(@class,'remove')]"
   repo-result-type "//div[@id='left_select']//li[contains(.,'%s')]"
@@ -75,6 +75,8 @@
   result-row-id "//ul[@id='grid_row_headers']//li[contains(.,'%s')]"
   result-cell "//div[@id='grid_row_%s']/div[contains(@class,'cell_%s')]/i"
   repo-errata-count "//div[@id='grid_row_%s']"
+  result-repo-errata-link "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
+  result-repo-errata-div "//div[@id='grid_row_%s']//div[contains(@class,'cell_%s')]"
   errata-link "//div[@id='grid_row_%s']//a[@data-type='repo_errata' and @data-env_id='%s']"
   repo-link "//div[@id='grid_row_%s']//a[@data-type='repo_packages' and @data-env_id='%s']" })
 
@@ -412,30 +414,6 @@
   (load-all-results)
   (get-result-packages))
 
-(defn search-for-repositories [repo]
-                                        ;(nav/go-to ::page)
-  (browser/select-by-text ::type-select "Repositories")
-  (browser/input-text ::repo-search repo)
-  (submit-browse-button)
-  (get-grid-row-headers))
-
-(defn search-for-packages [package]
-                                        ;(nav/go-to ::page)
-  (browser/select-by-text ::type-select "Packages")
-  (browser/input-text ::pkg-search package)
-  (submit-browse-button)
-  (get-grid-row-headers))
-
-(defn select-content-type [content-type]
-  ;; Navigate to content search page and select content type
-  (let [ctype-map {:prod-type   "Products"
-                   :repo-type   "Repositories"
-                   :pkg-type    "Packages"
-                   :errata-type "Errata"}
-        ctype-str (ctype-map content-type)]
-                                        ;(nav/go-to ::page)
-    (browser/select-by-text ::type-select ctype-str)))
-
 (defn select-environments [envs]
   ;; Select environments (columns)
   (scroll-right)
@@ -545,11 +523,15 @@ Example: search-for-content :errata-type {:prods ['myprod']
    (remove #(.contains % "/"))
    ))
 
-(defn get-errata-desc-button [repo-name env-name]
-  (browser/text (errata-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
+(defn click-repo-desc [content repo-name env-name view-name]
+  (let [name-mapped (name-map-to-name (get-repo-search-data-name repo-name view-name)) 
+        col-id (get-col-id env-name)
+        div-link (result-repo-errata-div name-mapped col-id) 
+        click-link (case content
+                     :repo-type (repo-link name-mapped col-id)
+                     :errata-type (errata-link name-mapped col-id))]
+  (browser/move-to div-link)
+  (browser/click click-link)))
 
-(defn get-repo-desc-button [repo-name env-name]
-  (browser/text (repo-link (name-map-to-name (get-repo-search-data-name repo-name)) (get-col-id env-name))))
-
-(defn click-repo-desc [repo-name env-name view-name]
-  (browser/click (repo-link (name-map-to-name (get-repo-search-data-name repo-name view-name)) (get-col-id env-name))))
+(defn click-back-to-result []
+  (browser/click ::back-to-result))
