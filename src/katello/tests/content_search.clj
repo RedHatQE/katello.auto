@@ -243,6 +243,13 @@
                   #{}
                  {"Default Organization View" {"Com Errata Enterprise" {"ErrataZoo" expected-errata}}} )
                 (content-search/get-errata-set type))))
+(defn test-result-link-cycle [content-type]
+                (content-search/go-to-content-search-page test-org-errata)
+                (content-search/select-content-type :repo-type)
+                (content-search/submit-browse-button)
+                (content-search/expand-everything)
+                (content-search/click-repo-desc content-type "ErrataZoo" "Library" "Default Organization View")
+                (content-search/click-back-to-result))
 
 (defmacro deftests-errata-search
   "for a bunch of data driven tests that use the same function, but
@@ -274,7 +281,16 @@ different name and data."
                  (fake/prepare-org-custom-provider test-org-errata fake/custom-errata-test-provider)
                  (rest/create (kt/newEnvironment {:name (uniqueify "simple-env") :org test-org-errata :prior-env "Library"}))
                  (org/switch test-org-errata))
-  
+
+  (deftest "Content Browser - Validate when user hover-over a repository, a link to packages is available"
+                (test-result-link-cycle :repo-type))
+
+  (deftest "Content Browser - Validate when user hover-over a repository, a link to errata is available"
+                (test-result-link-cycle :errata-type))
+
+ (deftest "Content Browser - Validate that user should be able to navigate back after clicking packages/errata link with 'Back to results'"
+                (test-result-link-cycle :errata-type))
+                 
   #_(deftest "Content Browser: Errata information"
     :uuid "f2a008f7-3219-1934-0c1b-82f47633be1c"
     (content-search/go-to-content-search-page test-org-errata)
@@ -284,7 +300,7 @@ different name and data."
     (content-search/click-repo-errata "ErrataZoo")
     (content-search/test-errata-popup-click "RHEA-2012:2011")
     (content-search/compare-repositories ["ErrataZoo"])
-   ; (content-search/select-type :errata)
+    ;(content-search/select-type :errata)
     (content-search/test-errata-popup-click "RHEA-2012:2011"))
   
   (deftests-errata-search
@@ -479,7 +495,7 @@ different name and data."
                 (content-search/select-content-type :repo-type)
                 (content-search/submit-browse-button)
                 (content-search/select-environments [env-dev env-qa env-release])
-                (content-search/click-repo-desc repo env view)
+                (content-search/click-repo-desc :repo-type repo env view)
                 (assert/is (content-search/get-package-desc) result))
         
         [["China" "Library" "Default Organization View"
