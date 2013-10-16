@@ -27,6 +27,11 @@
             [katello.tests.useful :refer [fresh-repo create-series create-recursive]]
             [katello.client.provision :as provision]))
 
+;;Variables
+
+(def gpg-key-file
+  (str (System/getProperty "user.dir") "/gpg-keys/RPM-GPG-KEY-redhat-release"))
+
 ;; Functions
 
 (defn verify-provider-renamed
@@ -111,7 +116,7 @@
   (deftest "Create a new GPG key from file"
     :blockers (bz-bugs "835902" "846432")
 
-    (-> {:name "test-key-file", :url (@config :gpg-key), :org conf/*session-org*}
+    (-> {:name "test-key-file", :url gpg-key-file, :org conf/*session-org*}
         katello/newGPGKey
         uniqueify
         ui/create)
@@ -119,7 +124,7 @@
     (deftest "Create a new GPG key from file and associate it with products/providers"
       :blockers (list rest/katello-only)
 
-      (-> {:name "test-key-text", :url (@config :gpg-key), :org conf/*session-org*}
+      (-> {:name "test-key-text", :url gpg-key-file, :org conf/*session-org*}
           katello/newGPGKey
           uniqueify
           create-custom-provider-with-gpg-key)))
