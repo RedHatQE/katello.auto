@@ -98,10 +98,6 @@
     (sync/perform-sync (list repo))
     product))
 
-(def save-cancel
-  (partial #'common/save-cancel
-           ::system/save-button ::system/cancel-button :sys-update))
-
 (defn ui-count-systems "Gets the total count of systems in the given org"
   [org]
   (nav/go-to ::system/page org)
@@ -113,6 +109,31 @@
   (wd/select-by-text ::system/select-errata-type errata-type)
   (doseq [errata-id errata-ids]
     (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
+
+(defn save-cancel-details [save-locator cancel-locator element input-locator requested-value save?]
+  (let [orig-text (browser/text element)]
+    (browser/click element)
+    (browser/clear input-locator)
+    (browser/input-text input-locator requested-value)
+    (if save?
+      (do (browser/click save-locator)
+        (let [new-text (browser/text element)]
+          (when (not= new-text requested-value)
+            (throw+ {:type ::save-failed
+                     :requested-value requested-value
+                     :new-value new-text
+                     :msg "Input field didn't update properly after saving."}))))
+      (do (browser/click cancel-locator)
+        (let [new-text (browser/text element)]
+          (when (not= new-text orig-text)
+            (throw+ {:type ::cancel-failed
+                     :requested-value requested-value
+                     :new-value new-text
+                     :msg "Value changed even after clicking cancel button."})))))))
+
+(def save-cancel-sys-details
+  (partial #'save-cancel-details
+           ::system/save-button ::system/cancel-button))         
 
 ;; Tests
 
@@ -129,32 +150,24 @@
     
   (deftest "System details: save or cancel editing field"
     :uuid "b3f26238-b35c-aa84-3533-e3d3bb27bd8b"
+    :blockers (bz-bugs "1019764" "1019690")
     :data-driven true
-    ;; blockers (bz-bugs "917033")
-
-    (fn [input-loc new-value save? expected-res]
+    
+    (fn [element input-loc new-value save? expected-res]
       (with-unique-system s
         (rest/create s)
         (expecting-error expected-res
                          (nav/go-to ::system/details-page s)
-                         (save-cancel input-loc new-value save?))))
-
-    ;;block if using save
-    (for [d [[::system/name-text-edit "yoursys" false success]
-             [::system/name-text-edit "test.pnq.redhat.com" true success]
-             [::system/name-text-edit (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
-             [::system/name-text-edit (random-ascii-string 255) true success]
-             [::system/description-text-edit "cancel description" false success]
-             [::system/description-text-edit "System Registration Info" true success]
-             [::system/description-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
-             [::system/description-text-edit (random-ascii-string 255) true success]
-             [::system/location-text-edit "Cancel Location" false success]
-             [::system/location-text-edit "System Location Info" true success]
-             [::system/location-text-edit (random-ascii-string 256) true (common/errtype ::notification/sys-location-255-char-limit)]
-             [::system/location-text-edit (random-ascii-string 255) true success]]]
-      (if (nth d 2)
-        (with-meta d {:blockers (bz-bugs "985586")})
-        d)))
+                         (save-cancel-sys-details element input-loc new-value save?))))
+	
+    [[::system/edit-name ::system/input-name-text "yoursys" false success]
+     [::system/edit-name ::system/input-name-text "test.pnq.redhat.com" true success]
+     [::system/edit-name ::system/input-name-text (random-ascii-string 256) true (common/errtype ::notification/name-too-long)]
+     [::system/edit-name ::system/input-name-text (random-ascii-string 255) true success]
+     [::system/edit-description ::system/input-description-text "cancel description" false success]
+     [::system/edit-description ::system/input-description-text "System Registration Info" true success]
+     [::system/edit-description ::system/input-description-text (random-ascii-string 256) true (common/errtype ::notification/sys-description-255-char-limit)]
+     [::system/edit-description ::system/input-description-text (random-ascii-string 255) true success]])
   
   (deftest "Subscribe a system to a custom product"
     :uuid "5b2feb1c-ce47-fcd4-fdf3-f4205b8e75d2"
