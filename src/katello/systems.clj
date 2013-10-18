@@ -389,10 +389,10 @@
   (nav/go-to ::details-page system)
   (browser/click ::expand-eth-interface)
   (let [headpin-details ["UUID" "Hostname" "Interfaces" "Name" "Description" "OS" "Release"
-                         "Arch" "RAM" "Sockets" "Checkin" "Registered"
-                         "ipv4 address" "ipv4 netmask" "ipv4 broadcast"]
+                         "Arch" "RAM" "Sockets" "Checkin" "Registered" "Type"
+                         "ipv4 address" "ipv4 netmask" "ipv4 broadcast" "Product" "Activation Key(s)"]
         ;;Removed some details, New UI doesn't show these under details tab
-        ;;"Last Booted" "Activation Key" "System Type" "Host"
+        ;;like: "Last Booted" 
         katello-details (conj headpin-details "Environment")
         details (if (rest/is-katello?) katello-details headpin-details)]
     (zipmap details
