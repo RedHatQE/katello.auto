@@ -83,6 +83,7 @@
   
   (deftest "Repository Autodiscovery for new product"
     :uuid "f45dcc7e-3fbd-3d84-1a43-15e26d6c5384"
+    :blockers (bz-bugs "1018132")
     :description "Uses the repo autodiscovery tool to create custom repositories within a new custom product."
     (with-unique [org      (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
@@ -98,6 +99,7 @@
   
   (deftest "Repository Autodiscovery for existing product"
     :uuid "cd24049d-9b47-9654-0f03-1c967d240d55"
+    :blockers (bz-bugs "1018132")
     :description "Uses the repo autodiscovery tool to create custom repositories within an existing custom product."
     (with-unique [org      (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
@@ -110,6 +112,7 @@
   
   (deftest "Sync and Promote a repository created via Repository Autodiscovery"
     :uuid "cd24049d-9b47-9654-0f03-1c967d240d55"
+    :blockers (bz-bugs "1018132")
     (with-unique [org      (katello/newOrganization {:name "org"})
                   env      (katello/newEnvironment {:name "env", :org org})
                   provider (katello/newProvider {:name "prov"
@@ -135,7 +138,7 @@
   
   (deftest "Auto-discovered repositories should automatically use GPG keys from product, if associated"
     :uuid "8129ec58-3013-2a74-0cb3-73bc4199c816"
-    :blockers (bz-bugs "927335")
+    :blockers (bz-bugs "927335" "1018132")
     (with-unique [org (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})
@@ -155,6 +158,7 @@
   
   (deftest "Auto-discovered repositories should not use GPG keys from product, unless associated"
     :uuid "b436d8d9-d663-1174-10b3-c01b7778e33f"
+    :blockers (bz-bugs "1018132")
     (with-unique [org (katello/newOrganization {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})
@@ -174,7 +178,7 @@
   (deftest "Add the same autodiscovered repo to a product twice"
     :uuid "340ec414-d857-d404-8653-58ee90756828"
     :description "Adds the repositories to the selected product twice."
-    :blockers (bz-bugs "1013689")
+    :blockers (bz-bugs "1013689" "1018132")
     (with-unique [org (katello/newOrganization  {:name "org"})
                   provider (katello/newProvider {:name "prov"
                                                  :org org})
