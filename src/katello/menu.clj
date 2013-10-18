@@ -14,12 +14,12 @@
                       ::content-link    "Content"})
 
 (def menu-items {::by-environments-link          "By Environment"
-                 ::changeset-management-link     "Changeset Management"
                  ::content-search-link           "Content Search"
                  ::content-view-definitions-link "Content View Definitions"
                  ::manage-organizations-link     "Organizations"
                  ::repositories-link             "Repositories"
                  ::roles-link                    "Roles"
+                 ::changesets-link               "Changesets"
                  ::sync-management-link          "Sync Management"
                  ::system-groups-link            "System Groups"
                  ::systems-all-link              "All"
@@ -35,7 +35,7 @@
                    ::sync-schedule-link               "Sync Schedule"
                    ::sync-status-link                 "Sync Status"
                    ::changeset-history-link           "Changesets History"
-                   ::changesets-link                  "Changesets"})
+                   ::changeset-management-link        "Changeset Management"})
 
 (def subscriptions-menu-items {::red-hat-subscriptions-link "Red Hat Subscriptions"
                                ::distributors-link          "Subscription Manager Applications"
@@ -106,8 +106,8 @@
 
              [:katello.content-search/page (fn [_] (browser/click ::content-search-link))]
 
-             [::changeset-management-menu (fn [_] (browser/move-to ::changeset-management-link))
-              [:katello.changesets/page (fn [_] (browser/click ::changesets-link))]
+             [::changesets-menu (fn [_] (browser/move-to ::changesets-link))
+              [:katello.changesets/page (fn [_] (browser/click ::changeset-management-link))]
               [:katello.changesets/history-page (fn [_] (browser/click ::changeset-history-link))]]]]]
           right-hand-menus))
 
