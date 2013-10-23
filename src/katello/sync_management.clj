@@ -16,11 +16,11 @@
 (ui/defelements :katello.deployment/any []
   {::apply-schedule        "apply_button"
    ::new-plan              "new"
-   ::plan-name-text        "sync_plan[name]"
-   ::plan-description-text "sync_plan[description]"
-   ::plan-interval-select  "sync_plan[interval]"
-   ::plan-date-text        "sync_plan[plan_date]"
-   ::plan-time-text        "sync_plan[plan_time]"
+   ::plan-name-text        {:tag :input, :name "sync_plan[name]"}
+   ::plan-description-text {:tag :input, :name "sync_plan[description]"}
+   ::plan-interval-select  "//select[@name='sync_plan[interval]']"
+   ::plan-date-text        "//input[@name='sync_plan[plan_date]']"
+   ::plan-time-text        "//input[@name='sync_plan[plan_time]']"
    ::save-plan             "plan_save"
    ::expand-all-products   {:css "a#expand_all"}
    ::synchronize-now       "sync_button"})
@@ -61,9 +61,9 @@
            start-date-literal start-time-literal org] :as plan}]
   (nav/go-to ::new-plan-page org)
   (let [[date time] (split-date plan)]
+    (browser/select-by-text ::plan-interval-select interval)
     (browser/quick-fill [::plan-name-text name
                          ::plan-description-text description
-                         ::plan-interval-select interval
                          ::plan-time-text time
                          ::plan-date-text date
                          ::save-plan browser/click])
