@@ -531,7 +531,7 @@
                  :users [user])))
 
   (deftest "Remove a permission and from a role"
-    :uuid "14ecb28a-92fa-fc74-0ff3-ea142f08171c"
+    :uuid "3c641c00-187c-4ba4-9dbb-f3b4bdee76fb"
     (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
                   role (kt/newRole {:name "edit-role"})]
       (ui/create-all (list user role))
