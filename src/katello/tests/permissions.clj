@@ -528,11 +528,33 @@
                                 :name "blah2"
                                 :resource-type "Organizations"
                                 :verbs ["Read Organization"]}]
+                 :users [user])))
+
+  (deftest "Remove a permission and from a role"
+    :uuid "3c641c00-187c-4ba4-9dbb-f3b4bdee76fb"
+    (with-unique [user (kt/newUser {:name "role-user" :password "abcd1234" :email "me@my.org"})
+                  role (kt/newRole {:name "edit-role"})]
+      (ui/create-all (list user role))
+      (ui/update role assoc
+                 :permissions [{:org global
+                                :name "blah2"
+                                :resource-type "Organizations"
+                                :verbs ["Read Organization"]}]
+                 :users [user])
+      (ui/update (assoc role 
+                 :permissions [{:org global
+                                :name "blah2"
+                                :resource-type "Organizations"
+                                :verbs ["Read Organization"]}]
+                 :users [user])
+                 assoc 
+                 :permissions []
                  :users [user]))
+
 
     (deftest "Verify user with specific permission has access only to what permission allows"
       :uuid "6ea63d4f-49f1-8244-564b-79a265bebc2c"
       :data-driven true
 
       verify-access
-      access-test-data)))
+      access-test-data))
