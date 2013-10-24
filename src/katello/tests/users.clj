@@ -195,7 +195,7 @@
     (deftest "Admin creates a user with i18n and html characters "
       :uuid "3d79f50b-f27b-4e44-fa4b-834568c214d7"
       :data-driven true
-      :blockers (bz-bugs "868906")
+      :blockers (bz-bugs "1022498")
       
       (fn [username]
         (ui/create (uniqueify (assoc generic-user :name username ))))
