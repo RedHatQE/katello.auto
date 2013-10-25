@@ -30,7 +30,6 @@
   select-system-checkbox          "//td[@class='ng-scope']/a[contains(text(), '%s')]/parent::td/preceding-sibling::td[@class='row-select']/input[@ng-model='system.selected']"
   remove-package                  "//td[contains(text(), '%s')]/following::td/i[@ng-click='table.removePackage(package)']"
   remove-package-status           "//td[contains(text(), '%s')]/following::td/i[2]"
-  get-errata                      "//tr[@id='errata_%s']/td[@class='one-line-ellipsis']"
   package-select                  "//input[@id='package_%s']"
   get-filtered-package            "//td[contains(., '%s') and parent::tr[@ng-repeat='package in table.rows | filter:table.filter']]"
   environment-checkbox            "//div[contains(text(), '%s')]"
