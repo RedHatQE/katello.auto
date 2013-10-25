@@ -103,12 +103,11 @@
   (nav/go-to ::system/page org)
   (Integer/parseInt (fnext (split (browser/text ::system/sys-count) #" "))))
 
-(defn filter-errata-by-type "Filter errata based on selected errata-type"
-  [system {:keys [errata-type errata-ids]}]
+(defn filter-errata "Filter errata based on selected filter term"
+  [system {:keys [filter-term]}]
   (nav/go-to ::system/errata-page system)
-  (wd/select-by-text ::system/select-errata-type errata-type)
-  (doseq [errata-id errata-ids]
-    (assert/is (= errata-id (browser/text (system/get-errata errata-id))))))
+  (browser/input-text ::system/filter-errata filter-term)
+  (assert/is (wd/text-present? filter-term)))
 
 (defn save-cancel-details [save-locator cancel-locator element input-locator requested-value save?]
   (let [orig-text (browser/text element)]
@@ -578,11 +577,13 @@
           (client/subscribe ssh-conn (system/pool-id mysys product))
           (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
           (client/run-cmd ssh-conn "yum repolist")
-          (doall (for [errata [{:errata-type "All Errata", :errata-ids (list "RHEA-2012:3234" "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}
-                               {:errata-type "Bug Fix", :errata-ids (list "RHEA-2012:3234")}
-                               {:errata-type "Security", :errata-ids (list "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}]]
-                   (filter-errata-by-type mysys errata)))))))
-        
+          (client/sm-cmd ssh-conn :refresh)
+          (doall (for [errata [{:filter-term "bugfix"}
+                               {:filter-term "RHEA-2012:783"}
+                               {:filter-term "zebra_Erratum"}
+                               {:filter-term "cow_Erratum"}]]
+                   (filter-errata mysys errata)))))))
+  
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
     :blockers (conj (bz-bugs "959211") rest/katello-only)
