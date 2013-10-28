@@ -109,6 +109,7 @@
    ::add-custom-info            "//button[@ng-click='add({value: {keyname: newKey, value: newValue}})']"
    ::input-custom-value         "//div[@alch-edit-text='customInfo.value']//input"
    ::custom-info-save-button     "//div/div/div/div/span/div/button"  ;;ui/save-button locator doesn't work
+   ::existing-custom-items      "//div[@class='existing-items']"
 
 
    ;;subscriptions pane

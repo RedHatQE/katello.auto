@@ -262,6 +262,7 @@
         (org/add-custom-keyname org ::org/system-default-info-page "fizzbuzz" {:apply-default true})
         (assert/is (org/isKeynamePresent? "fizzbuzz"))
         (nav/go-to sys1)
+        (wd/move-to ::system/existing-custom-items)
         (assert/is (wd/text-present? "fizzbuzz")))))
 
   (deftest "System Details: Add custom info"
