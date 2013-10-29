@@ -78,8 +78,8 @@
       plan-validate
       [(fn [] [(kt/newSyncPlan {:start-time (java.util.Date.) :interval "daily", :org *session-org*}) :katello.notifications/name-cant-be-blank])
        (with-meta
-         (fn [] [(kt/newSyncPlan {:name "blah" :start-time-literal "" :start-date-literal "", :org *session-org*}) :katello.notifications/start-date-time-cant-be-blank])
-         {:blockers (bz-bugs "853229")})])
+         (fn [] [(kt/newSyncPlan {:name "blah" :interval "daily" :start-time-literal "" :start-date-literal "", :org *session-org*}) :katello.notifications/start-date-time-cant-be-blank])
+         {:blockers (bz-bugs "853229" "1024306")})])
 
     (deftest "Cannot create two sync plans with the same name"
       :uuid "d194f7de-6dbd-2144-7ee3-f900ace0c532"
