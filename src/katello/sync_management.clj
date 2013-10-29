@@ -19,6 +19,7 @@
    ::plan-name-text        {:tag :input, :name "sync_plan[name]"}
    ::plan-description-text {:tag :input, :name "sync_plan[description]"}
    ::plan-interval-select  "//select[@name='sync_plan[interval]']"
+   ::plan-interval-edit    "plan_interval"
    ::plan-date-text        "//input[@name='sync_plan[plan_date]']"
    ::plan-time-text        "//input[@name='sync_plan[plan_time]']"
    ::save-plan             "plan_save"
@@ -77,9 +78,12 @@
   (let [[removed {:keys [name description interval]
                   :as added}] (data/diff plan updated)
                   [date time] (split-date added)]
+    (when interval 
+      (browser/click ::plan-interval-edit)
+      (browser/select-by-text ::plan-interval-select interval)
+      (browser/click ::ui/save-inplace-edit))
     (common/in-place-edit {::plan-name-text name
                            ::plan-description-text description
-                           ::plan-interval-select interval
                            ::plan-time-text time
                            ::plan-date-text date}))
   (notification/success-type :sync-update))
