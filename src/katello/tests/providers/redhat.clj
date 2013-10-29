@@ -46,9 +46,9 @@
   {:rhel            "Red Hat Employee Subscription"
    :hpn             "90 Day Supported High Performance Network (4 sockets) Evaluation"
    :cloud-forms     "CloudForms Employee Subscription"
-   :open-shift      "OpenShift Employee Subscription"
+   ;;:open-shift      "OpenShift Employee Subscription"
    :cloud-providers "Red Hat Enterprise Linux for Cloud Providers, Partner Enablement, Premium"
-   :hcn             "Red Hat Enterprise Linux Server for HPC Compute Node, Self-support (8 sockets) (Up to 1 guest)"
+   ;;:hcn             "Red Hat Enterprise Linux Server for HPC Compute Node, Self-support (8 sockets) (Up to 1 guest)"
    :rhev            "Red Hat Enterprise Virtualization for Desktops (25 concurrent desktops), Premium"
    :scalable-hcn    "Scalable File System for HPC Compute Node (1-2 sockets)"})
 
