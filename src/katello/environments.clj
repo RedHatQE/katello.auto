@@ -38,9 +38,13 @@
   (nav/go-to ::new-page org)
   (Thread/sleep 2000)
   (browser/quick-fill [::name-text name
-                       ::description-text description
-                       ::label-text label
-                       ::prior #(browser/select-by-text % (:name prior))
+                       ::description-text description])
+  (let [label-activate #(webdriver/execute-script "$('.name_input').trigger('blur')")] ;; workaround to activate label js
+    (when label
+      (label-activate) 
+      (browser/clear ::label-text)
+      (browser/input-text ::label-text label)))
+  (browser/quick-fill [::prior #(browser/select-by-text % (:name prior))
                        ::create browser/click])
   (notification/success-type :env-create))
 
