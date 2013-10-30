@@ -107,7 +107,7 @@
   "Opens katello url (to a quick-loading page, not dashboard), and logs in"
   []
   ;;Set the filedetector to Local
-  (.setFileDetector (-> browser/*driver* :webdriver) (LocalFileDetector.))
+  ;;(.setFileDetector (-> browser/*driver* :webdriver) (LocalFileDetector.))
   (browser/window-maximize)
   (browser/to (str (@config :server-url) "/users"))
   (login))
