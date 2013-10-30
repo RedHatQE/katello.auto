@@ -18,8 +18,8 @@
 ;; Locators
 
 (browser/template-fns
- {subscription-available-checkbox "//div[@id='panel-frame']//table[@id='subscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
-  subscription-current-checkbox   "//div[@id='panel-frame']//table[@id='unsubscribeTable']//td[contains(normalize-space(.),'%s')]//input[@type='checkbox']"
+ {subscription-available-checkbox "//div[@alch-table='availableSubscriptionsTable']//td[contains(normalize-space(.),'%s')]/preceding-sibling::td[@class='row-select']/input[@type='checkbox']"
+  subscription-current-checkbox   "//div[@alch-table='currentSubscriptionsTable']//td[contains(normalize-space(.),'%s')]/preceding-sibling::td[@class='row-select']/input[@type='checkbox']"
   checkbox                        "//input[@class='system_checkbox' and @type='checkbox' and parent::td[normalize-space(.)='%s']]"
   sysgroup-checkbox               "//input[@title='%s']"
   check-selected-env              "//span[@class='checkbox_holder']/input[@class='node_select' and @data-node_name='%s']"
@@ -113,6 +113,8 @@
 
    ;;subscriptions pane
    ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"
+   ::attach-subscription         "//button[@ng-click='attachSubscriptions()']"
+   ::remove-subscription         "//button[@ng-click='removeSubscriptions()']"
    ::red-subs-icon               "//i[@class='icon-circle red']"})
 
 ;; Nav
@@ -195,8 +197,8 @@
                            (browser/click (checkbox-fn (:name item))))
                          (browser/click submit)
                          (notification/success-type :sys-update-subscriptions)))]
-    (sub-unsub-fn add-products subscription-available-checkbox ::subscribe)
-    (sub-unsub-fn remove-products subscription-current-checkbox ::unsubscribe)))
+    (sub-unsub-fn add-products subscription-available-checkbox ::attach-subscription)
+    (sub-unsub-fn remove-products subscription-current-checkbox ::remove-subscription)))
 
 (defn- edit-system-name
   [{:keys [name]}]

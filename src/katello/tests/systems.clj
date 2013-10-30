@@ -298,10 +298,11 @@
 
      (with-meta
        ["foo@!#$%^&*()" "bar_+{}|\"?<blink>hi</blink>" true]
-       {:blockers (bz-bugs "951231")})
-
-     ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]])
-
+       {:blockers (bz-bugs "951231" "1020425")})
+     (with-meta
+       ["foo@!#$%^&*()" "bar_+{}|\"?hi" true]
+       {:blockers (bz-bugs "1020425")})])
+  
   (deftest "System Details: Update custom info"
     :uuid "fd2edd3a-3653-9544-c26b-1c9b4b9ef9d7"
     :blockers (bz-bugs "919373" "951231" "951197" "970079")
