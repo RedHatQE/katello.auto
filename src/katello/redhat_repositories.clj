@@ -15,12 +15,12 @@
   select-repo     "//td[contains(.,'%s')]/../td/label/input[@type='checkbox']"})
 
 (ui/defelements :katello.deployment/any []
-  {::rpms-tab       "//a[@href='#rpms']"    
-   ::srpms-tab      "//a[@href='#srpms']"
-   ::debugs-tab     "//a[@href='#debug']"
-   ::beta-tab       "//a[@href='#beta']"
-   ::isos-tab       "//a[@href='#isos']"
-   ::others-tab     "//a[@href='#other']"})
+  {::rpms-tab       "//a[@href='#ui-tabs-1']"    
+   ::srpms-tab      "//a[@href='#ui-tabs-2']"
+   ::debugs-tab     "//a[@href='#ui-tabs-3']"
+   ::beta-tab       "//a[@href='#ui-tabs-4']"
+   ::isos-tab       "//a[@href='#ui-tabs-5']"
+   ::others-tab     "//a[@href='#ui-tabs-6']"})
 
 ;; Nav
 
@@ -36,11 +36,11 @@
 (def redhat-ak-subscriptions '("Red Hat Employee Subscription"))
 
 (def repo-map
-  {:rpms    ::rpms-page
-   :srpms   ::source-rpms-page
-   :debug   ::debug-rpms-page
-   :beta    ::beta-rpms-page
-   :other   ::others-page})
+  {:ui-tabs-1    ::rpms-page
+   :ui-tabs-2    ::source-rpms-page
+   :ui-tabs-3    ::debug-rpms-page
+   :ui-tabs-4    ::beta-rpms-page
+   :ui-tabs-6    ::others-page})
 
 (def enable-redhat-repos 
             {:allrepos    '(["Red Hat CloudForms System Engine RPMs x86_64 6.4"
@@ -53,7 +53,7 @@
                             "Red Hat CloudForms Tools for RHEL 6") 
              :allprds     '("Red Hat CloudForms" 
                             "Red Hat Enterprise Linux Server")
-             :repo-type     "rpms" 
+             :repo-type     "ui-tabs-1" 
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
@@ -80,7 +80,6 @@
       (when-not checked?
         (browser/click (expand-product (:type repo) (:name prd)))
         (browser/click (select-repo-set (:type repo)(:name reposet))))
-        ;;(browser/click (expand-repo-set (:type repo)(:name reposet))))
       (if (repo :deselect?)
         (browser/deselect (select-repo (:name repo)))
         (browser/click (select-repo (:name repo)))))))  
