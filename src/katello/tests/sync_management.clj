@@ -96,7 +96,6 @@
                       (update-in repo [:product] assoc :provider prov))
               prods (map :product repos)]
           (rest/create-all (conj (concat prods repos) prov))
-          (changeset/api-promote (first *environments*) prods)
           (ui/create p)
           (sync/schedule {:products prods, :plan p})
           (let [expected-plan (:name p)
