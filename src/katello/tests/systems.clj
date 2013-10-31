@@ -424,7 +424,8 @@
       (provision/with-queued-client ssh-conn
         (client/register ssh-conn
                          {:org (:name *session-org*)
-                          :activationkey (:name ak)})
+                          :activationkey (:name ak)
+                          :force true})
         (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
               aklink (system/activation-key-link (:name ak))]
           (nav/go-to ::system/details-page system)
