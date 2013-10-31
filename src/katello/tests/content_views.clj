@@ -399,7 +399,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (client/run-cmd ssh-conn "yum repolist")
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
@@ -446,7 +447,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd1 (client/run-cmd ssh-conn "yum install -y fox camel-0.1-1 dog-4.23-1 dolphin-3.10.232-1 duck-0.6-1")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie fox -ie dog -ie dolphin")]
@@ -487,7 +489,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                            {:org (:name org)
-                            :activationkey (:name ak)})
+                            :activationkey (:name ak)
+                            :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd1 (client/run-cmd ssh-conn "yum groupinstall -y mammals")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie fox -ie cow -ie dog -ie dolphin -ie duck")]
@@ -529,7 +532,8 @@
            (provision/with-queued-client ssh-conn
              (client/register ssh-conn
                               {:org (:name org)
-                               :activationkey (:name ak)})
+                               :activationkey (:name ak)
+                               :force true})
              (client/sm-cmd ssh-conn :refresh)
              (let [cmd1 (client/run-cmd ssh-conn "yum install -y pig-3.7.7-1 cow-5.3.2-1")
                    cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie pig-3.7.7-1 -ie cow-5.3.2-1")]
@@ -742,7 +746,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))))))
@@ -776,7 +781,8 @@
             (provision/with-queued-client ssh-conn
               (client/register ssh-conn
                                {:org (:name org)
-                                :activationkey (:name ak)})
+                                :activationkey (:name ak)
+                                :force true})
               (client/sm-cmd ssh-conn :refresh)
               (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
                 (assert/is (client/ok? cmd_result))))))))
@@ -840,7 +846,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))))))
@@ -868,7 +875,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd1 (client/run-cmd ssh-conn "yum install -y sheep-1.3.7-1 cow-5.3.2-1 zebra-10.0.8-1 seal-3.10.1-1")
                   cmd2 (client/run-cmd ssh-conn "rpm -qa | grep -ie sheep-1.3.7-1 -ie cow-5.3.2-1 -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]
@@ -908,7 +916,8 @@
             (provision/with-queued-client ssh-conn
               (client/register ssh-conn
                                {:org (:name org)
-                                :activationkey (:name ak)})
+                                :activationkey (:name ak)
+                                :force true})
               (client/sm-cmd ssh-conn :refresh)
               (let [install_result (client/run-cmd ssh-conn "yum install -y cow")]
                 (assert/is (client/ok? install_result)))
@@ -946,7 +955,8 @@
           (provision/with-queued-client ssh-conn
             (client/register ssh-conn
                              {:org (:name org)
-                              :activationkey (:name ak)})
+                              :activationkey (:name ak)
+                              :force true})
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))
