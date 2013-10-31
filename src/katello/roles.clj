@@ -89,11 +89,15 @@
           (browser/click ::next)
           (cond
            (and (not tags) (browser/visible? ::all-tags))
-           (browser/click ::all-tags)
+           (do 
+             (browser/click ::all-tags)
+             (browser/click ::next))
 
            (not (nil? tags))
-           (doseq [tag tags]
-             (browser/select-by-text  ::permission-tag-select tag)))))
+           (do 
+             (doseq [tag tags]
+               (browser/select-by-text  ::permission-tag-select tag))
+             (browser/click ::next)))))
     (browser/quick-fill [::permission-name-text name
                          ::permission-description-text description
                          ::save-permission browser/click])
