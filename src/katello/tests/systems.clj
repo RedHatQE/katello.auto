@@ -650,7 +650,8 @@
         (provision/with-queued-client ssh-conn
           (client/register ssh-conn
                            {:org (:name *session-org*)
-                            :activationkey ak-name})
+                            :activationkey ak-name
+                            :force true})
           (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})]
             (doseq [ak [ak1 ak2]]
               (let [aklink (system/activation-key-link (:name ak))]
