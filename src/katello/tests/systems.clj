@@ -379,8 +379,7 @@
               sys-date (client/get-client-date ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
-              details (system/get-details system)
-              facts (system/get-facts system)]
+              details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
           (assert/is (= (date sys-date) (first (split (details "Checkin") #" "))))
