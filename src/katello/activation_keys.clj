@@ -1,5 +1,6 @@
 (ns katello.activation-keys
   (:require [katello :as kt]
+            [clojure.string :refer [trim]]
             (katello [navigation :as nav]
                      [notifications :as notification]
                      [ui-common :as common]
@@ -25,6 +26,7 @@
    ::system-groups           (ui/third-level-link "system_mgmt")
    ::applied-subscriptions   (ui/third-level-link "applied_subscriptions")
    ::available-subscriptions (ui/third-level-link "available_subscriptions")
+   ::extract-applied-subs    {:xpath "//table[@class='filter_table clear']//td[1]"}
    ::add-subscriptions       "//input[@id='subscription_submit_button']"
    ::remove-link             (ui/remove-link "activation_keys")
    ::release-version-text    {:tag :input, :name "system[releaseVer]"}})
@@ -32,7 +34,6 @@
 (browser/template-fns
  {subscription-checkbox "//a[.='%s']/../span/input[@type='checkbox']"
   sysgroup-checkbox "//input[@title='%s']"
-  applied-subscriptions "xpath=(//table[@class='filter_table clear']//td[1])[%s]"
   systems-link          "//a[contains(@href,'systems') and contains(.,'%s')]"})
 
 ;; Nav
@@ -94,7 +95,8 @@
   [ak]
   (nav/go-to ak)
   (browser/click ::applied-subscriptions)
-  (common/extract-list applied-subscriptions))
+  (for [sub (map browser/text (browser/elements ::extract-applied-subs))]
+    (trim sub)))
 
 (defn- update [ak updated]
   (let [[remove add] (data/diff ak updated)]

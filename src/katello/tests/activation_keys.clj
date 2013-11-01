@@ -72,11 +72,11 @@
       (let [org (uniqueify (kt/newOrganization {:name "redhat-org"}))
             [e1 :as envz] (take 3 (uniques (kt/newEnvironment {:name "env", :org org})))]
         (manifest/setup-org envz (rh-repos/describe-repos-to-enable-disable fake/enable-nature-repos))
-        (with-unique [ak (assoc (some-ak) :env e1)]
+        (with-unique [ak (assoc (some-ak) :env (kt/library org))]
           (ui/create ak)
-          (ui/update ak assoc :subscriptions fake/subscription-names)
-          (assert/is (some #{(first fake/subscription-names)}
-                           (ak/get-subscriptions ak))))))  
+          (ui/update ak assoc :subscriptions (pop fake/subscription-names))
+          (assert/is (some #{(second fake/subscription-names)}
+                       (ak/get-subscriptions ak))))))  
     
     (deftest  "Deleting the pool referenced by the activation key" 
       :uuid "600a0af7-2c55-4a65-9754-96050096891a"
@@ -112,12 +112,14 @@
       (provision/with-queued-client ssh-conn
         (client/register ssh-conn
                          {:org (-> ak :env :org :name)
-                          :activationkey (:name ak)})
+                          :activationkey (:name ak)
+                          :force true})
         (ui/delete ak)
         (client/sm-cmd ssh-conn :refresh))))
   
   (deftest "Check whether the systems link on activation keys page works correctly"
     :uuid "35b9d9e2-ab84-4a99-a633-6135d40e6970"
+    :blockers (bz-bugs "1025716")
     (let [manifest (new-manifest true)
           org (kt/org manifest)
           repos     (for [r (rh-repos/describe-repos-to-enable-disable rh-repos/enable-redhat-repos)]
@@ -132,7 +134,8 @@
         (provision/with-queued-client ssh-conn
           (client/register ssh-conn
                            {:org (-> ak :env :org :name)
-                            :activationkey (:name ak)}) 
+                            :activationkey (:name ak)
+                            :force true}) 
           (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
                              katello/newSystem)]
             (nav/go-to ::ak/systems-page ak)

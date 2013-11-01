@@ -52,7 +52,7 @@
                                      "Zoo Enterprise x86_64 5.7"
                                      "Zoo Enterprise x86_64 6Server"]}])
 
-(def subscription-names '("Nature Enterprise 8/5", "Zoo Enterprise 24/7"))
+(def subscription-names '("Zoo Enterprise 24/7", "Nature Enterprise 8/5"))
 
 
 (def custom-providers [{:name "Custom Provider"
