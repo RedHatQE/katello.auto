@@ -409,8 +409,7 @@
                "memtotal" "swaptotal"
                "host type" "is guest" "uuid"
                "machine" "nodename" "release"
-               "sysname" "entitlements valid"
-               "hostname"]]
+               "sysname" "hostname"]]
     (zipmap facts
             (doall (for [fact facts]
                      (browser/text (system-fact-textbox fact)))))))

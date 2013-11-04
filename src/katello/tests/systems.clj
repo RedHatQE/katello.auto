@@ -379,8 +379,7 @@
               sys-date (client/get-client-date ssh-conn)
               system (kt/newSystem {:name hostname
                                     :env test-environment})
-              details (system/get-details system)
-              facts (system/get-facts system)]
+              details (system/get-details system)]
           (assert/is (= (client/get-distro ssh-conn)
                         (details "OS")))
           (assert/is (= (date sys-date) (first (split (details "Checkin") #" "))))
@@ -424,7 +423,8 @@
       (provision/with-queued-client ssh-conn
         (client/register ssh-conn
                          {:org (:name *session-org*)
-                          :activationkey (:name ak)})
+                          :activationkey (:name ak)
+                          :force true})
         (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})
               aklink (system/activation-key-link (:name ak))]
           (nav/go-to ::system/details-page system)
@@ -650,7 +650,8 @@
         (provision/with-queued-client ssh-conn
           (client/register ssh-conn
                            {:org (:name *session-org*)
-                            :activationkey ak-name})
+                            :activationkey ak-name
+                            :force true})
           (let [system (kt/newSystem {:name (client/my-hostname ssh-conn) :env test-environment})]
             (doseq [ak [ak1 ak2]]
               (let [aklink (system/activation-key-link (:name ak))]
