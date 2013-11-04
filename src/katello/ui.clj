@@ -28,7 +28,7 @@
 
 (defn ensure-exists [ent]
   {:pre [(satisfies? CRUD ent)]}
-  (when-not (rest/exists? ent)
+  (when-not (or (rest/exists? ent) (instance? katello.Provider ent))
     (create ent)))
 
 (defn create-recursive

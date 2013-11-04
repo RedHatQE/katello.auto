@@ -49,8 +49,20 @@
 
 (defn setup-custom-org-with-content
   [env repos]
-  (ui/create-all-recursive (concat (list (kt/org env) env) repos))
-  (changeset/sync-and-promote (filter (complement :unsyncable) repos) env))
+  (with-unique [cv (kt/newContentViewDefinition {:name "con-def"
+                                                 :published-name "publish-name"
+                                                 :org (kt/org env)})
+                cs (kt/newChangeset {:name "cs"
+                                     :env env
+                                     :content (list cv)})]
+    (ui/create-all-recursive (concat (list (kt/org env) env) repos))
+    (sync/perform-sync repos)
+    (ui/create cv)
+    (ui/update cv assoc :products (list (kt/product (first repos))))
+    (views/publish {:content-defn cv
+                    :published-name (:published-name cv)
+                    :org (kt/org env)})
+    (changeset/promote-delete-content cs)))
 
 
 ;; Data (Generated)
@@ -187,7 +199,7 @@
 
         (with-unique [org (mkorg "delorg")
                       env (kt/newEnvironment {:name "env" :org org})]
-          (let [repos (for [r fake/custom-repos]
+          (let [repos (for [r fake/custom-repos1]
                         (update-in r [:product :provider] assoc :org org))]
            (setup-custom-org-with-content env repos)
            ;; not allowed to delete the current org, so switch first.

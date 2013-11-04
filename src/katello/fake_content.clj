@@ -121,6 +121,7 @@
           (kt/newRepository 
              {:name (repo :name) 
               :nosync (repo :nosync)
+              :repo-type "yum" 
              :url (repo :url)
              :product (kt/newProduct 
                         {:name (product :name) 
@@ -130,6 +131,8 @@
                                       :org org})})}))))))) 
 
 (def custom-repos  (repo-list-from-tree custom-providers nil))
+
+(def custom-repos1  (repo-list-from-tree custom-provider nil))
 
 (defn prepare-org-custom-provider [org tree]
   (let [repolist (repo-list-from-tree tree org)]
