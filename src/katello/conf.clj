@@ -98,7 +98,7 @@
     :default "https://raw.github.com/RedHatQE/jenkins-scripts/master/jenkins/sethostname.sh"]
    
    ["--agent-repo" "URL of a .repo file to point to where katello-agent can be installed from."
-    :default "https://raw.github.com/gist/1978881"]
+    :default "https://gist.github.com/weissjeffm/1978881/raw/15a5ed9981100600c156c896eba24f5c3bec3f96/katello-devel.repo"]
    
    ["--gpg-key" "URL of a GPG-Key"
     :default "http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator"]])
