@@ -963,6 +963,33 @@
             (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
                              (changeset/promote-delete-content deletion-cs))))))
     
+    (deftest "Remove parameters of filter rules"
+      ::uuid "c02da40f-fa69-480b-883e-425d4370224b"
+      (with-unique [org (kt/newOrganization {:name "cv-org"})
+                    target-env (kt/newEnvironment {:name "dev" :org org})
+                    cv (kt/newContentViewDefinition {:name "con-def"
+                                                     :published-name "publish-name"
+                                                     :org org})
+                    pkg-filter (katello/newFilter {:name "pkg-filter", :cv cv, :type "Packages", :exclude? true})
+                    pkggroup-filter (katello/newFilter {:name "pkggroup-filter", :cv cv, :type "Package Groups", :exclude? false})
+                    errata-filter (katello/newFilter {:name "errata-filter", :cv cv, :type "Errata"})]
+        (let [package-names (list "cow")
+              pkg-groups (list "mammals")
+              erratums (list "RHEA-2012:3642")]
+          (ui/create-all-recursive (list org target-env))
+          (let [repo (assoc-content-with-cv cv pkg-filter)]
+            (views/filter-items pkg-filter {:items package-names, :version-type :all})
+            (views/remove-rule-parameters package-names)
+            (ui/create pkggroup-filter)
+            (views/add-repo-from-filters (list (kt/repository repo)))
+            (views/add-pkg-group-rule pkggroup-filter {:pkg-groups pkg-groups})
+            (views/remove-rule-parameters pkg-groups)
+            (ui/create errata-filter)
+            (views/add-repo-from-filters (list (kt/repository repo)))
+            (views/filter-errata-by-id errata-filter erratums)
+            (views/remove-rule-parameters erratums)))))
+    
+    
     
     (deftest "Create a puppet module filter"
       :uuid "e34dd75b-9ec3-4cfd-a00b-b41d9dfc8c5a"
