@@ -20,7 +20,9 @@
   puppet-repository           "//div[@id='repo_select_chzn']//li[contains(text(), '%s')]"            
   filter-link                 "//a[contains(text(), 'Filter: %s')]"
   filter-name-link            "//a[contains(text(), '%s')]"
+  rule-link                   "//a[contains(text(), ': %s')]"
   select-filter               "//input[@value='%s']"
+  select-param                "//input[@name='units[%s]']"
   select-filter-name          "//div[@class='panel_link']/a[contains(text(), '%s')]"       
   select-rule                 "//a[contains(text(), '%s')]/../input[@type='checkbox']"
   composite-view-name         "//td[@class='view_checkbox' and contains(., '%s')]/input"
@@ -303,6 +305,15 @@
     (Thread/sleep 1000)
     (browser/click ::remove-button)
     (notification/success-type :filter-rules-destroy)))
+
+(defn remove-rule-parameters
+  "Remove filter rule parameters"
+  [rule-params]
+  (doseq [rule-param rule-params]
+    (browser/click (rule-link rule-param))
+    (browser/click (select-param rule-param))
+    (browser/click ::remove-button)
+    (notification/check-for-success)))
 
 (defn- edit-content-view-details [name description]
   (browser/click ::details-tab)
