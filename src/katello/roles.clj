@@ -5,6 +5,7 @@
             (katello [navigation :as nav]
                      [notifications :as notification]
                      [tasks :as tasks]
+                     [content-search :as cs]
                      [ui :as ui]
                      [rest :as rest]
                      [ui-common :as common])))
@@ -31,11 +32,13 @@
    ::all-types                       "all_types"
    ::slide-link-home                 "//span[@id='roles']"
    ::all-verbs                       "all_verbs"
+   ::role-opt-list                    "//div[@id='roles_tree']//ul[@class='filterable']//li"
    ::all-tags                        "all_tags"}
   )
 
 (browser/template-fns
  {permission-org "//li[@class='slide_link' and starts-with(normalize-space(.),'%s')]"
+  permission-perm "//li[@class='slide_link' and contains(.,'%s')]"
   role-action    "//li[.//span[@class='sort_attr' and .='%2$s']]//a[.='%s']"})
 
 ;; Nav
@@ -143,10 +146,61 @@
   (browser/click ::ui/confirmation-yes)
   (notification/success-type :roles-destroy))
 
+(defn read-it 
+  "Tries to read a role based on the name"
+  [role]
+  (let [get-list   #(do (Thread/sleep 1000)
+                        (second (cs/get-search-page-result-list-of-lists-xml "roles_list")) )
+        every-second #(take-nth 2 (rest %))
+        user-names (do 
+                     (nav/go-to role) 
+                     (browser/click ::users)
+                     (->> 
+                       (get-list)
+                       (every-second)
+                       doall)) 
+        orgs (do
+                        (nav/go-to role) 
+                        (browser/click ::permissions)
+                        (->> 
+                            (get-list)
+                            (map #(clojure.string/split % #"( \()|(\))"))
+                            (map (fn [[a b]] [a (Integer/parseInt b)]))
+                            (filter (fn [[a b]] (> b 0)))
+                            (map first)
+                             doall)) 
+        org-perm (doall (for [org orgs]
+                               (do
+                                 (nav/go-to role) 
+                                 (browser/click ::permissions)
+                                 (browser/click (permission-org org))
+                                 [org (doall (every-second (get-list)))])))
+
+       perms 
+         (doall (for [[org plist] org-perm]  
+                        (for [p plist]
+                          (do
+                            (nav/go-to role) 
+                            (browser/click ::permissions)
+                            (browser/click (permission-org org))
+                            (browser/click (permission-perm p))
+                            (->>
+                              (get-list)
+                              (filter coll?)
+                              (map second)
+                              (zipmap [:name :resource-type :verbs :on])
+                              (#(if (coll? (:verbs %)) %
+                                  (assoc % :verbs [(% :verbs)])))
+                              (merge {:org (katello/newOrganization {:name org})})
+                            )))))]
+
+    (katello/newRole {:name (:name role) :users user-names :permissions perms})))
+
 
 (extend katello.Role
   ui/CRUD {:create create
            :update* edit
+           :read read-it
            :delete delete}
 
   rest/CRUD (let [url "api/roles"
