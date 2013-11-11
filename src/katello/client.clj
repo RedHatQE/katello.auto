@@ -62,6 +62,7 @@
               
               ["yum remove -y '%s*'" rpm-name-prefix]
               ["rm -f *.rpm"]
+              ["rm -f /etc/yum.repos.d/redhat.repo"]
               ["ntpdate clock.redhat.com"]
               ["wget -nd -r -l1 --no-parent -A \"*.noarch.rpm\" http://%s/pub/" (server-hostname)]
               ["rpm -ivh candlepin*.noarch.rpm"]
