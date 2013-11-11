@@ -18,7 +18,7 @@
 (def create-role (partial create-role* identity))
 (def global (kt/newOrganization {:name "Global Permissions"}))
 
-(defn upgrade? []
+(defn upgraded? []
   false)
 
 (defgroup upgrade-tests 
@@ -40,13 +40,11 @@
                                                :resource-type "Organizations", 
                                                :verbs ["Read Organization"], :on "+ All", 
                                                :org #katello.Organization{:id nil, :name "Global Permissions", :label nil, :description nil, :initial-env nil}}))} ]
-
+   (when (not (upgraded?))
       (ui/create user)
       (ui/create rolec)
-      (ui/update* rolec roleu) 
+      (ui/update* rolec roleu)) 
       (assert/is (= rolev (ui/read rolec)))))
-  
-
   
   )   
 
