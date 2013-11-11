@@ -40,7 +40,7 @@
 ;; Functions
 
 (def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
-(def outputformat (java.text.SimpleDateFormat. "MM/dd/yy"))
+(def outputformat (java.text.SimpleDateFormat. "MM/d/yy"))
 (defn date [d] (.format outputformat (.parse inputformat d)))
 
 (defn create-test-environment []
