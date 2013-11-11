@@ -36,7 +36,8 @@
   system-detail-textbox           "//span[contains(.,'%s')]/./following-sibling::*[1]"
   system-fact-textbox             "//span[contains(.,'%s')]/./following-sibling::*[1]"
   existing-key-value-field        "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[1]"
-  remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"})
+  remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"
+  save-button-common              "//span[@class='info-label ng-binding' and contains(.,'%s')]/../div/div/span/div/button[@ng-click='save()']"})
 
 (ui/defelements :katello.deployment/any []
   {::new                         "new"
@@ -89,10 +90,12 @@
    ::input-name-text             "//div[@alch-edit-text='system.name']//input"
    ::edit-description            "//div[@alch-edit-textarea='system.description']//span"
    ::input-description-text      "//div[@alch-edit-textarea='system.description']//textarea"
-   ::save-button                 "//button[@ng-click='save()']"
+   ::save-button                 "//button[@ng-click='save()']"  
    ::cancel-button               "//button[@ng-click='cancel()']"
    ::get-selected-env            "//div[@id='path_select_system_details_path_selector']//label[@class='active']//div"
    ::select-content-view         "//div[@edit-trigger='editContentView']/select"
+   ::release-version-edit        "//div[@selector='system.releaseVer']/div/div/span/i[contains(@class,'icon-edit')]"
+   ::select-release-version      "//div[@alch-edit-select='system.releaseVer']/select"
    ::expand-eth-interface        "//div/i[@class='expand-icon clickable icon-plus']"
    ::expand-lo-interface         "//div[2]/i[@class='expand-icon clickable icon-plus']"
    ::sys-count                   "//div[@class='nutupane-actionbar']/div/span"
@@ -126,6 +129,15 @@
     [::subscriptions-page (fn [_] (browser/click ::subscriptions))]
     [::packages-page (fn [_] (browser/click ::packages-link))]
     [::errata-page (fn [_] (browser/click ::errata-link))]]])
+
+(def save-map
+  {:name            "Name"
+   :description     "Description"
+   :auto-attach     "Auto-Attach"
+   :service-level   "Service Level"
+   :system-groups   "System Groups"
+   :release-version "Release Version"
+   :content-view    "Content View"})
 
 ;; Tasks
 (defn- create "Create a system from UI"
@@ -182,7 +194,7 @@
   {:pre [(not-empty new-environment)]}
   (browser/click (environment-checkbox new-environment))
   (browser/select-by-text ::select-content-view published-name)
-  (browser/click ::save-button))
+  (browser/click (-> save-map :content-view save-button-common)))
 
 (defn subscribe
   "Subscribes the given system to the products. (products should be a
@@ -222,6 +234,13 @@
       (browser/clear ::input-custom-value)
       (browser/input-text ::input-custom-value value)
       (browser/click ::custom-info-save-button))))
+
+(defn- set-release-version
+  [release-version]
+  (browser/click ::release-version-edit)
+  (browser/select-by-text ::select-release-version release-version)
+  (browser/click (-> save-map :release-version save-button-common)))
+  
    
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
@@ -244,11 +263,14 @@
                     :as to-add} _] (data/diff system updated)]
 
     (when (some not-empty (list to-remove to-add))
+      (Thread/sleep 5000)
       (nav/go-to ::details-page system)
       (edit-system-name to-add)
       (edit-system-description to-add)
       
       (when env (set-environment (:name env :published-name cv)))
+      
+      (when release-version (set-release-version release-version))
 
       (when (or (:custom-info to-add) (:custom-info to-remove))
         (update-custom-info (:custom-info to-add) (:custom-info to-remove)))
