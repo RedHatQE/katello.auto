@@ -12,14 +12,14 @@
    ::delete-manifest          "delete_form_button"
    ::create                   "commit"
    ::repository-url-text      {:tag :input, :name "provider[repository_url]"}
+   ::fetch-all-history        {:xpath "//div[@id='subscription_history']//td[contains(., 'imported') or contains(., 'deleted') or contains(., 'Archive') or contains(., 'Owner')]"}
    ::choose-file              "provider_contents"
    ::manifest-history         "//a[contains(@href,'history_items')]"
    ::manifest-link            "//fieldset/div/a[contains(@href,'access')]"
    ::redhat-login             "//label[@for='username' and contains(.,'Red Hat Login')]"})
 
 (browser/template-fns
- {subs-exists       "//div[@class='one-line-ellipsis' and contains(.,'%s')]"
-  fetch-all-history "xpath=(//div[@id='subscription_history']//td[contains(., 'imported') or contains(., 'deleted') or contains(., 'Archive') or contains(., 'Owner')])[%s]"})
+ {subs-exists       "//div[@class='one-line-ellipsis' and contains(.,'%s')]"})
 
 ;; Nav
 
