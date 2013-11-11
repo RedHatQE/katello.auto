@@ -68,7 +68,8 @@
   
 (defn extract-manifest-history-list [page manifest]
   (nav/go-to page manifest)
-  (common/extract-list subscriptions/fetch-all-history))
+  (map browser/text (browser/elements ::subscriptions/fetch-all-history)))
+
 
 ;; Tests
 (defgroup redhat-promoted-content-tests

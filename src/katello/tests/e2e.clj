@@ -48,7 +48,7 @@
       (let [cmd-results [(client/run-cmd ssh-conn "yum repolist")
                          (client/run-cmd ssh-conn (format "yum install -y --nogpg %s" all-packages))
                          (client/run-cmd ssh-conn (format "rpm -q %s" all-packages))]]
-        (->> cmd-results (map :exit) (every? client/ok?) assert/is)))))
+        (->> cmd-results (every? client/ok?) assert/is)))))
 
 ;; Tests
 
@@ -57,8 +57,7 @@
   (deftest "Clients can access custom content"
     :uuid "34fdfac4-7c7c-0c94-4173-c60711d2da24"
     :blockers (conj (bz-bugs "784853" "790246" "959211" "970570")
-                    (blocking-tests "simple sync" "promote content")
-                    no-clients-defined)
+                    (blocking-tests "simple sync" "promote content"))
     (let [repo (fresh-repo *session-org*
                            "http://inecas.fedorapeople.org/fakerepos/cds/content/safari/1.0/x86_64/rpms/")
           target-env (-> {:name "e2e" :org *session-org*} kt/newEnvironment uniqueify)
