@@ -108,7 +108,7 @@
           (let [repo (fresh-repo)
                 prod (:product repo)
                 prods (list prod)]
-            (ui/create-all (list p1 p2 (:provider prod) prod repo))
+            (ui/create-all (list p1 p2 prod repo))
             (sync/schedule {:products prods :plan p1})
             (sync/schedule {:products prods :plan p2})
             (assert/is (= ((sync/current-plan prods) prod)
