@@ -57,6 +57,20 @@
              :deselect?      false})
 ;; One could select, deselect, any RedHat repo-type "rpms", "srpms", "debug", "beta"
 
+(def enable-rhel-repos 
+  {:allrepos    '(["Red Hat Enterprise Linux 6 Server RPMs i386 6.1"
+                   "Red Hat Enterprise Linux 6 Server RPMs i386 6.2"
+                   "Red Hat Enterprise Linux 6 Server RPMs i386 6.3"
+                   "Red Hat Enterprise Linux 6 Server RPMs i386 6.4"
+                   "Red Hat Enterprise Linux 6 Server RPMs x86_64 6.1"
+                   "Red Hat Enterprise Linux 6 Server RPMs x86_64 6.2"
+                   "Red Hat Enterprise Linux 6 Server RPMs x86_64 6.3"
+                   "Red Hat Enterprise Linux 6 Server RPMs x86_64 6.4"]) 
+   :allreposets  '("Red Hat Enterprise Linux 6 Server")
+   :allprds      '("Red Hat Enterprise Linux Server")
+   :repo-type     "ui-tabs-1" 
+   :deselect?      false})
+
 (defn describe-repos-to-enable-disable
   [{:keys [allrepos allreposets allprds repo-type deselect?]}]
   (let [repo-items        (map list allprds allreposets allrepos)       

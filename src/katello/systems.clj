@@ -241,6 +241,12 @@
   (browser/select-by-text ::select-release-version release-version)
   (browser/click (-> save-map :release-version save-button-common)))
   
+(defn get-release-version
+  [system]
+  (nav/go-to ::details-page system)
+  (browser/click ::release-version-edit)
+  (browser/text ::select-release-version))
+
    
 (defn- update-custom-info [to-add to-remove]
   (doseq [[k v] to-add]
