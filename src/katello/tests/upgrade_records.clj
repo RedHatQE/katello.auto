@@ -4,10 +4,10 @@
             (katello [ui :as ui]
                      [users :as user]
                      [roles :as role]
+                     [conf :refer [*upgraded*]]
                      [blockers :refer [bz-bugs bz-bug auto-issue]])
             [test.assert :as assert]
             [test.tree.script :refer [deftest defgroup]]
-            [test.tree :refer [blockers]]
             [webdriver :as browser])
   (:import [com.thoughtworks.selenium SeleniumException]))
 
@@ -19,7 +19,7 @@
 (def global (kt/newOrganization {:name "Global Permissions"}))
 
 (defn upgraded? []
-  false)
+  *upgraded*)
 
 (defgroup upgrade-tests 
 

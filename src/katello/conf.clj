@@ -44,6 +44,9 @@
    ["--redhat-repo-url" "A Red Hat content delivery url to be used with --redhat-manifest-url"
     :default "https://cdn.redhat.com/"]
    
+   ["--upgraded" "Running upgrade tests without setup, because setup already ran previous run."
+    :default false :flag true]
+
    ["--key-url" "A private key used to sign the cloned manifests"
     ;;:default "https://raw.github.com/iNecas/katello-misc/sign_manifest.sh/scripts/test/manifest_generation/fake_key.pem"]
     :default "http://cosmos.lab.eng.pnq.redhat.com/rhel64/fake_key.pem"]
@@ -160,7 +163,8 @@
          ^:dynamic *session-org*
          ^:dynamic *browsers*
          ^:dynamic *cloud-conn*
-         ^:dynamic *environments*)
+         ^:dynamic *environments*
+         ^:dynamic *upgraded*)
 
 (defn- try-read-configs
   "try to read a config from filename, if file doesn't exist, return nil"
@@ -202,6 +206,7 @@
                                          :cluster (@config :ovirt-cluster)})
                                       (catch Exception e (.printStackTrace e))))
      (def ^:dynamic *browsers* (@config :browser-types))
+     (def ^:dynamic *upgraded* (@config :upgraded))
      (def ^:dynamic *environments* (for [e (@config :environments)]
                                      (katello/newEnvironment {:name e
                                                               :org *session-org*}))))) 
