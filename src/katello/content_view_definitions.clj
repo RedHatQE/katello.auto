@@ -31,7 +31,7 @@
   refresh-cv                  "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::td/a[@original-title='Refresh']"
   refresh-version             "//tbody[@class='views']/tr/td/a[contains(.,'%s')]/following::tr/td[2]"
   expand-toggle               "//span[contains(text(), '%s')]/parent::div/preceding-sibling::div[contains(@class, 'small_col')]"
-  remove-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
+  delete-product              "//span[@class='text' and contains(., '%s')]//a[@class='remove_product']"
   remove-repository           "//div[@class='repo' and contains(., '%s')]/a[@class='remove_repo']"})
 
 (ui/defelements :katello.deployment/any []
@@ -335,7 +335,7 @@
   (browser/click ::content-tab)
   (doseq [product products]
     (browser/click (-> product :name expand-toggle)) 
-    (browser/click (-> product :name remove-product))))
+    (browser/click (-> product :name delete-product))))
 
 (defn- update
   "Edits an existing Content View Definition."
