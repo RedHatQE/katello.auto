@@ -34,7 +34,6 @@
   get-filtered-package            "//td[contains(., '%s') and parent::tr[@ng-repeat='package in table.rows | filter:table.filter']]"
   environment-checkbox            "//div[contains(text(), '%s')]"
   system-detail-textbox           "//span[contains(.,'%s')]/./following-sibling::*[1]"
-  subs-detail-textbox             "//span[contains(.,'%s')]/../div/ul/li"
   system-fact-textbox             "//span[contains(.,'%s')]/./following-sibling::*[1]"
   existing-key-value-field        "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[1]"
   remove-custom-info-button       "//div[@class='details-container']/div/span[contains(text(), '%s')]/following::span[@class='fr']/i[2]"
