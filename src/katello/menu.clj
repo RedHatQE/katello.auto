@@ -63,7 +63,8 @@
 
 ;; Nav
 (def subscriptions-menu
-  [:subscriptions (fn [_] (browser/move-to ::subscriptions-link))
+  [:subscriptions (fn [_] (browser/move-to ::subscriptions-link)
+                          (Thread/sleep 3000))
    [:katello.subscriptions/page (fn [_] (browser/click ::red-hat-subscriptions-link))]
    [:katello.distributors/page (fn [_] (browser/click ::distributors-link))]
    [:katello.activation-keys/page (fn [_] (browser/click ::activation-keys-link))]

@@ -37,7 +37,8 @@
 (nav/defpages :katello.deployment/any katello.menu
   [::page
    [::named-page (fn [distributor] (nav/choose-left-pane distributor))
-    [::details-menu (fn [_] (browser/move-to ::details-link))
+    [::details-menu (fn [_] (browser/move-to ::details-link)
+                            (Thread/sleep 3000))
      [::distributor-info-page (fn [_] (third-lvl-menu-click ::distributor-info-link))]
      [::events-history-page (fn [_] (third-lvl-menu-click ::events-history-link))]
      [::custom-info-page (fn [_] (third-lvl-menu-click ::custom-info-link))]]]
