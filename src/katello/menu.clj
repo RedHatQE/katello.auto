@@ -70,7 +70,8 @@
    [:katello.subscriptions/import-history-page (fn [_] (browser/click ::import-history-link))]])
 
 (def systems-menu
-  [::systems-menu (fn [_] (browser/move-to ::systems-link))
+  [::systems-menu (fn [_] (browser/move-to ::systems-link)
+                          (Thread/sleep 3000))
    [:katello.systems/page (fn [_] (browser/click ::systems-all-link))]
    [:katello.systems/by-environments-page (fn [_] (browser/click ::by-environments-link))]
    [:katello.system-groups/page (fn [_] (browser/click ::system-groups-link))]])
