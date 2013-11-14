@@ -6,6 +6,7 @@
             (katello [navigation :as nav]
                      [tasks :as tasks]
                      [ui :as ui]
+                     [page-parsing :as cs]
                      [conf :as conf]
                      [rest :as rest]
                      [login :refer [logged-in?]]
@@ -93,6 +94,43 @@
   (browser/click ::ui/confirmation-yes)
   (notification/success-type :users-destroy))
 
+(defn read-it "Reads the user" 
+  [user]
+  (let [details (do 
+               (nav/go-to user) 
+               (Thread/sleep 1000)
+               (->> (browser/find-elements {:xpath "//div[@id='users']//fieldset"}) 
+                    (map browser/text)  
+                    (map #(clojure.string/split % #":\n" 2) ) 
+                    (filter #(> (count %) 1)) 
+                    flatten 
+                    (apply hash-map)
+                    (#(hash-map :name  (get % "Username") 
+                        :email (get % "Email Address")))
+                    doall
+                    ))
+        roles {:roles (do
+               (nav/go-to user) 
+               (browser/click ::roles-link) 
+               (->> (browser/find-elements {:xpath "//div[@id='role']//div[@class='selected']//li"}) 
+                    (map browser/text)  
+                    rest
+                    doall)
+                )}
+        defaults (do
+               (nav/go-to user) 
+               (browser/click ::defaults-link) 
+               {:default-org (#(if (= % "No system registration default set for this user.") 
+                                 nil
+                                 (kt/newOrganization {:name %}))
+                               (browser/text "//div[@id='org_name']"))
+                :default-env (#(if (= % "No system registration default set for this user.") 
+                                 nil
+                                 (kt/newEnvironment {:name %}))
+                               (browser/text "//div[@id='env_name']"))
+                })]
+        (kt/newUser (merge details  defaults roles))))
+
 (defn- modify-roles [to-add to-remove]
   (doseq [role to-add]
     (browser/click (plus-icon (:name role))))
@@ -159,6 +197,7 @@
 
 (extend katello.User
   ui/CRUD {:create #'create
+           :read read-it
            :update* #'edit
            :delete #'delete}
 
