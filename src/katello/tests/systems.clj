@@ -759,8 +759,6 @@
           (assert/is (= "valid" (browser/text (system/system-detail-textbox "Subscription Status"))))
           (assert/is (= "true" (browser/text (system/system-detail-textbox "Auto-Attach"))))
           (assert/is (= "Red Hat Employee Subscription" (browser/text ::system/current-subscription-name)))))))
-        
-  
  
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
