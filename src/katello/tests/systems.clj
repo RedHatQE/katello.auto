@@ -27,7 +27,7 @@
             [katello.client.provision :as provision]
             [katello.tests.content-views :refer [promote-published-content-view]]
             [katello.tests.useful :refer [create-all-recursive create-series
-                                          create-recursive fresh-repo new-manifest]]
+                                          create-recursive fresh-repo upload-manifest-with-rhel-subscriptions]]
             [clojure.string :refer [blank? join split]]
             [clj-webdriver.taxi :as browser]
             [webdriver :as wd]
@@ -42,8 +42,6 @@
 (def inputformat (java.text.SimpleDateFormat. "EEE MMM d HH:mm:ss zzz yyyy"))
 (def outputformat (java.text.SimpleDateFormat. "MM/d/yy"))
 (defn date [d] (.format outputformat (.parse inputformat d)))
-
-(def rhel-repos rh-repos/enable-rhel-repos)
 
 (defn create-test-environment []
   (def test-environment (kt/library *session-org*)))
@@ -730,12 +728,7 @@
 
   (deftest "Upload redhat manifest and enable rhel repos to validate release-version"
     :uuid "5aa3f4a0-7614-4525-93fe-27a083056ff3"
-    (let [manifest (new-manifest "true")
-          org       (kt/org manifest)
-          repos  (for [r (rh-repos/describe-repos-to-enable-disable rhel-repos)]
-                   (update-in r [:reposet :product :provider] assoc :org org))]
-      (ui/create manifest)
-      (rh-repos/enable-disable-repos repos)
+    (let [org (upload-manifest-with-rhel-subscriptions)]
       (provision/with-queued-client
         ssh-conn
         (client/register ssh-conn {:username (:name *session-user*)
@@ -746,6 +739,27 @@
         (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
                       katello/newSystem)]
           (assert/is (= "6.1\n6.2\n6.3\n6.4" (system/get-release-version mysys)))))))
+  
+  (deftest "Upload a manifest with rhel subscriptions and autosubscribe a client with it"
+    :uuid "320aa021-338d-490b-b4b3-575d0ddfa59f"
+    (let [org (upload-manifest-with-rhel-subscriptions)]
+      (provision/with-queued-client
+        ssh-conn
+        (client/register ssh-conn {:username (:name *session-user*)
+                                   :password (:password *session-user*)
+                                   :org (:name org)
+                                   :env (:name (kt/library org))
+                                   :force true
+                                   :autosubscribe true})
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env (kt/library org)}
+                      katello/newSystem)]
+          (nav/go-to ::system/details-page mysys)
+          (browser/click ::system/subscriptions)
+          (browser/exists? :system/green-subs-icon)
+          (assert/is (= "valid" (browser/text (system/system-detail-textbox "Subscription Status"))))
+          (assert/is (= "true" (browser/text (system/system-detail-textbox "Auto-Attach"))))
+          (assert/is (= "Red Hat Employee Subscription" (browser/text ::system/current-subscription-name)))))))
+        
   
  
 (deftest "Systems cannot retrieve content from environment

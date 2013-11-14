@@ -118,7 +118,9 @@
    ::subscriptions               "//nav[@class='details-navigation']//li/a[contains (text(), 'Subscriptions')]"
    ::attach-subscription         "//button[@ng-click='attachSubscriptions()']"
    ::remove-subscription         "//button[@ng-click='removeSubscriptions()']"
-   ::red-subs-icon               "//i[@class='icon-circle red']"})
+   ::current-subscription-name   "//div[@alch-table='currentSubscriptionsTable']//td[2]"
+   ::red-subs-icon               "//i[@class='icon-circle red']"
+   ::green-subs-icon             "//i[@class='icon-circle green']"})
 
 ;; Nav
 

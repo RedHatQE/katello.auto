@@ -8,7 +8,10 @@
                      [tasks :refer [with-unique uniqueify uniques]]
                      [sync-management :as sync]
                      [manifest :as manifest]
+                     [redhat-repositories :as rh-repos]
                      [tasks :as tasks])))
+
+(def rhel-repos rh-repos/enable-rhel-repos)
 
 (defn ensure-exists [ent]
   (when-not (rest/exists? ent)
@@ -104,3 +107,14 @@
     (ui/create cv)
     (ui/update cv assoc :products (list (kt/product repo)))
     cv))
+
+(defn upload-manifest-with-rhel-subscriptions
+  "Uploads a redhat manifest and enable all rhel subscriptions"
+  []
+  (let [manifest (new-manifest "true")
+        org       (kt/org manifest)
+        repos  (for [r (rh-repos/describe-repos-to-enable-disable rhel-repos)]
+                 (update-in r [:reposet :product :provider] assoc :org org))]
+    (ui/create manifest)
+    (rh-repos/enable-disable-repos repos)
+    org))
