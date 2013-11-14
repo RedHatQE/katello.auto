@@ -172,5 +172,5 @@
 
 (defn go-to-system
   [system]
-  (Thread/sleep 3000)
+  (Thread/sleep 5000)
   (browser/click (select-system (:name system))))
