@@ -63,14 +63,16 @@
 
 ;; Nav
 (def subscriptions-menu
-  [:subscriptions (fn [_] (browser/move-to ::subscriptions-link))
+  [:subscriptions (fn [_] (browser/move-to ::subscriptions-link)
+                          (Thread/sleep 3000))
    [:katello.subscriptions/page (fn [_] (browser/click ::red-hat-subscriptions-link))]
    [:katello.distributors/page (fn [_] (browser/click ::distributors-link))]
    [:katello.activation-keys/page (fn [_] (browser/click ::activation-keys-link))]
    [:katello.subscriptions/import-history-page (fn [_] (browser/click ::import-history-link))]])
 
 (def systems-menu
-  [::systems-menu (fn [_] (browser/move-to ::systems-link))
+  [::systems-menu (fn [_] (browser/move-to ::systems-link)
+                          (Thread/sleep 3000))
    [:katello.systems/page (fn [_] (browser/click ::systems-all-link))]
    [:katello.systems/by-environments-page (fn [_] (browser/click ::by-environments-link))]
    [:katello.system-groups/page (fn [_] (browser/click ::system-groups-link))]])

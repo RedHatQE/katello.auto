@@ -63,8 +63,8 @@
   (nav/go-to ::system/subscriptions-page system)
   (browser/exists?  ::system/red-subs-icon)
   (assert/is (= "invalid" (browser/text (system/system-detail-textbox "Subscription Status"))))
-  (assert/is (= "Red Hat Enterprise Linux Server - Not covered by a valid subscription." 
-                (browser/text (system/system-detail-textbox "Details"))))
+  (assert/is (some #(= "Red Hat Enterprise Linux Server - Not covered by a valid subscription." %)
+                (map browser/text (browser/elements ::system/subs-detail-textbox))))
   (assert/is (= "true" (browser/text (system/system-detail-textbox "Auto-Attach")))))
 
 (defn validate-package-info

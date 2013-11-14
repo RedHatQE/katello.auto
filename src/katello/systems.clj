@@ -99,6 +99,7 @@
    ::expand-eth-interface        "//div/i[@class='expand-icon clickable icon-plus']"
    ::expand-lo-interface         "//div[2]/i[@class='expand-icon clickable icon-plus']"
    ::sys-count                   "//div[@class='nutupane-actionbar']/div/span"
+   ::subs-detail-textbox         "//span[contains(.,'Details')]/../div/ul/li"
    
 
    ;;system-facts
