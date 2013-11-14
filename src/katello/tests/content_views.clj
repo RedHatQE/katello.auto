@@ -456,7 +456,7 @@
               (assert/is (client/ok? cmd2)))
             (let [cmd3 (client/run-cmd ssh-conn "yum install -y elephant-8.3-1 walrus-5.21-1 horse-0.22-2 kangaroo-0.2-1 pike-2.2-1")
                   cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie elephant -ie walrus -ie horse -ie kangaroo -ie pike")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
+              (assert/is (->> cmd4 :exit (not= 0))))))))
     
     (deftest "Consume content after applying package and package-group filters"
       :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
@@ -497,7 +497,7 @@
               (assert/is (client/ok? cmd2)))
             (let [cmd3 (client/run-cmd ssh-conn "yum install -y frog")
                   cmd4 (client/run-cmd ssh-conn "rpm -qa | grep frog")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
+              (assert/is (->> cmd4 :exit (not= 0))))))))
      
   
      (deftest "Consume content on client after applying errata filters"
@@ -541,7 +541,7 @@
                (assert/is (client/ok? cmd2)))
              (let [cmd3 (client/run-cmd ssh-conn "yum install -y zebra-10.0.8-1 seal-3.10.1-1")
                    cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]                    
-               (assert/is (->> cmd3 :exit-code (not= 0))))))))
+               (assert/is (->> cmd3 :exit (not= 0))))))))
      
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
