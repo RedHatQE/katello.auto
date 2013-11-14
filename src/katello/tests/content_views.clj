@@ -960,8 +960,7 @@
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))
-            (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
-                             (changeset/promote-delete-content deletion-cs))))))
+            (changeset/env-content-not-deletable? deletion-cs)))))
     
     (deftest "Remove parameters of filter rules"
       ::uuid "c02da40f-fa69-480b-883e-425d4370224b"
@@ -1008,4 +1007,3 @@
                            {:items (list "cobbler"), :version-type :older-than, :value1 "1.2.1"}
                            {:items (list "activemq"), :version-type :range, :value1 "0.0.1", :value2 "2.0.0"}]]
                  (views/filter-items cv-filter rule)))))))
-               
