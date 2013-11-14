@@ -4,7 +4,7 @@
             [clojure.zip :as zip]
             (katello [navigation :as nav]
                      [notifications :as notification] 
-                     [content-search :as cs]
+                     [page-parsing :as cs]
                      [ui-common :as common]
                      [ui :as ui]))
   (:import  [java.text SimpleDateFormat]))

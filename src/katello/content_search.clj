@@ -10,6 +10,7 @@
             (katello [navigation :as nav]
                      [organizations :as org]
                      [tasks         :refer :all]
+                     [page-parsing  :refer :all]
                      [ui            :as ui]
                      [ui-common     :as common]
                      [notifications :as notification]
@@ -106,88 +107,6 @@
   (and (string? num)
        (= num (re-matches #"[0-9]+" num))))
 
-(defn get-string-of-html-element [id]
-  (->> id
-       (format "return window.document.getElementById('%s').innerHTML;")
-       (browser/execute-script)
-       (format "<root>%s</root>")))
-
-(defn get-string-of-body-element []
-  (->>
-   "window.document.getElementsByTagName('body')[0].innerHTML;"
-   (browser/execute-script)
-   (format "<body>%s</body>")
-   ))
-
-(defn search-in-zip [query node]
-  (loop [q query
-         n node]
-    (if (q n)
-      n
-      (if (zip/end? n)
-        nil
-        (recur q (zip/next n))))))
-
-
-(defn get-zip-of-xml-string [xml-string]
-  (->> xml-string
-       java.io.StringReader.
-       org.xml.sax.InputSource.
-       xml/parse
-       zip/xml-zip))
-
-(defn get-zip-of-html-string [html-string]
-  (->> html-string
-       .getBytes
-       ByteArrayInputStream.
-       parse-xml
-       zip/xml-zip))
-
-(defn node-content-as [empty-coll tree]
-  (postwalk
-     #(cond
-     (and (map? %) (contains? % :attrs) (= (-> % :attrs :class) "dot_icon-black")) (into empty-coll ["++"])
-     (and (map? %) (contains? % :content)) (into empty-coll (:content %))
-     :else %)
-   tree))
-
-(defn normalize-nodes [tree]
-  (postwalk
-   #(if (and (not (map? %)) (= 1 (count %)))
-      (first %)
-      %)
-   tree))
-
-(defn remove-nil-and-empty [when? empty-col tree]
-  (postwalk #(if (when? %)
-               (->> %
-                    (remove nil?)
-                    (remove empty?)
-                    (into empty-col))
-               %)
-            tree))
-
-(defn postwalk-trim [tree]
-  (postwalk #(if (string? %)
-               (trim %)
-               %)
-            tree))
-
-(defn postwalk-rm [what tree]
-  (postwalk #(if (= % what)
-               nil
-               %)
-            tree))
-
-(defn get-search-page-result-list-of-lists [xml-zip]
-  (->> xml-zip
-       zip/node
-       (node-content-as [])
-       (remove-nil-and-empty vector? [])
-       normalize-nodes
-       (postwalk #(cond (= "--" %) false
-                        (= "++" %) true
-                        :else %))))
 
 
 (defn get-grid-row-headers []
@@ -207,18 +126,6 @@
        (node-content-as #{})
        (remove-nil-and-empty set? #{})
        normalize-nodes))
-
-(defn get-search-page-result-list-of-lists-html [id]
-  (-> id
-      get-string-of-html-element
-      get-zip-of-html-string
-      get-search-page-result-list-of-lists))
-
-(defn get-search-page-result-list-of-lists-xml [id]
-  (-> id
-      get-string-of-html-element
-      get-zip-of-xml-string
-      get-search-page-result-list-of-lists))
 
 (def ^{:arglists '([locator attribute])}
   attr-loc (partial format "%s@%s"))

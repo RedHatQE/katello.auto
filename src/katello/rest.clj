@@ -184,6 +184,11 @@
   (when-not (exists? ent)
     (create ent)))
 
+(defn ensure-doesnt-exist [ent]
+  {:pre [(satisfies? CRUD ent)]}
+  (when (exists? ent)
+    (delete ent)))
+
 (defn create-recursive
   "Recursively create in katello, all the entites that satisfy
    katello.rest/CRUD (innermost first).  Example, an env that contains

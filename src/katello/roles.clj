@@ -5,7 +5,7 @@
             (katello [navigation :as nav]
                      [notifications :as notification]
                      [tasks :as tasks]
-                     [content-search :as cs]
+                     [page-parsing :as cs]
                      [ui :as ui]
                      [rest :as rest]
                      [ui-common :as common])))
@@ -209,7 +209,10 @@
 
   rest/CRUD (let [url "api/roles"
                   url-by-id (partial rest/url-maker [["api/roles/%s" [identity]]])]
-              {:id rest/id-field})
+              {:id rest/id-field
+               :query  (fn [e] (rest/query-by-name (constantly (rest/api-url url)) e))
+               :delete (fn [e] (rest/http-delete (url-by-id e))) 
+               :read   (fn [e] (rest/read-impl url-by-id e)) })
 
   tasks/Uniqueable tasks/entity-uniqueable-impl
   nav/Destination {:go-to (partial nav/go-to ::named-page)})
