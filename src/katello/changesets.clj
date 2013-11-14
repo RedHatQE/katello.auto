@@ -26,8 +26,8 @@
   content-item-n         "//div[@id='list']//li[%s]//div[contains(@class,'simple_link')]/descendant::text()[(position()=0 or parent::span) and string-length(normalize-space(.))>0]"
   select-product         "//span[contains(.,'%s')]"
   select-env             "//a[normalize-space(.)='%s' and contains(@class,'path_link')]"
-  select-published-names "xpath=(//div[contains(@class,'simple_link')])[%s]"
   status                 "//span[.='%s']/..//span[@class='changeset_status']"
+  check-publish-name     "//a[@data-display_name='%s' and contains(.,'+ Add')]"
   list-item              "//div[starts-with(@id,'changeset_') and normalize-space(.)='%s']"})
 
 (defn check-all [template coll]
@@ -39,6 +39,7 @@
   {::promotion-eligible-home     "//div[@id='content_tree']//span[contains(@class,'home_img_inactive')]"
    ::review-for-promotion        "review_changeset"
    ::promote-to-next-environment "//div[@id='promote_changeset' and not(contains(@class,'disabled'))]"
+   ::select-published-names      "//div[@class='simple_link']/span"
    ::new                         "new"
    ::name-text                   "changeset_name"
    ::save                        "save_changeset_button"
@@ -186,7 +187,16 @@
   (nav/go-to ::named-environment-page env)
   (browser/click (select-env (:name env)))
   (every? true? (doall (for [cv content]
-                         (some #(= (cv :published-name) %) (common/extract-list select-published-names))))))
+                         (some #(= (cv :published-name) %) (map browser/text (browser/elements ::select-published-names)))))))
+
+(defn env-content-not-deletable?
+  "If the CV is being consumed by a system, the content is not deletable,
+   Also the +Add option will be invisible and returns true."
+  [{:keys [name deletion? env content] :as changeset}]
+  (nav/go-to ::named-environment-page env)
+  (browser/click (select-env (:name env)))
+  (every? false? (doall (for [cv content]
+                         (browser/visible? (check-publish-name (cv :published-name)))))))
 
 (defn api-promote-changeset
   "Promotes a changeset, polls the API until the promotion completes,

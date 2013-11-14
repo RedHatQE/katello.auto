@@ -456,7 +456,7 @@
               (assert/is (client/ok? cmd2)))
             (let [cmd3 (client/run-cmd ssh-conn "yum install -y elephant-8.3-1 walrus-5.21-1 horse-0.22-2 kangaroo-0.2-1 pike-2.2-1")
                   cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie elephant -ie walrus -ie horse -ie kangaroo -ie pike")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
+              (assert/is (->> cmd4 :exit (not= 0))))))))
     
     (deftest "Consume content after applying package and package-group filters"
       :uuid "61b7f569-985d-4305-8c6b-173d647ff5d1"
@@ -497,7 +497,7 @@
               (assert/is (client/ok? cmd2)))
             (let [cmd3 (client/run-cmd ssh-conn "yum install -y frog")
                   cmd4 (client/run-cmd ssh-conn "rpm -qa | grep frog")]
-              (assert/is (->> cmd4 :exit-code (not= 0))))))))
+              (assert/is (->> cmd4 :exit (not= 0))))))))
      
   
      (deftest "Consume content on client after applying errata filters"
@@ -541,7 +541,7 @@
                (assert/is (client/ok? cmd2)))
              (let [cmd3 (client/run-cmd ssh-conn "yum install -y zebra-10.0.8-1 seal-3.10.1-1")
                    cmd4 (client/run-cmd ssh-conn "rpm -qa | grep -ie zebra-10.0.8-1 -ie seal-3.10.1-1")]                    
-               (assert/is (->> cmd3 :exit-code (not= 0))))))))
+               (assert/is (->> cmd3 :exit (not= 0))))))))
      
     (deftest "Create filter by errata-type"
       :uuid "c57544d7-358e-41f4-b5c3-c3e66287ebb0"
@@ -960,8 +960,7 @@
             (client/sm-cmd ssh-conn :refresh)
             (let [cmd_result (client/run-cmd ssh-conn "yum install -y cow")]
               (assert/is (client/ok? cmd_result)))
-            (expecting-error [:type :katello.changesets/promotion-failed] ;;Promotion failed when a system is subscribed to selected CV
-                             (changeset/promote-delete-content deletion-cs))))))
+            (changeset/env-content-not-deletable? deletion-cs)))))
     
     (deftest "Remove parameters of filter rules"
       ::uuid "c02da40f-fa69-480b-883e-425d4370224b"
@@ -1008,4 +1007,3 @@
                            {:items (list "cobbler"), :version-type :older-than, :value1 "1.2.1"}
                            {:items (list "activemq"), :version-type :range, :value1 "0.0.1", :value2 "2.0.0"}]]
                  (views/filter-items cv-filter rule)))))))
-               

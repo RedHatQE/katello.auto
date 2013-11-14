@@ -463,7 +463,7 @@
                 (system/package-action mysys {:package package :pkg-action "Package Remove"})
                 (let [cmd (format "rpm -qa | grep %s" package)
                       cmd_result (client/run-cmd ssh-conn cmd)]
-                  (assert/is (->> cmd_result :exit-code (not= 0))))))))))
+                  (assert/is (->> cmd_result :exit (not= 0))))))))))
                   ;(validate-package-info "Package Remove" "package removed" {:package packages} pkg-version))))))))
     [[true]
      [false]])
@@ -496,7 +496,7 @@
             (when remove-group?
               (system/package-action mysys {:package-group package-groups :pkg-action "Group Remove"})
               (let [cmd_result (client/run-cmd ssh-conn "rpm -q cockateel duck penguin stork")]
-                (assert/is (->> cmd_result :exit-code (not= 0)))))))))
+                (assert/is (->> cmd_result :exit (not= 0)))))))))
                ; (validate-package-info "Package Group Remove" "package group removed" {:package-group package-groups})))))))
 
     [[true]
@@ -536,7 +536,7 @@
               (when remove-pkg?
                 (system/remove-selected-package mysys {:package package})
                 (let [cmd_result (client/run-cmd ssh-conn "rpm -qa | grep walrus-5.21-1.noarch")]
-                  (assert/is (->> cmd_result :exit-code (not= 0))))))))))
+                  (assert/is (->> cmd_result :exit (not= 0))))))))))
                 ;(validate-package-info "Package Remove" "package removed" {:package package} pkg-version)))))))
     
     [[true]
@@ -788,9 +788,9 @@
                (client/sm-cmd ssh-conn :refresh)
                (client/run-cmd ssh-conn "yum repolist")
                (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
-                 (assert/is (->> result :exit-code (= 0))))
+                 (assert/is (->> result :exit (= 0))))
                (changeset/promote-delete-content deletion-changeset)
                (client/sm-cmd ssh-conn :refresh)
                (client/run-cmd ssh-conn "yum repolist")
                (let [result (client/run-cmd ssh-conn "yum install cow -y --nogpgcheck")]
-                 (assert/is (->> result :exit-code (= 1)))))))))
+                 (assert/is (->> result :exit (= 1)))))))))
