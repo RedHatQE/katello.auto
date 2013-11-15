@@ -462,6 +462,12 @@
   (browser/click ::perform-action)
   (check-package-status))
 
+(defn update-all "Run update-all to update a selected system"
+  [system]
+  (nav/go-to ::packages-page system)
+  (browser/click ::update-all)
+  (check-package-status))
+
 (defn filter-package
   [system {:keys [package]}]
   (nav/go-to ::packages-page system)

@@ -759,6 +759,31 @@
           (assert/is (= "valid" (browser/text (system/system-detail-textbox "Subscription Status"))))
           (assert/is (= "true" (browser/text (system/system-detail-textbox "Auto-Attach"))))
           (assert/is (= "Red Hat Employee Subscription" (browser/text ::system/current-subscription-name)))))))
+  
+  (deftest "Update all system packages"
+    :uuid "6a0df4cd-195d-46fa-8be0-984dfc4ec978"
+    (let [repo-url "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/"
+          product (configure-product-for-pkg-install repo-url)]
+      (provision/with-queued-client
+        ssh-conn
+        (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/7479364/raw/")
+        (let [cmd "yum install -y acme-package-1.0.1-1.noarch bat-3.10.6-1.noarch bird-5.1.9-1.noarch cheetah-5.1.8-1.noarch cow-5.3.0-1.noarch eagle-9.8.9-1.noarch fish-4.10.0-1.noarch fox-10.8.0-1.noarch"]
+          (client/run-cmd ssh-conn cmd))
+        (client/register ssh-conn
+                         {:username (:name *session-user*)
+                          :password (:password *session-user*)
+                          :org (-> product :provider :org :name)
+                          :env (:name test-environment)
+                          :force true})
+        (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+        (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                      katello/newSystem)]
+          (client/subscribe ssh-conn (system/pool-id mysys product))
+          (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+          (client/run-cmd ssh-conn "yum repolist")
+          (system/update-all mysys)
+          (let [cmd_result (client/run-cmd ssh-conn "rpm -q acme-package-1.1.2-1.noarch bat-3.10.7-1.noarch bird-5.1.11-1.noarch cheetah-5.1.10-1.noarch cow-5.3.2-1.noarch eagle-9.8.10-1.noarch fish-4.10.3-1.noarch fox-10.8.2-1.noarch")]
+            (assert/is (client/ok? cmd_result)))))))
  
 (deftest "Systems cannot retrieve content from environment
 	 after a remove changeset has been applied"
