@@ -74,11 +74,11 @@
 (defn validate-permissions-navigation
   "Validate Navigation of permissions page under Roles."
   [role {:keys [org resource-type verbs tags name]}]
-  (nav/go-to ::role/named-permissions-page role)
-  (browser/click (role/permission-org (:name org)))
-  #_(sleep 1000)
+  (nav/go-to role)
+  (browser/click ::role/slide-link-home)
+  (role/goto-org-perms org)
   (browser/click ::role/add-permission)
-  (browser/select ::role/permission-resource-type-select resource-type)
+  (browser/select-by-text ::role/permission-resource-type-select resource-type)
   (browser/click ::role/next)
   (doseq [verb verbs]
     (browser/select-by-text  ::role/permission-verb-select verb))
@@ -501,9 +501,9 @@
 
   (deftest "Verify the Navigation of Roles, related to permissions"
     :uuid "db588bc0-6f95-4534-7673-e612cd00d8f8"
-    :data-driven true
-
-    (fn [{:keys [resource-type verbs tags setup] :as perm} & [setup]]
+    :data-driven true 
+    
+    (fn [{:keys [resource-type verbs tags] :as perm} & [setup]]
       (when setup (setup))
       (with-unique [role  (kt/newRole {:name "myrole"})
                     perm  (-> perm
