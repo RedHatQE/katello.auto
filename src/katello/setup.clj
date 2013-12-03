@@ -119,7 +119,7 @@
 (defn sauce-attributes [test]
   (let [full-ver (:version (rest/get-version))
         [_ ver build] (re-find #"(.*-\d+)\.(.*)" full-ver)
-        build 1 #_(second (re-find #"\.(\d+)\." build))]
+        build "1" #_(second (re-find #"\.(\d+)\." build))]
     
     {:name (:name test)
      :tags [ver full-ver]
