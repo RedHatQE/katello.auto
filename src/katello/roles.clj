@@ -68,7 +68,7 @@
                        ::save browser/click])
   (notification/success-type :roles-create))
 
-(defn- goto-org-perms [org]
+(defn goto-org-perms [org]
   (browser/click ::permissions)
   (browser/click (permission-org (:name org)))
   (Thread/sleep 1000))
@@ -177,7 +177,7 @@
                                (do
                                  (nav/go-to role) 
                                  (browser/click ::permissions)
-                                 (browser/click (permission-org org))
+                                 (browser/click (permission-org (:name org)))
                                  [org (doall (every-second (get-list)))])))
 
        perms 
@@ -186,7 +186,7 @@
                           (do
                             (nav/go-to role) 
                             (browser/click ::permissions)
-                            (browser/click (permission-org org))
+                            (browser/click (permission-org (:name org)))
                             (browser/click (permission-perm p))
                             (->>
                               (get-list)
